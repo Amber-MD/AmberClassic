@@ -136,7 +136,7 @@
 
 \series bold
 \size giant
-Msander Reference Manual 
+AmberClassic Reference Manual 
 \end_layout
 
 \begin_layout Standard
@@ -208,7 +208,7 @@ tleap, antechamber
 \emph default
 , 
 \emph on
-sqm,
+sqm, saxs, rism1d, metatwist
 \emph default
  and 
 \emph on
@@ -258,7 +258,7 @@ cpptraj
 , which is distributed separately, at 
 \begin_inset CommandInset href
 LatexCommand href
-name "hittps://githbu.com/Amber-MD"
+name "hittps://github.com/Amber-MD"
 target "https://github.com/Amber-MD"
 literal "false"
 
@@ -459,6 +459,258 @@ LatexCommand tableofcontents
 \end_inset
 
 
+\end_layout
+
+\begin_layout Chapter
+Introduction
+\begin_inset CommandInset label
+LatexCommand label
+name "chap:Introduction"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This repository contains 
+\emph on
+msander
+\emph default
+, a "modern" version of parts of the Amber molecular dynamics program sander.
+ Also included are various NMR, X-ray and cryoEM-related code and utilities,
+ as well as versions of a number of the “classic” (and most-used) parts
+ of AmberTools: 
+\emph on
+tleap, antechamber, sqm, metatwist, rism1d, saxs
+\emph default
+ and 
+\emph on
+paramfit
+\emph default
+.
+ With these tools, many systems can be set up for simulation in 
+\emph on
+msander
+\emph default
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The documentation and authorship credits are in the 
+\family typewriter
+doc/AmberClassic.pdf
+\family default
+ file.
+\end_layout
+
+\begin_layout Subsection*
+Warning
+\end_layout
+
+\begin_layout Standard
+This is a work in progress, and may not always be in a stable state (although
+ that is my goal for the main branch).
+ I may not be able to respond to requests for support, but please create
+ a github issue if you have comments or suggestions.
+ (As an alternative, send email to 
+\emph on
+dacase1@gmail.com
+\emph default
+.)
+\end_layout
+
+\begin_layout Standard
+This code is probably most useful to those who are already familiar with
+ `AmberTools` (https://ambermd.org).
+ Many of the basic tutorials there will also work with AmberClassic.
+ 
+\end_layout
+
+\begin_layout Standard
+This package may also be of interest to those who want just the subset included
+ here of the far-more-complex AmberTools package.
+ Some other popular parts of 
+\emph on
+AmberTools
+\emph default
+ are not included here, but are available separately: 
+\emph on
+cpptraj
+\emph default
+ and 
+\emph on
+pytraj
+\emph default
+ (both at https://github.com/Amber-MD), and 
+\emph on
+parmed
+\emph default
+ (at https://github.com/ParmEd).
+\end_layout
+
+\begin_layout Subsection*
+Design goals
+\end_layout
+
+\begin_layout Standard
+This project began as a fork of the 
+\emph on
+sander
+\emph default
+ code in 
+\emph on
+AmberTools
+\emph default
+.
+ It tries to (greatly) simplify the code base, choosing the best and most
+ useful parts of the code, and to serve as a test bed for how modern Fortran
+ coding techniques can be used.
+ Key application areas are expected to be in structure refinements using
+ NMR, cryoEM or Xray diffraction information.
+ This version has a fair amount of OpenMP support, especially for Xray and
+ 3D-RISM calculations.
+ Parts of the Xray code uses GPU acceleration.
+\end_layout
+
+\begin_layout Standard
+One additional goal of this collection is to make compiling and installation
+ as simple as possible.
+ There is a pretty simple 
+\family typewriter
+configure
+\family default
+ script, and minimal dependencies on external packages.
+ I am (slowly) cleaning up and adding other parts of 
+\emph on
+AmberTools
+\emph default
+, and I hope to create a conda package soon.
+\end_layout
+
+\begin_layout Subsection*
+Key differences in functionality versus sander
+\end_layout
+
+\begin_layout Standard
+Some pieces are missing from the sander program in AmberTools:
+\end_layout
+
+\begin_layout Itemize
+Things that should be easy to re-introduce later: emil, sebomd, pbsa, APBS
+\end_layout
+
+\begin_layout Itemize
+Things are are problably gone for good, but which don't represent the best
+ current practice: Path-integral methods, thermostats that don't follow
+ the "middle" scheme, Berendsen barostat
+\end_layout
+
+\begin_layout Itemize
+Things that might be useful, but really complicate the code: evb potentials,
+ QM/MM, nudged elastic band, constant pH and constant redox potential simulation
+s.
+ The API interface has also been removed.
+\end_layout
+
+\begin_layout Itemize
+Non-periodic 3D-RISM has been removed for now, in an attempt to get the
+ simplest possible RISM code, perhaps as a basis for future GPU work.
+\end_layout
+
+\begin_layout Standard
+(If you need some of these deleted pieces, use *sander* from AmberTools
+ instead.)
+\end_layout
+
+\begin_layout Standard
+Key pieces of code that are still there, and being emphasized:
+\end_layout
+
+\begin_layout Itemize
+Periodic and non-periodic simulations, with all of Amber's GB models
+\end_layout
+
+\begin_layout Itemize
+3D-RISM in periodic boundary conditions
+\end_layout
+
+\begin_layout Itemize
+NMR, cryoEM and Xray restraints (including quite a bit of new code; Xray
+ restraints include NVIDIA GPU-enabled capabilities)
+\end_layout
+
+\begin_layout Itemize
+Thermodynamic integration and non-equilibrium sampling methods, including
+ adaptively biassed sampling and self-guided Langevin dynamics
+\end_layout
+
+\begin_layout Itemize
+Sampling and minimization using the lmod and xmin approaches; these can
+ now be used in conjunction with SHAKE and SETTLE.
+\end_layout
+
+\begin_layout Itemize
+Replica exchange capabilities, except for constant pH and redox potential
+ simulations
+\end_layout
+
+\begin_layout Subsection*
+Installation
+\end_layout
+
+\begin_layout Standard
+In the top-level folder:
+\end_layout
+
+\begin_layout LyX-Code
+./configure --help      # then choose options
+\end_layout
+
+\begin_layout LyX-Code
+make install
+\end_layout
+
+\begin_layout LyX-Code
+source AmberClassic.sh  # sets up environment variables; consider adding
+ to your SHELL rc file
+\end_layout
+
+\begin_layout LyX-Code
+make test               # optional--more info is below
+\end_layout
+
+\begin_layout Standard
+The test suite also serves as a source of example input files.
+ Look especially in the 
+\emph on
+rism
+\emph default
+, 
+\emph on
+xray
+\emph default
+ and 
+\emph on
+cryoem
+\emph default
+ folders to see sample inputs for these sorts of calculation.
+\end_layout
+
+\begin_layout Subsection*
+License
+\end_layout
+
+\begin_layout Standard
+This project is licensed under the GNU General Public License, version 2,
+ or (at your option) any later version.
+ Some components use different, but compatible, open source licenses.
+ See the 
+\family typewriter
+LICENSE
+\family default
+ file for more information.
 \end_layout
 
 \begin_layout Chapter
@@ -734,39 +986,6 @@ Replica exchange capabilities, except for constant pH and redox potential
 \end_layout
 
 \end_deeper
-\begin_layout Section
-Installation
-\end_layout
-
-\begin_layout LyX-Code
-./configure --help    # then choose options
-\end_layout
-
-\begin_layout LyX-Code
-make install
-\end_layout
-
-\begin_layout LyX-Code
-make test             # optional--more info is below
-\end_layout
-
-\begin_layout Standard
-The test suite also serves as a source of example input files.
- Look especially in the 
-\emph on
-rism
-\emph default
-, 
-\emph on
-xray
-\emph default
- and 
-\emph on
-cryoem
-\emph default
- folders to see sample inputs for these sorts of calculation.
-\end_layout
-
 \begin_layout Section
 
 \series bold

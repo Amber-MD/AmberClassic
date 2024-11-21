@@ -3,9 +3,6 @@
 install::
 	cd src && $(MAKE) install
 
-full::
-	cd src && $(MAKE) full
-
 test::
 	cd test && $(MAKE) test
 

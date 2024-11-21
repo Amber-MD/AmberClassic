@@ -4,7 +4,7 @@ include ../config.h
 
 install: $(INSTALLTYPE)
 
-full:
+serial:
 	@cd msander && $(MAKE) msander
 	@cd msander && $(MAKE) msander.LES
 	@cd xray && $(MAKE) xray
@@ -18,10 +18,6 @@ full:
 	@cd moft && $(MAKE) moft
 	@cd saxs && $(MAKE) saxs
 	@cd rism && $(MAKE) rism1d
-
-serial:
-	@cd msander && $(MAKE) msander
-	@cd xray && $(MAKE) xray
 
 parallel:
 	@cd msander && $(MAKE) msander.MPI

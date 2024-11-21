@@ -1,40 +1,22 @@
-# Overview
+# Overview of AmberClassic
 
-This directory tree contains `msander`, a "modern" version of parts
-of sander.  Also included are various X-ray and cryoEM-related code
-and utilities, as well as versions of a number of the “classic”
-(and most-used) parts of AmberTools: `tleap, antechamber, sqm, metatwist`
-and `paramfit`. With these tools, many systems can be set up for simulation in
-msander.
+This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and most-used) parts of AmberTools: `tleap, antechamber, sqm, metatwist, rism1d, saxs` and `paramfit`. With these tools, many systems can be set up for simulation in `msander`.
 
-The documentation and authorship credits are in the *doc/msander.pdf* file.
+The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
 
 # Warning
 
-This is a work in progress, and may not always be in a stable state
-(although that is my goal for the main branch).  I may not be able to
-respond to requests for support, but please create a github issue if you
-have comments or suggestions.
+This is a work in progress, and may not always be in a stable state (although that is my goal for the main branch).  I may not be able to respond to requests for support, but please create a github issue if you have comments or suggestions.  (As an alternative, send email to dacase1@gmail.com.)
 
-This code is probably most useful to those who are already familiar with
-AmberTools, and access to either AmberTools (https://ambermd.org), or at
-least to `cpptraj` (https://github.com/Amber-MD) will be needed by most
-users.
+This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic.  
+
+This package may also be of interest to those who want just the subset included here of the far-more-complex AmberTools package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
 
 # Design goals
 
-* This project began as a fork of the `sander` code in `AmberTools`.  
-It tries to (greatly) simplify the code base, choosing the best and 
-most useful parts of the code, and to serve as a test bed for how 
-modern Fortran coding techniques can be used.  Key application areas 
-are expected to be in structure refinements using NMR, cryoEM or 
-Xray diffraction information.  This version has a fair amount of OpenMP
-support, especially for Xray and 3D-RISM calculations.  Parts of the Xray
-code uses GPU acceleration.
+* This project began as a fork of the `sander` code in `AmberTools`.  It tries to (greatly) simplify the code base, choosing the best and most useful parts of the code, and to serve as a test bed for how modern Fortran coding techniques can be used.  Key application areas are expected to be in structure refinements using NMR, cryoEM or Xray diffraction information.  This version has a fair amount of OpenMP support, especially for Xray and 3D-RISM calculations.  Parts of the Xray code uses GPU acceleration.
 
-* One additional goal of this collection is to make compiling and
-installation as simple as possible. There is a pretty simple configure
-script, and minimal dependencies on external packages.
+* One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and I hope to create a conda package soon.
 
 # Key differences in functionality versus sander
 
@@ -77,10 +59,7 @@ instead.)
 
 # Execution speed
 
-Force field evaluation is still slow compared to many other codes.  This
-project thus focusses on systems where other parts of the simulation (such
-as QM, RISM, or Xray/Cryoem restraints) are the bottleneck, so that force
-field speed is not the limiting component.
+Force field evaluation is still slow compared to many other codes.  This project thus focusses on systems where other parts of the simulation (such as RISM or Xray/Cryoem restraints) are the bottleneck, so that force field speed is not the limiting component.
 
 # Building the code
 
@@ -88,13 +67,11 @@ field speed is not the limiting component.
 ```
    ./configure --help   #  then choose the options you want
    make install
+   source AmberClassic.sh
    make test
 ```
 
 # License
 
-This project is licensed under the GNU General Public License, 
-version 2, or (at your option) any later version.   Some components use 
-different, but compatible, open source licenses.  See the LICENSE file 
-for more information.
+This project is licensed under the GNU General Public License, version 2, or (at your option) any later version.   Some components use different, but compatible, open source licenses.  See the LICENSE file for more information.
 

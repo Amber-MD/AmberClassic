@@ -1,6 +1,6 @@
 #!/bin/bash
 
-printf "configure script for msander\n\n"
+printf "configure script for AmberClassic\n\n"
 
 # Store the command
 command=`echo "$0 $*"`
@@ -8,7 +8,7 @@ command=`echo "$0 $*"`
 #------------------------------------------------------------------------------
 #  Set up defaults:
 #------------------------------------------------------------------------------
-msanderhome=`pwd`
+AmberClassicHome=`pwd`
 verbose="@"
 enablempi=
 requested_help="no"
@@ -55,9 +55,9 @@ cuda_prec='SPFP'
 lapack="skip"
 blas="skip"
 
-inc="-I$msanderhome/include"
-netcdflibf_static="$msanderhome/lib/libnetcdff.a $msanderhome/lib/libnetcdf.a"
-netcdflibf_shared="-L$msanderhome/lib -lnetcdff -lnetcdf"
+inc="-I$AmberClassicHome/include"
+netcdflibf_static="$AmberClassicHome/lib/libnetcdff.a $AmberClassicHome/lib/libnetcdf.a"
+netcdflibf_shared="-L$AmberClassicHome/lib -lnetcdff -lnetcdf"
 netcdflibf=$netcdflibf_static
 
 #short_ene=short_ene_omp.o
@@ -122,8 +122,6 @@ while [ $# -gt 0 ]; do
             short_ene=short_ene.o
             installtype="parallel"
             sfx=".MPI";;
-        --full)
-            installtype="full";;
         *)
             echo "Option $1 not recognized"
             exit 1
@@ -138,17 +136,16 @@ if [ "$requested_help" = "yes" ] ; then
     printf "\n"
 	printf " --mpi          build only msander.MPI\n"
 	printf " --cuda         build only msander.cuda\n"
-                            [If both --mpi and --cuda are set, build only
-                            msander.cuda.MPI]
+    printf "                [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
     printf " --cudaprec     [SPFP|DPFP], cuda precision, default is SPFP\n"
-    printf " --cudaarch     <kepler|maxwell|pascal|volta|turing|ampere|ada>"
+    printf " --cudaarch     <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\n"
 	printf " --openmp       make use of OPENMP\n"
 	printf " --mkl          use MKL routines from \$MKLROOT environment variable\n"
 	printf " --openblas     use BLAS routines from \$GOTO environment variable\n"
+    printf "\n"
 	printf " --verbose      give build details, otherwise be more silent\n"
-	printf " --static       use static linking (experiental)\n"
-    printf " --full         install everything with a serial install\n"
+	printf " --static       use static linking (experimental)\n"
     printf "\n"
     exit 0
 fi
@@ -391,7 +388,7 @@ if [ ! -s "lib/libnetcdf.a" ]; then
    printf "Configuring the NetCDF C interface..."
    make clean > /dev/null 2>&1
    ./configure CC="$cc" CFLAGS="-fPIC" LDFLAGS="" \
-      --prefix=$msanderhome --disable-netcdf-4 --disable-dap \
+      --prefix=$AmberClassicHome --disable-netcdf-4 --disable-dap \
       --disable-shared --disable-doxygen > ../netcdf_c.config.log 2>&1
    ncerror=$?
    if [ $ncerror -gt 0 ]; then
@@ -413,15 +410,15 @@ if [ ! -s "lib/libnetcdf.a" ]; then
    # NetCDF Fortran configure/build
    cd ../netcdf-fortran-4.5.2
    # The NetCDF Fortran config script will need access to the C library.
-   export LD_LIBRARY_PATH="$msanderhome/lib:$LD_LIBRARY_PATH"
+   export LD_LIBRARY_PATH="$AmberClassicHome/lib:$LD_LIBRARY_PATH"
    printf "Configuring the NetCDF Fortran interface..."
    make clean > /dev/null 2>&1
    ./configure  CC="$cc" CFLAGS="-fPIC" \
-                  LDFLAGS="-L$msanderhome/lib $ldflags" \
-                  CPPFLAGS="-I$msanderhome/include" \
+                  LDFLAGS="-L$AmberClassicHome/lib $ldflags" \
+                  CPPFLAGS="-I$AmberClassicHome/include" \
                   FC="$fc" FCFLAGS="" \
                   F77="$fc" FFLAGS="-fPIC" --disable-shared  --disable-doxygen \
-                  --prefix=$msanderhome >> ../netcdf_f.config.log 2>&1
+                  --prefix=$AmberClassicHome >> ../netcdf_f.config.log 2>&1
    ncerror=$?
    if [ $ncerror -gt 0 ]; then
        echo "Error: NetCDF configure failed!  Check netcdf_f.config.log"
@@ -465,8 +462,8 @@ if [ "$flibs_fftw" != "" ]; then
        #   be required for Intel compilers.
        printf "\nConfiguring fftw-3.3 with $cc and $fc..."
        cd src/fftw-3.3 && \
-           ./configure --disable-doc --prefix=$msanderhome \
-           --libdir=$msanderhome/lib $enableomp $fftw_flags \
+           ./configure --disable-doc --prefix=$AmberClassicHome \
+           --libdir=$AmberClassicHome/lib $enableomp $fftw_flags \
            --enable-static $enable_sse MPICC="$mpicc" \
            CC="$cc" CFLAGS="$gccsys $optflags -fPIC"  \
            F77="$fc" FFLAGS="$optflags -fPIC" \
@@ -634,15 +631,14 @@ fi
 
 cat <<EOF > config.h
 
-#  msander configuration file.
+#  AmberClasic configuration file.
 #  Created on `date` via $command
 
 ###############################################################################
 
 # (1)  Location of the installation
 
-AMBERTOOLS=msander
-BASEDIR=$msanderhome
+BASEDIR=$AmberClassicHome
 BINDIR=\$(BASEDIR)/bin
 LIBDIR=\$(BASEDIR)/lib
 INCDIR=\$(BASEDIR)/include

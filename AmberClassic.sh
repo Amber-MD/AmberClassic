@@ -1,4 +1,4 @@
-# Source this script to add the variables necessary for msander.
+# Source this script to add the variables necessary for AmberClassic.
 
 # determine file path of this script (credit http://unix.stackexchange.com/questions/96203/find-location-of-sourced-shell-script)
 if [ -n "$BASH_SOURCE" ]; then
@@ -15,13 +15,13 @@ else
     exit 2
 fi
 
-export MSANDERHOME=$(cd "$(dirname "$this_script")"; pwd)
-export PATH="$MSANDERHOME/bin:$PATH"
+export AMBERCLASSICHOME=$(cd "$(dirname "$this_script")"; pwd)
+export PATH="$AMBERCLASSICHOME/bin:$PATH"
 
-# Add msander lib folder to LD_LIBRARY_PATH (if your platform supports it)
+# Add lib folder to LD_LIBRARY_PATH (if your platform supports it)
 
 if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH="$MSANDERHOME/lib"
+    export LD_LIBRARY_PATH="$AMBERCLASSICHOME/lib"
 else
-    export LD_LIBRARY_PATH="$MSANDERHOME/lib:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="$AMBERCLASSICHOME/lib:$LD_LIBRARY_PATH"
 fi

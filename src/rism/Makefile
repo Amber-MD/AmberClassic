@@ -4,6 +4,9 @@ include ../../config.h
 # Add search paths for .mod files
 LOCALFLAGS = -I../msander
 
+$(LIBDIR)/libxblas-amb.a:
+	cd ../xblas && $(MAKE) lib-amb
+
 # ------- rism3d information: ----------------------------------------------
 
 LIBOBJ = array_util.o rism_util.o \
