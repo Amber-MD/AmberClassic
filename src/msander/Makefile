@@ -124,7 +124,7 @@ libs:
 	$(VB)cd ../lapack && $(MAKE) $(LAPACK)
 	$(VB)cd ../arpack && $(MAKE) $(ARPACK)
 	$(VB)$(MAKE) binrestart.o    # needed by rism_io 
-	$(VB)cd ../rism && $(MAKE) $(RISM)
+	$(VB)cd ../rism && $(MAKE) librism
 	$(VB)cd ../xray && $(MAKE) libxray
     
 lib_cuda:

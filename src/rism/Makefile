@@ -4,9 +4,6 @@ include ../../config.h
 # Add search paths for .mod files
 LOCALFLAGS = -I../msander
 
-$(LIBDIR)/libxblas-amb.a:
-	cd ../xblas && $(MAKE) lib-amb
-
 # ------- rism3d information: ----------------------------------------------
 
 LIBOBJ = array_util.o rism_util.o \
@@ -31,12 +28,15 @@ rism1d: $(BINDIR)/rism1d
 $(BINDIR)/rism1d: rism1d_driver.o $(LIBDIR)/librism.a $(LIBDIR)/libxblas-amb.a
 	@echo "[RISM]  FC $@"
 	$(VB)$(FC) $(FFLAGS) -o $@ rism1d_driver.o \
-	        -L$(LIBDIR) -lrism -lxblas-amb $(FLIBSF)
+	        -L$(LIBDIR) -lxblas-amb $(FLIBSF)
 
 $(LIBDIR)/librism.a: $(LIBOBJ)
 	@echo "[RISM]  AR $@"
 	$(VB)$(AR) $@ $(LIBOBJ) > /dev/null
 	$(VB)$(RANLIB) $@
+
+$(LIBDIR)/libxblas-amb.a:
+	cd ../xblas && $(MAKE) lib-amb
 
 uninstall:
 	/bin/rm -f $(LIBDIR)/librism.a $(BINDIR)/rism1d
