@@ -18,6 +18,7 @@
   _control87(__old_cw, 0xFFFFFFFF);
 #else  /* _WIN32 */
 
+#undef HAVE_FPU_CONTROL_H
 #if HAVE_FPU_CONTROL_H
 #include <fpu_control.h>
 #endif
