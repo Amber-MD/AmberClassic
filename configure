@@ -297,16 +297,12 @@ fi
 /bin/rm -f testp.y y.tab.c
 
 #--------------------------------------------------------------------------
-#  Configure the MKL or GOTO etc libraries for BLAS/LAPACK.
+#  Configure the MKL or GOTO libraries for BLAS/LAPACK.
 #--------------------------------------------------------------------------
-
-if [ "$conda" == "no" ]; then
 
 # Determine MKL home directory
 mklroot=''
-if [ "$conda" == "yes" ]; then
-    mklroot=$CONDA_PREFIX
-elif [ ! -z "$MKLROOT" ] ; then
+if [ ! -z "$MKLROOT" ] ; then
     mklroot=$MKLROOT
 elif [ ! -z "$MKL_HOME" ] ; then
     mklroot=$MKL_HOME
@@ -418,8 +414,6 @@ else
   fi
 fi
 
-# end if if conda
-fi
 
 #--------------------------------------------------------------------------
 #  Configure and build netcdf:
