@@ -1,0 +1,43 @@
+package:
+  name: amberclassic
+#  version 0.1   just trying to adapt recipe from amber_phenix
+  version: 0.1
+
+source:
+  path: ../
+  
+build:
+  number: 0
+
+requirements:
+  build:
+   - {{ compiler('fortran') }}
+   - {{ compiler('c') }}
+   - {{ compiler('cxx') }}
+#  - llvm-openmp  # [osx]
+
+  host:
+   - bison
+   - boost=1.85.0
+#  - bzip2
+#  - zlib
+#  - mkl
+#  - mkl-include
+#  - libnetcdf
+#  - netcdf-fortran
+#  - openblas
+#  - arpack
+   - llvm-openmp  # [osx]
+
+  run:
+#  - mkl
+   - boost=1.85.0
+#  - libnetcdf
+#  - netcdf-fortran
+#  - openblas
+   - llvm-openmp  # [osx]
+
+about:
+    home: https://github.com/Amber-MD/AmberClassic.git
+    license: GNU General Public License (GPL/LGPL)
+    summary: Subset of AmberTools, built around a "modern" version of sander; includes other useful tools

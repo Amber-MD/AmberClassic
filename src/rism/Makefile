@@ -28,7 +28,7 @@ rism1d: $(BINDIR)/rism1d
 $(BINDIR)/rism1d: rism1d_driver.o $(LIBDIR)/librism.a $(LIBDIR)/libxblas-amb.a
 	@echo "[RISM]  FC $@"
 	$(VB)$(FC) $(FFLAGS) -o $@ rism1d_driver.o \
-	        -L$(LIBDIR) -lxblas-amb $(FLIBSF)
+	        -L$(LIBDIR) $(FLIBSF) -lxblas-amb
 
 $(LIBDIR)/librism.a: $(LIBOBJ)
 	@echo "[RISM]  AR $@"

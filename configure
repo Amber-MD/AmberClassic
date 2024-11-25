@@ -20,6 +20,7 @@ gcc10c="-fcommon"
 longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
+conda="no"
 
 compiler="gnu"
 cc="gcc -Wno-unused-result"
@@ -89,6 +90,8 @@ while [ $# -gt 0 ]; do
         --nogcc10)
             gcc10f=""
             gcc10c="";;
+        --conda)
+            conda="yes";;
         --mkl)
             mkl="yes";;
         --openblas)
@@ -263,12 +266,47 @@ fi
 /bin/rm -f testp.f testp.o testp
 
 #--------------------------------------------------------------------------
+#  Test if bison is available and works
+#--------------------------------------------------------------------------
+
+  printf "Testing bison: "
+  cat <<EOF >testp.y
+%{
+static int curItemNo, curValueNo, itemIndex;
+%}
+%token NUMBER
+%%
+term: NUMBER  { curItemNo = 1; }
+
+%%
+EOF
+
+bison -y testp.y
+status=$?
+
+if [ $status -gt 0 ]; then
+    echo ""
+    echo "Error: Unable to run bison."
+    echo "       Please check your PATH, or install the program."
+    echo ""
+    exit 1
+else
+    printf "OK\n\n"
+fi
+
+/bin/rm -f testp.y y.tab.c
+
+#--------------------------------------------------------------------------
 #  Configure the MKL or GOTO etc libraries for BLAS/LAPACK.
 #--------------------------------------------------------------------------
 
+if [ "$conda" == "no" ]; then
+
 # Determine MKL home directory
 mklroot=''
-if [ ! -z "$MKLROOT" ] ; then
+if [ "$conda" == "yes" ]; then
+    mklroot=$CONDA_PREFIX
+elif [ ! -z "$MKLROOT" ] ; then
     mklroot=$MKLROOT
 elif [ ! -z "$MKL_HOME" ] ; then
     mklroot=$MKL_HOME
@@ -378,6 +416,9 @@ else
     # ----- Use simple flag for Intel compilers on Linux ------------
     flibs_la='-qmkl'
   fi
+fi
+
+# end if if conda
 fi
 
 #--------------------------------------------------------------------------

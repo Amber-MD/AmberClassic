@@ -1,10 +1,10 @@
 #!/bin/sh
 
-export MSANDERHOME="$(dirname "$(cd "$(dirname "$0")" && pwd)")"
+export AMBERCLASSICHOME="$(dirname "$(cd "$(dirname "$0")" && pwd)")"
 
 $MSANDERHOME/bin/teLeap \
-           -I$MSANDERHOME/dat/leap/prep \
-           -I$MSANDERHOME/dat/leap/lib \
-           -I$MSANDERHOME/dat/leap/parm \
-           -I$MSANDERHOME/dat/leap/cmd \
+           -I$AMBERCLASSICHOME/dat/leap/prep \
+           -I$AMBERCLASSICHOME/dat/leap/lib \
+           -I$AMBERCLASSICHOME/dat/leap/parm \
+           -I$AMBERCLASSICHOME/dat/leap/cmd \
             $*

@@ -70,6 +70,13 @@ Force field evaluation is still slow compared to many other codes.  This project
    source AmberClassic.sh
    make test
 ```
+* Conda build  (Not yet working!)
+```
+   conda build recipe
+      (note: you should have conda-forge at the top of your channel
+      list in ~/.condarc.  You should also have done a "conda install
+      conda-forge-pinning" in your conda build environment.
+```
 
 # License
 
