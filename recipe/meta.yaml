@@ -33,13 +33,11 @@ requirements:
    - libgomp      # [linux and not aarch64]
 
   run:
-   - libblas
-   - liblapack
 #  - libboost-devel=1.85.0
 #  - libnetcdf
 #  - netcdf-fortran
    - llvm-openmp  # [osx]
-   - libgomp      # [linux and not aarch64]
+#  - libgomp      # [linux and not aarch64]
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
