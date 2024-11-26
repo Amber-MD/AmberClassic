@@ -63,14 +63,23 @@ Force field evaluation is still slow compared to many other codes.  This project
 
 # Building the code
 
-* MacOSX, Linux, probably WSL:
+* Compiling, on MacOSX, Linux, probably WSL:
 ```
    ./configure --help   #  then choose the options you want
    make install
    source AmberClassic.sh
    make test
 ```
-* Conda build  (Not yet working!)
+* Installing pre-built executables via conda  (work in progress)
+```
+   conda create --name AmberClassic   # you can choose the env name
+   conda activate AmberClassic
+   conda install dacase::amberclassic  # linux only for now
+   cd $CONDA_PREFIX
+   source AmberClassic.sh
+   cd test && make test   # optional; right now only tests msander
+```
+* Conda build  (For developers: Only tested on linux-x86 in serial mode)
 ```
    conda build recipe
       (note: you should have conda-forge at the top of your channel
