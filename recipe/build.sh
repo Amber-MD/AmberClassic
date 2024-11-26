@@ -8,4 +8,4 @@ cd src
 make serial
 cd ..
 
-rsync -av README.md LICENSE AmberClassic.sh bin lib $PREFIX
+rsync -av README.md LICENSE AmberClassic.sh doc/AmberClassic.pdf dat bin lib $PREFIX
