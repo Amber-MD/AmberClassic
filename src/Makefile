@@ -15,7 +15,7 @@ serial:
 	@cd nmr_aux && $(MAKE) nmr_aux
 	@cd xtalutil && $(MAKE) xtalutil
 	@cd paramfit && $(MAKE) paramfit
-#	@cd moft && $(MAKE) moft
+	@cd moft && $(MAKE) moft
 	@cd saxs && $(MAKE) saxs
 	@cd rism && $(MAKE) rism1d
 

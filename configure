@@ -46,6 +46,8 @@ installtype="serial"
 
 plumed="no"
 
+boostlib="-lboost_program_options -lboost_iostreams -lboost_regex -lboost_system -lboost_timer -lboost_chrono -lboost_filesystem -lboost_graph"
+
 cuda="no"
 cudaflags=''
 cudafflags=''
@@ -92,6 +94,7 @@ while [ $# -gt 0 ]; do
             gcc10f=""
             gcc10c="";;
         --conda)
+            boostlib="-L$CONDA_PREFIX/lib $boostlib"
             conda_incflags="-I$CONDA_PREFIX/include"
             conda="yes";;
         --mkl)
@@ -708,27 +711,27 @@ LM=$lm
 
 ###############################################################################
 
-#  (3) allow for the use of netcdf
+#  (3) specify some library options:
 
 NETCDFLIBF=$netcdflibf
-
+BOOSTLIB=$boostlib
 LAPACK=$lapack
 BLAS=$blas
 
 ###############################################################################
 
-#  (4)  C compiler
+#  (4)  C compilers:
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$clangf $inc $gcc10c $iccflags $fpic $debug
+CFLAGS=$clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 
 ###############################################################################
 
-#  (5)  Fortran compiler
+#  (5)  Fortran compiler:
 
 FC=$fc
 FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
