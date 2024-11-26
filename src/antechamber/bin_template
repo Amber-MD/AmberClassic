@@ -1,4 +1,4 @@
 #!/bin/sh
 
-export MSANDERHOME="$(dirname "$(cd "$(dirname "$0")" && pwd)")"
-"$MSANDERHOME/bin/wrapped_progs/REPLACE_ME" "$@"
+export AMBERCLASSICHOME="$(dirname "$(cd "$(dirname "$0")" && pwd)")"
+"$AMBERCLASSICHOME/bin/wrapped_progs/REPLACE_ME" "$@"
