@@ -313,6 +313,9 @@ if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
    if [ ! -z "$GOTO" -a "$openblas" == "yes" ]; then
       echo "using OpenBLAS libraries in $GOTO"
       flibs_la="$GOTO -lpthread"
+   elif [ "$conda" == "yes" -a "$openblas" == "yes" ]; then
+      echo "using OpenBLAS libraries from conda"
+      flibs_la="$CONDA_PREFIX/lib/libopenblas.a -lpthread"
    else
       # use the compiled versions;
       flibs_la="-llapack -lblas"
@@ -418,7 +421,13 @@ fi
 #--------------------------------------------------------------------------
 #  Configure and build netcdf:
 #--------------------------------------------------------------------------
-if [ ! -s "lib/libnetcdf.a" ]; then
+
+if [ "$conda" == "yes" ]; then
+
+   netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
+   echo "using netcdf libraries from conda"
+
+elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
    printf "Configuring the NetCDF C interface..."
    make clean > /dev/null 2>&1

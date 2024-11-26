@@ -20,24 +20,21 @@ requirements:
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - coreutils
+   - openblas
 
   host:
 #  - libboost-devel=1.85.0
-   - libblas
-   - liblapack
+   - openblas
 #  - bzip2
 #  - zlib
-#  - libnetcdf
-#  - netcdf-fortran
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
 
   run:
 #  - libboost-devel=1.85.0
-#  - libnetcdf
-#  - netcdf-fortran
    - llvm-openmp  # [osx]
-#  - libgomp      # [linux and not aarch64]
+   - libgomp      # [linux and not aarch64]
+   - openblas
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git

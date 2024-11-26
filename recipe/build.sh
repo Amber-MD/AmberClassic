@@ -2,10 +2,12 @@
 
 export MKLROOT=/opt/intel/oneapi/mkl/latest
 
-./configure --openmp --mkl
+./configure --conda --openmp --openblas
 
 cd src
 make serial
 cd ..
 
-rsync -av README.md LICENSE AmberClassic.sh doc/AmberClassic.pdf dat bin lib $PREFIX
+rsync -av README.md LICENSE AmberClassic.sh dat bin lib $PREFIX
+mkdir -p $PREFIX/doc
+rsync -av doc/AmberClassic.pdf $PREFIX/doc
