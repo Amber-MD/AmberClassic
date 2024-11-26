@@ -1,7 +1,8 @@
 package:
   name: amberclassic
 #  version 0.1   just trying to adapt recipe from amber_phenix
-  version: 0.1
+#  version 0.2   try using more shared libs from conda-forge
+  version: 0.2
 
 source:
   path: ../
@@ -21,10 +22,14 @@ requirements:
    - llvm-openmp  # [osx]
    - coreutils
    - openblas
+   - libnetcdf
+   - netcdf-fortran
 
   host:
-#  - libboost-devel=1.85.0
+   - libboost-devel=1.85.0
    - openblas
+   - libnetcdf
+   - netcdf-fortran
 #  - bzip2
 #  - zlib
    - llvm-openmp  # [osx]
@@ -35,6 +40,8 @@ requirements:
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
    - openblas
+   - libnetcdf
+   - netcdf-fortran
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git

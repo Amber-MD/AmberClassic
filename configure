@@ -21,6 +21,7 @@ longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
 conda="no"
+conda_flags=""
 
 compiler="gnu"
 cc="gcc -Wno-unused-result"
@@ -425,6 +426,7 @@ fi
 if [ "$conda" == "yes" ]; then
 
    netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
+   conda_flags="-I$CONDA_PREFIX/../_build_env/include"
    echo "using netcdf libraries from conda"
 
 elif [ ! -s "lib/libnetcdf.a" ]; then
@@ -722,7 +724,7 @@ COPTFLAGS=$optflags
 #  (5)  Fortran compiler
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
+FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_flags
 FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
