@@ -64,7 +64,7 @@ program add_xray
 
    ! begin
 
-   call get_environment_variable( 'MSANDERHOME', ambhome, amblength )
+   call get_environment_variable( 'AMBERCLASSICHOME', ambhome, amblength )
    if( amblength > 0 ) then
      symmop_filename = ambhome(1:amblength) // '/dat/xray/symop.lib'
    else
@@ -106,9 +106,9 @@ program add_xray
       end select
    end do
    
-   call get_environment_variable( 'MSANDERHOME', ambhome, amblength )
+   call get_environment_variable( 'AMBERCLASSICHOME', ambhome, amblength )
    if( amblength .le. 0 ) then
-      write(0,*) 'Error: MSANDERHOME is not set!'
+      write(0,*) 'Error: AMBERCLASSICHOME is not set!'
       stop
    endif
 
