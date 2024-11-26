@@ -21,7 +21,7 @@ longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
 conda="no"
-conda_flags=""
+conda_incflags=""
 
 compiler="gnu"
 cc="gcc -Wno-unused-result"
@@ -92,6 +92,7 @@ while [ $# -gt 0 ]; do
             gcc10f=""
             gcc10c="";;
         --conda)
+            conda_incflags="-I$CONDA_PREFIX/include"
             conda="yes";;
         --mkl)
             mkl="yes";;
@@ -426,8 +427,7 @@ fi
 if [ "$conda" == "yes" ]; then
 
    netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
-   conda_flags="-I$CONDA_PREFIX/../_build_env/include"
-   echo "using netcdf libraries from conda"
+   echo "using netcdf   libraries from conda"
 
 elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
@@ -489,7 +489,14 @@ fi
 #--------------------------------------------------------------------------
 #  Configure and build FFTW3:
 #--------------------------------------------------------------------------
-if [ "$flibs_fftw" != "" ]; then
+
+if [ "$conda" == "yes" ]; then
+
+   flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
+   echo "using fftw     libraries from conda"
+
+
+elif [ "$flibs_fftw" != "" ]; then
 
    if [ ! -s "lib/libfftw3.a" ] || \
        [ "$mpi" == "yes" -a ! -s "lib/libfftw3_mpi.a" ] || \
@@ -724,7 +731,7 @@ COPTFLAGS=$optflags
 #  (5)  Fortran compiler
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_flags
+FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
 FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags

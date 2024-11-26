@@ -24,6 +24,7 @@ requirements:
    - openblas
    - libnetcdf
    - netcdf-fortran
+   - fftw
 
   host:
    - libboost-devel=1.85.0
@@ -34,6 +35,7 @@ requirements:
 #  - zlib
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
+   - fftw
 
   run:
 #  - libboost-devel=1.85.0
@@ -42,6 +44,7 @@ requirements:
    - openblas
    - libnetcdf
    - netcdf-fortran
+   - fftw
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
