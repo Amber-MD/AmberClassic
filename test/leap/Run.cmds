@@ -4,8 +4,8 @@
 
 DACDIF=../dacdif
 
-tleap=$AMBERCLASSICHOME/bin/tleap
-leaprc=$AMBERCLASSICHOME/dat/leap/cmd/oldff/leaprc.ff10
+tleap=../../bin/tleap
+leaprc=../../dat/leap/cmd/oldff/leaprc.ff10
 ion_params=$AMBERCLASSICHOME/dat/leap/parm/frcmod.ionsjc_tip3p
 dry_prefix1=sys1
 dry_prefix2=sys2

@@ -1,7 +1,8 @@
 test:
 	@./run_tests.sh
 
-test.all: test.general test.rism test.xray test.nmr test.leap test.antechamber
+test.all: test.general test.rism test.xray test.nmr \
+          test.leap test.antechamber test.paramfit
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -50,6 +51,9 @@ test.leap:
 
 test.antechamber:
 	-(cd antechamber && make test)
+
+test.paramfit:
+	-(cd paramft && make test)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff

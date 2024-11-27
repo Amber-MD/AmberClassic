@@ -1,16 +1,14 @@
 #!/bin/sh
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
-logdir="$AMBERCLASSICHOME/logs"
+logdir="../logs"
 logprefix="${logdir}/${date_string}"
 logfile="${logprefix}.log"
 difffile="${logprefix}.diff"
 
 mkdir -p ${logdir}
 
-(make --no-print-directory -k test.general 2>&1) | tee ${logfile}
-(make --no-print-directory -k test.rism 2>&1) | tee -a ${logfile}
-(make --no-print-directory -k test.xray 2>&1) | tee -a ${logfile}
+(make --no-print-directory -k test.all 2>&1) | tee ${logfile}
 
 passed_count=`grep PASS ${logfile} | wc -l`
 questionable_count=`grep "FAILURE:" ${logfile} | wc -l`

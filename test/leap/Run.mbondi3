@@ -3,8 +3,8 @@
 . ../program_error.sh
 
 DACDIF=../dacdif
-tleap=$AMBERCLASSICHOME/bin/tleap
-leaprc=$AMBERCLASSICHOME/dat/leap/cmd/oldff/leaprc.ff10
+tleap=../../bin/tleap
+leaprc=../../dat/leap/cmd/oldff/leaprc.ff10
 prefix=alphabet.mbondi3
 
 cat > leap.in << EOF
