@@ -2,7 +2,7 @@
 
 export AMBERCLASSICHOME="$(dirname "$(cd "$(dirname "$0")" && pwd)")"
 
-$MSANDERHOME/bin/teLeap \
+$AMBERCLASSICHOME/bin/teLeap \
            -I$AMBERCLASSICHOME/dat/leap/prep \
            -I$AMBERCLASSICHOME/dat/leap/lib \
            -I$AMBERCLASSICHOME/dat/leap/parm \
