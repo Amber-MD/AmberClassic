@@ -251,23 +251,6 @@ $(BINDIR)/top2ff: top2ff
 $(BINDIR)/top2mol2: top2mol2
 	$(VB)$(MV) top2mol2 $@
 
-#_____________________________________________________________________________
-# Tests
-
-test:
-	cd ../../test/antechamber; make clean; make; make check
-
-test-penalties: ncsu-penalties.o test-penalties.o
-	$(CC) $(CFLAGS) $(AMBERCFLAGS) -o test-penalties $(LDFLAGS) $(AMBERLDFLAGS) ncsu-penalties.o test-penalties.o
-
-test-int-part: ncsu-penalties.h ncsu-penalties.c
-	$(CC)  $(CNOOPTFLAGS) $(CFLAGS) $(AMBERCFLAGS) -o test-int-part ncsu-penalties.c $(LDFLAGS) $(AMBERLDFLAGS) \
-   -DENABLE_INT_PART_MAIN=1
-
-test-combination: ncsu-penalties.h ncsu-penalties.c
-	$(CC) $(CNOOPTFLAGS) $(CFLAGS) $(AMBERCFLAGS) -o test-combination ncsu-penalties.c $(LDFLAGS) $(AMBERLDFLAGS) \
-   -DENABLE_COMBINATION_MAIN=1
-
 #############################################################################
 # DO NOT DELETE
 

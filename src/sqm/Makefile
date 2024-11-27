@@ -54,12 +54,11 @@ QMOBJ = qm2_allocate_e_repul.o qm2_calc_charges.o qm2_calc_dipole.o \
 	qm2_dftb_get_dftb3_parameters.o qm2_dftb_gamma_dftb3.o wallclock.o
 
 
-install: sqm
-	mv sqm $(BINDIR)
+install_sqm: $(BINDIR)/sqm
 
-sqm: $(SQMOBJ) $(QMOBJ) netlib
+$(BINDIR)/sqm: $(SQMOBJ) $(QMOBJ) 
 	@echo "[SQM]  FC $@"
-	$(VB)$(FC) $(FFLAGS) $(AMBERFFLAGS) -o sqm $(SQMOBJ) $(QMOBJ) \
+	$(VB)$(FC) $(FFLAGS) -o $@ $(SQMOBJ) $(QMOBJ) \
 		-L$(LIBDIR) $(FLIBSF)
 
 #-----------LIBS

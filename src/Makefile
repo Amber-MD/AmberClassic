@@ -12,6 +12,7 @@ serial:
 	@cd leap && $(MAKE) leap
 	@cd sff && $(MAKE) sff
 	@cd antechamber && $(MAKE) install
+	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
 	@cd xtalutil && $(MAKE) xtalutil
 	@cd paramfit && $(MAKE) paramfit
