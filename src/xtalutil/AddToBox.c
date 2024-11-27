@@ -116,7 +116,13 @@ int main(int argc, char* argv[])
   c.source[0] = '\0';
   a.source[0] = '\0';
   o.source[0] = '\0';
-  sprintf(a2bpath, "/home/case/xtaltools/src/AddToBox");
+  char *amberclassichome = getenv("AMBERCLASSICHOME");
+  if (amberclassichome == NULL) {
+      fprintf(stderr, "AMBERCLASSICHOME is not set.");
+      exit(1);
+  }
+  strcpy(a2bpath, amberclassichome);
+  strcat(a2bpath, "/bin/AddToBox");
   RW = 1.0;
   RP = 5.0;
   RCS = 0;

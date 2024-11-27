@@ -16,7 +16,7 @@ AOBJ=   ambpdb.o forFIRSTtype.o forFIRSTbond.o forFIRSThbond.o \
         forFIRSTteth.o forFIRSToutp.o forFIRSTsugar.o nxtsec.o \
         amopen.o mexit.o
 
-xtalutil: $(BINDIR)/ChBox $(BINDIR)/UnitCell \
+xtalutil: $(BINDIR)/ChBox $(BINDIR)/UnitCell $(BINDIR)/CheckMD \
      $(BINDIR)/AddToBox $(BINDIR)/PropPDB $(BINDIR)/ambpdb
 
 $(BINDIR)/ambpdb: $(AOBJ)

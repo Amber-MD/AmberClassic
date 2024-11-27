@@ -2,7 +2,7 @@ test:
 	@./run_tests.sh
 
 test.all: test.general test.rism test.xray test.nmr \
-          test.leap test.antechamber test.paramfit test.rism1d
+          test.leap test.antechamber test.paramfit test.rism1d text.xtalutil
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -47,10 +47,15 @@ test.xray:
 	-(cd cryoem/emap && ./Run.emap)
 
 test.leap:
-	-(cd leap && make test)
+	-(cd leap && ./Run.cmds)
+	-(cd leap && ./Run.mbondi3)
 
 test.antechamber:
-	-(cd antechamber && make test)
+	-(cd antechamber/abcg2 && Run.abcg2)
+	-(cd antechamber/fpph && Run.fpph)
+	-(cd antechamber/parmchk2 && Run.parmchk2)
+	-(cd antechamber/sustiva && Run.sustiva_g2)
+	-(cd antechamber/tp && Run.tp2)
 
 test.paramfit:
 	-(cd paramft && make test)
@@ -59,6 +64,12 @@ test.rism1d:
 	-(cd rism1d/spc-kh && ./Run.spc)
 	-(cd rism1d/spc-psen && ./Run.spc-nacl-3)
 	-(cd rism1d/spc-hnc && ./Run.spc-lj)
+
+test.xtalutil:
+	-(cd AddToBox && ./Run.AddToBox)
+	-(cd CheckMD && ./Run.CheckMD)
+	-(cd PropPDB && ./Run.PropPDB)
+	-(cd UnitCell && ./Run.UnitCell)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff
