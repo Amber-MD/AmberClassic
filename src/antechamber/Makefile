@@ -47,10 +47,10 @@ PROGS = \
 
 #############################################################################
 
+install_ac: $(DISPATCHEDPROGS) dispatch
+
 dispatch:
 	$(VB)BINDIR=$(BINDIR) sh patch.sh
-
-install: $(DISPATCHEDPROGS) dispatch
 
 clean:
 	/bin/rm -f *.o 

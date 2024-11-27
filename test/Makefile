@@ -2,7 +2,8 @@ test:
 	@./run_tests.sh
 
 test.all: test.general test.rism test.xray test.nmr \
-          test.leap test.antechamber test.paramfit test.rism1d text.xtalutil
+          test.leap test.antechamber test.paramfit test.rism1d text.xtalutil \
+          test.gbnsr6
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -70,6 +71,9 @@ test.xtalutil:
 	-(cd CheckMD && ./Run.CheckMD)
 	-(cd PropPDB && ./Run.PropPDB)
 	-(cd UnitCell && ./Run.UnitCell)
+
+test.gbnsr6:
+	-(cd gbnsr6 && ./Run.gbnsr6)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff

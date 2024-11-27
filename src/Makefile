@@ -11,7 +11,7 @@ serial:
 	@cd addles && $(MAKE) addles
 	@cd leap && $(MAKE) leap
 	@cd sff && $(MAKE) sff
-	@cd antechamber && $(MAKE) install
+	@cd antechamber && $(MAKE) install_ac
 	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
 	@cd xtalutil && $(MAKE) xtalutil
@@ -19,6 +19,7 @@ serial:
 	@cd moft && $(MAKE) moft
 	@cd saxs && $(MAKE) saxs
 	@cd rism && $(MAKE) rism1d
+	@cd gbnsr6 && $(MAKE) install_gbnsr6
 
 parallel:
 	@cd msander && $(MAKE) msander.MPI
