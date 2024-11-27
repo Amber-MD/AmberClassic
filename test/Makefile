@@ -1,7 +1,7 @@
 test:
 	@./run_tests.sh
 
-test.all: test.general test.rism test.xray test.nmr
+test.all: test.general test.rism test.xray test.nmr test.leap test.antechamber
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -44,6 +44,12 @@ test.xray:
 #	-(cd xray/2msi && ./Run.2msi)
 	-(cd cryoem/3j9d && ./Run.3j9d)
 	-(cd cryoem/emap && ./Run.emap)
+
+test.leap:
+	-(cd leap && make test)
+
+test.antechamber:
+	-(cd antechamber && make test)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff
