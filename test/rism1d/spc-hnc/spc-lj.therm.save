@@ -1,0 +1,14 @@
+#Global properties                
+#Description                      Variable    Units          Value            
+Compressibility                   xi          [1/MPa]         6.43185318E-004
+Pressure_(Free_Energy)            Pfe         [MPa]           4.94946637E+002
+Excess_free_energy                FE          [kcal/mol/A^3] -2.29996704E-001
+
+#Species properties               
+#Description                      Variable    Units           cSPC              LJ              
+Excess_chemical_potential_PR      EXCHEMsp_PR [kcal/mol]     -3.37896237E+000  5.93901592E+000 
+Partial_molar_volume              PMV         [A^-3]          3.00300236E+001  4.13870618E+001 
+
+#Site properties                  
+#Description                      Variable    Units          O                H1               LJ               
+Excess_chemical_potential_PR      EXCHEMv_PR  [kcal/mol]     -7.12878359E+000  3.74982122E+000  5.93901592E+000 
