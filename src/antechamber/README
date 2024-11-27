@@ -83,7 +83,7 @@ For the version see ANTECHAMBER_VERSION in ./define.h.
 20.5 Better mol2 file checking for 202103/0313.html, Scott Brozell.
 21.0 AmberTools 21.0 (released)
 21.1 Changed messaging and CCD CIF type LINKING error handling, Scott Brozell.
-21.2 Re added handling of spaces in AMBERHOME for dev-archive/202107/0017.html.
+21.2 Re added handling of spaces in AMBERCLASSICHOME for dev-archive/202107/0017.html.
 22.0 Amber 22.0 (released)
      Major updates from Junmei Wang.
 23.0 AmberTools 23.0 (released)

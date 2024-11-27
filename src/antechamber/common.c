@@ -20,7 +20,7 @@
    Assumptions:  strncat correctly handles a non-positive 3rd argument.
    'for_system' indicates if the path will be used in a 'system'
    command and therefore needs quotes if there are spaces in the
-   AMBERHOME variable.
+   AMBERCLASSICHOME variable.
  */
 size_t build_path(char *path, const char *subdir, const char *fname, size_t sizeof_path,
                   int for_system)

@@ -481,7 +481,7 @@ int main(int argc, char *argv[])
     char command[MAXCHAR];
     size_t copied_size;
 
-    amberhome = egetenv("AMBERHOME");
+    amberhome = egetenv("AMBERCLASSICHOME");
 
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
         if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-H") == 0)) {

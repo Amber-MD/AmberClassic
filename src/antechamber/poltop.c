@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
                    "[34m                  D1:[0m Thole linear,      no 1-2 and 1-3, %100 of 1-4, also known as AL\n"
                    "[34m                  D2:[0m Thole exponential, no 1-2 and 1-3, %100 of 1-4, also known as AE\n"
                    "[34m                  D3:[0m Thole tinker-like, no 1-2 and 1-3, %100 of 1-4, also known as AT\n"
-                   "[31m              -t [0m atom type file, optional, the default is $AMBERHOME/dat/antechamber/ATCOR2.DAT\n"
+                   "[31m              -t [0m atom type file, optional, the default is $AMBERCLASSICHOME/dat/antechamber/ATCOR2.DAT\n"
                    "[31m              -p [0m parameter file, optional\n");
             exit(1);
         }
@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
                    "[34m                  D1:[0m Thole linear,      no 1-2 and 1-3, %100 of 1-4, also known as AL\n"
                    "[34m                  D2:[0m Thole exponential, no 1-2 and 1-3, %100 of 1-4, also known as AE\n"
                    "[34m                  D3:[0m Thole tinker-like, no 1-2 and 1-3, %100 of 1-4, also known as AT\n"
-                   "[31m              -t [0m atom type file, optional, the default is $AMBERHOME/dat/antechamber/ATCOR2.DAT\n"
+                   "[31m              -t [0m atom type file, optional, the default is $AMBERCLASSICHOME/dat/antechamber/ATCOR2.DAT\n"
                    "[31m              -p [0m parameter file, optional\n");
             exit(1);
         }
@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
                        "                  D1: Thole linear,      no 1-2 and 1-3, %100 of 1-4, also known as AL\n"
                        "                  D2: Thole exponential, no 1-2 and 1-3, %100 of 1-4, also known as AE\n"
                        "                  D3: Thole tinker-like, no 1-2 and 1-3, %100 of 1-4, also known as AT\n"
-                       "              -t  atom type file, optional, the default is $AMBERHOME/dat/antechamber/ATCOR2.DAT\n"
+                       "              -t  atom type file, optional, the default is $AMBERCLASSICHOME/dat/antechamber/ATCOR2.DAT\n"
                        "              -p  parameter file, optional\n");
                 exit(1);
             }
@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
                    "                  D1: Thole linear,      no 1-2 and 1-3, %100 of 1-4, also known as AL\n"
                    "                  D2: Thole exponential, no 1-2 and 1-3, %100 of 1-4, also known as AE\n"
                    "                  D3: Thole tinker-like, no 1-2 and 1-3, %100 of 1-4, also known as AT\n"
-                   "              -t  atom type file, optional, the default is $AMBERHOME/dat/antechamber/ATCOR2.DAT\n"
+                   "              -t  atom type file, optional, the default is $AMBERCLASSICHOME/dat/antechamber/ATCOR2.DAT\n"
                    "              -p  parameter file, optional\n");
             exit(1);
         }
@@ -589,9 +589,9 @@ int main(int argc, char *argv[])
     }
 
     if (ireadparm == 0) {
-        amberhome = (char *) getenv("AMBERHOME");
+        amberhome = (char *) getenv("AMBERCLASSICHOME");
         if (amberhome == NULL) {
-            fprintf(stdout, "AMBERHOME is not set!\n");
+            fprintf(stdout, "AMBERCLASSICHOME is not set!\n");
             exit(1);
         }
         strcpy(pfilename, amberhome);
@@ -601,9 +601,9 @@ int main(int argc, char *argv[])
         rparm2();
 
     if (ireadat == 0) {
-        amberhome = (char *) getenv("AMBERHOME");
+        amberhome = (char *) getenv("AMBERCLASSICHOME");
         if (amberhome == NULL) {
-            fprintf(stdout, "AMBERHOME is not set!\n");
+            fprintf(stdout, "AMBERCLASSICHOME is not set!\n");
             exit(1);
         }
         strcpy(tfilename, amberhome);

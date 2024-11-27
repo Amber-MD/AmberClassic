@@ -9,5 +9,5 @@
 # ".DAT", etc., etc.
 
 ln mopac.in FOR005
-$AMBERHOME/bin/mopac > mopac.out
+$AMBERCLASSICHOME/bin/mopac > mopac.out
 rm -f FOR0??

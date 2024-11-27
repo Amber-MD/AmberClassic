@@ -5527,9 +5527,9 @@ int main(int argc, char *argv[])
 
 	default_cinfo(&cinfo);
 	default_minfo(&minfo);
-    amberhome = (char *) getenv("AMBERHOME");
+    amberhome = (char *) getenv("AMBERCLASSICHOME");
     if( amberhome == NULL ){
-       fprintf( stdout, "AMBERHOME is not set!\n" );
+       fprintf( stdout, "AMBERCLASSICHOME is not set!\n" );
        exit(1);
     }
     minfo.connect_file[0] = '\0';

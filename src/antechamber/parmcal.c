@@ -924,7 +924,7 @@ int main()
 {
     int cmdid = 1;
 
-    amberhome = egetenv("AMBERHOME");
+    amberhome = egetenv("AMBERCLASSICHOME");
     cmdid = 1;
     while (cmdid == 0 || cmdid == 1 || cmdid == 2) {
         blforce = 0.0;

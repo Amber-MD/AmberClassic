@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
     default_minfo(&minfo);
     int overflow_flag = 0;      /*if overflow_flag ==1, reallocate memory */
 
-    amberhome = egetenv("AMBERHOME");
+    amberhome = egetenv("AMBERCLASSICHOME");
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
         if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-H") == 0)) {
             printf("[31mUsage: translate -i [0m input file name (pdb, ac or mol2)\n"

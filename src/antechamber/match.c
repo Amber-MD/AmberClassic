@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
     char defstr[MAXCHAR];
     char atomname[MAXCHAR];
 
-    amberhome = egetenv("AMBERHOME");
+    amberhome = egetenv("AMBERCLASSICHOME");
 
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
         if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-H") == 0)) {

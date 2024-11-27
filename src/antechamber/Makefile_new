@@ -26,7 +26,7 @@ TOP2FFOBJS = top2ff.o eprintf.o
 TOP2MOL2OBJS = top2mol2.o eprintf.o
 
 # Dispatched programs are wrapper scripts of programs; these scripts
-# automatically set AMBERHOME; they live in $(BINDIR)/to_be_dispatched/
+# automatically set AMBERCLASSICHOME; they live in $(BINDIR)/to_be_dispatched/
 DISPATCHEDPROGS = \
 	$(BINDIR)/to_be_dispatched/am1bcc$(SFX) \
 	$(BINDIR)/to_be_dispatched/antechamber$(SFX) \

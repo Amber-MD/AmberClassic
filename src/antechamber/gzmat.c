@@ -224,7 +224,7 @@ void wgzmat(char *filename, int atomnum, ATOM atom[], MOLINFO minfo)
         esp_flag = 1;
     //      when the default gaussian keyword is used, or esp_flag ==1, read ESP.PARM
     if (minfo.igkeyword == 0 || esp_flag == 1) {
-        amberhome = egetenv("AMBERHOME");
+        amberhome = egetenv("AMBERCLASSICHOME");
         strcpy(espparm_file, amberhome);
         strcat(espparm_file, "/dat/antechamber/ESPPARM.DAT");
         fpin = efopen(espparm_file, "r");

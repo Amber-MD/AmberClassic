@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     double diff;
     double tmpfloat;
 
-    amberhome = egetenv("AMBERHOME");
+    amberhome = egetenv("AMBERCLASSICHOME");
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
         if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-H") == 0)) {
             printf("[31mUsage: crdgrow -i[0m input file name \n"
