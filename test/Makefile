@@ -15,7 +15,7 @@ test.general:
 	-(cd tip4p && ./Run.tip4p_mcbar)
 	-(cd middle-scheme/MD_Constr_Langevin_water && ./Run.LGV_LF)
 	-(cd middle-scheme/MD_Unconstr_Langevin_water && ./Run.LGV_LF)
-#	-(cd softcore && ./Run_sc)
+#	-(cd softcore && ./Run_sc)   # parallel only!
 	-(cd gb_rna && ./Run.gbrna)
 	-(cd gb_rna && ./Run.gbrna.xmin)
 	-(cd gb_rna && ./Run.gbrna.sgld)

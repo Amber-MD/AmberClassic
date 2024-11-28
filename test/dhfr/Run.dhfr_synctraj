@@ -27,6 +27,6 @@ $DO_PARALLEL $sander -O -i gbin -c md12.x -o $output -x md13.trj \
     < /dev/null || { echo "  $0:  Program error"; exit 1; }
 
 ../dacdif md13.trj.save md13.trj
-/bin/rm -f gbin restrt mdinfo
+/bin/rm -f gbin restrt mdinfo $output
 exit 0 
 

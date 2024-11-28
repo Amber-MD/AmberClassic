@@ -23,5 +23,5 @@ EOF
 $DO_PARALLEL $sander -O -i gbin -c md12_noshake.x -o mdout.shadow.4 \
     < /dev/null || { echo "  $0:  Program error"; exit 1; }
 
-/bin/rm -f gbin restrt
+/bin/rm -f gbin restrt mdinfo
 exit 0
