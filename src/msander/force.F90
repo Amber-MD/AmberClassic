@@ -87,6 +87,13 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
    use mpi
 #endif
 
+  use external_module, only : &
+      gb_external, &
+      pme_external, &
+      pme_external_from_neighborlist, &
+      pme_external_needs_neighborlist, &
+      pme_external_dummyiblo
+
   implicit none
   
   integer, intent(in) :: nstep
@@ -171,7 +178,10 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
   f3(1:3,1:natom) => f(1:3*natom)   ! for xray_get_derivative
 
   ect = 0.0
-
+  if (iextpot == 2) then
+      ! Disable bonded interactions, since Sander's forces will be overriden
+      ntf = 7
+  end if
 
   call timer_start(TIME_FORCE)
   ene(:) = ZERO 
@@ -224,12 +234,19 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 
   if (igb == 0 .and. ipb == 0 .and. iyammp == 0) then
 
-    ! For GB: do all nonbondeds together below
     call timer_start(TIME_NONBON)
     call timer_start(TIME_LIST)
-    call nonbond_list(x, ix(i04), ix(i06), ix(i08), ix(i10), ntypes, &
-                      natom, xx, ix, ipairs, ntnb, ix(ibellygp), &
-                      belly, newbalance, qsetup, do_list_update)
+    if (iextpot == 2 .and. pme_external_needs_neighborlist) then
+        ! NOTE: "pme_external_dummyiblo" is passed here instead of iblo to construct
+        ! a list between all pairs, instead of only between non-bonded pairs
+        call nonbond_list(x, ix(i04), ix(i06), pme_external_dummyiblo, ix(i10), ntypes, &
+                          natom/am_nbead, xx, ix, ipairs, ntnb, ix(ibellygp), &
+                          belly, newbalance, qsetup, do_list_update)
+    else
+        call nonbond_list(x, ix(i04), ix(i06), ix(i08), ix(i10), ntypes, &
+                          natom/am_nbead, xx, ix, ipairs, ntnb, ix(ibellygp), &
+                          belly, newbalance, qsetup, do_list_update)
+    endif
     call timer_stop(TIME_LIST)
     call timer_stop(TIME_NONBON)
   end if
@@ -303,49 +320,70 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 
     ! (for GB: do all nonbondeds together below)
     call timer_start(TIME_EWALD)
-    if (ilrt /= 0) then
+    if (iextpot == 2) then
+        ! Sander's energies are overriden by an external pot, zero all non-bond energies
+        ! VDW and VDW 1-4
+        evdw = 0.0d0
+        enb14 = 0.0d0
+        ! Electro and electro 1-4
+        eelt = 0.0d0
+        ee14 = 0.0d0
+        ! H-bond
+        ehb = 0.0d0
+        ! Epol, surface and charging
+        epol = 0.0d0
+        esurf = 0.0d0
+        dvdl = 0.0d0
+    else
 
-      ! Modifications for computing interaction energy
-      ! according to the Linear Response Theory, LIE module
-      if (do_lrt) then
+        if (ilrt /= 0) then
 
-        ! call with molecule charges set to zero
-        call ewald_force(x, natom, ix(i04), ix(i06), crg_m0, cn1, cn2, &
+          ! Modifications for computing interaction energy
+          ! according to the Linear Response Theory, LIE module
+          if (do_lrt) then
+
+            ! call with molecule charges set to zero
+            call ewald_force(x, natom, ix(i04), ix(i06), crg_m0, cn1, cn2, &
                          cn6, energy_m0, epolar, f_scratch, xx, ix, &
                          ipairs, virvsene, xx(lpol), &
                          xx(lpol2), .false. , cn3, cn4, cn5)
 
-        ! call with water charges set to zero
-        call ewald_force(x, natom, ix(i04), ix(i06), crg_w0, cn1, cn2, &
+            ! call with water charges set to zero
+            call ewald_force(x, natom, ix(i04), ix(i06), crg_w0, cn1, cn2, &
                          cn6, energy_w0, epolar, f_scratch, xx, ix, &
                          ipairs, virvsene, xx(lpol), &
                          xx(lpol2), .false. , cn3, cn4, cn5)
-        ! call with full charges but no vdw interaction
-        ! between solute and solvent
-        call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1_lrt, &
+            ! call with full charges but no vdw interaction
+            ! between solute and solvent
+            call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1_lrt, &
                          cn2_lrt, cn6, eelt, epolar, f_scratch, xx, ix, &
                          ipairs, virvsene, xx(lpol), &
                          xx(lpol2), .false. , cn3, cn4, cn5)
-        energy_vdw0 = evdw
-        call lrt_solute_sasa(x,natom, xx(l165))
-      end if
+            energy_vdw0 = evdw
+            call lrt_solute_sasa(x,natom, xx(l165))
+          end if
 
-      ! call normal_ewald force this will overwrite everything 
-      ! computed above except energy_m0 and energy_w0
-      call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1, cn2, &
+          ! call normal_ewald force this will overwrite everything 
+          ! computed above except energy_m0 and energy_w0
+          call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1, cn2, &
                        cn6, eelt, epolar, f, xx, ix, ipairs, &
                        virvsene, xx(lpol), &
                        xx(lpol2), .false. , cn3, cn4, cn5)
-      energy_vdw0 = evdw - energy_vdw0
+          energy_vdw0 = evdw - energy_vdw0
 
-      ! count call to ltr, maybe calculate Eee and print it
-      call ee_linear_response(eelt, master)
-    else ! just call ewald_force normally
-      call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1, cn2, &
+          ! count call to ltr, maybe calculate Eee and print it
+          call ee_linear_response(eelt, master)
+
+        else ! just call ewald_force normally
+
+          call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1, cn2, &
                        cn6, eelt, epolar, f, xx, ix, ipairs, &
                        virvsene, xx(lpol), &
                        xx(lpol2), .false. , cn3, cn4, cn5)
-    end if ! ilrt /= 0
+
+        end if ! ilrt /= 0
+
+    end if ! iextpot == 2
 
     call timer_stop(TIME_EWALD)
 #ifdef MPI
@@ -587,7 +625,22 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
   esurf = 0.d0
   if (igb /= 0 .and. igb /= 10 .and. ipb == 0) then
     call timer_start(TIME_EGB)
-    call egb(x, f, rborn, fs, reff, onereff, xx(l15), ix(i04), ix(i06), &
+    if (iextpot == 2) then
+        ! Sander's energies are overriden by an external pot, zero all non-bond energies
+        ! VDW and VDW 1-4
+        evdw = 0.0d0
+        enb14 = 0.0d0
+        ! Electrostatic and electrostatic 1-4
+        eelt = 0.0d0
+        ee14 = 0.0d0
+        ! H-bond
+        ehb = 0.0d0
+        ! Epol, surface and charging
+        epol = 0.0d0
+        esurf = 0.0d0
+        dvdl = 0.0d0
+    else
+       call egb(x, f, rborn, fs, reff, onereff, xx(l15), ix(i04), ix(i06), &
              ix(i08), ix(i10), xx(l190), cut, ntypes, natom, natbel, epol, &
              eelt, evdw, esurf, dvdl, xx(l165), ix(i82), xx(l170), xx(l175), &
              xx(l180), xx(l185), ncopy &
@@ -595,6 +648,8 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
              , xx(l2402),xx(l2403),xx(l2404) &
 #endif
              )
+    end if
+
     pot%vdw  = evdw
     pot%elec = eelt
     pot%gb   = epol
@@ -662,6 +717,22 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
   !      is the place to put any component of the force calculation that
   !      has not (yet) been parallelized.
 
+  ! External library code: could be cuda, mpi, serial, quantum AI,
+  ! cyborg biochip, we don't know.
+  ! Therefore need to call from a place in the code where forces
+  ! and coordinates are coherent, at least on the master.
+  if (iextpot .gt. 0) then
+      if (igb == 0) then
+         if (pme_external_needs_neighborlist) then
+            call pme_external_from_neighborlist(ipairs, x, f, eextpot)
+         else
+            call pme_external(x, f, eextpot)
+         endif
+      else
+         call gb_external(x, f, eextpot)
+      endif
+  endif
+
   ! Calculate the NMR restraint energy contributions, if requested.
   ! (Even though this is not parallelized, it needs to be run on all
   ! threads, since this code is needed for weight changes as well as
@@ -700,6 +771,13 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 #endif
   pot%constraint = pot%constraint + eshf + epcshf + pot%noe + &
        sum(enmr(1:6)) + ealign + ecsa + pot%emap + xray_energy + enfe
+
+  ! In this case the external potential is treated as a constraint.
+  ! If it catches on we can make a new separate record.
+  if (iextpot == 1) then
+    pot%constraint = pot%constraint + eextpot
+  end if
+
 #ifdef DSSP
   pot%constraint = pot%constraint + edssp
 #endif
@@ -708,6 +786,12 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
               pot%dihedral + pot%vdw_14 + pot%elec_14 + pot%hbond + &
               pot%constraint + pot%rism + pot%ct
   pot%tot = pot%tot + pot%polar + pot%surf + pot%scf + pot%disp
+
+  ! In this case the external potential overrides the force field, so all
+  ! the potential energy comes from eextpot
+  if (iextpot == 2) then
+    pot%tot = pot%tot + eextpot
+  end if
 
   !Charmm related
   pot%tot = pot%tot + pot%angle_ub + pot%imp + pot%cmap 
