@@ -14,4 +14,5 @@
 ../../dacdif -a 5.5e-3 me3nh_abcg2.mol2.save me3nh_abcg2.mol2
 ../../dacdif -a 5.5e-3 me3nh_abcg2.frcmod.save me3nh_abcg2.frcmod
 
-/bin/rm -f ANTE* ATOMTYPE.INF NEWPDB.PDB PREP.INF antechamber.out 
+/bin/rm -f ANTE* ATOMTYPE.INF NEWPDB.PDB PREP.INF antechamber.out \
+      leap.log leap_bcc.out leap_abcg2.out
