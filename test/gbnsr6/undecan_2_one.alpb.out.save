@@ -1,0 +1,93 @@
+
+          -------------------------------------------------------
+          GBNSR6 2015                       
+          -------------------------------------------------------
+
+| Run on 03/05/2015 at 18:04:31
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: mdin                                                                  
+| MDOUT: undecan_2_one.alpb.out                                                
+|INPCRD: undecan_2_one.inpcrd                                                  
+|  PARM: undecan_2_one.prmtop                                                  
+|
+
+ Here is the input file:
+
+ test, compute solvation energy with gbnsr6                                    
+ &cntrl                                                                        
+   inp=0                                                                       
+ /                                                                             
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+| New format PARM file being parsed.
+| Version =    1.000 Date = 03/27/08 Time = 09:10:04
+ NATOM  =      34 NTYPES =       4 NBONH =      22 MBONA  =      11
+ NTHETH =      52 MTHETA =      11 NPHIH =      80 MPHIA  =      22
+ NHPARM =       0 NPARM  =       0 NNB   =     182 NRES   =       1
+ NBONA  =      11 NTHETA =      11 NPHIA =      22 NUMBND =       4
+ NUMANG =       7 NPTRA  =      10 NATYP =       4 NPHB   =       0
+ IFBOX  =       0 NMXRS  =      34 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+GB Warning in  gb_read(): B=0 is recommended for molecules with more than 50 atoms
+
+|     Memory Use     Allocated
+|     Real                1296
+|     Hollerith            207
+|     Integer            19427
+|     Max Pairs              1
+|     Max Rstack             1
+|     Max Istack             1
+|       Total               86 kbytes
+
+| Note: 1-4 EEL scale factors were NOT found in the topology file.
+|       Using default value of 1.2.
+
+--------------------------------------------------------------------------------
+   2.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+*****                                                                           
+ begin time read from input coords =     0.000 ps
+
+ Number of triangulated 3-point waters found:        0
+
+--------------------------------------------------------------------------------
+   3.  RESULTS
+--------------------------------------------------------------------------------
+
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =       -20.5220  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =       -15.3212  VDWAALS    =         0.0000
+ EELEC  =         1.1772  EGB     =        -6.3781  RESTRAINT  =         0.0000
+ ESURF  =         0.0000
+ ------------------------------------------------------------------------------
+
+
+
+  Maximum number of minimization cycles reached.
+
+
+                    FINAL RESULTS
+
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =       -20.5220  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =       -15.3212  VDWAALS    =         0.0000
+ EELEC  =         1.1772  EGB     =        -6.3781  RESTRAINT  =         0.0000
+ ESURF  =         0.0000
+ ------------------------------------------------------------------------------
+
+|           Job began  at 18:04:31.214  on 03/05/2015
+|           Setup done at 18:04:31.227  on 03/05/2015
+|           Run   done at 18:04:31.246  on 03/05/2015
+|     wallclock() was called      58 times

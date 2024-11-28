@@ -1,0 +1,401 @@
+# GAP/TORDEF.LIB
+#
+# Garry Gippert, The Scripps Research Institute, 1995
+# garry@scripps.edu
+#
+# $Id: tordef.lib,v 10.0 2008/04/15 23:23:24 case Exp $
+# WHEN REPORTING ERRORS, PLEASE INCLUDE THE ENTIRE $Id LINE.
+#
+# This file contains Torsion Angle Definitions for standard
+# (20+) amino-acid and (4) deoxyribo-nucleic-acid residues in
+# approximately IUPAC atom nomenclature.
+#
+# NOTE: Atom nomenclature will vary according to philosophy,
+# taste, program anacronisms, etc., therefore this library
+# may not suit your needs.  Feel free to create your own copy
+# of this library with your own modifications, but PLEASE
+# contact the author with corrections, omissions.
+#
+# A "-" sign or "+" sign suffix to a familiar atom name tells
+# the TORVIO program to look in the residue preceeding or
+# following the current residue, respectively.
+#
+# Please do not confuse PDB format with IUPAC nomenclature.
+# Contrary to opinion, the "wrapped" proton index is NOT
+# "correct". PDB uses, for example, "1HG1" to represent one of
+# the HG protons attached to CG1 in a Valine. I'm sorry, pdb,
+# but the correct atom name is "HG11". The TORVIO program
+# reads either wrapped or unwrapped proton indices, and
+# compares the upwrapped name to the strings found here.
+#
+# NEW ADDITION!
+# lines beginning with PSEUDO followed by torsion name (residue
+# and torsion angle) and five torsion angle names will generate
+# pseudo-rotation phase angles. If the five angles are called
+# N0, N1, N2, N3, N4, then P is given by (From Saenger, p 20)
+# P = arctan[ ((N4+N1)-(N3+N0))/(2*N2(sin 36deg + sin 72deg)) ].
+#
+ALA	OMEGA	CA-  C-   N    CA
+ALA	PHI	C-   N    CA   C
+ALA	PSI	N    CA   C    N+
+ALA     CHI1    N    CA   CB   HB1
+ALA JHNA    H    N    CA   HA   9.5  -1.4  0.3
+#
+ARG	OMEGA	CA-  C-   N    CA
+ARG	PHI	C-   N    CA   C
+ARG	PSI	N    CA   C    N+
+ARG	CHI1	N    CA   CB   CG
+ARG	CHI2	CA   CB   CG   CD
+ARG	CHI3	CB   CG   CD   NE
+ARG	CHI4	CG   CD   NE   CZ
+ARG	CHI5	CD   NE   CZ   NH1
+ARG	CHI61	NE   CZ   NH1  HH11
+ARG	CHI62	NE   CZ   NH2  HH21
+ARG JHNA    H    N    CA   HA   9.5  -1.4  0.3
+ARG JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+ARG JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+ASN	OMEGA	CA-  C-   N    CA
+ASN	PHI	C-   N    CA   C
+ASN	PSI	N    CA   C    N+
+ASN	CHI1	N    CA   CB   CG
+ASN	CHI2	CA   CB   CG   OD1
+ASN	CIS	OD1  CG   ND2  HD21
+ASN JHNA    H    N    CA   HA   9.5  -1.4  0.3
+ASN JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+ASN JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+ASP	OMEGA	CA-  C-   N    CA
+ASP	PHI	C-   N    CA   C
+ASP	PSI	N    CA   C    N+
+ASP	CHI1	N    CA   CB   CG
+ASP	CHI2	CA   CB   CG   OD1
+ASP JHNA    H    N    CA   HA   9.5  -1.4  0.3
+ASP JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+ASP JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+CYS	OMEGA	CA-  C-   N    CA
+CYS	PHI	C-   N    CA   C
+CYS	PSI	N    CA   C    N+
+CYS	CHI1	N    CA   CB   SG
+CYS JHNA    H    N    CA   HA   9.5  -1.4  0.3
+CYS JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+CYS JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+GLN	OMEGA	CA-  C-   N    CA
+GLN	PHI	C-   N    CA   C
+GLN	PSI	N    CA   C    N+
+GLN	CHI1	N    CA   CB   CG
+GLN	CHI2	CA   CB   CG   CD
+GLN	CHI3	CB   CG   CD   OE1
+GLN	CIS	OE1  CD   NE2  HE21
+GLN JHNA    H    N    CA   HA   9.5  -1.4  0.3
+GLN JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+GLN JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+GLU	OMEGA	CA-  C-   N    CA
+GLU	PHI	C-   N    CA   C
+GLU	PSI	N    CA   C    N+
+GLU	CHI1	N    CA   CB   CG
+GLU	CHI2	CA   CB   CG   CD
+GLU	CHI3	CB   CG   CD   OE1
+GLU JHNA    H    N    CA   HA   9.5  -1.4  0.3
+GLU JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+GLU JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+GLY	OMEGA	CA-  C-   N    CA
+GLY	PHI	C-   N    CA   C
+GLY	PSI	N    CA   C    N+
+#
+HIS	OMEGA	CA-  C-   N    CA
+HIS	PHI	C-   N    CA   C
+HIS	PSI	N    CA   C    N+
+HIS	CHI1	N    CA   CB   CG
+HIS	CHI2	CA   CB   CG   ND1
+HIS JHNA    H    N    CA   HA   9.5  -1.4  0.3
+HIS JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+HIS JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+ILE	OMEGA	CA-  C-   N    CA
+ILE	PHI	C-   N    CA   C
+ILE	PSI	N    CA   C    N+
+ILE	CHI1	N    CA   CB   CG1
+ILE	CHI21	CA   CB   CG1  CD1
+ILE     CHI22   CA   CB   CG2  HG21
+ILE     CHI31   CB   CG1  CD1  HD11
+ILE JHNA    H    N    CA   HA   9.5  -1.4  0.3
+ILE JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+ILE JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+LEU	OMEGA	CA-  C-   N    CA
+LEU	PHI	C-   N    CA   C
+LEU	PSI	N    CA   C    N+
+LEU	CHI1	N    CA   CB   CG
+LEU	CHI2	CA   CB   CG   CD1
+LEU     CHI31   CB   CG   CD1  HD11
+LEU     CHI32   CB   CG   CD2  HD21
+LEU JHNA    H    N    CA   HA   9.5  -1.4  0.3
+LEU JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+LEU JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+LYS	OMEGA	CA-  C-   N    CA
+LYS	PHI	C-   N    CA   C
+LYS	PSI	N    CA   C    N+
+LYS	CHI1	N    CA   CB   CG
+LYS	CHI2	CA   CB   CG   CD
+LYS	CHI3	CB   CG   CD   CE
+LYS	CHI4	CG   CD   CE   NZ
+LYS	CHI5	CD   CE   NZ   HZ1
+LYS JHNA    H    N    CA   HA   9.5  -1.4  0.3
+LYS JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+LYS JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+MET	OMEGA	CA-  C-   N    CA
+MET	PHI	C-   N    CA   C
+MET	PSI	N    CA   C    N+
+MET	CHI1	N    CA   CB   CG
+MET	CHI2	CA   CB   CG   SD
+MET	CHI3	CB   CG   SD   CE
+MET CHI4    CG   SD   CE   HE1
+MET JHNA    H    N    CA   HA   9.5  -1.4  0.3
+MET JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+MET JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+PHE	OMEGA	CA-  C-   N    CA
+PHE	PHI	C-   N    CA   C
+PHE	PSI	N    CA   C    N+
+PHE	CHI1	N    CA   CB   CG
+PHE	CHI2	CA   CB   CG   CD1
+PHE JHNA    H    N    CA   HA   9.5  -1.4  0.3
+PHE JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+PHE JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+PRO	OMEGA	CA-  C-   N    CA
+PRO	PHI	C-   N    CA   C
+PRO	PSI	N    CA   C    N+
+PRO	CHI1	N    CA   CB   CG
+PRO	CHI2	CA   CB   CG   CD
+PRO	CHI3	CB   CG   CD   N
+PRO	CHI4	CG   CD   N    CA
+PRO	THETA	CD   N    CA   CB
+PRO 	CHI0	CD   N    CA   CB	#  aka
+PRO JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+PRO JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+PSEUDO	PRO	PPA	CHI0	CHI1	CHI2	CHI3	CHI4
+#
+# also known as CPRO
+CPR 	OMEGA	CA-  C-   N    CA
+CPR 	PHI	C-   N    CA   C
+CPR 	PSI	N    CA   C    N+
+CPR 	CHI1	N    CA   CB   CG
+CPR 	CHI2	CA   CB   CG   CD
+CPR 	CHI3	CB   CG   CD   N
+CPR 	CHI4	CG   CD   N    CA
+CPR 	THETA	CD   N    CA   CB
+CPR 	CHI0	CD   N    CA   CB	# aka
+PSEUDO	CPR	PPA	CHI0	CHI1	CHI2	CHI3	CHI4
+#
+SER	OMEGA	CA-  C-   N    CA
+SER	PHI	C-   N    CA   C
+SER	PSI	N    CA   C    N+
+SER	CHI1	N    CA   CB   OG
+SER	CHI2	CA   CB   OG   HG
+SER JHNA    H    N    CA   HA   9.5  -1.4  0.3
+SER JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+SER JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+THR	OMEGA	CA-  C-   N    CA
+THR	PHI	C-   N    CA   C
+THR	PSI	N    CA   C    N+
+THR	CHI1	N    CA   CB   OG1
+THR     CHI22   CA   CB   CG2  HG21
+THR JHNA    H    N    CA   HA   9.5  -1.4  0.3
+#
+TRP	OMEGA	CA-  C-   N    CA
+TRP	PHI	C-   N    CA   C
+TRP	PSI	N    CA   C    N+
+TRP	CHI1	N    CA   CB   CG
+TRP	CHI2	CA   CB   CG   CD1
+TRP JHNA    H    N    CA   HA   9.5  -1.4  0.3
+TRP JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+TRP JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+TYR	OMEGA	CA-  C-   N    CA
+TYR	PHI	C-   N    CA   C
+TYR	PSI	N    CA   C    N+
+TYR	CHI1	N    CA   CB   CG
+TYR	CHI2	CA   CB   CG   CD1
+TYR JHNA    H    N    CA   HA   9.5  -1.4  0.3
+TYR JAB2    HA   CA   CB   HB2  9.5  -1.6  1.8
+TYR JAB3    HA   CA   CB   HB3  9.5  -1.6  1.8
+#
+VAL	OMEGA	CA-  C-   N    CA
+VAL	PHI	C-   N    CA   C
+VAL	PSI	N    CA   C    N+
+VAL	CHI1	N    CA   CB   CG1
+VAL     CHI21   CA   CB   CG1  HG11
+VAL     CHI22   CA   CB   CG2  HG21
+VAL JHNA    H    N    CA   HA   9.5  -1.4  0.3
+#
+#
+# STANDARD NUCLEIC ACIDS
+#
+# ribonucleic acids
+#
+A	ALPHA	O3'-	P	O5'	C5'
+A	BETA	P	O5'	C5'	C4'
+A	GAMMA	O5'	C5'	C4'	C3'
+A	DELTA	C5'	C4'	C3'	O3'
+A	EPSLN	C4'	C3'	O3'	P+
+A	ZETA	C3'	O3'	P+	O5'+
+A	NU0	C4'	O4'	C1'	C2'
+A	NU1	O4'	C1'	C2'	C3'
+A	NU2	C1'	C2'	C3'	C4'
+A	NU3	C2'	C3'	C4'	O4'
+A	NU4	C3'	C4'	O4'	C1'
+A	CHI	O4'	C1'	N9	C4
+# alternative spelling
+A	EPSILON	C4'	C3'	O3'	P+
+A	EPSILN	C4'	C3'	O3'	P+
+A	EPSI	C4'	C3'	O3'	P+
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	A	PPA	NU0	NU1	NU2	NU3	NU4
+#
+U	ALPHA	O3'-	P	O5'	C5'
+U	BETA	P	O5'	C5'	C4'
+U	GAMMA	O5'	C5'	C4'	C3'
+U	DELTA	C5'	C4'	C3'	O3'
+U	EPSLN	C4'	C3'	O3'	P+
+U	ZETA	C3'	O3'	P+	O5'+
+U	NU0	C4'	O4'	C1'	C2'
+U	NU1	O4'	C1'	C2'	C3'
+U	NU2	C1'	C2'	C3'	C4'
+U	NU3	C2'	C3'	C4'	O4'
+U	NU4	C3'	C4'	O4'	C1'
+U	CHI	O4'	C1'	N1	C2
+# alternative spelling
+U	EPSILON	C4'	C3'	O3'	P+
+U	EPSILN	C4'	C3'	O3'	P+
+U	EPSI	C4'	C3'	O3'	P+
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	U	PPA	NU0	NU1	NU2	NU3	NU4
+#
+G	ALPHA	O3'-	P	O5'	C5'
+G	BETA	P	O5'	C5'	C4'
+G	GAMMA	O5'	C5'	C4'	C3'
+G	DELTA	C5'	C4'	C3'	O3'
+G	EPSLN	C4'	C3'	O3'	P+
+G	ZETA	C3'	O3'	P+	O5'+
+G	NU0	C4'	O4'	C1'	C2'
+G	NU1	O4'	C1'	C2'	C3'
+G	NU2	C1'	C2'	C3'	C4'
+G	NU3	C2'	C3'	C4'	O4'
+G	NU4	C3'	C4'	O4'	C1'
+G	CHI	O4'	C1'	N9	C4
+# alternative spelling
+G	EPSILON	C4'	C3'	O3'	P+
+G	EPSILN	C4'	C3'	O3'	P+
+G	EPSI	C4'	C3'	O3'	P+
+#
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	G	PPA	NU0	NU1	NU2	NU3	NU4
+#
+C	ALPHA	O3'-	P	O5'	C5'
+C	BETA	P	O5'	C5'	C4'
+C	GAMMA	O5'	C5'	C4'	C3'
+C	DELTA	C5'	C4'	C3'	O3'
+C	EPSLN	C4'	C3'	O3'	P+
+C	ZETA	C3'	O3'	P+	O5'+
+C	NU0	C4'	O4'	C1'	C2'
+C	NU1	O4'	C1'	C2'	C3'
+C	NU2	C1'	C2'	C3'	C4'
+C	NU3	C2'	C3'	C4'	O4'
+C	NU4	C3'	C4'	O4'	C1'
+C	CHI	O4'	C1'	N1	C2
+# alternative spelling
+C	EPSILON	C4'	C3'	O3'	P+
+C	EPSILN	C4'	C3'	O3'	P+
+C	EPSI	C4'	C3'	O3'	P+
+#
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	C	PPA	NU0	NU1	NU2	NU3	NU4
+
+# deoxy-ribonucleic acids
+#
+DA	ALPHA	O3'-	P	O5'	C5'
+DA	BETA	P	O5'	C5'	C4'
+DA	GAMMA	O5'	C5'	C4'	C3'
+DA	DELTA	C5'	C4'	C3'	O3'
+DA	EPSLN	C4'	C3'	O3'	P+
+DA	ZETA	C3'	O3'	P+	O5'+
+DA	NU0	C4'	O4'	C1'	C2'
+DA	NU1	O4'	C1'	C2'	C3'
+DA	NU2	C1'	C2'	C3'	C4'
+DA	NU3	C2'	C3'	C4'	O4'
+DA	NU4	C3'	C4'	O4'	C1'
+DA	CHI	O4'	C1'	N9	C4
+# alternative spelling
+DA	EPSILON	C4'	C3'	O3'	P+
+DA	EPSILN	C4'	C3'	O3'	P+
+DA	EPSI	C4'	C3'	O3'	P+
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	DA	PPA	NU0	NU1	NU2	NU3	NU4
+#
+DT	ALPHA	O3'-	P	O5'	C5'
+DT	BETA	P	O5'	C5'	C4'
+DT	GAMMA	O5'	C5'	C4'	C3'
+DT	DELTA	C5'	C4'	C3'	O3'
+DT	EPSLN	C4'	C3'	O3'	P+
+DT	ZETA	C3'	O3'	P+	O5'+
+DT	NU0	C4'	O4'	C1'	C2'
+DT	NU1	O4'	C1'	C2'	C3'
+DT	NU2	C1'	C2'	C3'	C4'
+DT	NU3	C2'	C3'	C4'	O4'
+DT	NU4	C3'	C4'	O4'	C1'
+DT	CHI	O4'	C1'	N1	C2
+# alternative spelling
+DT	EPSILON	C4'	C3'	O3'	P+
+DT	EPSILN	C4'	C3'	O3'	P+
+DT	EPSI	C4'	C3'	O3'	P+
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	DT	PPA	NU0	NU1	NU2	NU3	NU4
+#
+DG	ALPHA	O3'-	P	O5'	C5'
+DG	BETA	P	O5'	C5'	C4'
+DG	GAMMA	O5'	C5'	C4'	C3'
+DG	DELTA	C5'	C4'	C3'	O3'
+DG	EPSLN	C4'	C3'	O3'	P+
+DG	ZETA	C3'	O3'	P+	O5'+
+DG	NU0	C4'	O4'	C1'	C2'
+DG	NU1	O4'	C1'	C2'	C3'
+DG	NU2	C1'	C2'	C3'	C4'
+DG	NU3	C2'	C3'	C4'	O4'
+DG	NU4	C3'	C4'	O4'	C1'
+DG	CHI	O4'	C1'	N9	C4
+# alternative spelling
+DG	EPSILON	C4'	C3'	O3'	P+
+DG	EPSILN	C4'	C3'	O3'	P+
+DG	EPSI	C4'	C3'	O3'	P+
+#
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	DG	PPA	NU0	NU1	NU2	NU3	NU4
+#
+DC	ALPHA	O3'-	P	O5'	C5'
+DC	BETA	P	O5'	C5'	C4'
+DC	GAMMA	O5'	C5'	C4'	C3'
+DC	DELTA	C5'	C4'	C3'	O3'
+DC	EPSLN	C4'	C3'	O3'	P+
+DC	ZETA	C3'	O3'	P+	O5'+
+DC	NU0	C4'	O4'	C1'	C2'
+DC	NU1	O4'	C1'	C2'	C3'
+DC	NU2	C1'	C2'	C3'	C4'
+DC	NU3	C2'	C3'	C4'	O4'
+DC	NU4	C3'	C4'	O4'	C1'
+DC	CHI	O4'	C1'	N1	C2
+# alternative spelling
+DC	EPSILON	C4'	C3'	O3'	P+
+DC	EPSILN	C4'	C3'	O3'	P+
+DC	EPSI	C4'	C3'	O3'	P+
+#
+# PSEUDO-ROTATION PHASE defined in terms of the NU angles
+PSEUDO	DC	PPA	NU0	NU1	NU2	NU3	NU4

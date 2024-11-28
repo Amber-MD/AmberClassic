@@ -1,0 +1,47 @@
+#!/bin/sh
+
+sander="../../../bin/msander"
+export OMP_NUM_THREADS=20
+
+if [ ! -z "$DO_PARALLEL" ]; then
+   sander=$sander.MPI
+   export OMP_NUM_THREADS=1
+fi
+
+cat > mdin <<EOF
+ Relaxtion of solution 2igd using SINR (isokinetic ensemble)
+ &cntrl                                                                        
+  imin=0, ntx=5, irest=1, 
+  nstlim=24, dt=0.004,
+  ntc=2, ntf=2, tol=1.e-6, ioutfm=1,
+  ntpr=1, ntwx=0, ntwr=50,
+  tempi=298.15 temp0=298.15, ntp=0,
+  ntb=1, irism=1, cut=8.0, 
+  ig=314159, ntt=10, nrespa=4, nkija=4,
+  gamma_ln=2.0, sinrtau=1.0,
+ /
+&rism
+    periodic='pme',
+    closure='kh',
+    grdspc=0.5,0.5,0.5,
+    solvcut=8.d0,
+    verbose=1,
+    write_thermo=0,
+    npropagate=1, maxstep=1000,
+    mdiis_del=0.6, mdiis_nvec=10, tolerance=1e-7,
+    apply_rism_force=1,
+    rismnrespa=4, 
+ /
+EOF
+
+output=mdout.SINR
+cp sinrvels.rst.save sinrvels.rst
+
+$DO_PARALLEL $sander -O -i mdin -o $output \
+    -p 2igd.parm7 -c 2igd.rst7 -xvv ../xvv/spc.kh.xvv \
+    < /dev/null || { echo "  $0:  Program error"; exit 1; }
+
+../../dacdif -r 0.00001 $output.save $output
+/bin/rm -f mdin restrt mdinfo mdcrd *.rst
+exit 0 
+

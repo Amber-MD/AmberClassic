@@ -1,0 +1,263 @@
+#!/usr/bin/perl
+
+$dipfile = $ARGV[0];
+open (DIP, $dipfile) || die "Failed to open $dipfile\n" ;
+
+$pdbfile = $ARGV[1];
+open (PDB, $pdbfile) || die "Failed to open $pdbfile\n" ;
+
+open (DIPOUT, ">RST.dip");
+open (ANGOUT, ">RST.ang");
+
+$tot = 0;
+while (<DIP>)  {
+  next if /^#/;
+  ($res, $atom1, $atom2, $dip) = split;
+  seek PDB,0,0;
+  if (($atom1 eq "C1\'") || ($atom2 eq "C1\'"))  {
+    LOOK: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "C1\'")  {
+          $c = $atomnum;
+        }
+        elsif ($atomname eq "H1\'")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "C2\'")  {
+          $c2 = $atomnum;
+        }
+        elsif ($atomname eq "O4\'")  {
+          $o4 = $atomnum;
+        }
+        else  {
+          if (($resname eq "ADE") || ($resname eq "DA") ||
+              ($resname eq "A") || ($resname eq "DA3") || ($resname eq "DA5") ||
+              ($resname eq "GUA") || ($resname eq "DG") ||
+              ($resname eq "G") || ($resname eq "DG3") || ($resname eq "DG5"))  {
+            if ($atomname eq "N9")  {
+              $n = $atomnum;
+            }
+          }
+          if (($resname eq "CYT") || ($resname eq "DC") ||
+              ($resname eq "C") || ($resname eq "DC3") || ($resname eq "DC5") ||
+              ($resname eq "THY") || ($resname eq "DT") ||
+              ($resname eq "T") || ($resname eq "DT3") || ($resname eq "DT5"))  {
+            if ($atomname eq "N1")  {  
+              $n = $atomnum;
+            }
+          }
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $c, $tot, $h, $tot, $dip;
+    printf ANGOUT "# C angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120.,  /\n",
+                                                     $h, $c, $n;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120.,  /\n",
+                                                     $h, $c, $c2;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120.,  /\n",
+                                                     $h, $c, $o4;
+  }
+  elsif (($atom1 eq "C6") || ($atom2 eq "C6"))  {
+    LOOK1: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "N1")  {
+          $n = $atomnum;
+        }
+        elsif ($atomname eq "H6")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "C6")  {
+          $c = $atomnum;
+        }
+        elsif ($atomname eq "C5")  {
+          $c5 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $c, $tot, $h, $tot, $dip;
+    printf ANGOUT "# C angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=109., r2=119.1, r3=119.1, r4=129.,  /\n",
+                                                     $h, $c, $n;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=109., r2=119.1, r3=119.1, r4=129.,  /\n",
+                                                     $h, $c, $c5;
+  }
+  elsif (($atom1 eq "C8") || ($atom2 eq "C8"))  {
+    LOOK2: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "C8")  {
+          $c = $atomnum;
+        }
+        elsif ($atomname eq "H8")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "N9")  {
+          $n9 = $atomnum;
+        }
+        elsif ($atomname eq "N7")  {
+          $n7 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $c, $tot, $h, $tot, $dip;
+    printf ANGOUT "# C angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=113., r2=123.05, r3=123.05, r4=133.,  /\n",
+                                                     $h, $c, $n7;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=113., r2=123.05, r3=123.05, r4=133.,  /\n",
+                                                     $h, $c, $n9;
+  }
+  elsif (($atom1 eq "C2") || ($atom2 eq "C2"))  {
+    LOOK3: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "C2")  {
+          $c = $atomnum;
+        }
+        elsif ($atomname eq "H2")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "N1")  {
+          $n1 = $atomnum;
+        }
+        elsif ($atomname eq "N3")  {
+          $n3 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $c, $tot, $h, $tot, $dip;
+    printf ANGOUT "# C angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=105., r2=115.45, r3=115.45, r4=125.,  /\n",
+                                                     $h, $c, $n1;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=105., r2=115.45, r3=115.45, r4=125.,  /\n",
+                                                     $h, $c, $n3;
+  }
+  elsif (($atom1 eq "C4\'") || ($atom2 eq "C4\'"))  {
+    LOOK4: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "C4\'")  {
+          $c = $atomnum;
+        }
+        elsif ($atomname eq "H4\'")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "C5\'")  {
+          $c5 = $atomnum;
+        }
+        elsif ($atomname eq "O4\'")  {
+          $o4 = $atomnum;
+        }
+        elsif ($atomname eq "C3\'")  {
+          $c3 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $c, $tot, $h, $tot, $dip;
+    printf ANGOUT "# C angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.50, r3=109.50, r4=120.,  /\n",
+                                                     $h, $c, $c3;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.50, r3=109.50, r4=120.,  /\n",
+                                                     $h, $c, $c5;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.50, r3=109.50, r4=120.,  /\n",
+                                                     $h, $c, $o4;
+  }
+  elsif (($atom1 eq "N1") || ($atom2 eq "N1"))  {
+    LOOK5: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "N1")  {
+          $n = $atomnum;
+        }
+        elsif ($atomname eq "H1")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "C6")  {
+          $c6 = $atomnum;
+        }
+        elsif ($atomname eq "C2")  {
+          $c2 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $n, $tot, $h, $tot, $dip;
+    printf ANGOUT "# N angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=108., r2=118.00, r3=118.00, r4=128.,  /\n",
+                                                     $h, $n, $c2;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=107., r2=116.80, r3=116.80, r4=127.,  /\n",
+                                                     $h, $n, $c6;
+  }
+  elsif (($atom1 eq "N3") || ($atom2 eq "N3"))  {
+    LOOK6: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "N3")  {
+          $n = $atomnum;
+        }
+        elsif ($atomname eq "H3")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "C4")  {
+          $c4 = $atomnum;
+        }
+        elsif ($atomname eq "C2")  {
+          $c2 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $n, $tot, $h, $tot, $dip;
+    printf ANGOUT "# N angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=107., r2=116.80, r3=116.80, r4=127.,  /\n",
+                                                     $h, $n, $c2;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=107., r2=116.80, r3=116.80, r4=127.,  /\n",
+                                                     $h, $n, $c4;
+  }
+  elsif (($atom1 eq "N7") || ($atom2 eq "N7"))  {
+    LOOK7: while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if ($resnum == $res)  {
+        if ($atomname eq "N7")  {
+          $n = $atomnum;
+        }
+        elsif ($atomname eq "H8")  {
+          $h = $atomnum;
+        }
+        elsif ($atomname eq "N9")  {
+          $n9 = $atomnum;
+        }
+        elsif ($atomname eq "C8")  {
+          $c8 = $atomnum;
+        }
+      }
+    }
+    $tot++;
+    printf DIPOUT "   id(%d)=%d,   jd(%d)=%d,  dobs(%d)= %5.2f, \n",
+                  $tot, $n, $tot, $h, $tot, $dip;
+    printf ANGOUT "# N angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=113., r2=123.05, r3=123.05, r4=133.,  /\n",
+                                                     $n, $c8, $h;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=113., r2=123.05, r3=123.05, r4=133.,  /\n",
+                                                     $h, $c8, $n9;
+  }
+}
+close(DIP);
+close(PDB);
+
+close(DIPOUT);
+close(ANGOUT);

@@ -1,0 +1,64 @@
+#!/usr/bin/perl -n -i.bak
+#
+#   first, read in a pdb file line and unpack
+#
+$residuesperchain=622;
+
+if( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+if    ($resno <=    $residuesperchain ){ $chainId = "A"; }
+elsif ($resno <=  2*$residuesperchain ){ $chainId = "B"; }
+elsif ($resno <=  3*$residuesperchain ){ $chainId = "C"; }
+elsif ($resno <=  4*$residuesperchain ){ $chainId = "D"; }
+elsif ($resno <=  5*$residuesperchain ){ $chainId = "E"; }
+elsif ($resno <=  6*$residuesperchain ){ $chainId = "F"; }
+elsif ($resno <=  7*$residuesperchain ){ $chainId = "G"; }
+elsif ($resno <=  8*$residuesperchain ){ $chainId = "H"; }
+elsif ($resno <=  9*$residuesperchain ){ $chainId = "I"; }
+elsif ($resno <= 10*$residuesperchain ){ $chainId = "J"; }
+elsif ($resno <= 11*$residuesperchain ){ $chainId = "K"; }
+elsif ($resno <= 12*$residuesperchain ){ $chainId = "L"; }
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} elsif( $_ =~ /^ANISOU/){
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+    $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x a7 a7 a7 a7 a7 a7 x6 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s %7s%7s%7s%7s%7s%7s      %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge;
+
+} else {
+   print;
+}

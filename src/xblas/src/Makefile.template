@@ -1,0 +1,53 @@
+dnl
+define(`ROUTINE', 
+  `translit(routine(), `abcdefghijklmnopqrstuvwxyz', `ABCDEFGHIJKLMNOPQRSTUVWXYZ')')dnl
+dnl
+dnl
+define(`if_f2c', `ifdef(`no_f2c', `$2', `$1')')dnl
+dnl
+dnl
+include(../m4/cblas.m4)dnl
+include(../m4/routine()/routine()-common.m4)dnl
+`include' ../../make.conf
+`include' ../../$(MAKEINC)
+
+LIB_PATH = ../../$(OUTPUT_DIR)
+SRC_PATH = .
+HEADER_PATH = ..
+
+ROUTINE()_SRCS =FOREACH(`ROUTINE()_ARGS',
+	`\
+	$(SRC_PATH)/ROUTINE()_NAME(arg).c') if_f2c(`\
+	FOREACH(`ROUTINE()_ARGS',
+	`\
+	$(SRC_PATH)/ROUTINE()_NAME(arg)-f2c.c') ')
+
+ROUTINE()_AMB_SRCS =FOREACH(`ROUTINE()_AMB_ARGS',
+	`\
+	$(SRC_PATH)/ROUTINE()_NAME(arg).c') if_f2c(`\
+	FOREACH(`ROUTINE()_AMB_ARGS',
+	`\
+	$(SRC_PATH)/ROUTINE()_NAME(arg)-f2c.c') ')
+
+ROUTINE()_OBJS = $(ROUTINE()_SRCS:.c=.o)
+
+ROUTINE()_AMB_OBJS = $(ROUTINE()_AMB_SRCS:.c=.o)
+
+all: $(ROUTINE()_OBJS)
+
+all-amb: $(ROUTINE()_AMB_OBJS)
+
+lib: $(ROUTINE()_OBJS)
+	$(ARCH) $(ARCHFLAGS) $(LIB_PATH)/$(XBLASLIB) $(ROUTINE()_OBJS)
+	$(RANLIB) $(LIB_PATH)/$(XBLASLIB)
+
+lib-amb: $(ROUTINE()_AMB_OBJS)
+	$(ARCH) $(ARCHFLAGS) $(LIB_PATH)/$(XBLASLIB_AMB) $(ROUTINE()_AMB_OBJS)
+	$(RANLIB) $(LIB_PATH)/$(XBLASLIB_AMB)
+
+.c.o: 
+	$(CC) $(CFLAGS) -I$(HEADER_PATH) -c -o $@ $<
+
+clean:
+	rm -f *.o *~ *.BAK
+

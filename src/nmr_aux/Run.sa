@@ -1,0 +1,30 @@
+#!/bin/sh
+
+cat <<EOF > mdin
+ 15ps simulated annealing protocol, from p. 430 of Amber14 Reference Manual
+ &cntrl
+ nstlim=15000, ntt=1, ntpr=500, pencut=0.1, tempi=0.0,
+ ipnlty=1, nmropt=1, vlimit=10,
+ ntb=0, igb=8, cut=25., rgbmax=25.,
+ iscale=0, scalm=300., ntc=2,
+ /
+ &wt type='TEMP0', istep1=0,istep2=1000,value1=10., value2=500., /
+ &wt type='TEMP0', istep1=1001, istep2=3000, value1=500., value2=500.0, /
+ &wt type='TEMP0', istep1=3001, istep2=15000, value1=0., value2=0.0, /
+ &wt type='TAUTP', istep1=0,istep2=3000,value1=0.2, value2=0.2, /
+ &wt type='TAUTP', istep1=3001,istep2=11000,value1=4.0, value2=2.0, /
+ &wt type='TAUTP', istep1=11001,istep2=13000,value1=1.0, value2=1.0, /
+ &wt type='TAUTP', istep1=13001,istep2=14000,value1=0.5, value2=0.5, /
+ &wt type='TAUTP', istep1=14001,istep2=15000,value1=0.05, value2=0.05, /
+ &wt type='REST', istep1=0,istep2=3000,value1=0.1, value2=1.0, /
+ &wt type='REST', istep1=3001,istep2=15000,value1=1.0, value2=1.0, /
+ &wt type='END'  /                                                          
+LISTIN=POUT
+LISTOUT=POUT                                                                   
+DISANG=RST.all                                      
+END                                                                            
+EOF
+
+mpiexec -np 4 sander.MPI -O -i mdin -p 1pqx.parm7 -c 1pqx.$1.rst7 \
+   -o 1pqx.$1.sa1.o -r 1pqx.$1.sa1.x
+

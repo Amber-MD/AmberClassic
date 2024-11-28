@@ -1,0 +1,365 @@
+#!/usr/bin/perl
+#
+#   Prepare restraints to define "rigid groups".
+#
+#   Usage:  makeRIGID_RST < input
+#
+#   Here is a sample input file:
+#
+$sample_input = <<EOF;
+
+PDB mrf2_1.pdb                  # PDB file in AMBER format
+DOMAIN                          # Define first rigid domain
+#DOMAIN mrf2_1.pdb              # If want to use different PDBs for
+                                # different domains
+ RES  3 17                      # Group 1 of first domain contains
+                                #   residues 3 to 17
+                                # Only "RES" can be handled right now
+ RES  73 91                     # Group 2 of first domain contains
+                                #   residues 73 to 91
+END                             # End of definition for Domain 1
+DOMAIN                          # Define second rigid domain
+#DOMAIN mrf2_2.pdb              # If want to use different PDBs for
+                                # different domains
+ RES  34 64                     # Group 1 of second domain contains
+                                #   residues 34 to 64
+END                             # End of definition for Domain 2
+#ALLATOM                        # Uncomment if all-atom pairwise restraints
+                                # are desired.  Default is between CA atoms.
+#NOT_PROTEIN                    # Uncomment if not protein.  Then all-atom
+                                # pairwise restraints will be automatically
+                                # generated, and no backbone torsion restraints
+                                # will be generated
+#OUTPUT RST.test                # Uncomment to specify output file
+                                # Default output file is "RST.rigid"
+EOF
+
+$tolerance = 0.1;
+
+$num_domain = 0;
+$protein = 1;
+$allatom = 0;
+
+READARG: while (<ARGV>)  {
+  ($action, $value1, $value2) = split;
+  ($first, $rest) = split //,$action;
+  next READARG unless ($first ne "#");
+  if ($action =~ /pdb/i)  {
+    $pdb[1] = $value1;
+  }
+  elsif ($action =~ /domain/i)  {
+    $num_domain++;
+    $num_group[$num_domain]=0;
+    ($first, $rest) = split //,$value1;
+    if (($value1 ne "") && ($first ne "#"))  {
+      $pdb[$num_domain] = $value1;
+    }
+    TRYLABLE: $_=<ARGV>;
+    ($action, $value1, $value2) = split;
+    ($first, $rest) = split //,$action;
+    if ($first eq "#")  {
+      goto TRYLABLE;
+    }
+    if (!($action =~ /res/i))  {
+      print "Error in input: After DOMAIN, RES must be defined\n";
+      exit;
+    }
+    $stop = 0;
+    while ($stop == 0)  {
+      $num_group[$num_domain]++;
+      $res1[$num_domain][$num_group[$num_domain]] = $value1;
+      $res2[$num_domain][$num_group[$num_domain]] = $value2;
+      TRYLABEL2: $_=<ARGV>;
+      ($action, $value1, $value2) = split;
+      ($first, $rest) = split //,$action;
+      if ($first eq "#")  {
+        goto TRYLABEL2;
+      }
+      if ($action =~ /end/i)  {
+        $stop = 1;
+      }
+      elsif (!($action =~ /res/i))  {
+        print "Error in input: end of domain definition must be followed by END\n";
+        exit;
+      }
+    }
+  }
+  if ($action =~ /output/i)  {
+    $outfile = $value1;
+  }
+  elsif ($action =~ /allatom/i)  {
+    $allatom = 1;
+    print "WARNING: Using ALLATOM distance restraints,\n";
+    print "         May take a long time and create a large file\n";
+  }
+  elsif ($action =~ /not_protein/i)  {
+    $protein = 0;
+    print "NOT_PROTEIN option used: \n";
+    print "ALLATOM distance restraints will be output with no torsion restraints\n";
+    print "May take a long time and create a large file\n";
+  }
+  elsif ($action =~ /eof/i)  {
+    last READARG;
+  }
+}
+if ($pdb[1] eq "")  {
+  print "Error in input: No PDB has been input\n";
+  exit;
+}
+
+
+if ($outfile eq "")  {
+  $outfile = "RST.rigid";
+}
+open (OUTFILE, ">$outfile");
+
+print OUTFILE "# Number of domains: $num_domain\n";
+foreach $n (1 .. $num_domain)  {
+  if ($pdb[$n] eq "")  {
+    print OUTFILE "# PDB: $pdb[1]\n";
+  }
+  else  {
+    print OUTFILE "# PDB: $pdb[$n]\n";
+  }
+  $num_ca[$n] = 0;
+  foreach $j (1 .. $num_group[$n])  {
+    print OUTFILE "# Residues $res1[$n][$j] to $res2[$n][$j]\n";
+  }
+}
+
+if (($allatom == 0) && ($protein == 1))  {
+
+# Calculate distances between only CA pairs
+
+for ($i=1; $i<=$num_domain; $i++)  {
+  if ($pdb[$i] ne "")  {
+    open (PDB, $pdb[$i]);
+  }
+  else  {
+    open (PDB, $pdb[1]);
+  }
+  while (<PDB>)  {
+    ($a, $pdbatomnum, $pdbatom, $pdbres, $pdbresnum, $pdbx, $pdby, $pdbz) = split;
+    last if ($pdbresnum > $res2[$i][$num_group[$i]]);
+    next unless (($pdbresnum >= $res1[$i][1]) || ($pdbresnum <= $res2[$i][$num_group[$i]]));
+    for ($g=1; $g<=$num_group[$i]; $g++)  {
+      if (($a eq "ATOM") && ($pdbatom eq "CA") &&
+        ($pdbresnum >= $res1[$i][$g]) && ($pdbresnum <= $res2[$i][$g]))  {
+        $num_ca[$i]++;
+        $atomnum[$i][$num_ca[$i]] = $pdbatomnum;
+        $atom[$i][$num_ca[$i]] = $pdbatom;
+        $resnum[$i][$num_ca[$i]] = $pdbresnum;
+        $res[$i][$num_ca[$i]] = $pdbres;
+        $x[$i][$num_ca[$i]] = $pdbx;
+        $y[$i][$num_ca[$i]] = $pdby;
+        $z[$i][$num_ca[$i]] = $pdbz;
+#  For torsion angle calculations
+        $CA_atomnum[$i][$pdbresnum] = $pdbatomnum;
+        $CA_res[$i][$pdbresnum] = $pdbres;
+        $CA_x[$i][$pdbresnum] = $pdbx;
+        $CA_y[$i][$pdbresnum] = $pdby;
+        $CA_z[$i][$pdbresnum] = $pdbz;
+      }
+      elsif (($a eq "ATOM") && (($pdbatom eq "N") || ($pdbatom eq "NH")) &&
+          ($pdbresnum >= $res1[$i][$g]) && ($pdbresnum <= $res2[$i][$g]))  {
+        $N_atomnum[$i][$pdbresnum] = $pdbatomnum;
+        $N_res[$i][$pdbresnum] = $pdbres;
+        $N_x[$i][$pdbresnum] = $pdbx;
+        $N_y[$i][$pdbresnum] = $pdby;
+        $N_z[$i][$pdbresnum] = $pdbz;
+      }
+      elsif (($a eq "ATOM") && ($pdbatom eq "C") &&
+          ($pdbresnum >= $res1[$i][$g]) && ($pdbresnum <= $res2[$i][$g]))  {
+        $C_atomnum[$i][$pdbresnum] = $pdbatomnum;
+        $C_res[$i][$pdbresnum] = $pdbres;
+        $C_x[$i][$pdbresnum] = $pdbx;
+        $C_y[$i][$pdbresnum] = $pdby;
+        $C_z[$i][$pdbresnum] = $pdbz;
+      }
+    }
+  }
+  close (PDB);
+}
+
+}
+
+else  {
+
+# Calculate allatom distance pairs
+
+for ($i=1; $i<=$num_domain; $i++)  {
+  if ($pdb[$i] ne "")  {
+    open (PDB, $pdb[$i]);
+  }
+  else  {
+    open (PDB, $pdb[1]);
+  }
+  while (<PDB>)  {
+    ($a, $pdbatomnum, $pdbatom, $pdbres, $pdbresnum, $pdbx, $pdby, $pdbz) = split;
+    last if ($pdbresnum > $res2[$i][$num_group[$i]]);
+    next unless (($pdbresnum >= $res1[$i][1]) || ($pdbresnum <= $res2[$i][$num_group[$i]]));
+    for ($g=1; $g<=$num_group[$i]; $g++)  {
+      if (($a eq "ATOM") &&
+        ($pdbresnum >= $res1[$i][$g]) && ($pdbresnum <= $res2[$i][$g]))  {
+        $num_ca[$i]++;
+        $atomnum[$i][$num_ca[$i]] = $pdbatomnum;
+        $atom[$i][$num_ca[$i]] = $pdbatom;
+        $resnum[$i][$num_ca[$i]] = $pdbresnum;
+        $res[$i][$num_ca[$i]] = $pdbres;
+        $x[$i][$num_ca[$i]] = $pdbx;
+        $y[$i][$num_ca[$i]] = $pdby;
+        $z[$i][$num_ca[$i]] = $pdbz;
+        if (($pdbatom eq "CA") && ($protein == 1))  {
+#  For torsion angle calculations
+          $CA_atomnum[$i][$pdbresnum] = $pdbatomnum;
+          $CA_res[$i][$pdbresnum] = $pdbres;
+          $CA_x[$i][$pdbresnum] = $pdbx;
+          $CA_y[$i][$pdbresnum] = $pdby;
+          $CA_z[$i][$pdbresnum] = $pdbz;
+        }
+        elsif ((($pdbatom eq "N") || ($pdbatom eq "NH")) && ($protein == 1))  {
+          $N_atomnum[$i][$pdbresnum] = $pdbatomnum;
+          $N_res[$i][$pdbresnum] = $pdbres;
+          $N_x[$i][$pdbresnum] = $pdbx;
+          $N_y[$i][$pdbresnum] = $pdby;
+          $N_z[$i][$pdbresnum] = $pdbz;
+        }
+        elsif (($pdbatom eq "C") && ($protein == 1))  {
+          $C_atomnum[$i][$pdbresnum] = $pdbatomnum;
+          $C_res[$i][$pdbresnum] = $pdbres;
+          $C_x[$i][$pdbresnum] = $pdbx;
+          $C_y[$i][$pdbresnum] = $pdby;
+          $C_z[$i][$pdbresnum] = $pdbz;
+        }
+      }
+    }
+  }
+  close (PDB);
+}
+
+}
+
+foreach $n (1 .. $num_domain)  {
+  foreach $i (1 .. $num_ca[$n])  {
+    foreach $j ($i+1 .. $num_ca[$n])  {
+      $distance = dist($x[$n][$i],$y[$n][$i],$z[$n][$i],$x[$n][$j],$y[$n][$j],$z[$n][$j]);
+      $lower = $distance - $tolerance;
+      $upper = $distance + $tolerance;
+      printf OUTFILE "#\n# %3d  %4s  %4s  %3d  %4s  %4s  %6.2f  %6.2f\n",
+        $resnum[$n][$i], $res[$n][$i], $atom[$n][$i], $resnum[$n][$j], $res[$n][$j], $atom[$n][$j],
+        $lower, $upper;
+      printf OUTFILE " \&rst iat= %4d, %4d, r1=0\.3, r2=%6.2f, r3=%6.2f, r4 = %6.2f,\n",
+        $atomnum[$n][$i], $atomnum[$n][$j], $lower, $upper, $upper+0.5;
+      if (($n == 1) && ($i == 1) && ($j == 2))  {
+        printf OUTFILE "      rk2=20\.0, rk3=20\.0, ir6=1,\n";
+      }
+      printf OUTFILE " \&end\n";
+    }
+  }
+}
+
+if ($protein == 0)  {
+  close (OUTFILE);
+  exit;
+}
+
+# tor1: N(i)-CA(i)-C(i)-N(i+1)
+# tor2: CA(i)-C(i)-N(i+1)-CA(i+1)
+# tor3: C(i)-N(i+1)-CA(i+1)-C(i+1)
+# goes from res1 to res2-1
+
+for ($dom=1; $dom<=$num_domain; $dom++)  {
+  for ($i=1; $i<=$num_group[$dom]; $i++)  {
+    for ($n=$res1[$dom][$i]; $n<$res2[$dom][$i]; $n++)  {
+      $tor1 = dih($N_x[$dom][$n], $N_y[$dom][$n], $N_z[$dom][$n],
+                  $CA_x[$dom][$n], $CA_y[$dom][$n], $CA_z[$dom][$n],
+                  $C_x[$dom][$n], $C_y[$dom][$n], $C_z[$dom][$n],
+                  $N_x[$dom][$n+1], $N_y[$dom][$n+1], $N_z[$dom][$n+1]);
+      $tor2 = dih($CA_x[$dom][$n], $CA_y[$dom][$n], $CA_z[$dom][$n],
+                  $C_x[$dom][$n], $C_y[$dom][$n], $C_z[$dom][$n],
+                  $N_x[$dom][$n+1], $N_y[$dom][$n+1], $N_z[$dom][$n+1],
+                  $CA_x[$dom][$n+1], $CA_y[$dom][$n+1], $CA_z[$dom][$n+1]);
+      $tor3 = dih($C_x[$dom][$n], $C_y[$dom][$n], $C_z[$dom][$n],
+                  $N_x[$dom][$n+1], $N_y[$dom][$n+1], $N_z[$dom][$n+1],
+                  $CA_x[$dom][$n+1], $CA_y[$dom][$n+1], $CA_z[$dom][$n+1],
+                  $C_x[$dom][$n+1], $C_y[$dom][$n+1], $C_z[$dom][$n+1]);
+      printf OUTFILE "# %4d  %4s  N-CA-C-N  %6.2f\n", $n, $C_res[$dom][$n], $tor1;
+      printf OUTFILE " \&rst iat = %4d, %4d, %4d, %4d,\n",
+        $N_atomnum[$dom][$n], $CA_atomnum[$dom][$n], $C_atomnum[$dom][$n], $N_atomnum[$dom][$n+1];
+      printf OUTFILE "      r1=%7.2f, r2=%7.2f, r3=%7.2f, r4=%7.2f,\n",
+        $tor1-$tolerance-10, $tor1-$tolerance, 
+        $tor1+$tolerance, $tor1+$tolerance+10;
+      if ($n == $res1[1][1])  {
+        printf OUTFILE "      rk2=20\.0, rk3=20\.0,\n";
+      }
+      printf OUTFILE " \&end\n";
+      printf OUTFILE "# %4d  %4s  CA-C-N-CA  %6.2f\n", $n, $C_res[$dom][$n], $tor2;
+      printf OUTFILE " \&rst iat = %4d, %4d, %4d, %4d,\n",
+        $CA_atomnum[$dom][$n], $C_atomnum[$dom][$n], $N_atomnum[$dom][$n+1], $CA_atomnum[$dom][$n+1];
+      printf OUTFILE "      r1=%7.2f, r2=%7.2f, r3=%7.2f, r4=%7.2f,\n",
+        $tor2-$tolerance-10, $tor2-$tolerance, 
+        $tor2+$tolerance, $tor2+$tolerance+10;
+      printf OUTFILE " \&end\n";
+      printf OUTFILE "# %4d  %4s  C-N-CA-C  %6.2f\n", $n, $C_res[$dom][$n], $tor3;
+      printf OUTFILE " \&rst iat = %4d, %4d, %4d, %4d,\n",
+        $C_atomnum[$dom][$n], $N_atomnum[$dom][$n+1], $CA_atomnum[$dom][$n+1], $C_atomnum[$dom][$n+1];
+      printf OUTFILE "      r1=%7.2f, r2=%7.2f, r3=%7.2f, r4=%7.2f,\n",
+        $tor3-$tolerance-10, $tor3-$tolerance, 
+        $tor3+$tolerance, $tor3+$tolerance+10;
+      printf OUTFILE " \&end\n";
+    }
+  }
+}
+close (OUTFILE);
+
+sub dist  {
+  my($x1,$y1,$z1,$x2,$y2,$z2) = @_;
+  my($dist1);
+  $dist1 = sqrt(($x1-$x2)**2 + ($y1-$y2)**2 + ($z1-$z2)**2);
+  return $dist1;
+}
+
+sub dih  {
+  my($xi,$yi,$zi,$xj,$yj,$zj,$xk,$yk,$zk,$xl,$yl,$zl) = @_;
+  my($DX,$DX,$DZ,$GX,$GY,$GZ,$BI,$BK,$CT,$Z1,$Z2,$AP,$S,$dihedral);
+
+  $XIJ[1] = $xi - $xj;
+  $XIJ[2] = $yi - $yj;
+  $XIJ[3] = $zi - $zj;
+  $XKJ[1] = $xk - $xj;
+  $XKJ[2] = $yk - $yj;
+  $XKJ[3] = $zk - $zj;
+  $XKL[1] = $xk - $xl;
+  $XKL[2] = $yk - $yl;
+  $XKL[3] = $zk - $zl;
+
+  $DX = $XIJ[2]*$XKJ[3] - $XIJ[3]*$XKJ[2];
+  $DY = $XIJ[3]*$XKJ[1] - $XIJ[1]*$XKJ[3];
+  $DZ = $XIJ[1]*$XKJ[2] - $XIJ[2]*$XKJ[1];
+
+  $GX = $XKJ[3]*$XKL[2] - $XKJ[2]*$XKL[3];
+  $GY = $XKJ[1]*$XKL[3] - $XKJ[3]*$XKL[1];
+  $GZ = $XKJ[2]*$XKL[1] - $XKJ[1]*$XKL[2];
+
+  $BI = $DX*$DX + $DY*$DY + $DZ*$DZ;
+  $BK = $GX*$GX + $GY*$GY + $GZ*$GZ;
+  $CT = $DX*$GX + $DY*$GY + $DZ*$GZ;
+
+  $BI = sqrt($BI);
+  $BK = sqrt($BK);
+  $Z1 = 1.00/$BI;
+  $Z2 = 1.00/$BK;
+  $CT = $CT*$Z1*$Z2;
+
+  $AP = acos($CT);
+  $S = $XKJ[1]*($DZ*$GY-$DY*$GZ) + $XKJ[2]*($DX*$GZ-$DZ*$GX) +
+       $XKJ[3]*($DY*$GX-$DX*$GY);
+  if ($S < 0)  {
+    $AP = -$AP;
+  }
+  $AP = 3.141592653589793 - $AP;
+  $dihedral = $AP*180/3.141592653589793;
+  return $dihedral;
+}
+
+sub acos { atan2(sqrt(1-$_[0]*$_[0]), $_[0])};

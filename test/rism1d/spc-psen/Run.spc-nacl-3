@@ -1,0 +1,38 @@
+#!/bin/bash
+
+cat > spc-nacl-3.inp <<EOF
+&PARAMETERS
+outlist='uxghctensq', THEORY='DRISM', closure='PSEN', closure_order=3
+exchem_SC=1, exchem_SM=1
+!grid
+NR=5000, DR=0.025, rout=384, kout=20,
+!MDIIS
+mdiis_nvec=20, mdiis_del=0.3, tolerance=1.e-12,
+!iter
+ksave=0, progress=1, maxstep=10000,
+!ElStat
+SMEAR=1, ADBCOR=0.5,
+!bulk solvent properties
+temperature=310, DIEps=78.497,
+NSP=3
+/
+&SPECIES
+!DENSITY=55.5,
+!corresponds very closely to 0.0333 1/A3
+DENSITY=55.296d0,
+MODEL="../cSPCE.mdl"
+/
+&SPECIES
+DENSITY=.1d0,
+MODEL="../Na+.mdl"
+/
+&SPECIES
+DENSITY=.1d0,
+MODEL="../Cl-.mdl"
+/
+EOF
+
+../../../bin/rism1d spc-nacl-3 > spc-nacl-3.out || { echo "  $0:  Program error"; exit 1; }
+
+../check1d spc-nacl-3
+/bin/rm -f spc-nacl-3.inp spc-nacl-3.out spc-nacl-3.sav

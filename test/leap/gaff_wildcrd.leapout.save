@@ -1,0 +1,41 @@
+-I: Adding /tmp/amber/dat/leap/prep to search path.
+-I: Adding /tmp/amber/dat/leap/lib to search path.
+-I: Adding /tmp/amber/dat/leap/parm to search path.
+-I: Adding /tmp/amber/dat/leap/cmd to search path.
+-f: Source -.
+
+Welcome to LEaP!
+Sourcing leaprc: ./leaprc
+Sourcing: ./leaprc
+----- Source: /tmp/amber/dat/leap/cmd/leaprc.gaff
+----- Source of /tmp/amber/dat/leap/cmd/leaprc.gaff done
+Log file: ./leap.log
+Loading parameters: /tmp/amber/dat/leap/parm/gaff.dat
+Reading title:
+AMBER General Force Field for organic molecules (Version 1.81, May 2017)
+Loading library: ./gaff_wildcrd.off
+Loading PDB file: ./gaff_wildcrd.pdb
+  total atoms in file: 184
+Checking Unit.
+
+/tmp/amber/bin/teLeap: Warning!
+The unperturbed charge of the unit (-8.000004) is not zero.
+
+/tmp/amber/bin/teLeap: Note.
+Ignoring the warning from Unit Checking.
+
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 52 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+ (no restraints)
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 1; Notes = 1.

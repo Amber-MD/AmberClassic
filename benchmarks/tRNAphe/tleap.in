@@ -1,0 +1,8 @@
+source leaprc.RNA.OL3
+loadoff tRNAphe.off
+loadoff terminal_monophosphate.lib
+loadamberparams tRNAphe.frcmod
+rna1 = loadpdb 1ehz_RNA.pdb
+set rna1 box {80. 80. 80 }
+saveamberparm rna1 1ehz.parm7 1ehz.rst7
+quit

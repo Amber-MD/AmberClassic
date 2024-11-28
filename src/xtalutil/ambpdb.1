@@ -1,0 +1,83 @@
+.TH AMBPDB 1 "16 Jan 2001"
+.SH NAME
+ambpdb \- convert amber-format coordinate files to pdb format
+.SH SYNOPSIS
+.B ambpdb [options] < restrt > out.pdb
+.br
+Options are:
+.br
+[-p prmtop-file] [-tit title] [-pqr|-bnd|-atm] [-aatm] [-bres] [-ctr] [-noter]
+.SH DESCRIPTION
+\fIambpdb\fP is a filter to take a coordinate "restart" file from an AMBER
+dynamics or minimization run (on STDIN) and prepare a pdb-format file (on
+STDOUT).  The program
+assumes that a \fIprmtop\fR file is available, from which it gets atom
+and residue names. If the name of the \fIprmtop\fR file is not ``prmtop'', 
+the -p option can be used.
+.SH OPTIONS
+The title, if given, will be output as a REMARK at the top of the file.
+It should be protected by quotes or double quotes if it contains spaces or
+special characters.
+.PP
+If \fI-pqr\fR is set, output will be in the format needed for the MEAD suite
+of programs created by Don Bashford.  The \fI-atm\fR option creates files
+used by Mike Connolly's surface area/volume programs.  The \fI-bnd\fR option
+creates a file that lists the bonds in the molecule, one per line.
+.PP
+The \fI-aatm\fR and \fI-bres\fR switches control whether the output atom and
+residue names follow Amber ("a") or Brookhaven ("b") formats.
+Generally speaking,
+if you are planning to read the coordinates back into LEaP, you should use
+the default settings; for input to programs like Rasmol (and others) that
+expect stricter conformance to Brookhaven standards, setting -bres may help.
+.PP
+If \fI-aatm\fR (Amber-atom-names) is not set, the atom names will 
+be placed into four columns in an
+approximation to the rules used by the Protein Data Base.
+This gives files that look very much like PDB files, EXCEPT
+that PDB uses "1" and "2" for amino-acid beta-protons (for example)
+whereas the standard Amber database (along with many in
+the NMR field) use "2" and "3", i.e. we have 2HB and 3HB,
+whereas Brookhaven files use 1HB and 2HB.  The \fIprotonate\fR program can
+be used to check and re-name proton names to various conventions.
+.PP
+If \fI-aatm\fR is set, Amber atom names will be
+left-justified in the output file, starting in column 13.
+For programs in the Amber suite, there should be no reason to use this
+option, but some other codes may need it.
+.PP
+If \fI-bres\fR (Brookhaven-residue-names) is not set (the default),
+Amber-specific atom 
+names (like CYX, HIE, DG5, etc.) will be
+kept in the pdb file; otherwise, these will be converted to PDB-standard
+names (CYS, HIS, G, in the above example).
+Note that setting -bres creates
+a naming ambiguity between protonated and uprotonated forms of amino acids,
+and between DNA and RNA.
+.PP
+If \fI-noter\fR is set, the output PDB file not include TER cards between
+molecules.  Otherwise, TER cards will be added whenever there is not bond
+between adjacent residues.  Note that this means there will be a TER card
+between each water molecule, for example.  The PDB is idiosyncratic about
+TER cards: they are generally present between separate protein chains, but
+generally not present between cofactors or solvent molecules.  This behavior
+is not mimicked by \fIambpdb\fR.
+.pp
+If \fI-ctr\fR is set, the molecule's geometric center will moved to the
+origin; this is sometimes useful for Poisson-Boltzmann solvers
+.SH FILES
+Assumes that a \fIprmtop\fR file (with that name, or the one given in the
+\fI-p\fR option) exists in the current
+directory;  reads AMBER coordinates from STDIN, and writes pdb-file to
+STDOUT.
+.SH BUGS
+Inevitably, various niceties of the Brookhaven format are not as well 
+supported as they should be.  The \fIprotonate\fR program can be used to
+fix up hydrogen atom names, but that functionality should really be
+integrated here.  There is no good solution to the PDB problem of using the
+same residue name for different chemical species; depending on how the
+output file is to be used, the two options supported (setting or not setting
+\fI-bres\fR) may or may not suffice.  Radii used for the \fI-pqr\fR option are
+hard-wired into the code, requiring a re-compilation if they are to be
+changed.  If \fI-batm\fR is set, the output may be incorrect for
+atoms with two-character atomic symbols, like calcium or iron.

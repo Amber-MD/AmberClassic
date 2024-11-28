@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+$help=0;
+if (($#ARGV < 0) || ($ARGV[0] eq "-help"))  {
+  $help=1;
+}
+
+use Getopt::Long;
+&GetOptions ("type:s@", "file:s@", "pdb:s", "angle:s", "dip:s");
+$num_type = $#opt_type;
+$num_file = $#opt_file;
+if (($num_type != $num_file) || ($opt_pdb eq ""))  {
+  $help=1;
+}
+if ($help == 1)  {
+  print "Usage: makeDIP_RST -pdb PDB_file [-dip dipfile -angle anglefile] -type type1 -file dip_file1 -type type2 -file dip_file2 etc...\n\n";
+  print "PDB file must contain standard atom ordering\n\n";
+  print 'type: Can be "CH" or "NH"';
+  print "\n\nfile: Preliminary dipolar coupling file in 2-column free form: 1st column contains residue number, 2nd column contains dipolar coupling splitting.  Residue numbering must be in increasing order\n";
+  exit;
+}
+
+$pdb = $opt_pdb;
+if ($opt_angle eq "")  {
+  $anglefile = "RST.angle";
+}
+else  {
+  $anglefile = $opt_angle;
+}
+if ($opt_dip eq "")  {
+  $dipfile = "RST.dip";
+}
+else  {
+  $dipfile = $opt_dip;
+}
+
+open(ANG, ">$anglefile");
+open(DIP, ">$dipfile");
+
+$tot=0;
+print DIP " &align\n";
+foreach $f (0 .. $num_type)  {
+  $type[$f] = $opt_type[$f];
+  $file[$f] = $opt_file[$f];
+  open (FILE, $file[$f]) || die "Failed to open $file[$f]\n";
+  open (PDB, $pdb) || die "Failed to open $pdb\n";
+  $n=0;
+  while (<FILE>)  {
+    $n++;
+    ($res[$n], $dobs[$n]) = split;
+  }
+  close (FILE);
+  foreach $line (1 .. $n)  {
+    LOOK: while (<PDB>)  {
+      ($j1, $atom, $name, $j3, $resnum) = split;
+      if ($type[$f] eq "CH")  {
+        if (($name eq CA) && ($res[$line] == $resnum))  {
+          $tot++;
+          printf DIP "   id(%d)=%d,   jd(%d)=%d,  dobsl(%d)= %5.2f, dobsu(%d)= %5.2f\n", 
+            $tot, $atom, $tot, $atom+1, $tot, $dobs[$line], $tot, $dobs[$line];
+          printf ANG "# C angles for residue %d\n", $resnum;
+          if( $tot == 1 ){
+            printf ANG " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120., rk2=600., rk3=600., /\n", 
+                       $atom+1, $atom, $atom+2;
+          } else {
+            printf ANG " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120.,  /\n", 
+                       $atom+1, $atom, $atom+2;
+          }
+          printf ANG " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120.,  /\n", 
+                       $atom+1, $atom, $atom-2;
+          printf ANG " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=109.5, r3=109.5, r4=120.,  /\n", 
+                       $atom+1, $atom, $atom-4;
+          last LOOK;
+        }
+      }
+      elsif ($type[$f] eq "NH")  {
+        if (($name eq N) && ($res[$line] == $resnum))  {
+          $tot++;
+          printf DIP "   id(%d)=%d,   jd(%d)=%d,  dobsl(%d)= %5.2f, dobsu(%d)= %5.2f\n", 
+            $tot, $atom, $tot, $atom+1, $tot, $dobs[$line], $tot, $dobs[$line];
+          printf ANG "# N angles for residue %d\n", $resnum;
+          if ($tot == 1) {
+            printf ANG " &rst   iat= %d, %d, %d, 0,  \n r1=110., r2=120., r3=120., r4=130., rk2=600., rk3=600., /\n", 
+                      $atom+1, $atom, $atom-2;
+          } else {
+            printf ANG " &rst   iat= %d, %d, %d, 0,  \n r1=110., r2=120., r3=120., r4=130., /\n", 
+                      $atom+1, $atom, $atom-2;
+          }
+          printf ANG " &rst   iat= %d, %d, %d, 0,  \n r1=108., r2=118.04, r3=118.04, r4=128., /\n", 
+                      $atom+1, $atom, $atom+2;
+          last LOOK;
+        }
+      }
+    }
+  }
+  close (PDB);
+}
+print DIP " /\n";
+close(ANG);
+close(DIP);

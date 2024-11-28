@@ -1,0 +1,300 @@
+#!/bin/sh
+#
+#  This script reads in a pdb file, and generates constraints
+#    for the nmr module that force the proper chirality on 
+#    tetrahedral carbons.  The pdb file must have the proper
+#    AMBER atom order, e.g. have been written by the edit or anal
+#    programs.
+#
+#  It also generates "trans" constraints for all peptide bonds.
+#  NOTE!!!  You must edit the output of this program manually to
+#     change "trans" peptide constraints to "cis" peptide constraints
+#     if needed!
+#
+#  Usage:  makeCHIR_RST pdb-file les-file output-constraint-file
+#
+cat <<eof > chiral_defs
+#
+# chiral definitions for PDB proton nonemclature
+# the triple product for these tetrads should always be positive
+#
+ALA N C HA CB
+#
+ARG CA CG HB2 HB3
+ARG CB CD HG2 HG3
+ARG CG NE HD2 HD3
+ARG N C HA CB
+#
+ASN CA CG HB2 HB3
+ASN N C HA CB
+#
+ASP CA CG HB2 HB3
+ASP N C HA CB
+#
+CYS CA SG HB2 HB3
+CYS N C HA CB
+#
+CYX CA SG HB2 HB3
+CYX N C HA CB
+#
+GLN CA CG HB2 HB3
+GLN CB CD HG2 HG3
+GLN N C HA CB
+#
+GLU CA CG HB2 HB3
+GLU CB CD HG2 HG3
+GLU N C HA CB
+#
+GLY N C HA2 HA3
+#
+HIP  CA CG HB2 HB3
+HIP  N C HA CB
+#
+HID  CA CG HB2 HB3
+HID  N C HA CB
+#
+HIE  CA CG HB2 HB3
+HIE  N C HA CB
+#
+ILE CA CG2 CG1 HB
+ILE CB CD1 HG12 HG13
+ILE N C HA CB
+#
+LEU CA CG HB2 HB3
+LEU CB CD1 CD2 HG
+LEU N C HA CB
+#
+LYS CA CG HB2 HB3
+LYS CB CD HG2 HG3
+LYS CD NZ HE2 HE3
+LYS CG CE HD2 HD3
+LYS N C HA CB
+#
+MET CA CG HB2 HB3
+MET CB SD HG2 HG3
+MET N C HA CB
+#
+PHE CA CG HB2 HB3
+PHE N C HA CB
+#
+PRO CA CG HB2 HB3
+PRO CB CD HG2 HG3
+PRO CG N  HD2 HD3
+PRO N C HA CB
+#
+SER CA OG HB2 HB3
+SER N C HA CB
+#
+THR CA CG2 OG1 HB
+THR N C HA CB
+#
+TRP CA CG HB2 HB3
+TRP N C HA CB
+#
+TYR CA CG HB2 HB3
+TYR N C HA CB
+#
+VAL CA CG1 CG2 HB
+VAL N C HA CB
+#
+DC  C2' O4' N1 H1'
+DC  C3' C1' H2'1 H2'2
+DC  O3' C2' C4' H3'
+DC  C3' C5' O4' H4'
+DC  C4' O5' H5'1 H5'2
+#
+DC5  C2' O4' N1 H1'
+DC5  C3' C1' H2'1 H2'2
+DC5  O3' C2' C4' H3'
+DC5  C3' C5' O4' H4'
+DC5  C4' O5' H5'1 H5'2
+#
+DC3  C2' O4' N1 H1'
+DC3  C3' C1' H2'1 H2'2
+DC3  O3' C2' C4' H3'
+DC3  C3' C5' O4' H4'
+DC3  C4' O5' H5'1 H5'2
+#
+DT  C2' O4' N1 H1'
+DT  C3' C1' H2'1 H2'2
+DT  O3' C2' C4' H3'
+DT  C3' C5' O4' H4'
+DT  C4' O5' H5'1 H5'2
+#
+DT5  C2' O4' N1 H1'
+DT5  C3' C1' H2'1 H2'2
+DT5  O3' C2' C4' H3'
+DT5  C3' C5' O4' H4'
+DT5  C4' O5' H5'1 H5'2
+#
+DT3  C2' O4' N1 H1'
+DT3  C3' C1' H2'1 H2'2
+DT3  O3' C2' C4' H3'
+DT3  C3' C5' O4' H4'
+DT3  C4' O5' H5'1 H5'2
+#
+DG  C2' O4' N9 H1'
+DG  C3' C1' H2'1 H2'2
+DG  O3' C2' C4' H3'
+DG  C3' C5' O4' H4'
+DG  C4' O5' H5'1 H5'2
+#
+DG3  C2' O4' N9 H1'
+DG3  C3' C1' H2'1 H2'2
+DG3  O3' C2' C4' H3'
+DG3  C3' C5' O4' H4'
+DG3  C4' O5' H5'1 H5'2
+#
+DG5  C2' O4' N9 H1'
+DG5  C3' C1' H2'1 H2'2
+DG5  O3' C2' C4' H3'
+DG5  C3' C5' O4' H4'
+DG5  C4' O5' H5'1 H5'2
+#
+DA  C2' O4' N9 H1'
+DA  C3' C1' H2'1 H2'2
+DA  O3' C2' C4' H3'
+DA  C3' C5' O4' H4'
+DA  C4' O5' H5'1 H5'2
+#
+DA3  C2' O4' N9 H1'
+DA3  C3' C1' H2'1 H2'2
+DA3  O3' C2' C4' H3'
+DA3  C3' C5' O4' H4'
+DA3  C4' O5' H5'1 H5'2
+#
+DA5  C2' O4' N9 H1'
+DA5  C3' C1' H2'1 H2'2
+DA5  O3' C2' C4' H3'
+DA5  C3' C5' O4' H4'
+DA5  C4' O5' H5'1 H5'2
+eof
+nawk '
+BEGIN {
+	while ( getline < "chiral_defs" > 0 ) {
+		if (substr($1,1,1) != "#") {
+			icons++
+			rescons[icons] = $1
+			atcons1[icons] = $2
+			atcons2[icons] = $3
+			atcons3[icons] = $4
+			atcons4[icons] = $5
+		}
+	}
+	ncons = icons
+
+	getline < "'$2'"; iat=0;
+	while ( getline < "'$2'" > 0 ){
+		iat++; invcnt[iat] = $1;
+		for( j=2; j<=NF; j++ ){
+			jp = j-1; idx = iat "," jp
+			invcop[idx] = $j
+#			print idx,":",invcop[idx]
+		}
+	}
+}
+$1=="ATOM" {
+	ind = $3 "," $5
+	atno[ind] = $2; restype[$5] = $4
+	lastres = $5
+}
+END { OFS = ""
+		
+	for (ires=1; ires<=lastres; ires++ ) {
+		for (icons=1; icons<=ncons; icons++) {
+			if (rescons[icons]==restype[ires]) {
+				ind1 = atcons1[icons] "," ires	
+				ind2 = atcons2[icons] "," ires	
+				ind3 = atcons3[icons] "," ires	
+				ind4 = atcons4[icons] "," ires	
+				if (ind1 in atno && ind2 in atno && ind3 in atno \
+					&& ind4 in atno ) {
+					print "#"
+					print "#  chirality for residue ",ires, " atoms:  ", \
+						atcons1[icons]," ",atcons2[icons]," ",atcons3[icons], \
+						" ",atcons4[icons]
+					icount++
+					maxcnt = invcnt[atno[ind1]];
+					if( invcnt[atno[ind2]] > maxcnt ) maxcnt=invcnt[atno[ind2]]
+					if( invcnt[atno[ind3]] > maxcnt ) maxcnt=invcnt[atno[ind3]]
+					if( invcnt[atno[ind4]] > maxcnt ) maxcnt=invcnt[atno[ind4]]
+
+					for( jcnt=1; jcnt<=maxcnt; jcnt++ ){
+						if( invcnt[atno[ind1]] == 1 ) idx = atno[ind1] ",1";
+							else idx = atno[ind1] "," jcnt;
+#						print "atom 1:", idx
+						iat1 = invcop[idx]
+						if( invcnt[atno[ind2]] == 1 ) idx = atno[ind2] ",1";
+							else idx = atno[ind2] "," jcnt;
+#						print "atom 2:", idx
+						iat2 = invcop[idx]
+						if( invcnt[atno[ind3]] == 1 ) idx = atno[ind3] ",1";
+							else idx = atno[ind3] "," jcnt;
+#						print "atom 3:", idx
+						iat3 = invcop[idx]
+						if( invcnt[atno[ind4]] == 1 ) idx = atno[ind4] ",1";
+							else idx = atno[ind4] "," jcnt;
+#						print "atom 4:", idx
+						iat4 = invcop[idx]
+						if (icount==1) {
+							print " &rst iat=",iat1,",",iat2,",", \
+							iat3,",",iat4,", "
+							print "   r1=10., r2=60., r3=80., r4=130.,"\
+							" rk2 = 10., rk3=10.,  &end"
+						} else {
+							print " &rst iat=",iat1,",",iat2,",", \
+							iat3,",",iat4,", &end"
+						}
+					}
+
+				} else {
+					print "bad constraint for residue ",ires, " atoms:  ", \
+						atcons1[icons]," ",atcons2[icons]," ",atcons3[icons], \
+						" ",atcons4[icons] 
+				}
+			}
+		}
+	}
+	icount = 0
+	for (ires=2; ires<=lastres; ires++ ) {
+		inda = "CA," ires
+		indn = "N," ires; indc = "C," ires
+		iresm1 = ires-1
+		indcm = "C," iresm1; indam = "CA," iresm1
+		if (inda in atno && indn in atno && indcm in atno && indam in atno) {
+			icount++
+			maxcnt = invcnt[atno[inda]];
+			if( invcnt[atno[indn]] > maxcnt ) maxcnt=invcnt[atno[indn]]
+			if( invcnt[atno[indcm]] > maxcnt ) maxcnt=invcnt[atno[indcm]]
+			if( invcnt[atno[indam]] > maxcnt ) maxcnt=invcnt[atno[indam]]
+
+			print "#"
+			print "#  trans-omega constraint for residue ",ires
+
+			for( jcnt=1; jcnt<=maxcnt; jcnt++ ){
+				if( invcnt[atno[inda]] == 1 ) idx = atno[inda] ",1";
+					else idx = atno[inda] "," jcnt;
+				iat1 = invcop[idx]
+				if( invcnt[atno[indn]] == 1 ) idx = atno[indn] ",1";
+					else idx = atno[indn] "," jcnt;
+				iat2 = invcop[idx]
+				if( invcnt[atno[indcm]] == 1 ) idx = atno[indcm] ",1";
+					else idx = atno[indcm] "," jcnt;
+				iat3 = invcop[idx]
+				if( invcnt[atno[indam]] == 1 ) idx = atno[indam] ",1";
+					else idx = atno[indam] "," jcnt;
+				iat4 = invcop[idx]
+				if (icount==1) {
+					print " &rst iat=",iat1,",",iat2,",", \
+						iat3,",",iat4,", "
+					print "   r1=150., r2=170., r3=190., r4=210.,"\
+						" rk2 = 50., rk3=50.,  &end"
+				} else {
+					print " &rst iat=",iat1,",",iat2,",", \
+						iat3,",",iat4,", &end"
+				}
+			}
+		}
+	}
+}'  $1 > $3
+/bin/rm chiral_defs

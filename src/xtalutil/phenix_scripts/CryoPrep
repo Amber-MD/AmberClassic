@@ -1,0 +1,121 @@
+#!/bin/bash
+
+#  prepare Amber and structure factor files needed for CryoEM
+#  refinements using the phenix_amber or msander programs.
+#
+#    phenix_amber is an option inside phenix.refine to use a force field
+#       description instead of Engh-Huber-type distance and angle restraints
+#       to constrain the geometry.
+#
+#    msander does much the same thing, but uses Amber MD code (including
+#       GPU acceleration) to carry out much of the refinement.  This 
+#       program is available at https://github.com/dacase/msander.git.
+#
+#  First input is the pdb-identifier: code assumes that $1.pdb is present
+#  Second argument is the electron density map
+#  Third argument is resolution to be used in converting the map to
+#     structure factors
+
+id=$1
+emdmap=$2
+resolution_high=$3
+resolution_low=$4
+
+if true; then
+echo "CryoPrep log file for id $id" > $id-prep.log
+
+#============================================================================
+echo "Making input mtz file"
+
+phenix.map_box $id.pdb $emdmap keep_map_size=True resolution=$resolution_high \
+     keep_origin=False >> $id-prep.log
+
+# trucate really low resolution coefficients
+sftools <<EOF  >sftools.log || { echo "  sftools:  Program error"; exit 1; }
+read ${id}_box.mtz
+select resolu < $resolution_low
+purge
+y
+write ${id}_box2.mtz
+quit
+EOF
+
+/bin/mv ${id}_box2.mtz ${id}_box.mtz
+
+
+#============================================================================
+echo "Making the -sf.dat file"
+
+#  convert to formatted file:
+phenix.mtz.dump -c -f s ${id}_box.mtz  | tr ',' '\t' > ${id}_box.fmtz \
+     || { echo "  phenix.mtz.dump:  Program error"; exit 1; }
+
+#  make the -sf.dat file needed by xray3:
+awk '{printf("%d\t%d\t%d\t%s\t%s\t1\n", \
+      $1,$2,$3,$4,$5)}'  ${id}_box.fmtz | tail +2 > tmp.dat \
+     || { echo "  awk:  Program error"; exit 1; }
+
+nrefl=`wc -l tmp.dat | awk '{print $1}'`
+echo "$nrefl 0" > $id-sf.dat
+cat tmp.dat >> $id-sf.dat
+
+/bin/rm tmp.* ${id}_box.fmtz
+fi
+
+#============================================================================
+
+if true; then
+
+echo "Running phenix.AmberPrep" 
+phenix.AmberPrep ${id}_box.pdb >> $id-prep.log \
+     || { echo "  phenix.AmberPrep:  Program error"; exit 1; }
+
+/bin/mv ${id}_box_uc.pdb ${id}_box.pdb
+
+#============================================================================
+echo "creating ${id}_box.parm7"
+# create an interactive parmed script (when run from phenix.python, will
+#       have the correct PYTHONPATH)
+cat <<EOF > parmed
+import os
+import sys
+from parmed.scripts import clapp
+clapp()
+EOF
+
+/bin/rm -f ${id}_box.parm7 foo1.parm7 foo.parm7
+
+phenix.python ./parmed -n <<EOF >> $id-prep.log \
+     || { echo "  parmed:   Program error"; exit 1; }
+parm 4amber_${id}_box.prmtop
+lmod
+HMassRepartition
+addPDB ${id}_box.pdb elem 
+parmout foo.parm7
+go
+EOF
+
+$MSANDERHOME/bin/add_xray -i foo.parm7 -o ${id}_box.parm7 \
+     -electronsf >> $id-prep.log \
+     || { echo "  add_xray: Program error"; exit 1; }
+
+/bin/mv 4amber_${id}_box.rst7 ${id}_box.rst7
+
+# check: following not needed if phenix.AmberPrep is used above
+# ambpdb -p ${id}_box.parm7 -ext < ${id}_box.rst7 > ${id}_box.pdb
+
+#============================================================================
+echo "Done. Created 5 files:"
+echo "   ${id}_box.parm7       Use this as the Amber prmtop file"
+echo "   ${id}_box.rst7        Starting coordinates in Amber restrt format"
+echo "   ${id}_box.pdb         Use as pdb_infile"
+echo "   ${id}-sf.dat          Use as reflections_infile"
+echo "   ${id}-prep.log        Log file: examine this if problems arise"
+
+#============================================================================
+
+# clean up
+/bin/rm -f tmp* parmed foo*.parm7 4amber_${id}_box.prmtop \
+    tleap_uc.in 4amber_${id}_box.order 4phenix_${id}_box.pdb 
+
+fi

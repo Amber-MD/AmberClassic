@@ -1,0 +1,371 @@
+#!/bin/sh
+
+##########################################################################
+#
+# (1) edit the "upl_to_upb" and "lol_to_ual" scripts below for any system-
+#     specific tweaks needed for the cyana to Amber conversion.  This step 
+#     might be needed if, for example, the cyana residue numbering is 
+#     different from that used by Amber.
+#
+#     (Examples of such system-specific tweaks are given between the
+#     "#==================" lines below.)
+#
+# (2) run the edited script; output will be "RST.all", which can be used as a
+#     DISANG input in sander.  N.B.: any existing "RST.all" file will be
+#     removed!
+#
+##########################################################################
+
+#------------------------------------------------------------------------------
+#  Set up defaults:
+
+UPL_FILES=''
+LOL_FILES=''
+ACO_FILES=''
+RDC_FILES=''
+AMBER_PDB_FILE=''
+OLD_ATNAMES=0
+
+#------------------------------------------------------------------------------
+#  Checking Arguments:
+#------------------------------------------------------------------------------
+# if [ $# -lt 1 ]; then usage; fi
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -upl)           shift; UPL_FILES="$1";;
+        -lol)           shift; LOL_FILES="$1";;
+        -aco)           shift; ACO_FILES="$1";;
+        -rdc)           shift; RDC_FILES="$1";;
+        -pdb)           shift; AMBER_PDB_FILE="$1";;
+        -old)           OLD_ATNAMES=1;;
+
+        *) echo "Error: unknown flag: $1"
+            exit 1;;
+    esac
+    shift
+done
+
+#------------------------------------------------------------------------------
+#  Make the upl_to_upb conversion script
+#------------------------------------------------------------------------------
+cat <<EOF > upl_to_upb
+#!/usr/bin/perl -w
+
+#  Convert a cyana .upl file to an Amber .upb file (for input to makeDIST_RST)
+
+\$rest = "";  # to avoid perl warning
+\$ambig = 0;
+\$restno = 1;
+
+open( MAPS, ">", "maps.dat") || die "can't open maps.dat\\n";
+
+while(<>){
+
+	if( \$_ =~ /^#/ ){  print \$_; next; }
+	if( \$_ =~ /^ *\$/ ){ print \$_; next; }
+
+	( \$resno1, \$resname1, \$atname1, \$resno2, \$resname2, \$atname2, 
+		\$ub, \$rest ) = split(' ',\$_, 8);
+
+	#  convert Cyana atom names to Amber/PDB names:
+	\$atname1 = "HO2'" if \$atname1 eq "HO2";
+	\$atname1 = "H5''" if \$atname1 eq "H5\"";
+	\$atname2 = "HO2'" if \$atname2 eq "HO2";
+	\$atname2 = "H5''" if \$atname2 eq "H5\"";
+
+	#convert Cyana residue names to Amber/PDB names:
+	\$resname1 = "  G" if \$resname1 eq "RGUA";
+	\$resname1 = "  C" if \$resname1 eq "RCYT";
+	\$resname1 = "  A" if \$resname1 eq "RADE";
+	\$resname1 = "  U" if \$resname1 eq "URA";
+	\$resname2 = "  G" if \$resname2 eq "RGUA";
+	\$resname2 = "  C" if \$resname2 eq "RCYT";
+	\$resname2 = "  A" if \$resname2 eq "RADE";
+	\$resname2 = "  U" if \$resname2 eq "URA";
+
+	if( $OLD_ATNAMES ){
+	# some cyana restraints use the old hydrogen nomenclature:
+	\$atname1 = "HA3" if \$atname1 eq "HA2";
+	\$atname1 = "HA2" if \$atname1 eq "HA1";
+	\$atname1 = "HB3" if \$atname1 eq "HB2";
+	\$atname1 = "HB2" if \$atname1 eq "HB1";
+	\$atname1 = "HG3" if \$atname1 eq "HG2";
+	\$atname1 = "HG2" if \$atname1 eq "HG1";
+	if( \$resname1 ne "PHE" && \$resname1 ne "TYR" &&
+		\$resname1 ne "HIS" && \$resname1 ne "TRP" ){
+	   \$atname1 = "HD3" if \$atname1 eq "HD2";
+	   \$atname1 = "HD2" if \$atname1 eq "HD1";
+	   \$atname1 = "HE3" if \$atname1 eq "HE2";
+	   \$atname1 = "HE2" if \$atname1 eq "HE1";
+	}
+
+	\$atname2 = "HA3" if \$atname2 eq "HA2";
+	\$atname2 = "HA2" if \$atname2 eq "HA1";
+	\$atname2 = "HB3" if \$atname2 eq "HB2";
+	\$atname2 = "HB2" if \$atname2 eq "HB1";
+	\$atname2 = "HG3" if \$atname2 eq "HG2";
+	\$atname2 = "HG2" if \$atname2 eq "HG1";
+	if( \$resname2 ne "PHE" && \$resname2 ne "TYR" &&
+		\$resname2 ne "HIS" && \$resname2 ne "TRP" ){
+	   \$atname2 = "HD3" if \$atname2 eq "HD2";
+	   \$atname2 = "HD2" if \$atname2 eq "HD1";
+	   \$atname2 = "HE3" if \$atname2 eq "HE2";
+	   \$atname2 = "HE2" if \$atname2 eq "HE1";
+	}
+
+	\$atname1 = "HG13" if \$atname1 eq "HG12";
+	\$atname1 = "HG12" if \$atname1 eq "HG11";
+	\$atname2 = "HG13" if \$atname2 eq "HG12";
+	\$atname2 = "HG12" if \$atname2 eq "HG11";
+	}
+
+	#========================================================================
+	# system-specific:  example of changing residue numbers
+
+	#  if( \$resno1 < 136 ){ \$resno1 -= 124; } else { \$resno1 -= 205; }
+	#  if( \$resno2 < 136 ){ \$resno2 -= 124; } else { \$resno2 -= 205; }
+
+	#========================================================================
+
+	#
+	#  process zero upper bounds, which signal ambigous restraints:
+	#
+	if( \$ub == 0.0 ){
+		\$ambig += 1;
+		\$ambig1{\$atname1 . " " . \$resno1} = 1;
+		\$ambig2{\$atname2 . " " . \$resno2} = 1;
+	} else {
+		if( \$ambig ){   # we are at the end of processing an ambiguous restraint
+			\$ambig1{\$atname1 . " " . \$resno1} = 1;
+			\$ambig2{\$atname2 . " " . \$resno2} = 1;
+			print MAPS "AMBIG \${restno}:1 = ";
+			for \$key ( keys %ambig1 ){ print MAPS "\$key "; }
+			print MAPS "\\n";
+			print MAPS "AMBIG \${restno}:2 = ";
+			for \$key ( keys %ambig2 ){ print MAPS "\$key "; }
+			print MAPS "\\n";
+			print "0  AMB \${restno}:1 0 AMB \${restno}:2  \$ub \\n";
+			\$ambig = 0; undef %ambig1; undef %ambig2;
+		} else {   # this is a non-ambigous restraint
+			printf( "%4d %-4s %-4s %4d %-4s %-4s  %8.3f\n",
+				\$resno1, \$resname1, \$atname1, \$resno2, \$resname2, 
+				\$atname2, \$ub );
+		}
+		\$restno += 1;
+	}
+}
+EOF
+chmod +x ./upl_to_upb
+
+#------------------------------------------------------------------------------
+#  Make the lol_to_ual conversion script
+#------------------------------------------------------------------------------
+cat <<EOF > lol_to_ual
+#!/usr/bin/perl -n -w
+
+#  Convert a cyana .lol file to an Amber .ual file (for input to makeDIST_RST)
+
+\$rest = "";  # to avoid perl warning
+
+if( \$_ =~ /^#/ ){ \$_ =~ s/^ *//; print \$_; next; }
+if( \$_ =~ /^\$/ ){ print \$_; next; }
+
+( \$resno1, \$resname1, \$atname1, \$resno2, \$resname2, \$atname2, \$lb, \$rest ) = 
+    split(' ',\$_, 8);
+
+#  convert Cyana atom names to Amber/PDB names:
+\$atname1 = "HO2'" if \$atname1 eq "HO2";
+\$atname1 = "H5''" if \$atname1 eq "H5\"";
+\$atname2 = "HO2'" if \$atname2 eq "HO2";
+\$atname2 = "H5''" if \$atname2 eq "H5\"";
+
+#convert Cyana residue names to Amber/PDB names:
+\$resname1 = "  G" if \$resname1 eq "RGUA";
+\$resname1 = "  C" if \$resname1 eq "RCYT";
+\$resname1 = "  A" if \$resname1 eq "RADE";
+\$resname1 = "  U" if \$resname1 eq "URA";
+\$resname2 = "  G" if \$resname2 eq "RGUA";
+\$resname2 = "  C" if \$resname2 eq "RCYT";
+\$resname2 = "  A" if \$resname2 eq "RADE";
+\$resname2 = "  U" if \$resname2 eq "URA";
+
+if( $OLD_ATNAMES ){
+# some cyana restraints use the old hydrogen nomenclature:
+\$atname1 = "HA3" if \$atname1 eq "HA2";
+\$atname1 = "HA2" if \$atname1 eq "HA1";
+\$atname1 = "HB3" if \$atname1 eq "HB2";
+\$atname1 = "HB2" if \$atname1 eq "HB1";
+\$atname1 = "HG3" if \$atname1 eq "HG2";
+\$atname1 = "HG2" if \$atname1 eq "HG1";
+if( \$resname1 ne "PHE" && \$resname1 ne "TYR" &&
+    \$resname1 ne "HIS" && \$resname1 ne "TRP" ){
+   \$atname1 = "HD3" if \$atname1 eq "HD2";
+   \$atname1 = "HD2" if \$atname1 eq "HD1";
+   \$atname1 = "HE3" if \$atname1 eq "HE2";
+   \$atname1 = "HE2" if \$atname1 eq "HE1";
+}
+
+\$atname2 = "HA3" if \$atname2 eq "HA2";
+\$atname2 = "HA2" if \$atname2 eq "HA1";
+\$atname2 = "HB3" if \$atname2 eq "HB2";
+\$atname2 = "HB2" if \$atname2 eq "HB1";
+\$atname2 = "HG3" if \$atname2 eq "HG2";
+\$atname2 = "HG2" if \$atname2 eq "HG1";
+if( \$resname2 ne "PHE" && \$resname2 ne "TYR" &&
+    \$resname2 ne "HIS" && \$resname2 ne "TRP" ){
+   \$atname2 = "HD3" if \$atname2 eq "HD2";
+   \$atname2 = "HD2" if \$atname2 eq "HD1";
+   \$atname2 = "HE3" if \$atname2 eq "HE2";
+   \$atname2 = "HE2" if \$atname2 eq "HE1";
+}
+
+\$atname1 = "HG13" if \$atname1 eq "HG12";
+\$atname1 = "HG12" if \$atname1 eq "HG11";
+\$atname2 = "HG13" if \$atname2 eq "HG12";
+\$atname2 = "HG12" if \$atname2 eq "HG11";
+}
+
+#========================================================================
+# system-specific:
+
+	# if( \$resno1 < 136 ){ \$resno1 -= 124; } else { \$resno1 -= 205; }
+	# if( \$resno2 < 136 ){ \$resno2 -= 124; } else { \$resno2 -= 205; }
+
+#========================================================================
+
+#
+#  write back out
+#
+printf( "%4d %-4s %-4s %4d %-4s %-4s  %8.3f  100.0\n",
+  \$resno1, \$resname1, \$atname1, \$resno2, \$resname2, \$atname2, \$lb );
+EOF
+chmod +x ./lol_to_ual
+
+#------------------------------------------------------------------------------
+#  Make the aco_to_ang conversion script
+#------------------------------------------------------------------------------
+cat <<EOF > aco_to_ang
+#!/usr/bin/perl -n -w
+
+#  Convert a cyana .aco file to an Amber .ang file (for input to makeANG_RST)
+
+\$rest = "";  # to avoid perl warning
+
+if( \$_ =~ /^ *#/ ){ \$_ =~ s/^ *//; print \$_; next; }
+if( \$_ =~ /^\$/ ){ print \$_; next; }
+
+( \$resno1, \$resname1, \$angle, \$lb, \$ub, \$rest ) = split(' ',\$_, 6);
+
+#convert Cyana residue names to Amber/PDB names:
+\$resname1 = "  G" if \$resname1 eq "RGUA";
+\$resname1 = "  C" if \$resname1 eq "RCYT";
+\$resname1 = "  A" if \$resname1 eq "RADE";
+\$resname1 = "  U" if \$resname1 eq "URA";
+
+#========================================================================
+# system-specific:
+
+	# if( \$resno1 < 136 ){ \$resno1 -= 124; } else { \$resno1 -= 205; }
+#========================================================================
+
+#
+#  write back out
+#
+printf( "%4d %-4s %-4s %8.3f  %8.3f\n",
+  \$resno1, \$resname1, \$angle, \$lb, \$ub );
+EOF
+chmod +x ./aco_to_ang
+
+
+#------------------------------------------------------------------------------
+#  Make the zero_first conversion script
+#------------------------------------------------------------------------------
+cat <<EOF > zero_first
+#!/usr/bin/perl -w
+
+\$lsave = "";
+while(<>){
+	print if /^ *#/;
+	next if /^ *#/;
+	next if /^ *\$/;
+	@F = split(' ');
+	\$ub = \$F[6];
+	if( \$ub == 0.0){
+		\$ub_old = \$ub;  print;
+	} else {
+		print \$lsave;
+		\$ub_old=\$ub;  \$lsave=\$_;
+	}
+}
+print \$lsave;
+
+EOF
+chmod +x ./zero_first
+
+
+##########################################################################
+
+/bin/rm -f RST.all
+
+#  Convert upper-limit (upl) files to Amber format:
+if [ "$UPL_FILES" != "" ]; then
+   echo "# ----------------------------------------------------------" >>RST.all
+   echo "# Converting $UPL_FILES to Amber upper bounds" >>RST.all
+   echo "# ----------------------------------------------------------" >>RST.all
+   cat $UPL_FILES | ./zero_first | ./upl_to_upb > all.upb
+   cat $AMBERHOME/dat/map.DG-AMBER maps.dat > newmap.dat
+
+   makeDIST_RST -upb all.upb -pdb $AMBER_PDB_FILE -rst RST.all.upb \
+       -map newmap.dat 2> upb.out
+   if [ $? -ne 0 ]; then
+      echo "Error in makeDIST_RST; check upb.out"
+      exit 1
+   fi
+   cat RST.all.upb >> RST.all
+fi
+
+#  Convert lower-limit (lol) files to Amber format:
+if [ "$LOL_FILES" != "" ]; then
+   echo "# ----------------------------------------------------------" >>RST.all
+   echo "# Converting $LOL_FILES to Amber lower bounds" >>RST.all
+   echo "# ----------------------------------------------------------" >>RST.all
+   cat $LOL_FILES | ./lol_to_ual > all.ual
+   makeDIST_RST -ual all.ual -pdb $AMBER_PDB_FILE -rst RST.all.ual 2> ual.out
+   if [ $? -ne 0 ]; then
+      echo "Error in makeDIST_RST; check ual.out"
+      exit 1
+   fi
+   cat RST.all.ual >> RST.all
+fi
+
+#  Convert torsion angle (aco) files to Amber format:
+if [ "$ACO_FILES" != "" ]; then
+   echo "# ----------------------------------------------------------" >>RST.all
+   echo "# Converting $ACO_FILES to Amber torsion bounds" >>RST.all
+   echo "# ----------------------------------------------------------" >>RST.all
+   cat $ACO_FILES | ./aco_to_ang > in.ang
+   makeANG_RST -pdb $AMBER_PDB_FILE -con in.ang > RST.all.ang 2> ang.out
+   if [ $? -ne 0 ]; then
+      echo "Error in makeANG_RST; check ang.out"
+      exit 1
+   fi
+   cat RST.all.ang >> RST.all
+fi
+
+#  Convert rdc file to Amber format:
+if [  "$RDC_FILES" != "" ]; then
+   echo "# ----------------------------------------------------------" >>RST.dip
+   echo "# Converting $RDC_FILES to Amber rdc bounds" >>RST.dip
+   echo "# ----------------------------------------------------------" >>RST.dip
+   cat $RDC_FILES > in.rdc
+   makeDIP_RST.cyana -pdb $AMBER_PDB_FILE -file in.rdc
+   cat RST.angle >> RST.all
+fi
+
+#  (Optional) cleanup of intermediate files:
+/bin/rm -f *.upb *.ual upl_to_upb lol_to_ual RST.all.upb RST.all.ual in.ang \
+     RST.all.ang in.rdc RST.angle aco_to_ang zero_first maps.dat newmap.dat
+#  Generally dangerous to remove these before examining them:
+#/bin/rm -f upb.out ual.out ang.out
+

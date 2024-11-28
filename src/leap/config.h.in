@@ -1,0 +1,39 @@
+// config.h.in, processed by CMake to generate config.h
+
+// headers
+// ----------------------------------------------
+
+#cmakedefine HAVE_SYS_PARAM_H 1
+
+#cmakedefine HAVE_DIRENT_H 1
+
+#cmakedefine HAVE_SYS_DIR_H 1
+
+#cmakedefine HAVE_STRING_H 1
+
+#cmakedefine HAVE_STRINGS_H 1
+
+#cmakedefine HAVE_PWD_H 1
+
+#cmakedefine HAVE_STDBOOL_H
+
+#cmakedefine HAVE_SYS_TIME_H
+
+// functions
+// ----------------------------------------------
+
+#cmakedefine HAVE_TOUPPER 1
+
+#cmakedefine HAVE_TOLOWER 1
+
+// types
+// ----------------------------------------------
+
+// _Bool
+#cmakedefine HAVE__BOOL 1
+
+// BOOL
+#cmakedefine HAVE_BOOL 1 
+
+// BOOOOOOOLLLLLLL!!!!!!!!
+#cmakedefine BOOL_IN_X11_XMD 1

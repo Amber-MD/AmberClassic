@@ -2559,11 +2559,11 @@ end if
      s_orb_exp_tail_am1d(atomic_number) = 1.61862D0
      p_orb_exp_tail_am1d(atomic_number) = 1.48840D0
      d_orb_exp_tail_am1d(atomic_number) = 1.07347D0  
-     GSS_am1d(atomic_number) = 14.645747D00 ! Need to be fixed
+     GSS_am1d(atomic_number) = 11.36908D00 ! Fixed
      GSP_am1d(atomic_number) = 7.48305D00 
-     GPP_am1d(atomic_number) = 11.694918D00 ! Need to be fixed
-     GDD_am1d(atomic_number) = 11.694918D00   ! Need to be fixed
-     GP2_am1d(atomic_number) = 10.328696D00 !Need to be fixed
+     GPP_am1d(atomic_number) = 11.33740D00 ! Fixed
+     GDD_am1d(atomic_number) = 11.33740D00 ! GDD is not used
+     GP2_am1d(atomic_number) = 10.01294D00 ! Fixed
      HSP_am1d(atomic_number) = 0.67433D00
      alp_am1d(atomic_number) = 1.28263D0
      USS_am1d(atomic_number) = -16.63758D0
@@ -9686,13 +9686,97 @@ end if
                 call SetUpUserParameter('FN14', FN1_pm3(4,atomic_number) ,temp)
                 call SetUpUserParameter('FN24', FN2_pm3(4,atomic_number) ,temp)
                 call SetUpUserParameter('FN34', FN3_pm3(4,atomic_number) ,temp)
-                tempIntegerInReal=NUM_FN_am1(atomic_number)     
+                tempIntegerInReal=NUM_FN_pm3(atomic_number)     
                 call SetUpUserParameter('NUM_FN', tempIntegerInReal ,temp)
                 NUM_FN_pm3(atomic_number)=int(tempIntegerInReal+0.25)
             end do
         end if
 
+        if (currentTheory%PDDGPM3) then
+            do i=1, n
+                temp=GetParameterEntry(i)
+#ifdef MPI
+                call mpi_bcast(temp%name,8,MPI_CHARACTER, 0, qmmm_mpi%commqmmm, ierr)
+                call mpi_bcast(temp%value,1,AMBER_MPI_REAL, 0, qmmm_mpi%commqmmm, ierr)
+                call mpi_bcast(temp%atomicNumber,1,MPI_INTEGER, 0, qmmm_mpi%commqmmm, ierr)
+#endif /* MPI */
+                atomic_number=temp%atomicNumber
+                call SetUpUserParameter('USS', USS_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('UPP', UPP_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('BETAS', betas_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('BETAP', betap_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('GSS', GSS_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('GPP', GPP_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('GSP', GSP_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('GP2', GP2_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('HSP', HSP_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('ZS', s_orb_exp_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('ZP', p_orb_exp_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('ALP', alp_pddgpm3(atomic_number) ,temp)
+                call SetUpUserParameter('FN11', FN1_pddgpm3(1,atomic_number) ,temp)
+                call SetUpUserParameter('FN21', FN2_pddgpm3(1,atomic_number) ,temp)
+                call SetUpUserParameter('FN31', FN3_pddgpm3(1,atomic_number) ,temp)
+                call SetUpUserParameter('FN12', FN1_pddgpm3(2,atomic_number) ,temp)
+                call SetUpUserParameter('FN22', FN2_pddgpm3(2,atomic_number) ,temp)
+                call SetUpUserParameter('FN32', FN3_pddgpm3(2,atomic_number) ,temp)
+                call SetUpUserParameter('FN13', FN1_pddgpm3(3,atomic_number) ,temp)
+                call SetUpUserParameter('FN23', FN2_pddgpm3(3,atomic_number) ,temp)
+                call SetUpUserParameter('FN33', FN3_pddgpm3(3,atomic_number) ,temp)
+                call SetUpUserParameter('FN14', FN1_pddgpm3(4,atomic_number) ,temp)
+                call SetUpUserParameter('FN24', FN2_pddgpm3(4,atomic_number) ,temp)
+                call SetUpUserParameter('FN34', FN3_pddgpm3(4,atomic_number) ,temp)
+                call SetUpUserParameter('PDDGC1', PDDGC1_pm3(atomic_number) ,temp)
+                call SetUpUserParameter('PDDGC2', PDDGC2_pm3(atomic_number) ,temp)
+                call SetUpUserParameter('PDDGE1', PDDGE1_pm3(atomic_number) ,temp)
+                call SetUpUserParameter('PDDGE2', PDDGE2_pm3(atomic_number) ,temp)
+                tempIntegerInReal=NUM_FN_pddgpm3(atomic_number)     
+                call SetUpUserParameter('NUM_FN', tempIntegerInReal ,temp)
+                NUM_FN_pddgpm3(atomic_number)=int(tempIntegerInReal+0.25)
+            end do
+        end if
 
+        if (currentTheory%PDDGPM3_08) then
+            do i=1, n
+                temp=GetParameterEntry(i)
+#ifdef MPI
+                call mpi_bcast(temp%name,8,MPI_CHARACTER, 0, qmmm_mpi%commqmmm, ierr)
+                call mpi_bcast(temp%value,1,AMBER_MPI_REAL, 0, qmmm_mpi%commqmmm, ierr)
+                call mpi_bcast(temp%atomicNumber,1,MPI_INTEGER, 0, qmmm_mpi%commqmmm, ierr)
+#endif /* MPI */
+                atomic_number=temp%atomicNumber
+                call SetUpUserParameter('USS', USS_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('UPP', UPP_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('BETAS', betas_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('BETAP', betap_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('GSS', GSS_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('GPP', GPP_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('GSP', GSP_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('GP2', GP2_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('HSP', HSP_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('ZS', s_orb_exp_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('ZP', p_orb_exp_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('ALP', alp_pddgpm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('FN11', FN1_pddgpm3_08(1,atomic_number) ,temp)
+                call SetUpUserParameter('FN21', FN2_pddgpm3_08(1,atomic_number) ,temp)
+                call SetUpUserParameter('FN31', FN3_pddgpm3_08(1,atomic_number) ,temp)
+                call SetUpUserParameter('FN12', FN1_pddgpm3_08(2,atomic_number) ,temp)
+                call SetUpUserParameter('FN22', FN2_pddgpm3_08(2,atomic_number) ,temp)
+                call SetUpUserParameter('FN32', FN3_pddgpm3_08(2,atomic_number) ,temp)
+                call SetUpUserParameter('FN13', FN1_pddgpm3_08(3,atomic_number) ,temp)
+                call SetUpUserParameter('FN23', FN2_pddgpm3_08(3,atomic_number) ,temp)
+                call SetUpUserParameter('FN33', FN3_pddgpm3_08(3,atomic_number) ,temp)
+                call SetUpUserParameter('FN14', FN1_pddgpm3_08(4,atomic_number) ,temp)
+                call SetUpUserParameter('FN24', FN2_pddgpm3_08(4,atomic_number) ,temp)
+                call SetUpUserParameter('FN34', FN3_pddgpm3_08(4,atomic_number) ,temp)
+                call SetUpUserParameter('PDDGC1', PDDGC1_pm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('PDDGC2', PDDGC2_pm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('PDDGE1', PDDGE1_pm3_08(atomic_number) ,temp)
+                call SetUpUserParameter('PDDGE2', PDDGE2_pm3_08(atomic_number) ,temp)
+                tempIntegerInReal=NUM_FN_pddgpm3_08(atomic_number)     
+                call SetUpUserParameter('NUM_FN', tempIntegerInReal ,temp)
+                NUM_FN_pddgpm3_08(atomic_number)=int(tempIntegerInReal+0.25)
+            end do
+        end if
 
         if (currentTheory%AM1) then 
             do i=1, n

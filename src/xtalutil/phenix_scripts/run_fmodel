@@ -1,0 +1,16 @@
+#!/bin/sh
+
+#  usage: run_fmodel <basename>
+#     input is <basename>.pdb resolution k_sol b_sol
+#     output to <basename>.fmodel.pdb
+
+phenix.fmodel algorithm=direct scattering_table=it1992 \
+     high_resolution=$2  k_sol=$3  b_sol=$4  \
+     mask.ignore_hydrogens=False  $1.pdb | tee fmodel.log
+
+phenix.mtz.dump -f s -c $1.pdb.mtz | tr ',' '\t' | tail +2 > tmp.rdb
+
+awk 'BEGIN{printf("h\tk\tl\tFMODEL\tPHIMODEL\n4N\t4N\t4N\t15N\t15N\n")}' > $1.fmodel.rdb
+cat tmp.rdb >> $1.fmodel.rdb
+
+/bin/rm $1.pdb.mtz tmp.rdb

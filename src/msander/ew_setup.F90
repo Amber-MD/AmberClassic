@@ -733,7 +733,6 @@ subroutine ew_startup(natom_local,iblo,inb,x,ix)
 
    use nblist, only:cutoffnb,nvdwcls,mxlstmsk,fill_xtran,fill_tranvec
    use stack
-   use qmmm_module, only : qmmm_nml, qmmm_struct
 #ifdef MPI
    use mpi
 #endif
@@ -780,14 +779,6 @@ subroutine ew_startup(natom_local,iblo,inb,x,ix)
    call vdw_correct_setup(natom_local,ix(i04),ntypes,nvdwcls)
    call load_adj_mask(iblo,inb,natom_local, &
          mxadjmsk,ix(imask1),ix(imask2),numadjst,verbose)
-   if ( qmmm_nml%ifqnt .and. (qmmm_nml%qmmm_int == 5) ) then
-      ! Mechanical QM/MM embedding
-      ! => need to exclude also all QM-QM atom pairs
-      ! NOTES: We assume natom_local to be the total number of atoms
-      !        in the system
-      call load_adj_mask_qmqm(iblo,inb,natom_local,mxadjmsk,ix(imask1),ix(imask2), &
-           numadjst,qmmm_struct%atom_mask,verbose)
-   end if
    call load_list_mask(iblo,inb,natom_local, &
          mxlstmsk)
 #ifdef MPI

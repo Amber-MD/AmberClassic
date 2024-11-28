@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# simple check on how NEF-based restraints are working
+# input argument is <basename>
+
+#--------------------------------------------------------------------------
+#  prepare Amber system:
+pdb4amber -i ../source/$1.pdb -o $1.pdb  2> pdb4amber.log
+
+cat <<EOF > leap.in
+set default PBRadii mbondi3
+source leaprc.protein.ff19SB
+x = loadpdb $1.pdb
+saveAmberParm x $1.parm7 $1.rst7
+quit
+EOF
+
+tleap -f leap.in > tleap.out
+
+ambpdb -p $1.parm7 -c $1.rst7 > $1.ambpdb.pdb
+
+#--------------------------------------------------------------------------
+#  convert NEF restraints to RST, DIP format:
+nef_to_RST -nef ../$1.nef  -pdb $1.ambpdb.pdb -p4a ${1}_renum.txt \
+           -rst $1.RST -rdc $1.DIP
+
+#--------------------------------------------------------------------------
+#  run a simple minimization:
+cat<<EOF >mdin
+md for NEF restraints
+ &cntrl
+  imin=1 maxcyc=250, ntmin=3, nscm=20000,
+  ntpr=50, ntwx=0, ntwr=100000, ioutfm=1, ntxo=1,
+  ntx=1, irest=0, tempi=0., temp0=300.,
+  ntt=3, gamma_ln=10.,
+  ntb=0, ntp=0, ntc=1, ntf=1,  tol=0.0000001,
+  nstlim=0, dt=.002, ig=314159, ntave=0,
+  ntr=0, restraint_wt=5.0, restraintmask="!@H=",
+  igb=8, cut=20.0, rgbmax=15.0,
+  nmropt=1, pencut=1.0,
+ /
+ &wt type='END' /
+LISTOUT=POUT
+DISANG=$1.RST
+EOF
+
+mpirun -np 4 sander.MPI -O -i mdin \
+    -ref $1.rst7 -p $1.parm7 -c $1.rst7 \
+    -o $1.min.o -r $1.min.x < /dev/null
+
+
+#--------------------------------------------------------------------------
+# clean up:
+/bin/rm -f mdin mdinfo leap.in leap.log $1.pdb tleap.out ${1}_sslink \
+     ${1}_nonprot.pdb  pdb4amber.log  $1.min.x
+

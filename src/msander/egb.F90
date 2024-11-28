@@ -182,7 +182,6 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
    !--------------------------------------------------------------------------
 
    use icosasurf, only : icosa_init, icosa_sphere_approx
-   use qmmm_module, only : qmmm_nml,qmmm_struct,qm2_struct
    use parms, only: cn1,cn2
    use constants, only: zero, one, two, three, four, five, six, seven, &
                         eight, nine, ten, eleven, twelve, half, third, &
@@ -322,52 +321,6 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
    dl = 0.d0
    f6 = 0.d0
    f12 = 0.d0
-
-!============ QMMM ==========================================================
-!  If ifqnt == True and igb /=0 and igb /= 6 then we will do EGB with QMMM.
-
-!  In this case the charge array should currently be zero for the QM atoms.
-!  This corresponds to qmgb = 0 where we do only EGB(MM-MM) -- skipping
-!  QM-MM and QM-QM interactions.
-
-!  If qmgb==1 then we need to copy back the qm resp charges from
-!  qm_resp_charges, so we can do EGB on everything. When done we need to
-!  ensure we zero the QM charge array again.
-
-!  Before doing the non-bonded electrostatics:
-   if (qmmm_nml%ifqnt) then
-      if (qmmm_nml%qmgb == 1) then
-
-         call qmmm_restore_mm_charges(qmmm_struct%nquant,qmmm_struct%qm_resp_charges,charge, &
-                                      qmmm_struct%scaled_mm_charges, qmmm_struct%iqmatoms, &
-                                      qmmm_nml%chg_lambda,qmmm_struct%nlink,qmmm_struct%link_pairs, &
-                                      qmmm_struct%mm_link_pair_resp_charges, &
-                                      .false.)
-
-         ! Unlike ewald where we don't explicitly skip QM-MM interactions,
-         ! in GB we do explicitly skip them so it doesn't matter that the
-         ! QM charges are not set to zero in the charge array.
-
-      else if (qmmm_nml%qmgb > 1 ) then
-
-        ! In this case we need to fill the charge array with the Mulliken
-        ! charges from the SCF.  Note if igb==2 we skip the radii calculation
-        ! below as this has already been done before the call to qm_mm.
-        do qm_temp_count = 1, qmmm_struct%nquant_nlink
-           charge(qmmm_struct%iqmatoms(qm_temp_count)) = &
-                   qm2_struct%scf_mchg(qm_temp_count)*AMBER_ELECTROSTATIC
-        end do
-      end if
-
-      !We need to replace the MM link pair coordinates with
-      !the MM link atom coordinates.
-      call adj_mm_link_pair_crd(x)
-
-      !We also need to zero the nlink part of dxyzqm so we can accumulate link atom forces in this routine.
-      qmmm_struct%dxyzqm(1:3,qmmm_struct%nquant+1:qmmm_struct%nquant_nlink) = zero
-
-   end if
-!============ END QMMM =======================================================
 
    epol = zero
    eelt = zero
@@ -520,32 +473,6 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
       do jjv=jexcl,jexcl_last
          skipv(natex(jjv))=.true.
       end do
-
-      ! QMMM:  We have 2 lists here:
-      !        atom_mask which is natom long and .true. for each qm atom
-      !        skipv which is natom long and is .true. if atom v should
-      !             be skipped for this atom
-
-      !Step 1 - is current atom i a QM atom - NOT link atoms?
-
-      if (qmmm_nml%ifqnt) then
-         if ( qmmm_struct%atom_mask(i) ) then  !yes it is
-           !step 2 - exclude all other QM atoms
-           do qm_temp_count = 1, qmmm_struct%nquant
-              skipv(qmmm_struct%iqmatoms(qm_temp_count)) = .true.
-              !The VDW between the link atom and the MM atoms is not
-              !calculated. Instead MM link pair atom with Real QM atoms is calculated.
-           end do
-         !Is atom i an MM link pair atom?
-         else if ( qmmm_struct%mm_link_mask(i) ) then !yes it is
-           !Exclude all interactions (eel and VDW) with this
-           !atom. We will do the MM link pair VDW terms manually
-           !at the end of this routine.
-           skipv(i+1:natom) = .true. !We can't just cycle here because we want the GB interactions.
-         end if
-      end if
-
-      ! END QMMM
 
       icount = 0
       do j=i+1,natom
@@ -919,20 +846,6 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
 
             doeel = .true.
             dovdw = .true.
-            !  check if i or j is a quantum atom:
-            if ( qmmm_nml%ifqnt ) then
-               if ( qmmm_struct%atom_mask(i) .OR. qmmm_struct%atom_mask(j) ) then
-                  doeel = .false.
-               end if
-
-               ! if i or j is an MM link pair atom we also need to exclude it.
-               ! We also need to skip the VDW term if either is a mm link
-               ! pair atom
-               if (qmmm_struct%mm_link_mask(i) .or. qmmm_struct%mm_link_mask(j)) then
-                 doeel = .false.
-                 dovdw = .false.
-               end if
-            end if
 
             !we can use the cached values.
             rinv = vectmp5(k) !1/rij
@@ -1012,59 +925,16 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
          dumy = dumy + dedy
          dumz = dumz + dedz
 
-         if (qmmm_nml%ifqnt) then
-           !Currently if j is a link atom then
-           !dedxy,y,z are force on the link atom, not on the MM link pair.
-           !we have to use the chain rule to put the forces back onto the MM link
-           !pair atom.
-           !For the moment we just accumulate the forces on the end of dxyzqm
-           !this should have been zeroed at the beginning of this routine.
-           if (qmmm_struct%mm_link_mask(j)) then
-             !j is a link atom, instead of adding it to the main force
-             !array, accumulate it in dxyzqm
-             !Find the link id for this j
-             do qm_temp_count = 1,qmmm_struct%nlink
-               if (qmmm_struct%link_pairs(1,qm_temp_count) == j) exit
-             end do
-             qm_temp_count = qm_temp_count + qmmm_struct%nquant
-             qmmm_struct%dxyzqm(1,qm_temp_count) = qmmm_struct%dxyzqm(1,qm_temp_count) + dedx
-             qmmm_struct%dxyzqm(2,qm_temp_count) = qmmm_struct%dxyzqm(2,qm_temp_count) + dedy
-             qmmm_struct%dxyzqm(3,qm_temp_count) = qmmm_struct%dxyzqm(3,qm_temp_count) + dedz
-           else
-             !Not a link atom, can just add to main force array.
-             f(3*j-2) = f(3*j-2) - dedx
-             f(3*j-1) = f(3*j-1) - dedy
-             f(3*j  ) = f(3*j  ) - dedz
-           end if
-         else
-           f(3*j-2) = f(3*j-2) - dedx
-           f(3*j-1) = f(3*j-1) - dedy
-           f(3*j  ) = f(3*j  ) - dedz
-         end if
+         f(3*j-2) = f(3*j-2) - dedx
+         f(3*j-1) = f(3*j-1) - dedy
+         f(3*j  ) = f(3*j  ) - dedz
       end do !k=1,icount
 
   !---- End first outer loop ----
 
-      if (qmmm_nml%ifqnt) then
-        if (qmmm_struct%mm_link_mask(i)) then
-          do qm_temp_count = 1,qmmm_struct%nlink
-            if (qmmm_struct%link_pairs(1,qm_temp_count) == i) exit
-          end do
-          qm_temp_count = qm_temp_count + qmmm_struct%nquant
-          qmmm_struct%dxyzqm(1,qm_temp_count) = qmmm_struct%dxyzqm(1,qm_temp_count) - dumx
-          qmmm_struct%dxyzqm(2,qm_temp_count) = qmmm_struct%dxyzqm(2,qm_temp_count) - dumy
-          qmmm_struct%dxyzqm(3,qm_temp_count) = qmmm_struct%dxyzqm(3,qm_temp_count) - dumz
-        else
-          !Not a link atom, can just add to main force array.
-          f(3*i-2) = f(3*i-2) + dumx
-          f(3*i-1) = f(3*i-1) + dumy
-          f(3*i  ) = f(3*i  ) + dumz
-        end if
-      else
-        f(3*i-2) = f(3*i-2) + dumx
-        f(3*i-1) = f(3*i-1) + dumy
-        f(3*i  ) = f(3*i  ) + dumz
-      end if
+      f(3*i-2) = f(3*i-2) + dumx
+      f(3*i-1) = f(3*i-1) + dumy
+      f(3*i  ) = f(3*i  ) + dumz
 #ifdef MPI
       do k=i,(min(i+numtasks-1,natom))
          iexcl = iexcl + numex(k)
@@ -1506,26 +1376,9 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
               f_x = xij*datmp
               f_y = yij*datmp
               f_z = zij*datmp
-              if (qmmm_nml%ifqnt) then
-                if (qmmm_struct%mm_link_mask(j)) then
-                  do qm_temp_count = 1,qmmm_struct%nlink
-                    if (qmmm_struct%link_pairs(1,qm_temp_count) == j) exit
-                  end do
-                  qm_temp_count = qm_temp_count + qmmm_struct%nquant
-                  qmmm_struct%dxyzqm(1,qm_temp_count) = qmmm_struct%dxyzqm(1,qm_temp_count) - f_x
-                  qmmm_struct%dxyzqm(2,qm_temp_count) = qmmm_struct%dxyzqm(2,qm_temp_count) - f_y
-                  qmmm_struct%dxyzqm(3,qm_temp_count) = qmmm_struct%dxyzqm(3,qm_temp_count) - f_z
-                else
-                  !Not a link atom, can just add to main force array.
-                  f(j3-2) = f(j3-2) + f_x
-                  f(j3-1) = f(j3-1) + f_y
-                  f(j3  ) = f(j3  ) + f_z
-                end if
-              else
-                f(j3-2) = f(j3-2) + f_x
-                f(j3-1) = f(j3-1) + f_y
-                f(j3  ) = f(j3  ) + f_z
-              end if
+              f(j3-2) = f(j3-2) + f_x
+              f(j3-1) = f(j3-1) + f_y
+              f(j3  ) = f(j3  ) + f_z
 
               f_xi = f_xi - f_x
               f_yi = f_yi - f_y
@@ -1536,26 +1389,9 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
            end if ! (dij <= rgbmax +sj)
          end do  !  k=1,icount
 
-         if (qmmm_nml%ifqnt) then
-           if (qmmm_struct%mm_link_mask(i)) then
-             do qm_temp_count = 1,qmmm_struct%nlink
-               if (qmmm_struct%link_pairs(1,qm_temp_count) == i) exit
-             end do
-             qm_temp_count = qm_temp_count + qmmm_struct%nquant
-             qmmm_struct%dxyzqm(1,qm_temp_count) = qmmm_struct%dxyzqm(1,qm_temp_count) - f_xi
-             qmmm_struct%dxyzqm(2,qm_temp_count) = qmmm_struct%dxyzqm(2,qm_temp_count) - f_yi
-             qmmm_struct%dxyzqm(3,qm_temp_count) = qmmm_struct%dxyzqm(3,qm_temp_count) - f_zi
-           else
-             !Not a link atom, can just add to main force array.
-             f(3*i-2) = f(3*i-2) + f_xi
-             f(3*i-1) = f(3*i-1) + f_yi
-             f(3*i  ) = f(3*i  ) + f_zi
-           end if
-         else
-           f(3*i-2) = f(3*i-2) + f_xi
-           f(3*i-1) = f(3*i-1) + f_yi
-           f(3*i  ) = f(3*i  ) + f_zi
-         end if
+         f(3*i-2) = f(3*i-2) + f_xi
+         f(3*i-1) = f(3*i-1) + f_yi
+         f(3*i  ) = f(3*i  ) + f_zi
 
          !  --- Define neighbor list ineighbor for calc of LCPO areas ---
 
@@ -1623,148 +1459,6 @@ subroutine egb(x,f,rborn,fs,reff,onereff,charge,iac,ico,numex, &
 
 
 VACUUM3 &
-
-!======== QMMM ==========
-   if (qmmm_nml%ifqnt) then
-     call timer_start(TIME_QMMM)
-     if (qmmm_nml%qmgb /= 0) then
-
-        ! We filled the main charge array with charges for QM atoms; make sure
-        ! we zero it again so the 1-4's which are done outside of EGB will be
-        ! correctly skipped for QM-MM on the next step. Note here we don't have the routine
-        ! save the charges again since depending on the GB option they may have been filled
-        ! with either RESP charges or mulliken charges.
-        call qm_zero_charges(charge,qmmm_struct%scaled_mm_charges,.false.)
-        if (qmmm_struct%nlink > 0 ) then
-           !Don't save the charges here since they could be the resp charges.
-           call qm_zero_mm_link_pair_main_chg(qmmm_struct%nlink,qmmm_struct%link_pairs,charge, &
-                                              qmmm_struct%scaled_mm_charges,.false.)
-        end if
-     end if
-
-     call timer_start(TIME_QMMMCOLLATEF)
-     !We need to restore the MM link pair coordinates and then
-     !Use the chain rule to put the link pair forces back onto the
-     !QM and MM link pairs.
-     call rst_mm_link_pair_crd(x)
-     do i=1,qmmm_struct%nlink
-       mm_no = 3*qmmm_struct%link_pairs(1,i)-2  !location of atom in x array
-       lnk_no = qmmm_struct%link_pairs(2,i) !Nquant number of QM atom bound to link atom
-       qm_no = 3*qmmm_struct%iqmatoms(lnk_no)-2
-       !Note this routine uses the flink in the form -flink.
-       call distribute_lnk_f(forcemod,qmmm_struct%dxyzqm(1:3,qmmm_struct%nquant+i),x(mm_no), &
-                             x(qm_no),qmmm_nml%lnk_dis)
-
-       !NOTE: forces are reversed in QM calc with respect to amber force array
-       !so we subtract forcemod from MM atom and add it to QM atom.
-       j = (qmmm_struct%link_pairs(1,i)-1)*3 !Natom number of MM link pair.
-       !MM atom's new force = FMM(x,y,z) - FORCEMOD(x,y,z)
-       f(j+1) = f(j+1) - forcemod(1)
-       f(j+2) = f(j+2) - forcemod(2)
-       f(j+3) = f(j+3) - forcemod(3)
-
-       j = (qmmm_struct%iqmatoms(lnk_no)-1)*3
-       !QM atom's new force = FQM(x,y,z) - Flink(x,y,z) + FORCEMOD(x,y,z)
-       !Note QM forces should be subtracted from sander F array to leave total force.
-       f(j+1) = f(j+1) - qmmm_struct%dxyzqm(1,qmmm_struct%nquant+i) + forcemod(1)
-       f(j+2) = f(j+2) - qmmm_struct%dxyzqm(2,qmmm_struct%nquant+i) + forcemod(2)
-       f(j+3) = f(j+3) - qmmm_struct%dxyzqm(3,qmmm_struct%nquant+i) + forcemod(3)
-     end do
-     call timer_stop_start(TIME_QMMMCOLLATEF,TIME_QMMMENERGY)
-     call timer_start(TIME_QMMMGBENERGY)
-     !Finally we need to calculate the VDW terms
-     !for the MM link pair atoms as they were skipped above.
-
-!------------ START MM LINK PAIR VDW -------------------
-     do i = 1, qmmm_struct%nlink
-       skipv(1:natom) = .false.
-       jexcl = 1
-       mm_no = qmmm_struct%link_pairs(1,i)
-       iminus = mm_no-1
-       do j = 1, iminus
-         !As we loop over each atom check if this atom is supposed to exclude this MM
-         !link pair atom.
-         jexcl_last = jexcl + numex(j) -1
-         do jjv = jexcl, jexcl_last
-           iexcl = natex(jjv)
-           !Should this atom exclude the MM atom?
-           if (iexcl == mm_no) skipv(j) = .true.
-         end do
-         jexcl = jexcl + numex(j)
-       end do
-       jexcl_last = jexcl + numex(mm_no) -1
-       do jjv = jexcl, jexcl_last
-         skipv(natex(jjv)) = .true.
-       end do
-       !We need to avoid double counting so we should exclude ourself and
-       !all link atoms of lower number
-       !Note this assumes the link atom list is numerically sorted...
-       do k = 1, i !To i ensures we skip the self interaction.
-         skipv(qmmm_struct%link_pairs(1,k)) = .true.
-       end do
-       xi = x(3*mm_no-2)
-       yi = x(3*mm_no-1)
-       zi = x(3*mm_no  )
-
-       iaci = ntypes * (iac(mm_no) - 1)
-#ifdef LES
-       icnum=cnum(mm_no)
-       nrg_vdw_tmp = zero
-#endif
-       dumx = zero
-       dumy = zero
-       dumz = zero
-       de = zero
-#ifdef MPI
-       do j=mpistart,maxi,numtasks
-#else
-       do j=1,maxi !1 to natom
-#endif
-         !Do all atoms that are not excluded and
-         !are within the cutoff for this i. Skip other
-         !MM interactions that are less than i to avoid double
-         !counting.
-         if ( .not. skipv(j) ) then
-           xij = xi - x(3*j-2)
-           yij = yi - x(3*j-1)
-           zij = zi - x(3*j  )
-           r2 = xij*xij + yij*yij + zij*zij
-           if ( r2 <= cut ) then
-             r2inv = one/r2
-             ic = ico( iaci + iac(j) )
-             if (ic > 0) then
-               !6-12 potential:
-               r6inv = r2inv*r2inv*r2inv
-               f6 = cn2(ic)*r6inv
-               f12 = cn1(ic)*(r6inv*r6inv)
-               evdw = evdw + (f12 - f6)
-               de = (twelve*f12 - six*f6)*r2inv
-             end if !if ic>0
-             de = de*nrespai
-             dedx = de * xij
-             dedy = de * yij
-             dedz = de * zij
-             dumx = dumx + dedx
-             dumy = dumy + dedy
-             dumz = dumz + dedz
-             f(3*j-2) = f(3*j-2) - dedx
-             f(3*j-1) = f(3*j-1) - dedy
-             f(3*j  ) = f(3*j  ) - dedz
-           end if !if r2<=cut
-         end if !if not skipv(i)
-       end do
-
-       f(3*mm_no-2) = f(3*mm_no-2) + dumx
-       f(3*mm_no-1) = f(3*mm_no-1) + dumy
-       f(3*mm_no  ) = f(3*mm_no  ) + dumz
-     end do ! i = 1, qmmm_struct%nlink
-     call timer_stop(TIME_QMMMGBENERGY)
-     call timer_stop(TIME_QMMMENERGY)
-!------------ END MM LINK PAIR VDW ---------------------
-     call timer_stop(TIME_QMMM)
-   end if !if ifqnt.
-!======== END QMMM ==========
-
    return
 end subroutine egb
 

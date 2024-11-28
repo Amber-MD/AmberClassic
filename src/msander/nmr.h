@@ -87,10 +87,10 @@ _REAL_ dobsu(maxdip),dobsl(maxdip),dcut,gigj(maxdip), &
       dij(maxdip),dwt(maxdip), &
       s11(maxdipsets),s12(maxdipsets),s13(maxdipsets), &
       s22(maxdipsets),s23(maxdipsets),s33(maxdipsets), &
-      da_target(maxdipsets),r_target(maxdipsets)
+      da_target(maxdipsets),r_target(maxdipsets),root(3,maxdipsets)
 integer ndip,num_datasets,id(maxdip),jd(maxdip),dataset(maxdip),ifreeze, &
         ifreezes, itarget
-common/align/dobsu,dobsl,dcut,gigj,dij,dwt,s11,s12,s13,s22,s23,s33, &
+common/align/dobsu,dobsl,dcut,gigj,dij,dwt,s11,s12,s13,s22,s23,s33,root, &
       da_target,r_target,ndip,id,jd,dataset,num_datasets,ifreeze,ifreezes, &
       itarget
 

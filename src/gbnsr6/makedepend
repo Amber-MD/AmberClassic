@@ -1,0 +1,86 @@
+#!/usr/bin/perl -w
+
+#  cycle through fortran files, determine which headers are included;
+#      the "used" array eliminates duplicate enties
+
+#  for SANDER programs, add these dependencies as well 
+#      to the list
+
+#  Be sure do to a "make clean" before running this script!
+#      (probably not really needed, but better safe than sorry)
+
+printf <<EOF;
+#
+#   Please do not edit the "depend" file directly, since it is created by the
+#   "makedepend" script.  If changes are needed, edit "makedepend" itself.
+#
+EOF
+
+#  in order to get a mapping between module names and file names, we have
+#  have to set up the following hash. 
+#  (special cases, since source is elsewhere)
+#  (check also below  (end of this file) for "compilation" rules)
+
+foreach $file ( <*.F90> ){
+	next if $file =~ /^_/;
+	($fileroot) = $file =~ /(.+)\.F90$/;
+	$optimized{$fileroot} = 0;
+	open( F, "$file" ) || die "unable to open $file\n";
+	while( <F> ){
+		if( /^ *module /i ){
+			($head,$modulename) = /( *[Mm][Oo][Dd][Uu][Ll][Ee]) +(\w*)/;
+			$modulefile{$modulename} = $fileroot;
+#			printf STDERR "modulefile:  $modulename  $fileroot\n";
+		}
+		if( /compile=optimized/ ){
+			$optimized{$fileroot} = 1;
+		}
+	}
+	close( F );
+}
+
+#  Now, cycle over all source files to create the compilation rules and 
+#  dependencies.  Check for "compile=optimized" comments and do the right 
+#  thing:
+
+foreach $file ( <*.F90> ){
+
+	next if $file =~ /^_/;
+
+	$deps = "";
+
+	($fileroot) = $file =~ /(.+)\.F90$/;
+
+	#  construct the header and module dependency rules:
+
+	open( F, "$file" ) || die "unable to open $file\n";
+	while( <F> ){
+
+		if( /^ *use / ){
+			($head,$usee) = /( *use) +(\w*)/;
+#			printf STDERR "     usee: $usee; modulefile is $modulefile{$usee}\n";
+            next if $usee =~ /file_io_dat/;
+
+			if( !defined $modulefile{$usee} ){
+				printf STDERR "No file name associated with module $usee\n";
+				exit(1);
+			}
+			if( !defined $used{ $fileroot,$modulefile{$usee} } ){
+
+				#  remove any circular references:
+				next if $fileroot eq $modulefile{$usee};
+                                $deps .= "\\\n                    " . $modulefile{$usee} .      ".o" ;
+
+				$used{ $fileroot,$modulefile{$usee} } = 1;
+			}
+		}
+		if (/^# *include/) {
+			($head,$included) = /(# *include) +"(.*)"/;
+			if( !defined $used{ $fileroot,$included } ){
+    				$deps .= "\\\n                    " . $included ;
+    				$used{ $fileroot,$included } = 1;
+			}
+		}
+	}
+	printf "$fileroot.o: $deps\n\n" unless $deps eq "";
+}

@@ -1,0 +1,167 @@
+#!/bin/sh
+
+#script to check all output files from a 1D-RISM calculation against their '.save' gold standards using dacdif
+
+#expected input
+
+usage () {
+         echo "USAGE: check1d fileroot"
+         echo
+         echo "       fileroot:       root name for files to check.  E.g. root.xvv"
+         echo
+         echo "Checks rism1d output files with the suffixes .uvv, .xvv, .gvv, .cvv, .td, .exnvv,"
+         echo " .nvv, .n00, .q00, .hvv, .svv and .bvv against the corresponding .save file if"
+         echo "it exists." 
+         exit 1
+}
+
+#if the dacdif test passes, then <file>.dif will not exist
+dacdifPass() {
+    if [ -e "$1.dif" ]; then
+        echo 0
+    else
+        echo 1
+    fi
+}
+
+#deletes intermediate files if dacdifPass indicates that the tests have passed
+tryclean () {
+    returnCode=`dacdifPass $1`
+    if [ "$returnCode" = "1" ]; then
+        while [ $# -gt 0 ]; do
+            rm -f $1
+            shift
+        done
+    fi
+}
+
+if [ $# -ne 1 ]; then
+   usage
+fi
+
+# Note that different levels of precision are required for
+# different files. The most important is the real-space distribution of the
+# sites.  At the end of the day, this is what we are trying to
+# calculate.  k-space distributions are less important and have larger
+# variability between compilers, even for Xvv.  The DELHV0 interpolated
+# value is very sensitive to small perturbations in small k-values but
+# has very little influence on subsequent 3D-RISM calculations as long
+# as it is roughly correct.
+
+# The XVV file is divided into four parts. DELHV0 values are
+# relatively inexact.  Xvv values in k-space (see above) and the
+# remaining values should be quite precise.
+
+# The XVV file is divided using sed.  We use commands of the following
+# structure
+#     /start/,/end/ {action}
+# /start/ is the first line of the section and /end/ is the last (this
+# is inclusive).  The action is applied only to the section. We may,
+# for example, print (p) or delete (d) any lines matching a regexp.
+if [ -s $1.xvv.save ]; then
+   # BACKGROUND_CORRECTION and DELHV0 are related and should be tested at the same tolerance
+   sed -n -e '/BACKGROUND_CORRECTION$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' \
+       -e '/DELHV0$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' \
+       $1.xvv > $1.xvv.delhv0
+   sed -n -e '/BACKGROUND_CORRECTION$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' \
+       -e '/DELHV0$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' \
+       $1.xvv.save > $1.xvv.delhv0.save
+   sed -n -e '/DELHV0_DT$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' $1.xvv > $1.xvv.delhv0_dT
+   sed -n -e '/DELHV0_DT$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' $1.xvv.save > $1.xvv.delhv0_dT.save
+   sed -n -e '/XVV$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' $1.xvv > $1.xvv.xvv
+   sed -n -e '/XVV$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' $1.xvv.save > $1.xvv.xvv.save
+   sed -n -e '/XVV_DT$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' $1.xvv > $1.xvv.xvv_dT
+   sed -n -e '/XVV_DT$/,/%FLAG/{' -e '/^%FORMAT/p' -e '/^[^%]/p' -e '}' $1.xvv.save > $1.xvv.xvv_dT.save
+   sed -e '/XVV$/,$d' -e '/XVV_DT$/,$d' -e '/^%COMMENT/d' \
+       -e '/%FLAG BACKGROUND_CORRECTION$/,/%FLAG/{' -e '/^%FORMAT/d' -e '/^[^%]/d' -e '/^%FLAG BACKGROUND_CORRECTION$/d' -e '}'  \
+       -e '/%FLAG DELHV0$/,/%FLAG/{' -e '/^%FORMAT/d' -e '/^[^%]/d' -e '/^%FLAG DELHV0$/d' -e '}'  \
+       -e '/%FLAG DELHV0_DT$/,/%FLAG/{' -e '/^%FORMAT/d' -e '/^[^%]/d' -e '/^%FLAG DELHV0_DT$/d' -e '}'  $1.xvv > $1.xvv.other
+   sed -e '/XVV$/,$d' -e '/XVV_DT$/,$d' -e '/^%COMMENT/d' \
+       -e '/%FLAG BACKGROUND_CORRECTION$/,/%FLAG/{' -e '/^%FORMAT/d' -e '/^[^%]/d' -e '/^%FLAG BACKGROUND_CORRECTION$/d' -e '}'  \
+       -e '/%FLAG DELHV0$/,/%FLAG/{' -e '/^%FORMAT/d' -e '/^[^%]/d' -e '/^%FLAG DELHV0$/d' -e '}'  \
+       -e '/%FLAG DELHV0_DT$/,/%FLAG/{' -e '/^%FORMAT/d' -e '/^[^%]/d' -e '/^%FLAG DELHV0_DT$/d' -e '}'  $1.xvv.save > $1.xvv.other.save
+
+   ../../dacdif -r 3.e-5 $1.xvv.delhv0.save $1.xvv.delhv0
+   tryclean $1.xvv.delhv0 $1.xvv.delhv0.save
+   #XBLAS for temperature derivatives is needed to get better precision
+   ../../dacdif -r 5.e-3 $1.xvv.delhv0_dT.save $1.xvv.delhv0_dT
+   tryclean $1.xvv.delhv0_dT $1.xvv.delhv0_dT.save
+   ../../dacdif -a 1.e-6 $1.xvv.xvv.save $1.xvv.xvv
+   tryclean $1.xvv.xvv $1.xvv.xvv.save
+   ../../dacdif -a 1.e-6 $1.xvv.xvv_dT.save $1.xvv.xvv_dT
+   tryclean $1.xvv.xvv_dT $1.xvv.xvv_dT.save
+   #use absolute instead of relative as the rotated atom positions may
+   #have round-off errors when they should be zero.  Theses absolute
+   #differences are on the order of 1e-18
+   ../../dacdif -a 1.e-7 $1.xvv.other.save $1.xvv.other
+   tryclean $1.xvv.other $1.xvv.other.save
+   if [ -z "$(find . -maxdepth 1 -name '*.xvv*dif' -print -quit)" ]; then
+       rm -f $1.xvv
+   fi
+#   tryclean $xvvReturnCode $1.xvv
+fi
+#UVV should be very precise
+if [ -s $1.uvv.save ]; then
+   ../../dacdif -r 1.e-6 $1.uvv.save $1.uvv
+fi
+#GVV should be very precise.  This is the most important file to
+#determine the quality of results.
+if [ -s $1.gvv.save ]; then
+   ../../dacdif -r 1.e-8 $1.gvv.save $1.gvv
+fi
+#the derivative goes to zero at large separations, so it is best to
+#use absolute error
+if [ -s $1.gvv_dT.save ]; then
+   ../../dacdif -a 2.e-8 $1.gvv_dT.save $1.gvv_dT
+fi
+#CVV is a short range function with very small values at long ranges.
+#It is unrealistic to achieve low relative error for these very small numbers so
+#we only use the abolute error
+if [ -s $1.cvv.save ]; then
+   ../../dacdif -a 1.e-6 $1.cvv.save $1.cvv
+fi
+if [ -s $1.cvv_dT.save ]; then
+   ../../dacdif -a 1.e-6 $1.cvv_dT.save $1.cvv_dT
+fi
+#Thermodynamics may have some integration variability
+if [ -s $1.td.save ]; then
+   ../../dacdif -r 1.e-6 $1.td.save $1.td
+fi
+#Thermodynamics may have some integration variability
+if [ -s $1.therm.save ]; then
+   ../../dacdif -r 1.e-6 $1.therm.save $1.therm
+fi
+if [ -s $1.exnvv.save ]; then
+   ../../dacdif -r 1.e-6 $1.exnvv.save $1.exnvv
+fi
+if [ -s $1.nvv.save ]; then
+   ../../dacdif -r 1.e-6 $1.nvv.save $1.nvv
+fi
+if [ -s $1.n00.save ]; then
+   ../../dacdif -r 1.e-6 $1.n00.save $1.n00
+fi
+#Nearly equal numbers that are subtracted requires the use of absolute error
+if [ -s $1.q00.save ]; then
+   ../../dacdif -a 1.e-7 $1.q00.save $1.q00
+fi
+#k-space
+if [ -s $1.hvv.save ]; then
+   ../../dacdif -a 2.e-5 $1.hvv.save $1.hvv
+fi
+#k-space (but the numbers are > 1e-3 so relative seems best)
+if [ -s $1.hvv_dT.save ]; then
+   ../../dacdif -r 2.e-5 $1.hvv_dT.save $1.hvv_dT
+fi
+#k-space
+if [ -s $1.svv.save ]; then
+   ../../dacdif -a 2.e-5 $1.svv.save $1.svv
+fi
+#the bridge function typically contains very small numbers a large distances.  
+#It is unrealistic to achieve low relative error for these very small number so we only 
+#use the abolute error
+if [ -s $1.bvv.save ]; then
+   ../../dacdif -a 2.e-7 $1.bvv.save $1.bvv
+fi
+
+
+

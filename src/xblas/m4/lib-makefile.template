@@ -1,0 +1,55 @@
+dnl M4 template file for generating m4/*/Makefile.
+dnl The string "routine" should be defined to expand to the routine name.
+dnl
+define(`ROUTINE', 
+  `translit(routine(), `abcdefghijklmnopqrstuvwxyz', `ABCDEFGHIJKLMNOPQRSTUVWXYZ')')dnl
+dnl
+dnl
+define(`if_f2c', `ifdef(`no_f2c', `$2', `$1')')dnl
+dnl
+dnl
+include(cblas.m4)dnl
+include(routine()/routine()-common.m4)dnl
+dnl
+dnl
+`include' ../../make.conf
+`include' ../../$(MAKEINC)
+
+
+SRC_PATH = ../../src/routine()
+M4_PATH = -I. -I..
+
+ROUTINE()_SRCS = FOREACH(`ROUTINE()_ARGS', `\
+	$(SRC_PATH)/ROUTINE()_NAME(arg).c') if_f2c(`\
+	FOREACH(`ROUTINE()_ARGS', `\
+	$(SRC_PATH)/ROUTINE()_NAME(arg)-f2c.c')')
+
+routine()-source: $(ROUTINE()_SRCS)
+
+routine()-header: routine().h
+
+FOREACH(`ROUTINE()_ARGS', `$(SRC_PATH)/ROUTINE()_NAME(arg).c: routine().m4 routine()-common.m4 ../cblas.m4`'
+	echo "ROUTINE()(arg)" | cat routine().m4 - | \
+    $(M4) $(M4_OPTS) $(M4_PATH) - > tmp.ROUTINE()_NAME(arg).c && \
+    $(INDENT) $(INDENT_OPTS) tmp.ROUTINE()_NAME(arg).c && \
+    mv tmp.ROUTINE()_NAME(arg).c $`'@ && rm -f tmp.ROUTINE()_NAME(arg).c*
+
+')dnl
+
+if_f2c(`
+FOREACH(`ROUTINE()_ARGS', `$(SRC_PATH)/ROUTINE()_NAME(arg)-f2c.c: ../f2c-bridge.m4 routine()-common.m4 ../cblas.m4`'
+	$(M4) $(M4_OPTS) $(M4_PATH) -Drou`'tine=routine() -DRARG="arg" ../f2c-bridge.m4 > tmp.ROUTINE()_NAME(arg)-f2c.c && \
+    $(INDENT) $(INDENT_OPTS) tmp.ROUTINE()_NAME(arg)-f2c.c && \
+    mv tmp.ROUTINE()_NAME(arg)-f2c.c $`'@ && rm -f tmp.ROUTINE()_NAME(arg)-f2c.c*
+
+')')dnl
+
+routine().h: ../cblas.m4 ../header.template routine()-common.m4
+	sed -e "s/rou`'tine/routine()/g" -e "s/ROU`'TINE/ROUTINE()/g" \
+  ../header.template | $(M4) $(M4_OPTS) $(M4_PATH) - >$`'@
+
+source-clean:
+	rm -f $(ROUTINE()_SRCS) routine().h
+
+.PHONY: routine()-source routine()-header source-clean
+

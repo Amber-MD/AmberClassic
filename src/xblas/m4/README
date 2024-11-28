@@ -1,0 +1,5 @@
+Makefile structure
+  % make Makefile - produce Makefile at this level
+  % make makefiles - produce Makefile for each m4 subdirectory
+                     using Makefile.template
+  % make header - produce prototype header file for src/ directory

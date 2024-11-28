@@ -1,0 +1,69 @@
+#!/bin/bash 
+#=============================================================================
+#    Running RISM
+#    (copy this script to your working directory, and edit it as needed.
+#=============================================================================
+parm7=$1   
+rst7=$2
+xvv=$3   # xvv file for the solvent to be used
+id=$4
+resolution=$5
+
+export OMP_NUM_THREADS=25
+sander=/home/case/msander/bin/msander
+
+cat > mdin.rism <<EOF
+  single-point 3D-RISM calculation using the sander interface
+ &cntrl
+    ntx=1, nstlim=0, irism=1,
+ /
+ &rism
+    periodic='pme',
+    closure='kh','pse2','pse3'  tolerance=0.01,0.01,1e-7
+    grdspc=0.5,0.5,0.5,
+    mdiis_del=0.4, mdiis_nvec=20, maxstep=5000, mdiis_restart=50,
+    solvcut=9.0,
+    verbose=2, npropagate=0,
+    apply_rism_force=0,
+    volfmt='mrc', ntwrism=1,
+ /
+EOF
+
+$sander -O -i mdin.rism -o ${rst7%%.*}.pse3.r3d \
+    -p $parm7 -c $rst7 -xvv $xvv -guv ${rst7%%.*}.pse3
+
+/bin/rm -f mdin.rism restrt mdinfo 
+
+#--------------------------------------------------------------------------
+#  1. Use metatwist to create a solvent density file from guv files:
+#--------------------------------------------------------------------------
+
+metatwist --dx $id.O.0.mrc  --species O2-  --odx rho.O.0.mrc  \
+    --map rhoelreal --bulkdens 55.55 > metatwist.log
+metatwist --dx $id.Na+.0.mrc  --species Na+  --odx rho.Na+.0.mrc  \
+    --map rhoelreal --bulkdens 0.1 >> metatwist.log
+metatwist --dx $id.Cl-.0.mrc  --species Cl-  --odx rho.Cl-.0.mrc  \
+    --map rhoelreal --bulkdens 0.1 >> metatwist.log
+
+metatwist --dx rho.O.0.mrc rho.Na+.0.mrc rho.Cl-.0.mrc \
+     --odx solvent.mrc --species none >> metatwist.log
+
+# mv rho.O.0.mrc solvent.mrc
+
+# ================== convert to proper axis order for SFALL
+mapmask mapin solvent.mrc mapout a.map <<EOF > metatwist.log
+AXIS Z X Y
+EOF
+
+# =================== run SFALL
+sfall mapin a.map hklout sfalled.mtz memsize 10000000 <<EOF >> metatwist.log
+mode sfcalc mapin
+RESO $resolution
+EOF
+
+# ==================== convert to rdb file to merge with an sf-dat file:
+phenix.mtz.dump -f s -c sfalled.mtz | tr ',' '\t' | \
+   sed 's/H\tK\tL\tFC\tPHIC/H\tK\tL\tFC\tPHIC\n5N\t5N\t5N\t15N\t15N/' \
+   > sfalled.fmtz
+
+/bin/rm -f sfalled.mtz a.map rho.*.mrc  

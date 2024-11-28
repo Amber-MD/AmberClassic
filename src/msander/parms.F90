@@ -82,53 +82,6 @@ subroutine allocate_parms
 end subroutine allocate_parms
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-!+ Allocate space for all of the parm arrays
-subroutine add_qmmm_bonds(new_rk, new_req)
-
-   implicit none
-   
-   ! Formal arguments
-   _REAL_, dimension(*), intent(in) :: new_rk      ! New force constants
-   _REAL_, dimension(*), intent(in) :: new_req     ! New equilibrium values
-
-   ! Local arguments
-   _REAL_, dimension(orig_numbnd) :: rk_holder
-   _REAL_, dimension(orig_numbnd) :: req_holder
-
-   integer :: ierror, i
-
-   ! We only have something to do if numbnd > orig_numbnd
-   if (numbnd <= orig_numbnd) return
-
-   ! back up rk and req
-   rk_holder(1:orig_numbnd) = rk(1:orig_numbnd)
-   req_holder(1:orig_numbnd) = req(1:orig_numbnd)
-
-   ! Deallocate our rk/req
-   deallocate(rk, req)
-
-   ! Reallocate with the larger numbnd
-   allocate(rk(numbnd), req(numbnd), stat=ierror)
-   if (ierror /= 0) then
-      write(6, *) 'ERROR extending rk/req in add_qmmm_bonds (parms.F90)'
-      call mexit(6, 1)
-   end if
-
-   ! Restore our original rk, req and then extend it with our new values
-   rk(1:orig_numbnd) = rk_holder(1:orig_numbnd)
-   req(1:orig_numbnd) = req_holder(1:orig_numbnd)
-
-   ! Now add in our additional rk and req values
-   do i = 1, numbnd - orig_numbnd
-      rk(orig_numbnd + i) = new_rk(i)
-      req(orig_numbnd + i) = new_req(i)
-   end do
-
-   return
-
-end subroutine add_qmmm_bonds
-
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !+ deallocates the various data structures
 subroutine clean_parms
 

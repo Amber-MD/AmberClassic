@@ -1,0 +1,81 @@
+#!/usr/bin/env perl
+
+use POSIX "fmod";
+
+$model = 0; $first=1;
+
+# get the following lines from get_ucell.F90
+
+# recip matrix, for conversion to fractional coords:
+$r11 =     0.0367107; $r12 =    -0.0000000; $r13 =     0.0000000;
+$r21 =     0.0147502; $r22 =     0.0338155; $r23 =    -0.0000000;
+$r31 =     0.0139355; $r32 =     0.0035812; $r33 =     0.0309838;
+# ucell matrix, for conversion from fractional coords:
+$u11 =    27.2400000; $u12 =   -11.8819595; $u13 =   -10.8783335;
+$u21 =     0.0000000; $u22 =    29.5722157; $u23 =    -3.4180696;
+$u31 =     0.0000000; $u32 =     0.0000000; $u33 =    32.2749370;
+
+while(<>){
+if( $_ =~ /^ATOM|^HETATM/){
+
+if( $first ){ printf "MODEL%9d\n", ++$model; $first=0; }
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+
+next if $resname eq "HOH" || $resname eq "NO3" || $resname eq "CL ";
+
+#  Convert to fractional coordinates, based on original unit cell;
+$f1 = $r11*$x + $r21*$y + $r31*$z;
+$f2 = $r12*$x + $r22*$y + $r32*$z;
+$f3 = $r13*$x + $r23*$y + $r33*$z;
+
+#  Manipulate fractional coordinates here:                        000
+if ($chainId eq "B") {$f3 -= 1.0;}                             #  001
+elsif ($chainId eq "C") {$f2 -= 1.0;}                          #  010
+elsif ($chainId eq "D") {$f2 -= 1.0; $f3 -= 1.0;}              #  011
+elsif ($chainId eq "E") {$f2 -= 2.0;}                          #  020
+elsif ($chainId eq "F") {$f2 -= 2.0; $f3 -= 1.0;}              #  021
+elsif ($chainId eq "G") {$f1 -= 1.0;}                          #  100
+elsif ($chainId eq "H") {$f1 -= 1.0; $f3 -= 1.0;}              #  101
+elsif ($chainId eq "I") {$f1 -= 1.0; $f2 -= 1.0;}              #  110
+elsif ($chainId eq "J") {$f1 -= 1.0; $f2 -= 1.0; $f3 -= 1.0;}  #  111
+elsif ($chainId eq "K") {$f1 -= 1.0; $f2 -= 2.0;}              #  120
+elsif ($chainId eq "L") {$f1 -= 1.0; $f2 -= 2.0; $f3 -= 1.0;}  #  121
+elsif ($chainId eq "M") {$f1 -= 2.0;}                          #  200
+elsif ($chainId eq "N") {$f1 -= 2.0; $f3 -= 1.0;}              #  201
+elsif ($chainId eq "O") {$f1 -= 2.0; $f2 -= 1.0;}              #  210
+elsif ($chainId eq "P") {$f1 -= 2.0; $f2 -= 1.0; $f3 -= 1.0;}  #  211
+elsif ($chainId eq "Q") {$f1 -= 2.0; $f2 -= 2.0;}              #  220
+elsif ($chainId eq "R") {$f1 -= 2.0; $f2 -= 2.0; $f3 -= 1.0;}  #  221
+
+#  Reconvert to cartesian:
+$x = $u11*$f1 + $u12*$f2 + $u13*$f3;
+$y = $u21*$f1 + $u22*$f2 + $u23*$f3;
+$z = $u31*$f1 + $u32*$f2 + $u33*$f3;
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} elsif( $_ =~ /^TER/){
+   print;
+   printf "ENDMDL\nMODEL%9d\n", ++$model;
+} elsif( $_ =~ /^SSBOND/){
+} else {
+   print;
+}
+}

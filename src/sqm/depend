@@ -2,6 +2,14 @@
 #   Please do not edit the "depend" file directly, since it is created by the
 #   "makedepend" script.  If changes are needed, edit "makedepend" itself.
 #
+amopen.o: \
+                    copyright.h
+
+
+amopen.o:   amopen.F90
+	@echo '[SQM]  FC $<'
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ amopen.F90
+
 assert.o: \
                     copyright.h\
                     ../include/assert.fh
@@ -9,7 +17,16 @@ assert.o: \
 
 assert.o:   assert.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ assert.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ assert.F90
+
+constants.o: \
+                    copyright.h\
+                    ../include/dprec.fh
+
+
+constants.o:   constants.F90
+	@echo '[SQM]  FC $<'
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ constants.F90
 
 dh_correction_module.o: \
                     ../include/dprec.fh\
@@ -19,7 +36,7 @@ dh_correction_module.o: \
 
 dh_correction_module.o:   dh_correction_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ dh_correction_module.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ dh_correction_module.F90
 
 elementOrbitalIndex.o: \
                     copyright.h\
@@ -29,7 +46,7 @@ elementOrbitalIndex.o: \
 
 elementOrbitalIndex.o:   elementOrbitalIndex.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ elementOrbitalIndex.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ elementOrbitalIndex.F90
 
 file_io_dat.o: \
                     files.h
@@ -37,7 +54,7 @@ file_io_dat.o: \
 
 file_io_dat.o:   file_io_dat.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ file_io_dat.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ file_io_dat.F90
 
 findmask.o: \
                     ../include/dprec.fh
@@ -45,15 +62,15 @@ findmask.o: \
 
 findmask.o:   findmask.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ findmask.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ findmask.F90
 
 mexit.o: \
-                    parallel.h
+                    copyright.h
 
 
 mexit.o:   mexit.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ mexit.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ mexit.F90
 
 MNDOChargeSeparation.o: \
                     ../include/dprec.fh\
@@ -64,7 +81,7 @@ MNDOChargeSeparation.o: \
 
 MNDOChargeSeparation.o:   MNDOChargeSeparation.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ MNDOChargeSeparation.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ MNDOChargeSeparation.F90
 
 nmlsrc.o: \
                     copyright.h
@@ -72,7 +89,7 @@ nmlsrc.o: \
 
 nmlsrc.o:   nmlsrc.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ nmlsrc.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ nmlsrc.F90
 
 opnq.o: \
                     copyright.h\
@@ -87,7 +104,7 @@ opnq.o: \
 
 opnq.o:   opnq.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ opnq.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ opnq.F90
 
 opnq_Edisp.o: \
                     copyright.h\
@@ -97,7 +114,7 @@ opnq_Edisp.o: \
 
 opnq_Edisp.o:   opnq_Edisp.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ opnq_Edisp.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ opnq_Edisp.F90
 
 opnq_Erep.o: \
                     copyright.h\
@@ -106,7 +123,7 @@ opnq_Erep.o: \
 
 opnq_Erep.o:   opnq_Erep.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ opnq_Erep.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ opnq_Erep.F90
 
 opnq_Evdw.o: \
                     copyright.h\
@@ -117,7 +134,7 @@ opnq_Evdw.o: \
 
 opnq_Evdw.o:   opnq_Evdw.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ opnq_Evdw.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ opnq_Evdw.F90
 
 opnq_SwitchMod.o: \
                     copyright.h\
@@ -126,7 +143,7 @@ opnq_SwitchMod.o: \
 
 opnq_SwitchMod.o:   opnq_SwitchMod.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ opnq_SwitchMod.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ opnq_SwitchMod.F90
 
 parameterReader.o: \
                     copyright.h\
@@ -137,7 +154,7 @@ parameterReader.o: \
 
 parameterReader.o:   parameterReader.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ parameterReader.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ parameterReader.F90
 
 qm2_allocate_e_repul.o: \
                     copyright.h\
@@ -147,7 +164,7 @@ qm2_allocate_e_repul.o: \
 
 qm2_allocate_e_repul.o:   qm2_allocate_e_repul.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_allocate_e_repul.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_allocate_e_repul.F90
 
 qm2_calc_charges.o: \
                     copyright.h\
@@ -157,7 +174,7 @@ qm2_calc_charges.o: \
 
 qm2_calc_charges.o:   qm2_calc_charges.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_calc_charges.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_calc_charges.F90
 
 qm2_calc_dipole.o: \
                     copyright.h\
@@ -168,7 +185,7 @@ qm2_calc_dipole.o: \
 
 qm2_calc_dipole.o:   qm2_calc_dipole.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_calc_dipole.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_calc_dipole.F90
 
 qm2_calc_rij_and_eqns.o: \
                     copyright.h\
@@ -181,7 +198,7 @@ qm2_calc_rij_and_eqns.o: \
 
 qm2_calc_rij_and_eqns.o:   qm2_calc_rij_and_eqns.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_calc_rij_and_eqns.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_calc_rij_and_eqns.F90
 
 qm2_core_core_repulsion.o: \
                     ../include/dprec.fh\
@@ -191,7 +208,7 @@ qm2_core_core_repulsion.o: \
 
 qm2_core_core_repulsion.o:   qm2_core_core_repulsion.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_core_core_repulsion.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_core_core_repulsion.F90
 
 qm2_core_core_repulsion_dxyz.o: \
                     ../include/dprec.fh\
@@ -201,7 +218,7 @@ qm2_core_core_repulsion_dxyz.o: \
 
 qm2_core_core_repulsion_dxyz.o:   qm2_core_core_repulsion_dxyz.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_core_core_repulsion_dxyz.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_core_core_repulsion_dxyz.F90
 
 qm2_dftb_3rd_order.o: \
                     ../include/dprec.fh\
@@ -213,7 +230,7 @@ qm2_dftb_3rd_order.o: \
 
 qm2_dftb_3rd_order.o:   qm2_dftb_3rd_order.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_3rd_order.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_3rd_order.F90
 
 qm2_dftb_broyden.o: \
                     ../include/dprec.fh\
@@ -224,7 +241,7 @@ qm2_dftb_broyden.o: \
 
 qm2_dftb_broyden.o:   qm2_dftb_broyden.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_broyden.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_broyden.F90
 
 qm2_dftb_cm3.o: \
                     ../include/dprec.fh\
@@ -234,7 +251,7 @@ qm2_dftb_cm3.o: \
 
 qm2_dftb_cm3.o:   qm2_dftb_cm3.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_cm3.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_cm3.F90
 
 qm2_dftb_dispersion_egr.o: \
                     ../include/dprec.fh\
@@ -245,7 +262,7 @@ qm2_dftb_dispersion_egr.o: \
 
 qm2_dftb_dispersion_egr.o:   qm2_dftb_dispersion_egr.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_dispersion_egr.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_dispersion_egr.F90
 
 qm2_dftb_dispersion_params.o: \
                     ../include/dprec.fh\
@@ -255,7 +272,7 @@ qm2_dftb_dispersion_params.o: \
 
 qm2_dftb_dispersion_params.o:   qm2_dftb_dispersion_params.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_dispersion_params.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_dispersion_params.F90
 
 qm2_dftb_dispersionread.o: \
                     ../include/dprec.fh\
@@ -266,7 +283,7 @@ qm2_dftb_dispersionread.o: \
 
 qm2_dftb_dispersionread.o:   qm2_dftb_dispersionread.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_dispersionread.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_dispersionread.F90
 
 qm2_dftb_energy.o: \
                     copyright.h\
@@ -279,7 +296,7 @@ qm2_dftb_energy.o: \
 
 qm2_dftb_energy.o:   qm2_dftb_energy.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_energy.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_energy.F90
 
 qm2_dftb_ewald.o: \
                     ../include/dprec.fh\
@@ -290,7 +307,7 @@ qm2_dftb_ewald.o: \
 
 qm2_dftb_ewald.o:   qm2_dftb_ewald.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_ewald.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_ewald.F90
 
 qm2_dftb_ewevge.o: \
                     ../include/dprec.fh\
@@ -299,7 +316,7 @@ qm2_dftb_ewevge.o: \
 
 qm2_dftb_ewevge.o:   qm2_dftb_ewevge.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_ewevge.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_ewevge.F90
 
 qm2_dftb_externalshift.o: \
                     ../include/dprec.fh\
@@ -309,7 +326,7 @@ qm2_dftb_externalshift.o: \
 
 qm2_dftb_externalshift.o:   qm2_dftb_externalshift.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_externalshift.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_externalshift.F90
 
 qm2_dftb_fermi.o: \
                     ../include/dprec.fh\
@@ -318,7 +335,7 @@ qm2_dftb_fermi.o: \
 
 qm2_dftb_fermi.o:   qm2_dftb_fermi.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_fermi.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_fermi.F90
 
 qm2_dftb_gamma.o: \
                     ../include/dprec.fh
@@ -326,7 +343,7 @@ qm2_dftb_gamma.o: \
 
 qm2_dftb_gamma.o:   qm2_dftb_gamma.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_gamma.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_gamma.F90
 
 qm2_dftb_gamma_dftb3.o: \
                     ../include/dprec.fh
@@ -334,7 +351,7 @@ qm2_dftb_gamma_dftb3.o: \
 
 qm2_dftb_gamma_dftb3.o:   qm2_dftb_gamma_dftb3.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_gamma_dftb3.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_gamma_dftb3.F90
 
 qm2_dftb_gammamat.o: \
                     ../include/dprec.fh\
@@ -343,7 +360,7 @@ qm2_dftb_gammamat.o: \
 
 qm2_dftb_gammamat.o:   qm2_dftb_gammamat.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_gammamat.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_gammamat.F90
 
 qm2_dftb_gb.o: \
                     ../include/dprec.fh\
@@ -354,7 +371,7 @@ qm2_dftb_gb.o: \
 
 qm2_dftb_gb.o:   qm2_dftb_gb.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_gb.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_gb.F90
 
 qm2_dftb_get_dftb3_parameters.o: \
                     ../include/dprec.fh\
@@ -364,7 +381,7 @@ qm2_dftb_get_dftb3_parameters.o: \
 
 qm2_dftb_get_dftb3_parameters.o:   qm2_dftb_get_dftb3_parameters.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_get_dftb3_parameters.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_get_dftb3_parameters.F90
 
 qm2_dftb_get_qm_forces.o: \
                     copyright.h\
@@ -377,7 +394,7 @@ qm2_dftb_get_qm_forces.o: \
 
 qm2_dftb_get_qm_forces.o:   qm2_dftb_get_qm_forces.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_get_qm_forces.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_get_qm_forces.F90
 
 qm2_dftb_get_qmmm_forces.o: \
                     ../include/dprec.fh\
@@ -387,7 +404,7 @@ qm2_dftb_get_qmmm_forces.o: \
 
 qm2_dftb_get_qmmm_forces.o:   qm2_dftb_get_qmmm_forces.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_get_qmmm_forces.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_get_qmmm_forces.F90
 
 qm2_dftb_gettab.o: \
                     ../include/dprec.fh\
@@ -396,7 +413,7 @@ qm2_dftb_gettab.o: \
 
 qm2_dftb_gettab.o:   qm2_dftb_gettab.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_gettab.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_gettab.F90
 
 qm2_dftb_load_params.o: \
                     copyright.h\
@@ -410,7 +427,7 @@ qm2_dftb_load_params.o: \
 
 qm2_dftb_load_params.o:   qm2_dftb_load_params.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_load_params.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_load_params.F90
 
 qm2_dftb_module.o: \
                     ../include/assert.fh\
@@ -420,7 +437,7 @@ qm2_dftb_module.o: \
 
 qm2_dftb_module.o:   qm2_dftb_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_module.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_module.F90
 
 qm2_dftb_mulliken.o: \
                     ../include/dprec.fh\
@@ -430,7 +447,7 @@ qm2_dftb_mulliken.o: \
 
 qm2_dftb_mulliken.o:   qm2_dftb_mulliken.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_mulliken.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_mulliken.F90
 
 qm2_dftb_read_cm3.o: \
                     ../include/dprec.fh\
@@ -439,7 +456,7 @@ qm2_dftb_read_cm3.o: \
 
 qm2_dftb_read_cm3.o:   qm2_dftb_read_cm3.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_read_cm3.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_read_cm3.F90
 
 qm2_dftb_repulsiv.o: \
                     ../include/dprec.fh\
@@ -449,7 +466,7 @@ qm2_dftb_repulsiv.o: \
 
 qm2_dftb_repulsiv.o:   qm2_dftb_repulsiv.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_repulsiv.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_repulsiv.F90
 
 qm2_dftb_scf.o: \
                     copyright.h\
@@ -464,7 +481,7 @@ qm2_dftb_scf.o: \
 
 qm2_dftb_scf.o:   qm2_dftb_scf.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_scf.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_scf.F90
 
 qm2_dftb_scf.SQM.o: \
                     copyright.h\
@@ -478,7 +495,7 @@ qm2_dftb_scf.SQM.o: \
 
 qm2_dftb_scf.SQM.o:   qm2_dftb_scf.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -DSQM -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_scf.F90
+	$(VB)$(FC) -DSQM -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_scf.F90
 
 qm2_dftb_self.o: \
                     ../include/dprec.fh
@@ -486,7 +503,7 @@ qm2_dftb_self.o: \
 
 qm2_dftb_self.o:   qm2_dftb_self.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_self.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_self.F90
 
 qm2_dftb_shift.o: \
                     ../include/dprec.fh\
@@ -496,7 +513,7 @@ qm2_dftb_shift.o: \
 
 qm2_dftb_shift.o:   qm2_dftb_shift.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_shift.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_shift.F90
 
 qm2_dftb_skpar.o: \
                     ../include/dprec.fh\
@@ -505,7 +522,7 @@ qm2_dftb_skpar.o: \
 
 qm2_dftb_skpar.o:   qm2_dftb_skpar.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_skpar.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_skpar.F90
 
 qm2_dftb_slkode.o: \
                     ../include/dprec.fh\
@@ -515,7 +532,7 @@ qm2_dftb_slkode.o: \
 
 qm2_dftb_slkode.o:   qm2_dftb_slkode.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_slkode.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_slkode.F90
 
 qm2_dftb_slktrafo.o: \
                     ../include/dprec.fh
@@ -523,7 +540,7 @@ qm2_dftb_slktrafo.o: \
 
 qm2_dftb_slktrafo.o:   qm2_dftb_slktrafo.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dftb_slktrafo.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dftb_slktrafo.F90
 
 qm2_diagonalizer_module.o: \
                     copyright.h\
@@ -535,7 +552,7 @@ qm2_diagonalizer_module.o: \
 
 qm2_diagonalizer_module.o:   qm2_diagonalizer_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_diagonalizer_module.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_diagonalizer_module.F90
 
 qm2_dihed.o: \
                     copyright.h\
@@ -544,7 +561,7 @@ qm2_dihed.o: \
 
 qm2_dihed.o:   qm2_dihed.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_dihed.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_dihed.F90
 
 qm2_energy.o: \
                     copyright.h\
@@ -558,7 +575,7 @@ qm2_energy.o: \
 
 qm2_energy.o:   qm2_energy.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_energy.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_energy.F90
 
 qm2_energy.SQM.o: \
                     copyright.h\
@@ -571,7 +588,7 @@ qm2_energy.SQM.o: \
 
 qm2_energy.SQM.o:   qm2_energy.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -DSQM -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_energy.F90
+	$(VB)$(FC) -DSQM -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_energy.F90
 
 qm2_fock.o: \
                     copyright.h\
@@ -582,7 +599,7 @@ qm2_fock.o: \
 
 qm2_fock.o:   qm2_fock.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_fock.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_fock.F90
 
 qm2_fock_d.o: \
                     copyright.h\
@@ -595,7 +612,7 @@ qm2_fock_d.o: \
 
 qm2_fock_d.o:   qm2_fock_d.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_fock_d.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_fock_d.F90
 
 qm2_fock_predict.o: \
                     copyright.h\
@@ -605,7 +622,7 @@ qm2_fock_predict.o: \
 
 qm2_fock_predict.o:   qm2_fock_predict.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_fock_predict.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_fock_predict.F90
 
 qm2_get_qm_forces.o: \
                     copyright.h\
@@ -621,7 +638,7 @@ qm2_get_qm_forces.o: \
 
 qm2_get_qm_forces.o:   qm2_get_qm_forces.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_get_qm_forces.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_get_qm_forces.F90
 
 qm2_get_qmmm_forces.o: \
                     copyright.h\
@@ -636,7 +653,7 @@ qm2_get_qmmm_forces.o: \
 
 qm2_get_qmmm_forces.o:   qm2_get_qmmm_forces.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_get_qmmm_forces.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_get_qmmm_forces.F90
 
 qm2_h1elec.o: \
                     copyright.h\
@@ -649,7 +666,7 @@ qm2_h1elec.o: \
 
 qm2_h1elec.o:   qm2_h1elec.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_h1elec.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_h1elec.F90
 
 qm2_h1elec_d.o: \
                     copyright.h\
@@ -664,7 +681,7 @@ qm2_h1elec_d.o: \
 
 qm2_h1elec_d.o:   qm2_h1elec_d.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_h1elec_d.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_h1elec_d.F90
 
 qm2_hcore_qmmm.o: \
                     copyright.h\
@@ -677,7 +694,7 @@ qm2_hcore_qmmm.o: \
 
 qm2_hcore_qmmm.o:   qm2_hcore_qmmm.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_hcore_qmmm.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_hcore_qmmm.F90
 
 qm2_hcore_qmqm.o: \
                     copyright.h\
@@ -690,7 +707,7 @@ qm2_hcore_qmqm.o: \
 
 qm2_hcore_qmqm.o:   qm2_hcore_qmqm.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_hcore_qmqm.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_hcore_qmqm.F90
 
 qm2_identify_peptide_links.o: \
                     copyright.h\
@@ -701,7 +718,7 @@ qm2_identify_peptide_links.o: \
 
 qm2_identify_peptide_links.o:   qm2_identify_peptide_links.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_identify_peptide_links.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_identify_peptide_links.F90
 
 qm2_iterator_mod.o: \
                     qmmm_module.o
@@ -709,7 +726,7 @@ qm2_iterator_mod.o: \
 
 qm2_iterator_mod.o:   qm2_iterator_mod.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_iterator_mod.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_iterator_mod.F90
 
 qm2_load_params_and_allocate.o: \
                     copyright.h\
@@ -726,7 +743,7 @@ qm2_load_params_and_allocate.o: \
 
 qm2_load_params_and_allocate.o:   qm2_load_params_and_allocate.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_load_params_and_allocate.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_load_params_and_allocate.F90
 
 qm2_parameters.o: \
                     copyright.h\
@@ -740,7 +757,7 @@ qm2_parameters.o: \
 
 qm2_parameters.o:   qm2_parameters.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_parameters.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_parameters.F90
 
 qm2_params_module.o: \
                     copyright.h\
@@ -753,7 +770,7 @@ qm2_params_module.o: \
 
 qm2_params_module.o:   qm2_params_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_params_module.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_params_module.F90
 
 qm2_pm6_hof_module.o: \
                     ../include/dprec.fh\
@@ -763,7 +780,7 @@ qm2_pm6_hof_module.o: \
 
 qm2_pm6_hof_module.o:   qm2_pm6_hof_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_pm6_hof_module.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_pm6_hof_module.F90
 
 qm2_print_bondorders.o: \
                     copyright.h\
@@ -774,7 +791,7 @@ qm2_print_bondorders.o: \
 
 qm2_print_bondorders.o:   qm2_print_bondorders.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_print_bondorders.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_print_bondorders.F90
 
 qm2_print_charges.o: \
                     copyright.h\
@@ -784,7 +801,7 @@ qm2_print_charges.o: \
 
 qm2_print_charges.o:   qm2_print_charges.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_print_charges.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_print_charges.F90
 
 qm2_print_energy.o: \
                     copyright.h\
@@ -796,7 +813,7 @@ qm2_print_energy.o: \
 
 qm2_print_energy.o:   qm2_print_energy.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_print_energy.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_print_energy.F90
 
 qm2_read_nm_and_alloc.o: \
                     copyright.h\
@@ -814,7 +831,7 @@ qm2_read_nm_and_alloc.o: \
 
 qm2_read_nm_and_alloc.o:   qm2_read_nm_and_alloc.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_read_nm_and_alloc.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_read_nm_and_alloc.F90
 
 qm2_read_nm_and_alloc.SQM.o: \
                     copyright.h\
@@ -831,7 +848,7 @@ qm2_read_nm_and_alloc.SQM.o: \
 
 qm2_read_nm_and_alloc.SQM.o:   qm2_read_nm_and_alloc.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -DSQM -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_read_nm_and_alloc.F90
+	$(VB)$(FC) -DSQM -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_read_nm_and_alloc.F90
 
 qm2_repp.o: \
                     copyright.h\
@@ -842,7 +859,7 @@ qm2_repp.o: \
 
 qm2_repp.o:   qm2_repp.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_repp.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_repp.F90
 
 qm2_repp_d.o: \
                     copyright.h\
@@ -854,7 +871,7 @@ qm2_repp_d.o: \
 
 qm2_repp_d.o:   qm2_repp_d.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_repp_d.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_repp_d.F90
 
 qm2_rotate_qmqm.o: \
                     copyright.h\
@@ -865,7 +882,7 @@ qm2_rotate_qmqm.o: \
 
 qm2_rotate_qmqm.o:   qm2_rotate_qmqm.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_rotate_qmqm.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_rotate_qmqm.F90
 
 qm2_scf.o: \
                     copyright.h\
@@ -882,7 +899,7 @@ qm2_scf.o: \
 
 qm2_scf.o:   qm2_scf.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_scf.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_scf.F90
 
 qm2_scf.SQM.o: \
                     copyright.h\
@@ -898,7 +915,7 @@ qm2_scf.SQM.o: \
 
 qm2_scf.SQM.o:   qm2_scf.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -DSQM -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_scf.F90
+	$(VB)$(FC) -DSQM -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_scf.F90
 
 qm2_setup_orb_exp.o: \
                     copyright.h\
@@ -911,7 +928,7 @@ qm2_setup_orb_exp.o: \
 
 qm2_setup_orb_exp.o:   qm2_setup_orb_exp.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_setup_orb_exp.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_setup_orb_exp.F90
 
 qm2_smallest_number.o: \
                     copyright.h\
@@ -920,7 +937,7 @@ qm2_smallest_number.o: \
 
 qm2_smallest_number.o:   qm2_smallest_number.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_smallest_number.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_smallest_number.F90
 
 qm2_transf_roothaan_diag.o: \
                     qmmm_module.o
@@ -928,7 +945,7 @@ qm2_transf_roothaan_diag.o: \
 
 qm2_transf_roothaan_diag.o:   qm2_transf_roothaan_diag.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm2_transf_roothaan_diag.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_transf_roothaan_diag.F90
 
 qm_assign_atom_types.o: \
                     copyright.h\
@@ -939,7 +956,7 @@ qm_assign_atom_types.o: \
 
 qm_assign_atom_types.o:   qm_assign_atom_types.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm_assign_atom_types.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_assign_atom_types.F90
 
 qm_gb.o: \
                     copyright.h\
@@ -952,7 +969,7 @@ qm_gb.o: \
 
 qm_gb.o:   qm_gb.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm_gb.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_gb.F90
 
 qm_link_atoms.o: \
                     copyright.h\
@@ -965,7 +982,7 @@ qm_link_atoms.o: \
 
 qm_link_atoms.o:   qm_link_atoms.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm_link_atoms.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_link_atoms.F90
 
 qm_print_info.o: \
                     copyright.h\
@@ -981,7 +998,7 @@ qm_print_info.o: \
 
 qm_print_info.o:   qm_print_info.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm_print_info.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_print_info.F90
 
 qm_print_info.SQM.o: \
                     copyright.h\
@@ -996,7 +1013,7 @@ qm_print_info.SQM.o: \
 
 qm_print_info.SQM.o:   qm_print_info.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -DSQM -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm_print_info.F90
+	$(VB)$(FC) -DSQM -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_print_info.F90
 
 qm_zero_charges.o: \
                     copyright.h\
@@ -1008,7 +1025,7 @@ qm_zero_charges.o: \
 
 qm_zero_charges.o:   qm_zero_charges.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qm_zero_charges.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_zero_charges.F90
 
 qmmm_module.o: \
                     copyright.h\
@@ -1025,7 +1042,7 @@ qmmm_module.o: \
 
 qmmm_module.o:   qmmm_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qmmm_module.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qmmm_module.F90
 
 qmmm_nml_module.o: \
                     copyright.h\
@@ -1037,7 +1054,7 @@ qmmm_nml_module.o: \
 
 qmmm_nml_module.o:   qmmm_nml_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qmmm_nml_module.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qmmm_nml_module.F90
 
 qmmm_qmtheorymodule.o: \
                     constants.o\
@@ -1047,7 +1064,7 @@ qmmm_qmtheorymodule.o: \
 
 qmmm_qmtheorymodule.o:   qmmm_qmtheorymodule.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qmmm_qmtheorymodule.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qmmm_qmtheorymodule.F90
 
 qmmm_struct_module.o: \
                     copyright.h\
@@ -1059,7 +1076,7 @@ qmmm_struct_module.o: \
 
 qmmm_struct_module.o:   qmmm_struct_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qmmm_struct_module.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qmmm_struct_module.F90
 
 qmmm_vsolv_module.o: \
                     copyright.h\
@@ -1071,7 +1088,7 @@ qmmm_vsolv_module.o: \
 
 qmmm_vsolv_module.o:   qmmm_vsolv_module.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ qmmm_vsolv_module.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qmmm_vsolv_module.F90
 
 rotation.o: \
                     copyright.h\
@@ -1082,7 +1099,7 @@ rotation.o: \
 
 rotation.o:   rotation.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ rotation.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ rotation.F90
 
 slater_overlap.o: \
                     ../include/dprec.fh\
@@ -1091,7 +1108,7 @@ slater_overlap.o: \
 
 slater_overlap.o:   slater_overlap.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ slater_overlap.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ slater_overlap.F90
 
 sqm.o: \
                     copyright.h\
@@ -1108,7 +1125,7 @@ sqm.o: \
 
 sqm.o:   sqm.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ sqm.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ sqm.F90
 
 sqm.SQM.o: \
                     copyright.h\
@@ -1124,12 +1141,12 @@ sqm.SQM.o: \
 
 sqm.SQM.o:   sqm.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -DSQM -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ sqm.F90
+	$(VB)$(FC) -DSQM -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ sqm.F90
 
 
 timer_dummy.o:   timer_dummy.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ timer_dummy.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ timer_dummy.F90
 
 utilitiesModule.o: \
                     copyright.h\
@@ -1138,7 +1155,7 @@ utilitiesModule.o: \
 
 utilitiesModule.o:   utilitiesModule.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ utilitiesModule.F90
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ utilitiesModule.F90
 
 xmin.o: \
                     ../include/assert.fh\
@@ -1149,9 +1166,5 @@ xmin.o: \
 
 xmin.o:   xmin.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ xmin.F90
-
-constants.o: ../msander/constants.F90
-	@echo '[SQM]  FC $<'
-	$(VB)$(FC) $(FWARNFLAGS) $(FPPFLAGS) -c $(FOPTFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o constants.o ../msander/constants.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ xmin.F90
 

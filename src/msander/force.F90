@@ -47,7 +47,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 #  endif /* MPI */
 #else
   use genborn
-  use qmmm_module, only: qmmm_struct, qm2_struct
 #endif /* LES */
 #ifdef MPI
   use softcore, only: sc_ener
@@ -57,7 +56,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 #endif /* LES && MPI */
   use sander_rism_interface, only: rismprm, rism_force
   use stack
-  use qmmm_module, only : qmmm_nml
   use constants, only: zero, one
   use relax_mat
   use ew_recip
@@ -210,26 +208,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
   iend = natom
 #endif /* MPI */
 
-  ! QM/MM variable QM solvent scheme
-  if (qmmm_nml%ifqnt .and. qmmm_nml%vsolv > 0) then
-    call timer_start(TIME_QMMM)
-    call timer_start(TIME_QMMMVARIABLESOLVCALC)
-
-    ! For the moment this is NOT parallel: all threads need to call this.
-    call qmmm_vsolv_update(nstep, natom, qsetup, xx(l15), x,  &
-                           nbonh, nbona, ntheth, ntheta, nphih, nphia, &
-                           ix(iibh), ix(ijbh), ix(iicbh), &
-                           ix(iiba), ix(ijba), ix(iicba), &
-                           ix(i24), ix(i26), ix(i28), ix(i30), &
-                           ix(i32), ix(i34), ix(i36), ix(i38), &
-                           ix(i40), ix(i42), ix(i44), ix(i46), &
-                           ix(i48), ix(i50), ix(i52), ix(i54), &
-                           ix(i56), ix(i58), ix(ibellygp))
-    call timer_stop(TIME_QMMMVARIABLESOLVCALC)
-    call timer_stop(TIME_QMMM)
-  end if 
-  ! End QM/MM variable QM solvent scheme
-
   ! Zero out the energies and forces
   enoe = 0.d0
   aveper = 0.d0
@@ -288,14 +266,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
     call timer_start(TIME_EGB)
     call timer_start(TIME_GBRAD1)
 
-    ! In QM/MM, this will calculate us the radii for the link atoms
-    ! and not the MM link pair atoms.  The initial radii used are
-    ! those of the mm link pair's atom type though.  The MM link
-    ! pair atoms must be the coordinates of the link atoms here.
-    if (qmmm_nml%ifqnt) then
-      call adj_mm_link_pair_crd(x)
-    end if
-
 #ifdef LES
 #  ifdef MPI
     call egb_calc_radii(igb, natom, x, fs, reff, onereff, fsmax, rgbmax, &
@@ -321,43 +291,11 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
                         xx(l2402), xx(l2403), xx(l2404))
 #  endif
 #endif
-    if (qmmm_nml%ifqnt) then
-      call rst_mm_link_pair_crd(x)
-    end if
     call timer_stop(TIME_GBRAD1)
     call timer_stop(TIME_EGB)
   end if
   ! End EGB
  
-  ! QM/MM Contributions are now calculated before the NON-Bond info.
-  if (qmmm_nml%ifqnt) then
-
-    ! If we are doing periodic boundaries with QM/MM PME then we need to
-    ! do the PME calculation twice. First here to get the potential at
-    ! each QM atom due to the PME and then again after all the QM is done
-    ! to get the MM-MM potential and all of the gradients.
-    if (qmmm_nml%qm_pme) then
-      ! Ewald force will put the potential into the qm_ewald%mmpot array.
-      call timer_start(TIME_EWALD)
-      call ewald_force(x, natom, ix(i04), ix(i06), xx(l15), cn1, cn2, cn6, &
-                       eelt, epolar, f, xx, ix, ipairs, virvsene, &
-                       xx(lpol), &
-                       xx(lpol2), .true., cn3, cn4, cn5 )
-      call timer_stop(TIME_EWALD)
-    endif
-
-    call timer_start(TIME_QMMM)
-#ifndef LES
-    call qm_mm(x, natom, qmmm_struct%scaled_mm_charges, f, escf, periodic, &
-               reff, onereff, intdiel, extdiel, Arad, cut, &
-               qm2_struct%scf_mchg, ntypes, ih(m04), ih(m06), xx(lmass), &
-               ix(i04), nstep)
-    pot%scf = escf
-#endif
-    call timer_stop(TIME_QMMM)
-  end if
-  !END qm/mm contributions, triggered by ifqnt in the qmmm_nml namelist
-
   ! Calculate the non-bonded contributions
   call timer_start(TIME_NONBON)
 

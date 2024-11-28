@@ -1,0 +1,80 @@
+#!/usr/bin/env perl -n
+
+#  line-by-line modification of PDB files; acts as a filter
+#    (see add_chainId for more complex manipulations)
+
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+if ($chainId eq ' ' ){    # PDB standard says chainId's cannot be blank
+    if ($chain < 26){ 
+       $chainId = chr($chain + 65); 
+    } elsif ($chain < 51) { 
+       $chainId = chr($chain + 71);
+    } else {
+       $chainId = 'z';
+    }
+}
+
+#
+#  do modifications necessary here:
+#
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} elsif( $_ =~ /^ANISOU/){
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+    $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x a7 a7 a7 a7 a7 a7 x6 a2 a2",$_);
+
+if ($chainId eq ' ' ){    # PDB standard says chainId's cannot be blank
+    if ($chain < 26){ 
+       $chainId = chr($chain + 65); 
+    } elsif ($chain < 51) { 
+       $chainId = chr($chain + 71);
+    } else {
+       $chainId = 'z';
+    }
+}
+
+#
+#  do modifications necessary here:
+#
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s %7s%7s%7s%7s%7s%7s      %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge;
+
+} elsif( $_ =~ /^TER/){
+
+   $chain++;
+   print;
+  
+} else {
+   print;
+}

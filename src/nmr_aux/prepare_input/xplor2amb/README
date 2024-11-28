@@ -1,0 +1,6 @@
+Some simple scripts to convert xplor-type NMR restraints to Amber 8-column
+format.
+
+cnvx     converts standard distance restraints
+cnvpx    converts pseudo-atom distance restraints (not tested recently)
+cnvdx    converts dihedral restraints

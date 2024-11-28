@@ -3,10 +3,10 @@
           MSANDER                                      2021
           -------------------------------------------------------
 
-| Run on 11/24/2022 at 13:39:13
+| Run on 11/28/2024 at 11:24:03
 
 |   Executable path: ../../bin/msander
-| Working directory: /home/case/msander_intel/test/rdc
+| Working directory: /home/case/AmberClassic/test/rdc
 |          Hostname: Unknown
   [-O]verwriting output
 
@@ -27,9 +27,9 @@ File Assignments:
 |RSTDIP: rstdip                                                                
 |INPTRA: inptraj                                                               
 
- 
+
  Here is the input file:
- 
+
   test of distance, angle, restraints for a DNA duplex                         
  &cntrl                                                                        
     pencut=0.05, nmropt=1,                                                     
@@ -133,8 +133,8 @@ NMR refinement options:
   DISANG    = RST.allang
  Restraints will be read from file: RST.allang
 Here are comments from the DISANG input file:
-#                                                                               
-#   1  GUA H1'      1  GUA H3'           4.6                                    
+#                                                                                                                                                                                                                                                               
+#   1  GUA H1'      1  GUA H3'           4.6                                                                                                                                                                                                                    
 
                        Number of restraints read =   793
 
@@ -142,6 +142,8 @@ Here are comments from the DISANG input file:
 
 
  Number of triangulated 3-point waters found:        0
+
+     Sum of charges from parm topology file =     -18.0000
 
 --------------------------------------------------------------------------------
    4.  RESULTS
@@ -542,16 +544,16 @@ Here are comments from the DISANG input file:
    5.  TIMINGS
 --------------------------------------------------------------------------------
 
-|                Calc gb radii              0.07 (27.82% of Gen B)
-|                Calc gb diag               0.12 (48.21% of Gen B)
-|                Calc gb off-diag           0.06 (23.97% of Gen B)
-|             Gen Born time              0.26 (100.0% of Nonbo)
-|          Nonbond force              0.26 (97.35% of Force)
-|          Bond/Angle/Dihedral        0.01 ( 2.12% of Force)
-|       Force time                 0.26 (98.88% of Runmd)
-|    Runmd Time                 0.27 (90.67% of Total)
-|    Other                      0.03 ( 9.19% of Total)
-| Total time                 0.29 (100.0% of ALL  )
+|                Calc gb radii              0.06 (28.28% of Gen B)
+|                Calc gb diag               0.10 (48.48% of Gen B)
+|                Calc gb off-diag           0.05 (23.23% of Gen B)
+|             Gen Born time              0.20 (100.0% of Nonbo)
+|          Nonbond force              0.20 (96.59% of Force)
+|          Bond/Angle/Dihedral        0.00 ( 2.44% of Force)
+|       Force time                 0.20 (98.56% of Runmd)
+|    Runmd Time                 0.21 (92.44% of Total)
+|    Other                      0.02 ( 7.56% of Total)
+| Total time                 0.23 (100.0% of ALL  )
 
 | Number of list builds   :          0
 
@@ -561,11 +563,11 @@ Here are comments from the DISANG input file:
 | Final Performance Info:
 | -----------------------------------------------------
 | Average timings for all steps:
-|     Elapsed(s) =       0.27 Per Step(ms) =       8.91
-|         ns/day =       9.69   seconds/ns =    8913.33
+|     Elapsed(s) =       0.21 Per Step(ms) =       6.93
+|         ns/day =      12.46   seconds/ns =    6933.33
 | -----------------------------------------------------
 
-|           Job began  at 13:39:13.184  on 11/24/2022
-|           Setup done at 13:39:13.211  on 11/24/2022
-|           Run   done at 13:39:13.479  on 11/24/2022
+|           Job began  at 11:24:03.170  on 11/28/2024
+|           Setup done at 11:24:03.187  on 11/28/2024
+|           Run   done at 11:24:03.394  on 11/28/2024
 |     wallclock() was called     659 times

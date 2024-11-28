@@ -1,0 +1,134 @@
+
+          -------------------------------------------------------
+          GBNSR6 2015                       
+          -------------------------------------------------------
+
+| Run on 03/05/2015 at 18:04:31
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: mdin                                                                  
+| MDOUT: undecan_2_one.chagb.out                                               
+|INPCRD: undecan_2_one.inpcrd                                                  
+|  PARM: undecan_2_one.prmtop                                                  
+|
+
+ Here is the input file:
+
+ test, compute solvation energy with gbnsr6                                    
+ &cntrl                                                                        
+   inp=1                                                                       
+ /                                                                             
+ &gb                                                                           
+   epsin=1.0, epsout=78.5, istrng=0, dprob=1.4, space=0.4,                     
+   arcres=0.2, B=0, alpb=1, rbornstat=1, cavity_surften=0.005,                 
+   chagb=1                                                                     
+ /                                                                             
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+| New format PARM file being parsed.
+| Version =    1.000 Date = 03/27/08 Time = 09:10:04
+ NATOM  =      34 NTYPES =       4 NBONH =      22 MBONA  =      11
+ NTHETH =      52 MTHETA =      11 NPHIH =      80 MPHIA  =      22
+ NHPARM =       0 NPARM  =       0 NNB   =     182 NRES   =       1
+ NBONA  =      11 NTHETA =      11 NPHIA =      22 NUMBND =       4
+ NUMANG =       7 NPTRA  =      10 NATYP =       4 NPHB   =       0
+ IFBOX  =       0 NMXRS  =      34 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+
+|     Memory Use     Allocated
+|     Real                1296
+|     Hollerith            207
+|     Integer            19427
+|     Max Pairs              1
+|     Max Rstack             1
+|     Max Istack             1
+|       Total               86 kbytes
+
+| Note: 1-4 EEL scale factors were NOT found in the topology file.
+|       Using default value of 1.2.
+
+--------------------------------------------------------------------------------
+   2.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+*****                                                                           
+ begin time read from input coords =     0.000 ps
+
+ Number of triangulated 3-point waters found:        0
+
+--------------------------------------------------------------------------------
+   3.  RESULTS
+--------------------------------------------------------------------------------
+
+Print:    Atom number      Inverse Effective Born Radii
+rinv           1            0.37613134
+rinv           2            0.42869681
+rinv           3            0.43297884
+rinv           4            0.38613293
+rinv           5            0.40027221
+rinv           6            0.38035394
+rinv           7            0.38858904
+rinv           8            0.38807527
+rinv           9            0.38780673
+rinv          10            0.38701026
+rinv          11            0.38686123
+rinv          12            0.45268943
+rinv          13            0.62257927
+rinv          14            0.62138016
+rinv          15            0.62529415
+rinv          16            0.62312679
+rinv          17            0.62837848
+rinv          18            0.63421910
+rinv          19            0.60855167
+rinv          20            0.60663999
+rinv          21            0.61588568
+rinv          22            0.61924195
+rinv          23            0.59674551
+rinv          24            0.59566785
+rinv          25            0.60809183
+rinv          26            0.60711267
+rinv          27            0.61144574
+rinv          28            0.60639654
+rinv          29            0.60586038
+rinv          30            0.60967222
+rinv          31            0.60606776
+rinv          32            0.60320743
+rinv          33            0.60697213
+rinv          34            0.61191643
+
+ Cavity solvation energy      2.3430
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =       -18.1416  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =       -15.3212  VDWAALS    =         0.0000
+ EELEC  =         1.1772  EGB     =        -6.3407  RESTRAINT  =         0.0000
+ ESURF  =         2.3430
+ ------------------------------------------------------------------------------
+
+
+
+  Maximum number of minimization cycles reached.
+
+
+                    FINAL RESULTS
+
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =       -18.1416  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =       -15.3212  VDWAALS    =         0.0000
+ EELEC  =         1.1772  EGB     =        -6.3407  RESTRAINT  =         0.0000
+ ESURF  =         2.3430
+ ------------------------------------------------------------------------------
+
+|           Job began  at 18:04:31.344  on 03/05/2015
+|           Setup done at 18:04:31.346  on 03/05/2015
+|           Run   done at 18:04:31.359  on 03/05/2015
+|     wallclock() was called      72 times

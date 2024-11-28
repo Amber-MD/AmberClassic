@@ -1,0 +1,19 @@
+#!/bin/csh -f
+
+# find out the correspondence of atom names between SAH_XRAY.pdb and SAH.prepi 
+
+"$AMBERHOME/bin/antechamber" -fi ac -fo prepi -i SAH.ac -o SAH.prepi -rn SAH
+$AMBERHOME/bin/match_atomname -i SAH.prepi -fi prepi -o SAH_matched.prepi -r SAH_XRAY.pdb -fr pdb
+"$AMBERHOME/bin/parmchk" -i SAH_matched.prepi -f prepi -o SAH.frcmod || goto error
+"$AMBERHOME/bin/tleap" -s -f leap.in > leap.out
+
+../../dacdif -a 5.5e-3 SAH.frcmod.save SAH.frcmod
+../../dacdif -a 5.5e-3 SAH_matched.prepi.save SAH_matched.prepi 
+../../dacdif -a 5.5e-3 SAH.prmtop.save SAH.prmtop
+
+/bin/rm -f ANTE* ATOMTYPE.INF BCCTYPE.INF FOR* NEWPDB.PDB PREP.INF 
+exit(0)
+
+error:
+echo "  ${0}:  Program error"
+exit(1)

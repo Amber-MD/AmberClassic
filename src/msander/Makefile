@@ -5,7 +5,7 @@ SHELL=/bin/sh
 VPATH=
 
 # Add search paths for .mod files
-LOCALFLAGS = $(CUDAFFLAGS) -I../sqm -I../rism -I../xray 
+LOCALFLAGS = $(CUDAFFLAGS) -I../rism -I../xray 
 
 NFE_OBJECTS = \
     nfe-abmd-hooks.o nfe-bbmd-ctxt.o nfe-bbmd-hooks.o  \
@@ -23,17 +23,6 @@ NFE_OBJECTS = \
 	nfe-cv-QUATERNION0.o nfe-cv-QUATERNION1.o nfe-cv-QUATERNION2.o \
 	nfe-cv-QUATERNION3.o nfe-cv-SPINANGLE.o nfe-cv-TILT.o
 
-QMOBJ= \
-    qm_ewald.o qmmm_vsolv.o \
-    qm2_extern_util_module.o qm2_extern_module.o \
-    qm2_extern_adf_module.o qm2_read_adf_results.o KFReader.o \
-    ArrayList.o qm2_extern_gms_module.o qm2_extern_tc_module.o \
-    qm2_extern_gau_module.o qm2_extern_orc_module.o \
-    qm2_extern_nw_module.o qm2_extern_qc_module.o qm2_extern_mrcc_module.o \
-    qm2_extern_genmpi_module.o tcpb_module.o \
-    qm2_extern_quick_module.o  qm2_extern_reaxff_puremd_module.o \
-    qmmm_adaptive_module.o prn_qmmm_dipole.o
-
 MMOBJ = \
     align.o AmberNetcdf.o amopen.o assert.o \
     barostats.o binrestart.o bintraj.o charmm.o \
@@ -49,13 +38,13 @@ MMOBJ = \
     mexit.o minrit.o molecule.o mtmdcall.o multisander.o \
     multitmd.o music_module.o new_time.o nmlsrc.o nmrcal.o \
     nmr.o nonbond_list.o parallel.o parms.o pcshift.o \
-    pearsn.o printe.o qm_mm.o quench.o rand2.o \
+    pearsn.o printe.o quench.o rand2.o \
     random.o rattle.o rdparm.o relax_mat.o \
     remd.o rfree.o rgroup.o rmsgrd.o runmd.o \
-    sander_lib.o sander.o set.o \
+    sander_lib.o sander.o set.o get_atomic_number.o utilitiesModule.o \
     sglds.o shake.o $(SHORT_ENE) softcore.o \
     stack.o state.o thermo_int.o trajene.o \
-    wallclock.o xminC.o veclib.o dsarpack.o nxtsec.o
+    wallclock.o xminC.o veclib.o dsarpack.o nxtsec.o sinr_t.o
 
 LESOBJ= \
     align.o AmberNetcdf.o amopen.o \
@@ -66,20 +55,20 @@ LESOBJ= \
     erfcfun.o ew_box.LES.o ew_bspline.o \
     ew_fft.o ew_force.LES.o ew_recip.LES.o ew_setup.LES.o \
     extra_pts.LES.o fastwt.o file_io_dat.o findmask.o force.LES.o \
-    getcor.LES.o icosasurf.o iwrap2.o \
+    get_atomic_number.o utilitiesModule.o getcor.LES.o icosasurf.o iwrap2.o \
     les.o linear_response.o lmodC.o lmod.LES.o locmem.LES.o \
     matinv.o mbar.o mdfil.LES.o mdread.LES.o md_scheme.LES.o \
     mdwrit.LES.o memory_module.o mexit.o minrit.LES.o molecule.o \
     mtmdcall.o multisander.LES.o multitmd.o music_module.o new_time.o \
     nmlsrc.o nmrcal.o nmr.LES.o nonbond_list.LES.o parallel.LES.o \
     parms.o pcshift.o pearsn.o printe.o \
-    qm_mm.LES.o quench.o rand2.o random.o \
+    quench.o rand2.o random.o \
     rattle.o rdparm.LES.o relax_mat.o remd.LES.o \
     rfree.o rgroup.o rmsgrd.o runmd.LES.o \
     sander.LES.o  sander_lib.o set.LES.o sglds.o \
     shake.o short_ene.LES.o softcore.o \
     stack.o state.o thermo_int.o trajene.o wallclock.o \
-    xminC.o veclib.o dsarpack.o nxtsec.o
+    xminC.o veclib.o dsarpack.o nxtsec.o sinr_t.o
 
 XRAY_OBJS = \
    xray_globals.o xray_interface.o xray_interface_impl_cpu.o \
@@ -96,31 +85,31 @@ msander.cuda$(SFX): $(BINDIR)/msander.cuda$(SFX)
 dummy:
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander$(SFX): libs $(MMOBJ) $(QMOBJ) \
+$(BINDIR)/msander$(SFX): libs $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) $(PLUMED_DEPENDENCIES) \
          dummy
 	@echo "[MSANDER]  FC $@"
-	$(VB)$(FC) $(FFLAGS) -o $@  $(MMOBJ) $(QMOBJ) \
+	$(VB)$(FC) $(FFLAGS) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) $(QMOBJ) \
+$(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
-	$(VB)$(FC) -o $@  $(MMOBJ) $(QMOBJ) \
+	$(VB)$(FC) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
          -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
          -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) $(QMOBJ) \
+$(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
-	$(VB)$(FC) $(FFLAGS) -o $@ $(LESOBJ) $(QMOBJ) \
+	$(VB)$(FC) $(FFLAGS) -o $@ $(LESOBJ) \
 	     $(XRAY_OBJS) $(NFE_OBJECTS) -L$(LIBDIR) $(NETCDFLIBF) \
 	     $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
@@ -134,9 +123,8 @@ libs:
 	$(VB)cd ../blas && $(MAKE) $(BLAS)
 	$(VB)cd ../lapack && $(MAKE) $(LAPACK)
 	$(VB)cd ../arpack && $(MAKE) $(ARPACK)
-	$(VB)cd ../sqm && $(MAKE) libsqm
 	$(VB)$(MAKE) binrestart.o    # needed by rism_io 
-	$(VB)cd ../rism && $(MAKE) $(RISM)
+	$(VB)cd ../rism && $(MAKE) librism
 	$(VB)cd ../xray && $(MAKE) libxray
     
 lib_cuda:
@@ -156,18 +144,6 @@ lmodC.o:  lmodC.c
 	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
 
 xminC.o:  xminC.c
-	@echo "[MSANDER]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
-
-ArrayList.o:  ArrayList.c
-	@echo "[MSANDER]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
-
-KFReader.o:  KFReader.c
-	@echo "[MSANDER]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
-
-qm2_read_adf_results.o:  qm2_read_adf_results.c
 	@echo "[MSANDER]  CC $<"
 	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
 

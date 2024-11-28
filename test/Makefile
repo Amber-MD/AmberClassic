@@ -1,7 +1,22 @@
-test:
-	@./run_tests.sh
+include ../config.h
 
-test.all: test.general test.rism test.xray test.nmr
+test:  test.$(INSTALLTYPE)
+
+test.serial:
+	@./run_serial_tests.sh
+
+test.parallel:
+	@echo "parallel test suite is not yet ready!"
+
+test.cuda:
+	@echo "cuda test suite is not yet ready!"
+
+test.mpicuda:
+	@echo "mpicuda test suite is not yet ready!"
+
+test.allserial: test.general test.rism test.xray test.nmr \
+          test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
+          test.gbnsr6
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -13,12 +28,7 @@ test.general:
 	-(cd tip4p && ./Run.tip4p_mcbar)
 	-(cd middle-scheme/MD_Constr_Langevin_water && ./Run.LGV_LF)
 	-(cd middle-scheme/MD_Unconstr_Langevin_water && ./Run.LGV_LF)
-	-(cd middle-scheme/QMMM_Constr_ALA_Methol && Run.qmmm)
-#	-(cd softcore && ./Run_sc)
-#	-(cd qmmm_DFTB/lysine_DFTB && ./Run.lysine_md)
-	-(cd qmmm2/crambin_PM6 && ./Run.crambin_md)
-	-(cd qmmm2/lysine_AM1 && ./Run.lysine)
-	-(cd qmmm2/lysine_AM1 && ./Run.lysine_md)
+#	-(cd softcore && ./Run_sc)   # parallel only!
 	-(cd gb_rna && ./Run.gbrna)
 	-(cd gb_rna && ./Run.gbrna.xmin)
 	-(cd gb_rna && ./Run.gbrna.sgld)
@@ -49,6 +59,34 @@ test.xray:
 #	-(cd xray/2msi && ./Run.2msi)
 	-(cd cryoem/3j9d && ./Run.3j9d)
 	-(cd cryoem/emap && ./Run.emap)
+
+test.leap:
+	-(cd leap && ./Run.cmds)
+	-(cd leap && ./Run.mbondi3)
+
+test.antechamber:
+	-(cd antechamber/abcg2 && Run.abcg2)
+	-(cd antechamber/fpph && Run.fpph)
+	-(cd antechamber/parmchk2 && Run.parmchk2)
+	-(cd antechamber/sustiva && Run.sustiva_g2)
+	-(cd antechamber/tp && Run.tp2)
+
+test.paramfit:
+	-(cd paramfit && make test)
+
+test.rism1d:
+	-(cd rism1d/spc-kh && ./Run.spc)
+	-(cd rism1d/spc-psen && ./Run.spc-nacl-3)
+	-(cd rism1d/spc-hnc && ./Run.spc-lj)
+
+test.xtalutil:
+	-(cd xtalutil/AddToBox && ./Run.AddToBox)
+	-(cd xtalutil/CheckMD && ./Run.CheckMD)
+	-(cd xtalutil/PropPDB && ./Run.PropPDB)
+	-(cd xtalutil/UnitCell && ./Run.UnitCell)
+
+test.gbnsr6:
+	-(cd gbnsr6 && ./Run.gbnsr6.min)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff

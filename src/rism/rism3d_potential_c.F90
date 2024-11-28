@@ -62,11 +62,6 @@ module rism3d_potential_c
      !! used in later calls. [kT]
      _REAL_, pointer :: ljEpsilonUV(:,:) => NULL()
 
-     !> Solute-solvent LJ A coefficient
-     _REAL_, pointer :: ljAUV(:,:) => NULL()
-     !> Solute-solvent LJ B coefficient
-     _REAL_, pointer :: ljBUV(:,:) => NULL()
-
      !> Long-range part of Huv(k) at k = 0 (2, solv%natom).
      _REAL_, pointer :: huvk0(:,:) => NULL()
 
@@ -129,9 +124,7 @@ contains
     this%chargeSmear = chargeSmear
     this%ljCutoffs2 => safemem_realloc(this%ljCutoffs2, this%solute%numAtoms, this%solvent%numAtomTypes, .false.)
     this%ljSigmaUV => safemem_realloc(this%ljSigmaUV, this%solute%numAtoms, this%solvent%numAtomTypes, .false.)
-    this%ljEpsilonUV => safemem_realloc(this%ljEpsilonUV, this%solute%numAtoms, this%solvent%numAtomTypes, .false.)
-    this%ljAUV => safemem_realloc(this%ljAUV, this%solute%numAtoms, this%solvent%numAtomTypes, .false.)
-    this%ljBUV => safemem_realloc(this%ljBUV, this%solute%numAtoms, this%solvent%numAtomTypes, .false.)
+    this%ljEpsilonUV => safemem_realloc(this%ljEpsilonUV, this%solvent%numAtomTypes,this%solute%numAtoms, .false.)
     call rism3d_potential_setCut_ljdistance(this, cut)
     call mixSoluteSolventLJParameters(this)
     
@@ -218,10 +211,6 @@ contains
          call rism_report_error("LjSigmaUV deallocation failed")
     if (safemem_dealloc(this%ljEpsilonUV) /= 0) &
          call rism_report_error("EPSuv deallocation failed")
-    if (safemem_dealloc(this%ljAUV) /= 0) &
-         call rism_report_error("ljAUV deallocation failed")
-    if (safemem_dealloc(this%ljBUV) /= 0) &
-         call rism_report_error("ljBUV deallocation failed")
     if (safemem_dealloc(this%ljCutoffs2) /= 0) &
          call rism_report_error("ljCutoffs2 deallocation failed")
     if (safemem_dealloc(this%huvk0) /= 0) &
@@ -284,10 +273,8 @@ contains
        do iu = 1, this%solute%numAtoms
           this%ljSigmaUV(iu, iv) = this%solute%ljSigma(iu) + &
                                    this%solvent%ljSigma(iv)
-          this%ljEpsilonUV(iu, iv) = sqrt(this%solute%ljEpsilon(iu) * &
+          this%ljEpsilonUV(iv, iu) = sqrt(this%solute%ljEpsilon(iu) * &
                                           this%solvent%ljEpsilon(iv))
-          this%ljAUV(iu, iv) = this%ljEpsilonUV(iu, iv)*this%ljSigmaUV(iu,iv)**12
-          this%ljBUV(iu, iv) = 2d0*this%ljEpsilonUV(iu, iv)*this%ljSigmaUV(iu,iv)**6
        end do
     end do
 
@@ -305,7 +292,7 @@ contains
          !call rism_report_message("(a20,2i6,2e16.8)", "lj-matrix-mods>",
          !iu,iv,sm,em)
          this%ljSigmaUV(iu,iv) = sm
-         this%ljEpsilonUV(iu,iv) = em
+         this%ljEpsilonUV(iv,iu) = em
        enddo
        call rism_report_message("|-> Read LJ-matrix modifications from ljmatrix.mods.txt.")
 
@@ -317,7 +304,7 @@ contains
        do iv = 1, this%solvent%numAtomTypes
           do iu = 1, this%solute%numAtoms
              write (out_unit,'(2i6,2e16.8)') iu,iv,this%ljSigmaUV(iu,iv), &
-                                                   this%ljEpsilonUV(iu,iv)
+                                                   this%ljEpsilonUV(iv,iu)
           end do
        end do
        close (out_unit)
@@ -348,14 +335,15 @@ contains
     _REAL_ :: ljBaseTerm(this%solvent%numAtomTypes)
     _REAL_ :: solutePosition(3)
     _REAL_ :: sd, sr
-    _REAL_ :: sigma(this%solute%numAtoms,this%solvent%numAtomTypes), beta
+    _REAL_ :: sigma(this%solvent%numAtomTypes,this%solute%numAtoms), beta
 
     beta = 1.d0/this%chargeSmear
     do iu = 1, this%solute%numAtoms
        do iv = 1, this%solvent%numAtomTypes
-          sigma(iu,iv) = 1.d0/this%ljSigmaUV(iu, iv)**2
+          sigma(iv,iu) = 1.d0/this%ljSigmaUV(iu, iv)**2
        end do
     end do
+
 
 !$omp parallel do private (rx,ry,rz,solutePosition,sd2,sd,sr,ljBaseTerm, &
 !$omp&   igx,igy,igz,iu) num_threads(omp_num_threads)
@@ -377,10 +365,10 @@ contains
 
                    sd = sqrt(sd2)
                    sr = this%solute%charge(iu) * erfc(sd * beta) / sd
-                   ljBaseTerm(:) = 1.d0 / (sd2 * sigma(iu,:))**3
+                   ljBaseTerm(:) = 1.d0 / (sd2 * sigma(:,iu))**3
 
                    ulj(igx,igy,igz,:) = ulj(igx,igy,igz,:) &
-                           + this%ljEpsilonUV(iu, :) &
+                           + this%ljEpsilonUV(:,iu) &
                              * ljBaseTerm(:) * (ljBaseTerm(:) - 2.d0) &
                            + sr * this%solvent%charge(:)
                 end if

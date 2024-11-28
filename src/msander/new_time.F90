@@ -901,7 +901,6 @@ end subroutine profile_time
 !+ and optionally mdout.
 !+ Written by Ross Walker (SDSC, 2009)
 subroutine print_ongoing_time_summary(total_steps,current_step,time_step,write_unit)
-use qmmm_module, only: qmmm_nml
 
 ! Make the ongoing time summary work with explicit Constant pH simulations JMS 2/2011
 
@@ -983,24 +982,14 @@ use qmmm_module, only: qmmm_nml
     write (write_unit,'(a,i7,a)') '| Average timings for last ',step_interval,' steps:'
     write (write_unit,'(a,f10.2,a,f10.2)') &
                     '|     Elapsed(s) = ',elapsed_time,' Per Step(ms) = ',time_per_step
-    if((qmmm_nml%ifqnt .and. qmmm_nml%qmtheory%EXTERN) ) then
-      write (write_unit,'(a,f10.3,a,f10.2)') &
-                      '|         ps/day = ',ns_per_day*1000.0d0,  '   seconds/ps = ',sec_per_ns/1000.0d0
-    else
-      write (write_unit,'(a,f10.2,a,f10.2)') &
+    write (write_unit,'(a,f10.2,a,f10.2)') &
                       '|         ns/day = ',ns_per_day,  '   seconds/ns = ',sec_per_ns
-    endif
     write (write_unit,'(a)') '|'
     write (write_unit,'(a)') '| Average timings for all steps:'
     write (write_unit,'(a,f10.2,a,f10.2)') &
                     '|     Elapsed(s) = ',total_elapsed_time,' Per Step(ms) = ',avg_time_per_step
-    if((qmmm_nml%ifqnt .and. qmmm_nml%qmtheory%EXTERN) ) then
-      write (write_unit,'(a,f10.3,a,f10.2)') &
-                    '|         ps/day = ',total_ns_per_day*1000.0d0,  '   seconds/ps = ',total_sec_per_ns/1000.0d0
-    else
-      write (write_unit,'(a,f10.2,a,f10.2)') &
+    write (write_unit,'(a,f10.2,a,f10.2)') &
                     '|         ns/day = ',total_ns_per_day,  '   seconds/ns = ',total_sec_per_ns
-    endif
     write (write_unit,'(a)') '|'
     if (time_remaining < 60) then
       write (write_unit,'(a,f9.1,a)') '| Estimated time remaining: ',time_remaining,' seconds.'
@@ -1019,25 +1008,15 @@ use qmmm_module, only: qmmm_nml
       write (write_unit,'(a,i7,a)') '| Average timings for last ',step_interval,' steps:'
       write (write_unit,'(a,f10.2,a,f10.2)') &
                       '|     Elapsed(s) = ', elapsed_time,' Per Step(ms) = ',time_per_step
-      if((qmmm_nml%ifqnt .and. qmmm_nml%qmtheory%EXTERN) ) then
-        write (write_unit,'(a,f10.3,a,f10.2)') &
-                        '|         ps/day = ',ns_per_day*1000.0d0,  '   seconds/ps = ',sec_per_ns/1000.0d0
-      else
-        write (write_unit,'(a,f10.2,a,f10.2)') &
+      write (write_unit,'(a,f10.2,a,f10.2)') &
                         '|         ns/day = ',ns_per_day,  '   seconds/ns = ',sec_per_ns
-      endif
       write (write_unit,'(a)') '|'
     endif
     write (write_unit,'(a)') '| Average timings for all steps:'
     write (write_unit,'(a,f10.2,a,f10.2)') &
                     '|     Elapsed(s) = ', total_elapsed_time,' Per Step(ms) = ', avg_time_per_step
-    if((qmmm_nml%ifqnt .and. qmmm_nml%qmtheory%EXTERN) ) then
-      write (write_unit,'(a,f10.3,a,f10.2)') &
-                      '|         ps/day = ', total_ns_per_day*1000.0d0,  '   seconds/ps = ', total_sec_per_ns/1000.0d0
-    else
-      write (write_unit,'(a,f10.2,a,f10.2)') &
+    write (write_unit,'(a,f10.2,a,f10.2)') &
                       '|         ns/day = ', total_ns_per_day,  '   seconds/ns = ', total_sec_per_ns
-    endif
     write (write_unit,'(a, /)') '| -----------------------------------------------------'
   end if
 

@@ -17,8 +17,6 @@ subroutine ewald_force(crd,numatoms,iac,ico,charge, &
                      nvdwcls
    use constants, only : INV_AMBER_ELECTROSTATIC2, INV_AMBER_ELECTROSTATIC, &
                          zero, AMBER_ELECTROSTATIC
-   use qmmm_module, only : qmmm_struct, qm2_struct, qmmm_nml, qmewald, &
-                           qmmm_scratch
    use file_io_dat
 #ifdef LES
    use les_data, only : les_vir, cnum, nlesadj, eeles
@@ -152,7 +150,8 @@ subroutine ewald_force(crd,numatoms,iac,ico,charge, &
    call timer_stop(TIME_EWFSTRT)
    if( numextra > 0 ) call local_to_global(crd,x,ix)
    
-   if( use_pme /= 0 .and. mod(irespa,nrespa) == 0) then
+   ! Set use_pme=2 to always run PME, e.g. when rismrespa is set as well)
+   if( use_pme == 2 .or. (use_pme == 1 .and. mod(irespa,nrespa) == 0)) then
       
       !--------------------------------------------------------
       ! SELF ENERGY
@@ -168,7 +167,6 @@ subroutine ewald_force(crd,numatoms,iac,ico,charge, &
 
 
       call timer_start(TIME_REC)
-      if (.not. qmmm_nml%ifqnt) then
 #ifdef MPI
         if(i_do_recip)then
            call mpi_comm_size(recip_comm,numtasks,ierr)
@@ -186,7 +184,7 @@ subroutine ewald_force(crd,numatoms,iac,ico,charge, &
         
            ! Scaleup forces, field for respa
          
-           if ( nrespa > 1 ) &
+           if ( use_pme == 1 .and. nrespa > 1 ) &
                call respa_scale(numatoms,frc,nrespa)
 #ifdef MPI
            numtasks = commsander_numtasks
@@ -194,147 +192,6 @@ subroutine ewald_force(crd,numatoms,iac,ico,charge, &
            master = mytaskid.eq.0
         end if         !loop for ido_recip
 #endif
-      else !if .not ifqnt
-        !--- QUANTUM PME ---
-        if (qmmm_nml%qm_pme .and. .not. qm_pot_only) then
-          !copy the mulliken charges out of scf_mchg and into main charge array.
-          !all threads do this - 1,nquant_nlink
-          do qm_temp_count = 1, qmmm_struct%nquant_nlink
-             charge(qmmm_struct%iqmatoms(qm_temp_count)) = &
-                        qm2_struct%scf_mchg(qm_temp_count)*AMBER_ELECTROSTATIC
-          end do
-        end if
-#ifdef MPI
-        if(i_do_recip)then
-           call mpi_comm_size(recip_comm,numtasks,ierr)
-           call mpi_comm_rank(recip_comm,mytaskid,ierr)
-#endif
-           if (qm_pot_only) then
-             call adj_mm_link_pair_crd(crd) !Replace the MM atom's coordinates 
-                                          !      with the link atom.
-
-             call do_pme_recip(mpoltype,numatoms,crd,charge, &
-                   qmmm_scratch%qm_real_scratch,  &
-                   X(linddip),x(lfield),x(lprefac1),x(lprefac2),    &
-                   X(lprefac3),x(lfftable),qm_pot_only )
-
-             call rst_mm_link_pair_crd(crd)
-             !-- store the reciprocal energy so that we can subtract off 
-             !   the QM-QM reciprocal energy
-             !   when we next come through.
-             qmewald%mm_recip_e=eer
-             call timer_stop(TIME_REC)
-  
-             ! If qm_pot_only is true then do not do any more stuff here.
-  
-             return
-           end if
-
-           qmmm_scratch%qm_real_scratch(1:3*natom) = zero
-           call adj_mm_link_pair_crd(crd) !Replace the MM atom's coordinates 
-                                          !      with the link atom.
-           call do_pme_recip(mpoltype,numatoms,crd,charge, &
-                 qmmm_scratch%qm_real_scratch,  &
-                 X(linddip),x(lfield),x(lprefac1),x(lprefac2),    &
-                 X(lprefac3),x(lfftable),qm_pot_only )
-
-
-           call rst_mm_link_pair_crd(crd)
-           !We need to redistribute the force on link atoms
-           do i=1,qmmm_struct%nlink
-             mm_no = qmmm_struct%link_pairs(1,i)  !location of atom in x array
-             lnk_no = qmmm_struct%link_pairs(2,i) !Nquant number of QM atom 
-                                                  !      bound to link atom
-             qm_no = qmmm_struct%iqmatoms(lnk_no)
-             !Note this routine uses the flink in the form -flink.
-             call distribute_lnk_f(forcemod, &
-                         qmmm_scratch%qm_real_scratch(3*mm_no-2:3*mm_no), &
-                         crd(1,mm_no), crd(1,qm_no), qmmm_nml%lnk_dis)
-
-             frc(1:3,mm_no) = frc(1:3,mm_no) + forcemod(1:3)
-             frc(1:3,qm_no) = frc(1:3,qm_no) &
-                   + qmmm_scratch%qm_real_scratch(3*mm_no-2:3*mm_no) &
-                   - forcemod(1:3)
-
-             !Zero out the link atom force in the scratch array.
-             qmmm_scratch%qm_real_scratch(3*mm_no-2) = zero
-             qmmm_scratch%qm_real_scratch(3*mm_no-1) = zero
-             qmmm_scratch%qm_real_scratch(3*mm_no) = zero
-           end do
- 
-           do i = 1, natom
-             frc(1,i)=frc(1,i)+qmmm_scratch%qm_real_scratch(3*i-2)
-             frc(2,i)=frc(2,i)+qmmm_scratch%qm_real_scratch(3*i-1)
-             frc(3,i)=frc(3,i)+qmmm_scratch%qm_real_scratch(3*i)
-           end do
-
-           if (qmmm_nml%qm_pme) then
-             ! Zero the mulliken charges in main charge array. 
-             ! Probably belongs after do_pme_recip call above
-             !     but here it avoids the need for an extra if statement.
-             ! All threads do this.
- 
-             do qm_temp_count = 1, qmmm_struct%nquant_nlink
-                charge(qmmm_struct%iqmatoms(qm_temp_count)) = zero
-             end do
- 
-             ! Build a charge array that is natom long but contains only QM 
-             ! scf charges.
-
-             qmmm_scratch%qm_pme_scratch(1:natom) = zero
-             qmmm_scratch%qm_real_scratch(1:3*natom) = zero
-             do qm_temp_count = 1, qmmm_struct%nquant_nlink
-                qmmm_scratch%qm_pme_scratch(qmmm_struct%iqmatoms(qm_temp_count)) &
-                     = qm2_struct%scf_mchg(qm_temp_count)*AMBER_ELECTROSTATIC
-             end do
- 
-             ! Calculate QM-QM PME forces to remove from 
-             !   the full PME we did above.
-             call adj_mm_link_pair_crd(crd)
-             call do_pme_recip(mpoltype,numatoms,crd, &
-                  qmmm_scratch%qm_pme_scratch, &
-                  qmmm_scratch%qm_real_scratch, &
-                  X(linddip),x(lfield),x(lprefac1),x(lprefac2),    &
-                  X(lprefac3),x(lfftable),qm_pot_only )
- 
-             ! Now subtract out the QM-QM forces from the pme.
-  
-             ! Redistribute the force on link atoms
-             call rst_mm_link_pair_crd(crd)
-             do i=1,qmmm_struct%nlink
-                mm_no = qmmm_struct%link_pairs(1,i)  !location in x array
-                lnk_no = qmmm_struct%link_pairs(2,i) !Nquant number of QM atom 
-                                                     !      bound to link atom
-                qm_no = qmmm_struct%iqmatoms(lnk_no)
-                ! Note this routine uses the flink in the form -flink.
-                call distribute_lnk_f(forcemod, &
-                     qmmm_scratch%qm_real_scratch(3*mm_no-2:3*mm_no),crd(1,mm_no), &
-                     crd(1,qm_no),qmmm_nml%lnk_dis)
-                
-               frc(1:3,mm_no) = frc(1:3,mm_no) - forcemod(1:3)
-               frc(1:3,qm_no) = frc(1:3,qm_no) &
-                    - qmmm_scratch%qm_real_scratch(3*mm_no-2:3*mm_no) &
-                    + forcemod(1:3)
-             end do
- 
-             do qm_temp_count = 1, qmmm_struct%nquant
-               i = qmmm_struct%iqmatoms(qm_temp_count)
-               frc(1,i)=frc(1,i)-qmmm_scratch%qm_real_scratch(3*i-2)
-               frc(2,i)=frc(2,i)-qmmm_scratch%qm_real_scratch(3*i-1)
-               frc(3,i)=frc(3,i)-qmmm_scratch%qm_real_scratch(3*i)
-             end do
-
-             ! Put back the energy from recip without the QM-QMrecip 
-             ! contributions; these are already in ESCF.
-
-             eer = qmewald%mm_recip_e
-           end if !qmmm_nml%qm_pme
-#ifdef MPI
-           numtasks = commsander_numtasks
-           mytaskid = commsander_mytaskid 
-        end if         !loop for ido_recip
-#endif
-      end if !if .not. ifqnt
       call timer_stop(TIME_REC)
       
       !-------------------------------------------------------

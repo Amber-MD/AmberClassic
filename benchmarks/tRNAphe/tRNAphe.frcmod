@@ -1,0 +1,66 @@
+
+BOND
+N*-CQ   470.3   1.350          #GAFF:ca-na
+N*-CA   426.0   1.380          #GAFF:n -cd, N* type usually corresponds to gaff's na. However N* - CA only shows in 1MG (N1 - C2), where gaff type is n. Plus, na-cd and n-cd have very similar values.
+NA-CM   426.0   1.380          #GAFF:cd-n  
+CA-N    372.3   1.422          #GAFF:ca-n
+N*-CC   390.5   1.407          #GAFF:c2-n
+CC-CC   589.7   1.324          #GAFF:c2-c2
+P -HO   300.0   2.1200         #from David Case's tRNA.frcmod
+
+ANGLE
+CB-C -N*  70.2    111.86   #GAFF:cd-c -na/n
+CB-C -N   70.2    111.86   #GAFF:cd-c -n
+C -N*-CQ  65.3    125.20   #GAFF:c -na-ca
+N -C -N*   75.4    111.70   #GAFF:n -c -na/n
+N*-CQ-NC 69.7    123.86   #GAFF:na/n -ca-nc
+N*-CQ-H5 51.3    119.23   #GAFF:na - ca - h5, only can be found as h5-ca-nb & h5-ca-nc and averaged from them
+CT-N*-CQ 63.1    124.36   #GAFF:c3 - na - ca
+C -N*-CA  65.2    124.19   #GAFF:c -n -cd   
+N*-CA-NC 70.9    123.86   #GAFF:n -cd-nc
+N*-CA-N2 72.2    117.01   #GAFF:n -cd-nh
+CT-N*-CA 63.3    121.17   #GAFF:c3-n -cd
+CT-CM-CA 64.7    115.97   #GAFF:c3-cd-cd
+N*-CK-N* 73.7    109.33   #GAFF:na-c2-na
+N*-CB-C  64.3    130.80   #GAFF:cannot find na-c2-c, use c -cc-nc, aproximate as (Sp2 C carbonyl group)-(Sp2 carbons in non-pure aromatic systems)-(Sp2 N in non-pure aromatic systems)
+CT-N*-CT 62.7    119.26   #GAFF:averaged c3-na-c3 & c3-n -c3
+N*-C -N   75.4    111.70   #GAFF:n -c -n
+C -N -C    67.4    119.63   #GAFF:c -n -c 
+CT-N2-CT 63.5    114.54   #GAFF:c3-nh-c3
+NA-CM-CM 67.9    119.89   #GAFF:cd-cd-n
+NA-CM-H4 50.4    117.62   #GAFF:h4-cd-n
+NA-C -NA  75.4    111.70   #GAFF:n -c -n
+H -NA-CM  47.5    121.52   #GAFF:cd-n -hn
+CM-NA-C  65.2    124.19   #GAFF:c -n -cd
+CB-CA-N  68.0    119.89   #GAFF:ca-ca-n 
+CA-N -C   64.3    123.71   #GAFF:c -n -ca
+CA-N -H   47.6    114.59   #GAFF:ca-n -hn 
+N -CA-NC  71.6    123.80   #GAFF:n -ca-nb, can only be found as nb-ca-nb nb-ca-nc nb-ca-nh and averaged from them
+N -C -N    75.4    111.70   #GAFF:n -c -n
+OH-C -O2  77.4    122.88   #GAFF:o -c -oh 
+N*-CB-N* 74.2    107.38   #GAFF:averaged na-c2-na & n -c2-na
+C -N*-CB  64.3    125.09   #GAFF:c -na-c2 
+C -N*-CC  64.3    125.09   #GAFF:c -na-c2  
+N*-CB-NB 71.7    123.62   #GAFF:n2-c2-na
+N*-CC-CC 69.8    121.38   #GAFF:c2-c2-na
+N*-CC-CT 65.0    122.54   #GAFF:c3-c2-na
+CB-N*-CC 67.8    110.37   #GAFF:c2-na-c2
+CB-N*-CB 67.8    110.37   #GAFF:c2-na-c2 
+CB-NB-CC 70.8    118.18   #GAFF:c2-n2-c2
+NB-CC-CC 71.3    126.01   #GAFF:c2-c2-n2
+CT-CC-CC 64.3    123.42   #GAFF:c2-c2-c3
+N -C -OS   74.7    115.25   #GAFF:n -c -os
+P -HO-OH   0.0      0.00   #from David Case's tRNA.frcmod
+O2-P -HO   0.0      0.00   #from David Case's tRNA.frcmod
+OS-P -HO   0.0      0.00   #from David Case's tRNA.frcmod
+OH-P -HO   0.0      0.00   #from David Case's tRNA.frcmod
+
+DIHE
+X -N*-CQ-X    4    1.200       180.0             2.0   #C6-N1-C2-N3      GAFF: c -na-ca-nc X -ca-na-X
+X -N*-CA-X    4    6.600       180.0             2.0   #C6-N1-C2-N3      GAFF: c -n -cd-nc X -n -cd-X      statistic value from parm94
+X -NA-CM-X    4    6.600       180.0             2.0   #H1-N1-C6-C5      GAFF: hn-n -cc-cd X -n -cc-X      statistic value from parm94
+X -CA-N -X    4    1.800       180.0             2.0   #C5-C6-N6-C10     GAFF: ca-ca-n -c  X -ca-n -X 
+X -N*-CC-X    4    2.600       180.0             2.0   #C6-N1-C12-C11    GAFF: c -n -c2-c2 X -c2-n -X
+X -CC-CC-X    4   26.600       180.0             2.0   #N1-C12-C11-N2    GAFF: n -c2-c2-n2 X -c2-c2-X
+OS-P -HO-OH    2    0.00          0.0             2.0   #from David Case's tRNA.frcmod
+O2-P -HO-OH    2    0.00          0.0             2.0   #from David Case's tRNA.frcmod

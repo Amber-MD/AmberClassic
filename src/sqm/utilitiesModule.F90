@@ -92,7 +92,7 @@ contains
     jstart = 1
     do i = 1, size(array) / jstep + 1
        jend = min ( (jstart + jstep - 1), size(array) )
-       write(6,'(8(f9.4,1x))') (array(j), j = jstart, jend)
+       write(6,'(8(f9.4,x))') (array(j), j = jstart, jend)
        jstart = jstart + jstep
     end do
 
@@ -130,7 +130,7 @@ contains
           do i = jstart, dim
              ipos = (i-1)*i/2
              jend = min ( (jstart + jstep - 1), i )
-             write(6,'(8(f9.4,1x))') (array(ipos+j), j = jstart, jend)
+             write(6,'(8(f9.4,x))') (array(ipos+j), j = jstart, jend)
           end do
           write(6,'(/)')
           call flush(6)

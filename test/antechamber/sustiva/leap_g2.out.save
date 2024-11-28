@@ -1,0 +1,56 @@
+-I: Adding /home/case/AmberClassic/dat/leap/prep to search path.
+-I: Adding /home/case/AmberClassic/dat/leap/lib to search path.
+-I: Adding /home/case/AmberClassic/dat/leap/parm to search path.
+-I: Adding /home/case/AmberClassic/dat/leap/cmd to search path.
+-s: Ignoring startup file: leaprc
+-f: Source leap_g2.in.
+
+Welcome to LEaP!
+Sourcing: ./leap_g2.in
+----- Source: /home/case/AmberClassic/dat/leap/cmd/leaprc.gaff2
+----- Source of /home/case/AmberClassic/dat/leap/cmd/leaprc.gaff2 done
+Log file: ./leap.log
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/gaff2.dat
+Reading title:
+AMBER General Force Field for organic molecules (Version 2.2.20, March 2021)
+Loading parameters: ./frcmod_g2
+Reading force field modification type file (frcmod)
+Reading title:
+Remark line goes here
+Loading Mol2 file: ./sustiva_g2.mol2
+Reading MOLECULE named SUS
+Checking Unit.
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+
+/home/case/AmberClassic/bin/teLeap: Note.
+1-4: angle 7 12 duplicates bond ('triangular' bond) or angle ('square' bond)
+
+
+/home/case/AmberClassic/bin/teLeap: Note.
+1-4: angle 7 9 duplicates bond ('triangular' bond) or angle ('square' bond)
+
+
+/home/case/AmberClassic/bin/teLeap: Note.
+1-4: angle 9 12 duplicates bond ('triangular' bond) or angle ('square' bond)
+
+Building improper torsion parameters.
+ total 8 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	SUS	1
+  )
+ (no restraints)
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 0; Notes = 3.

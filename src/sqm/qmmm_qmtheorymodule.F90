@@ -39,6 +39,8 @@ module qmmm_qmtheorymodule
      logical SEBOMD         !External interface to SEBOMD: full QM calculation (no QM/MM)
      logical ISQUICK
      logical ISTCPB
+     logical ISXTB
+     logical ISDFTBPLUS
   end type qmTheoryType
 
   interface Set
@@ -106,6 +108,8 @@ contains
     self%SEBOMD     = .false.
     self%ISQUICK    = .false.
     self%ISTCPB     = .false.
+    self%ISXTB      = .false.
+    self%ISDFTBPLUS = .false.
 
     select case (Upcase(qm_theory))
     case ('', 'PM3')
@@ -169,13 +173,19 @@ contains
        self%ISTCPB = .true.
     case ('TERACHEM')
        self%ISTCPB = .true.
+    case ('XTB')
+       self%ISXTB = .true.
+    case ('DFTBPLUS')
+       self%ISDFTBPLUS = .true.
+       
     case default
        call sander_bomb('qmtheorymodule:SetQmTheoryType','Unknown method specified for qm_theory', &
             'Valid options are: PM3, AM1, RM1, MNDO, PM3-PDDG, PM3-PDDG_08, MNDO-PDDG, PM3-CARB1, '&
             //'PM3-ZNB, PM3-MAIS, AM1-D*, AM1-DH+, MNDO/D, AM1/D, PM6, PM6-D, PM6-DH+, DFTB, DFTB2, DFTB3 '&
-            //'QUICK, TCPB (or TC, or TERACHEM), SEBOMD (full QM) and EXTERN (external)')
+            //'QUICK, TCPB (or TC, or TERACHEM), SEBOMD (full QM), XTB, '&
+            //'DFTBPLUS, and EXTERN (external)')
     end select
-
+    
   end subroutine SetQmTheoryType
 
   ! ---------------------------------
@@ -225,6 +235,10 @@ contains
        qmTheoryString = 'QUICK'
     else if (self%ISTCPB) then
        qmTheoryString = 'TCPB'
+    else if (self%ISXTB) then
+       qmTheoryString = 'XTB'
+    else if (self%ISDFTBPLUS) then
+       qmTheoryString = 'DFTBPLUS'
     end if
 
   end function QmTheoryString
@@ -258,6 +272,8 @@ contains
     call mpi_bcast(self%SEBOMD    , 1, mpi_logical, 0, commsander, ier)
     call mpi_bcast(self%ISQUICK   , 1, mpi_logical, 0, commsander, ier)
     call mpi_bcast(self%ISTCPB    , 1, mpi_logical, 0, commsander, ier)
+    call mpi_bcast(self%ISXTB     , 1, mpi_logical, 0, commsander, ier)
+    call mpi_bcast(self%ISDFTBPLUS, 1, mpi_logical, 0, commsander, ier)
 
   end subroutine BroadcastQmTheoryType
 #endif

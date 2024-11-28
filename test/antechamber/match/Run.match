@@ -1,0 +1,15 @@
+#!/bin/csh -f
+
+# the corresponding file, 3pdz_1be9.corr can be manually prepared or comes from a sequence alignment
+
+"$AMBERHOME/bin/match" -f pdb -r 1be9.pdb -i 3pdz.pdb -o 3pdz_aligned.pdb -s 4 -ds "CA,C,N,O" -df 3pdz_1be9.corr
+
+../../dacdif -a 5.5e-3 3pdz_aligned.pdb.save 3pdz_aligned.pdb
+../../dacdif match.log.save match.log
+
+/bin/rm -f match.log 3pdz_aligned.pdb
+exit(0)
+
+error:
+echo "  ${0}:  Program error"
+exit(1)

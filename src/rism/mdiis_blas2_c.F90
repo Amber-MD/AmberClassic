@@ -247,7 +247,7 @@ contains
 
     ! aij :: overlap matrix for LAPACK
     ! bi  :: linear coefficients from LAPACK
-    _REAL_ :: aij(0:this%nvec, 0:this%nvec), bi(0:this%nvec, 1)
+    _REAL_, allocatable :: aij(:,:), bi(:,:)
 
     ! nvecWRK :: number of vectors with data
     integer :: nvecWRK
@@ -265,6 +265,8 @@ contains
     nvecWRK = count(this%vecMap > 0)
     !.................. increment step and MDIIS counters ..................
     this%istep = this%istep + 1
+
+    allocate(aij(0:this%nvec, 0:this%nvec), bi(0:this%nvec,1))
 
     !............. calculate diagonal overlap of new residual ..............
     !                              and
@@ -394,6 +396,7 @@ contains
     call DAXPY (this%np, this%delta, this%ri(1, this%vecMap(1)), 1, &
          this%xi(1,this%vecMap(1)), 1)
     call timer_stop(TIME_MDIIS_LAPACK)
+    deallocate(aij, bi)
 
   end subroutine mdiis_blas2_advance
 

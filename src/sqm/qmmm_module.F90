@@ -761,7 +761,7 @@ contains
     ! The rest of this subroutine still needs to be cleaned up
 
     !Deallocate qm_ewald memory if it is on.
-    if ( qmmm_nml%qm_ewald>0 ) then
+    if ( qmmm_nml%qm_ewald>0 .and. .not. qmmm_nml%qmtheory%ISQUICK ) then
        deallocate ( qmewald%dmkv, stat = ier)
        REQUIRE(ier == 0)
        deallocate ( qmewald%dkvec, stat = ier)
@@ -811,17 +811,23 @@ contains
 
     !MPI Specific deallocations
 #ifdef MPI
-    deallocate(qmmm_mpi%nquant_nlink_jrange, stat=ier )
-    REQUIRE(ier == 0)
+    if ( associated(qmmm_mpi%nquant_nlink_jrange) ) then
+       deallocate(qmmm_mpi%nquant_nlink_jrange, stat=ier )
+       REQUIRE(ier == 0)
+    end if
 # ifndef USE_MPI_IN_PLACE
-    deallocate(qmmm_scratch%matsize_red_scratch, stat=ier )
-    REQUIRE(ier == 0)
+    if ( associated(qmmm_scratch%matsize_red_scratch) ) then
+       deallocate(qmmm_scratch%matsize_red_scratch, stat=ier )
+       REQUIRE(ier == 0)
+    end if
 # endif
 #endif
 
     if (qmmm_nml%qmqm_erep_incore) then
-       deallocate ( qm2_struct%qm_qm_e_repul, stat = ier )
-       REQUIRE(ier == 0)
+       if ( associated(qm2_struct%qm_qm_e_repul) ) then
+          deallocate ( qm2_struct%qm_qm_e_repul, stat = ier )
+          REQUIRE(ier == 0)
+       end if
     end if
     if (qmmm_nml%idc==0) then
        if (qm2_struct%n_peptide_links > 0) then
@@ -834,13 +840,19 @@ contains
           end if
        end if
        if (.not. qmmm_nml%qmtheory%DFTB) then
-          deallocate ( qm2_struct%eigen_vectors, stat=ier )
-          REQUIRE(ier == 0)
-          deallocate ( qm2_struct%eigen_values, stat=ier )
-          REQUIRE(ier == 0)
-          if (qmmm_mpi%commqmmm_master) then !Only master does diagonalisation
-             deallocate ( qmmm_scratch%mat_diag_workspace, stat=ier )
+          if ( associated(qm2_struct%eigen_vectors) ) then
+             deallocate ( qm2_struct%eigen_vectors, stat=ier )
              REQUIRE(ier == 0)
+          end if
+          if ( associated(qm2_struct%eigen_values) ) then
+             deallocate ( qm2_struct%eigen_values, stat=ier )
+             REQUIRE(ier == 0)
+          end if
+          if (qmmm_mpi%commqmmm_master) then !Only master does diagonalisation
+             if ( associated(qmmm_scratch%mat_diag_workspace) ) then
+                deallocate ( qmmm_scratch%mat_diag_workspace, stat=ier )
+                REQUIRE(ier == 0)
+             end if
           end if
        end if
        if (qmmm_scratch%lapack_dc_real_scr_aloc /= 0) then
@@ -853,7 +865,9 @@ contains
           REQUIRE(ier == 0)
           qmmm_scratch%lapack_dc_int_scr_aloc = 0
        end if
-       if (qmmm_nml%allow_pseudo_diag .and. qmmm_mpi%commqmmm_master) then
+       if (qmmm_nml%allow_pseudo_diag .and. qmmm_mpi%commqmmm_master .and. &
+            & .not. qmmm_nml%qmtheory%ISXTB .and.  &
+            & .not. qmmm_nml%qmtheory%ISDFTBPLUS ) then
           deallocate(qmmm_scratch%pdiag_scr_norbs_norbs, &
                qmmm_scratch%pdiag_scr_noccupied_norbs, &
                qmmm_scratch%pdiag_vectmp1, &
@@ -867,42 +881,70 @@ contains
        if (qmmm_mpi%commqmmm_master .and. qmmm_nml%diag_routine==7 .and. (.not. qmmm_nml%allow_pseudo_diag)) then
           !we allocated pdiag_scr_norbs_norbs to store the unpacked matrix so make sure
           !we deallocate it.
-          deallocate(qmmm_scratch%pdiag_scr_norbs_norbs, stat=ier)
+          if ( associated(qmmm_scratch%pdiag_scr_norbs_norbs) ) then
+             deallocate(qmmm_scratch%pdiag_scr_norbs_norbs, stat=ier)
+             REQUIRE(ier == 0)
+          end if
+       end if
+       if ( associated(qm2_struct%fock2_ptot2) ) then
+          deallocate ( qm2_struct%fock2_ptot2, stat=ier )
           REQUIRE(ier == 0)
        end if
-       deallocate ( qm2_struct%fock2_ptot2, stat=ier )
-       REQUIRE(ier == 0)
-       deallocate ( qm2_struct%hmatrix, stat = ier )
-       REQUIRE(ier == 0)
-       deallocate (qm2_struct%qm_qm_2e_repul, stat = ier )
-       REQUIRE(ier == 0)
-       deallocate ( qm2_struct%fock_matrix, stat = ier )
-       REQUIRE(ier == 0)
-       deallocate ( qm2_struct%old2_density, stat = ier )
-       REQUIRE(ier == 0)
-       deallocate ( qm2_struct%old_den_matrix, stat = ier )
-       REQUIRE(ier == 0)
-       deallocate ( qm2_struct%den_matrix, stat = ier )
-       REQUIRE(ier == 0)
+       if ( associated(qm2_struct%hmatrix) ) then
+          deallocate ( qm2_struct%hmatrix, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(qm2_struct%qm_qm_2e_repul) ) then
+          deallocate (qm2_struct%qm_qm_2e_repul, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(qm2_struct%fock_matrix) ) then
+          deallocate ( qm2_struct%fock_matrix, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(qm2_struct%old2_density) ) then
+          deallocate ( qm2_struct%old2_density, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(qm2_struct%old_den_matrix) ) then
+          deallocate ( qm2_struct%old_den_matrix, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(qm2_struct%den_matrix) ) then
+          deallocate ( qm2_struct%den_matrix, stat = ier )
+          REQUIRE(ier == 0)
+       end if
 
        if (qmmm_nml%density_predict == 1) then
           !We are using Niklasson et al density matrix prediction algorithm.
-          deallocate ( qm2_struct%md_den_mat_guess1, stat = ier )
-          REQUIRE(ier == 0)
-          deallocate ( qm2_struct%md_den_mat_guess2, stat = ier )
-          REQUIRE(ier == 0)
+          if ( associated(qm2_struct%md_den_mat_guess1) ) then
+             deallocate ( qm2_struct%md_den_mat_guess1, stat = ier )
+             REQUIRE(ier == 0)
+          end if
+          if ( associated(qm2_struct%md_den_mat_guess2) ) then
+             deallocate ( qm2_struct%md_den_mat_guess2, stat = ier )
+             REQUIRE(ier == 0)
+          end if
        end if
 
        if (qmmm_nml%fock_predict == 1) then
           !We are using Pulay et al matrix prediction algorithm.
-          deallocate ( qm2_struct%fock_mat_final4, stat = ier )
-          REQUIRE(ier == 0)
-          deallocate ( qm2_struct%fock_mat_final3, stat = ier )
-          REQUIRE(ier == 0)
-          deallocate ( qm2_struct%fock_mat_final2, stat = ier )
-          REQUIRE(ier == 0)
-          deallocate ( qm2_struct%fock_mat_final1, stat = ier )
-          REQUIRE(ier == 0)
+          if ( associated(qm2_struct%fock_mat_final4) ) then
+             deallocate ( qm2_struct%fock_mat_final4, stat = ier )
+             REQUIRE(ier == 0)
+          end if
+          if ( associated(qm2_struct%fock_mat_final3) ) then
+             deallocate ( qm2_struct%fock_mat_final3, stat = ier )
+             REQUIRE(ier == 0)
+          end if
+          if ( associated(qm2_struct%fock_mat_final2) ) then
+             deallocate ( qm2_struct%fock_mat_final2, stat = ier )
+             REQUIRE(ier == 0)
+          end if
+          if ( associated(qm2_struct%fock_mat_final1) ) then
+             deallocate ( qm2_struct%fock_mat_final1, stat = ier )
+             REQUIRE(ier == 0)
+          end if
        end if
 
        if ( associated( qm2_struct%diis_fock ) ) deallocate( qm2_struct%diis_fock , stat = ier )
@@ -918,21 +960,29 @@ contains
 
     if (qmmm_nml%qmmmrij_incore) then
 !      if (qmmm_mpi%commqmmm_master) then        ! lam81
+       if ( associated(qm2_rij_eqns%qmmmrijdata) ) then
           deallocate (qm2_rij_eqns%qmmmrijdata, stat = ier )
           REQUIRE(ier == 0)
+       end if
 !      end if                                    ! lam81
     end if
 
-    deallocate ( qmmm_scratch%qm_int_scratch, stat = ier )
-    REQUIRE(ier == 0)
+    if ( associated(qmmm_scratch%qm_int_scratch) ) then
+       deallocate ( qmmm_scratch%qm_int_scratch, stat = ier )
+       REQUIRE(ier == 0)
+    end if
 
-    deallocate ( qmmm_scratch%qm_real_scratch, stat = ier )
-    REQUIRE(ier == 0)
+    if ( associated(qmmm_scratch%qm_real_scratch) ) then
+       deallocate ( qmmm_scratch%qm_real_scratch, stat = ier )
+       REQUIRE(ier == 0)
+    end if
 
     !Deallocate the scf Mulliken charge array.
     !Was allocated on all cpus.
-    deallocate ( qm2_struct%scf_mchg, stat = ier )
-    REQUIRE(ier == 0)
+    if ( associated(qm2_struct%scf_mchg) ) then
+       deallocate ( qm2_struct%scf_mchg, stat = ier )
+       REQUIRE(ier == 0)
+    end if
 
     ! GMS: Dellocate DFTB arrays
     if ((qmmm_nml%qmtheory%DFTB).and.(qmmm_mpi%commqmmm_master)) call qm2_dftb_deallocate
@@ -1154,6 +1204,8 @@ contains
     elseif( Upcase(atom_name(1:1)) .eq. 'P' ) then
        if(atom_mass > 29.0d0 .and. atom_mass <= 33.0d0) then
           atomic_number = 15 !Phosphorus
+       elseif(atom_mass > 37.0d0 .and. atom_mass <= 41.0d0) then ! possibly named "POT" for potassium
+          atomic_number = 19 !Potassium
        elseif(atom_mass > 104.0d0 .and. atom_mass <= 108.0d0) then
           atomic_number = 46 !Palladium
        elseif(atom_mass > 193.0d0 .and. atom_mass <= 197.0d0) then
@@ -1189,6 +1241,8 @@ contains
     elseif( Upcase(atom_name(1:1)) .eq. 'S' ) then
        if(atom_mass > 26.0d0 .and. atom_mass <= 30.0d0) then
           atomic_number = 14 !Silicon
+       elseif(atom_mass > 22.1d0 .and. atom_mass <= 23.0d0) then ! possibly named "SOD" for sodium
+          atomic_number = 11 !Sodium
        elseif(atom_mass > 30.0d0 .and. atom_mass <= 34.0d0) then
           atomic_number = 16 !Sulphur
        elseif(atom_mass > 43.0d0 .and. atom_mass <= 47.0d0) then

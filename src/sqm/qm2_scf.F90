@@ -474,7 +474,7 @@ subroutine qm2_scf(fock_matrix, hmatrix, W, escf, den_matrix, scf_mchg, num_qmmm
   end if
 
   if (qmmm_nml%verbosity > 0 .and. converged .and. qmmm_mpi%commqmmm_master) then
-     write(6,'("QMMM: SCF Converged to ",G11.4," in: ",i5," Cycles ")') qmmm_nml%scfconv,scf_iteration
+     write(6,'("QMMM: SCF Converged to ",G10.4," in: ",i5," Cycles ")') qmmm_nml%scfconv,scf_iteration
   end if
 
 ! If we are trying to do Fock matrix prediction based on an extrapolation of previous steps then
@@ -496,9 +496,9 @@ end subroutine qm2_scf
 subroutine level_shift(fock, dens, norbs, vshift)
   
   implicit none
-  integer, intent(in) :: norbs
   _REAL_, intent(inout) :: fock(norbs*(norbs+1)/2)
   _REAL_, intent(in) :: dens(norbs*(norbs+1)/2)
+  integer, intent(in) :: norbs
   _REAL_, intent(in) :: vshift
 
   integer :: i, j, ij
@@ -2187,7 +2187,7 @@ END SUBROUTINE diis_extrap
 !   ainv = a
 !   JOBZ = "A"
 !   LWORK = -1
-!   CALL DGESDD(JOBZ,n,n,ainv,n,S,U,n,VT,n,twork(1),LWORK,IWORK,my_err)
+!   CALL DGESDD(JOBZ,n,n,ainv,n,S,U,n,VT,n,twork,LWORK,IWORK,my_err)
 
 !   LWORK = NINT(twork(1))
 !   ALLOCATE( WORK(LWORK) )
@@ -2265,9 +2265,10 @@ SUBROUTINE SvdInvert_SymMat(n,a,ainv,thresh) ! THRESH,ERR
   !  IF ( PRESENT(THRESH) ) my_thresh = THRESH
   my_thresh = thresh
 
+  ! get the optimal size of the WORK array
   ainv = a
   LWORK = -1
-  CALL DGESVD("A","A",n,n, ainv,n, S,U,n, VT,n, twork(1),LWORK,my_err)
+  CALL DGESVD("A","A",n,n, ainv,n, S,U,n, VT,n, twork,LWORK,my_err)
   
   LWORK = NINT(twork(1))
   ALLOCATE( WORK(LWORK) )

@@ -1,0 +1,15 @@
+1. Output other pairwise energy components in addition to DGij. Do we want these in 
+separate files? 
+
+2. Print values if gbnsr6 relevant flags, e.g. chagb, etc. 
+
+3. Add option to read-in inverse effective radii from a file, bypass their calculation. 
+
+4. Explore less restrictive default values for parameters that control accuracy/speed trade-offs. 
+   E.g. space=0.6 A instead of 0.4 A. 
+
+5. zap9 radii set option
+
+6. compute energies from MD trajectories
+
+7. Compute B(A) automatically for non-cha GB as well

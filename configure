@@ -1,6 +1,6 @@
 #!/bin/bash
 
-printf "configure script for msander\n\n"
+printf "configure script for AmberClassic\n\n"
 
 # Store the command
 command=`echo "$0 $*"`
@@ -8,21 +8,24 @@ command=`echo "$0 $*"`
 #------------------------------------------------------------------------------
 #  Set up defaults:
 #------------------------------------------------------------------------------
-msanderhome=`pwd`
+AmberClassicHome=`pwd`
 verbose="@"
 enablempi=
 requested_help="no"
 clangf=""
 openblas="no"
 sfx=""
-gcc10f=""
-gcc10c=""
+gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
+gcc10c="-fcommon"
 longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
+conda="no"
+conda_incflags=""
 
 compiler="gnu"
 cc="gcc -Wno-unused-result"
+cxx="g++ -Wno-unused-result"
 mpicc="mpicc"
 iccflags=""
 
@@ -43,6 +46,8 @@ installtype="serial"
 
 plumed="no"
 
+boostlib="-lboost_program_options -lboost_iostreams -lboost_regex -lboost_system -lboost_timer -lboost_chrono -lboost_filesystem -lboost_graph"
+
 cuda="no"
 cudaflags=''
 cudafflags=''
@@ -54,9 +59,9 @@ cuda_prec='SPFP'
 lapack="skip"
 blas="skip"
 
-inc="-I$msanderhome/include"
-netcdflibf_static="$msanderhome/lib/libnetcdff.a $msanderhome/lib/libnetcdf.a"
-netcdflibf_shared="-L$msanderhome/lib -lnetcdff -lnetcdf"
+inc="-I$AmberClassicHome/include"
+netcdflibf_static="$AmberClassicHome/lib/libnetcdff.a $AmberClassicHome/lib/libnetcdf.a"
+netcdflibf_shared="-L$AmberClassicHome/lib -lnetcdff -lnetcdf"
 netcdflibf=$netcdflibf_static
 
 #short_ene=short_ene_omp.o
@@ -83,11 +88,15 @@ while [ $# -gt 0 ]; do
             installtype="cuda"
             cudafflags="-DCUDA"
             fpic="";;
-        --prec)          shift; cuda_prec="$1";;
-        --arch)          shift; cuda_arch="$cuda_arch $1"; uspec_arch='true';;
-        --gcc10)
-            gcc10f="-Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
-            gcc10c="-fcommon";;
+        --cudaprec)      shift; cuda_prec="$1";;
+        --cudaarch)      shift; cuda_arch="$cuda_arch $1"; uspec_arch='true';;
+        --nogcc10)
+            gcc10f=""
+            gcc10c="";;
+        --conda)
+            boostlib="-L$CONDA_PREFIX/lib $boostlib"
+            conda_incflags="-I$CONDA_PREFIX/include"
+            conda="yes";;
         --mkl)
             mkl="yes";;
         --openblas)
@@ -99,16 +108,18 @@ while [ $# -gt 0 ]; do
         --intel)
             compiler="intel"
             cc="icx"
-            fc="ifort"
+            cxx="icpx"
+            fc="ifx"
             longlines=""
             mpicc="mpiicc -cc=icx"
-            mpif90="mpiifort"
+            mpif90="mpiifort -fc=ifx"
             optflags="-g -O3"
             flibs_arch="-lifport -lifcore -lsvml";;
         --clang)
             compiler="clang"
             clangf="-DCLANG"
             cc="clang"
+            cxx="clang"
             fc="gfortran"
             optflags="-g -O3";;
         --mpi)
@@ -119,8 +130,6 @@ while [ $# -gt 0 ]; do
             short_ene=short_ene.o
             installtype="parallel"
             sfx=".MPI";;
-        --full)
-            installtype="full";;
         *)
             echo "Option $1 not recognized"
             exit 1
@@ -131,19 +140,20 @@ done
 if [ "$requested_help" = "yes" ] ; then
 	printf " --intel        use Intel compilers; default is gnu\n"
 	printf " --clang        use clang/gfortran as compilers\n"
-	printf " --gcc10        add flags for gcc10 and above\n"
+	printf " --nogcc10      use flags for gcc9 and below\n"
     printf "\n"
-	printf " --mpi          prepare for mpi build\n"
-	printf " --openmp       prepare for OMP build\n"
-	printf " --cuda         prepare for cuda build\n"
-    printf " --prec         [SPFP|DPFP], cuda precision, default is SPFP\n"
-    printf " --arch          <kepler|maxwell|pascal|volta|turing|ampere|ada>"
+	printf " --mpi          build only msander.MPI\n"
+	printf " --cuda         build only msander.cuda\n"
+    printf "                [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
+    printf " --cudaprec     [SPFP|DPFP], cuda precision, default is SPFP\n"
+    printf " --cudaarch     <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\n"
+	printf " --openmp       make use of OPENMP\n"
 	printf " --mkl          use MKL routines from \$MKLROOT environment variable\n"
 	printf " --openblas     use BLAS routines from \$GOTO environment variable\n"
+    printf "\n"
 	printf " --verbose      give build details, otherwise be more silent\n"
-	printf " --static       use static linking (experiental)\n"
-    printf " --full         install everything with a serial install\n"
+	printf " --static       use static linking (experimental)\n"
     printf "\n"
     exit 0
 fi
@@ -168,15 +178,10 @@ fi
 #------------------------------------------------------------------------------
 #  Make some needed directories:
 #------------------------------------------------------------------------------
-if [ ! -d bin ]; then
-    mkdir bin
-fi
-if [ ! -d lib ]; then
-    mkdir lib
-fi
-if [ ! -d include ]; then
-    mkdir include
-fi
+mkdir -p bin
+mkdir -p bin/wrapped_progs
+mkdir -p lib
+mkdir -p include
 cp src/msander/sander.h include
 
 #------------------------------------------------------------------------------
@@ -266,7 +271,38 @@ fi
 /bin/rm -f testp.f testp.o testp
 
 #--------------------------------------------------------------------------
-#  Configure the MKL or GOTO etc libraries for BLAS/LAPACK.
+#  Test if bison is available and works
+#--------------------------------------------------------------------------
+
+  printf "Testing bison ..."
+  cat <<EOF >testp.y
+%{
+static int curItemNo, curValueNo, itemIndex;
+%}
+%token NUMBER
+%%
+term: NUMBER  { curItemNo = 1; }
+
+%%
+EOF
+
+bison -y testp.y
+status=$?
+
+if [ $status -gt 0 ]; then
+    echo ""
+    echo "Error: Unable to run bison."
+    echo "       Please check your PATH, or install the program."
+    echo ""
+    exit 1
+else
+    printf "OK\n\n"
+fi
+
+/bin/rm -f testp.y y.tab.c
+
+#--------------------------------------------------------------------------
+#  Configure the MKL or GOTO libraries for BLAS/LAPACK.
 #--------------------------------------------------------------------------
 
 # Determine MKL home directory
@@ -282,6 +318,9 @@ if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
    if [ ! -z "$GOTO" -a "$openblas" == "yes" ]; then
       echo "using OpenBLAS libraries in $GOTO"
       flibs_la="$GOTO -lpthread"
+   elif [ "$conda" == "yes" -a "$openblas" == "yes" ]; then
+      echo "using OpenBLAS libraries from conda"
+      flibs_la="$CONDA_PREFIX/lib/libopenblas.a -lpthread"
    else
       # use the compiled versions;
       flibs_la="-llapack -lblas"
@@ -383,15 +422,22 @@ else
   fi
 fi
 
+
 #--------------------------------------------------------------------------
 #  Configure and build netcdf:
 #--------------------------------------------------------------------------
-if [ ! -s "lib/libnetcdf.a" ]; then
+
+if [ "$conda" == "yes" ]; then
+
+   netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
+   echo "using netcdf   libraries from conda"
+
+elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
    printf "Configuring the NetCDF C interface..."
    make clean > /dev/null 2>&1
    ./configure CC="$cc" CFLAGS="-fPIC" LDFLAGS="" \
-      --prefix=$msanderhome --disable-netcdf-4 --disable-dap \
+      --prefix=$AmberClassicHome --disable-netcdf-4 --disable-dap \
       --disable-shared --disable-doxygen > ../netcdf_c.config.log 2>&1
    ncerror=$?
    if [ $ncerror -gt 0 ]; then
@@ -413,15 +459,15 @@ if [ ! -s "lib/libnetcdf.a" ]; then
    # NetCDF Fortran configure/build
    cd ../netcdf-fortran-4.5.2
    # The NetCDF Fortran config script will need access to the C library.
-   export LD_LIBRARY_PATH="$msanderhome/lib:$LD_LIBRARY_PATH"
+   export LD_LIBRARY_PATH="$AmberClassicHome/lib:$LD_LIBRARY_PATH"
    printf "Configuring the NetCDF Fortran interface..."
    make clean > /dev/null 2>&1
    ./configure  CC="$cc" CFLAGS="-fPIC" \
-                  LDFLAGS="-L$msanderhome/lib $ldflags" \
-                  CPPFLAGS="-I$msanderhome/include" \
+                  LDFLAGS="-L$AmberClassicHome/lib $ldflags" \
+                  CPPFLAGS="-I$AmberClassicHome/include" \
                   FC="$fc" FCFLAGS="" \
                   F77="$fc" FFLAGS="-fPIC" --disable-shared  --disable-doxygen \
-                  --prefix=$msanderhome >> ../netcdf_f.config.log 2>&1
+                  --prefix=$AmberClassicHome >> ../netcdf_f.config.log 2>&1
    ncerror=$?
    if [ $ncerror -gt 0 ]; then
        echo "Error: NetCDF configure failed!  Check netcdf_f.config.log"
@@ -446,7 +492,14 @@ fi
 #--------------------------------------------------------------------------
 #  Configure and build FFTW3:
 #--------------------------------------------------------------------------
-if [ "$flibs_fftw" != "" ]; then
+
+if [ "$conda" == "yes" ]; then
+
+   flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
+   echo "using fftw     libraries from conda"
+
+
+elif [ "$flibs_fftw" != "" ]; then
 
    if [ ! -s "lib/libfftw3.a" ] || \
        [ "$mpi" == "yes" -a ! -s "lib/libfftw3_mpi.a" ] || \
@@ -465,8 +518,8 @@ if [ "$flibs_fftw" != "" ]; then
        #   be required for Intel compilers.
        printf "\nConfiguring fftw-3.3 with $cc and $fc..."
        cd src/fftw-3.3 && \
-           ./configure --disable-doc --prefix=$msanderhome \
-           --libdir=$msanderhome/lib $enableomp $fftw_flags \
+           ./configure --disable-doc --prefix=$AmberClassicHome \
+           --libdir=$AmberClassicHome/lib $enableomp $fftw_flags \
            --enable-static $enable_sse MPICC="$mpicc" \
            CC="$cc" CFLAGS="$gccsys $optflags -fPIC"  \
            F77="$fc" FFLAGS="$optflags -fPIC" \
@@ -634,15 +687,14 @@ fi
 
 cat <<EOF > config.h
 
-#  msander configuration file.
+#  AmberClasic configuration file.
 #  Created on `date` via $command
 
 ###############################################################################
 
 # (1)  Location of the installation
 
-AMBERTOOLS=msander
-BASEDIR=$msanderhome
+BASEDIR=$AmberClassicHome
 BINDIR=\$(BASEDIR)/bin
 LIBDIR=\$(BASEDIR)/lib
 INCDIR=\$(BASEDIR)/include
@@ -659,30 +711,31 @@ LM=$lm
 
 ###############################################################################
 
-#  (3) allow for the use of netcdf
+#  (3) specify some library options:
 
 NETCDFLIBF=$netcdflibf
-
+BOOSTLIB=$boostlib
 LAPACK=$lapack
 BLAS=$blas
 
 ###############################################################################
 
-#  (4)  C compiler
+#  (4)  C compilers:
 
 CC=$cc
-CFLAGS=$clangf $inc $gcc10c $iccflags $fpic $debug
+CXX=$cxx
+CFLAGS=$clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 
 ###############################################################################
 
-#  (5)  Fortran compiler
+#  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
-FLIBSF=-lrism -lxray -lsqm -larpack $flibs_fftw $flibs_la $plumed_load
+FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
+FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
 SHORT_ENE=$short_ene
@@ -700,6 +753,8 @@ MAKE=make --no-print-directory
 SFX=$sfx
 VB=$verbose
 INSTALLTYPE=$installtype
+FLEX=flex
+BISON=bison
 
 # CUDA:
 CUDAFLAGS=$prec_model $cuda_arch_flags $cuda_dc_flags

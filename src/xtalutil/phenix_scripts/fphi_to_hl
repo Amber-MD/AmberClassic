@@ -1,0 +1,49 @@
+#!/bin/bash
+
+#  Convert an mtz file with F/PHIF data into HL format for phenix.
+#    Makes assumptions (below) about the figure of merit and errors in F
+
+#  Input:  $1.mtz       Output:  ${1}_hl.mtz
+
+if true; then
+
+chltofom -mtzin $1.mtz -mtzout tmp.mtz -colin-phifom '/*/*/[F,PHIF]' > $1.fphi_to_hkl.log
+
+sftools << EOF >> $1.fphi_to_hkl.log
+read tmp.mtz
+set labels
+FP
+PHI
+HLA
+HLB
+HLC
+HLD
+calc Q col SIGFP = 0.1
+calc W col FOM = 0.99
+write ${1}_hl.mtz col FP SIGFP PHI FOM HLA HLB HLC HLD
+quit
+EOF
+
+/bin/rm tmp.mtz
+
+fi
+
+if false; then
+
+#  Second, optional step: run a zero-cycle phenix refinement to get
+#  R-free-factors, reject outliers.  Requires $2.pdb as input
+
+phenix.refine  \
+   $2.pdb ${1}_hl.mtz $ciffiles \
+   refinement.input.xray_data.r_free_flags.generate=True \
+   refinement.main.number_of_macro_cycles=0 \
+   xray_data.outliers_rejection=True \
+   output.write_model_cif_file=False \
+   prefix=cdl serial=1 \
+   write_geo=False cdl=True --overwrite >> $1.fphi_to_hkl.log
+
+/bin/mv cdl_data.mtz ${1}_hl.mtz
+/bin/rm cdl_001.{log,mtz,eff,pdb} cdl_002.def
+
+fi
+

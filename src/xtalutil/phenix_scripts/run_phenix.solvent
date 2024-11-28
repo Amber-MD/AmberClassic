@@ -1,0 +1,80 @@
+#!/bin/sh
+
+# Do single-point calculations in phenix to compare the default bulk-solvent
+#   model with a user-supplied solvent file.
+#   User should edit the label_string below to match the input files.
+
+pdbin=$1     # input pdb-file
+mtzin=$2     # input reflection file
+
+#  Output to stdout.
+
+#  Mainly developed by Pavel Afonine, modified by David Case.
+
+cat <<EOF > run_00.py
+from __future__ import division
+import iotbx.pdb
+import mmtbx.f_model
+from iotbx import reflection_file_reader
+import iotbx.xplor.map
+
+def run():
+  # Read model and data
+  xrs = iotbx.pdb.input(
+    file_name="$pdbin").xray_structure_simple()
+  miller_arrays = reflection_file_reader.any_reflection_file(file_name =
+    "$mtzin").as_miller_arrays()
+  for ma in miller_arrays:
+    if(ma.info().label_string()=="FP,SIGFP"):
+      f_obs = ma
+
+  #-----------------------------------------------------
+
+  print("Using Phenix default bulk-solvent:")
+  fmodel = mmtbx.f_model.manager(
+    xray_structure = xrs,
+    f_obs          = f_obs)
+  fmodel.update_all_scales(update_f_part1=False, remove_outliers=False)
+  fmodel.show(show_header=False, show_approx=False)
+  print("r_work: %6.4f"%fmodel.r_work())
+  print("")
+  mtzfile = open('phenix.flat.mtz','wb')
+  fmodel.export(out=mtzfile)
+
+  #-----------------------------------------------------
+
+  print("Using user-supplied bulk-solvent:")
+  miller_arrays = reflection_file_reader.any_reflection_file(file_name =
+    "$mtzin").as_miller_arrays()
+  for ma in miller_arrays:
+    if(ma.info().label_string()=="Fpart,PHIpart"):
+      f_mask = ma
+  fft_map = f_mask.fft_map(resolution_factor = 1./4)
+  fft_map.apply_volume_scaling()
+  mask_data = fft_map.real_map_unpadded()
+  #
+  f_mask = fmodel.f_obs().structure_factors_from_map(
+    map            = mask_data,
+    use_scale      = True,
+    anomalous_flag = False,
+    use_sg         = False)
+  f_calc = fmodel.f_obs().structure_factors_from_scatterers(
+    xray_structure = xrs).f_calc()
+  fmodel = mmtbx.f_model.manager(
+    f_obs  = f_obs,
+    f_calc = f_calc,
+    f_mask = f_mask)
+  fmodel.update_all_scales(update_f_part1=False, remove_outliers=False)
+  fmodel.show(show_header=False, show_approx=False)
+  print("r_work: %6.4f"%fmodel.r_work())
+  mtzfile = open('phenix.part.mtz','wb')
+  fmodel.export(out=mtzfile)
+
+
+if (__name__ == "__main__"):
+  run()
+EOF
+
+phenix.python run_00.py
+
+/bin/rm -f run_00.py

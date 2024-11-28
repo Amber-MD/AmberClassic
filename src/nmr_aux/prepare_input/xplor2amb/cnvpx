@@ -1,0 +1,269 @@
+#!/usr/bin/env perl
+
+if($#ARGV != 3)
+{
+   $prgName = `basename $0`;
+   chomp($prgName);
+   die <<EODIE;
+
+This program attempts to convert XPLOR pseudo restraints into AMBER restraints.
+But it's primitive. XPLOR files must be simplified first.
+(We really should use a parser, or some way to skip new lines in the middle
+of an "assign" statement.)
+
+XPLOR:
+assign (resid 2   and name HA   )(resid 2   and name HB#  ) 2.4 0.6 0.6
+assign (resid 2   and name HB#  )(resid 3   and name HD1  ) 3.4 1.6 1.6
+assign (resid 2   and name HB#  )(resid 3   and name HD2  ) 3.4 1.6 1.6
+assign (resid 3   and name HD#  )(resid 3   and name HG#  ) 2.4 0.6 0.6
+
+AMBER:
+#
+#  1 GUA H3'  1 GUA Q5'        5.50
+ &rst iat=  27, -1, r3= 4.394, r4= 4.894,
+ igr1= 0, 0, 0, 0, igr2= 4, 5, 0, 0,
+ r1= 1.300, r2= 1.800, r3= 4.394, r4= 4.894,
+ rk2= 0.00, rk3= 32.000, &end
+
+Usage: $prgName -x [XPLOR file] -p [example pdb file]
+EODIE
+}
+use Getopt::Std;
+getopt('xp');
+$xFile = $opt_x;
+$pdbFile = $opt_p;
+$pound = "#";
+
+open(PDBFILE, $pdbFile) || die("HELP Can't open $pdbFile: $!\n");
+while(<PDBFILE>)
+{
+   next unless /^ATOM/;
+#ATOM      1 C20  DSI     1       1.296   0.825   4.158  1.00  6.00
+   ($type, $atomNum, $atomName, $resName, $resNum, $xcoord, $ycoord, $zcoord) = split;
+   $numMap{"$resNum $atomName"} = $atomNum;
+   $resMap{"$resNum"} = $resName;
+}
+close(PDBFILE);
+
+open(XFILE, $xFile) || die("Can't open file $xFile: $!\n");
+while(<XFILE>)
+{
+  next if /^#/;
+  next if /^\s*$/;
+
+  @wd = split;
+  $res1 = $wd[2];
+  $res2 = $wd[7];
+  $atm1 = $wd[5];
+  $atm2 = $wd[10];
+
+  $dn = $wd[12] - $wd[13];
+  $up = $wd[12] + $wd[14];
+
+  $igr1=0;$igr2=0;
+  $val1=0;$val2=0;
+  $ile1=0;$ile2=0;
+  $ild1=0;$ild2=0;
+  $leu1=0;$leu2=0;
+  $gln1=0;$gln2=0;
+  $thr1=0;$thr2=0;
+  $arg1=0;$arg2=0;
+
+  $h5p1=0;$h5p2=0;
+
+  for($wd[5]){
+     if(/$\#/){
+       $igr1 = 1;
+       @letts = split //, $wd[5]; 
+       $i=0;
+       $flag = 0;
+     until($flag == 1){
+          if($letts[$i] eq $pound){$flag = 1;}
+          $i++;
+          }
+     if($i == 3){$name1 = join '', $letts[0], $letts[1];}
+     if($i == 4){$name1 = join '', $letts[0], $letts[1], $letts[2];}
+
+     $residue1 = $resMap{"$res1"};
+     if($residue1 eq "VAL" && $name1 eq "HG"){$val1 = 1;}
+     if($residue1 eq "ILE" && $name1 eq "HG"){$ile1 = 1;}
+     if($residue1 eq "ILE" && $name1 eq "HD"){$ild1 = 1;}
+     if($residue1 eq "LEU" && $name1 eq "HD"){$leu1 = 1;}
+     if($residue1 eq "GLN" && $name1 eq "HE"){$gln1 = 1;}
+     if($residue1 eq "THR" && $name1 eq "HG"){$thr1 = 1;}
+     if($residue1 eq "ARG" && $name1 eq "HH"){$arg1 = 1;}
+     if($name1 eq "H5'"){$h5p1 = 1;}
+     }
+   }
+
+  for($wd[10]){
+     if(/$\#/){
+       $igr2 = 1;
+       @letts = split //, $wd[10];
+       $i=0;
+     $flag = 0;
+     until($flag == 1){
+          if($letts[$i] eq $pound){$flag = 1;}
+          $i++;
+          }
+     if($i == 3){$name2 = join '', $letts[0], $letts[1];}
+     if($i == 4){$name2 = join '', $letts[0], $letts[1], $letts[2];}
+
+     $residue2 = $resMap{"$res2"};
+     if($residue2 eq "VAL" && $name2 eq "HG"){$val2 = 1;}
+     if($residue2 eq "ILE" && $name2 eq "HG"){$ile2 = 1;}
+     if($residue2 eq "ILE" && $name2 eq "HD"){$ild2 = 1;}
+     if($residue2 eq "LEU" && $name2 eq "HD"){$leu2 = 1;}
+     if($residue2 eq "GLN" && $name2 eq "HE"){$gln2 = 1;}
+     if($residue2 eq "THR" && $name2 eq "HG"){$thr2 = 1;}
+     if($residue2 eq "ARG" && $name2 eq "HH"){$arg2 = 1;}
+     if($name2 eq "H5'"){$h5p2 = 1;}
+     }
+   }
+
+   $num1 = $numMap{"$res1 $atm1"};
+   $num2 = $numMap{"$res2 $atm2"};
+
+################### OUTPUT ###################
+
+#########################
+# COMMENT HEADER  +  IGRs
+#########################
+
+if($igr1 == 1 && $igr2 == 1){
+   $atm1j = join '', $name1, "1";
+   $pseud1 = join '', $name1, "*";
+   $base1 = $resMap{"$res1"};
+   $atm2j = join '', $name2, "1";
+   $pseud2 = join '', $name2, "*";
+   $base2 = $resMap{"$res2"};
+   printf("#\n#  %d %s %s   %d %s %s\n", $res1, $base1, $pseud1, $res2, $base2, $pseud2);
+   printf(" \&rst iat=  ");
+   printf(" -1, -1,") 
+   }
+elsif($igr1 == 1){
+   $atm1j = join '', $name1, "1";
+   $base1 = $resMap{"$res1"};
+   $pseud1 = join '', $name1, "*";
+   $base2 = $resMap{"$res2"};
+   printf("#\n#  %d %s %s   %d %s %s\n", $res1, $base1, $pseud1, $res2, $base2, $atm2);
+   printf(" \&rst iat=  ");
+   printf(" -1, %d,", $num2)
+   }
+elsif($igr2 == 1){
+   $base1 = $resMap{"$res1"};
+   $atm2j = join '', $name2, "1";
+   $base2 = $resMap{"$res2"};
+   $pseud2 = join '', $name2, "*";
+   printf("#\n#  %d %s %s   %d %s %s\n", $res1, $base1, $atm1, $res2, $base2, $pseud2);
+   printf(" \&rst iat=  ");
+   printf(" %d, -1,", $num1);
+   }
+printf(" r1= %2.2f, r2= %2.2f, r3= %2.2f, r4= %2.2f,\n", $dn - 0.5, $dn, $up, $up + 0.5);
+
+#########################
+# ATOM NUMBERS
+#########################
+
+printf(" igr1=");
+
+if($val1==1||$ile1==1||$leu1==1||$gln1==1||$ild1==1||$thr1==1||$arg1==1||$h5p1==1){
+   $atmo1 = join '', $name1, "11";
+   $atmo2 = join '', $name1, "12";
+   $atmo3 = join '', $name1, "13";
+   $atmo4 = join '', $name1, "21";
+   $atmo5 = join '', $name1, "22";
+   $atmo6 = join '', $name1, "23";
+   $numo1 = $numMap{"$res1 $atmo1"};
+   $numo2 = $numMap{"$res1 $atmo2"};
+   $numo3 = $numMap{"$res1 $atmo3"};
+   $numo4 = $numMap{"$res1 $atmo4"};
+   $numo5 = $numMap{"$res1 $atmo5"};
+   $numo6 = $numMap{"$res1 $atmo6"};
+ if($val1 == 1 || $leu1 == 1){
+   printf(" %d, %d, %d, %d, %d, %d, ",$numo1,$numo2,$numo3,$numo4,$numo5,$numo6);}
+ if($ile1 == 1){
+   printf(" %d, %d, %d, %d, %d, ",$numo1,$numo2,$numo4,$numo5,$numo6);}
+ if($ild1 == 1){
+   printf(" %d, %d, %d, ",$numo1,$numo2,$numo3);}
+ if($gln1 == 1){
+   printf(" %d, %d,",$numo4,$numo5);}
+ if($thr1 == 1){
+   printf(" %d, %d, %d, ",$numo4,$numo5,$numo6);}
+ if($arg1 == 1){
+   printf(" %d, %d, %d, %d, ",$numo1,$numo2,$numo4,$numo5);}
+ if($h5p1 == 1){
+   $numo1 = $numMap{"$res1 H5'"};
+   $numo2 = $numMap{"$res1 H5''"};
+   printf(" %d, %d,",$numo1,$numo2);}
+   }
+
+elsif($igr1 == 1){
+   $atm1a = join '', $name1, "1";
+   $atm1b = join '', $name1, "2";
+   $atm1c = join '', $name1, "3";
+   $num1a = $numMap{"$res1 $atm1a"};
+   $num1b = $numMap{"$res1 $atm1b"};
+   printf(" %d, %d, ", $num1a, $num1b);
+   $t1 = 0;
+   $t1 = 1 if exists $numMap{"$res1 $atm1c"};
+   if($t1 == 1){
+     $num1c = $numMap{"$res1 $atm1c"};
+     printf("%d,", $num1c);}
+   }
+
+else{printf(" 0,");}
+
+printf("\n igr2=");
+
+if($val2==1||$ile2==1||$leu2==1||$gln2==1||$ild2==1||$thr2==1||$arg2==1||$h5p2==1){
+   $atmt1 = join '', $name2, "11";
+   $atmt2 = join '', $name2, "12";
+   $atmt3 = join '', $name2, "13";
+   $atmt4 = join '', $name2, "21";
+   $atmt5 = join '', $name2, "22";
+   $atmt6 = join '', $name2, "23";
+   $numt1 = $numMap{"$res2 $atmt1"};
+   $numt2 = $numMap{"$res2 $atmt2"};
+   $numt3 = $numMap{"$res2 $atmt3"};
+   $numt4 = $numMap{"$res2 $atmt4"};
+   $numt5 = $numMap{"$res2 $atmt5"};
+   $numt6 = $numMap{"$res2 $atmt6"};
+ if($val2 == 1 || $leu2 == 1){
+   printf(" %d, %d, %d, %d, %d, %d,\n",$numt1,$numt2,$numt3,$numt4,$numt5,$numt6);}
+ if($ile2 == 1){
+   printf(" %d, %d, %d, %d, %d, %d,\n",$numt1,$numt2,$numt4,$numt5,$numt6);}
+ if($ild2 == 1){
+   printf(" %d, %d, %d,\n",$numt1,$numt2,$numt3);}
+ if($gln2 == 1){
+   printf(" %d, %d,\n",$numt4,$numt5);}
+ if($thr2 == 1){
+   printf(" %d, %d, %d,\n",$numt4,$numt5,$numt6);}
+ if($arg2 == 1){
+   printf(" %d, %d, %d, %d, %d, ",$numt1,$numt2,$numt4,$numt5);}
+ if($h5p2 == 1){
+   $numt1 = $numMap{"$res2 H5'"};
+   $numt2 = $numMap{"$res2 H5''"};
+   printf(" %d, %d,",$numt1,$numt2);}
+   }
+
+elsif($igr2 == 1){
+   $atm2a = join '', $name2, "1";
+   $atm2b = join '', $name2, "2";
+   $atm2c = join '', $name2, "3";
+   $num2a = $numMap{"$res2 $atm2a"};
+   $num2b = $numMap{"$res2 $atm2b"};
+   printf(" %d, %d, ", $num2a, $num2b);
+   $t2 = 0;
+   $t2 = 1 if exists $numMap{"$res2 $atm2c"};
+   if($t2 == 1){
+     $num2c = $numMap{"$res2 $atm2c"};
+     printf("%d,\n", $num2c)}
+   else{printf("\n");}
+   }
+
+else{printf(" 0,\n");}
+
+printf(" rk2= 0.00, rk3= 20.000, ir6=1, &end\n");
+}
+close(XFILE);

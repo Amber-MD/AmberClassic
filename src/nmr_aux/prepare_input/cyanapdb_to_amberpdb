@@ -1,0 +1,70 @@
+#!/usr/bin/perl -n -w
+#
+########################################################################
+#
+#  Sample script to convert a cyana pdb file to Amber format:
+#
+#  You should copy this file to your working directory, i.e. where the
+#     cyana pdb files are.  Then:
+#
+#  (1) Edit the "system-specific changes below for your particular problem
+#           (examples are given between the "#=================" lines below)
+#
+#  (2) Run this script as a filter: 
+#           cyanapdb_to_amberpdb < cyana-pdb-file > amber-pdb-file
+#
+########################################################################
+#
+#   first, read in a pdb file line and unpack
+#
+if ( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+
+#   Generic substitutions, should work for all RNA's:
+
+$alt = " ";
+
+$atname = "HO2'" if $atname eq " HO2";
+$atname = "H5''" if $atname eq " H5\"";
+
+$resname = "  G" if $resname eq "RGUA";
+$resname = "  C" if $resname eq "RCYT";
+$resname = "  A" if $resname eq "RADE";
+$resname = "  U" if $resname eq "URA ";
+
+# skip cyana linker residues:
+next if $resname eq "PL ";
+next if $resname eq "LL5";
+next if $resname eq "ORI";
+
+#=========================================================================
+#   System-specific changes: edit for your particular problem:
+#
+#       (In this example, we convert the cyana residue numbers to Amber
+#       residue numbers, skip the cyana linker residues, and remove 
+#       the 5'-terminal phosphates from each of the Amber strands.)
+
+#=========================================================================
+
+#
+#  write back out
+#
+printf
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} else {
+	print;
+}

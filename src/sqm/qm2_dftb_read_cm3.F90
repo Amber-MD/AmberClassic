@@ -5,7 +5,7 @@
 subroutine read_cm3(ntype,cm3_file)
    !
    ! Subroutine to read the CM3 parameters from the file
-   ! $MSANDERHOME/dat/slko/CM3_PARAMETERS.DAT
+   ! $AMBERHOME/dat/slko/CM3_PARAMETERS.DAT
    !
    use qm2_dftb_module, only: mol, cm3
 
@@ -34,7 +34,7 @@ subroutine read_cm3(ntype,cm3_file)
       write(6,*)" CM3 parameter table needed for this calculation."
       write(6,*)
       write(6,*)" This file was supposed to be located in the "
-      write(6,*)" $(MSANDERHOME)/dat/slko/"
+      write(6,*)" $(AMBERHOME)/dat/slko/"
       write(6,*)" directory."
       write(6,*)
       call sander_bomb("qm2_dftb_read_cm3 <qm2_dftb_read_cm3.f>", &

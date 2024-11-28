@@ -37,7 +37,8 @@ subroutine qm2_dftb_get_dftb3_parameters(silence, natom, ntyp, atyp, atomic_numb
   uhder_params(6)  = -0.1492d0   ! C : -"-
   uhder_params(7)  = -0.1535d0   ! N : -"-
   uhder_params(8)  = -0.1575d0   ! O : -"-
-  uhder_params(9)  = -0.1575d0   ! F : D, Table 1
+  uhder_params(9)  = -0.1623d0   ! F : D, Table 1
+  uhder_params(11) = -0.0454d0   ! Na: D, Table 1
   uhder_params(12) = -0.02d0     ! Mg: C, Table 1
   uhder_params(15) = -0.14d0     ! P : B, Table 1
   uhder_params(16) = -0.11d0     ! S : -"-

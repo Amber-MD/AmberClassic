@@ -1,0 +1,312 @@
+
+ ******************************************************************************
+ *                                                                            *
+ *                           DIVCON 99a                                       *
+ *                                                                            *
+ *                                             $Revision: 10.0 $ (*)          *
+ *                                                                            *
+ ******************************************************************************
+
+                                           (*) COMPILED WITH DIRECTIVES:
+                                               MPI_IS_ON            NOT DEFINED
+                                               MPI_NOMC             NOT DEFINED
+                                               CUTREPUL_IS_ON       NOT DEFINED
+                                               LARGE_MEMORY_MC      NOT DEFINED
+                                               MEMORY_OVERLAP           DEFINED
+                                               STEWART_INTEGRALS        DEFINED
+                                               SCRF_IS_ON           NOT DEFINED
+                                               PARAM_IS_ON          NOT DEFINED
+
+
+CARTESIAN AM1 STANDARD DIRECT OPT=BFGS  CHARGE=0                                
+
+created by wmopcrt()                                                            
+
+
+ CARTESIAN      - CARTESIAN COORDINATE FORMAT SELECTED
+ AM1            - AM1 HAMILTONIAN TO BE USED
+ STANDARD       - STANDARD CLOSED-SHELL CALCULATION (NO D&C)
+ DIRECT         - DO NOT STORE 2-ELECTRON INTEGRALS IN SCF CALCULATIONS
+ OPT=BFGS       - CARRY OUT A BFGS GEOMETRY OPTIMIZATION
+ CHARGE=0       - A NET CHARGE OF     0.00 TO BE PLACED ON SYSTEM
+
+
+ NUMBER OF ATOMS                 =    30
+ TOTAL NUMBER OF BASIS FUNCTIONS =    93
+ TOTAL NUMBER OF ELECTRONS       =   110
+
+
+ DEFAULT SETTINGS FOR CALCULATION
+ --------------------------------
+
+ - D&C TEMPERATURE OF 1000.00 K WILL BE USED
+ - NO TIME LIMIT ON CALCULATION
+
+
+ ETEST  =  0.002000
+ XTEST  =  0.001000
+ GNTEST =  1.185854
+ GTEST  =  0.500000
+
+ NUMBER OF VARIABLES=    90
+
+ UPDATING PAIRLIST
+ NPAIRS =      435
+
+  CYCLE =     0         TIME =      2.300  ENERGY =     -91.865426
+  GNORM =    322.642  GRDMAX =  130.9926   GRDAVR =   23.1877
+ DELTAE =    0.000000 DELTAX = 0.000000
+
+  CYCLE =     1         TIME =      3.300  ENERGY =    -111.827680
+  GNORM =    149.594  GRDMAX =   64.9067   GRDAVR =   10.5636
+ DELTAE =  -19.962253 DELTAX = 0.013645
+
+  CYCLE =     2         TIME =      4.000  ENERGY =    -113.017246
+  GNORM =    138.129  GRDMAX =   57.9052   GRDAVR =    9.4368
+ DELTAE =   -1.189566 DELTAX = 0.004733
+
+  CYCLE =     3         TIME =      3.500  ENERGY =    -115.652489
+  GNORM =     92.983  GRDMAX =   28.2426   GRDAVR =    6.8324
+ DELTAE =   -2.635243 DELTAX = 0.009292
+
+  CYCLE =     4         TIME =      1.400  ENERGY =    -117.016327
+  GNORM =     48.158  GRDMAX =   18.1333   GRDAVR =    3.6656
+ DELTAE =   -1.363838 DELTAX = 0.004849
+
+  CYCLE =     5         TIME =      1.600  ENERGY =    -117.735692
+  GNORM =     39.606  GRDMAX =   16.1259   GRDAVR =    2.9721
+ DELTAE =   -0.719365 DELTAX = 0.004515
+
+  CYCLE =     6         TIME =      1.400  ENERGY =    -118.154940
+  GNORM =     34.006  GRDMAX =   16.3349   GRDAVR =    2.5293
+ DELTAE =   -0.419248 DELTAX = 0.002858
+
+  CYCLE =     7         TIME =      1.600  ENERGY =    -118.687617
+  GNORM =     26.997  GRDMAX =    8.7492   GRDAVR =    2.0787
+ DELTAE =   -0.532676 DELTAX = 0.004287
+
+  CYCLE =     8         TIME =      1.400  ENERGY =    -119.031178
+  GNORM =     17.639  GRDMAX =    6.6073   GRDAVR =    1.3612
+ DELTAE =   -0.343562 DELTAX = 0.004369
+
+  CYCLE =     9         TIME =      1.500  ENERGY =    -119.173026
+  GNORM =     14.319  GRDMAX =    4.4044   GRDAVR =    1.1240
+ DELTAE =   -0.141847 DELTAX = 0.002707
+
+  CYCLE =    10         TIME =      1.200  ENERGY =    -119.254625
+  GNORM =     11.138  GRDMAX =    3.3945   GRDAVR =    0.8727
+ DELTAE =   -0.081600 DELTAX = 0.001829
+
+  CYCLE =    11         TIME =      1.200  ENERGY =    -119.312830
+  GNORM =      9.431  GRDMAX =    3.3030   GRDAVR =    0.7347
+ DELTAE =   -0.058205 DELTAX = 0.001557
+
+  CYCLE =    12         TIME =      1.000  ENERGY =    -119.355444
+  GNORM =      7.942  GRDMAX =    2.8923   GRDAVR =    0.5831
+ DELTAE =   -0.042614 DELTAX = 0.001293
+
+  CYCLE =    13         TIME =      1.000  ENERGY =    -119.385108
+  GNORM =      7.626  GRDMAX =    2.4883   GRDAVR =    0.5619
+ DELTAE =   -0.029664 DELTAX = 0.001166
+
+  CYCLE =    14         TIME =      1.200  ENERGY =    -119.421713
+  GNORM =      6.774  GRDMAX =    2.3445   GRDAVR =    0.4815
+ DELTAE =   -0.036605 DELTAX = 0.001748
+
+  CYCLE =    15         TIME =      1.000  ENERGY =    -119.444491
+  GNORM =      5.972  GRDMAX =    2.3569   GRDAVR =    0.4055
+ DELTAE =   -0.022778 DELTAX = 0.001257
+
+  CYCLE =    16         TIME =      1.000  ENERGY =    -119.465383
+  GNORM =      4.918  GRDMAX =    1.7530   GRDAVR =    0.3619
+ DELTAE =   -0.020892 DELTAX = 0.001069
+
+  CYCLE =    17         TIME =      1.000  ENERGY =    -119.489796
+  GNORM =      4.347  GRDMAX =    1.4492   GRDAVR =    0.3272
+ DELTAE =   -0.024413 DELTAX = 0.001421
+
+  CYCLE =    18         TIME =      1.000  ENERGY =    -119.505406
+  GNORM =      4.345  GRDMAX =    1.7134   GRDAVR =    0.3223
+ DELTAE =   -0.015610 DELTAX = 0.001008
+
+  CYCLE =    19         TIME =      1.300  ENERGY =    -119.523579
+  GNORM =      4.687  GRDMAX =    2.3135   GRDAVR =    0.3288
+ DELTAE =   -0.018173 DELTAX = 0.001511
+
+  CYCLE =    20         TIME =      1.200  ENERGY =    -119.537770
+  GNORM =      4.698  GRDMAX =    2.2502   GRDAVR =    0.3164
+ DELTAE =   -0.014191 DELTAX = 0.001503
+
+  CYCLE =    21         TIME =      1.000  ENERGY =    -119.549193
+  GNORM =      3.672  GRDMAX =    1.7095   GRDAVR =    0.2671
+ DELTAE =   -0.011423 DELTAX = 0.000776
+ COORDINATE TEST PASSED
+
+  CYCLE =    22         TIME =      1.000  ENERGY =    -119.566051
+  GNORM =      3.127  GRDMAX =    1.2600   GRDAVR =    0.2424
+ DELTAE =   -0.016858 DELTAX = 0.000567
+ COORDINATE TEST PASSED
+
+  CYCLE =    23         TIME =      1.000  ENERGY =    -119.575121
+  GNORM =      3.242  GRDMAX =    1.1007   GRDAVR =    0.2554
+ DELTAE =   -0.009070 DELTAX = 0.000850
+ COORDINATE TEST PASSED
+
+  CYCLE =    24         TIME =      1.000  ENERGY =    -119.586642
+  GNORM =      3.104  GRDMAX =    1.0937   GRDAVR =    0.2383
+ DELTAE =   -0.011521 DELTAX = 0.001216
+
+  CYCLE =    25         TIME =      1.000  ENERGY =    -119.597350
+  GNORM =      3.027  GRDMAX =    0.9609   GRDAVR =    0.2332
+ DELTAE =   -0.010707 DELTAX = 0.001261
+
+  CYCLE =    26         TIME =      1.000  ENERGY =    -119.609262
+  GNORM =      2.832  GRDMAX =    0.8390   GRDAVR =    0.2260
+ DELTAE =   -0.011912 DELTAX = 0.001555
+
+  CYCLE =    27         TIME =      1.000  ENERGY =    -119.618788
+  GNORM =      2.661  GRDMAX =    0.9011   GRDAVR =    0.2008
+ DELTAE =   -0.009526 DELTAX = 0.001276
+
+  CYCLE =    28         TIME =      1.200  ENERGY =    -119.630702
+  GNORM =      2.722  GRDMAX =    1.1934   GRDAVR =    0.2016
+ DELTAE =   -0.011914 DELTAX = 0.001914
+
+  CYCLE =    29         TIME =      1.200  ENERGY =    -119.642196
+  GNORM =      3.101  GRDMAX =    1.6171   GRDAVR =    0.2158
+ DELTAE =   -0.011494 DELTAX = 0.002871
+
+  CYCLE =    30         TIME =      0.800  ENERGY =    -119.645973
+  GNORM =      2.817  GRDMAX =    1.4685   GRDAVR =    0.1935
+ DELTAE =   -0.003777 DELTAX = 0.000460
+ COORDINATE TEST PASSED
+
+  CYCLE =    31         TIME =      0.800  ENERGY =    -119.653759
+  GNORM =      1.728  GRDMAX =    0.6057   GRDAVR =    0.1316
+ DELTAE =   -0.007786 DELTAX = 0.001554
+
+  CYCLE =    32         TIME =      1.000  ENERGY =    -119.655678
+  GNORM =      1.851  GRDMAX =    0.7815   GRDAVR =    0.1318
+ DELTAE =   -0.001919 DELTAX = 0.000244
+ ENERGY TEST PASSED
+ COORDINATE TEST PASSED
+
+  CYCLE =    33         TIME =      0.900  ENERGY =    -119.657541
+  GNORM =      1.675  GRDMAX =    0.5262   GRDAVR =    0.1298
+ DELTAE =   -0.001863 DELTAX = 0.000279
+ ENERGY TEST PASSED
+ COORDINATE TEST PASSED
+
+  CYCLE =    34         TIME =      0.800  ENERGY =    -119.657984
+  GNORM =      1.130  GRDMAX =    0.4436   GRDAVR =    0.0836
+ DELTAE =   -0.000443 DELTAX = 0.000790
+ ENERGY TEST PASSED
+ COORDINATE TEST PASSED
+ GRADIENT NORM TEST PASSED
+ GRADIENT COMPONENT TEST PASSED
+
+ -- GEOMETRY OPTIMIZED --
+
+
+ FINAL QUANTITIES:
+ -----------------
+
+ NUMBER OF FULLY DIAGONALIZED SUBSYSTEMS:      1
+ NUMBER OF FROZEN SUBSYSTEMS:                  0
+ NUMBER OF SCF CALCULATIONS =     38
+
+ ELECTRONIC ENERGY     =           -26712.42308079 EV
+ CORE-CORE REPULSIONS  =            22121.70589254 EV
+ TOTAL ENERGY          =            -4590.71718825 EV
+ HEAT OF FORMATION     =             -119.65798436 KCAL/MOL
+ FERMI ENERGY          =                0.00000000 EV
+
+ TIMINGS:
+ -------
+ * NUMBER OF DIAGONALIZATIONS:     2
+ * SCF CYCLE: TOTAL     0.5000, AV.     0.2500 SEC.
+    OF WHICH: FOCK BUILD   0.00%. (TOTAL     0.0000, AV.     0.0000 SEC.)
+
+
+     ATOM     ELEMENTAL            CARTESIAN COORDINATES
+    NUMBER     SYMBOL            X           Y           Z
+
+       1         C             0.69542     1.39068     0.24399
+       2         H            -0.20588     1.72219     0.78738
+       3         C             0.79264     0.06226    -0.17284
+       4         C            -0.30399    -0.91644     0.13053
+       5         C            -1.61547    -0.32918     0.00374
+       6         C            -2.71470     0.13171    -0.10607
+       7         C            -4.01474     0.68022    -0.19865
+       8         H            -4.69918     0.27478     0.58023
+       9         C            -4.60263     1.01194    -1.55265
+      10         H            -5.67461     0.80179    -1.71689
+      11         H            -3.99984     0.82136    -2.45847
+      12         C            -4.20282     2.11877    -0.62887
+      13         H            -4.98408     2.71320    -0.12250
+      14         H            -3.31287     2.72625    -0.87160
+      15         C            -0.12833    -1.48296     1.62493
+      16         F             1.07098    -2.11520     1.82157
+      17         F            -0.19030    -0.52122     2.59627
+      18         F            -1.07369    -2.40693     1.97275
+      19         O            -0.29325    -2.09159    -0.70338
+      20         C             0.88612    -2.52081    -1.28007
+      21         O             0.81613    -3.65689    -1.75779
+      22         N             2.00689    -1.69962    -1.30860
+      23         H             2.82793    -2.03917    -1.75618
+      24         C             1.94066    -0.37598    -0.87571
+      25         C             2.99339     0.53323    -1.12031
+      26         H             3.89929     0.20504    -1.65235
+      27         C             2.88930     1.84804    -0.68677
+      28         H             3.71534     2.55199    -0.87837
+      29         C             1.74004     2.27965    -0.01355
+      30         CL            1.61755     3.89359     0.49757
+
+
+   ATOMIC CHARGES:
+
+   ATOM   ELEMENTAL  PARTIAL    PARTIAL    PARTIAL
+    NO.    SYMBOL    MULLIKEN   CM1        CM2
+                     CHARGE     CHARGE     CHARGE
+
+     1       C     -0.04584    -0.04413    -0.02673
+     2       H      0.16737     0.16754     0.14977
+     3       C     -0.17176    -0.16635    -0.16764
+     4       C      0.26310     0.28926     0.30380
+     5       C     -0.21728    -0.21700    -0.21695
+     6       C     -0.01267    -0.01213    -0.01225
+     7       C     -0.09179    -0.09178    -0.07428
+     8       H      0.14832     0.14832     0.13083
+     9       C     -0.18528    -0.18526    -0.14848
+    10       H      0.11966     0.11967     0.10127
+    11       H      0.12304     0.12304     0.10465
+    12       C     -0.19158    -0.19157    -0.15476
+    13       H      0.11900     0.11900     0.10060
+    14       H      0.11980     0.11980     0.10139
+    15       C      0.39716     0.34836     0.45245
+    16       F     -0.16038    -0.14421    -0.17925
+    17       F     -0.15688    -0.13988    -0.17569
+    18       F     -0.14473    -0.12568    -0.16386
+    19       O     -0.21217    -0.26473    -0.29952
+    20       C      0.40480     0.62044     0.65071
+    21       O     -0.30204    -0.34127    -0.42580
+    22       N     -0.32623    -0.82895    -0.66874
+    23       H      0.26966     0.46144     0.42898
+    24       C      0.11476     0.25703     0.21367
+    25       C     -0.17151    -0.16616    -0.15016
+    26       H      0.14972     0.14985     0.13191
+    27       C     -0.06655    -0.06465    -0.04723
+    28       H      0.15639     0.15659     0.13862
+    29       C     -0.09843    -0.06892    -0.07016
+    30       CL     0.00233    -0.02769    -0.02715
+
+ TOTAL MULLIKEN CHARGE =   0.0000
+ TOTAL CM1 CHARGE      =   0.0000
+ TOTAL CM2 CHARGE      =   0.0000
+
+ ----------------------------------------------------------
+ TOTAL TIME:            47.899999 SECONDS
+         0 DAYS  0 HOURS  0 MIN 47.90 SEC 
+
+ EE=          -26712.42308079 EC=            22121.70589254
+ ET=           -4590.71718825 HF=             -119.65798436

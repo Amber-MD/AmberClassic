@@ -630,7 +630,7 @@ contains
                    do iv = 1, this%solvent%numAtomTypes
                       ljBaseTerm = sd2 / this%ljSigmaUV(iu, iv)**2
                       ljBaseTerm = 1d0 / ljBaseTerm**3
-                      dUlj_dr = dUlj_dr + this%ljEpsilonUV(iu, iv) &
+                      dUlj_dr = dUlj_dr + this%ljEpsilonUV(iv, iu) &
                            * ljBaseTerm * (ljBaseTerm - 1.d0) &
                            * this%solvent%density(iv) * guv(ig, iv)
                    end do

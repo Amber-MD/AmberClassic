@@ -526,4 +526,296 @@ elemental _REAL_ function heaviside(x,offset)
   end if
 end function heaviside
   
+!! Computes zeroth order spherical Bessel function.  Adapted from the GNU 
+!! Scientific library.
+!! IN:
+!!    x :: calculate the spherical Bessel function a x
+!!    o_err :: (optional) absolute error in the result.  For abs(x)>0.5d0 this is
+!!             an approximation of the GSL version since we don't know the error
+!!             for the intrinsic sin(x)
+!! OUT:
+!!     the value of the zeroth spherical Bessel function at x
+
+function spherical_bessel_j0(x,o_err) result(val)
+  implicit none
+  _REAL_, intent(in) :: x
+  _REAL_, optional, intent(out) :: o_err
+  _REAL_ :: val
+  _REAL_ :: ax
+  _REAL_, parameter :: c1 = -1d0/6d0, &
+       c2 =  1d0/120d0,&
+       c3 = -1d0/5040d0,&
+       c4 =  1d0/362880d0,&
+       c5 = -1d0/39916800d0,&
+       c6 =  1d0/6227020800d0
+  ax = abs(x)
+  if (ax < 0.5d0) then
+     ax = ax*ax
+     val = 1d0 + ax*(c1 + ax*(c2 + ax*(c3 + ax*(c4 + ax*(c5 + ax*c6)))))
+     if (present(o_err)) o_err = 2d0 * epsilon(1d0) * abs(val)
+  else
+     val  = sin(x)/x;
+     if (present(o_err)) then
+        !we don't know what the error is for intrinsic sin(x)!
+        o_err  = abs(epsilon(1d0)/x)  + 2.0 * epsilon(1d0) * abs(val)
+     end if
+  end if
+end function spherical_bessel_j0
+
+
+!! Computes first order spherical Bessel function.  Adapted from the GNU 
+!! Scientific library.
+!! IN:
+!!    x :: calculate the spherical Bessel function a x
+!!    o_err :: (optional) absolute error in the result.  For abs(x)>0.25d0 this is
+!!             an approximation of the GSL version since we don't know the error
+!!             for the intrinsics sin(x) and cos(x)
+!! OUT:
+!!     the value of the first spherical Bessel function at x
+
+function spherical_bessel_j1(x,o_err) result(val)
+  implicit none
+  _REAL_, intent(in) :: x
+  _REAL_, optional, intent(out) :: o_err
+  _REAL_ :: val
+  _REAL_ :: ax
+  _REAL_, parameter :: c1 = -1d0/10d0,&
+       c2 =  1d0/280d0,&
+       c3 = -1d0/15120d0,&
+       c4 =  1d0/1330560d0,&
+       c5 = -1d0/172972800d0
+
+  ax = abs(x)
+  if (x==0) then
+     val=0d0
+     if (present(o_err)) o_err=0d0
+  else if (ax < 3.1d0*tiny(1d0)) then
+     !GSL  gives an underflow error here.  We'll just approximate it as zero
+     val=0d0
+     if (present(o_err)) o_err=0d0
+  else if (ax < 0.25d0) then
+     ax = ax*ax
+     val = x/3d0*(1d0 + ax*(c1 + ax*(c2 + ax*(c3 + ax*(c4 + ax*c5)))))
+     if (present(o_err)) o_err = 2d0 * epsilon(1d0) * abs(val)
+  else
+     val  = (sin(x)/x - cos(x))/x;
+     if (present(o_err)) then
+        !we don't know what the error is for intrinsic sin(x)!
+        o_err  = (abs(epsilon(1d0)/x)+epsilon(1d0))/abs(x)  + 2.0 * epsilon(1d0) * abs(val)
+        o_err = o_err+ 2.0 * epsilon(1d0)*(abs(sin(x)/(x*x)) + abs(cos(x)/x))
+     end if
+  end if
+end function spherical_bessel_j1
+
+! Calculate the principal axes of the atom distribution.  
+! This follows, in part, mofi() in nmode/thermo.f.
+!IN:
+!   ratu   :: the x,y,z position of each solute atom. (3,natom)
+!   mass   :: mass of each atom
+!   pa     :: the three prinicpal axes
+subroutine principalAxes(ratu,mass,pa)
+  implicit none
+  _REAL_,intent(in) :: ratu(:,:),mass(:)
+  _REAL_, intent(out) :: pa(3,3)
+  integer :: id,ier
+
+  !t        : moment of inertia tensor in 1-d, in upper triangular, 
+  !           column-major format (xx, xy, yy, xz, yz, zz)
+  !eigenval : This will be the moment of interia in each direction
+  !work     : temp space for the algorithm
+  _REAL_ :: t(6),eigenval(3),eigenvec(3,3),work(3*3)
+#ifdef RISM_DEBUG
+  write(6,*)"CALC PA"
+  call flush(6)
+#endif /*RISM_DEBUG*/
+  
+  call dspev('V','U',3,momentOfInertia(ratu,mass),eigenval,pa,3,work,ier)
+
+end subroutine principalAxes
+
+! Calculate the moment of inertia in upper triangular form.
+! Uses column-major format (xx, xy, yy, xz, yz, zz).
+! This follows, in part, mofi() in nmode/thermo.f.
+!IN:
+!   ratu   :: the x,y,z position of each solute atom. (3,numAtoms)
+!   mass   :: mass of each atom
+function momentOfInertia(ratu,mass)
+  implicit none
+  _REAL_,intent(in) :: ratu(:,:),mass(:)
+
+  !> Moment of inertia tensor in 1-d, in upper triangular form.
+  _REAL_ :: momentOfInertia(6)
+#ifdef RISM_DEBUG
+  write(6,*)"CALC momentOfInertia"
+  call flush(6)
+#endif /*RISM_DEBUG*/
+  momentOfInertia(1) = sum(mass * (ratu(2, :)**2 + ratu(3, :)**2))
+  momentOfInertia(3) = sum(mass * (ratu(1, :)**2 + ratu(3, :)**2))
+  momentOfInertia(6) = sum(mass * (ratu(1, :)**2 + ratu(2, :)**2))
+  momentOfInertia(2) = -sum(mass * (ratu(1, :) * ratu(2, :)))
+  momentOfInertia(4) = -sum(mass * (ratu(1, :) * ratu(3, :)))
+  momentOfInertia(5) = -sum(mass * (ratu(2, :) * ratu(3, :)))
+  
+end function momentOfInertia
+
+!> Assumes that the principal axes have been aligned to coincide with
+!! the x-, y- and z- axes for both structures. The structures are then
+!! compared to each other and the first rotated to best fit the second
+!! while maintaining the orientation of the PA.
+!! @param[in,out] ratu The x,y,z position of each solute atom.
+!! @param[in,out] ratu2 The x,y,z position of each solute atom.
+!! @param[in] numAtoms The number of solute atoms.
+subroutine alignorient(ratu, ratu2, numAtoms, backquat)
+  use constants, only : PI
+  use quaternion, only : rotate_quat, quat_mult
+  use rism_report_c
+  implicit none
+  integer,intent(in) :: numAtoms
+  _REAL_, intent(inout) :: ratu(3, numAtoms)
+  _REAL_, intent(in) :: ratu2(3, numAtoms)
+  _REAL_, intent(out) :: backquat(4)
+  _REAL_ :: rotaxis(3), quat(4), tempquat(4)
+  integer :: axis(3)
+  integer :: id,iatu
+
+  ! Here we calculate the product of each coordinate of each atom in
+  ! the two structures.  If both have had their PA aligned to the
+  ! coordinate system there are zero to three 180 degree rotations
+  ! that will align the two molecules.  The rotation axes are those
+  ! with over all positive coordinate products (some atom movement may
+  ! distort the molecule).
+
+#ifdef RISM_DEBUG
+  write(6,*) "ALIGNORIENT"
+#endif /* RISM_DEBUG*/
+  do id = 1, 3
+     rotaxis(id) = sum(ratu(id, :) * ratu2(id, :))
+     if (rotaxis(id) < 0) then
+        axis(id) = 0
+     else
+        axis(id) = 1
+     end if
+  end do
+#ifdef RISM_DEBUG
+  write(6,*) "rotate axis", axis, rotaxis
+#endif /*RISM_DEBUG*/
+  if (sum(axis) == 0) then
+     call rism_report_error("ALIGNORIENT failed")
+  else if (sum(axis) == 3) then
+     ! Already aligned.
+     backquat = (/ 1d0, 0d0, 0d0, 0d0 /)
+     return
+  end if
+  backquat = 0d0
+  do id = 1, 3
+     if (axis(id) == 1) then
+        rotaxis = 0d0
+        rotaxis(id) = 1d0
+
+!! $        quat(2:4) = rotaxis * sin(PI / 2d0)
+!! $        quat(1) = cos(PI / 2d0)
+        quat = 0d0
+        quat(id + 1) = 1d0
+
+        do iatu = 1, numAtoms
+           call rotate_quat(ratu(1:3, iatu), quat)
+        end do
+#ifdef RISM_DEBUG
+        write(6,*) "QUAT", quat, backquat
+#endif /*RISM_DEBUG*/
+        if (sum(backquat) == 0d0) then
+           backquat(1) = quat(1)
+           backquat(2:4) = -1d0 * quat(2:4)
+!           backquat(2:4) = quat(2:4)
+        else
+           quat(2:4) = -1d0 * quat(2:4)
+           call quat_mult(quat, backquat, tempquat)
+           backquat = tempquat
+        end if
+#ifdef RISM_DEBUG
+        write(6,*) "QUAT", quat, backquat
+#endif /*RISM_DEBUG*/
+     end if
+  end do
+#ifdef RISM_DEBUG
+  write(6,*) ratu(:,1)
+#endif /*RISM_DEBUG*/
+end subroutine alignorient
+
+
+!Rotates the system such that the previously calculated pricipal axes
+!coincide with the x-,y- and z-axes.
+!IN:
+!   ratu   :: the x,y,z position of each solute atom.  (3,natom) This is modified.
+!   pa     :: the three prinicpal axes
+subroutine orientToPrincipalAxes(ratu, pa, backquat)
+  use constants, only : PI
+  use quaternion, only : quaternionFromEulerAxis, rotate_quat, quat_mult
+  implicit none
+  _REAL_,intent(inout) :: ratu(:,:)
+  _REAL_, intent(inout) :: pa(3,3)
+  _REAL_, intent(out) :: backquat(4)
+  _REAL_ :: angle, quat(4),dir(3),xaxis(3)=(/1d0,0d0,0d0/),yaxis(3)=(/0d0,1d0,0d0/),&
+       checkv(3), tempquat(4)
+  integer :: numAtoms
+
+  integer :: iatu,ipa
+#ifdef RISM_DEBUG
+  write(6,*) "ORIENT_PA"
+#endif /*RISM_DEBUG*/
+  numAtoms=ubound(ratu,2)
+
+  ! Rotate first principal axis the x-axis.
+
+  ! Get the angle.  This is always positive.
+  angle = acos(min(1d0,max(-1d0,dot_product(pa(1:3,1),xaxis))))
+  if (angle < PI - 1d-6 .and. angle > -PI+1d-6) then
+     dir = cross(pa(1:3,1), xaxis)
+  else
+     dir = yaxis
+  end if
+  
+  ! Get the cross product between pa(:,1) and dir.  This will determine
+  ! if we should rotate using +ive or -ive angle.
+  checkv = cross(dir,pa(1:3,1))
+  if (dot_product(checkv,xaxis) < 0) then
+     angle = -angle
+  end if
+  quat = quaternionFromEulerAxis(angle,dir)
+  do iatu = 1 ,numAtoms
+     call rotate_quat(ratu(1:3,iatu),quat)
+  end do
+  do ipa = 1,3
+     call rotate_quat(pa(1:3,ipa),quat)
+  end do
+  backquat = quat
+
+  ! Next the second PA (this also places the third one as well)
+  ! max/min protects against round-off errors in normalized vectors.
+  angle = acos(min(1d0,max(-1d0,dot_product(pa(1:3,2),yaxis))))
+  dir = xaxis
+  checkv = cross(dir, pa(1:3,2))
+  
+  if (dot_product(checkv,yaxis) < 0) then
+     angle = -angle
+  end if
+
+  quat = quaternionFromEulerAxis(angle,dir)
+  do iatu = 1 ,numAtoms
+     call rotate_quat(ratu(1:3,iatu),quat)
+  end do
+  do ipa = 1,3
+     call rotate_quat(pa(1:3,ipa),quat)
+  end do
+
+  call quat_mult(quat,backquat,tempquat)
+  backquat = tempquat
+  backquat(2:4) = -1d0*backquat(2:4)
+
+#ifdef RISM_DEBUG
+  write(6,*) ratu(:,1)
+#endif /*RISM_DEBUG*/
+
+end subroutine orientToPrincipalAxes
+
 end module rism_util

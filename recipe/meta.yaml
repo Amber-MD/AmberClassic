@@ -1,0 +1,54 @@
+package:
+  name: amberclassic
+#  version 0.1   just trying to adapt recipe from amber_phenix
+#  version 0.2   try using more shared libs from conda-forge
+#  version 0.3   try using boost from conda-forge for metatwist
+  version: 0.3
+
+source:
+  path: ../
+  
+build:
+  number: 0
+
+requirements:
+  build:
+   - bison
+   - flex
+   - make
+   - {{ compiler('fortran') }}
+   - {{ compiler('c') }}
+   - {{ compiler('cxx') }}
+#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - libgomp      # [linux and not aarch64]
+   - llvm-openmp  # [osx]
+   - openblas
+   - libnetcdf
+   - netcdf-fortran
+   - fftw
+   - libboost-devel=1.85.0
+
+  host:
+   - libboost-devel=1.85.0
+   - openblas
+   - libnetcdf
+   - netcdf-fortran
+   - llvm-openmp  # [osx]
+   - libgomp      # [linux and not aarch64]
+   - fftw
+#  - {{ mpi }} # [ mpi == "openmpi" ]
+
+  run:
+   - libboost-devel=1.85.0
+   - llvm-openmp  # [osx]
+   - libgomp      # [linux and not aarch64]
+   - openblas
+   - libnetcdf
+   - netcdf-fortran
+   - fftw
+#  - {{ mpi }} # [ mpi == "openmpi" ]
+
+about:
+    home: https://github.com/Amber-MD/AmberClassic.git
+    license: GNU General Public License (GPL/LGPL)
+    summary: Subset of AmberTools, built around a "modern" version of sander; includes other useful tools

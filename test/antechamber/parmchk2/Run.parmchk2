@@ -1,0 +1,9 @@
+#!/bin/bash
+
+../../../bin/parmchk2 -s 1 -i ccl3br.prepi -f prepi -o ccl3br.frcmod || { echo "  $0:  Program error"; exit 1; }
+../../../bin/parmchk2 -s 1 -i diethylamine.prepi -f prepi -o diethylamine.frcmod || { echo "  $0:  Program error"; exit 1; }
+../../../bin/parmchk2 -s 1 -i N-methylacetamide.prepi -f prepi -o N-methylacetamide.frcmod || { echo "  $0:  Program error"; exit 1; }
+
+../../dacdif ccl3br.frcmod.save ccl3br.frcmod
+../../dacdif diethylamine.frcmod.save diethylamine.frcmod
+../../dacdif N-methylacetamide.frcmod.save N-methylacetamide.frcmod

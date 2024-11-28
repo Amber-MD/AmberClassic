@@ -1,0 +1,5 @@
+source leaprc.gaff
+mods = loadamberparams me3nh_bcc.frcmod
+MOL = loadmol2 me3nh_bcc.mol2
+saveamberparm MOL me3nh_bcc.prmtop me3nh_bcc.prmcrd
+quit

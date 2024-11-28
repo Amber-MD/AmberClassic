@@ -1,0 +1,68 @@
+#!/usr/bin/env perl
+
+if($#ARGV != 3)
+{
+   $prgName = `basename $0`;
+   chomp($prgName);
+   die <<EODIE;
+
+This program attempts to convert XPLOR restraints into AMBER restraints.
+But it's primitive. XPLOR files must be simplified first.
+(We really should use a parser, or some way to skip new lines in the middle
+of an "assign" statement.)
+
+XPLOR:
+assign  (resid  1 and  name  HA )(resid  2  and name  HD1  ) 2.40  0.60  0.60
+assign  (resid  1 and  name  HA )(resid  2  and name  HD2  ) 2.90  1.10  1.10
+
+AMBER:
+#  1 GUA H2'1  1 GUA H8        5.50
+ &rst iat=  29, 13, r3= 3.663, r4= 4.163,
+ r1= 1.300, r2= 1.800, r3= 3.663, r4= 4.163,
+ rk2= 0.00, rk3= 32.000, &end
+#
+Usage: $prgName -x [XPLOR file] -p [example pdb file]
+EODIE
+}
+
+use Getopt::Std;
+getopt('xp');
+$xFile = $opt_x;
+$pdbFile = $opt_p;
+
+open(PDBFILE, $pdbFile) || die("HELP Can't open $pdbFile: $!\n");
+while(<PDBFILE>)
+{
+   next unless /^ATOM/;
+#ATOM      1 C20  DSI     1       1.296   0.825   4.158  1.00  6.00
+   ($type, $atomNum, $atomName, $resName, $resNum, $xcoord, $ycoord, $zcoord) = split;
+   $numMap{"$resNum $atomName"} = $atomNum;
+   $baseMap{"$resNum $atomName"} = $resName;
+}
+close(PDBFILE);
+
+open(XFILE, $xFile) || die("Can't open file $xFile: $!\n");
+while(<XFILE>)
+{
+   next if /^#/;
+   next if /^\s*$/;
+   next unless /^assign/;
+   ($res1, $atm1) = 
+       ($_ =~ /assign\s+\(\s*resid\s+(\d+)\s+and\s+name\s+([\w']+)/ );
+   $_ = <XFILE>;
+   ($res2, $atm2, $mean, $plus, $minus) = 
+       ($_ =~ /\s+\(\s*resid\s+(\d+)\s+and\s+name\s+([\w']+)\)\s*([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)/ );
+
+   $up = $mean + $plus;
+   $dn = $mean - $minus;
+
+   $num1 = $numMap{"$res1 $atm1"};
+   $base1 = $baseMap{"$res1 $atm1"};
+   $num2 = $numMap{"$res2 $atm2"};
+   $base2 = $baseMap{"$res2 $atm2"};
+
+   print("#\n# $res1 $base1 $atm1 $res2 $base2 $atm2 $mean $plus $minus\n");
+   printf(" &rst iat=  %s, %s, r1= %2.2f, r2= %2.2f,", $num1, $num2, $dn - 0.5, $dn); 
+   printf(" r3= %2.2f, r4= %2.2f, /\n", $up, $up + 0.5); 
+}
+close(XFILE);

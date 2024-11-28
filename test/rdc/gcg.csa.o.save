@@ -3,10 +3,10 @@
           MSANDER                                      2021
           -------------------------------------------------------
 
-| Run on 11/24/2022 at 13:33:59
+| Run on 11/28/2024 at 11:24:03
 
 |   Executable path: ../../bin/msander
-| Working directory: /home/case/msander_intel/test/rdc
+| Working directory: /home/case/AmberClassic/test/rdc
 |          Hostname: Unknown
   [-O]verwriting output
 
@@ -27,9 +27,9 @@ File Assignments:
 |RSTDIP: rstdip                                                                
 |INPTRA: inptraj                                                               
 
- 
+
  Here is the input file:
- 
+
   test of rdc and chemical shifts restraints for a DNA duplex                  
   The csa restraints are dummies, intended to match the rdc values             
  &cntrl                                                                        
@@ -149,11 +149,33 @@ NMR refinement options:
 
  Alignment info will be read from file: RST.dip3
  Here are comments from the alignment input file:
- 
+  &align                                                                       
+    ndip=50, dcut=-1.0, dwt=66*0.0,                                            
+    gigj = 50*7.847, 8*-3.163, 8*7.847,                                        
+    s11=-14.357, s22=-18.844, s12=1.286, s13=-29.811, s23=-44.361,             
+    dij=50*1.091,  freezes=.true., freezemol=.false.,                          
+    id(1)=9,   jd(1)=10,       dobsl(1)=  4.39,  dobsu(1)=  4.39,              
+    id(2)=42,   jd(2)=43,      dobsl(2)=  9.81,  dobsu(2)=  9.81,              
+    id(3)=72,   jd(3)=73,      dobsl(3)= 12.49,  dobsu(3)= 12.49,              
+    id(4)=105,   jd(4)=106,    dobsl(4)=  9.41,  dobsu(4)=  9.41,              
+    id(5)=137,   jd(5)=138,    dobsl(5)=  8.12,  dobsu(5)=  8.12,              
+    id(6)=169,   jd(6)=170,    dobsl(6)=  9.92,  dobsu(6)=  9.92,              
+    id(7)=201,   jd(7)=202,    dobsl(7)= 12.49,  dobsu(7)= 12.49,              
+    id(8)=233,   jd(8)=234,    dobsl(8)= 12.02,  dobsu(8)= 12.02,              
+    id(9)=263,   jd(9)=264,    dobsl(9)=  4.44,  dobsu(9)=  4.44,              
+    id(10)=296,   jd(10)=297,  dobsl(10)=  1.95, dobsu(10)=  1.95,             
+    id(11)=325,   jd(11)=326,  dobsl(11)=  4.39, dobsu(11)=  4.39,             
+    id(12)=358,   jd(12)=359,  dobsl(12)=  9.81, dobsu(12)=  9.81,             
+    id(13)=388,   jd(13)=389,  dobsl(13)= 12.49, dobsu(13)= 12.49,             
+    id(14)=421,   jd(14)=422,  dobsl(14)=  9.41, dobsu(14)=  9.41,             
+    id(15)=453,   jd(15)=454,  dobsl(15)=  8.12, dobsu(15)=  8.12,             
+
  CSA info will be read from file: RST.csa
  Here are comments from the csa input file:
- 
+
  Number of triangulated 3-point waters found:        0
+
+     Sum of charges from parm topology file =     -18.0000
 
 --------------------------------------------------------------------------------
    4.  RESULTS
@@ -164,16 +186,16 @@ NMR refinement options:
 |  NDFMIN =    1668.     NUM_NOSHAKE =      0     CORRECTED RNDFP =    1668.
 |  TOTAL # of degrees of freedom (RNDF) =    1668.
 
- NSTEP =        0   TIME(PS) =       0.000  TEMP(K) =    57.38  PRESS =     0.0
- Etot   =     -3998.9660  EKtot   =        95.0908  EPtot      =     -4094.0568
+ NSTEP =        0   TIME(PS) =       0.000  TEMP(K) =    49.97  PRESS =     0.0
+ Etot   =     -4011.2337  EKtot   =        82.8231  EPtot      =     -4094.0568
  BOND   =        30.3316  ANGLE   =        94.2198  DIHED      =       320.2998
  1-4 NB =       142.1107  1-4 EEL =     -2431.6010  VDWAALS    =      -363.7617
  EELEC  =      2335.2833  EGB     =     -4525.0722  RESTRAINT  =       304.1331
  EAMBER (non-restraint)  =     -4398.1898
  Energy (this step): Align=     0.000  CSA=   304.133
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       10   TIME(PS) =       0.010  TEMP(K) =    80.90  PRESS =     0.0
@@ -181,11 +203,11 @@ NMR refinement options:
  BOND   =        45.1111  ANGLE   =       165.8424  DIHED      =       360.7899
  1-4 NB =       144.3283  1-4 EEL =     -2426.6588  VDWAALS    =      -359.0001
  EELEC  =      2339.7309  EGB     =     -4529.8997  RESTRAINT  =        54.4018
- EAMBER (non-restraint)  =     -4259.7560
+ EAMBER (non-restraint)  =     -4259.7559
  Energy (this step): Align=     0.000  CSA=    54.402
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       20   TIME(PS) =       0.020  TEMP(K) =    92.62  PRESS =     0.0
@@ -195,21 +217,21 @@ NMR refinement options:
  EELEC  =      2339.7082  EGB     =     -4526.4057  RESTRAINT  =        79.9211
  EAMBER (non-restraint)  =     -4301.8501
  Energy (this step): Align=     0.000  CSA=    79.921
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       30   TIME(PS) =       0.030  TEMP(K) =    75.60  PRESS =     0.0
- Etot   =     -4088.5114  EKtot   =       125.2898  EPtot      =     -4213.8011
+ Etot   =     -4088.5113  EKtot   =       125.2898  EPtot      =     -4213.8012
  BOND   =        43.3578  ANGLE   =       163.2481  DIHED      =       340.5268
  1-4 NB =       145.2048  1-4 EEL =     -2428.5792  VDWAALS    =      -360.6180
- EELEC  =      2337.3223  EGB     =     -4526.9771  RESTRAINT  =        72.7133
+ EELEC  =      2337.3223  EGB     =     -4526.9771  RESTRAINT  =        72.7132
  EAMBER (non-restraint)  =     -4286.5144
  Energy (this step): Align=     0.000  CSA=    72.713
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       40   TIME(PS) =       0.040  TEMP(K) =    60.23  PRESS =     0.0
@@ -219,21 +241,21 @@ NMR refinement options:
  EELEC  =      2338.3796  EGB     =     -4524.3698  RESTRAINT  =        72.2248
  EAMBER (non-restraint)  =     -4296.6973
  Energy (this step): Align=     0.000  CSA=    72.225
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       50   TIME(PS) =       0.050  TEMP(K) =    72.26  PRESS =     0.0
- Etot   =     -4150.3341  EKtot   =       119.7622  EPtot      =     -4270.0963
+ Etot   =     -4150.3340  EKtot   =       119.7622  EPtot      =     -4270.0962
  BOND   =        41.7118  ANGLE   =       145.0056  DIHED      =       332.1924
  1-4 NB =       144.5170  1-4 EEL =     -2434.1372  VDWAALS    =      -360.6546
  EELEC  =      2340.5562  EGB     =     -4527.7425  RESTRAINT  =        48.4548
  EAMBER (non-restraint)  =     -4318.5511
  Energy (this step): Align=     0.000  CSA=    48.455
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       60   TIME(PS) =       0.060  TEMP(K) =    67.93  PRESS =     0.0
@@ -243,9 +265,9 @@ NMR refinement options:
  EELEC  =      2335.9728  EGB     =     -4527.0114  RESTRAINT  =        39.4439
  EAMBER (non-restraint)  =     -4315.2067
  Energy (this step): Align=     0.000  CSA=    39.444
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       70   TIME(PS) =       0.070  TEMP(K) =    62.73  PRESS =     0.0
@@ -255,9 +277,9 @@ NMR refinement options:
  EELEC  =      2332.7713  EGB     =     -4525.0089  RESTRAINT  =        49.9237
  EAMBER (non-restraint)  =     -4328.5556
  Energy (this step): Align=     0.000  CSA=    49.924
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       80   TIME(PS) =       0.080  TEMP(K) =    58.74  PRESS =     0.0
@@ -267,33 +289,33 @@ NMR refinement options:
  EELEC  =      2345.1963  EGB     =     -4529.5388  RESTRAINT  =        41.1014
  EAMBER (non-restraint)  =     -4323.4659
  Energy (this step): Align=     0.000  CSA=    41.101
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =       90   TIME(PS) =       0.090  TEMP(K) =    50.07  PRESS =     0.0
  Etot   =     -4202.1638  EKtot   =        82.9876  EPtot      =     -4285.1514
  BOND   =        39.6814  ANGLE   =       133.2210  DIHED      =       327.1565
  1-4 NB =       143.5271  1-4 EEL =     -2431.4334  VDWAALS    =      -361.4247
- EELEC  =      2342.6392  EGB     =     -4530.2891  RESTRAINT  =        51.7705
+ EELEC  =      2342.6392  EGB     =     -4530.2891  RESTRAINT  =        51.7704
  EAMBER (non-restraint)  =     -4336.9219
  Energy (this step): Align=     0.000  CSA=    51.770
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      100   TIME(PS) =       0.100  TEMP(K) =    33.03  PRESS =     0.0
- Etot   =     -4225.1438  EKtot   =        54.7362  EPtot      =     -4279.8800
+ Etot   =     -4225.1437  EKtot   =        54.7362  EPtot      =     -4279.8800
  BOND   =        37.5818  ANGLE   =       130.1898  DIHED      =       331.6892
  1-4 NB =       143.6590  1-4 EEL =     -2429.2392  VDWAALS    =      -361.2689
- EELEC  =      2345.2858  EGB     =     -4529.5499  RESTRAINT  =        51.7724
+ EELEC  =      2345.2858  EGB     =     -4529.5499  RESTRAINT  =        51.7723
  EAMBER (non-restraint)  =     -4331.6523
  Energy (this step): Align=     0.000  CSA=    51.772
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      110   TIME(PS) =       0.110  TEMP(K) =    30.94  PRESS =     0.0
@@ -303,33 +325,33 @@ NMR refinement options:
  EELEC  =      2347.6331  EGB     =     -4531.4353  RESTRAINT  =        53.5768
  EAMBER (non-restraint)  =     -4343.3064
  Energy (this step): Align=     0.000  CSA=    53.577
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      120   TIME(PS) =       0.120  TEMP(K) =    25.32  PRESS =     0.0
- Etot   =     -4255.1525  EKtot   =        41.9612  EPtot      =     -4297.1138
+ Etot   =     -4255.1525  EKtot   =        41.9612  EPtot      =     -4297.1137
  BOND   =        37.0813  ANGLE   =       123.8878  DIHED      =       331.8089
  1-4 NB =       142.6674  1-4 EEL =     -2432.1524  VDWAALS    =      -360.9973
  EELEC  =      2347.6277  EGB     =     -4531.9411  RESTRAINT  =        44.9039
  EAMBER (non-restraint)  =     -4342.0177
  Energy (this step): Align=     0.000  CSA=    44.904
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      130   TIME(PS) =       0.130  TEMP(K) =    25.52  PRESS =     0.0
- Etot   =     -4264.4010  EKtot   =        42.2976  EPtot      =     -4306.6985
+ Etot   =     -4264.4009  EKtot   =        42.2976  EPtot      =     -4306.6985
  BOND   =        34.2282  ANGLE   =       124.3360  DIHED      =       326.3075
  1-4 NB =       143.1424  1-4 EEL =     -2430.6668  VDWAALS    =      -360.9655
  EELEC  =      2347.5042  EGB     =     -4531.6041  RESTRAINT  =        41.0195
- EAMBER (non-restraint)  =     -4347.7180
+ EAMBER (non-restraint)  =     -4347.7181
  Energy (this step): Align=     0.000  CSA=    41.020
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      140   TIME(PS) =       0.140  TEMP(K) =    24.59  PRESS =     0.0
@@ -339,21 +361,21 @@ NMR refinement options:
  EELEC  =      2352.0251  EGB     =     -4534.0979  RESTRAINT  =        35.3391
  EAMBER (non-restraint)  =     -4347.3628
  Energy (this step): Align=     0.000  CSA=    35.339
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      150   TIME(PS) =       0.150  TEMP(K) =    24.92  PRESS =     0.0
- Etot   =     -4279.7543  EKtot   =        41.3035  EPtot      =     -4321.0577
+ Etot   =     -4279.7543  EKtot   =        41.3035  EPtot      =     -4321.0578
  BOND   =        34.9006  ANGLE   =       119.6065  DIHED      =       327.5037
  1-4 NB =       142.7827  1-4 EEL =     -2435.5163  VDWAALS    =      -360.9173
  EELEC  =      2351.7055  EGB     =     -4532.1996  RESTRAINT  =        31.0765
  EAMBER (non-restraint)  =     -4352.1343
  Energy (this step): Align=     0.000  CSA=    31.077
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      160   TIME(PS) =       0.160  TEMP(K) =    22.53  PRESS =     0.0
@@ -363,9 +385,9 @@ NMR refinement options:
  EELEC  =      2352.6692  EGB     =     -4533.3516  RESTRAINT  =        27.7182
  EAMBER (non-restraint)  =     -4356.5053
  Energy (this step): Align=     0.000  CSA=    27.718
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      170   TIME(PS) =       0.170  TEMP(K) =    22.35  PRESS =     0.0
@@ -375,21 +397,21 @@ NMR refinement options:
  EELEC  =      2354.1814  EGB     =     -4534.9530  RESTRAINT  =        23.2895
  EAMBER (non-restraint)  =     -4359.2515
  Energy (this step): Align=     0.000  CSA=    23.290
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      180   TIME(PS) =       0.180  TEMP(K) =    21.05  PRESS =     0.0
- Etot   =     -4308.7950  EKtot   =        34.8871  EPtot      =     -4343.6820
+ Etot   =     -4308.7950  EKtot   =        34.8871  EPtot      =     -4343.6821
  BOND   =        32.8831  ANGLE   =       114.9855  DIHED      =       325.6238
  1-4 NB =       141.9561  1-4 EEL =     -2429.4250  VDWAALS    =      -360.5449
  EELEC  =      2350.3683  EGB     =     -4535.0618  RESTRAINT  =        15.5329
  EAMBER (non-restraint)  =     -4359.2149
  Energy (this step): Align=     0.000  CSA=    15.533
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      190   TIME(PS) =       0.190  TEMP(K) =    19.45  PRESS =     0.0
@@ -399,9 +421,9 @@ NMR refinement options:
  EELEC  =      2351.8742  EGB     =     -4534.4370  RESTRAINT  =        18.0466
  EAMBER (non-restraint)  =     -4364.6625
  Energy (this step): Align=     0.000  CSA=    18.047
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
  NSTEP =      200   TIME(PS) =       0.200  TEMP(K) =    15.75  PRESS =     0.0
@@ -411,9 +433,9 @@ NMR refinement options:
  EELEC  =      2353.5749  EGB     =     -4535.2647  RESTRAINT  =        16.1159
  EAMBER (non-restraint)  =     -4362.1221
  Energy (this step): Align=     0.000  CSA=    16.116
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
       A V E R A G E S   O V E R     200 S T E P S
@@ -426,9 +448,9 @@ NMR refinement options:
  EELEC  =      2345.2622  EGB     =     -4530.4408  RESTRAINT  =        46.7881
  EAMBER (non-restraint)  =     -4331.4922
  Energy (this step): Align=     0.000  CSA=    16.116
-          Alignment tensor:   -14.357     1.286   -29.811
-                                1.286   -18.844   -44.361
-                              -29.811   -44.361    33.201
+   Alignment tensor:   -14.357     1.286   -29.811  Da =    33.693
+                         1.286   -18.844   -44.361  R  =     0.334
+                       -29.811   -44.361    33.201
 ===============================================================================
 
       R M S  F L U C T U A T I O N S
@@ -515,15 +537,16 @@ NMR refinement options:
  C8   DA    16 -- H8   DA    16:   21.149   21.260   -0.111    0.000    1.091   
  C8   DA    17 -- H8   DA    17:   17.663   17.610    0.053    0.000    1.091   
  C8   DG    19 -- H8   DG    19:    6.200    7.450   -1.250    0.000    1.091   
-                                        Total align    constraint:    0.00      
- Diagonalize the alignment matrix:                                              
-      -50.55782          0.41598     0.73402     0.53681                        
+                    Total align    constraint:    0.00 Q =    0.09876           
+alignment tensor  1                                                             
+s11( 1)= -14.357, s12( 1)=   1.286, s13( 1)= -29.811,                           
+  s22( 1)= -18.844, s23( 1)= -44.361,                                           
+ Diagonalization:                                                               
       -16.82740          0.85341    -0.51899     0.04833                        
+      -50.55782          0.41598     0.73402     0.53681                        
        67.38522         -0.31408    -0.43802     0.84232                        
- Diagonalize the moment of interia tensor:                                      
-   288734.60352         -0.11808    -0.51261     0.85046         21.98879       
-   705393.94775         -0.95970     0.27886     0.03484         11.76754       
-   751103.42392         -0.25502    -0.81208    -0.52488         10.03112       
+ Da =    33.6926 x 10^-5;  R =    0.3337                                        
+                                                                                
  ------------------------------------------------------------------------------
 
 
@@ -590,17 +613,17 @@ NMR refinement options:
    5.  TIMINGS
 --------------------------------------------------------------------------------
 
-|                Calc gb radii              0.56 (23.27% of Gen B)
-|                Calc gb diag               0.98 (41.14% of Gen B)
-|                Calc gb off-diag           0.85 (35.58% of Gen B)
-|             Gen Born time              2.39 (100.0% of Nonbo)
-|          Nonbond force              2.39 (93.55% of Force)
-|          Bond/Angle/Dihedral        0.04 ( 1.50% of Force)
-|          Other                      0.13 ( 4.95% of Force)
-|       Force time                 2.55 (98.39% of Runmd)
-|       Verlet update time         0.04 ( 1.51% of Runmd)
-|    Runmd Time                 2.59 (99.57% of Total)
-| Total time                 2.60 (100.0% of ALL  )
+|                Calc gb radii              0.38 (22.69% of Gen B)
+|                Calc gb diag               0.69 (41.25% of Gen B)
+|                Calc gb off-diag           0.60 (36.06% of Gen B)
+|             Gen Born time              1.67 (100.0% of Nonbo)
+|          Nonbond force              1.67 (94.26% of Force)
+|          Bond/Angle/Dihedral        0.06 ( 3.15% of Force)
+|          Other                      0.05 ( 2.59% of Force)
+|       Force time                 1.78 (97.21% of Runmd)
+|       Verlet update time         0.05 ( 2.68% of Runmd)
+|    Runmd Time                 1.83 (99.73% of Total)
+| Total time                 1.83 (100.0% of ALL  )
 
 | Number of list builds   :          0
 
@@ -610,11 +633,11 @@ NMR refinement options:
 | Final Performance Info:
 | -----------------------------------------------------
 | Average timings for all steps:
-|     Elapsed(s) =       2.59 Per Step(ms) =      12.96
-|         ns/day =       6.67   seconds/ns =   12956.50
+|     Elapsed(s) =       1.83 Per Step(ms) =       9.14
+|         ns/day =       9.45   seconds/ns =    9140.00
 | -----------------------------------------------------
 
-|           Job began  at 13:33:59.319  on 11/24/2022
-|           Setup done at 13:33:59.330  on 11/24/2022
-|           Run   done at 13:34:01.922  on 11/24/2022
+|           Job began  at 11:24:03.683  on 11/28/2024
+|           Setup done at 11:24:03.688  on 11/28/2024
+|           Run   done at 11:24:05.516  on 11/28/2024
 |     wallclock() was called    4449 times

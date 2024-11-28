@@ -19,7 +19,7 @@ Usage: ./configure_openmpi [flags] compiler
       -static     Create statically linked executables (not recommended for
                     MacOSX)
       -np         Number of processes for parallel Make
-    Note: See http://www.open-mpi.org/software/ompi/v1.6/ for information
+    Note: See http://www.open-mpi.org/software/ompi for information
           on how to obtain openmpi.
 EOD
 
@@ -103,11 +103,11 @@ esac
 #--------------------------------------------------------------------------
 
 # Get the list of openmpi directories
-mpidirs=`/bin/ls -d openmpi-[2-4].[0-9]*/ 2>/dev/null | tail -n 1`
+mpidirs=`/bin/ls -d openmpi-[4-5].[0-9]*/ 2>/dev/null | tail -n 1`
 
 if [ -z $mpidirs ]; then
     echo "You must download openmpi and extract it here"
-    echo "   (for example, type 'tar xvf openmpi-4.0.2.tar.gz')"
+    echo "   (for example, type 'tar xvf openmpi-5.0.3.tar.bz2')"
     echo "See http://www.open-mpi.org/software/ for more info;"
     echo "Then, re-run this script."
     exit 1

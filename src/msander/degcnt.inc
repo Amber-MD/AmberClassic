@@ -22,9 +22,6 @@
         rndfs
   end if
 
-  ! qtw - substract the number of overlapping noshake QM atoms in noshakemask
-  rndfp = rndfp - qmmm_struct%noshake_overlap
-
   ! Modify RNDFP to reflect NDFMIN (set in mdread) and num_noshake
   rndfp = rndfp - ndfmin + num_noshake
   rndf = rndfp + rndfs
@@ -33,10 +30,6 @@
 #  else
   if (master) then
 #  endif /* MPI */
-    if (qmmm_nml%ifqnt) then
-      write (6,'(a,i6)') "|  QMSHAKE_NOSHAKEMASK_OVERLAP = ", &
-        qmmm_struct%noshake_overlap
-    end if
     write (6,'(a,f8.0,a,i6,a,f8.0)') "|  NDFMIN = ", rndfp, &
       "     NUM_NOSHAKE = ", num_noshake, "     CORRECTED RNDFP = ", rndfp
     write (6,'(a,f8.0)') "|  TOTAL # of degrees of freedom (RNDF) = ", rndf
@@ -64,7 +57,6 @@
     end if
 
     ! Note that the solute ndf outputs above from degcnt are uncorrected
-    ! for qmmm_struct%noshake_overlap, num_noshake, and extra points;
     ! also, ndfmin is not always being handled.
     call sg_fix_degree_count(sgsta_rndfp, sgend_rndfp, ndfmin, rndf)
   end if
