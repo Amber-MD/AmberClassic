@@ -1,7 +1,6 @@
 #!/bin/sh
 
 sander="../../bin/msander"
-sander="/home/case/amber18/bin/pmemd"
 
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI
