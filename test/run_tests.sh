@@ -1,14 +1,16 @@
 #!/bin/sh
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
-logdir="../logs"
+logdir="$AMBERCLASSICHOME/logs"
 logprefix="${logdir}/${date_string}"
 logfile="${logprefix}.log"
 difffile="${logprefix}.diff"
 
 mkdir -p ${logdir}
 
-(make --no-print-directory -k test.all 2>&1) | tee ${logfile}
+echo "Running AmberClassic tests on $date_string" | tee ${logfile}
+
+(make --no-print-directory -k test.all 2>&1) | tee -a ${logfile}
 
 passed_count=`grep PASS ${logfile} | wc -l`
 questionable_count=`grep "FAILURE:" ${logfile} | wc -l`
