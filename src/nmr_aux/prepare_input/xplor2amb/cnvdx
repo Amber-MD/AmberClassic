@@ -1,0 +1,94 @@
+#!/usr/bin/env perl
+
+if($#ARGV != 3)
+{
+   $prgName = `basename $0`;
+   chomp($prgName);
+   die <<EODIE;
+
+This program attempts to convert XPLOR dihed restraints into AMBER 
+restraints. But it's primitive. XPLOR files must be simplified first.
+(We really should use a parser, or some way to skip new lines in the middle
+of an "assign" statement.)
+
+XPLOR:
+assign (resid  7  and name  C  ) 
+       (resid  8  and name  N  ) 
+       (resid  8  and name  CA  ) 
+       (resid  8  and name  C  ) 1.00  -65.00  30.00  2.00
+
+AMBER:
+# 2 ADE BETA:  (2 ADE P)-(2 ADE O5')-(2 ADE C5')-(2 ADE C4')  90.0 270.0
+ &rst     iat =    32,    35,    36,    39,
+          r1 =  95.0, r2 = 105.0, r3 = 255.0, r4 = 265.0, &end
+#
+Usage: $prgName -x [XPLOR file] -p [example pdb file]
+EODIE
+}
+
+$count = 0;
+
+use Getopt::Std;
+getopt('xp');
+$xFile = $opt_x;
+$pdbFile = $opt_p;
+
+open(PDBFILE, $pdbFile) || die("HELP Can't open $pdbFile: $!\n");
+while(<PDBFILE>)
+{
+   next unless /^ATOM/;
+#ATOM      1 C20  DSI     1       1.296   0.825   4.158  1.00  6.00
+   ($type, $atomNum, $atomName, $resName, $resNum, $xcoord, $ycoord, $zcoord) = split;
+   $numMap{"$resNum $atomName"} = $atomNum;
+   $baseMap{"$resNum $atomName"} = $resName;
+}
+close(PDBFILE);
+
+
+open(XFILE, $xFile) || die("Can't open file $xFile: $!\n");
+while(<XFILE>)
+{
+   next if /^#/;
+   next if /^\s*$/;
+   next unless /^assign/;
+
+   ($res1, $atm1) = 
+       ($_ =~ /assign\s+\(\s*resid\s+(\d+)\s+and\s+name\s+([\w']+)/ );
+   $atm1 = uc($atm1);
+   $num1 = $numMap{"$res1 $atm1"};
+   $base1 = $baseMap{"$res1 $atm1"};
+
+   $_ = <XFILE>;
+   ($res2, $atm2) = 
+       ($_ =~ /\s+\(\s*resid\s+(\d+)\s+and\s+name\s+([\w']+)/ );
+   $atm2 = uc($atm2);
+   $num2 = $numMap{"$res2 $atm2"};
+   $base2 = $baseMap{"$res2 $atm2"};
+
+   $_ = <XFILE>;
+   ($res3, $atm3) = 
+       ($_ =~ /\s+\(\s*resid\s+(\d+)\s+and\s+name\s+([\w']+)/ );
+   $atm3 = uc($atm3);
+   $num3 = $numMap{"$res3 $atm3"};
+   $base3 = $baseMap{"$res3 $atm3"};
+
+   $_ = <XFILE>;
+   ($res4, $atm4, $wt, $mean, $plusminus, $int) = 
+       ($_ =~ /\s+\(\s*resid\s+(\d+)\s+and\s+name\s+([\w']+)\s*\)\s*([-\d\.]+)\s+([-\d\.]+)\s+([-\d\.]+)\s+(\d+)/ );
+   $atm4 = uc($atm4);
+   $up = $mean + $plusminus;
+   $dn = $mean - $plusminus;
+   $num4 = $numMap{"$res4 $atm4"};
+   $base4 = $baseMap{"$res4 $atm4"};
+
+   printf("#\n#  (%d %s %s) - (%d %s %s) - ", $res1, $base1, $atm1, $res2, $base2, $atm2);
+   printf("(%d %s %s) - (%d %s %s)\n", $res3, $base3, $atm3, $res4, $base4, $atm4);
+   printf(" &rst iat=  %d, %d, %d, %d, \n", $num1, $num2, $num3, $num4);
+   printf(" r1= %3.1f, r2= %3.1f, r3= %3.1f, r4= %3.1f, /\n", 
+      $dn - 10, $dn, $up, $up + 10);
+   if( $num1 == 0 || $num2 == 0 || $num3 == 0 || $num4 == 0 ){
+     print "ERROR in above restraint!\n";
+   }
+
+}
+close(XFILE);

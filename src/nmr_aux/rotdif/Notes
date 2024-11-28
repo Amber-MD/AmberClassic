@@ -1,0 +1,64 @@
+To estimate rotational diffusion tensors from MD simulations along the
+lines described by Wong & Case, (Evaluating rotational diffusion from
+protein MD simulations, J. Phys. Chem. B 112:6013, 2008) you need to run
+four programs in succession:
+
+1.  randvec.f, creates a file of random vectors
+
+     input flags:
+     -n # : number of vectors to create (default=1000)
+     -s # : random number seed (default=80531)
+
+2.  ptraj, with an input file like this one:
+
+         trajin <filename>  # note: do *not* do an rms fit here
+         reference <whatever a good average structure might be>
+         rms @CA,C,N,O  out <filename.out>  rotation <filename.rot>
+         go
+
+
+3.  rmscorr.f, applies the rotation matrices (output by ptraj) to the vectors;
+               computes their time correlation functions, and estimates the
+               local effective diffusion constants (related to the area under
+               the correlation function).
+
+    A typical input file would be:
+
+        3000  0.002             # points in time-correlation, time step(ns)
+                                # The time step must correspond to that in
+                                # the input trajectory; for this example,
+                                # correlation functions out to 3000 x .002
+                                # = 6ns would be computed.  This must be bigger
+                                # than the ending time on the next card
+        0.0  5.0                # beginning,ending times (ns)
+        500  0.000001  0.03  2  # iterations, convergence, initial guess
+                                #  for iso diffusion tensor, el
+        <filename.rot>          # file of rotation matrices (from ptraj)
+        randvec.out             # file of vectors (from randvec)
+
+4.  tensorfit.f, takes the outputs from 1 and 3, and computes a best-fit
+                 rotational diffusion tensor, plus various statistics on this
+                 There are two optimizations: one giving the optimal diffusion
+                 tensor in the small-anisotropy limit, and the second
+                 optimizing the diffusion tensor with the full expression.
+
+     input flags:
+
+     -l # :  lflag=1 => only l=1 diffusion constants used to generate input Deff
+             lflag=2 => only l=2 constants are used  (default)
+             lflag=3 => both l=1 and l=2 used
+     -deffs : filename for local diffusion constant vector Deff from
+              MD (which may contain 1/(2*tau(l=1)), 1/(6*tau(l=2)), or both)
+              default is "deffs", and is created by rmscorr
+     -vecs  : filename for Cartesian coordinates of vectors used to
+              generate Deff from MD (in pdb frame)
+              default is "vecs"
+     -dq    : amoeba/grid search size in q-space (default=0.5)
+
+
+To do:
+
+a.  combine everything into one program
+d.  generalize program 1, to take vectors from a structure, instead of a set
+      of random vectors
+

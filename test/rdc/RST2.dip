@@ -3,7 +3,7 @@
    ndip=66, dcut=-1.0, dwt=66*0.1,
    gigj = 50*7.847, 8*-3.163, 8*7.847, dij=66*0.0,
    s11=-14.357, s22=-18.844, s12=1.286, s13=-29.811, s23=-44.361,
-   itarget=1, da_target=30, r_target=-0.3, 
+   itarget=1, da_target=30, r_target=0.3, 
    id(1)=9,   jd(1)=10,       dobsl(1)=  4.39,  dobsu(1)=  4.39, 
    id(2)=42,   jd(2)=43,      dobsl(2)=  9.81,  dobsu(2)=  9.81, 
    id(3)=72,   jd(3)=73,      dobsl(3)= 12.49,  dobsu(3)= 12.49, 

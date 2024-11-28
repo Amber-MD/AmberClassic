@@ -21,17 +21,6 @@ subroutine sander()
   use lmod_driver
   use constants, only : INV_AMBER_ELECTROSTATIC
 
-  ! The main qmmm_struct contains all the QMMM variables and arrays
-  use qmmm_read_and_alloc, only : read_qmmm_nm_and_alloc
-  use qmmm_vsolv_module, only: qmmm_vsolv_store_parameters, new
-  use qm2_extern_module, only: qm2_extern_finalize
-#ifdef MPI
-  use qmmm_module, only : qmmm_nml, qmmm_struct, deallocate_qmmm, qmmm_mpi, &
-                          qm2_struct, qmmm_vsolv, qm2_params, qmmm_mpi_setup
-#else
-  use qmmm_module, only : qmmm_nml, qmmm_struct, deallocate_qmmm, qmmm_mpi, &
-                          qm2_struct, qmmm_vsolv, qm2_params
-#endif /* MPI */
 #ifdef LES
   use genbornles
 #  ifdef MPI
@@ -87,8 +76,7 @@ subroutine sander()
   use trajenemod, only: trajene
 
   ! CHARMM support
-  use charmm_mod, only : charmm_active, charmm_deallocate_arrays, &
-                         charmm_filter_out_qm_atoms
+  use charmm_mod, only : charmm_active, charmm_deallocate_arrays
   use ff11_mod, only : cmap_active, deallocate_cmap_arrays
   use memory_module
 
@@ -196,17 +184,6 @@ subroutine sander()
   ! Flag to tell recip space routines to allocate on first call
   first_pme = .true.
 
-  ! Initialize first_call flags for QMMM
-  qmmm_struct%qm_mm_first_call = .true.
-  qmmm_struct%fock_first_call = .true.
-  qmmm_struct%fock2_2atm_first_call = .true.
-  qmmm_struct%qm2_allocate_e_repul_first_call = .true.
-  qmmm_struct%qm2_calc_rij_eqns_first_call = .true.
-  qmmm_struct%qm2_scf_first_call = .true.
-  qmmm_struct%zero_link_charges_first_call = .true.
-  qmmm_struct%adj_mm_link_pair_crd_first_call = .true.
-  qmmm_struct%num_qmmm_calls = 0
-
 #ifdef MPI
   ! Parallel initialization (setup is done in multisander.F90).
   ! Make PE 0 the master.
@@ -288,22 +265,6 @@ subroutine sander()
 
         ! Finish reading the prmtop file and other user input:
         call rdparm2(x, ix, ih, 8)
-
-      ! Branch for QM/MM systems
-      if (qmmm_nml%ifqnt) then
-        call read_qmmm_nm_and_alloc(igb, ih, ix, x, cut, use_pme, ntb, 0, &
-                                      dummy, 0, .true.)
-#if 0  /* not clear if this block is supposed to be called or not */
-          nr = natom
-#ifdef MPI
-          call getcor(nr, x(lcrd), x(lvel), x(lforce), ntx, &
-                        box, irest, t, temp0, .FALSE., solvph, solve)
-#else
-          call getcor(nr, x(lcrd), x(lvel), x(lforce), ntx, &
-                        box, irest, t, .FALSE.)
-#endif
-#endif
-      endif
 
       if( xray_active ) then
         call xray_read_mdin(mdin_lun=5)
@@ -445,117 +406,9 @@ subroutine sander()
                   ix(ijbh), iwtnm, iowtnm, ihwtnm, jfastw, ix(iicbh), req, &
                   x(lwinv), rbtarg, ibelly, ix(ibellygp), 6, imin)
 
-      ! Assign link atoms between quantum mechanical and molecular mechanical
-      ! atoms if quantum atoms are present.  After assigning the link atoms,
-      ! delete all connectivity between the QM atoms.
-      if (qmmm_nml%ifqnt) then
-        call identify_link_atoms(nbona, ix(iiba), ix(ijba))
-
-        ! Variable QM solvent:
-        ! Store the original bond parameters since we will need to rebuild
-        ! the QM region (delete bonded terms etc) repeatedly
-        if (qmmm_nml%vsolv > 0) then
-          call new(qmmm_vsolv, nbonh, nbona, ntheth, ntheta, nphih, nphia)
-          call qmmm_vsolv_store_parameters(qmmm_vsolv, numbnd, ix(iibh), &
-                                           ix(ijbh), ix(iicbh), ix(iiba), &
-                                           ix(ijba), ix(iicba), ix(i24), &
-                                           ix(i26), ix(i28), ix(i30), &
-                                           ix(i32), ix(i34), ix(i36), &
-                                           ix(i38), ix(i40), ix(i42), &
-                                           ix(i44), ix(i46), ix(i48), &
-                                           ix(i50), ix(i52), ix(i54), &
-                                           ix(i56), ix(i58))
-        end if
-
-        ! Remove bonds between QM atoms from list (Hydrogen)
-        if (nbonh .gt. 0) then
-          call setbon(nbonh, ix(iibh), ix(ijbh), ix(iicbh), ix(ibellygp))
-        end if
-
-        ! Remove bonds between QM atoms from list (Heavy)
-        if (nbona .gt. 0) then
-          call setbon(nbona, ix(iiba), ix(ijba), ix(iicba), ix(ibellygp))
-        end if
-
-        ! Remove angles between QM atoms from list (Hydrogen)
-        if (ntheth .gt. 0) then
-          call setang(ntheth, ix(i24), ix(i26), ix(i28), ix(i30), ix(ibellygp))
-        end if
-
-        ! Remove angles between QM atoms from list (Heavy)
-        if (ntheta .gt. 0) then
-          call setang(ntheta, ix(i32), ix(i34), ix(i36), ix(i38), ix(ibellygp))
-        end if
-
-        ! Remove dihedrals between QM atoms from list (Hydrogen)
-        if (nphih .gt. 0) then
-          call setdih(nphih, ix(i40), ix(i42), ix(i44), ix(i46), &
-                      ix(i48), ix(ibellygp))
-        end if
-
-        ! Remove dihedrals between QM atoms from list (Heavy)
-        if (nphia .gt. 0) then
-          call setdih(nphia, ix(i50), ix(i52), ix(i54), ix(i56), &
-                      ix(i58), ix(ibellygp))
-        end if
-
-        ! Remove CHARMM energy terms from QM region
-        call charmm_filter_out_qm_atoms()
-
-        ! Now we should work out the type of each quantum atom present.
-        ! This is used for our arrays of pre-computed parameters. It is
-        ! essentially a re-basing of the atomic numbers and is done to save
-        ! memory. Note: qm_assign_atom_types will allocate the qm_atom_type
-        ! array for us. Only the master calls this routine. All other
-        ! threads get this allocated and broadcast to them by the mpi setup
-        ! routine.
-        call qm_assign_atom_types
-
-        ! Set default QMMM MPI parameters - for single cpu operation.
-        ! These will get overwritten by qmmm_mpi_setup if MPI is on.
-        qmmm_mpi%commqmmm_master = master
-        qmmm_mpi%numthreads = 1
-        qmmm_mpi%mytaskid = 0
-        qmmm_mpi%natom_start = 1
-        qmmm_mpi%natom_end = natom
-        qmmm_mpi%nquant_nlink_start = 1
-        qmmm_mpi%nquant_nlink_end = qmmm_struct%nquant_nlink
-
-        ! Now we know how many link atoms we can allocate the scf_mchg array...
-        allocate(qm2_struct%scf_mchg(qmmm_struct%nquant_nlink), stat=ier)
-
-        ! qm2_struct%scf_mchg will be deallocated in deallocate qmmm,
-        ! so the allocation must have been successful here.
-        REQUIRE(ier == 0)
-
-        ! We can also allocate ewald_memory
-        if (qmmm_nml%qm_ewald > 0) then
-          call allocate_qmewald(natom)
-        end if
-        if (qmmm_nml%qmgb == 2) then
-          call allocate_qmgb(qmmm_struct%nquant_nlink)
-        end if
-        allocate(qmmm_struct%dxyzqm(3, qmmm_struct%nquant_nlink), stat=ier)
-
-        ! Again, qmmm_struct%dxyzqm will be deallocated in deallocate qmmm
-        REQUIRE(ier == 0)
-      end if
-      ! End if branch based on the presence of quantum atoms.  This block
-      ! assigned link atoms and replaced MM interactions along the QM/MM
-      ! boundary if necessary.
-
       ! Open the data dumping files and position them
       ! depending on the type of run:
-#ifdef MPI
-        ! Adaptive QM/MM (qmmm_nml%vsolv=2) via multisander.
-        ! All groups have identical coords and velocities.
-        ! Only the master process needs to dump results.
-        if ((qmmm_nml%vsolv < 2) .or. (worldrank == 0)) then
-#endif
-          call open_dump_files
-#ifdef MPI
-        end if
-#endif
+      call open_dump_files
       call flush(6)
 
     end if masterwork
@@ -594,8 +447,6 @@ subroutine sander()
     ! Set up integer stack initial size
     call mpi_bcast(lastist, 1, mpi_integer, 0, commsander, ier)
     call mpi_bcast(lastrst, 1, mpi_integer, 0, commsander, ier)
-
-    call mpi_bcast(qmmm_struct%abfqmmm, 1, mpi_integer, 0, commsander, ier)
 
     call stack_setup()
     call mpi_bcast(plumed, 1, MPI_INTEGER, 0, commsander, ier)
@@ -698,33 +549,6 @@ subroutine sander()
     nr3 = 3 * nr
     belly = (ibelly > 0)
 
-    ! Do setup for QMMM in parallel if ifqnt is on {{{
-    ! everything in the QMMM namelist and a few other bits and pieces.
-    ! Note, currently only master node knows if qmmm_nml%ifqnt is
-    ! on so we need to broadcast this first and then make decisions
-    ! based on this.
-    call mpi_bcast(qmmm_nml%ifqnt, 1, mpi_logical, 0, commsander, ier)
-    if (qmmm_nml%ifqnt) then
-
-      ! Broadcast all of the stuff in qmmm_nml and allocate the relevant
-      ! arrays on all processors. This will also set up information for
-      ! openmp on the master processor if it is in use.
-      call qmmm_mpi_setup(master, natom)
-      if (qmmm_nml%qm_ewald > 0 .and. .not. master) then
-        call allocate_qmewald(natom)
-      end if
-      if (qmmm_nml%qmgb==2 .and. .not. master) then
-        call allocate_qmgb(qmmm_struct%nquant_nlink)
-      end if
-      if (.not. master) then
-        allocate(qmmm_struct%dxyzqm(3, qmmm_struct%nquant_nlink), stat=ier)
-
-        ! qmmm_struct%dxyzqm will be deallocated in deallocate qmmm
-        REQUIRE(ier == 0)
-      end if
-    end if
-    ! End of QM/MM MPI setup }}}
-
     ! All nodes are calling this. amrset(ig) has already been called
     ! by the master node (twice if initial velocities are set, ntx <= 3).
     ! Replica Exchange MD now requires need to call amrset on all child
@@ -775,46 +599,6 @@ subroutine sander()
     if (mpi_orig .and. .not. master) then
       ! All nodes only do the force calculations.  Minimization  {{{
       ! so only master gets past the loop below
-      ! hence need to zero QM charges on non-master threads here.
-      if (qmmm_nml%ifqnt) then
-
-        ! Apply charge correction if required.
-        if (qmmm_nml%adjust_q > 0) then
-          call qmmm_adjust_q(qmmm_nml%adjust_q, natom, qmmm_struct%nquant, &
-                             qmmm_struct%nquant_nlink, qmmm_struct%nlink, &
-                             x(L15), qmmm_struct%iqmatoms, qmmm_nml%qmcharge,&
-                             qmmm_struct%atom_mask,qmmm_struct%mm_link_mask, &
-                             master,x(LCRD), qmmm_nml%vsolv)
-        end if
-
-        ! At this point we can also fill the qmmm_struct%scaled_mm_charges
-        ! array - we only need to do this once as the charges are constant
-        ! during a run. Having a separate array of scaled charges saves us
-        ! having to do it on every qmmm routine call. Do this BEFORE zeroing
-        ! the QM charges since that routine take care of these values as well.
-        do i = 1, natom
-
-          ! Charge scaling factor for Free Energy Perturbation
-          qmmm_struct%scaled_mm_charges(i) = x(L15+(i-1)) * &
-                                             INV_AMBER_ELECTROSTATIC * &
-                                             qmmm_nml%chg_lambda
-        end do
-
-        ! Zero out the charges on the quantum mechanical atoms
-        call qm_zero_charges(x(L15), qmmm_struct%scaled_mm_charges, .true.)
-        if (qmmm_struct%nlink > 0) then
-
-          ! We need to exclude all electrostatic interactions with
-          ! MM link pairs, both QM-MM and MM-MM. Do this by zeroing
-          ! the MM link pair charges in the main charge array.  These
-          ! charges are stored in qmmm_struct%mm_link_pair_resp_charges
-          ! in case they are later needed.
-          call qm_zero_mm_link_pair_main_chg(qmmm_struct%nlink, &
-                                             qmmm_struct%link_pairs, x(L15), &
-                                             qmmm_struct%scaled_mm_charges, &
-                                             .true.)
-        end if
-      end if
       if (igb == 7 .or. igb == 8) then
 
         ! x(l97) is rborn(), the Generalized Born radii
@@ -895,49 +679,6 @@ subroutine sander()
       call igb7_init(natom, x(l97)) !x(l97) is rborn()
     end if
 
-    !  some quantum setup  {{{
-    if (qmmm_nml%ifqnt) then
-
-      ! Apply charge correction if required.
-      if (qmmm_nml%adjust_q > 0) then
-        call qmmm_adjust_q(qmmm_nml%adjust_q, natom, qmmm_struct%nquant, &
-                           qmmm_struct%nquant_nlink, qmmm_struct%nlink, &
-                           x(L15), qmmm_struct%iqmatoms, qmmm_nml%qmcharge, &
-                           qmmm_struct%atom_mask, qmmm_struct%mm_link_mask, &
-                           master, x(LCRD), qmmm_nml%vsolv)
-      end if
-
-      ! At this point we can also fill the qmmm_struct%scaled_mm_charges
-      ! array - we only need to do this once as the charges are constant
-      ! during a run. Having a separate array of scaled charges saves us
-      ! having to do it on every qmmm routine call. Do this BEFORE zeroing
-      ! the QM charges since that routine take care of these values as well.
-      do i = 1, natom
-
-        ! Charge scaling factors for Free Energy Perturbation
-        qmmm_struct%scaled_mm_charges(i) = x(L15+(i-1)) * &
-                                           INV_AMBER_ELECTROSTATIC * &
-                                           qmmm_nml%chg_lambda
-      end do
-
-      ! Zeroing of QM charges MUST be done AFTER call to check_neutral.
-      ! Zero out the charges on the quantum mechanical atoms.
-      call qm_zero_charges(x(L15), qmmm_struct%scaled_mm_charges, .true.)
-      if (qmmm_struct%nlink > 0) then
-
-        ! We need to exclude all electrostatic interactions with
-        ! MM link pairs, both in QM-MM and MM-MM.  Do this by zeroing
-        ! the MM link pair charges in the main charge array.  These
-        ! charges are stored in qmmm_struct%mm_link_pair_resp_charges
-        ! in case they are later needed.
-        call qm_zero_mm_link_pair_main_chg(qmmm_struct%nlink, &
-                                           qmmm_struct%link_pairs, x(L15), &
-                                           qmmm_struct%scaled_mm_charges, &
-                                           .true.)
-      end if
-    end if
-    ! }}}
-
     ! Use the debugf namelist to activate
     call debug_frc(x, ix, ih, ipairs, x(lcrd), x(lforce), cn1, cn2, qsetup)
 
@@ -951,7 +692,7 @@ subroutine sander()
       call pemap(dt,temp0,x,ix,ih)
     end if
 
-    if (master .and. (.not. qmmm_nml%ifqnt)) then
+    if (master) then
       write(6,'(/80(''-'')/,''   4.  RESULTS'',/80(''-'')/)')
     end if
 
@@ -1185,16 +926,8 @@ subroutine sander()
 #endif
 
   if (master) then
-#ifdef MPI
-    ! Adaptive QM/MM (qmmm_nml%vsolv=2) via multisander:
-    ! all groups have identical coordinates and velocities.
-    ! Only the master process needs to dump results.
-    if ((qmmm_nml%vsolv < 2) .or. (worldrank == 0)) then
-#endif
-      call close_dump_files
-#ifdef MPI
-    end if
-#endif
+    call close_dump_files
+  end if
 
     ! Write out the final timings, taking Replica Exchange MD into account
 #ifdef MPI
@@ -1206,40 +939,29 @@ subroutine sander()
 #else
     nstlim_total = nstlim
 #endif
-    if (imin == 0) then
-      call print_ongoing_time_summary(nstlim_total, nstlim_total, dt, 6)
+    if( master ) then
+       if (imin == 0) then
+         call print_ongoing_time_summary(nstlim_total, nstlim_total, dt, 6)
+       end if
+       write(6,'(12(a))') '|           Job began  at ', initial_time(1:2), &
+             ':', initial_time(3:4), ':', initial_time(5:10), '  on ',&
+             initial_date(5:6), '/', initial_date(7:8), '/', initial_date(1:4)
+       write(6,'(12(a))') '|           Setup done at ', setup_end_time(1:2),  &
+             ':', setup_end_time(3:4), ':', setup_end_time(5:10), '  on ', &
+             setup_end_date(5:6), '/', setup_end_date(7:8), '/', &
+             setup_end_date(1:4)
+       write(6,'(12(a))') '|           Run   done at ', final_time(1:2),  &
+             ':', final_time(3:4), ':', final_time(5:10), '  on ', &
+             final_date(5:6), '/', final_date(7:8), '/', final_date(1:4)
+       call nwallclock( ncalls )
+       write(6, '(''|'',5x,''wallclock() was called'',I8,'' times'')') ncalls
+       call flush(6)
     end if
-    write(6,'(12(a))') '|           Job began  at ', initial_time(1:2), &
-          ':', initial_time(3:4), ':', initial_time(5:10), '  on ',&
-          initial_date(5:6), '/', initial_date(7:8), '/', initial_date(1:4)
-    write(6,'(12(a))') '|           Setup done at ', setup_end_time(1:2),  &
-          ':', setup_end_time(3:4), ':', setup_end_time(5:10), '  on ', &
-          setup_end_date(5:6), '/', setup_end_date(7:8), '/', &
-          setup_end_date(1:4)
-    write(6,'(12(a))') '|           Run   done at ', final_time(1:2),  &
-          ':', final_time(3:4), ':', final_time(5:10), '  on ', &
-          final_date(5:6), '/', final_date(7:8), '/', final_date(1:4)
-    call nwallclock( ncalls )
-    write(6, '(''|'',5x,''wallclock() was called'',I8,'' times'')') ncalls
-    call flush(6)
-
-  end if
-  call flush(6)
 
 #ifdef MPI
    ! --- dynamic memory deallocation:
    999 continue
 #endif
-
-  if (qmmm_nml%ifqnt .and. qmmm_nml%qmtheory%EXTERN .and. master) then
-    call qm2_extern_finalize()
-  endif
-  if (qmmm_nml%ifqnt .and. .not. qmmm_struct%qm_mm_first_call) then
-
-    ! If first_call is still true, this thread never really
-    ! called the QMMM routine. E.g. more threads than PIMD replicates
-    ! call deallocate_qmmm(qmmm_nml, qmmm_struct, qmmm_vsolv, qm2_params)
-  end if
 
 #ifdef MPI /* SOFT CORE */
   if (ifsc .ne. 0) then

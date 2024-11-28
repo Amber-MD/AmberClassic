@@ -1004,8 +1004,7 @@
       ! integer, pointer :: p=>NULL()
       code =1
       if(present(o_code)) code = o_code
-      ! stop code
-      call mexit(6,code)
+      stop 1
       !using the below statement instead of 'stop' will trigger a 
       !segfault, which can be useful if tracebacks are enabled through 
       !the compiler

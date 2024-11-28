@@ -1,0 +1,61 @@
+
+This directory contains a basic set of scripts for the analysis of crystal 
+simulations. Written by Paul Janowski and updated by David Case.
+
+#############################################################################
+
+Main components:
+
+GetBfactors.py - obtain B-factors from pdb file in order corresponding to 
+                 an Amber topology
+XtalAnalyze.sh - basic analysis of crystal trajectory: rmsd, b-factors, 
+                 average structures, etc
+                 Uses:
+                   RevSym.py
+                   SplitTrajectory.py
+                   AnalyzeRevSym.py
+                   AnalyzeIndivASU.py
+                   GetVolume.py
+                   GetSym.py
+XtalPlot.sh    - produces several plots from XtalAnalyze.sh output
+
+#############################################################################
+
+Output of XtalAnalyze.sh:
+
+In the working directory (where XtalAnalyze.sh itself is):
+  XtalAnalyze.log - cpptraj and other output
+  drift.dat - rmsd of supercell to experimental after correcting drift 
+              (translation only)
+  drift_nofit.dat - rmsd of supercell to experimental before correcting drift
+  volume.dat - volume of supercell at each frame and percent of 
+               experimental volume; 
+  volume.txt - summary of basic volume statistics
+
+In the splittrajectories sub-directory:
+  %d_%d.nc - trajectories of individual asu's
+  average_%d_%d.mdcrd - average coordinates of each asu
+  bfac_lattice_%d%d.dat - 'revsym' calpha B-factors for each asu
+  bfac_monomer_%d%d.dat - 'rmsd' calpha B-factors for each asu
+  bfacs_calpha_lattice_INDIVavg.dat - average over all asu's of bfac_lattice_%d%d.dat
+  RMSDUC.dat - matrix of rmsd of each asu average structure to each other asu
+
+In the revsym sub-directory:
+  AvgCoord_asu.rst7 - 'asu' rmsd-fit average structure
+  AvgCoord_lat.rst7 - 'lattice' rmsd-fit average structure
+  AvgCoord*dat - rmsd statistic of the average structures to experimental 
+                 for bkbn or heavy atoms
+  bfac_*dat - 'revsym' and 'rmsd' B-factors for calpha or average over all 
+               side chain atoms of each residue
+  RevSym_%d_%d.nc - individual asu trajectories after reversing symmetry
+  rmsd_asu_bkbn.dat; rmsd_asu_heavy.dat - 'asu' rmsd for all individual 
+          snapshots (nasu*nframes) of the trajectory for bkbn and heavy atoms
+   rmsd_lat_bkbn.dat; rmsd_lat_heavy.dat - 'lat' rmsd for all individual 
+          snapshots (nasu*nframes) of the trajectory for bkbn and heavy atoms
+   rmsd_asu_bkbn_ASU.dat; rmsd_asu_heavy_ASU.dat - 'asu' rmsd after 
+          averaging over all asu's (nframes long)
+   rmsd_lat_bkbn_ASU.dat; rmsd_lat_heavy_ASU.dat - 'lat' rmsd after 
+          averaging over all asu's (nframes long)
+   rmsd*table.dat - for each of the rmsd's, a table compiling for each frame 
+          the mean rmsd and standard dev. and the rmsd of each individual asu
+

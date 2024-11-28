@@ -1,0 +1,34 @@
+#!/bin/bash
+
+cat > spc-lj.inp <<EOF
+&PARAMETERS
+outlist='uxghctensq', THEORY='DRISM', closure='HNC',
+entropicDecomp=0
+!grid
+NR=16384, DR=0.025, rout=100, kout=30,
+!MDIIS
+mdiis_nvec=20, mdiis_del=0.3, tolerance=1.e-12,
+!iter
+ksave=0, progress=1, maxstep=10000,
+!ElStat
+SMEAR=1, ADBCOR=0.5,
+!bulk solvent properties
+temperature=298, DIEps=78.497,
+NSP=2
+/
+&SPECIES
+!DENSITY=55.5,
+!corresponds very closely to 0.0333 1/A3
+DENSITY=55.296d0,
+MODEL="../cSPCE.mdl"
+/
+&SPECIES
+DENSITY=0
+MODEL="lj.mdl"
+/
+EOF
+
+../../../bin/rism1d spc-lj > spc-lj.out || { echo "  $0:  Program error"; exit 1; }
+
+../check1d spc-lj
+/bin/rm -f spc-lj.inp spc-lj.out spc-lj.sav

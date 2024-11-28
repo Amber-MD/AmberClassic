@@ -494,21 +494,14 @@ contains
     ier = fftw_init_threads()
     if( ier == 0 ) then
        write(0,*) 'failure in fftw_plan_with_nthreads'
-       call mexit(6,1)
-#ifndef API
+       stop 1
     else
        write(6,'(a,i2,a)') '| calling fftw_plan_with_nthreads(', &
           omp_num_threads,')'
-#endif
     end if
     call fftw_plan_with_nthreads(omp_num_threads)
 #endif
 
-#ifdef API
-    xvvfile = 'xvvfile'
-    crdFile = 'inpcrd'
-    outunit = 0
-#endif
     call rism3d_solvent_new(solvent, xvvfile)    
     call rism3d_solute_new_sander(solute, numAtoms, numTypes, atomTypeIndex, &
          nonbondedParmIndex, charge, ljA, ljB, mass, solvent%temperature)
@@ -661,6 +654,7 @@ contains
     ! Test for RESPA.
     if (mod(irespa, rismprm%rismnrespa) /= 0) then
        calc_type = RISM_NONE
+       ! write(6,'(a,i4)') '|  setting RISM_NONE for irespa = ', irespa
     end if
   end function rism_calc_type
 
@@ -706,42 +700,12 @@ contains
     integer :: err
     _REAL_ :: mpi_temp, partialMolarVolume
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Adding new variables
-
-  _REAL_ :: sff(3, rism_3d%solute%numAtoms)
-  _REAL_ :: ffm(3, rism_3d%solute%numAtoms)
-  _REAL_ :: forcnetr
-
-   DOUBLE PRECISION deviat
-
-   integer jrespa,fsestride,ijrespe
-   integer :: idirom=0, mmidirom=0,llidirom=0,iupdate=0
-
-   save jrespa,fsestride,ijrespe
-   save idirom,mmidirom,llidirom,iupdate
-
-! Initialization of some new variables
-   
-   if (irespa == 0) then
-      jrespa=0
-   else if (irespa == 1) then
-      jrespa=1
-      fsestride=1
-      ijrespe=0
-   else
-      jrespa=jrespa+1
-   end if
-
    epol = 0
    ff=0
 
-    !
-    !Test for interpolation, minimum samples and if this is an interpolation step
-    !
-    if (rism_calc_type(jrespa) == RISM_NONE) then
+    if (rism_calc_type(irespa) == RISM_NONE) then
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     !!!No forces this steps. DO NOTHING!!!
+     !!!No forces this step. DO NOTHING!!!
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     else
        if (rismprm%verbose >= 2) call rism_report_message("|FULL RISM!!!")
@@ -781,7 +745,6 @@ contains
        epol = rism3d_excessChemicalPotential_tot(rism_3d)*KB*rism_3d%solvent%temperature
        call timer_stop(TIME_EXCESSCHEMICALPOTENTIAL)
 
-       ! if (rismnrespa >1) then
        if (rismprm%rismnrespa >1) then
           if (rismprm%verbose>=2) call rism_report_message("|IMPULSE FORCE!!!")
           ff=rismprm%rismnrespa*ff

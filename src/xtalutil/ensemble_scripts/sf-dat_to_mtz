@@ -1,0 +1,12 @@
+awk 'NR>1 {print $1,$2,$3,$4,$5,$6}' $1-sf.dat > foo.fmtz
+
+f2mtz hklin foo.fmtz hklout $1.mtz <<EOF
+CELL  40.824   36.996   44.742  90.00  90.47  90.00
+SYMMETRY P1
+LABOUT H K L FOBS SIGFOBS R-free-flags
+CTYPOUT H H H F Q I
+TITLE 1ejg, reindexed to 1x2x2
+END
+EOF
+
+/bin/rm -f foo.fmtz

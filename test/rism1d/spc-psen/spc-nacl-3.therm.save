@@ -1,0 +1,27 @@
+#Global properties                
+#Description                      Variable    Units          Value            
+Compressibility                   xi          [1/MPa]         5.96758461E-004
+Compressibility_dT                xi_dT       [1/MPa/K]      -2.11709476E-006
+Pressure_(Free_Energy)            Pfe         [MPa]           5.29103932E+002
+Excess_free_energy                FE          [kcal/mol/A^3] -2.37705468E-001
+
+#Species properties               
+#Description                      Variable    Units           cSPC              Na+              Cl-             
+Excess_chemical_potential_PR      EXCHEMsp_PR [kcal/mol]     -2.94840611E+000 -8.02432203E+001 -8.06716307E+001 
+Excess_chemical_potential_SC      EXCHEMsp_SC [kcal/mol]     -6.84667208E+000 -7.89150847E+001 -7.93435001E+001 
+Excess_chemical_potential_SM      EXCHEMsp_SM [kcal/mol]     -5.19507070E+000 -7.55619280E+001 -7.62537016E+001 
+Solvation_energy                  ESOLVsp     [kcal/mol]     -1.19034871E+001 -8.73580039E+001 -9.23369216E+001 
+-Temperature*solvation_entropy_PR -TSsp_PR    [kcal/mol]      8.95508102E+000  7.11478367E+000  1.16652909E+001 
+-Temperature*solvation_entropy_SC -TSsp_SC    [kcal/mol]      5.05681504E+000  8.44291923E+000  1.29934215E+001 
+-Temperature*solvation_entropy_SM -TSsp_SM    [kcal/mol]      6.70841643E+000  1.17960759E+001  1.60832199E+001 
+Partial_molar_volume              PMV         [A^-3]          2.99075737E+001  2.47618621E+001  4.29480500E+001 
+
+#Site properties                  
+#Description                      Variable    Units          O                H1               Na+              Cl-              
+Excess_chemical_potential_PR      EXCHEMv_PR  [kcal/mol]     -6.83924724E+000  3.89084113E+000 -8.02432203E+001 -8.06716307E+001 
+Excess_chemical_potential_SC      EXCHEMv_SC  [kcal/mol]     -9.97307458E+000  3.12640250E+000 -7.89150847E+001 -7.93435001E+001 
+Excess_chemical_potential_SM      EXCHEMv_SM  [kcal/mol]     -8.86244307E+000  3.66737237E+000 -7.55619280E+001 -7.62537016E+001 
+Solvation_energy                  ESOLVv      [kcal/mol]     -1.23453490E+001  4.41861901E-001 -8.73580039E+001 -9.23369216E+001 
+-Temperature*solvation_entropy_PR -TSv_PR     [kcal/mol]      5.50610179E+000  3.44897923E+000  7.11478367E+000  1.16652909E+001 
+-Temperature*solvation_entropy_SC -TSv_SC     [kcal/mol]      2.37227445E+000  2.68454060E+000  8.44291923E+000  1.29934215E+001 
+-Temperature*solvation_entropy_SM -TSv_SM     [kcal/mol]      3.48290596E+000  3.22551046E+000  1.17960759E+001  1.60832199E+001 

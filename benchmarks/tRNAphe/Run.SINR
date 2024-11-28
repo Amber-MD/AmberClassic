@@ -1,0 +1,51 @@
+#!/bin/bash
+
+sander="$MSANDERHOME/bin/msander"
+export OMP_NUM_THREADS=20
+export DO_PARALLEL='mpirun -np 16'
+
+if [ ! -z "$DO_PARALLEL" ]; then
+   sander=$sander.MPI
+   export OMP_NUM_THREADS=1
+fi
+
+in=3
+let out=$in+1
+
+cat > mdin <<EOF
+ Relaxtion of solution 1ehz using SINR (isokinetic ensemble)
+ &cntrl                                                                        
+  imin=0, ntx=5, irest=1, maxcyc=5,
+  nstlim=200, dt=0.002,
+  ntc=2, ntf=2, tol=1.e-6, ioutfm=1,
+  ntpr=1, ntwx=0, ntwr=50,
+  tempi=298.15 temp0=298.15, ntp=0,
+  ntb=1, irism=1, cut=8.0, 
+  ig=-1, ntt=10, nrespa=8, nkija=4,
+  gamma_ln=2.0, sinrtau=1.0,
+ /
+ &ewald  use_pme=2, /
+ &rism
+    periodic='pme',
+    closure='kh',
+    grdspc=0.5,0.5,0.5,
+    solvcut=8.d0,
+    verbose=1,
+    write_thermo=0,
+    npropagate=1, maxstep=1000,
+    mdiis_del=0.6, mdiis_nvec=10, tolerance=1e-7,
+    apply_rism_force=1,
+    rismnrespa=8, 
+ /
+EOF
+
+cp sinrvels.rst.save sinrvels.rst
+
+$DO_PARALLEL $sander -O -i mdin -o md$out.o -r md$out.x \
+    -p 1ehz.parm7 -c md$in.x -xvv 5_50.pse2.xvv < /dev/null 
+
+/bin/mv sinrvels.rst sinrvels.rst.save
+
+/bin/rm -f mdin restrt mdinfo mdcrd
+exit 0 
+

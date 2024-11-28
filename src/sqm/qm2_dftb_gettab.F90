@@ -11,7 +11,7 @@
 ! Reads the Slater-Kosher tables from the
 ! files indicated. In Amber, the SK files
 ! must be stored in:
-!         $(MSANDERHOME)/dat/slko
+!         $(AMBERHOME)/dat/slko
 ! ========================================
 subroutine gettab(ntype)
 

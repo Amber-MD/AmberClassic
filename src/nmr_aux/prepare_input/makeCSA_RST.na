@@ -1,0 +1,83 @@
+#!/usr/bin/perl
+
+#  takes RAMAH-like input of measured residual CSA's, and produces a
+#  sander "RST" file incorporating those restraints
+#
+#  Usage : makeCSA_RST.na  <ramah-file>  <pdb-file>  <output-RST-file>
+
+$csafile = $ARGV[0];
+open (RAMAH, $csafile) || die "Failed to open $csafile\n" ;
+
+$pdbfile = $ARGV[1];
+open (PDB, $pdbfile) || die "Failed to open $pdbfile\n" ;
+
+open (CSAOUT, ">$ARGV[2]");
+printf CSAOUT " &csa\n";
+
+$tot = 0;
+while (<RAMAH>)  {
+   if( /^Field/ ){
+      ( $code, $field ) = split;  next;
+   }
+   next unless /^C /;  # RAMAH token for CSA lines
+   ($code, $atomname_in, $resnum_in, $resname_in, $csa, $rest) = split;
+
+   seek PDB,0,0;
+   while (<PDB>)  {
+      ($a, $atomnum, $atomname, $resname, $resnum) = split;
+      if( $atomname_in eq $atomname && $resnum_in == $resnum ){
+         $atno = $atomnum;
+         last;
+      }
+   }
+   $tot++; 
+
+   if( $atomname_in eq "C2" ){
+      printf CSAOUT "  jcsa(%d)=%d,  icsa(%d)=%d,  kcsa(%d)=%d,\n",
+                  $tot, $atno, $tot, $atno + 1, $tot, $atno - 1;
+      printf CSAOUT "     cobsl(%d)= %7.2f, cobsu(%d)=%7.2f,\n",
+                  $tot, $csa, $tot, $csa;
+      printf CSAOUT "     sigma11(%d)= 89., sigma22(%d) = 15.,\n", $tot, $tot;
+   }
+   elsif( $atomname_in eq "C8" && $resname_in =~ /G/ ){
+      printf CSAOUT "  jcsa(%d)=%d,  icsa(%d)=%d,  kcsa(%d)=%d,\n",
+                  $tot, $atno, $tot, $atno + 2, $tot, $atno - 1;
+      printf CSAOUT "     cobsl(%d)= %7.2f, cobsu(%d)=%7.2f,\n",
+                  $tot, $csa, $tot, $csa;
+      printf CSAOUT "     sigma11(%d)=  5., sigma22(%d) = 74.,\n", $tot, $tot;
+   }
+   elsif( $atomname_in eq "C8" && $resname_in =~ /A/ ){
+      printf CSAOUT "  jcsa(%d)=%d,  icsa(%d)=%d,  kcsa(%d)=%d,\n",
+                  $tot, $atno, $tot, $atno + 2, $tot, $atno - 1;
+      printf CSAOUT "     cobsl(%d)= %7.2f, cobsu(%d)=%7.2f,\n",
+                  $tot, $csa, $tot, $csa;
+      printf CSAOUT "     sigma11(%d)=  5., sigma22(%d) = 80.,\n", $tot, $tot;
+   }
+   elsif( $atomname_in eq "C6" ){
+      printf CSAOUT "  jcsa(%d)=%d,  icsa(%d)=%d,  kcsa(%d)=%d,\n",
+                  $tot, $atno, $tot, $atno + 2, $tot, $atno + 4;
+      printf CSAOUT "     cobsl(%d)= %7.2f, cobsu(%d)=%7.2f,\n",
+                  $tot, $csa, $tot, $csa;
+      printf CSAOUT "     sigma11(%d)= -3., sigma22(%d) =121.,\n", $tot, $tot;
+   }
+   elsif( $atomname_in eq "C5" ){
+      printf CSAOUT "  jcsa(%d)=%d,  icsa(%d)=%d,  kcsa(%d)=%d,\n",
+                  $tot, $atno, $tot, $atno + 1, $tot, $atno - 2;
+      printf CSAOUT "     cobsl(%d)= %7.2f, cobsu(%d)=%7.2f,\n",
+                  $tot, $csa, $tot, $csa;
+      printf CSAOUT "     sigma11(%d)= 82., sigma22(%d) =  2.,\n", $tot, $tot;
+   }
+   else {
+      printf STDERR "bad input line: %s", $_;
+      exit(1);
+   }
+}
+printf CSAOUT "  ncsa=%d, cwt=%d*1.0, field=%d*%.2f,\n", 
+              $tot, $tot, $tot, $field/4.;
+printf CSAOUT "  sigma12 = %d*0.0, sigma13= %d*0.0, sigma23 = %d*0.0,\n &\n",
+              $tot, $tot, $tot;
+
+close(CSA);
+close(PDB);
+
+close(CSAOUT);

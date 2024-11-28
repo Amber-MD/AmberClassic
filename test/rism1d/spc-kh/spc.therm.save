@@ -1,0 +1,27 @@
+#Global properties                
+#Description                      Variable    Units          Value            
+Compressibility                   xi          [1/MPa]         4.73552130E-004
+Compressibility_dT                xi_dT       [1/MPa/K]      -1.45676119E-006
+Pressure_(Free_Energy)            Pfe         [MPa]           5.85603370E+002
+Excess_free_energy                FE          [kcal/mol/A^3] -2.24797798E-001
+
+#Species properties               
+#Description                      Variable    Units           cSPC             
+Excess_chemical_potential_PR      EXCHEMsp_PR [kcal/mol]     -2.79190338E+000 
+Excess_chemical_potential_SC      EXCHEMsp_SC [kcal/mol]     -6.30982097E+000 
+Excess_chemical_potential_SM      EXCHEMsp_SM [kcal/mol]     -4.81172182E+000 
+Solvation_energy                  ESOLVsp     [kcal/mol]     -1.16421825E+001 
+-Temperature*solvation_entropy_PR -TSsp_PR    [kcal/mol]      8.85027910E+000 
+-Temperature*solvation_entropy_SC -TSsp_SC    [kcal/mol]      5.33236151E+000 
+-Temperature*solvation_entropy_SM -TSsp_SM    [kcal/mol]      6.83046066E+000 
+Partial_molar_volume              PMV         [A^-3]          3.00300236E+001 
+
+#Site properties                  
+#Description                      Variable    Units          O                H1               
+Excess_chemical_potential_PR      EXCHEMv_PR  [kcal/mol]     -6.47897320E+000  3.68706981E+000 
+Excess_chemical_potential_SC      EXCHEMv_SC  [kcal/mol]     -9.29070981E+000  2.98088884E+000 
+Excess_chemical_potential_SM      EXCHEMv_SM  [kcal/mol]     -8.30287163E+000  3.49114981E+000 
+Solvation_energy                  ESOLVv      [kcal/mol]     -1.19565867E+001  3.14404201E-001 
+-Temperature*solvation_entropy_PR -TSv_PR     [kcal/mol]      5.47761349E+000  3.37266561E+000 
+-Temperature*solvation_entropy_SC -TSv_SC     [kcal/mol]      2.66587688E+000  2.66648464E+000 
+-Temperature*solvation_entropy_SM -TSv_SM     [kcal/mol]      3.65371505E+000  3.17674561E+000 

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 sander="../../../bin/msander"
+export OMP_NUM_THREADS=20
 
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI

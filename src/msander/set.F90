@@ -22,8 +22,7 @@ end subroutine setatm
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !+ Get rid of bond force constant for QM/MM or non-belly atom pairs.
 subroutine setbon(nb,ib,jb,icb,igrp)
-   use qmmm_module, only : qmmm_nml, qmmm_struct
-   use parms,       only : numbnd, orig_numbnd, add_qmmm_bonds, req
+   use parms,       only : numbnd, orig_numbnd, req
    use constants,   only : zero
    implicit none
    ! Passed arguments
@@ -50,34 +49,6 @@ subroutine setbon(nb,ib,jb,icb,igrp)
       jat = jb(i)/3+1
       iq = .FALSE.
       jq = .FALSE.
-      if (qmmm_nml%ifqnt) then
-        ! remove quantum - quantum bond pairs from the bond list. This is done by rebuilding
-        ! the list without these pairs.
-        ! Note if lnk_method == 2 then we will treat the MMLink pair atom as being a QM atom so
-        ! we also delete any MML-QM bonds.
-        do j=1, qmmm_struct%nquant
-           if (iat==qmmm_struct%iqmatoms(j)) then
-              iq = .true.
-              iatnum = qmmm_struct%iqm_atomic_numbers(j)
-           elseif (jat==qmmm_struct%iqmatoms(j)) then
-              jq = .true.
-              jatnum = qmmm_struct%iqm_atomic_numbers(j)
-           end if
-        end do
-        if (qmmm_nml%lnk_method == 2) then
-          ! MMlink atoms treated as QM atoms.
-          ! Need to check if either iat or jat is an MM link pair atom.
-          if (qmmm_struct%mm_link_mask(iat)) then
-            iq = .true.
-            iatnum = -1  !set iatnum to -1 for MMlink atoms since we don't want these bonds getting shaken.
-          elseif (qmmm_struct%mm_link_mask(jat)) then
-            jq = .true.
-            jatnum = -1  !set jatnum to -1 for MMlink atoms since we don't want these bonds getting shaken.
-          end if 
-        end if
-        iq = iq .and. jq
-        !iq will be true if BOTH iat and jat are in the QM region
-      end if
       if((igrp(iat) > 0 .or. igrp(jat) > 0)) then
         if (iq) then !Both are QM atoms (or also QM-MMLink if lnk_method==2)
           !In order to shake QM atoms we need to add the bonds to the bond list
@@ -85,7 +56,7 @@ subroutine setbon(nb,ib,jb,icb,igrp)
           !We will do this by creating a new type for each of the QM-QM bonds.
           !For the moment only do QM-H bonds for shake NTC=2
           !Only do this if qmshake is set.
-          if ((iatnum == 1 .OR. jatnum == 1) .AND. qmmm_nml%qmshake > 0) then
+          if ((iatnum == 1 .OR. jatnum == 1)) then
             !at least one of them is a hydrogen
             !We need to make a new bond type here.
             numbnd = numbnd+1
@@ -109,9 +80,6 @@ subroutine setbon(nb,ib,jb,icb,igrp)
    end do
    nb = nba
 
-   ! Add these additional bond parameters to the global rk/req arrays
-   call add_qmmm_bonds(new_rk, new_req)
-
    return
 
 end subroutine setbon 
@@ -119,7 +87,6 @@ end subroutine setbon
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !+ Remove QM/MM or non-belly angle parameters
 subroutine setang(nt,it,jt,kt,ict,igrp)
-   use qmmm_module, only : qmmm_nml,qmmm_struct
    implicit NONE
    integer nt
    integer it(nt),jt(nt),kt(nt),ict(nt),igrp(*)
@@ -135,25 +102,6 @@ subroutine setang(nt,it,jt,kt,ict,igrp)
       iq = .FALSE.
       jq = .FALSE.
       kq = .FALSE.
-      if (qmmm_nml%ifqnt) then
-        ! remove quantum - quantum - quantum angle triplets from the angle list. This is done by rebuilding
-        ! the list without these triplets.
-        ! if lnk_method=2 we treat the MMlink pair atoms as being QM so we also remove ML-QM-QM angle triplets.
-        do j=1, qmmm_struct%nquant
-          iq = iq.or.iat==qmmm_struct%iqmatoms(j)
-          jq = jq.or.jat==qmmm_struct%iqmatoms(j)
-          kq = kq.or.kat==qmmm_struct%iqmatoms(j)
-        end do
-        if (qmmm_nml%lnk_method == 2) then
-          ! MMlink atoms treated as QM atoms.
-          ! Need to check if iat, jat or kat are an MM link pair atom.
-          iq = iq .or. qmmm_struct%mm_link_mask(iat)
-          jq = jq .or. qmmm_struct%mm_link_mask(jat)
-          kq = kq .or. qmmm_struct%mm_link_mask(kat)
-        end if
-        iq = iq .and. jq .and. kq
-        !iq will be true if iat,jat and kat are all in the QM region
-      end if
       if((igrp(iat) > 0 .or. igrp(jat) > 0 .or. igrp(kat) > 0) .and. (.not. iq) ) then
         !We add the current triplet to the list if all atoms are not bellied AND/OR
         !in the QM region
@@ -171,7 +119,6 @@ end subroutine setang
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !+ [Enter a one-line description of subroutine setdih here]
 subroutine setdih(np,ip,jp,kp,lp,icp,igrp)
-   use qmmm_module, only : qmmm_nml,qmmm_struct
    implicit NONE
    integer np
    integer ip(np),jp(np),kp(np),lp(np),icp(np),igrp(*)
@@ -189,26 +136,6 @@ subroutine setdih(np,ip,jp,kp,lp,icp,igrp)
       jq = .FALSE.
       kq = .FALSE.
       lq = .FALSE.
-      if (qmmm_nml%ifqnt) then
-        ! remove quantum - quantum - quantum - quantum dihedrals from the dihedra; list. This is done by rebuilding
-        ! the list without these dihedrals.
-        do j=1, qmmm_struct%nquant
-          iq = iq.or.iat==qmmm_struct%iqmatoms(j)
-          jq = jq.or.jat==qmmm_struct%iqmatoms(j)
-          kq = kq.or.kat==qmmm_struct%iqmatoms(j)
-          lq = lq.or.lat==qmmm_struct%iqmatoms(j)
-        end do
-        if (qmmm_nml%lnk_method == 2) then
-          ! MMlink atoms treated as QM atoms.
-          ! Need to check if iat, jat, kat or lat are an MM link pair atom.
-          iq = iq .or. qmmm_struct%mm_link_mask(iat)
-          jq = jq .or. qmmm_struct%mm_link_mask(jat)
-          kq = kq .or. qmmm_struct%mm_link_mask(kat)
-          lq = lq .or. qmmm_struct%mm_link_mask(lat)
-        end if
-        iq = iq .and. jq .and. kq .and. lq
-        !iq will be true if iat,jat, kat and lat are all in the QM region
-      end if
       if((igrp(iat) > 0 .or. igrp(jat) > 0 .or. igrp(kat) > 0 .or. igrp(lat) > 0) .and. (.not. iq)) then
         !add current dihedral set to the list since all atoms are not bellied or in the QM region
         npa = npa+1
@@ -698,7 +625,6 @@ end subroutine setvar
 !+ Determine which bonds NOT to SHAKE
 subroutine setnoshake(ix,noshakegp,ntc,num_noshake)
    
-   use qmmm_module, only : qmmm_nml, qmmm_struct
    implicit none
    integer ix(*),noshakegp(*),ntc,num_noshake
    
@@ -724,10 +650,6 @@ subroutine setnoshake(ix,noshakegp,ntc,num_noshake)
       maxbond = nbonh + nbona
    end if
 
-   if (qmmm_nml%ifqnt) then
-      qmmm_struct%noshake_overlap = 0
-   end if
-
    !  loop over all of the bonds:
    do i = 1,maxbond
       iano = ix(iibh+i-1)/3 + 1
@@ -741,30 +663,6 @@ subroutine setnoshake(ix,noshakegp,ntc,num_noshake)
               resat(iano)(1:13),' -- ',resat(jano)(1:13)
 #endif
          num_noshake = num_noshake + 1
-         if (qmmm_nml%ifqnt) then
-            do j = 1, qmmm_struct%nquant
-               if (iano == qmmm_nml%iqmatoms(j)) then
-                  if (qmmm_nml%qmshake == 0) then
-                     ilap = .TRUE.
-                  else ! qmshake > 0
-                     call sander_bomb('setnoshake (in set.f)', &
-                          'there are QM atoms in noshakemask', &
-                          'in conflict with qmshake /= 0')
-                  end if
-               elseif (jano == qmmm_nml%iqmatoms(j)) then
-                  if (qmmm_nml%qmshake == 0) then
-                     jlap = .TRUE.
-                  else
-                     call sander_bomb('setnoshake (in set.f)', &
-                          'there are QM atoms in noshakemask', &
-                          'in conflict with qmshake /= 0')
-                  end if
-               end if
-            end do
-            if (ilap .and. jlap) then
-               qmmm_struct%noshake_overlap = qmmm_struct%noshake_overlap + 1
-            end if
-         end if
       end if
    end do
    return

@@ -122,19 +122,12 @@ subroutine read_qmmm_nm_and_alloc( igb, ih, ix, x, cut, use_pme, ntb, qmstep, &
    integer :: ifind
    integer :: qmqmdx     ! local copied to qmmm_nml%qmqm_analyt - 1 = analytical, 2 = numerical QM-QM derivatives in qm2
    integer :: verbosity  ! local copied to qmmm_nml%verbosity - Controls amount of info about QM part of calc that is printed (0=Def)
-   integer :: tight_p_conv ! local copied to qmmm_nml%tight_p_conv - Controls convergence of density matrix. 
-                           ! 0 (Def) = 0.05*sqrt(SCFCRT)
+   integer :: tight_p_conv ! local copied to qmmm_nml%tight_p_conv - Controls convergence of density matrix. 0 (Def) = 0.05*sqrt(SCFCRT)
                            ! 1 = Converged both Energy and Density to SCFCONV
    integer :: printcharges !Local copied to qmmm_nml%printcharges as a logical. 1 = true - print mulliken and cm1a and cm2a charges
                            !on every step. 0 = false = don't print charges. Default = 0 (.false.)
-   integer :: printdipole  !Local copied to qmmm_nml%printdipole as an integer 
-                           ! 1 = QM dipole moment, 
-                           ! 2 = QM + MM dipole moment, (0=Def)
-   integer :: print_eigenvalues  !Local copied to qmmm_nml%print_eigenvalues, 
-                           ! 0 = no printing, 
-                           ! 1 = at end of run (default), 
-                           ! 2 = each SCF cycle, 
-                           ! 3 = each SCF iteration
+   integer :: printdipole  !Local copied to qmmm_nml%printdipole as an integer 1 = QM dipole moment, 2 = QM + MM dipole moment, (0=Def)
+   integer :: print_eigenvalues  !Local copied to qmmm_nml%print_eigenvalues, 0 = no printing, 1 = at end of run (default), 2 = each SCF cycle, 3 = each SCF iteration
    integer :: peptide_corr !Local copied to the logical qmmm_nml%peptide_corr
                            !Add MM correction to peptide linkages 0 = No (Default), 1 = Yes.
    integer :: itrmax       !Local copied to qmmm_nml%itrmax - Maximum number of scf cycles to run
@@ -571,6 +564,26 @@ subroutine read_qmmm_nm_and_alloc( igb, ih, ix, x, cut, use_pme, ntb, qmstep, &
    end if
 #endif
 
+
+#ifndef XTB 
+   ! Quit if Amber has not been compiled with the XTB library but the user requests it nevertheless
+   if (qmmm_nml%qmtheory%ISXTB) then
+      call sander_bomb('read_qmmm_namelist', &
+           'Code was compiled without XTB support. Please change qm_theory', &
+           '(qm_theory = ''XTB'')')
+   end if
+#endif
+
+#ifndef DFTBPLUS 
+   ! Quit if Amber has not been compiled with the DFTBPLUS library but the user requests it nevertheless
+   if (qmmm_nml%qmtheory%ISDFTBPLUS) then
+      call sander_bomb('read_qmmm_namelist', &
+           'Code was compiled without DFTBPLUS support. Please change qm_theory', &
+           '(qm_theory = ''DFTBPLUS'')')
+   end if
+#endif
+
+   
 #ifdef SQM
    ! Disable EXTERN in SQM since
    ! it does not make sense for SQM to be calling the external ADF interface.
@@ -589,6 +602,18 @@ subroutine read_qmmm_nm_and_alloc( igb, ih, ix, x, cut, use_pme, ntb, qmstep, &
            '(qm_theory = ''TCPB'')')
    end if
 
+
+   if (qmmm_nml%qmtheory%ISXTB) then
+      call sander_bomb('read_qmmm_namelist','XTB library is not supported in SQM.', &
+           '(qm_theory = ''XTB'')')
+   end if
+
+   if (qmmm_nml%qmtheory%ISDFTBPLUS) then
+      call sander_bomb('read_qmmm_namelist','DFTBPLUS library is not supported in SQM.', &
+           '(qm_theory = ''DFTBPLUS'')')
+   end if
+
+   
    if (qmmm_nml%qmtheory%SEBOMD) then
       call sander_bomb('read_qmmm_namelist','SEBOMD interface is not supported in SQM.', &
            '(qm_theory = ''SEBOMD'')')
@@ -1176,7 +1201,9 @@ subroutine read_qmmm_nm_and_alloc( igb, ih, ix, x, cut, use_pme, ntb, qmstep, &
    call int_legal_range('QMMM: (PRINT CHARGES) ', printcharges,0,1)
    call int_legal_range('QMMM: (PRINT BONDORDERS) ',printbondorders,0,1)
    call int_legal_range('QMMM: (PRINT QM/Dipole) ', printdipole,0,2)
-   if (qmmm_nml%qmtheory%EXTERN .or. qmmm_nml%qmtheory%ISQUICK .or. qmmm_nml%qmtheory%ISTCPB) then
+   if (qmmm_nml%qmtheory%EXTERN .or. qmmm_nml%qmtheory%ISQUICK &
+        .or. qmmm_nml%qmtheory%ISTCPB .or. qmmm_nml%qmtheory%ISXTB &
+        .or. qmmm_nml%qmtheory%ISDFTBPLUS ) then
      !AWG: Allow any spin multiplicity for external QM programs
      call int_legal_range('QMMM: (Spin multiplicity) ', spin, 1,100)
    else
@@ -1345,7 +1372,7 @@ subroutine read_qmmm_nm_and_alloc( igb, ih, ix, x, cut, use_pme, ntb, qmstep, &
 
    !Write a warning about excessively tight convergence requests.
    if ( scfconv < 1.0D-12 ) then
-     write(6,'(" QMMM: WARNING - SCF Conv = ",G9.2)') scfconv
+     write(6,'(" QMMM: WARNING - SCF Conv = ",G8.2)') scfconv
      write(6,*) "QMMM:           There is a risk of convergence problems when the"
      write(6,*) "QMMM:           requested convergence is less than 1.0D-12 kcal/mol."
    end if
@@ -1698,10 +1725,10 @@ subroutine read_qmmm_nm_and_alloc( igb, ih, ix, x, cut, use_pme, ntb, qmstep, &
     end if
   else if (qmmm_nml%qmtheory%ISQUICK) then
     ! 1) PME and EWALD are not supported with QUICK.
-    if (qmmm_nml%qm_ewald /= 0) then
-      call sander_bomb('read_qmmm_nm_and_alloc','qm_theory=QUICK but qm_ewald /= 0.', &
-                       'The Quick interface does not currently support EWALD or PME.')
-    end if
+    ! if (qmmm_nml%qm_ewald /= 0) then
+    !   call sander_bomb('read_qmmm_nm_and_alloc','qm_theory=QUICK but qm_ewald /= 0.', &
+    !                    'The Quick interface does not currently support EWALD or PME.')
+    ! end if
     ! 2) GB is not currently supported with QUICK.
     if (qmmm_nml%qmgb /= 0) then
       call sander_bomb('read_qmmm_nm_and_alloc','qm_theory=QUICK but qmgb /= 0.', &

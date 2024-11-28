@@ -1,0 +1,126 @@
+These files are designed to help users create restraint input for SANDER
+from files that are easier to read and create from NMR programs.  Restraint
+files are often called "RST" files, so there are three main routines here:
+ 
+makeDIST_RST  :  make upper bound files from NOESY cross peak data
+makeANG_RST   :  make torsional constraints, generally from scalar
+                 coupling data
+makeCHIR_RST  :  add "chirality" constraints to keep pro-chiral protons
+                 in the correct positions (it's possible for them to get
+                 swapped during high-temperature annealing otherwise), and
+                 to place additional constraints (if desired) on the
+                 planarity of the peptide group in proteins.
+
+These three codes were written by Garry P. Gippert, at The Scripps
+Research Institute.  makeCHIR_RST also had substantial input from Jarrod
+Smith, also at TSRI.
+
+----------------------------------------------------------------------------
+
+The most useful program is probably makeDIS_RST, which takes a "7 column" 
+format:
+
+    3  GLY  HN          4 LEU HA      3.5
+
+where the first three columns identify proton #1, the second three identify
+proton #2, and the final value is a distance upper bound.  Common pseudo-
+atoms are defined in a "map" file (like map.DG-AMBER, which translates
+pseudoatoms from disgeo into AMBER nomenclature).  The output can be used
+for input to sander, but you might want/need to hand-edit the output to
+fine-tune the constraint weights and force constants, etc.  You should
+certainly check the AMBER output carefully (try setting LISTIN=POUT) in
+order to be sure that AMBER is interpreting the restraints the way you
+want it to.
+
+makeDIST_RST.c can just be compiled with a "C" compiler.  Then cd to the
+test directory and run "testit".  Compare your output with the *.scripps
+files.  These files will also give you an idea of what "real" input looks
+like.
+
+
+----------------------------------------------------------------------------
+
+makeANG_RST works in a similar way:
+Usage: makeANG_RST -help
+       makeANG_RST -pdb PDBFILE [DIHEDRALFILE] 
+
+This program takes as input a five column DNA dihedral angle and
+J coupling constant file along with a pdb file of the DNA molecule
+that these angles refer to.
+
+It creates as output (to standard out) a list of constraints
+that is readable by AMBER.
+
+The dihedral angle file can be read from standard in or from
+a file specified on the command line.
+
+The angle file should look something like this:
+GUA	1	PPA	111	144
+CYT	2	EPSILN	20	100
+CYT	2	PPA	115	134 
+THY	3	ALPHA	20	35
+ADE	4	GAMMA	54	78
+GUA	5	J1P2P	2	3
+CYT	6	J2P3P	0	4
+THY	7	J3P4P	4	0
+....
+
+The first column is the residue name (three letter code) for DNA.
+The second is the residue number. Third is the angle (or coupling
+constant) name. Fourth is the lower bound.  Last is the upper bound.
+The angles that are currently supported follow:
+
+ALPHA	 BETA	GAMMA	DELTA	EPSILN	ZETA	CHI	PPA
+
+PPA stands for Pseudorotation Phase Angle.  When a constraint of
+this type is encountered, it is expanded into the dihedral angles
+NU0-NU4. This is a redundant constraint if you are using coupling
+constant constraints for the ribose ring.
+
+For coupling constants which are not precisely known, a zero can 
+be entered as the upper or lower bound (see example above for 
+CYT 6 and THY 7) to specify a restraint that enforces J coupling 
+to be less than the upper bound (for lower bound=0) or greater than
+the lower bound (for upper bound=0).  The coupling constants that 
+are currently supported are:
+
+J1P2P	J1P2D	J2P3P	J2D3P	J3P4P
+
+Where a P refers to ' and a D refers to '' (single and double prime).
+These are redundant constraints if you are using PPA angle constraints.
+
+The pdb file is assumed to be AMBER pdb since the program
+outputs constraints in AMBER format.
+
+jsmith@Scripps.EDU
+
+----------------------------------------------------------------------------
+
+makeCHIR_RST:
+#
+#  This script reads in a pdb file, and generates constraints
+#    for the nmr module that force the proper chirality on 
+#    tetrahedral carbons.  The pdb file must have the proper
+#    AMBER atom order, e.g. have been written by the edit or anal
+#    programs.
+#
+#  It also generates "trans" constraints for all peptide bonds.
+#  NOTE!!!  You must edit the output of this program manually to
+#     change "trans" peptide constraints to "cis" peptide constraints
+#     if needed!
+#
+#  Usage:  mk_chir_cons pdb-file output-constraint-file
+#
+
+----------------------------------------------------------------------------
+
+Contact Dave Case with questions/comments/bugs:
+
+
+====================================================================
+David A. Case                         | david.case@rutgers.edu
+Dept. of Chemistry & Chemical Biology |
+Rutgers University                    | office:   +1-848-445-5885
+174 Frelinghuysen Road, Rm. 208b      | cell:     +1-609-751-8668
+Piscataway, NJ 08854        USA       | http://casegroup.rutgers.edu
+====================================================================

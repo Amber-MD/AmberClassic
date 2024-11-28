@@ -1,0 +1,239 @@
+basics.o: basics.c basics.h defaults.h zMatrix.h vector.h cmap.h \
+ varArray.h
+sysdepend.o: sysdepend.c basics.h
+stringExtra.o: stringExtra.c basics.h
+varArray.o: varArray.c basics.h varArray.h
+getline.o: getline.c getline.h
+avl.o: avl.c avl.h
+pdb_format.o: pdb_format.c pdb_int.h pdb.h basics.h
+pdb_read.o: pdb_read.c basics.h pdb_int.h pdb.h
+pdb_sprntf.o: pdb_sprntf.c
+pdb_sscanf.o: pdb_sscanf.c
+pdb_write.o: pdb_write.c pdb_int.h pdb.h basics.h unit.h atom.h \
+ container.h objekt.h displayer.h matrix.h vector.h stringExtra.h \
+ elements.h bag.h restraint.h dictionary.h hash.h varArray.h parmLib.h \
+ list.h collection.h parmSet.h database.h
+vector.o: vector.c basics.h vector.h
+zMatrix.o: zMatrix.c basics.h vector.h matrix.h zMatrix.h
+sort.o: sort.c basics.h
+bag.o: bag.c basics.h bag.h
+hash.o: hash.c basics.h hash.h
+dictionary.o: dictionary.c basics.h hash.h dictionary.h varArray.h
+database.o: database.c basics.h dictionary.h hash.h varArray.h database.h \
+ stringExtra.h
+nVector.o: nVector.c basics.h nVector.h
+ring.o: ring.c basics.h ring.h
+matrix.o: matrix.c basics.h vector.h matrix.h
+fortran.o: fortran.c basics.h stringExtra.h
+displayer.o: displayer.c basics.h displayer.h
+assoc.o: assoc.c basics.h classes.h vector.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h
+atom.o: atom.c basics.h defaults.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+byteArray.o: byteArray.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+collection.o: collection.c basics.h classes.h vector.h varArray.h \
+ objekt.h assoc.h oString.h oInteger.h oDouble.h collection.h list.h \
+ byteArray.h parmSet.h hash.h database.h dictionary.h container.h \
+ displayer.h matrix.h stringExtra.h atom.h elements.h residue.h \
+ molecule.h unit.h bag.h restraint.h parmLib.h internal.h ring.h loop.h
+container.o: container.c basics.h vector.h classes.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+internal.o: internal.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+list.o: list.c basics.h classes.h vector.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h
+loop.o: loop.c basics.h classes.h vector.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h
+molecule.o: molecule.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+oDouble.o: oDouble.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+oInteger.o: oInteger.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+oString.o: oString.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+objekt.o: objekt.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+parmSet.o: parmSet.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h amber.h mathop.h
+residue.o: residue.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h build.h minimizer.h
+unit.o: unit.c basics.h vector.h classes.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h unitio.h defaults.h
+unitio.o: unitio.c basics.h vector.h classes.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h avl.h defaults.h \
+ tools.h fortran.h mathop.h sort.h cmap.h
+tripos.o: tripos.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h tripos.h
+graphUtil.o: graphUtil.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h graphUtil.h sort.h
+select.o: select.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h minimizer.h \
+ select.h graphUtil.h build.h
+amber.o: amber.c basics.h vector.h classes.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h leap.h amber.h tools.h \
+ defaults.h sort.h zMatrix.h cmap.h
+build.o: build.c basics.h vector.h matrix.h zMatrix.h classes.h \
+ varArray.h objekt.h assoc.h oString.h oInteger.h oDouble.h collection.h \
+ list.h byteArray.h parmSet.h hash.h database.h dictionary.h container.h \
+ displayer.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h chirality.h \
+ minimizer.h model.h build.h sort.h graphUtil.h
+elements.o: elements.c basics.h elements.h
+library.o: library.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h library.h
+chirality.o: chirality.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h chirality.h
+minimizer.o: minimizer.c basics.h varArray.h nVector.h classes.h vector.h \
+ objekt.h assoc.h oString.h oInteger.h oDouble.h collection.h list.h \
+ byteArray.h parmSet.h hash.h database.h dictionary.h container.h \
+ displayer.h matrix.h stringExtra.h atom.h elements.h residue.h \
+ molecule.h unit.h bag.h restraint.h parmLib.h internal.h ring.h loop.h \
+ minimizer.h
+model.o: model.c basics.h classes.h vector.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h chirality.h model.h \
+ sort.h zMatrix.h
+parmLib.o: parmLib.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+pdbFile.o: pdbFile.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h pdb.h avl.h sort.h \
+ model.h minimizer.h leap.h amber.h defaults.h build.h
+mol2File.o: mol2File.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h pdb.h avl.h sort.h \
+ model.h minimizer.h leap.h amber.h defaults.h tripos.h unitio.h
+mol3File.o: mol3File.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h pdb.h avl.h sort.h \
+ model.h minimizer.h leap.h amber.h defaults.h tripos.h unitio.h \
+ mol2File.h
+tools.o: tools.c basics.h vector.h matrix.h classes.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h parser.h leap.h amber.h \
+ tools.h mathop.h sort.h
+variables.o: variables.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h leap.h amber.h
+parser.o: parser.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h commands.h block.h \
+ parser.h leap.h amber.h help.h
+help.o: help.c basics.h dictionary.h hash.h varArray.h help.h
+helptext.o: helptext.c
+octree.o: octree.c classes.h basics.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h octree.h
+commands.o: commands.c basics.h vector.h matrix.h classes.h varArray.h \
+ objekt.h assoc.h oString.h oInteger.h oDouble.h collection.h list.h \
+ byteArray.h parmSet.h hash.h database.h dictionary.h container.h \
+ displayer.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h library.h pdbFile.h \
+ help.h parser.h tools.h amber.h commands.h defaults.h leap.h octree.h \
+ tripos.h build.h minimizer.h zMatrix.h unitio.h mol2File.h mol3File.h \
+ model.h
+mathop.o: mathop.c basics.h vector.h matrix.h classes.h varArray.h \
+ objekt.h assoc.h oString.h oInteger.h oDouble.h collection.h list.h \
+ byteArray.h parmSet.h hash.h database.h dictionary.h container.h \
+ displayer.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h mathop.h
+block.o: block.c basics.h block.h
+restraint.o: restraint.c basics.h classes.h vector.h varArray.h objekt.h \
+ assoc.h oString.h oInteger.h oDouble.h collection.h list.h byteArray.h \
+ parmSet.h hash.h database.h dictionary.h container.h displayer.h \
+ matrix.h stringExtra.h atom.h elements.h residue.h molecule.h unit.h \
+ bag.h restraint.h parmLib.h internal.h ring.h loop.h
+hybrid.o: hybrid.c basics.h
+tLeap.o: tLeap.c basics.h classes.h vector.h varArray.h objekt.h assoc.h \
+ oString.h oInteger.h oDouble.h collection.h list.h byteArray.h parmSet.h \
+ hash.h database.h dictionary.h container.h displayer.h matrix.h \
+ stringExtra.h atom.h elements.h residue.h molecule.h unit.h bag.h \
+ restraint.h parmLib.h internal.h ring.h loop.h parser.h block.h leap.h \
+ amber.h getline.h

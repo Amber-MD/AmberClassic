@@ -1,4 +1,10 @@
+#
+# Makefile for SQM (stand-alone quantum program)
+#
 include ../../config.h
+
+# Sqm Fortran source files are free format
+LOCALFLAGS = $(FREEFORMAT_FLAG)
 
 SHELL=/bin/sh
 VPATH=
@@ -6,21 +12,13 @@ VPATH=
 #SQMOBJ = Objects specific to the standalone SQM
 SQMOBJ= file_io_dat.o constants.o findmask.o sqm.SQM.o \
 	xmin.o xminC.o \
-	mexit.o assert.o wallclock.o veclib.o \
+	amopen.o mexit.o assert.o \
 	timer_dummy.o nmlsrc.o \
 	qm_print_info.SQM.o \
 	qm2_energy.SQM.o \
 	qm2_read_nm_and_alloc.SQM.o \
 	qm2_scf.SQM.o \
 	qm2_dftb_scf.SQM.o
-
-#LIBQMOBJ = Objects specific to building as a library.
-LIBQMOBJ = qm_print_info.o \
-	qm2_energy.o \
-	qm2_read_nm_and_alloc.o \
-	qm2_scf.o \
-	qm2_dftb_ewald.o \
-	qm2_dftb_scf.o
 
 #QMOBJ = Objects common to both SQM and libsqm
 QMOBJ = qm2_allocate_e_repul.o qm2_calc_charges.o qm2_calc_dipole.o \
@@ -53,49 +51,37 @@ QMOBJ = qm2_allocate_e_repul.o qm2_calc_charges.o qm2_calc_dipole.o \
 	slater_overlap.o qm2_h1elec_d.o rotation.o qm2_repp_d.o \
 	opnq_Edisp.o  opnq_Erep.o  opnq_Evdw.o  opnq.o  opnq_SwitchMod.o \
 	qm2_fock_d.o MNDOChargeSeparation.o qm2_print_energy.o \
-	qm2_dftb_get_dftb3_parameters.o qm2_dftb_gamma_dftb3.o
+	qm2_dftb_get_dftb3_parameters.o qm2_dftb_gamma_dftb3.o wallclock.o
 
-.PHONY: sqm
-sqm: $(BINDIR)/sqm$(SFX)
 
-$(BINDIR)/sqm$(SFX): $(SQMOBJ) $(QMOBJ) libs
+install_sqm: $(BINDIR)/sqm
+
+$(BINDIR)/sqm: $(SQMOBJ) $(QMOBJ) 
 	@echo "[SQM]  FC $@"
-	$(VB)$(FC) $(FPPFLAGS) $(FFLAGS) $(AMBERFFLAGS) -o $@ \
-        $(SQMOBJ) $(QMOBJ) -L$(LIBDIR) $(FLIBSF) $(LDFLAGS)
-
-#---------------------------------------------------------------------------
-libs:
-	$(VB)cd ../blas && $(MAKE) $(BLAS)
-	$(VB)cd ../lapack && $(MAKE) $(LAPACK)
-	$(VB)cd ../arpack && $(MAKE) $(ARPACK)
-	$(VB)cd ../rism && $(MAKE) $(RISM)
-	$(VB)cd ../lib && $(MAKE) libsys
-    
+	$(VB)$(FC) $(FFLAGS) -o $@ $(SQMOBJ) $(QMOBJ) \
+		-L$(LIBDIR) $(FLIBSF)
 
 #-----------LIBS
 
-xminC.o:  ../msander/xminC.c
+xminC.o:  ../sff/xminC.c
 	@echo "[SQM]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
+	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o xminC.o ../sff/xminC.c
 
-wallclock.o: ../msander/wallclock.F90
-	@echo "[SQM]  FC $<"
-	$(VB)$(FC) -c $(FFLAGS) -o $@ $< 
+wallclock.o:  wallclock.c
+	@echo "[SQM]  CC $<"
+	$(VB)$(CC) -c $(CFLAGS) -o $@ $<
 
-veclib.o: ../msander/veclib.F90
-	@echo "[SQM]  FC $<"
-	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ $< 
-
-libsqm: $(LIBDIR)/libsqm.a
-
-$(LIBDIR)/libsqm.a: $(QMOBJ) $(LIBQMOBJ)
-	@echo "[SQM]  AR $@"
-	$(VB)$(AR) libsqm.a $(QMOBJ) $(LIBQMOBJ) > /dev/null
-	$(VB)$(RANLIB) libsqm.a
-	$(VB)mv libsqm.a $(LIBDIR)
+netlib:
+	cd ../lapack; $(MAKE) $(LAPACK)
+	cd ../blas; $(MAKE) $(BLAS)
+	cd ../arpack && $(MAKE) libarpack
 
 clean:
-	/bin/rm -f *.o  *.mod *.d sqm$(SFX)
+	/bin/rm -f *.o  *.mod *.d sqm
+
+uninstall:
+	-rm -f $(BINDIR)/sqm
+	-rm -f $(LIBDIR)/libsqm.a
 
 depend::
 	./makedepend > depend

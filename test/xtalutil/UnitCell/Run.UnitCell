@@ -1,0 +1,5 @@
+#!/bin/sh
+
+../../../bin/UnitCell -p 2igd.pdb -o 2igd_uc.pdb
+
+../../dacdif 2igd_uc.pdb.save 2igd_uc.pdb

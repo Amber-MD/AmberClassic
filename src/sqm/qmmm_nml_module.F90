@@ -522,17 +522,17 @@ end subroutine delete_qmmm_nml_type
     write(6,'(a,e10.2)') 'dftb_telec_step            = ', self%dftb_telec_step
     write(6,'(2a)')      'dftb_3rd_order             = ', trim(self%dftb_3rd_order)
     write(6,'(2a)')      'dftb_slko_path             = ', trim(self%dftb_slko_path)
-    write(6,'(a,l1)')     'qmqm_analyt                = ', self%qmqm_analyt
-    write(6,'(a,l1)')     'tight_p_conv               = ', self%tight_p_conv
-    write(6,'(a,l1)')     'printcharges               = ', self%printcharges
+    write(6,'(a,l)')     'qmqm_analyt                = ', self%qmqm_analyt
+    write(6,'(a,l)')     'tight_p_conv               = ', self%tight_p_conv
+    write(6,'(a,l)')     'printcharges               = ', self%printcharges
     write(6,'(a,i3)')    'printdipole                = ', self%printdipole
     write(6,'(a,i3)')    'print_eigenvalues          = ', self%print_eigenvalues
-    write(6,'(a,l1)')     'peptide_corr               = ', self%peptide_corr
-    write(6,'(a,l1)')     'qmqm_erep_incore           = ', self%qmqm_erep_incore
-    write(6,'(a,l1)')     'allow_pseudo_diag          = ', self%allow_pseudo_diag
-    write(6,'(a,l1)')     'qmmmrij_incore             = ', self%qmmmrij_incore
-    write(6,'(a,l1)')     'writepdb                   = ', self%writepdb
-    write(6,'(a,l1)')     'qm_pme                     = ', self%qm_pme
+    write(6,'(a,l)')     'peptide_corr               = ', self%peptide_corr
+    write(6,'(a,l)')     'qmqm_erep_incore           = ', self%qmqm_erep_incore
+    write(6,'(a,l)')     'allow_pseudo_diag          = ', self%allow_pseudo_diag
+    write(6,'(a,l)')     'qmmmrij_incore             = ', self%qmmmrij_incore
+    write(6,'(a,l)')     'writepdb                   = ', self%writepdb
+    write(6,'(a,l)')     'qm_pme                     = ', self%qm_pme
     
   end subroutine print_qmmm_nml_type
 

@@ -1,0 +1,235 @@
+#!/usr/bin/perl
+
+$dipfile = $ARGV[0];
+open (DIP, $dipfile) || die "Failed to open $dipfile\n" ;
+
+$pdbfile = $ARGV[1];
+open (PDB, $pdbfile) || die "Failed to open $pdbfile\n" ;
+
+open (DIPOUT, ">RST.dip");
+open (ANGOUT, ">RST.ang");
+
+while (<PDB>){
+   if( $_ =~ /^ATOM|^HETATM/){
+
+      #  expand to 80+ characters (really hokey version):
+      chop($_);
+      $_ .= "                                                                    ";
+
+      ( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+            $x, $y, $z, $occ, $bfact, $element, $charge ) =
+          unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+      $atname =~ s/^ +| +$//g;
+      $key = $atname . "," . int($resno);
+      $atno{$key} = $atno;
+   }
+}
+
+$tot = 0;
+while (<DIP>)  {
+  next if /^#/;
+  ($res, $atom1, $atom2, $dip) = split(' ',$_);
+  $res -= 16;
+
+#----------------------------------------------------------------------------
+  if (($atom1 eq "C1'") && ($atom2 eq "H1'"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C1' angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C2'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"O4'," . $res};
+
+  }
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C2\'") && ($atom2 eq "H2\'"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C2' angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C1'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C3'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"O2'," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C3\'") && ($atom2 eq "H3\'"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C3' angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C2'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C4'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"O3'," . $res};
+  }
+
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C4\'") && ($atom2 eq "H4\'"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C4' angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C3'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C5'," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=107.5, r3=107.5, r4=120.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"O4'," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C5") && ($atom2 eq "H5"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C5-H5 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=118.0, r3=118.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C6," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=118.0, r3=118.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C4," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C5") && ($atom2 eq "C6"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=1.9375, dij(%d)=1.29,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C5-C6 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=120.0, r3=120.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"H5," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=120.0, r3=120.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C4," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=119.5, r3=119.5, r4=130.,  /\n",
+       $atno{$atom1 . "," . $res}, $atno{$atom2 . "," . $res},
+       $atno{"H6," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C6") && ($atom2 eq "H6"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C6 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=118.0, r3=118.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C5," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=118.0, r3=118.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"N1," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C8") || ($atom2 eq "H8"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C8 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=123.1, r3=123.1, r4=133.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"N7," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=123.1, r3=123.1, r4=133.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"N9," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "C2") || ($atom2 eq "H2"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=7.8466, dij(%d)=1.09,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# C2 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=115.5, r3=115.5, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"N1," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=115.5, r3=115.5, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"N3," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "N1") || ($atom2 eq "H1"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=-3.1631, dij(%d)=1.01,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# N1 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=118.0, r3=118.0, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C2," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=116.8, r3=116.8, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C6," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "N3") || ($atom2 eq "H3"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=-3.1631, dij(%d)=1.01,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# N3 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=116.8, r3=116.8, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C2," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=116.8, r3=116.8, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{$atom1 . "," . $res},
+       $atno{"C4," . $res};
+  }
+
+#----------------------------------------------------------------------------
+  elsif (($atom1 eq "N7") || ($atom2 eq "H8"))  {
+    $tot++;
+    printf DIPOUT " id(%d)=%d, jd(%d)=%d, dobsl(%d)=%5.2f, dobsu(%d)=%5.2f, gigj(%d)=-3.1631, dij(%d)=1.4,\n",
+       $tot, $atno{$atom1 . "," . $res}, 
+       $tot, $atno{$atom2 . "," . $res}, $tot, $dip, $tot, $dip, $tot, $tot;
+    printf ANGOUT "# N7-H8 angles for residue %d\n", $res;
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=123.1, r3=123.1, r4=130.,  /\n",
+       $atno{$atom1 . "," . $res}, $atno{"C8'," . $res},
+       $atno{$atom2 . "," . $res};
+    printf ANGOUT " &rst   iat= %d, %d, %d, 0, \n r1=100., r2=123.1, r3=123.1, r4=130.,  /\n",
+       $atno{$atom2 . "," . $res}, $atno{"C8," . $res}, $atno{"N9," . $res};
+  }
+
+  else {
+    print "Error: $res $atom1 $atom2  $dip\n";
+  }
+}
+
+close(DIP);
+close(PDB);
+close(DIPOUT);
+close(ANGOUT);

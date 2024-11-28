@@ -19,11 +19,10 @@ $SQM{"qm2_read_nm_and_alloc"} = $SQM{"qm_print_info"} = 1;
 
 
 #  in order to get a mapping between module names and file names, we have
-#  have to set up the following hash. 
+#  have to set up the following hash.
 
-# Special-case NetCDF and constants, since the source code is elsewhere
+# Special-case NetCDF, since the source code is elsewhere
 $modulefile{"NETCDF"} = "netcdf";
-$modulefile{"CONSTANTS"} = "constants";
 
 foreach $file ( <*.F90> ){
 	next if $file =~ /^_/;
@@ -33,7 +32,7 @@ foreach $file ( <*.F90> ){
 	while( <F> ){
 		if( /^ *module /i ){
 			($head,$modulename) = /( *[Mm][Oo][Dd][Uu][Ll][Ee]) +(\w*)/;
-                        $modulename=uc($modulename); 
+                        $modulename=uc($modulename);
 			$modulefile{$modulename} = $fileroot;
 #			printf STDERR "modulefile:  $modulename  $fileroot\n";
 #			printf STDERR "modulefile:  $modulename  $fileroot\n";
@@ -45,8 +44,8 @@ foreach $file ( <*.F90> ){
 	close( F );
 }
 
-#  Now, cycle over all source files to create the compilation rules and 
-#  dependencies.  Check for "compile=optimized" comments and do the right 
+#  Now, cycle over all source files to create the compilation rules and
+#  dependencies.  Check for "compile=optimized" comments and do the right
 #  thing:
 
 foreach $file ( <*.F90> ){
@@ -104,10 +103,10 @@ foreach $file ( <*.F90> ){
 
 	if( $optimized{$fileroot} ){
 		printf "\n$fileroot.o:   $fileroot.F90\n";
-		printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) \$(FWARNFLAGS) \$(FPPFLAGS) -c \$(FOPTFLAGS) \$(FFLAGS) \$(AMBERFFLAGS) -o \$@ $fileroot.F90\n\n";
+		printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) -c \$(FOPTFLAGS) \$(FFLAGS) -o \$@ $fileroot.F90\n\n";
 	} else {
 		printf "\n$fileroot.o:   $fileroot.F90\n";
-		printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) \$(FWARNFLAGS) \$(FPPFLAGS) -c \$(FNOOPTFLAGS) \$(FFLAGS) \$(AMBERFFLAGS) -o \$@ $fileroot.F90\n\n";
+		printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) -c \$(FNOOPTFLAGS) \$(FFLAGS) -o \$@ $fileroot.F90\n\n";
 	}
 	if( defined $SQM{$fileroot} ){
 #	    print STDERR $fileroot,"\n";
@@ -115,12 +114,10 @@ foreach $file ( <*.F90> ){
 		printf "$fileroot.SQM.o: $depsSQM\n" unless $depsSQM eq "";
 		printf "\n$fileroot.SQM.o:   $fileroot.F90\n";
 		if( $optimized{$fileroot} ){
-			printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) \$(FWARNFLAGS) \$(FPPFLAGS) -DSQM -c \$(FOPTFLAGS) \$(FFLAGS) \$(AMBERFFLAGS) -o \$@ $fileroot.F90\n\n";
+			printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) -DSQM -c \$(FOPTFLAGS) \$(FFLAGS) -o \$@ $fileroot.F90\n\n";
 		} else {
-			printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) \$(FWARNFLAGS) \$(FPPFLAGS) -DSQM -c \$(FNOOPTFLAGS) \$(FFLAGS) \$(AMBERFFLAGS) -o \$@ $fileroot.F90\n\n";
+			printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) -DSQM -c \$(FNOOPTFLAGS) \$(FFLAGS) -o \$@ $fileroot.F90\n\n";
 		}
 	}
 }
 
-printf "constants.o: ../msander/constants.F90\n";
-printf "\t\@echo '[SQM]  FC \$<'\n\t\$(VB)\$(FC) \$(FWARNFLAGS) \$(FPPFLAGS) -c \$(FOPTFLAGS) \$(FFLAGS) \$(AMBERFFLAGS) -o constants.o ../msander/constants.F90\n\n";

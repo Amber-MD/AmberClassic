@@ -57,7 +57,6 @@ subroutine fastwat(igraph,nres,ipres,lbres, &
    !         waters. If the waters are not contiguous in the list, IENWAT
    !         will be 0.
    ! IORWAT: The position of the oxygen in each residue (1, 2, or 3).
-   use qmmm_module, only : qmmm_nml, qmmm_struct 
    implicit none
    character(len=4) igraph,lbres,iwtnm,iowtnm,ihwtnm
    integer nres,ipres
@@ -174,11 +173,6 @@ subroutine fastwat(igraph,nres,ipres,lbres, &
       do  j = 1,3
          iat = ipres(i)+j-1
          if (ibelly > 0 .and. igrp(iat) <= 0 ) cycle nres_loop !Skip this residue - move to next
-         !If this water residue is currently in the QM region
-         !do not flag it for fast water (quick3) treatment
-         if (qmmm_nml%ifqnt) then
-            if (qmmm_struct%atom_mask(iat)) cycle nres_loop
-         end if
          if (igraph(iat) == iowtnm) then
             if (iof /= 0) cycle nres_loop
             iof = 3*(iat-1)

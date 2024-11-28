@@ -1,0 +1,91 @@
+#!/bin/sh
+
+
+id=""    #  input PDB file will be named $id.pdb
+models=""
+firstmodel=""
+
+
+#  should not need to edit beyond this line
+#=========================================================================
+
+if true; then        # <== may change to "false" after initial run
+
+for i in $models
+do
+  ( reduce -NUCLEAR -Model$i -BUILD -noHIS $id.pdb 2> reduce_$i.out ) \
+     | sed 's/HIS /HID /' | ./cyanapdb_to_amberpdb > $id.H$i.pdb
+
+cat<<EOF > leap.in
+source leaprc.ff14SBonlysc
+set default PBradii mbondi3
+x = loadpdb $id.H$i.pdb
+saveamberparm x $id.parm7 $id.$i.rst7
+savepdb x $id.$i.pdb
+quit
+EOF
+
+  tleap -f leap.in > tleap.$i.out
+  err=$?
+  if [ $err -gt 0 ]; then
+	  echo "tleap returns $err; check tleap.$i.out"
+	  exit 1
+  fi
+  /bin/rm leap.in
+
+done
+
+./cyana_to_RST -pdb $id.$firstmodel.pdb
+err=$?
+if [ $err -gt 0 ]; then
+	echo "cyanarest_to_amberRST returns $err; check upb.out ual.out and ang.out"
+	exit 1
+fi
+
+fi    # <== end of first major if loop
+
+for i in $models
+
+do
+
+#  skip previously run files:
+   if [ ! -e $id.$i.sa2.o ]; then
+
+   echo Run.sa $i
+
+#   Note: need to add back in if RDC's are present:
+#   iscale=5, scalm=300.,
+
+cat <<EOF > mdin
+ 30ps simulated annealing protocol, top temp of 300K
+ &cntrl
+ nstlim=30000, ntt=1, ntpr=500, pencut=0.1, tempi=0.0,
+ ipnlty=1, nmropt=1, vlimit=20,
+ ntb=0, igb=8, cut=25., rgbmax=25., saltcon=1.0,
+ ntc=2,
+ /
+ &wt type='TEMP0', istep1=      0, istep2=600, value1=0.0, value2=300.0,/
+ &wt type='TEMP0', istep1=601, istep2=15000, value1=300.0, value2=300.0,/
+ &wt type='TEMP0', istep1=15001, istep2=22500, value1=300.0, value2=0.0,/
+ &wt type='TEMP0', istep1=22501, istep2=30000, value1=0.0,        value2=0.0,/
+ &wt type='REST',  istep1=      0, istep2=600, value1=0.0,        value2=2.0,/
+ &wt type='REST',  istep1=601, istep2=15000, value1=2.0,        value2=2.0,/
+ &wt type='REST',  istep1=15001, istep2=22500, value1=2.0,        value2=1.0,/
+ &wt type='REST',  istep1=22501, istep2=30000, value1=1.0,        value2=1.0,/
+ &wt type='END',/
+LISTOUT=POUT                                                                   
+DISANG=RST.all                                      
+END                                                                            
+EOF
+
+mpiexec -n 4 pmemd.MPI -O -i mdin -p $id.parm7 -c $id.$i.rst7 \
+    -o $id.$i.sa2.o -r $id.$i.sa2.x
+err=$?
+if [ $err -gt 0 ]; then
+	echo "pmemd.MPI returns $err; check $id.$i.sa2.o"
+	exit 1
+fi
+
+fi
+
+done

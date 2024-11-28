@@ -1,5 +1,6 @@
-source leaprc.ff14SB
+source leaprc.protein.ff14SB
 set default PBRadii mbondi3
 x = loadpdb 2igd.pdb
+set x box { 35.0 35.0 35.0 }
 saveAmberParm x 2igd.parm7 2igd.rst7
 quit

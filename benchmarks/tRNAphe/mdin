@@ -1,0 +1,23 @@
+ Relaxtion of solution 1ehz using SINR (isokinetic ensemble)
+ &cntrl                                                                        
+  imin=1, ntx=1, irest=0, maxcyc=5,
+  nstlim=24, dt=0.004,
+  ntc=2, ntf=2, tol=1.e-6, ioutfm=1,
+  ntpr=1, ntwx=0, ntwr=50,
+  tempi=298.15 temp0=298.15, ntp=0,
+  ntb=1, irism=1, cut=8.0, 
+  ig=314159, ntt=10, nrespa=1, nkija=4,
+  gamma_ln=2.0, sinrtau=1.0,
+ /
+&rism
+    periodic='pme',
+    closure='kh',
+    grdspc=0.5,0.5,0.5,
+    solvcut=8.d0,
+    verbose=1,
+    write_thermo=0,
+    npropagate=1, maxstep=1000,
+    mdiis_del=0.6, mdiis_nvec=10, tolerance=1e-7,
+    apply_rism_force=1,
+    rismnrespa=1, 
+ /

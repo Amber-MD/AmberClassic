@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Fast check of RESP fit with 2 conformations of levulinic acid with a fixed charge
+
+/bin/rm -f multi_fit.dat
+
+#Concatenate esp files
+cat levulinic_acid.*.esp > all.esp
+#Generate RESP input files
+"$AMBERHOME/bin/respgen" -i levulinic_acid.1.ac -o all.respin1 -f resp1 -n 2 -a lva.charge >> multi_fit.dat 2>&1 || echo "${0}: Program error"
+"$AMBERHOME/bin/respgen" -i levulinic_acid.1.ac -o all.respin2 -f resp2 -n 2 -a lva.charge >> multi_fit.dat 2>&1 || echo "${0}: Program error"
+#Run RESP fit
+"$AMBERHOME/bin/resp" -O -i all.respin1 -o all.respout1 -e all.esp -q QIN -t qout_stage1 >> multi_fit.dat 2>&1 || echo "${0}: Program error"
+"$AMBERHOME/bin/resp" -O -i all.respin2 -o all.respout2 -e all.esp -q qout_stage1 -t qout_stage2 >> multi_fit.dat 2>&1 || echo "${0}: Program error" 
+
+../../dacdif -t 3 qout_stage2.save qout_stage2
+
+echo "Checking for errors in logfile"
+grep -q '[^[:space:]]' < multi_fit.dat
+
+finished=$?
+
+if [ $finished -eq 1 ]
+then
+echo "PASSED"
+echo "=============================================================="
+/bin/rm -f multi_fit.dat all.respin1 all.respin2 all.respout1 all.respout2 all.esp QIN qout_stage1 qout_stage2 esout punch 
+else
+echo "FAILED"
+echo "Multi conformational fixed charge RESP fit Failed. Check the output files in "$(pwd)
+fi

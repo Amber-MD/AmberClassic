@@ -37,12 +37,6 @@ $LES{"multisander"} = $LES{"rdparm"} = $LES{"mdread"} = $LES{"r6ave"} =
 $modulefile{"netcdf"} = "netcdf";
 $modulefile{"AmberNetcdf_mod"} = "AmberNetcdf";
 $modulefile{"ElementOrbitalIndex"} = "elementOrbitalIndex";
-$modulefile{"qmmm_module"} = "qmmm_module";
-$modulefile{"qmmm_nml_module"} = "qmmm_nml_module";
-$modulefile{"qmmm_qmtheorymodule"} = "qmmm_qmtheorymodule";
-$modulefile{"qmmm_struct_module"} = "qmmm_struct_module";
-$modulefile{"qmmm_vsolv_module"} = "qmmm_vsolv_module";
-$modulefile{"qmmm_read_and_alloc"} = "qm2_read_nm_and_alloc";
 $modulefile{"sander_rism_interface"} = "../rism/amber_rism_interface";
 $modulefile{"xray_unit_cell_module"} = "../xray/xray_unit_cell";
 $modulefile{"xray_contracts_module"} = "../xray/xray_contracts";

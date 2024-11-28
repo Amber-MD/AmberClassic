@@ -135,7 +135,7 @@ mpidirs=`/bin/ls -d mpich*/ 2>/dev/null | tail -n 1`
 
 if [ -z $mpidirs ]; then
     echo "You must download MPICH and extract it here"
-    echo "   (for example, type 'tar xvfz mpich-3.3.1.tar.gz')"
+    echo "   (for example, type 'tar xvfz mpich-4.2.1.tar.gz')"
     echo "See http://www.mpich.org for more info;"
     echo "Then, re-run this script."
     exit 1

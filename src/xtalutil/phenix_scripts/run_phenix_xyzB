@@ -1,0 +1,75 @@
+#!/bin/bash
+
+pdb=$1
+mtz=$2
+prefix=$3
+serial=$4
+cif=$5
+
+cat <<EOF > cdl.eff
+refinement {
+  output {
+    write_eff_file = False
+    write_geo_file = False
+    write_def_file = False
+    write_model_cif_file = False
+    write_map_coefficients = False
+    export_final_f_model = False
+  }
+  refine {
+    strategy = *individual_sites *individual_sites_real_space rigid_body \
+               *individual_adp group_adp tls occupancies group_anomalous
+    sites {
+    }
+    occupancies {
+      remove_selection = All
+    }
+    adp { 
+      individual {
+         anisotropic = none
+      }
+    }
+  }
+  main {
+    nqh_flips = True
+    number_of_macro_cycles = 5
+    target = auto *ml mlhl ml_sad ls mli
+    use_experimental_phases = False
+    scattering_table = wk1995 *it1992 n_gaussian electron neutron
+  }
+  hydrogens {
+    refine = individual *riding Auto
+  }
+  pdb_interpretation {
+    c_beta_restraints = False
+    clash_guard {
+      nonbonded_distance_threshold=None  
+    }
+    reference_coordinate_restraints {
+      enabled = True
+      exclude_outliers = False
+      selection = not element H
+      sigma = 0.1
+    }
+  }
+  mask {
+    ignore_hydrogens = True
+  }
+  structure_factors_and_gradients_accuracy {
+    algorithm = *fft direct
+  }
+  gui {
+    skip_rsr = True
+    skip_kinemage = True
+  }
+}
+output {
+  prefix = "$prefix"
+  serial = "$serial"
+  overwrite = True
+}
+EOF
+
+phenix.refine  $pdb $mtz $cif cdl.eff 
+
+/bin/rm -f cdl.eff 

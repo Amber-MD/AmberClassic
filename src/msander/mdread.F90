@@ -13,7 +13,6 @@ subroutine mdread1()
 
    use file_io_dat
    use lmod_driver, only : read_lmod_namelist
-   use qmmm_module, only : qmmm_nml, qm_gb
    use constants, only : RETIRED_INPUT_OPTION, zero, one, two, three, seven, &
                          eight, NO_INPUT_VALUE_FLOAT, NO_INPUT_VALUE
    use md_scheme, only: ntt, gamma_ln
@@ -65,7 +64,6 @@ subroutine mdread1()
    integer     itotst
    integer     inerr
    logical     mdin_cntrl, mdin_lmod, mdin_qmmm  ! true if namelists are in mdin
-   integer ::  ifqnt    ! local here --> put into qmmm_nml%ifqnt after read here
    integer     mxgrp
    integer     iemap
    _REAL_      dtemp  ! retired
@@ -127,8 +125,8 @@ subroutine mdread1()
          noshakemask,crgmask, &
          mask_from_ref, &
          rdt, &
-         ifqnt,ievb, profile_mpi, &
-         ipb, inp, &
+         ievb, profile_mpi, &
+         ipb, inp, nkija, idistr, sinrtau, &
          gbneckscale, &
          gbalphaH,gbbetaH,gbgammaH, &
          gbalphaC,gbbetaC,gbgammaC, &
@@ -260,6 +258,7 @@ subroutine mdread1()
    temp0 = 300.0d0
    ntt = 3    ! was ithermostat=1
    gamma_ln = 5.d0  ! was therm_par = 5.0d0
+   sinrtau = 0.05
    plumed = 0
    plumedfile = 'plumed.dat'
 #ifdef LES
@@ -486,8 +485,6 @@ subroutine mdread1()
    vfac = 0 !velocity verlet scaling factor, 0 by default
    tmode = 1 !default tangent mode for NEB calculation
 
-   ifqnt = NO_INPUT_VALUE
-
    iemap=0     ! no emap constraint
    gammamap=1     ! default friction constant for map motion, 1/ps
    isgld = 0   ! no self-guiding
@@ -545,7 +542,6 @@ subroutine mdread1()
    saltcon = input_options%saltcon
    cut = input_options%cut
    dielc = input_options%dielc
-   ifqnt = input_options%ifqnt
    jfastw = input_options%jfastw
    ntf = input_options%ntf
    ntc = input_options%ntc
@@ -625,26 +621,20 @@ subroutine mdread1()
    if ( igb == 10 .and. ipb == 0 ) ipb = 2
    if ( igb == 0  .and. ipb /= 0 ) igb = 10
 
-   if (ifqnt == NO_INPUT_VALUE) then
-      ifqnt = 0 ! default value
-      if (mdin_qmmm) then
-         write(6, '(1x,a,/)') &
-            '| WARNING qmmm namelist found, but ifqnt was not set! QMMM NOT &
-            &active.'
-      end if
-   end if
-
-   ! middle scheme is now the only scheme {
-   if (ntt .ne. 0 .and. ntt .ne. 2 .and. ntt .ne.  3) then
+   ! middle scheme or SINR are now the only thermostats:
+   if (ntt.ne.0 .and. ntt.ne.2 .and. ntt.ne.3 .and. ntt.ne.10) then
       write(6,'(1x,a,/)') &
-         'Middle scheme: ntt is only available for 0,2,3'
+         'Middle scheme/SINR: ntt is only available for 0,2,3 and 10'
       FATAL_ERROR
    end if
    if (gamma_ln < 0d0) then
       write(6,'(1x,a,/)') 'Middle scheme: gamma_ln MUST be non-negative'
       FATAL_ERROR
    end if
-   ! }
+   if (sinrtau < 0.025d0) then
+      write(6,'(1x,a,/)') 'sinrtau must be >= 0.025 when ntt = 10'
+      FATAL_ERROR
+   end if
 
    ! Now that we've read the input file, set up the defaults for variables
    ! whose values depend on other input values (ntb, cut)
@@ -688,26 +678,6 @@ subroutine mdread1()
       write(6,'(a)') "|periodic 3D-RISM Forcing igb=0"
 #   endif
       igb = 0
-   end if
-
-   if (ifqnt>0) then
-      qmmm_nml%ifqnt = .true.
-      if (saltcon /= 0.0d0) then
-         qm_gb%saltcon_on = .true.
-      else
-         qm_gb%saltcon_on = .false.
-      end if
-      if (alpb == 1) then
-         qm_gb%alpb_on = .true.
-      else
-         qm_gb%alpb_on = .false.
-      end if
-      if (igb == 10 .or. ipb /= 0) then
-         write(6, '(1x,a,/)') 'QMMM is not compatible with Poisson Boltzmann (igb=10 or ipb/=0).'
-         FATAL_ERROR
-      end if
-   else
-      qmmm_nml%ifqnt = .false.
    end if
 
    if ( mdin_lmod ) then
@@ -962,15 +932,9 @@ subroutine mdread2(x,ix,ih)
 #endif
 #ifndef API
    use emap, only : temap, emap_options
-   use qmmm_module, only : qmmm_nml, qmmm_vsolv, qmmm_struct
-   use qmmm_vsolv_module, only : print
    use linear_response, only : lrt_interval
 #else
-#  ifdef LES
-   use qmmm_module, only : qmmm_nml
-#  endif
 #endif /* API */
-   use qmmm_module, only: get_atomic_number, qm_gb
 #ifdef MPI
    use softcore, only : ifsc, scalpha, scbeta, dvdl_norest, &
                         sceeorder, logdvdl, dynlmb
@@ -1133,11 +1097,10 @@ subroutine mdread2(x,ix,ih)
    ! all replicas.  Only use the IG value from worldrank=0. Ok to 
    ! broadcast between the various sander masters since
    ! they all call mdread2.
-   ! Also needs to be synchronized for adaptive QM/MM (qmmm_nml%vsolv > 1)
-   if ( (icfe > 0) .or. (qmmm_nml%vsolv > 1) ) then
+   if ( icfe > 0 ) then
       ! no_ntt3_sync currently does not work with softcore TI simulations
       ! see sc_lngdyn in softcore.F90
-      if ( (ifsc > 0) .or. (qmmm_nml%vsolv > 1) ) no_ntt3_sync = 0
+      if ( ifsc > 0 ) no_ntt3_sync = 0
       call mpi_bcast(ig, 1, MPI_INTEGER, 0, commmaster, ierr)
    end if
 #endif
@@ -1521,138 +1484,6 @@ subroutine mdread2(x,ix,ih)
   end if
 #endif
 
-!---- QMMM Options ----
-
-   if( qmmm_nml%ifqnt ) then
-      write(6, '(/a)') 'QMMM options:'
-      write(6, '(5x,"        ifqnt = True       nquant = ",i8)') &
-                 qmmm_struct%nquant
-      write(6, '(5x,"         qmgb = ",i8,"  qmcharge = ",i8,"   adjust_q = ",i8)') &
-                 qmmm_nml%qmgb, qmmm_nml%qmcharge, qmmm_nml%adjust_q
-      write(6, '(5x,"         spin = ",i8,"     qmcut = ",f8.4, "    qmshake = ",i8)') qmmm_nml%spin, &
-                 qmmm_nml%qmcut, qmmm_nml%qmshake
-      write(6, '(5x,"     qmmm_int = ",i8)') qmmm_nml%qmmm_int
-      write(6, '(5x,"lnk_atomic_no = ",i8,"   lnk_dis = ",f8.4," lnk_method = ",i8)') &
-                 qmmm_nml%lnk_atomic_no,qmmm_nml%lnk_dis, qmmm_nml%lnk_method
-      if ( qmmm_nml%qmtheory%PM3 ) then
-         write(6, '(5x,"     qm_theory =     PM3")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%AM1 ) then
-         write(6, '(5x,"     qm_theory =     AM1")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%AM1D ) then
-         write(6, '(5x,"     qm_theory =   AM1/d")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%MNDO ) then
-         write(6, '(5x,"     qm_theory =    MNDO")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%MNDOD ) then
-         write(6, '(5x,"     qm_theory =  MNDO/d")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PDDGPM3 ) then
-         write(6, '(5x,"     qm_theory = PDDGPM3")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PDDGMNDO ) then
-         write(6, '(5x,"     qm_theory =PDDGMNDO")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PM3CARB1 ) then
-         write(6, '(5x,"     qm_theory =PM3CARB1")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%DFTB ) then
-         write(6, '(5x,"     qm_theory =    DFTB")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%RM1 ) then
-         write(6, '(5x,"     qm_theory =     RM1")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PDDGPM3_08 ) then
-         write(6, '(5x,"     qm_theory = PDDGPM3_08")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PM6 ) then
-         write(6, '(5x,"     qm_theory =     PM6")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PM3ZNB ) then
-         write(6, '(5x,"     qm_theory = PM3/ZnB")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%PM3MAIS ) then
-         write(6, '(5x,"     qm_theory = PM3-MAIS")',ADVANCE='NO')
-      else if ( qmmm_nml%qmtheory%EXTERN ) then
-         write(6, '(5x,"     qm_theory =     EXTERN")',ADVANCE='NO')
-      else
-         write(6, '(5x,"     qm_theory = UNKNOWN!")',ADVANCE='NO')
-      end if
-      write (6, '(" verbosity = ",i8)') qmmm_nml%verbosity
-      if (qmmm_nml%qmqm_analyt) then
-        write(6, '(5x,"       qmqmdx = Analytical")')
-      else
-        write(6, '(5x,"       qmqmdx = Numerical")')
-      end if
-      !AWG: if EXTERN in use, skip printing of options that do not apply
-      EXTERN: if ( .not. qmmm_nml%qmtheory%EXTERN ) then
-         if (qmmm_nml%tight_p_conv) then
-            write(6, '(5x," tight_p_conv = True (converge density to SCFCRT)")')
-         else
-            write(6, '(5x," tight_p_conv = False (converge density to 0.05xSqrt[SCFCRT])")')
-         end if
-         write(6, '(5x,"      scfconv = ",e10.3,"  itrmax = ",i8)') qmmm_nml%scfconv, qmmm_nml%itrmax
-         if (qmmm_nml%printcharges) then
-            write(6, '(5x," printcharges = True ")',ADVANCE='NO')
-         else
-            write(6, '(5x," printcharges = False")',ADVANCE='NO')
-         end if
-         select case (qmmm_nml%printdipole)
-            case (1)
-               write(6, '(5x," printdipole = QM   ")',ADVANCE='NO')
-            case (2)
-               write(6, '(5x," printdipole = QM+MM")',ADVANCE='NO')
-            case default
-               write(6, '(5x," printdipole = False")',ADVANCE='NO')
-         end select
-         if (qmmm_nml%peptide_corr) then
-            write(6, '(5x," peptide_corr = True")')
-         else
-            write(6, '(5x," peptide_corr = False")')
-         end if
-         if (qmmm_nml%qmmmrij_incore) then
-            write(6, '(4x,"qmmmrij_incore = True ")')
-         else
-            write(6, '(4x,"qmmmrij_incore = False")')
-         end if
-         if (qmmm_nml%qmqm_erep_incore) then
-            write(6, '(2x,"qmqm_erep_incore = True ")')
-         else
-            write(6, '(2x,"qmqm_erep_incore = False")')
-         end if
-         if (qmmm_nml%allow_pseudo_diag) then
-            write(6, '(7x,"pseudo_diag = True ")',ADVANCE='NO')
-            write(6, '("pseudo_diag_criteria = ",f8.4)') qmmm_nml%pseudo_diag_criteria
-         else
-            write(6, '(7x,"pseudo_diag = False")')
-         end if
-         write(6,   '(6x,"diag_routine = ",i8)') qmmm_nml%diag_routine
-      end if EXTERN
-      !If ntb=0 or use_pme =0 then we can't do qm_ewald so overide what the user may
-      !have put in the namelist and set the value to false.
-      if (qmmm_nml%qm_ewald>0) then
-        if (qmmm_nml%qm_pme) then
-          write(6, '(10x,"qm_ewald = ",i8, " qm_pme = True ")') qmmm_nml%qm_ewald
-        else
-          write(6, '(10x,"qm_ewald = ",i8, " qm_pme = False ")') qmmm_nml%qm_ewald
-        end if
-          write(6, '(10x,"  kmaxqx = ",i4," kmaxqy = ",i4," kmaxqz = ",i4," ksqmaxq = ",i4)') &
-                  qmmm_nml%kmaxqx, qmmm_nml%kmaxqy, qmmm_nml%kmaxqz, qmmm_nml%ksqmaxq
-      else
-        write(6, '(10x,"qm_ewald = ",i8, " qm_pme = False ")') qmmm_nml%qm_ewald
-      end if
-      !Print the fock matrix prediction params if it is in use.
-      if (qmmm_nml%fock_predict>0) then
-          write(6, '(6x,"fock_predict = ",i4)') qmmm_nml%fock_predict
-          write(6, '(6x,"    fockp_d1 = ",f8.4," fockp_d2 = ",f8.4)') qmmm_nml%fockp_d1, qmmm_nml%fockp_d2
-          write(6, '(6x,"    fockp_d2 = ",f8.4," fockp_d4 = ",f8.4)') qmmm_nml%fockp_d3, qmmm_nml%fockp_d4
-      end if
-
-      if (qmmm_nml%qmmm_switch) then
-         write(6, '(7x,"qmmm_switch = True",3x,"r_switch_lo =",f8.4,3x,"r_switch_hi =",f8.4)') &
-               & qmmm_nml%r_switch_lo, qmmm_nml%r_switch_hi
-      !else
-      !   write(6, '(7x,"qmmm_switch = False")')
-      end if
-
-      if (qmmm_nml%printdipole==2) then
-         write(6, '("|",2x,"INFO: To compute MM dipole WAT residues will be stripped")')
-      end if
-   end if
-
-   if (qmmm_nml%vsolv > 0) then
-      call print(qmmm_vsolv)
-   end if
-
 ! ----EMAP Options-----
    if(temap)call emap_options(5)
 ! ---------------------
@@ -1913,9 +1744,7 @@ subroutine mdread2(x,ix,ih)
 
       kappa = 0.73d0* kappa
 
-      !Set kappa for qmmm if needed
-      qm_gb%kappa = kappa
-      !     ---------------------------------------------------------------------
+      !   ---------------------------------------------------------------------
 
       if ( gbsa == 1 ) then
 
@@ -2409,10 +2238,6 @@ subroutine mdread2(x,ix,ih)
    end if
    if( gbsa > 0 ) then
       write(6,'(/,a)') 'Error: LES is not compatible with GBSA > 0'
-      DELAYED_ERROR
-   end if
-   if( qmmm_nml%ifqnt ) then
-      write(6,'(/,a)') 'Error: LES is not compatible with QM/MM'
       DELAYED_ERROR
    end if
    if( ipol > 0 ) then
@@ -3145,23 +2970,7 @@ subroutine mdread2(x,ix,ih)
             call mpi_sendrecv( num_noshake, 1, MPI_INTEGER, partner, 5, &
                                num_noshake_c, 1, MPI_INTEGER, partner, 5, &
                                commmaster, ist, ierr )
-            if (qmmm_nml%ifqnt .and. qmmm_nml%qmshake == 0) then
-               ! qtw - if qmshake=0, we need to check the QM atoms
-               call mpi_sendrecv( &
-                       qmmm_struct%nquant, 1, MPI_INTEGER, partner, 5, &
-                       nquant_c, 1, MPI_INTEGER, partner, 5, &
-                       commmaster, ist, ierr)
-               call mpi_sendrecv( &
-                       qmmm_struct%noshake_overlap, 1, MPI_INTEGER,partner, 5, &
-                       noshake_overlap_c, 1, MPI_INTEGER, partner, 5, &
-                       commmaster, ist, ierr)
-               if ( (qmmm_struct%nquant-qmmm_struct%noshake_overlap) /= &
-                    (nquant_c-noshake_overlap_c) ) then
-                  call sander_bomb('mdread2', &
-                       'QMMM: NOSHAKE lists are not match in two groups!', &
-                       'try noshakemask in cntrl to match the noshake list')
-               end if
-            else if( nbonh - num_noshake /= nbonh_c - num_noshake_c ) then
+            if( nbonh - num_noshake /= nbonh_c - num_noshake_c ) then
                write(6,*) 'SHAKE lists are not compatible in the two groups!'
                call mexit(6,1)
             end if

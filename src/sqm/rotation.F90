@@ -152,8 +152,7 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       KL        = INDX(K+1)+1 
       matrix(1,KL)  = P(K,1) 
       matrix(2,KL)  = P(K,2) 
-      matrix(3,KL)  = P(K,3) 
-   10 continue
+   10 matrix(3,KL)  = P(K,3) 
 !     P-P                                                               
       DO 20 K=1,3 
       KL        = INDX(K+1)+K+1 
@@ -162,9 +161,8 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       matrix(3,KL)  = P(K,2)*P(K,2) 
       matrix(4,KL)  = P(K,1)*P(K,3) 
       matrix(5,KL)  = P(K,2)*P(K,3) 
-      matrix(6,KL)  = P(K,3)*P(K,3) 
-   20 continue
-      DO 35 K=2,3 
+   20 matrix(6,KL)  = P(K,3)*P(K,3) 
+      DO 30 K=2,3 
       DO 30 L=1,K-1 
       KL        = INDX(K+1)+L+1 
       matrix(1,KL)  = P(K,1)*P(L,1)*two 
@@ -172,9 +170,7 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       matrix(3,KL)  = P(K,2)*P(L,2)*two 
       matrix(4,KL)  = P(K,1)*P(L,3)+P(K,3)*P(L,1) 
       matrix(5,KL)  = P(K,2)*P(L,3)+P(K,3)*P(L,2) 
-      matrix(6,KL)  = P(K,3)*P(L,3)*two 
-   30 continue
-   35 continue
+   30 matrix(6,KL)  = P(K,3)*P(L,3)*two 
    
       IF(hasDOrbital) then 
 !     D-S                                                               
@@ -184,10 +180,9 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       matrix(2,KL)  = D(K,2) 
       matrix(3,KL)  = D(K,3) 
       matrix(4,KL)  = D(K,4) 
-      matrix(5,KL)  = D(K,5) 
-   40 continue
+   40 matrix(5,KL)  = D(K,5) 
 !     D-P                                                               
-      DO 55 K=1,5 
+      DO 50 K=1,5 
       DO 50 L=1,3 
       KL        = INDX(K+4)+L+1 
       matrix(1,KL)  = D(K,1)*P(L,1) 
@@ -204,9 +199,7 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       matrix(12,KL) = D(K,4)*P(L,3) 
       matrix(13,KL) = D(K,5)*P(L,1) 
       matrix(14,KL) = D(K,5)*P(L,2) 
-      matrix(15,KL) = D(K,5)*P(L,3) 
-   50 continue
-   55 continue
+   50 matrix(15,KL) = D(K,5)*P(L,3) 
 !     D-D                                                               
       DO 60 K=1,5 
       KL        = INDX(K+4)+K+4 
@@ -224,9 +217,8 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       matrix(12,KL) = D(K,2)*D(K,5) 
       matrix(13,KL) = D(K,3)*D(K,5) 
       matrix(14,KL) = D(K,4)*D(K,5) 
-      matrix(15,KL) = D(K,5)*D(K,5) 
-   60 continue
-      DO 75 K=2,5 
+   60 matrix(15,KL) = D(K,5)*D(K,5) 
+      DO 70 K=2,5 
       DO 70 L=1,K-1 
       KL        = INDX(K+4)+L+4 
       matrix(1,KL)  = D(K,1)*D(L,1)*two 
@@ -243,9 +235,7 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
       matrix(12,KL) = D(K,2)*D(L,5)+D(K,5)*D(L,2) 
       matrix(13,KL) = D(K,3)*D(L,5)+D(K,5)*D(L,3) 
       matrix(14,KL) = D(K,4)*D(L,5)+D(K,5)*D(L,4) 
-      matrix(15,KL) = D(K,5)*D(L,5)*two 
-   70 continue
-   75 continue
+   70 matrix(15,KL) = D(K,5)*D(L,5)*two 
    
       end if ! hasDOribtal
    
@@ -316,11 +306,9 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
 !     *                 
 
       call Is2CenterIntegralZero(r2cent)
-      DO 15 IJ=1,LIMIJ 
+      DO 10 IJ=1,LIMIJ 
       DO 10 KL=1,LImkl 
-      V(KL,IJ) = ZERO 
-   10 continue
-   15 continue
+   10 V(KL,IJ) = ZERO 
       IROTD    = IROTV 
       IF(IROTD.EQ.2) GO TO 300 
       IF(IROTD.GT.2) GO TO 500 
@@ -335,8 +323,15 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
 !           6 FOR KL=PP, 5 FOR KL=DS, 15 FOR KL=PD AND KL=DD).          
 ! *** FIRST STEP - TRANSFORMATION FOR INDICES KL IN (KL,IJ).            
 !     LOOP OVER OUTER TWO INDICES IJ (NOT TRANSFORMED).                 
+!$DIR SCALAR                                                            
+!VDIR NOVECTOR                                                          
+!VOCL LOOP,SCALAR                                                       
       DO 180 IJ=1,LIMIJ 
 !     LOOP OVER INNER TWO INDICES KL (TRANSFORMED).                     
+!DIR$ NEXTSCALAR                                                        
+!$DIR SCALAR                                                            
+!VDIR NOVECTOR                                                          
+!VOCL LOOP,SCALAR                                                       
       DO 170 KL=1,LImkl 
       IF(R2CENT(KL,IJ)) THEN 
          WREPP    = W(KL,IJ) 
@@ -402,9 +397,16 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
   180 END DO 
 ! *** SECOND STEP - TRANSFORMATION FOR OUTER TWO INDICES.               
 !     LOOP OVER OUTER TWO INDICES IJ (TRANSFORMED).                     
+!$DIR SCALAR                                                            
+!VDIR NOVECTOR                                                          
+!VOCL LOOP,SCALAR                                                       
       DO 280 IJ=1,LIMIJ 
       MIJ    = MET(IJ) 
 !     LOOP OVER INNER TWO INDICES KL (NOT TRANSFORMED).                 
+!DIR$ NEXTSCALAR                                                        
+!$DIR SCALAR                                                            
+!VDIR NOVECTOR                                                          
+!VOCL LOOP,SCALAR                                                       
       DO 270 KL=1,LImkl 
       IF(ABS(V(KL,IJ)).GT.VSMALL) THEN 
          WREPP  = V(KL,IJ) 
@@ -515,8 +517,7 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
          KLA    = META(mkl) 
          KLB    = METB(mkl) 
          DO 310 KLV=KLA,KLB 
-         V(KLV,IJ) = V(KLV,IJ) + rotationMatrix(KLV-KLA+1,KL)*WREPP 
-  310    continue
+  310    V(KLV,IJ) = V(KLV,IJ) + rotationMatrix(KLV-KLA+1,KL)*WREPP 
       ENDIF 
   320 END DO 
   330 END DO 
@@ -526,8 +527,7 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
       KL     = IKLV(KLV) 
 !     INITIALIZE BUFFER.                                                
       DO 410 IJ=1,LIMIJ 
-      WKL(IJ)= ZERO 
-  410 continue
+  410 WKL(IJ)= ZERO 
 !     LOOP OVER OUTER TWO INDICES IJ (TRANSFORMED).                     
       DO 430 IJ=1,LIMIJ 
       IF(ABS(V(KLV,IJ)).GT.VSMALL) THEN 
@@ -536,14 +536,12 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
          MIJB   = METB(MIJ) 
          WREPP  = V(KLV,IJ) 
          DO 420 M=MIJA,MIJB 
-         WKL(M) = WKL(M) + rotationMatrix(M-MIJA+1,IJ)*WREPP 
-  420    continue
+  420    WKL(M) = WKL(M) + rotationMatrix(M-MIJA+1,IJ)*WREPP 
       ENDIF 
   430 END DO 
 !     TRANSFER RESULTS FROM BUFFER TO W(KL,IJ).                         
       DO 440 IJ=1,LIMIJ 
-      W(KL,IKLV(IJ)) = WKL(IJ) 
-  440 continue
+  440 W(KL,IKLV(IJ)) = WKL(IJ) 
   450 END DO 
       RETURN 
 !     *                                                                 
@@ -564,18 +562,15 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
   500 CONTINUE 
 ! *** INITIALIZATION.                                                   
       LIMYM  = MAX(LIMIJ,LImkl) 
-      DO 515 IJ=1,LIMYM 
+      DO 510 IJ=1,LIMYM 
       DO 510 KL=1,LIMYM 
-      YM(KL,IJ) = ZERO 
-  510 continue
-  515 continue
+  510 YM(KL,IJ) = ZERO 
       YM( 1, 1) = ONE 
       DO 530 KL=2,LIMYM 
       mkl    = MET(KL) 
       NKL    = METB(mkl)-META(mkl)+1 
       DO 520 I=1,NKL 
-      YM(METI(I,mkl),KL) = rotationMatrix(I,KL) 
-  520 continue
+  520 YM(METI(I,mkl),KL) = rotationMatrix(I,KL) 
   530 END DO 
 ! *** FIRST IMPLEMENTATION OF THE TWO-STEP TRANSFORMATION.              
 !     V(INTERMEDIATE)  = YM * W(LOC,TRANSPOSE)                          

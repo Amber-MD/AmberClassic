@@ -1,0 +1,7 @@
+# example from 5whp/collapse
+parm alt1_uc.parm7
+reference alt1_uc.rst7
+trajin alt1_010.min1.pdb
+xtalsymm :1-9 group "P12(1)1" reference na 2 nb 4 nc 1 collect centroid
+trajout alt1_010.xtalsymm.pdb
+go

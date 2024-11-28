@@ -68,7 +68,7 @@ subroutine qm2_print_info
   ! --------------------------------------------------------
   ! Print references for semiempirical parameter sets in use
   ! --------------------------------------------------------
-  if (.not. qmmm_nml%qmtheory%DFTB) then
+  if (.not. qmmm_nml%qmtheory%DFTB .and. .not. qmmm_nml%qmtheory%ISXTB) then
      write(6,'(/,a)') '| QMMM: *** Selected Hamiltonian *** '
      write(6,'(2a)')  '| QMMM: ', String(qmmm_nml%qmtheory)
      if (qmmm_nml%qmtheory%PM6) then
@@ -228,7 +228,7 @@ subroutine qm_write_pdb(filename)
 !Local
   integer :: i,j
 
-  open(unit=23,file=trim(filename),action='write')
+  call amopen(23,trim(filename),'R','F','W')
   write(23,'(a)') 'REMARK'
   do i=1,qmmm_struct%nquant_nlink
     write(23,60) i,elementSymbol(qmmm_struct%iqm_atomic_numbers(i)),1, &
@@ -572,6 +572,14 @@ subroutine qm_print_ref(amber_papers, ref_index, atomic_number, qmtheory)
            write(6,'("| QMMM: that you are using (see the manual and www.dftb.org).")')
            write(6,'()')
          endif
+
+         if (qmtheory%ISXTB) then
+          write(6,'("| QMMM:")')
+          write(6,'("| QMMM: xTB methods and program citation: ")')
+          write(6,'("| QMMM:   C. Bannwarth et al., WIRES COMPUT. MOL. SCI. 11, e1493 (2021)")')
+          write(6,'("| QMMM:")')
+          write(6,'()')
+        endif
 
       else
         !Reference 1 - Most MNDO parameters

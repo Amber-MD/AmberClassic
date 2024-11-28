@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+#
+#   add chainId's based on TER cards; renumber residues in each chain
+#      designed to take Amber pdb files and make them more useful for
+#      other programs;
+#
+#   for now, all chains after the 52nd are labeled "z"
+#
+#   first, read in a pdb file line and unpack
+#
+$chain=1;
+$newid="A";
+$resno_old=0;
+
+while(<>){
+
+if( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+$chainId = $newid;
+$resno_save = $resno;
+$resno = $resno - $resno_old;
+if( $resno < 0 ){ $resno += 10000 }
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} elsif( $_ =~ /^ANISOU/){
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+    $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x a7 a7 a7 a7 a7 a7 x6 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+$chainId = $newid;
+$resno_save = $resno;
+$resno = $resno - $resno_old;
+if( $resno < 0 ){ $resno += 10000; }
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s %7s%7s%7s%7s%7s%7s      %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge;
+
+} elsif( $_ =~ /^TER/){
+
+$chain++;
+if ($chain > 51){ 
+   $newid = "z"; 
+} elsif ($chain <= 26 ){ 
+   $newid = chr($chain + 64); 
+   $resno_old = $resno_save;
+} else { 
+   $newid = chr($chain + 70);
+   $resno_old = $resno_save;
+}
+#  print STDERR "found TER: $chain  $newid  $resno_old\n";
+print;
+  
+} else {
+   print;
+}
+
+}

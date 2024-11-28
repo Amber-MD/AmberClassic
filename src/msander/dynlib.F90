@@ -163,7 +163,6 @@ subroutine prntmd(nstep, time, ener, onefac, iout7, rms)
                                    rism_calc_type, &
                                    rism_thermo_print
 
-  use qmmm_module, only: qmmm_nml
   use xray_interface_module, only: xray_write_md_state
   use xray_globals_module, only: xray_active
   use state
@@ -286,53 +285,6 @@ subroutine prntmd(nstep, time, ener, onefac, iout7, rms)
     write(6, 9059) eel, egb, econst
   end if
 
-  if (qmmm_nml%ifqnt) then
-
-    ! Write the SCF energy
-    if (qmmm_nml%qmtheory%PM3) then
-      if (qmmm_nml%qmmm_int == 3) then
-
-        ! PM3-MM*
-        write(6, 9090) escf
-      else if (qmmm_nml%qmmm_int == 4) then
-
-        ! PM3/MMX2
-        write(6, 9096) escf
-      else
-        write(6, 9080) escf
-      end if
-    else if (qmmm_nml%qmtheory%AM1) then
-      write(6, 9081) escf
-    else if (qmmm_nml%qmtheory%AM1D) then
-      write(6,9981) escf
-    else if (qmmm_nml%qmtheory%MNDO) then
-      write(6,9082) escf
-    else if (qmmm_nml%qmtheory%MNDOD) then
-      write(6,9982) escf
-    else if (qmmm_nml%qmtheory%PDDGPM3) then
-      write(6,9083) escf
-    else if (qmmm_nml%qmtheory%PDDGMNDO) then
-      write(6,9084) escf
-    else if (qmmm_nml%qmtheory%PM3CARB1) then
-      write(6,9085) escf
-    else if (qmmm_nml%qmtheory%DFTB) then
-      write(6,9086) escf
-    else if (qmmm_nml%qmtheory%RM1) then
-      write(6,9087) escf
-    else if (qmmm_nml%qmtheory%PDDGPM3_08) then
-      write(6,9088) escf
-    else if (qmmm_nml%qmtheory%PM6) then
-      write(6,9089) escf
-    else if (qmmm_nml%qmtheory%PM3ZNB) then
-      write(6,9091) escf
-    else if (qmmm_nml%qmtheory%EXTERN) then
-      write(6,9092) escf
-    else if (qmmm_nml%qmtheory%PM3MAIS) then
-      write(6,9093) escf
-    else
-      write(6,'(" ERROR - UNKNOWN QM THEORY")')
-    end if
-  end if
 
   if (gbsa > 0) then
     write(6, 9077) esurf
@@ -466,53 +418,6 @@ subroutine prntmd(nstep, time, ener, onefac, iout7, rms)
   if (temap .and. iout7 > 0) then
     write (7, 9062) enemap
   endif
-  if (qmmm_nml%ifqnt) then
-
-    ! Write the SCF energy
-    if (qmmm_nml%qmtheory%PM3) then
-      if (qmmm_nml%qmmm_int == 3) then
-
-        ! PM3-MM*
-        write(7, 9090) escf
-      else if (qmmm_nml%qmmm_int == 4) then
-
-        ! PM3/MMX2
-        write(7, 9096) escf
-      else
-        write(7,9080) escf
-      end if
-    else if (qmmm_nml%qmtheory%AM1) then
-      write(7, 9081) escf
-    else if (qmmm_nml%qmtheory%AM1D) then
-      write(7, 9981) escf
-    else if (qmmm_nml%qmtheory%MNDO) then
-      write(7, 9082) escf
-    else if (qmmm_nml%qmtheory%MNDOD) then
-      write(7, 9982) escf
-    else if (qmmm_nml%qmtheory%PDDGPM3) then
-      write(7, 9083) escf
-    else if (qmmm_nml%qmtheory%PDDGMNDO) then
-      write(7, 9084) escf
-    else if (qmmm_nml%qmtheory%PM3CARB1) then
-      write(7, 9085) escf
-    else if (qmmm_nml%qmtheory%DFTB) then
-      write(7, 9086) escf
-    else if (qmmm_nml%qmtheory%RM1) then
-      write(7, 9087) escf
-    else if (qmmm_nml%qmtheory%PDDGPM3_08) then
-      write(7, 9088) escf
-    else if (qmmm_nml%qmtheory%PM6) then
-      write(7, 9089) escf
-    else if (qmmm_nml%qmtheory%PM3ZNB) then
-      write(7, 9091) escf
-    else if (qmmm_nml%qmtheory%EXTERN) then
-      write(7, 9092) escf
-    else if (qmmm_nml%qmtheory%PM3MAIS) then
-      write(7, 9093) escf
-    else
-      write(7,'(" ERROR - UNKNOWN QM THEORY")')
-    end if
-  end if
 
    if (gbsa > 0) then
      write(7, 9077) esurf

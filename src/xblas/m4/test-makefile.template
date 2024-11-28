@@ -1,0 +1,31 @@
+dnl M4 template file for generating m4/*/Makefile.
+dnl The string "routine" should be defined to expand to the routine name.
+dnl
+include(cblas.m4)dnl
+dnl
+dnl
+ifdef(`EXTRA_SRCS', `', `define(EXTRA_SRCS)')dnl
+define(`M4_SRCS', `do_test_`'routine()`'ifelse(`EXTRA_SRCS', `', `', `, ')EXTRA_SRCS')dnl
+dnl
+dnl
+`include' ../../make.conf
+`include' ../../$(MAKEINC)
+
+SRC_PATH = ../../testing/test-routine()
+M4_PATH = -I. -I..
+
+TEST_SRCS = FOREACH(`M4_SRCS', `\
+  $(SRC_PATH)/arg.c')
+
+test-source: $(TEST_SRCS)
+
+FOREACH(`M4_SRCS', `
+$(SRC_PATH)/arg.c: arg.m4 ../cblas.m4 ../test-common.m4
+	$(M4) $(M4_OPTS) $(M4_PATH) -D BASE_ROU`'TINE=routine() arg.m4 > arg.tmp.c && \
+	$(INDENT) $(INDENT_OPTS) arg.tmp.c && \
+	mv arg.tmp.c $`'@ && rm -f arg.tmp.c*
+')
+
+source-clean:
+	rm -f $(TEST_SRCS)
+

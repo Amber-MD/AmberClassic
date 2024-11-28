@@ -281,6 +281,7 @@ contains
     end if
     allocate ( self%cc_exp_params(nquant_nlink), stat=ier )
     REQUIRE(ier == 0)
+    self%cc_exp_params = 0.d0
 
     allocate (self%orb_elec_ke(MaxAngularQuantumNumber+1,nquant_nlink), stat=ier )
     REQUIRE(ier == 0)
@@ -400,50 +401,90 @@ contains
     integer :: ier
 
     if (.not. qmtheory%DFTB) then
-       
-       deallocate (self%s_orb_exp_by_type, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%p_orb_exp_by_type, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%d_orb_exp_by_type, stat = ier)
-       REQUIRE(ier == 0)
-         
-       deallocate (self%s_orb_exp_tail_by_type, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%p_orb_exp_tail_by_type, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%d_orb_exp_tail_by_type, stat = ier)
-       REQUIRE(ier == 0)         
-                  
-       deallocate (self%atom_orb_pp_eqn_xxy2, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_pp_eqn_xxy1, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_sp_eqn_xx2, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_sp_eqn_xx1, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_sp_eqn_xy, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_ss_eqn_adb, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_pp_ovlp_ieqj2, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_pp_ovlp_ieqj1, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_pp_ovlp_inj, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_sp_ovlp, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_ss_eqn, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_zz_pxp_over_pap, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_zz_sxp_over_sap, stat = ier)
-       REQUIRE(ier == 0)
-       deallocate (self%atom_orb_zz_sxs_over_sas, stat = ier)
-       REQUIRE(ier == 0)
 
+       if ( associated(self%s_orb_exp_by_type) ) then
+          deallocate (self%s_orb_exp_by_type, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%p_orb_exp_by_type) ) then
+          deallocate (self%p_orb_exp_by_type, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%d_orb_exp_by_type) ) then
+          deallocate (self%d_orb_exp_by_type, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+
+       if ( associated(self%s_orb_exp_tail_by_type) ) then
+          deallocate (self%s_orb_exp_tail_by_type, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%p_orb_exp_tail_by_type) ) then
+          deallocate (self%p_orb_exp_tail_by_type, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%d_orb_exp_tail_by_type) ) then
+          deallocate (self%d_orb_exp_tail_by_type, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+
+       if ( associated(self%atom_orb_pp_eqn_xxy2) ) then
+          deallocate (self%atom_orb_pp_eqn_xxy2, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_pp_eqn_xxy1) ) then
+          deallocate (self%atom_orb_pp_eqn_xxy1, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_sp_eqn_xx2) ) then
+          deallocate (self%atom_orb_sp_eqn_xx2, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_sp_eqn_xx1) ) then
+          deallocate (self%atom_orb_sp_eqn_xx1, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_sp_eqn_xy) ) then
+          deallocate (self%atom_orb_sp_eqn_xy, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_ss_eqn_adb) ) then
+          deallocate (self%atom_orb_ss_eqn_adb, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_pp_ovlp_ieqj2) ) then
+          deallocate (self%atom_orb_pp_ovlp_ieqj2, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_pp_ovlp_ieqj1) ) then
+          deallocate (self%atom_orb_pp_ovlp_ieqj1, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_pp_ovlp_inj) ) then
+          deallocate (self%atom_orb_pp_ovlp_inj, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_sp_ovlp) ) then
+          deallocate (self%atom_orb_sp_ovlp, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_ss_eqn) ) then
+          deallocate (self%atom_orb_ss_eqn, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_zz_pxp_over_pap) ) then
+          deallocate (self%atom_orb_zz_pxp_over_pap, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_zz_sxp_over_sap) ) then
+          deallocate (self%atom_orb_zz_sxp_over_sap, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_zz_sxs_over_sas) ) then
+          deallocate (self%atom_orb_zz_sxs_over_sas, stat = ier)
+          REQUIRE(ier == 0)
+       end if
+       
        if (qmtheory%AM1 .OR. qmtheory%PM3 .OR. qmtheory%PDDGPM3 .OR. &
             qmtheory%PM3CARB1 .OR. qmtheory%RM1 .OR. qmtheory%PDDGPM3_08 .OR. &
             qmtheory%PM6 .OR. qmtheory%PM3ZNB .OR. qmtheory%PM3MAIS) then
@@ -505,77 +546,145 @@ contains
     end if
 
     ! Deallocate atom-specific core core parameters
-    deallocate (self%cc_exp_params, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%multip_2c_elec_params, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%onec2elec_params, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%orb_elec_ke, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%betasas, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%betasap, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%betasad, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%betapap, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%betapad, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%betadad, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%orb_loc, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%natomic_orbs, stat = ier)
-    REQUIRE(ier == 0)
-    deallocate (self%core_chg, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%sp_quantum_number, stat = ier )
-    REQUIRE(ier == 0)  
-    deallocate (self%d_quantum_number, stat = ier )
-    REQUIRE(ier == 0)  
-    deallocate (self%gss, stat = ier )
-    REQUIRE(ier == 0) 
-    deallocate (self%hsp, stat = ier )
-    REQUIRE(ier == 0) 
-    deallocate (self%hpp, stat = ier )
-    REQUIRE(ier == 0) 
-    deallocate (self%dd, stat = ier )
-    REQUIRE(ier == 0)   
-    deallocate (self%rho_core, stat = ier )
-    REQUIRE(ier == 0)   
-    deallocate (self%gnn, stat = ier )
-    REQUIRE(ier == 0)   
-    deallocate (self%po, stat = ier )
-    REQUIRE(ier == 0)                                           
-    deallocate (self%F0SD, stat = ier )
-    REQUIRE(ier == 0)                                           
-    deallocate (self%G2SD, stat = ier )
-    REQUIRE(ier == 0)                                           
-    deallocate (self%pascal_tri1, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%pascal_tri2, stat = ier )
-    REQUIRE(ier == 0)
+    if ( associated(self%cc_exp_params) ) then
+       deallocate (self%cc_exp_params, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%multip_2c_elec_params) ) then
+       deallocate (self%multip_2c_elec_params, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%onec2elec_params) ) then
+       deallocate (self%onec2elec_params, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%orb_elec_ke) ) then
+       deallocate (self%orb_elec_ke, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%betasas) ) then
+       deallocate (self%betasas, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%betasap) ) then
+       deallocate (self%betasap, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%betasad) ) then
+       deallocate (self%betasad, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%betapap) ) then
+       deallocate (self%betapap, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%betapad) ) then
+       deallocate (self%betapad, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%betadad) ) then
+       deallocate (self%betadad, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%orb_loc) ) then
+       deallocate (self%orb_loc, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%natomic_orbs) ) then
+       deallocate (self%natomic_orbs, stat = ier)
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%core_chg) ) then
+       deallocate (self%core_chg, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%sp_quantum_number) ) then
+       deallocate (self%sp_quantum_number, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%d_quantum_number) ) then
+       deallocate (self%d_quantum_number, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%gss) ) then
+       deallocate (self%gss, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%hsp) ) then
+       deallocate (self%hsp, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%hpp) ) then
+       deallocate (self%hpp, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%dd) ) then
+       deallocate (self%dd, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%rho_core) ) then
+       deallocate (self%rho_core, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%gnn) ) then
+       deallocate (self%gnn, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%po) ) then
+       deallocate (self%po, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%F0SD) ) then
+       deallocate (self%F0SD, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%G2SD) ) then
+       deallocate (self%G2SD, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%pascal_tri1) ) then
+       deallocate (self%pascal_tri1, stat = ier )
+       REQUIRE(ier == 0)
+    end if
+    if ( associated(self%pascal_tri2) ) then
+       deallocate (self%pascal_tri2, stat = ier )
+       REQUIRE(ier == 0)
+    end if
   
     if (.not. qmtheory%DFTB) then            ! lam81
 
-    deallocate (self%atom_orb_zz_sxd_over_sad, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_zz_pxd_over_pad, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_zz_dxd_over_dad, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_sd_ovlp, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_pd_ovlp, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_dd_ovlp_inj, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_dd_ovlp_ieqj1, stat = ier )
-    REQUIRE(ier == 0)
-    deallocate (self%atom_orb_dd_ovlp_ieqj2, stat = ier )
-    REQUIRE(ier == 0)                 
+       if ( associated(self%atom_orb_zz_sxd_over_sad) ) then
+          deallocate (self%atom_orb_zz_sxd_over_sad, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_zz_pxd_over_pad) ) then
+          deallocate (self%atom_orb_zz_pxd_over_pad, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_zz_dxd_over_dad) ) then
+          deallocate (self%atom_orb_zz_dxd_over_dad, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_sd_ovlp) ) then
+          deallocate (self%atom_orb_sd_ovlp, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_pd_ovlp) ) then
+          deallocate (self%atom_orb_pd_ovlp, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_dd_ovlp_inj) ) then
+          deallocate (self%atom_orb_dd_ovlp_inj, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_dd_ovlp_ieqj1) ) then
+          deallocate (self%atom_orb_dd_ovlp_ieqj1, stat = ier )
+          REQUIRE(ier == 0)
+       end if
+       if ( associated(self%atom_orb_dd_ovlp_ieqj2) ) then
+          deallocate (self%atom_orb_dd_ovlp_ieqj2, stat = ier )
+          REQUIRE(ier == 0)
+       end if
 
     end if                                    ! lam81
 

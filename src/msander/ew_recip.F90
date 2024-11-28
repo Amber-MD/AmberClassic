@@ -432,7 +432,6 @@ subroutine grad_sumrc( &
 #endif
       nmine,qm_pot_only )
   use constants, only:INV_AMBER_ELECTROSTATIC, zero
-  use qmmm_module, only : qmewald, qmmm_struct
 #ifdef MPI
   use ew_bspline,only:kbot,ktop
   use mpi
@@ -492,71 +491,6 @@ subroutine grad_sumrc( &
    recip22 = recip(2,2)*dnfft2
    recip33 = recip(3,3)*dnfft3
 
-   if(qm_pot_only)then
-!  ===============  Below for qm grad sum yielding recip potential ======
-      !1 to nquant_nlink
-      qmewald%mmpot(1:qmmm_struct%nquant_nlink)=zero      
-      do im = 1,nmine
-#ifdef MPI
-         n = my_cg(im)
-#else
-         n = im
-#endif
-         do_atom = (qmmm_struct%atom_mask(n) .or. qmmm_struct%mm_link_mask(n))
-         if (do_atom) then
-           f1 = zero
-           i00 = int(fr1(im)) - order
-           j00 = int(fr2(im)) - order
-           k0 = int(fr3(im)) - order
-           do ith3 = 1,order
-              k0 = k0 + 1
-              if (k0 >= 0) then
-                 k = k0 + 1
-              else
-                 k = k0 + 1 + nfft3
-              end if
-            
-#ifdef MPI
-              if ( k >= kbot .and. k <= ktop )then
-                 kq = k - mxystart(mytaskid)
-#else
-                 kq = k
-#endif
-                 iqk = (kq-1)*2*nfftdim1*nfftdim2
-                 j0 = j00
-                 do ith2 = 1,order
-                    j0 = j0 + 1
-                    
-                    iqj = iqk + j0*2*nfftdim1
-                    if( j0 < 0 ) iqj = iqj + 2*nfft2*nfftdim1
-                  
-                    i0 = i00 + 1
-                    f1fac =  theta2(ith2,im) *  theta3(ith3,im)
-                    do ith1 = 1,order
-                       i0 = i0 + 1
-                       if (i0 >= 1) then
-                          term = q(i0 + iqj)
-                       else
-                          term = q(i0 + nfft1 + iqj)
-                       end if
-                       f1 = f1 + term * theta1(ith1,im) * f1fac
-                    end do
-                 end do
-#ifdef MPI
-              end if  ! ( k >= kbot .and. k <= ktop )
-#endif
-           end do  !  ith3 = 1,order
-
-           do nn=1,qmmm_struct%nquant_nlink
-              if(qmmm_struct%iqmatoms(nn) == n) &
-                    qmewald%mmpot(nn) = f1*INV_AMBER_ELECTROSTATIC
-           enddo
-
-        end if !if (qmmm_struct%atom_mask(n)) then     
-      end do  !  im = 1,nmine
-!  ===============  Below for nornmal grad sum yielding forces ======
-      
-   else
       do im = 1,nmine
 #ifdef MPI
          n = my_cg(im)
@@ -646,7 +580,6 @@ subroutine grad_sumrc( &
             call cr_add_dcdr_factor( n, dedc ) 
          end if
       end do  !  im = 1,nmine
-   endif   !  qm_pot_only
    return
 end subroutine grad_sumrc 
 !=================================================================

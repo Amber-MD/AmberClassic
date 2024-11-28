@@ -1869,13 +1869,11 @@ end subroutine do_pairs
 subroutine do_14pairs(ip,kp,lp,icp, &
       nphi,nb_14_list,num,maxnb14, &
       epowner,numnghbr,enghbrs,ifail,chngmask)
-   use qmmm_module, only : qmmm_nml,qmmm_struct
    implicit none
    integer ip(*),kp(*),lp(*),icp(*)
    integer nphi,nb_14_list(3,*),num,maxnb14,ifail
    integer enghbrs(5,*),numnghbr(3,*),epowner(*),chngmask
    integer i,j,k,l,ii,ll,ic0,n,ni,nl,i3,l3
-   logical qmmm_skip
    ifail = 0
    do n = 1,nphi
       i3 = ip(n)
@@ -1885,19 +1883,8 @@ subroutine do_14pairs(ip,kp,lp,icp, &
       l = lp(n)
       ii = (i3 + 3)/3
       ll = (l3 + 3)/3
-      if (qmmm_nml%ifqnt) then
-        if (qmmm_struct%atom_mask(ii) .and. qmmm_struct%atom_mask(ll)) then !both true - Skip QM-QM 1-4 VDW
-          qmmm_skip = .true.
-        else
-          qmmm_skip = .false.
-        end if
-      else
-        qmmm_skip = .false.
-      end if
       if (  (k >= 0)    .and. &
-            (l >= 0)    .and. &
-            (.not. qmmm_skip) &
-            )then
+            (l >= 0)  )then
          if ( chngmask == 0 )then
             if ( num + 1 > maxnb14 ) then
               ifail = 1

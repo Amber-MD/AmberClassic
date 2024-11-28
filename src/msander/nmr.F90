@@ -3916,11 +3916,20 @@ subroutine nmrprt(eenmr,nstep,iout)
          write(iout,23) enoe,eshf,epcshf
    if( ealign > 0.d0 .or. ecsa > 0.d0 ) then
       write(iout,41) ealign,ecsa
-      do i=1,num_datasets
-         write(iout,42) s11(i), s12(i), s13(i)
-         write(iout,43) s12(i), s22(i), s23(i)
-         write(iout,43) s13(i), s23(i), -s11(i)-s22(i)
-      end do
+      if( itarget .eq. 0 ) then
+         do i=1,num_datasets
+            write(iout,42) s11(i), s12(i), s13(i), root(3,i)/2.d0
+            write(iout,43) s12(i), s22(i), s23(i), &
+               2.d0*(root(1,i)-root(2,i))/(3.d0*root(3,i))
+            write(iout,44) s13(i), s23(i), -s11(i)-s22(i)
+         end do
+      else
+         do i=1,num_datasets
+            write(iout,45) s11(i), s12(i), s13(i)
+            write(iout,44) s12(i), s22(i), s23(i)
+            write(iout,44) s13(i), s23(i), -s11(i)-s22(i)
+         end do
+      end if
    end if
    write(iout,40)
    return
@@ -3932,8 +3941,10 @@ subroutine nmrprt(eenmr,nstep,iout)
          'Pcshift = ',f9.3)
    40 format(79('='))
    41 format(' Energy (this step): Align=',f10.3, '  CSA=', f10.3)
-   42 format('          Alignment tensor:',3f10.3)
-   43 format('                           ',3f10.3)
+   42 format('   Alignment tensor:',3f10.3,'  Da =',f10.3)
+   43 format('                    ',3f10.3,'  R  =',f10.3)
+   44 format('                    ',3f10.3)
+   45 format('   Alignment tensor:',3f10.3)
 end subroutine nmrprt 
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -4243,7 +4254,7 @@ subroutine nmrred(x,name,ipres,rimass,r1nmr,r2nmr,r3nmr,r4nmr, &
    _REAL_  idxyz(*)
    parameter (rstwttol = 1.0d-7)
 
-   character(len=80) aline
+   character(len=256) aline
    character(256) restraint
    ! Added 9/2007 by Matthew Seetin to enable natural language input of restraints
    character(len=4) atnam(8),grnam1,grnam2,grnam3,grnam4,grnam5,grnam6,grnam7,grnam8, &

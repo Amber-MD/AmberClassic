@@ -4,15 +4,22 @@ include ../config.h
 
 install: $(INSTALLTYPE)
 
-full:
+serial:
 	@cd msander && $(MAKE) msander
 	@cd msander && $(MAKE) msander.LES
 	@cd xray && $(MAKE) xray
 	@cd addles && $(MAKE) addles
-
-serial:
-	@cd msander && $(MAKE) msander
-	@cd xray && $(MAKE) xray
+	@cd leap && $(MAKE) leap
+	@cd sff && $(MAKE) sff
+	@cd antechamber && $(MAKE) install_ac
+	@cd sqm && $(MAKE) install_sqm
+	@cd nmr_aux && $(MAKE) nmr_aux
+	@cd xtalutil && $(MAKE) xtalutil
+	@cd paramfit && $(MAKE) paramfit
+	@cd moft && $(MAKE) moft
+	@cd saxs && $(MAKE) saxs
+	@cd rism && $(MAKE) rism1d
+	@cd gbnsr6 && $(MAKE) install_gbnsr6
 
 parallel:
 	@cd msander && $(MAKE) msander.MPI
@@ -28,23 +35,26 @@ clean:
 	-(cd blas && $(MAKE) clean )
 	-(cd lapack && $(MAKE) clean )
 	-(cd arpack && $(MAKE) clean )
-	-(cd sqm && $(MAKE) clean )
 	-(cd rism && $(MAKE) clean )
 	-(cd msander && $(MAKE) clean )
 	-(cd xray && $(MAKE) clean )
 	-(cd xray/cuda && $(MAKE) clean )
-	-(cd addles && $(MAKE) clean )
-	-(cd sqm && $(MAKE) clean )
+	-(cd leap && $(MAKE) clean )
+	-(cd sff && $(MAKE) clean )
+	-(cd antechamber && $(MAKE) clean )
+	-(cd nmr_aux && $(MAKE) clean )
+	-(cd xtalutil && $(MAKE) clean )
+	-(cd paramfit && $(MAKE) clean )
+	-(cd moft && $(MAKE) clean )
+	-(cd saxs && $(MAKE) clean )
 
 uninstall: clean
-	-(cd $(BINDIR) && /bin/rm -f msander* \
-        add_pdb add_xray addles AddToBox ChBox PropPDB UnitCell)
+	-(cd $(BINDIR) && /bin/rm -rf *)
 	-(cd $(LIBDIR) && /bin/rm -f liblapack.a libblas.a \
-        libarpack.a libsqm.a librism.a /libsys.a )
+        libarpack.a librism.a libsff.a )
 	/bin/rm -f $(INCDIR)/* ../config.h
-	/bin/rm $(LIBDIR)/python3.*
 
-distclean: clean
+distclean: uninstall
 	-(/bin/rm -f netcdf*.log )
 	-(cd netcdf-c-4.7.2 && make uninstall)
 	-(cd netcdf-fortran-4.5.2 && make uninstall)

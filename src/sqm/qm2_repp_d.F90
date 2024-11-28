@@ -146,11 +146,9 @@
         RI(8:10)=-RI(8:10)
         RI(13:15)=-RI(13:15)  
                                                                                
-      DO IJ=1,LIMIJ 
-         DO KL=1,LImkl 
-            W(KL,IJ) = ZERO 
-         END DO
-      END DO
+      DO 10 IJ=1,LIMIJ 
+      DO 10 KL=1,LImkl 
+   10 W(KL,IJ) = ZERO 
       IF(LIMIJ.EQ.1) THEN 
          LIJMAX = 1 
       ELSE IF(LIMIJ.EQ.10) THEN 
@@ -715,9 +713,8 @@
 !     THE CONVERSION IS DONE HERE FOR COMPUTATIONAL EFFICIENCY.         
 !     ALTERNATIVELY IT COULD BE INCLUDED AFTER THE DO 280 LOOP          
 !     AT THE LEVEL OF THE TWO-ELECTRON INTEGRALS W(LImkl,LIMIJ).        
-      DO I=1,ILAST 
-         X(I)   = AU_TO_EV/SQRT(X(I)) 
-      END DO
+      DO 190 I=1,ILAST 
+  190 X(I)   = AU_TO_EV/SQRT(X(I)) 
 !     *                                                                 
 !     EVALUATE SEMIEMPIRICAL MULTIPOLE-MULTIPOLE INTERACTIONS XM(LABEL).
 !     EVALUATE THE UNIQUE INTEGRALS W(KL,IJ) FROM XM(LABEL).            
@@ -1801,9 +1798,8 @@
 !     THE NUMERATOR IS CHOSEN SUCH THAT THE NUCLEAR CHARGES ARE         
 !     INCLUDED ALREADY AT THIS POINT, AS WELL AS THE CONVERSION TO EV.  
       FACTOR = -TORENC*AU_TO_EV 
-      DO I=IFIRST,ILAST 
-         X(I)   = FACTOR/SQRT(X(I)) 
-      END DO
+      DO 340 I=IFIRST,ILAST 
+  340 X(I)   = FACTOR/SQRT(X(I)) 
 !     EVALUATE SEMIEMPIRICAL MULTIPOLE-MULTIPOLE INTERACTIONS XM(LABEL).
 !     EVALUATE THE UNIQUE CORE-ELECTRON ATTRACTION INTEGRALS CORE(I,N)  
 !     FROM XM(LABEL).                                                   

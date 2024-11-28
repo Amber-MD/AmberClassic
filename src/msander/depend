@@ -131,7 +131,6 @@ charmm.o: \
                     ../include/dprec.fh\
                     ew_cntrl.h\
                     parms.o\
-                    qmmm_module.o\
                     parallel.h\
                     constants.o\
                     state.o
@@ -273,7 +272,6 @@ decomp.o:   decomp.F90
 
 degcnt.o: \
                     ../include/dprec.fh\
-                    qmmm_module.o\
                     softcore.o
 
 
@@ -283,7 +281,6 @@ degcnt.o:   degcnt.F90
 
 degcnt.LES.o: \
                     ../include/dprec.fh\
-                    qmmm_module.o\
                     softcore.o
 
 degcnt.LES.o:   degcnt.F90
@@ -313,7 +310,6 @@ dynlib.o: \
                     remd.o\
                     les.o\
                     ../rism/amber_rism_interface.o\
-                    qmmm_module.o\
                     xray_interface.o\
                     xray_globals.o\
                     state.o\
@@ -345,7 +341,6 @@ dynlib.LES.o: \
                     remd.LES.o\
                     les.o\
                     ../rism/amber_rism_interface.o\
-                    qmmm_module.o\
                     xray_interface.o\
                     xray_globals.o\
                     state.o\
@@ -370,7 +365,6 @@ egb.o: \
                     ../include/assert.fh\
                     ../include/dprec.fh\
                     icosasurf.o\
-                    qmmm_module.o\
                     parms.o\
                     constants.o\
                     mdfil.o\
@@ -391,7 +385,6 @@ egb.LES.o: \
                     ../include/assert.fh\
                     ../include/dprec.fh\
                     icosasurf.o\
-                    qmmm_module.o\
                     parms.o\
                     constants.o\
                     mdfil.LES.o\
@@ -559,7 +552,6 @@ ew_force.o: \
                     stack.o\
                     nonbond_list.o\
                     constants.o\
-                    qmmm_module.o\
                     file_io_dat.o\
                     les.o\
                     charmm.o\
@@ -593,7 +585,6 @@ ew_force.LES.o: \
                     stack.o\
                     nonbond_list.LES.o\
                     constants.o\
-                    qmmm_module.o\
                     file_io_dat.o\
                     les.o\
                     charmm.o\
@@ -633,7 +624,6 @@ ew_recip.o: \
                     parallel.h\
                     ew_parallel.h\
                     constants.o\
-                    qmmm_module.o\
                     file_io_dat.o\
                     ../include/md.h\
                     extra.h
@@ -657,7 +647,6 @@ ew_recip.LES.o: \
                     parallel.h\
                     ew_parallel.h\
                     constants.o\
-                    qmmm_module.o\
                     file_io_dat.o\
                     ../include/md.h\
                     extra.h
@@ -682,7 +671,6 @@ ew_setup.o: \
                     parallel.h\
                     ew_parallel.h\
                     stack.o\
-                    qmmm_module.o\
                     def_time.h\
                     les.o\
                     AmberNetcdf.o\
@@ -712,7 +700,6 @@ ew_setup.LES.o: \
                     parallel.h\
                     ew_parallel.h\
                     stack.o\
-                    qmmm_module.o\
                     def_time.h\
                     les.o\
                     AmberNetcdf.o\
@@ -735,8 +722,7 @@ extra_pts.o: \
                     file_io_dat.o\
                     softcore.o\
                     flocntrl.h\
-                    ../include/md.h\
-                    qmmm_module.o
+                    ../include/md.h
 
 
 extra_pts.o:   extra_pts.F90
@@ -753,8 +739,7 @@ extra_pts.LES.o: \
                     file_io_dat.o\
                     softcore.o\
                     flocntrl.h\
-                    ../include/md.h\
-                    qmmm_module.o
+                    ../include/md.h
 
 extra_pts.LES.o:   extra_pts.F90
 	@echo '[MSANDER_LES]  FC $<'
@@ -762,7 +747,6 @@ extra_pts.LES.o:   extra_pts.F90
 
 fastwt.o: \
                     ../include/dprec.fh\
-                    qmmm_module.o\
                     parallel.h\
                     ../include/md.h\
                     constants.o
@@ -797,7 +781,6 @@ force.o: \
                     file_io_dat.o\
                     egb.o\
                     les.o\
-                    qmmm_module.o\
                     softcore.o\
                     remd.o\
                     ../rism/amber_rism_interface.o\
@@ -844,7 +827,6 @@ force.LES.o: \
                     file_io_dat.o\
                     egb.LES.o\
                     les.o\
-                    qmmm_module.o\
                     softcore.o\
                     remd.LES.o\
                     ../rism/amber_rism_interface.o\
@@ -880,6 +862,15 @@ force.LES.o: \
 force.LES.o:   force.F90
 	@echo '[MSANDER_LES]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -DLES -c $(FOPTFLAGS) $(FFLAGS) -o $@ force.F90
+
+get_atomic_number.o: \
+                    ../include/dprec.fh\
+                    utilitiesModule.o
+
+
+get_atomic_number.o:   get_atomic_number.F90
+	@echo '[MSANDER]  FC $<'
+	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ get_atomic_number.F90
 
 getcor.o: \
                     ../include/dprec.fh\
@@ -1108,7 +1099,6 @@ mdread.o: \
                     ../include/assert.fh\
                     file_io_dat.o\
                     lmod.o\
-                    qmmm_module.o\
                     constants.o\
                     md_scheme.o\
                     les.o\
@@ -1139,7 +1129,6 @@ mdread.o: \
                     parms.o\
                     nonbond_list.o\
                     sander_lib.o\
-                    qmmm_vsolv_module.o\
                     mdfil.o\
                     parallel.h\
                     extra_pts.h\
@@ -1158,7 +1147,6 @@ mdread.LES.o: \
                     ../include/assert.fh\
                     file_io_dat.o\
                     lmod.LES.o\
-                    qmmm_module.o\
                     constants.o\
                     md_scheme.LES.o\
                     les.o\
@@ -1189,7 +1177,6 @@ mdread.LES.o: \
                     parms.o\
                     nonbond_list.LES.o\
                     sander_lib.o\
-                    qmmm_vsolv_module.o\
                     mdfil.LES.o\
                     parallel.h\
                     extra_pts.h\
@@ -1380,7 +1367,6 @@ new_time.o: \
                     stack.o\
                     extra.h\
                     parallel.h\
-                    qmmm_module.o\
                     ../include/md.h
 
 
@@ -2185,7 +2171,6 @@ nonbond_list.o: \
                     constants.o\
                     les.o\
                     softcore.o\
-                    qmmm_module.o\
                     box.h\
                     ../include/memory.h
 
@@ -2206,7 +2191,6 @@ nonbond_list.LES.o: \
                     constants.o\
                     les.o\
                     softcore.o\
-                    qmmm_module.o\
                     box.h\
                     ../include/memory.h
 
@@ -2249,7 +2233,6 @@ parallel.o: \
                     debug.h\
                     new_time.h\
                     tgtmd.h\
-                    qmmm_module.o\
                     state.o
 
 
@@ -2287,7 +2270,6 @@ parallel.LES.o: \
                     debug.h\
                     new_time.h\
                     tgtmd.h\
-                    qmmm_module.o\
                     state.o
 
 parallel.LES.o:   parallel.F90
@@ -2341,7 +2323,6 @@ printe.o: \
                     multitmd.h\
                     constants.o\
                     ../rism/amber_rism_interface.o\
-                    qmmm_module.o\
                     charmm.o\
                     emap.o\
                     xray_interface.o\
@@ -2359,16 +2340,6 @@ prmtop_type.o:   prmtop_type.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ prmtop_type.F90
 
-prn_qmmm_dipole.o: \
-                    ../include/dprec.fh\
-                    qmmm_module.o\
-                    constants.o
-
-
-prn_qmmm_dipole.o:   prn_qmmm_dipole.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ prn_qmmm_dipole.F90
-
 pubfft.o: \
                     ../include/dprec.fh
 
@@ -2376,317 +2347,6 @@ pubfft.o: \
 pubfft.o:   pubfft.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ pubfft.F90
-
-qm2_extern_adf_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    file_io_dat.o\
-                    elementOrbitalIndex.o\
-                    utilitiesmodule.o
-
-
-qm2_extern_adf_module.o:   qm2_extern_adf_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_adf_module.F90
-
-qm2_extern_fb_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    elementOrbitalIndex.o\
-                    qmmm_module.o\
-                    utilitiesmodule.o
-
-
-qm2_extern_fb_module.o:   qm2_extern_fb_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_fb_module.F90
-
-qm2_extern_gau_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    file_io_dat.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_gau_module.o:   qm2_extern_gau_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_gau_module.F90
-
-qm2_extern_genmpi_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_genmpi_module.o:   qm2_extern_genmpi_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_genmpi_module.F90
-
-qm2_extern_gms_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_gms_module.o:   qm2_extern_gms_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_gms_module.F90
-
-qm2_extern_lio_module.o: \
-                    ../include/dprec.fh\
-                    constants.o\
-                    file_io_dat.o\
-                    qmmm_module.o
-
-
-qm2_extern_lio_module.o:   qm2_extern_lio_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_lio_module.F90
-
-qm2_extern_module.o: \
-                    ../include/dprec.fh\
-                    qmmm_module.o\
-                    qm2_extern_adf_module.o\
-                    qm2_extern_gms_module.o\
-                    qm2_extern_tc_module.o\
-                    qm2_extern_gau_module.o\
-                    qm2_extern_orc_module.o\
-                    qm2_extern_nw_module.o\
-                    qm2_extern_mrcc_module.o\
-                    qm2_extern_quick_module.o\
-                    qm2_extern_reaxff_puremd_module.o\
-                    qm2_extern_genmpi_module.o\
-                    qm2_extern_qc_module.o\
-                    qm2_extern_lio_module.o\
-                    qm2_extern_fb_module.o\
-                    file_io_dat.o\
-                    parallel.h\
-                    ../include/md.h\
-                    constants.o
-
-
-qm2_extern_module.o:   qm2_extern_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_module.F90
-
-qm2_extern_module.LES.o: \
-                    ../include/dprec.fh\
-                    qmmm_module.o\
-                    qm2_extern_adf_module.o\
-                    qm2_extern_gms_module.o\
-                    qm2_extern_tc_module.o\
-                    qm2_extern_gau_module.o\
-                    qm2_extern_orc_module.o\
-                    qm2_extern_nw_module.o\
-                    qm2_extern_mrcc_module.o\
-                    qm2_extern_quick_module.o\
-                    qm2_extern_reaxff_puremd_module.o\
-                    qm2_extern_genmpi_module.o\
-                    qm2_extern_qc_module.o\
-                    qm2_extern_lio_module.o\
-                    qm2_extern_fb_module.o\
-                    file_io_dat.o\
-                    parallel.h\
-                    ../include/md.h\
-                    constants.o
-
-qm2_extern_module.LES.o:   qm2_extern_module.F90
-	@echo '[MSANDER_LES]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -DLES -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_module.F90
-
-qm2_extern_mrcc_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    qmmm_module.o\
-                    constants.o\
-                    file_io_dat.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_mrcc_module.o:   qm2_extern_mrcc_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_mrcc_module.F90
-
-qm2_extern_nw_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    file_io_dat.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_nw_module.o:   qm2_extern_nw_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_nw_module.F90
-
-qm2_extern_orc_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_orc_module.o:   qm2_extern_orc_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_orc_module.F90
-
-qm2_extern_qc_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    file_io_dat.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_qc_module.o:   qm2_extern_qc_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_qc_module.F90
-
-qm2_extern_quick_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    file_io_dat.o\
-                    elementOrbitalIndex.o\
-                    utilitiesmodule.o
-
-
-qm2_extern_quick_module.o:   qm2_extern_quick_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_quick_module.F90
-
-qm2_extern_reaxff_puremd_module.o: \
-                    elementOrbitalIndex.o
-
-
-qm2_extern_reaxff_puremd_module.o:   qm2_extern_reaxff_puremd_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_reaxff_puremd_module.F90
-
-qm2_extern_tc_module.o: \
-                    ../include/dprec.fh\
-                    qm2_extern_util_module.o\
-                    constants.o\
-                    utilitiesmodule.o\
-                    elementOrbitalIndex.o
-
-
-qm2_extern_tc_module.o:   qm2_extern_tc_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_tc_module.F90
-
-qm2_extern_util_module.o: \
-                    ../include/dprec.fh\
-                    constants.o
-
-
-qm2_extern_util_module.o:   qm2_extern_util_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_extern_util_module.F90
-
-qm_div.o: \
-                    ../include/dprec.fh\
-                    qmmm_module.o\
-                    ../include/memory.h
-
-
-qm_div.o:   qm_div.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_div.F90
-
-qm_ewald.o: \
-                    ../include/dprec.fh\
-                    ../include/assert.fh\
-                    qmmm_module.o\
-                    nonbond_list.o\
-                    constants.o\
-                    qm2_array_locations.h\
-                    ew_pme_recip.h
-
-
-qm_ewald.o:   qm_ewald.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm_ewald.F90
-
-qm_mm.o: \
-                    ../include/dprec.fh\
-                    def_time.h\
-                    qmmm_module.o\
-                    constants.o\
-                    parms.o\
-                    nonbond_list.o\
-                    qm2_extern_module.o\
-                    tcpb_module.o\
-                    remd.o\
-                    ../include/assert.fh\
-                    parallel.h\
-                    qmmm_nml_module.o\
-                    qmmm_struct_module.o
-
-
-qm_mm.o:   qm_mm.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm_mm.F90
-
-qm_mm.LES.o: \
-                    ../include/dprec.fh\
-                    def_time.h\
-                    qmmm_module.o\
-                    constants.o\
-                    parms.o\
-                    nonbond_list.LES.o\
-                    qm2_extern_module.LES.o\
-                    tcpb_module.o\
-                    remd.LES.o\
-                    ../include/assert.fh\
-                    parallel.h\
-                    qmmm_nml_module.o\
-                    qmmm_struct_module.o
-
-qm_mm.LES.o:   qm_mm.F90
-	@echo '[MSANDER_LES]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -DLES -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm_mm.F90
-
-qmmm_adaptive_module.o: \
-                    ../include/dprec.fh\
-                    qmmm_module.o\
-                    parallel.h\
-                    state.o\
-                    ../include/memory.h\
-                    file_io_dat.o\
-                    constants.o\
-                    molecule.o\
-                    box.h
-
-
-qmmm_adaptive_module.o:   qmmm_adaptive_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qmmm_adaptive_module.F90
-
-qmmm_vsolv.o: \
-                    ../include/dprec.fh\
-                    ../include/assert.fh\
-                    qmmm_module.o\
-                    molecule.o\
-                    parallel.h\
-                    qmmm_vsolv_module.o\
-                    parms.o
-
-
-qmmm_vsolv.o:   qmmm_vsolv.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qmmm_vsolv.F90
 
 quench.o: \
                     ../include/dprec.fh\
@@ -2783,37 +2443,6 @@ relax_mat.o:   relax_mat.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ relax_mat.F90
 
-relaxmd.o: \
-                    ../include/dprec.fh\
-                    ../include/assert.fh\
-                    bintraj.o\
-                    barostats.o\
-                    constants.o\
-                    fastwt.o\
-                    file_io_dat.o\
-                    nonbond_list.o\
-                    qmmm_module.o\
-                    random.o\
-                    stack.o\
-                    state.o\
-                    md_scheme.o\
-                    parallel.h\
-                    ../include/md.h\
-                    box.h\
-                    nmr.h\
-                    ../include/memory.h\
-                    extra.h\
-                    ew_frc.h\
-                    ew_cntrl.h\
-                    ew_mpole.h\
-                    def_time.h\
-                    extra_pts.h
-
-
-relaxmd.o:   relaxmd.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ relaxmd.F90
-
 remd.o: \
                     ../include/assert.fh\
                     ../include/dprec.fh\
@@ -2903,7 +2532,6 @@ runmd.o: \
                     mdfil.o\
                     md_scheme.o\
                     ../rism/amber_rism_interface.o\
-                    qmmm_module.o\
                     file_io_dat.o\
                     constants.o\
                     stack.o\
@@ -2917,7 +2545,7 @@ runmd.o: \
                     emap.o\
                     barostats.o\
                     random.o\
-                    qmmm_adaptive_module.o\
+                    sinr_t.o\
                     parallel.h\
                     ../include/md.h\
                     box.h\
@@ -2950,7 +2578,6 @@ runmd.LES.o: \
                     mdfil.LES.o\
                     md_scheme.LES.o\
                     ../rism/amber_rism_interface.o\
-                    qmmm_module.o\
                     file_io_dat.o\
                     constants.o\
                     stack.o\
@@ -2964,7 +2591,7 @@ runmd.LES.o: \
                     emap.o\
                     barostats.o\
                     random.o\
-                    qmmm_adaptive_module.o\
+                    sinr_t.o\
                     parallel.h\
                     ../include/md.h\
                     box.h\
@@ -2996,10 +2623,6 @@ sander.o: \
                     nfe-sander-proxy.o\
                     lmod.o\
                     constants.o\
-                    qm2_read_nm_and_alloc.o\
-                    qmmm_vsolv_module.o\
-                    qm2_extern_module.o\
-                    qmmm_module.o\
                     egb.o\
                     les.o\
                     fastwt.o\
@@ -3058,10 +2681,6 @@ sander.LES.o: \
                     nfe-sander-proxy.o\
                     lmod.LES.o\
                     constants.o\
-                    qm2_read_nm_and_alloc.o\
-                    qmmm_vsolv_module.o\
-                    qm2_extern_module.LES.o\
-                    qmmm_module.o\
                     egb.LES.o\
                     les.o\
                     fastwt.o\
@@ -3116,7 +2735,6 @@ sander_lib.o:   sander_lib.F90
 
 set.o: \
                     ../include/dprec.fh\
-                    qmmm_module.o\
                     parms.o\
                     constants.o\
                     file_io_dat.o\
@@ -3138,7 +2756,6 @@ set.o:   set.F90
 
 set.LES.o: \
                     ../include/dprec.fh\
-                    qmmm_module.o\
                     parms.o\
                     constants.o\
                     file_io_dat.o\
@@ -3233,6 +2850,15 @@ short_ene.LES.o:   short_ene.F90
 	@echo '[MSANDER_LES]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -DLES -c $(FOPTFLAGS) $(FFLAGS) -o $@ short_ene.F90
 
+sinr_t.o: \
+                    ../include/dprec.fh\
+                    random.o
+
+
+sinr_t.o:   sinr_t.F90
+	@echo '[MSANDER]  FC $<'
+	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ sinr_t.F90
+
 softcore.o: \
                     ../include/assert.fh\
                     ../include/dprec.fh\
@@ -3268,18 +2894,6 @@ state.o:   state.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ state.F90
 
-tcpb_module.o: \
-                    ../include/dprec.fh\
-                    utilitiesmodule.o\
-                    qmmm_module.o\
-                    elementOrbitalIndex.o\
-                    constants.o
-
-
-tcpb_module.o:   tcpb_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ tcpb_module.F90
-
 thermo_int.o: \
                     ../include/dprec.fh\
                     ../include/assert.fh\
@@ -3312,6 +2926,14 @@ trajene.o: \
 trajene.o:   trajene.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ trajene.F90
+
+utilitiesModule.o: \
+                    ../include/dprec.fh
+
+
+utilitiesModule.o:   utilitiesModule.F90
+	@echo '[MSANDER]  FC $<'
+	$(VB)$(FC) $(LOCALFLAGS) -c $(FOPTFLAGS) $(FFLAGS) -o $@ utilitiesModule.F90
 
 veclib.o: \
                     ../include/dprec.fh

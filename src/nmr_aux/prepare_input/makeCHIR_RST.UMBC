@@ -1,0 +1,3253 @@
+#!/bin/sh
+#  Edited Aug 2023 to add residue type specifications,
+#  remove redundancies, and remove bond distances (MFS).
+#
+#  Edited Aug 2022 to remove ribose torsion angles for RNA (MFS).
+#  Edited 18Aug2021 to use X-ray standard valence bond angles for RNA.
+#
+#  This script reads in a pdb file, and generates constraints
+#    for the nmr module that force the proper chirality on 
+#    tetrahedral carbons.  The pdb file must have the proper
+#    AMBER atom order, e.g. have been written by LEaP or ambpdb.
+#
+#  It also generates "trans" constraints for all peptide bonds.
+#  NOTE!!!  You must edit the output of this program manually to
+#     change "trans" peptide constraints to "cis" peptide constraints
+#     if needed!
+#
+#  Usage:  makeCHIR_RST pdb-file output-constraint-file
+#
+if [ $# = 0 ] ; then
+    echo "usage:  $0  pdb_file  output_constraint_file"
+    exit 1
+fi
+#
+#  choose an awk cmd - some machines still have the 'old'
+#   awk (10 years outdated), so to be conservative,
+#   see if the more recent nawk or gawk versions exist
+#   and use them.
+#
+AWKS="nawk gawk awk"
+AWK="none"
+P=`echo $PATH | sed 's/:/ /g'`
+for j in $AWKS ; do
+    for i in $P ; do
+        if [ -x ${i}/${j} ]  ; then
+            AWK=$i/$j
+            break
+        fi
+    done
+    if [ $AWK != "none" ] ; then
+        break
+    fi
+done
+if [ $AWK = "none" ] ; then
+    echo "$0: no awk version found in path (tried: $AWKS)"
+    echo PATH = $PATH
+    exit 1
+fi
+echo "  (using $AWK)"
+
+cat <<eof > chiral_defs
+#
+# chiral definitions for PDB proton nonemclature
+# the triple product for these tetrads should always be positive
+#
+ALA N C HA CB
+#
+ARG CA CG HB2 HB3
+ARG CB CD HG2 HG3
+ARG CG NE HD2 HD3
+ARG N C HA CB
+#
+ASN CA CG HB2 HB3
+ASN N C HA CB
+#
+ASP CA CG HB2 HB3
+ASP N C HA CB
+#
+CYS CA SG HB2 HB3
+CYS N C HA CB
+#
+CYX CA SG HB2 HB3
+CYX N C HA CB
+#
+GLN CA CG HB2 HB3
+GLN CB CD HG2 HG3
+GLN N C HA CB
+#
+GLU CA CG HB2 HB3
+GLU CB CD HG2 HG3
+GLU N C HA CB
+#
+GLY N C HA2 HA3
+#
+HIP  CA CG HB2 HB3
+HIP  N C HA CB
+#
+HID  CA CG HB2 HB3
+HID  N C HA CB
+#
+HIE  CA CG HB2 HB3
+HIE  N C HA CB
+#
+HIS  CA CG HB2 HB3
+HIS  N C HA CB
+#
+ILE CA CG2 CG1 HB
+ILE CB CD1 HG12 HG13
+ILE N C HA CB
+#
+LEU CA CG HB2 HB3
+LEU CB CD1 CD2 HG
+LEU N C HA CB
+#
+LYS CA CG HB2 HB3
+LYS CB CD HG2 HG3
+LYS CD NZ HE2 HE3
+LYS CG CE HD2 HD3
+LYS N C HA CB
+#
+MET CA CG HB2 HB3
+MET CB SD HG2 HG3
+MET N C HA CB
+#
+PHE CA CG HB2 HB3
+PHE N C HA CB
+#
+PRO CA CG HB2 HB3
+PRO CB CD HG2 HG3
+PRO CG N  HD2 HD3
+PRO N C HA CB
+#
+SER CA OG HB2 HB3
+SER N C HA CB
+#
+THR CA CG2 OG1 HB
+THR N C HA CB
+#
+TRP CA CG HB2 HB3
+TRP N C HA CB
+#
+TYR CA CG HB2 HB3
+TYR N C HA CB
+#
+VAL CA CG1 CG2 HB
+VAL N C HA CB
+#
+DC  C2' O4' N1 H1'
+DC  C3' C1' H2'1 H2'2
+DC  O3' C2' C4' H3'
+DC  C3' C5' O4' H4'
+DC  C4' O5' H5'1 H5'2
+#
+DC5  C2' O4' N1 H1'
+DC5  C3' C1' H2'1 H2'2
+DC5  O3' C2' C4' H3'
+DC5  C3' C5' O4' H4'
+DC5  C4' O5' H5'1 H5'2
+#
+DC3  C2' O4' N1 H1'
+DC3  C3' C1' H2'1 H2'2
+DC3  O3' C2' C4' H3'
+DC3  C3' C5' O4' H4'
+DC3  C4' O5' H5'1 H5'2
+#
+DT  C2' O4' N1 H1'
+DT  C3' C1' H2'1 H2'2
+DT  O3' C2' C4' H3'
+DT  C3' C5' O4' H4'
+DT  C4' O5' H5'1 H5'2
+#
+DT5  C2' O4' N1 H1'
+DT5  C3' C1' H2'1 H2'2
+DT5  O3' C2' C4' H3'
+DT5  C3' C5' O4' H4'
+DT5  C4' O5' H5'1 H5'2
+#
+DT3  C2' O4' N1 H1'
+DT3  C3' C1' H2'1 H2'2
+DT3  O3' C2' C4' H3'
+DT3  C3' C5' O4' H4'
+DT3  C4' O5' H5'1 H5'2
+#
+DG  C2' O4' N9 H1'
+DG  C3' C1' H2'1 H2'2
+DG  O3' C2' C4' H3'
+DG  C3' C5' O4' H4'
+DG  C4' O5' H5'1 H5'2
+#
+DG3  C2' O4' N9 H1'
+DG3  C3' C1' H2'1 H2'2
+DG3  O3' C2' C4' H3'
+DG3  C3' C5' O4' H4'
+DG3  C4' O5' H5'1 H5'2
+#
+DG5  C2' O4' N9 H1'
+DG5  C3' C1' H2'1 H2'2
+DG5  O3' C2' C4' H3'
+DG5  C3' C5' O4' H4'
+DG5  C4' O5' H5'1 H5'2
+#
+DA  C2' O4' N9 H1'
+DA  C3' C1' H2'1 H2'2
+DA  O3' C2' C4' H3'
+DA  C3' C5' O4' H4'
+DA  C4' O5' H5'1 H5'2
+#
+DA3  C2' O4' N9 H1'
+DA3  C3' C1' H2'1 H2'2
+DA3  O3' C2' C4' H3'
+DA3  C3' C5' O4' H4'
+DA3  C4' O5' H5'1 H5'2
+#
+DA5  C2' O4' N9 H1'
+DA5  C3' C1' H2'1 H2'2
+DA5  O3' C2' C4' H3'
+DA5  C3' C5' O4' H4'
+DA5  C4' O5' H5'1 H5'2
+#
+#RA   C4  N3  C2  H2
+eof
+
+cat << eof > RNA.awk
+BEGIN {
+	while ( getline < "chiral_defs" > 0 ) {
+		if (substr(\$1,1,1) != "#") {
+			icons++
+			rescons[icons] = \$1
+			atcons1[icons] = \$2
+			atcons2[icons] = \$3
+			atcons3[icons] = \$4
+			atcons4[icons] = \$5
+		}
+	}
+	ncons = icons
+}
+\$1=="ATOM" {
+	name = \$3; n1 = substr(\$3,1,1)
+	if( n1=="1" || n1=="2" || n1=="3" ){ name = substr(\$3,2,length(\$3)-1) n1 }
+	ind = name "," \$5
+	atno[ind] = \$2; restype[\$5] = \$4
+	lastres = \$5
+}
+END { OFS = ""
+		
+	for (ires=1; ires<=lastres; ires++ ) {
+		for (icons=1; icons<=ncons; icons++) {
+			if (rescons[icons]==restype[ires]) {
+				ind1 = atcons1[icons] "," ires	
+				ind2 = atcons2[icons] "," ires	
+				ind3 = atcons3[icons] "," ires	
+				ind4 = atcons4[icons] "," ires	
+				if (ind1 in atno && ind2 in atno && ind3 in atno \\
+					&& ind4 in atno ) {
+					print "#"
+					print "#  chirality for residue ",ires, " atoms:  ", \\
+						atcons1[icons]," ",atcons2[icons]," ",atcons3[icons], \\
+						" ",atcons4[icons]
+					icount++
+					if (icount==1) {
+						print " &rst iat=",atno[ind1],",",atno[ind2],",", \\
+						atno[ind3],",",atno[ind4],", "
+						print "   r1=10., r2=60., r3=80., r4=130.,"\\
+						" rk2=10., rk3=10., &end"
+					} else {
+						print " &rst iat=",atno[ind1],",",atno[ind2],",", \\
+						atno[ind3],",",atno[ind4],", &end"
+					}
+				} else {
+					print "bad constraint for residue ",ires, " atoms:  ", \\
+						atcons1[icons]," ",atcons2[icons]," ",atcons3[icons], \\
+						" ",atcons4[icons] 
+				}
+			}
+		}
+	}
+
+	icount = 0
+	for (ires=1; ires<=lastres; ires++ ) {
+		inda = "CA," ires
+		indn = "N," ires; indc = "C," ires
+		iresm1 = ires-1
+		indcm = "C," iresm1; indam = "CA," iresm1
+		if (inda in atno && indn in atno && indcm in atno && indam in atno) {
+			icount++
+			print "#"
+			print "#  trans-omega constraint for residue ",ires
+			if (icount==1) {
+				print " &rst iat=",atno[inda],",",atno[indn],",", \\
+					atno[indcm],",",atno[indam],", "
+				print "   r1=150., r2=170., r3=190., r4=210.,"\\
+					" rk2=50., rk3=50., &end"
+			} else {
+				print " &rst iat=",atno[inda],",",atno[indn],",", \\
+					atno[indcm],",",atno[indam],", &end"
+			}
+		}
+	}
+
+##################################
+### RNA Restraints
+##################################
+
+### Planarity Restraints Common to all Residues
+##############################################
+# C6-N1-C2-N3 planarity for G/A/C/U
+        icount = 0
+        wt=\$3
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "N1," ires
+                indc2 = "C2," ires
+                indh2 = "N3," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-N1-C2-N3 restraint for residue G/A/C/U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+######### G/A Specific Restraints ###########
+# C4-N9-C8-H8 Planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "N9," ires
+                indc2 = "C8," ires
+                indh2 = "H8," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-N9-C8-H8 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C1*-N9-C8-H8 Planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C1'," ires
+                indn3 = "N9," ires
+                indc2 = "C8," ires
+                indh2 = "H8," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C1*-N9-C8-H8 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C1*-N9-C8-N7 Planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C1'," ires
+                indn3 = "N9," ires
+                indc2 = "C8," ires
+                indh2 = "N7," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C1*-N9-C8-N7 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C1*-N9-C4-C5 Planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C1'," ires
+                indn3 = "N9," ires
+                indc2 = "C4," ires
+                indh2 = "C5," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C1*-N9-C4-C5 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C1*-N9-C4-N3 Planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C1'," ires
+                indn3 = "N9," ires
+                indc2 = "C4," ires
+                indh2 = "N3," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C1*-N9-C4-N3 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+
+# N9-C8-N7-C5 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N9," ires
+                indn3 = "C8," ires
+                indc2 = "N7," ires
+                indh2 = "C5," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N9-C8-N7-C5 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# H8-C8-N7-C5 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H8," ires
+                indn3 = "C8," ires
+                indc2 = "N7," ires
+                indh2 = "C5," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H8-C8-N7-C5 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C6-C5-N7-C8 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "C5," ires
+                indc2 = "N7," ires
+                indh2 = "C8," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-C5-N7-C8 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C4-C5-N7-C8 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "C5," ires
+                indc2 = "N7," ires
+                indh2 = "C8," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-C5-N7-C8 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C5-C4-N9-C8 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C5," ires
+                indn3 = "C4," ires
+                indc2 = "N9," ires
+                indh2 = "C8," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C5-C4-N9-C8 restraint for residue G/A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N9-C4-N3-C2 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N9," ires
+                indn3 = "C4," ires
+                indc2 = "N3," ires
+                indh2 = "C2," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N9-C4-N3-C2 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C2-N1-C6-C5 planarity for G/A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N1," ires
+                indc2 = "C6," ires
+                indh2 = "C5," ires
+                incga = "H8," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno && indgh in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N1-C6-C5 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+######### G Specific ##############
+
+# N7-C5-C6-O6 planarity for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N7," ires
+                indn3 = "C5," ires
+                indc2 = "C6," ires
+                indh2 = "O6," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N7-C5-C6-N6 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+
+# C4-C5-C6-O6 planarity for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "C5," ires
+                indc2 = "C6," ires
+                indh2 = "O6," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-C5-C6-O6 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C2-N1-C6-O6 planarity restraint for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N1," ires
+                indc2 = "C6," ires
+                indh2 = "O6," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N1-C6-O6 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N3-C2-N2-H21 planarity restraint for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N3," ires
+                indn3 = "C2," ires
+                indc2 = "N2," ires
+                indh2 = "H21," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N3-C2-N2-H21 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N1-C2-N2-H22 planarity restraint for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N1," ires
+                indn3 = "C2," ires
+                indc2 = "N2," ires
+                indh2 = "H22," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N1-C2-N2-H22 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {  
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C4-N3-C2-N2 planarity restraint for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "N3," ires
+                indc2 = "C2," ires
+                indh2 = "N2," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-N3-C2-N2 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {  
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C6-N1-C2-N2 planarity restraint for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "N1," ires
+                indc2 = "C2," ires
+                indh2 = "N2," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-N1-C2-N2 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {  
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C5-C6-N1-H1 planarity for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C5," ires
+                indn3 = "C6," ires
+                indc2 = "N1," ires
+                indh2 = "H1," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C5-C6-N1-H1 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N3-C2-N1-H1 planarity for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N3," ires
+                indn3 = "C2," ires
+                indc2 = "N1," ires
+                indh2 = "H1," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N3-C2-N1-H1 restraint for residue G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+########## A Specific ###########
+
+# C4-N3-C2-H2 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "N3," ires
+                indc2 = "C2," ires
+                indh2 = "H2," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-N3-C2-H2 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2], ", &end"
+                        }
+                }
+        }
+
+# C6-N1-C2-H2 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "N1," ires
+                indc2 = "C2," ires
+                indh2 = "H2," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-N1-C2-H2 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2], ", &end"
+                        }
+                }
+        }
+
+
+# N7-C5-C6-N6 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N7," ires
+                indn3 = "C5," ires
+                indc2 = "C6," ires
+                indh2 = "N6," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N7-C5-C6-N6 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C4-C5-C6-N6 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "C5," ires
+                indc2 = "C6," ires
+                indh2 = "N6," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-C5-C6-N6 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C2-N1-C6-N6 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N1," ires
+                indc2 = "C6," ires
+                indh2 = "N6," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N1-C6-N6 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C5-C6-N6-H61 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C5," ires
+                indn3 = "C6," ires
+                indc2 = "N6," ires
+                indh2 = "H61," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C5-C6-N6-H61 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+
+# N1-C6-N6-H62 planarity restraint for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N1," ires
+                indn3 = "C6," ires
+                indc2 = "N6," ires
+                indh2 = "H62," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N1-C6-N6-H62 restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+############## C and U Planarity ##################
+# C2-N1-C6-H6 Planarity for C and U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N1," ires
+                indc2 = "C6," ires
+                indh2 = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N1-C6-H6 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N1-C6-C5-H5 Planarity for C and U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N1," ires
+                indn3 = "C6," ires
+                indc2 = "C5," ires
+                indh2 = "H5," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N1-C6-C5-H5 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# H6-C6-C5-H5 Planarity for C and U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H6," ires
+                indn3 = "C6," ires
+                indc2 = "C5," ires
+                indh2 = "H5," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H6-C6-C5-H5 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# H6-C6-N1-C1* planarity for U and  C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H6," ires
+                indn3 = "C6," ires
+                indc2 = "N1," ires
+                indh2 = "C1'," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H6-C6-N1-C1* restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# O2-C2-N1-C1* planarity for U and  C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H6," ires
+                indn3 = "C6," ires
+                indc2 = "N1," ires
+                indh2 = "C1'," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O2-C2-N1-C1* restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N3-C2-N1-C1* planarity for U and  C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N3," ires
+                indn3 = "C2," ires
+                indc2 = "N1," ires
+                indh2 = "C1'," ires
+                induc = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno && induc in atno) {
+                        icount++
+                        print "#"
+                        print "#  N3-C2-N1-C1* restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C5-C6-N1-C1* planarity for U and  C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C5," ires
+                indn3 = "C6," ires
+                indc2 = "N1," ires
+                indh2 = "C1'," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#" 
+                        print "#  C5-C6-N1-C1* restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# N3-C4-C5-H5 planarity for U and  C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N3," ires
+                indn3 = "C4," ires
+                indc2 = "C5," ires
+                indh2 = "H5," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N3-C4-C5-H5 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+#  C6-N1-C2-O2 planarity for U and C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "N1," ires
+                indc2 = "C2," ires
+                indh2 = "O2," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-N1-C2-O2 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+#  H6-C6-N1-C2 planarity for U and C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H6," ires
+                indn3 = "C6," ires
+                indc2 = "N1," ires
+                indh2 = "C2," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H6-C6-N1-C2 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+#  O2-C2-N3-C4 planarity for U and C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O2," ires
+                indn3 = "C2," ires
+                indc2 = "N3," ires
+                indh2 = "C4," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O2-C2-N3-C4 restraint for residue U/C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+############ U Specific ####################
+
+# O4-C4-C5-C6 planarity for U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O4," ires
+                indn3 = "C4," ires
+                indc2 = "C5," ires
+                indh2 = "C6," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O4-C4-C5-C6 restraint for residue U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# H3-N3-C4-C5 planarity for U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H3," ires
+                indn3 = "N3," ires
+                indc2 = "C4," ires
+                indh2 = "C5," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H3-N3-C4-C5 restraint for residue U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C2-N3-C4-O4 planarity for U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N3," ires
+                indc2 = "C4," ires
+                indh2 = "O4," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N3-C4-O4 restraint for residue U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+#  N1-C2-N3-H3 planarity for U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N1," ires
+                indn3 = "C2," ires
+                indc2 = "N3," ires
+                indh2 = "H3," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N1-C2-N3-H3 restraint for residue U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+
+########## C Specific #####################
+
+# N4-C4-C5-H5 planarity for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N4," ires
+                indn3 = "C4," ires
+                indc2 = "C5," ires
+                indh2 = "H5," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N4-C4-C5-H5 restraint for residue C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=-10.0, r2=0.0, r3=0.0, r4=10.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# H41-N4-C4-C5 planarity for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H41," ires
+                indn3 = "N4," ires
+                indc2 = "C4," ires
+                indh2 = "C5," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H41-N4-C4-C5 restraint for residue C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# H42-N4-C4-N3 planarity for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H42," ires
+                indn3 = "N4," ires
+                indc2 = "C4," ires
+                indh2 = "N3," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H42-N4-C4-N3 restraint for residue C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+
+# C2-N3-C4-N4 planarity for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N3," ires
+                indc2 = "C4," ires
+                indh2 = "N4," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N3-C4-N4 restraint for residue C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", "
+                                print "   r1=170.0, r2=180.0, r3=180.0, r4=190.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", ",atno[indh2],", &end"
+                        }
+                }
+        }
+#####################################################################################
+# RNA angle restrants
+
+# H2-C2-N1 angle for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H2," ires
+                indn3 = "C2," ires
+                indc2 = "N1," ires
+                indh2 = "H2," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H2-C2-N1 angle restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=106.0, r2=116.0, r3=116.0, r4=126.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H2-C2-N3 angle for A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H2," ires
+                indn3 = "C2," ires
+                indc2 = "N3," ires
+                indh2 = "H2," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H2-C2-N3 angle restraint for residue A ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=106.0, r2=116.0, r3=116.0, r4=126.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H8-C8-N9 angle for A/G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H8," ires
+                indn3 = "C8," ires
+                indc2 = "N9," ires
+                indh2 = "H8," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3" \
+                   || restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H8-C8-N9 angle restraint for residue A/G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=112.7, r2=122.7, r3=122.7, r4=132.7,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H8-C8-N7 angle for A/G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H8," ires
+                indn3 = "C8," ires
+                indc2 = "N7," ires
+                indh2 = "H8," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3" \
+                   || restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H8-C8-N7 angle restraint for residue A/G ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=112.7, r2=122.7, r3=122.7, r4=132.7,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C4-N9-C1* angle for A/G 
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "N9," ires
+                indc2 = "C1'," ires
+                indh2 = "H8," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3" \
+                   || restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-N9-C1* angle restraint for residue A/G  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=124.2, r2=125.2, r3=125.2, r4=126.2,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C8-N9-C1* angle for A/G 
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C8," ires
+                indn3 = "N9," ires
+                indc2 = "C1'," ires
+                indh2 = "H8," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3" \
+                   || restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C8-N9-C1* angle restraint for residue A/G  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=124.4, r2=129.4, r3=129.4, r4=134.4,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C4-C5-H5 angle for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "C5," ires
+                indc2 = "H5," ires
+                indh2 = "N4," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-C5-H5 angle restraint for residue C ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=117.6, r2=122.6, r3=122.6, r4=127.6,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C4-C5-H5 angle for U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4," ires
+                indn3 = "C5," ires
+                indc2 = "H5," ires
+                indh2 = "O4," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4-C5-H5 angle restraint for residue U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=113.3, r2=118.3, r3=118.3, r4=123.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+
+# C6-C5-H5 angle for C/U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "C5," ires
+                indc2 = "H5," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-C5-H5 angle restraint for residue C/U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=115.0, r2=120.0, r3=120.0, r4=125.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C5-C6-H6 angle for C/U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C5," ires
+                indn3 = "C6," ires
+                indc2 = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C5-C6-H6 angle restraint for residue C/U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=115.0, r2=120.0, r3=120.0, r4=125.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# N1-C6-H6 angle for C/U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "N1," ires
+                indn3 = "C6," ires
+                indc2 = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  N1-C6-H6 angle restraint for residue C/U ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", "
+                                print "   r1=115.0, r2=120.0, r3=120.0, r4=125.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C2-N1-C1* angle for U 
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N1," ires
+                indc2 = "C1'," ires
+                indh2 = "O4," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N1-C1* angle restraint for residue U  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=112.3, r2=117.3, r3=117.3, r4=122.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C2-N1-C1* angle for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2," ires
+                indn3 = "N1," ires
+                indc2 = "C1'," ires
+                indh2 = "N4," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2-N1-C1* angle restraint for residue C  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=113.3, r2=118.3, r3=118.3, r4=123.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+
+# C6-N1-C1* angle for U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "N1," ires
+                indc2 = "C1'," ires
+                indh2 = "O4," ires
+                if ((restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-N1-C1* angle restraint for residue U  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=117.4, r2=122.4, r3=122.4, r4=127.4,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C6-N1-C1* angle for C
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C6," ires
+                indn3 = "N1," ires
+                indc2 = "C1'," ires
+                indh2 = "N4," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C6-N1-C1* angle restraint for residue C  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=117.4, r2=122.4, r3=122.4, r4=127.4,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+###############################
+# C1* angles - H1*-containing restraints further below
+
+# O4*-C1*-N9 angle for G and A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O4'," ires
+                indn3 = "C1'," ires
+                indc2 = "N9," ires
+                indh2 = "N9," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O4*-C1*-N9 angle restraint for residue G/A  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.5, r2=109.5, r3=109.5, r4=114.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C2*-C1*-N9 angle for G and A
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2'," ires
+                indn3 = "C1'," ires
+                indc2 = "N9," ires
+                indh2 = "N9," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3" \
+                   || restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2*-C1*-N9 angle restraint for residue G/A  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.5, r2=109.5, r3=109.5, r4=114.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O4*-C1*-N1 angle for C and U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O4'," ires
+                indn3 = "C1'," ires
+                indc2 = "N1," ires
+                indh2 = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O4*-C1*-N1 angle restraint for residue C/U  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.5, r2=109.5, r3=109.5, r4=114.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C2*-C1*-N1 angle for C and U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2'," ires
+                indn3 = "C1'," ires
+                indc2 = "N1," ires
+                indh2 = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2*-C1*-N1 angle restraint for residue C/U  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.5, r2=109.5, r3=109.5, r4=114.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+##### RNA  Ribose Angles (modified 16Aug2021, mfs, from http://ndbserver.rutgers.edu/ndbmodule/archives/proj/valence/table4.html)
+
+# C1*-C2*-O2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C1'," ires
+                indn3 = "C2'," ires
+                indc2 = "O2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C1*-C2*-O2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=103.2, r2=108.2, r3=108.2, r4=113.2,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C3*-C2*-O2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C3'," ires
+                indn3 = "C2'," ires
+                indc2 = "O2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C3*-C2*-O2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.8, r2=109.8, r3=109.8, r4=114.8,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C4*-C3*-O3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4'," ires
+                indn3 = "C3'," ires
+                indc2 = "O3'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4*-C3*-O3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=107.5, r2=112.5, r3=112.5, r4=117.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C2*-C3*-O3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2'," ires
+                indn3 = "C3'," ires
+                indc2 = "O3'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2*-C3*-O3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=108.8, r2=113.8, r3=113.8, r4=118.8,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+
+# C4*-C3*-C2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4'," ires
+                indn3 = "C3'," ires
+                indc2 = "C2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4*-C3*-C2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=97.3, r2=102.3, r3=102.3, r4=107.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+
+# C1*-C2*-C3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C1'," ires
+                indn3 = "C2'," ires
+                indc2 = "C3'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C1*-C2*-C3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=96.3, r2=101.3, r3=101.3, r4=106.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C3*-C4*-C5* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C3'," ires
+                indn3 = "C4'," ires
+                indc2 = "C5'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C3*-C4*-C5* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=111.0, r2=116.0, r3=116.0, r4=121.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C3*-C4*-O4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C3'," ires
+                indn3 = "C4'," ires
+                indc2 = "O4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C3*-C4*-O4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=99.2, r2=104.2, r3=104.2, r4=109.2,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C4*-O4*-C1* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4'," ires
+                indn3 = "O4'," ires
+                indc2 = "C1'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4*-O4*-C1* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=105.0, r2=110.0, r3=110.0, r4=115.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C5*-C4*-O4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C5'," ires
+                indn3 = "C4'," ires
+                indc2 = "O4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C5*-C4*-O4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.5, r2=109.5, r3=109.5, r4=114.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C2*-C1*-O4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C2'," ires
+                indn3 = "C1'," ires
+                indc2 = "O4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C2*-C1*-O4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=102.4, r2=107.4, r3=107.4, r4=112.4,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+
+# P-O5*-C5* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "P," ires
+                indn3 = "O5'," ires
+                indc2 = "C5'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  P-O5*-C5* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=115.9, r2=120.9, r3=120.9, r4=125.9,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O5*-C5*-C4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O5'," ires
+                indn3 = "C5'," ires
+                indc2 = "C4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O5*-C5*-C4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=105.5, r2=110.5, r3=110.5, r4=115.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O5*-P-O3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O5'," ires
+                indn3 = "P," ires
+                iresm1 = ires-1
+                indc2 = "O3'," iresm1
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O5*-P-O3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=90.0, r2=95.0, r3=105.0, r4=110.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O1P-P-O2P angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O1P," ires
+                indn3 = "P," ires
+                indc2 = "O2P," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O1P-P-O2P angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=114.6, r2=119.6, r3=119.6, r4=124.6,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# P-O3*-C3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "P," ires
+                iresm1 = ires-1
+                indn3 = "O3'," iresm1
+                indc2 = "C3'," iresm1
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  P-O3*-C3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=111.0, r2=116.0, r3=121.0, r4=126.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# Ribose Hydrogen Angles
+# H1*-C1*-C2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H1'," ires
+                indn3 = "C1'," ires
+                indc2 = "C2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H1*-C1*-C2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H1*-C1*-O4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H1'," ires
+                indn3 = "C1'," ires
+                indc2 = "O4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H1*-C1*-O4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H1*-C1*-N1 angle for C and U
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H1'," ires
+                indn3 = "C1'," ires
+                indc2 = "N1," ires
+                indh2 = "H6," ires
+                if ((restype[ires]=="C" || restype[ires]=="C5" || restype[ires]=="C3" \
+                   || restype[ires]=="U" || restype[ires]=="U5" || restype[ires]=="U3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H1*-C1*-N1 angle restraint for residue C/U  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H1*-C1*-N9 angle for G
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H1'," ires
+                indn3 = "C1'," ires
+                indc2 = "N9," ires
+                indh2 = "O6," ires
+                if ((restype[ires]=="G" || restype[ires]=="G5" || restype[ires]=="G3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H1*-C1*-N9 angle restraint for residue G  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H1*-C1*-N9 angle for A 
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H1'," ires
+                indn3 = "C1'," ires
+                indc2 = "N9," ires
+                indh2 = "H2," ires
+                if ((restype[ires]=="A" || restype[ires]=="A5" || restype[ires]=="A3") \
+                   && indc4 in atno && indn3 in atno && indc2 in atno && indh2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H1*-C1*-N9 angle restraint for residue A  ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H2*-C2*-C1* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H2'," ires
+                indn3 = "C2'," ires
+                indc2 = "C1'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H2*-C2*-C1* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H2*-C2*-C3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H2'," ires
+                indn3 = "C2'," ires
+                indc2 = "C3'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H2*-C2*-C3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H2*-C2*-O2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H2'," ires
+                indn3 = "C2'," ires
+                indc2 = "O2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H2*-C2*-O2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H3*-C3*-C2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H3'," ires
+                indn3 = "C3'," ires
+                indc2 = "C2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H3*-C3*-C2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H3*-C3*-C4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H3'," ires
+                indn3 = "C3'," ires
+                indc2 = "C4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H3*-C3*-C4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H3*-C3*-O3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H3'," ires
+                indn3 = "C3'," ires
+                indc2 = "O3'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H3*-C3*-O3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H4*-C4*-C3* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H4'," ires
+                indn3 = "C4'," ires
+                indc2 = "C3'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H4*-C4*-C3* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H4*-C4*-C5* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H4'," ires
+                indn3 = "C4'," ires
+                indc2 = "C5'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H4*-C4*-C5* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109.0, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# H4*-C4*-O4* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "H4'," ires
+                indn3 = "C4'," ires
+                indc2 = "O4'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  H4*-C4*-O4* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=104.0, r2=109.0, r3=109, r4=114.0,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# Other Ribose Bond Angles
+
+# C4*-C3*-C2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C4'," ires
+                indn3 = "C3'," ires
+                indc2 = "C2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C4*-C3*-C2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=97.3, r2=102.3, r3=102.3, r4=107.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O3*-C3*-C2* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O3'," ires
+                indn3 = "C3'," ires
+                indc2 = "C2'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O3*-C3*-C2* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=108.8, r2=113.8, r3=113.8, r4=118.8,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# C3*-C2*-C1* angle
+        icount = 0
+        for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "C3'," ires
+                indn3 = "C2'," ires
+                indc2 = "C1'," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  C3*-C2*-C1* angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=96.3, r2=101.3, r3=101.3, r4=106.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O5*-P-OP1 angle
+         icount = 0
+         for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O5'," ires
+                indn3 = "P," ires
+                indc2 = "OP1," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O5*-P-OP1 angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=105.7, r2=110.7, r3=110.7, r4=115.7,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# O5*-P-OP2 angle
+         icount = 0
+         for (ires=1; ires<=lastres; ires++ ) {
+                indc4 = "O5'," ires
+                indn3 = "P," ires
+                indc2 = "OP2," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O5*-P-OP2 angle restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=105.7, r2=110.7, r3=110.7, r4=115.7,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# OP1-P-OP2 angle (excludes terminal phosphate)
+         icount = 0
+         for (ires=2; ires<=lastres; ires++ ) {
+                indc4 = "OP1," ires
+                indn3 = "P," ires
+                indc2 = "OP2," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  OP1-P-OP2 angle and distance restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=114.6, r2=119.6, r3=119.6, r4=124.6,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# Terminal phosphate O5*-P-OP3 angle
+         icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+         if (ires=1) {
+                indc4 = "O5'," ires
+                indn3 = "P," ires
+                indc2 = "OP3," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  O5*-P-OP3 angle and distance restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=103.5, r2=108.5, r3=110.5, r4=115.5,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# Terminal phosphate OP1-P-OP3 angle
+         icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+         if (ires=1) {
+                indc4 = "OP1," ires
+                indn3 = "P," ires
+                indc2 = "OP3," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  OP1-P-OP3 angle and distance restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=102, r2=107, r3=107, r4=112,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# Terminal phosphate OP2-P-OP3 angle
+         icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+         if (ires=1) {
+                indc4 = "OP2," ires
+                indn3 = "P," ires
+                indc2 = "OP3," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  OP2-P-OP3 angle and distance restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=102, r2=107, r3=107, r4=112,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+# Terminal phosphate OP1-P-OP2 angle
+         icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+         if (ires=1) {
+                indc4 = "OP1," ires
+                indn3 = "P," ires
+                indc2 = "OP2," ires
+                if (indc4 in atno && indn3 in atno && indc2 in atno) {
+                        icount++
+                        print "#"
+                        print "#  OP1-P-OP2 angle and distance restraint for residue ",ires
+                        if (icount==1) {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],",  "
+                                print "   r1=112.3, r2=117.3, r3=117.3, r4=122.3,"\\
+                                        " rk2=25.0, rk3=25.0, &end"
+                        } else {
+                                print " &rst iat=",atno[indc4],", ",atno[indn3],", ", \\
+                                        atno[indc2],", &end"
+                        }
+                }
+        }
+
+#####################################
+## Ribose Bond Lengths
+## C1*-C2* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C1'," ires
+#                indn3 = "C2'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C1*-C2* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=1.03, r2=1.53, r3=1.53, r4=2.03,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C2*-C3* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C2'," ires
+#                indn3 = "C3'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C2*-C3* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=1.03, r2=1.53, r3=1.53, r4=2.03,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C2*-O2* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C2'," ires
+#                indn3 = "O2'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C2*-O2* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.92, r2=1.42, r3=1.42, r4=1.92,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C3*-C4* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C3'," ires
+#                indn3 = "C4'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C3*-C4* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=1.02, r2=1.52, r3=1.52, r4=2.02,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C3*-O3* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C3'," ires
+#                indn3 = "O3'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C3*-O3* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.92, r2=1.42, r3=1.42, r4=1.92,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C4*-O4* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C4'," ires
+#                indn3 = "O4'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C4*-O4* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.95, r2=1.45, r3=1.45, r4=1.95,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## O4*-C1* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "O4'," ires
+#                indn3 = "C1'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  O4*-C1* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.91, r2=1.41, r3=1.41, r4=1.91,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C4*-C5* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C4'," ires
+#                indn3 = "C5'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C4*-C5* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=1.01, r2=1.51, r3=1.51, r4=2.01,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C5*-O5* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C5'," ires
+#                indn3 = "O5'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C5*-O5* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.93, r2=1.43, r3=1.43, r4=1.93,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C5*-H5* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C5'," ires
+#                indn3 = "H5'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C5*-H5* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.47, r2=0.97, r3=0.97, r4=1.47,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C5*-H5** distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C5'," ires
+#                indn3 = "H5''," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C5*-H5** bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.47, r2=0.97, r3=0.97, r4=1.47,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C4*-H4* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C4'," ires
+#                indn3 = "H4'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C4*-H4* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.47, r2=0.97, r3=0.97, r4=1.47,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C1*-H1* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C1'," ires
+#                indn3 = "H1'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C1*-H1* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.47, r2=0.97, r3=0.97, r4=1.47,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C2*-H2* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C2'," ires
+#                indn3 = "H2'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C2*-H2* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.47, r2=0.97, r3=0.97, r4=1.47,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## C3*-H3* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "C3'," ires
+#                indn3 = "H3'," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  C3*-H3* bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.47, r2=0.97, r3=0.97, r4=1.47,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## O5*-P distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "O5'," ires
+#                indn3 = "P," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  O5*-P bond length for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=1.09, r2=1.59, r3=1.59, r4=2.09,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## P-O3* distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "P," ires
+#                iresm1 = ires-1
+#                indn3 = "O3'," iresm1
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  P-O3* distance restraint for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=1.10, r2=1.60, r3=1.60, r4=2.10,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## P-OP1 distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "P," ires
+#                indn3 = "OP1," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  P-OP1 distance restraint for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.99, r2=1.49, r3=1.49, r4=1.99,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## P-OP2 distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "P," ires
+#                indn3 = "OP2," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  P-OP2 distance restraint for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.99, r2=1.49, r3=1.49, r4=1.99,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+#
+## P-OP3 distance
+#        icount = 0
+#        for (ires=1; ires<=lastres; ires++ ) {
+#                indc4 = "P," ires
+#                indn3 = "OP3," ires
+#                if (indc4 in atno && indn3 in atno) {
+#                        icount++
+#                        print "#"
+#                        print "#  P-OP3 distance restraint for residue ",ires
+#                        if (icount==1) {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", "
+#                                print "   r1=0.99, r2=1.49, r3=1.49, r4=1.99,"\\
+#                                        " rk2=25.0, rk3=25.0, &end"
+#                        } else {
+#                                print " &rst iat=",atno[indc4],", ",atno[indn3],", &end"
+#                        }
+#                }
+#        }
+
+}
+eof
+
+$AWK -f RNA.awk $1 > $2
+#
+#  tip user off about results & clean up tmp file
+#
+COUNT=`grep rst $2 | wc -l `
+echo $COUNT chiral restraints generated in $2
+/bin/rm -f chiral_defs RNA.awk
+

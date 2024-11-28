@@ -1,0 +1,9 @@
+Info: acdoctor mode is on: check and diagnose problems in the input file.
+Info: The atom type is set to gaff; the options available to the -at flag are
+      gaff, gaff2, amber, bcc, abcg2, and sybyl.
+
+-- Check Format for pdb File --
+   Status: pass
+
+Running: /home/case/dist/amber24/bin/sqm -O -i sqm.in -o sqm.out
+

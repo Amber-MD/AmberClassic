@@ -58,7 +58,7 @@ subroutine qm2_dftb_energy(escf,scf_mchg)
 
      if (qmmm_nml%verbosity > 3) then
         write(6,'(/," QMMM SCC-DFTB: QM Region Input Cartesian Coordinates ")')
-        write(6,'(" QMMM SCC-DFTB: ",4X,"NO.",2X,"TYP",2X,"L",2X,"AT#",2X,"SYM",10X,"X",16X,"Y",16X,"Z",13X,"Charge")')
+        write(6,'(" QMMM SCC-DFTB: ",4X,"NO.",2X,"TYP",2X,"L",2x"AT#",2X,"SYM",10X,"X",16X,"Y",16X,"Z",13X,"Charge")')
         do i = 1, qmmm_struct%nquant_nlink
            write(6,'(" QMMM SCC-DFTB: ",I6,3X,I2,2X,i2,1X,I3,4X,A2,2X,4F16.10)') i, &
                  izp_str%izp(i), &

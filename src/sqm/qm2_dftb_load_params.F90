@@ -327,7 +327,7 @@ subroutine qm2_dftb_check_slko_file(sk_file)
       write(6,*)" or that you just don't have it." 
       write(6,*)
       write(6,*)" These files are supposed to be located in a "
-      write(6,*)" subdirectory of $(MSANDERHOME)/dat/slko/"
+      write(6,*)" subdirectory of $(AMBERHOME)/dat/slko/"
       write(6,*)" and be named as <Atom1>-<Atom2>.skf,"
       write(6,*)" where <Atom1> and <Atom2> are the atomic symbols."
       write(6,*)" By default the subdirectory is mio-1-1 for DFTB2"
@@ -962,16 +962,16 @@ subroutine qm2_dftb_get_skroot(DFTB3, user_path, skroot)
   character(len=*), intent(in) :: user_path
   character(len=*), intent(out) :: skroot
 
-  character(len=256) :: msanderhome
+  character(len=256) :: amberhome
   integer :: last
 
-  call getenv('MSANDERHOME',msanderhome)
+  call getenv('AMBERHOME',amberhome)
 
   if (len(trim(user_path)) > 0) then
 
      if ( user_path(1:1) /= '/') then
-        ! not an absolute path - assume subdirectory of $MSANDERHOME/dat/slko
-        skroot = trim(msanderhome) // '/dat/slko/' // trim(adjustl(user_path))
+        ! not an absolute path - assume subdirectory of $AMBERHOME/dat/slko
+        skroot = trim(amberhome) // '/dat/slko/' // trim(adjustl(user_path))
      else
         skroot = trim(adjustl(user_path))
      end if
@@ -985,9 +985,9 @@ subroutine qm2_dftb_get_skroot(DFTB3, user_path, skroot)
 
      ! no user path, use default paths for DFTB2 and DFTB3
      if (DFTB3) then
-        skroot = trim(msanderhome) // '/dat/slko/3ob-3-1/'
+        skroot = trim(amberhome) // '/dat/slko/3ob-3-1/'
      else
-        skroot = trim(msanderhome) // '/dat/slko/mio-1-1/'
+        skroot = trim(amberhome) // '/dat/slko/mio-1-1/'
      end if
 
   end if

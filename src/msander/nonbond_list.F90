@@ -1531,7 +1531,6 @@ subroutine pack_nb_list(kk, i, xk, yk, zk, imagcrds, cutoffsq, numlist, &
 #ifdef MPI /* SOFT CORE */
   use softcore, only : nsc, ifsc
 #endif
-  use qmmm_module, only : qmmm_nml,qmmm_struct
   use constants, only : zero
 
   implicit none
@@ -1567,18 +1566,6 @@ subroutine pack_nb_list(kk, i, xk, yk, zk, imagcrds, cutoffsq, numlist, &
     k = lstmask(m+n)
     exclude(k) = i
   end do
-
-  if (qmmm_nml%ifqnt) then
-
-    ! Is the current atom a QM atom?
-    if (qmmm_struct%atom_mask(i)) then
-
-      ! Skip interaction with all other QM atoms
-      do qm_temp_count2=1, qmmm_struct%nquant
-        exclude(qmmm_struct%iqmatoms(qm_temp_count2))=i
-      end do
-    end if
-  end if
 
   deadi = .false.
   deadi = ((ibelly(i) == 0) .and. belly)
@@ -1746,7 +1733,6 @@ subroutine pack_nb_nogrdptrs(kk, i, xk, yk, zk, imagcrds, cutoffsq, numlist, &
                              numpack, iac, ico, ntypes, ipairs, ifail, belly, &
                              ibelly)
 
-  use qmmm_module, only : qmmm_nml,qmmm_struct
 #ifdef MPI /* SOFT CORE */
   use softcore, only : nsc, ifsc
 #endif
@@ -1779,19 +1765,6 @@ subroutine pack_nb_nogrdptrs(kk, i, xk, yk, zk, imagcrds, cutoffsq, numlist, &
     k = lstmask(m+n)
     exclude(k) = i
   end do
-
-  ! Quantum-Mechanical / Molecular-Mechanical contingency
-  if (qmmm_nml%ifqnt) then
-    if (qmmm_struct%atom_mask(i)) then ! then current atom is a QM atom
-      do qm_temp_count2 = 1, qmmm_struct%nquant
-
-        ! Skip interaction with all other QM atoms
-        exclude(qmmm_struct%iqmatoms(qm_temp_count2)) = i
-      end do
-    end if
-  end if
-  ! End QM/MM contingency
-
 
   deadi = .false.
   deadi = ((ibelly(i) == 0) .and. belly)

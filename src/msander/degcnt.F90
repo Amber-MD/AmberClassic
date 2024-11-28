@@ -52,8 +52,6 @@ subroutine degcnt(ibelly,nat,igrp,nsolut,nbonh,nbona,nbper, &
    ! Modifications for QMMM by Ross Walker (5/2005)
 
 
-   use qmmm_module, only : qmmm_nml
-   use qmmm_module, only : qmmm_struct 
 #ifdef MPI /* SOFT CORE */
    use softcore, only : sc_dof_shaked, ifsc
    use softcore, only : nsc, tishake
@@ -89,14 +87,6 @@ subroutine degcnt(ibelly,nat,igrp,nsolut,nbonh,nbona,nbper, &
             else
                ibelsv = ibelsv + 1
             end if
-            !Check if i is a QM atom.
-            if (qmmm_nml%ifqnt) then
-              if (qmmm_struct%atom_mask(i)) then
-                 ibelsl_qm = ibelsl_qm + 1
-              else
-                 ibelsl_mm = ibelsl_mm + 1
-              end if
-            end if
          end if
       end do
    end if
@@ -129,16 +119,6 @@ subroutine degcnt(ibelly,nat,igrp,nsolut,nbonh,nbona,nbper, &
                rstssl = rstssl + 0.5d0
                rstssv = rstssv + 0.5d0
             end if
-            !Check if ib is a QM atom. - We will assume that there
-            !are no bonds with hydrogen that cross the QM boundary so
-            !if one is a QM atom then we will assume both are.
-            if (qmmm_nml%ifqnt) then
-              if (qmmm_struct%atom_mask(ib)) then
-                 rstssqm = rstssqm + 1
-              else
-                 rstssmm = rstssmm + 1
-              end if
-            end if
 # ifdef MPI /* SOFT CORE */
             ! Check if this bond lies in the softcore region
             ! SHAKE is removed from bonds crossing into or out 
@@ -167,10 +147,6 @@ subroutine degcnt(ibelly,nat,igrp,nsolut,nbonh,nbona,nbper, &
    ! bonds to heavy atoms
    
    if (ntc == 3) then
-      !QMMM with ntc=3 is not valid
-      if (qmmm_nml%ifqnt) then
-        call sander_bomb('degcnt','NTC=3 Invalid with ifqnt>0', 'Only NTC=1 or NTC=2 is available with QMMM runs.')
-      end if
       do i = 1,nbona
          ib = iba(i)/3 + 1
          jb = jba(i)/3 + 1
@@ -221,16 +197,6 @@ subroutine degcnt(ibelly,nat,igrp,nsolut,nbonh,nbona,nbper, &
                rstssl = rstssl + 0.5d0
                rstssv = rstssv + 0.5d0
             end if
-            !Check if ib is a QM atom. - We will assume that there
-            !are no bonds with hydrogen that cross the QM boundary so
-            !if one is a QM atom then we will assume both are.
-            if (qmmm_nml%ifqnt) then
-              if (qmmm_struct%atom_mask(ib)) then
-                 rstssqm = rstssqm + 1
-              else
-                 rstssmm = rstssmm + 1
-              end if
-            end if
          else if (igrp(ib) > 0 .or. igrp(jb) > 0) then
             if (ib <= nsolut .and. jb <= nsolut) then
                rstssl = rstssl + 1.0d0
@@ -239,16 +205,6 @@ subroutine degcnt(ibelly,nat,igrp,nsolut,nbonh,nbona,nbper, &
             else
                rstssl = rstssl + 0.5d0
                rstssv = rstssv + 0.5d0
-            end if
-            !Check if ib is a QM atom. - We will assume that there
-            !are no bonds with hydrogen that cross the QM boundary so
-            !if one is a QM atom then we will assume both are.
-            if (qmmm_nml%ifqnt) then
-              if (qmmm_struct%atom_mask(ib)) then
-                 rstssqm = rstssqm + 1
-              else
-                 rstssmm = rstssmm + 1
-              end if
             end if
          end if  ! (ibelly <= 0)
       end do ! i = 1,nbper

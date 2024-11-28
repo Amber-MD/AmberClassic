@@ -22,6 +22,36 @@ subroutine qm2_dftb_scf(escf, elec_eng,enuclr_qmqm,scf_mchg)
    integer :: outer_scf_count, inner_scf_count, i
    logical :: scf_convgd
 
+   !----------------------------------------------------------------------
+   ! Explicit interface to nonmodule function containing a
+   ! pointer dummy argument. The interface to eglcao used to accept
+   ! qmat as an assumed shape array, but qmat is only associated
+   ! on rank 1. On some software stacks, accepting an unassociated
+   ! pointer as an assumed shape array leads to a segmentation fault.
+   ! Instead of writing an explicit interface, one could insert this
+   ! entire file within a module; however, the dependency chain
+   ! would then require qm2_dftb_ewald.F90 to be inserted into the
+   ! standalone sqm program as opposed to only being part of the library
+   ! linked to sander.
+   interface
+      subroutine eglcao(qm_coords,total_e,elec_eng,ethird,enuclr_qmqm, &
+           inner_scf_count, outer_scf_count, scc_converged,qmat,scf_mchg)
+        use qmmm_module, only: qmmm_struct
+        implicit none
+        _REAL_ , intent(in )   :: qm_coords(3,qmmm_struct%nquant_nlink)
+        _REAL_ , intent(out)   :: total_e
+        _REAL_ , intent(out)   :: elec_eng
+        _REAL_ , intent(out)   :: ethird
+        _REAL_ , intent(out)   :: enuclr_qmqm
+        integer, intent(out)   :: inner_scf_count
+        integer, intent(out)   :: outer_scf_count
+        logical, intent(out)   :: scc_converged
+        _REAL_ , pointer :: qmat(:)
+        _REAL_ , intent(out)   :: scf_mchg(qmmm_struct%nquant_nlink)
+      end subroutine eglcao
+   end interface
+   !----------------------------------------------------------------------
+
    total_e      = 0.0d0
    
    scf_convgd=.false.
@@ -187,7 +217,7 @@ subroutine eglcao(qm_coords,total_e,elec_eng,ethird,enuclr_qmqm, &
    use qmmm_module, only: qm_gb, qmewald
 #endif
    use ElementOrbitalIndex, only : elementSymbol
-   use constants, only : BOHRS_TO_A
+   use constants, only : BOHRS_TO_A, AU_TO_KCAL, AU_TO_EV
 
    implicit none
 
@@ -202,16 +232,18 @@ subroutine eglcao(qm_coords,total_e,elec_eng,ethird,enuclr_qmqm, &
    integer, intent(out)   :: inner_scf_count ! Number of SCC iterations performed in this trial
    integer, intent(out)   :: outer_scf_count ! Total number of SCC iterations performed
    logical, intent(out)   :: scc_converged   ! SCC procedure converged?
-   _REAL_ , intent(inout) :: qmat(*)         ! Electron population per atom
+   _REAL_ , pointer :: qmat(:)         ! Electron population per atom
    _REAL_ , intent(out)   :: scf_mchg(qmmm_struct%nquant_nlink) ! Mulliken charges per atom
 
    ! Locals
    ! ======
+   integer :: lumo
    integer :: liend, ljend
    integer :: j, k, li, lj, i
    integer :: n, m
    integer :: nstart, nend, mstart, mend
    integer :: indkn, indjm, indi, indj, indili, indjlj
+   _REAL_  :: shifti, shiftj
 
 #ifndef SQM
    _REAL_  :: ew_corr ! Ewald correction to energy in ev. Needed only if qm_ewald > 0.
@@ -475,7 +507,7 @@ subroutine eglcao(qm_coords,total_e,elec_eng,ethird,enuclr_qmqm, &
             DUhub(i) = -2.0d0*dftb_3rd_order_str%Gaussian_G0 * (-scf_mchg(i) - dftb_3rd_order_str%Gaussian_q0 )*gaussian
 
             if ( dftb_3rd_order_str%debug_print ) then
-               write (6,'(A,2X,I3,2X,E15.8)',advance='no') "DEBUG ==> 3RD ORDER SCC-DFTB: ", i, Uhub(i)
+               write (6,'(A,2X,I3,2X,E15.8,$)') "DEBUG ==> 3RD ORDER SCC-DFTB: ", i, Uhub(i)
                write (6,'(2X,E15.8)')DUhub(i)
             endif
          end do
@@ -483,12 +515,14 @@ subroutine eglcao(qm_coords,total_e,elec_eng,ethird,enuclr_qmqm, &
          do i = 1,qmmm_struct%nquant_nlink
             indi = ks_struct%ind(i)
             liend = lmax( izp_str%izp(i) )**2
+            shifti = ks_struct%shift(i)
             do li = 1,liend
                indili = indi + li
                do j = 1,i          
                   ! --> Note: Only the lower triangle is used
                   indj = ks_struct%ind(j)
                   ljend = lmax( izp_str%izp(j) )**2
+                  shiftj = ks_struct%shift(j)
                   do lj = 1,ljend
                      indjlj = indj + lj
                      third_order_h_contrib = 0.25d0 * ks_struct%overl(indili,indjlj)    * &
@@ -572,6 +606,9 @@ subroutine eglcao(qm_coords,total_e,elec_eng,ethird,enuclr_qmqm, &
                          qm2_struct%nclosed = qm2_struct%nclosed + 1
            qm2_struct%nopenclosed = qm2_struct%nopenclosed + 1
         end do
+
+        ! Lowest unoccupied level
+        lumo = i
 
         ! MULLIKEN CHARGES
         ! ----------------

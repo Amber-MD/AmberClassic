@@ -2106,6 +2106,12 @@
       else if (qmmm_nml%qmtheory%ISTCPB) then
          ! VWDC: We will use the TCPB library
          continue
+      else if (qmmm_nml%qmtheory%ISXTB) then
+         ! TJG: We will use the XTB library
+         continue
+      else if (qmmm_nml%qmtheory%ISDFTBPLUS) then
+         ! TJG: We will use the DFTBPLUS library
+         continue
       else
         !UNKNOWN method - should never actually get this far but might as well call
         !sander bomb just in case.
@@ -2115,7 +2121,8 @@
       end if
 
       skip = qmmm_nml%qmtheory%DFTB .or. qmmm_nml%qmtheory%EXTERN .or. &
-             qmmm_nml%qmtheory%ISQUICK .or. qmmm_nml%qmtheory%ISTCPB
+             qmmm_nml%qmtheory%ISQUICK .or. qmmm_nml%qmtheory%ISTCPB .or. &
+             qmmm_nml%qmtheory%ISXTB .or. qmmm_nml%qmtheory%ISDFTBPLUS
       if (.not. skip) then
         ! ------------------------------------------------------
         ! Now see if user wants an MM peptide torsion correction
@@ -2255,7 +2262,8 @@
       ! ------------------------------------------------
       skip = qmmm_nml%qmtheory%DFTB .or. qmmm_nml%qmtheory%EXTERN .or. &
              qmmm_nml%qmtheory%SEBOMD .or. qmmm_nml%qmtheory%ISQUICK .or. &
-             qmmm_nml%qmtheory%ISTCPB
+             qmmm_nml%qmtheory%ISTCPB .or. qmmm_nml%qmtheory%ISXTB .or. &
+             qmmm_nml%qmtheory%ISDFTBPLUS
       if (.not. skip ) then
          call qm2_diagonalizer_setup(qmmm_nml%diag_routine, qmmm_nml%allow_pseudo_diag, &
               qmmm_nml%verbosity, &
@@ -2264,6 +2272,8 @@
               qmmm_mpi%commqmmm, &
 #endif
               qm2_struct, qmmm_scratch, silence)
+      else
+         qmmm_nml%allow_pseudo_diag = .FALSE.
       end if
 
       ! ----------------------------------------------------------------
@@ -2275,7 +2285,8 @@
       ! for MNDO type Hamiltonians
       skip = qmmm_nml%qmtheory%DFTB .or. qmmm_nml%qmtheory%EXTERN .or. &
              qmmm_nml%qmtheory%SEBOMD .or. qmmm_nml%qmtheory%ISQUICK .or. &
-             qmmm_nml%qmtheory%ISTCPB
+             qmmm_nml%qmtheory%ISTCPB .or. qmmm_nml%qmtheory%ISXTB .or. &
+             qmmm_nml%qmtheory%ISDFTBPLUS
       if ( .not. skip ) then
 
          test = .false.
