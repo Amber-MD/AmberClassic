@@ -2,7 +2,7 @@ test:
 	@./run_tests.sh
 
 test.all: test.general test.rism test.xray test.nmr \
-          test.leap test.antechamber test.paramfit test.rism1d text.xtalutil \
+          test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6
 
 test.general:
@@ -59,7 +59,7 @@ test.antechamber:
 	-(cd antechamber/tp && Run.tp2)
 
 test.paramfit:
-	-(cd paramft && make test)
+	-(cd paramfit && make test)
 
 test.rism1d:
 	-(cd rism1d/spc-kh && ./Run.spc)
@@ -67,13 +67,13 @@ test.rism1d:
 	-(cd rism1d/spc-hnc && ./Run.spc-lj)
 
 test.xtalutil:
-	-(cd AddToBox && ./Run.AddToBox)
-	-(cd CheckMD && ./Run.CheckMD)
-	-(cd PropPDB && ./Run.PropPDB)
-	-(cd UnitCell && ./Run.UnitCell)
+	-(cd xtalutil/AddToBox && ./Run.AddToBox)
+	-(cd xtalutil/CheckMD && ./Run.CheckMD)
+	-(cd xtalutil/PropPDB && ./Run.PropPDB)
+	-(cd xtalutil/UnitCell && ./Run.UnitCell)
 
 test.gbnsr6:
-	-(cd gbnsr6 && ./Run.gbnsr6)
+	-(cd gbnsr6 && ./Run.gbnsr6.min)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff
