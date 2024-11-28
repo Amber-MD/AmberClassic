@@ -1,6 +1,6 @@
 # Overview of AmberClassic
 
-This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and most-used) parts of AmberTools: `tleap, antechamber, sqm, metatwist, rism1d, saxs` and `paramfit`. With these tools, many systems can be set up for simulation in `msander`.
+This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and most-used) parts of AmberTools: `tleap, antechamber, sqm, metatwist, rism1d, saxs, gbnsr6, xtalutil` and `paramfit`. With these tools, many systems can be set up for simulation in `msander`.
 
 The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
 
@@ -10,13 +10,13 @@ This is a work in progress, and may not always be in a stable state (although th
 
 This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic.  
 
-This package may also be of interest to those who want just the subset included here of the far-more-complex AmberTools package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
+This package may also be of interest to those who want just the subset included here of the far-more-complex `AmberTools` package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
 
 # Design goals
 
 * This project began as a fork of the `sander` code in `AmberTools`.  It tries to (greatly) simplify the code base, choosing the best and most useful parts of the code, and to serve as a test bed for how modern Fortran coding techniques can be used.  Key application areas are expected to be in structure refinements using NMR, cryoEM or Xray diffraction information.  This version has a fair amount of OpenMP support, especially for Xray and 3D-RISM calculations.  Parts of the Xray code uses GPU acceleration.
 
-* One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and I hope to create a conda package soon.
+* One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and a preliminary conda package is available (see below.)
 
 # Key differences in functionality versus sander
 
@@ -70,16 +70,16 @@ Force field evaluation is still slow compared to many other codes.  This project
    source AmberClassic.sh
    make test
 ```
-* Installing pre-built executables via conda  (work in progress)
+* Installing pre-built executables via conda
 ```
    conda create --name AmberClassic   # you can choose the env name
    conda activate AmberClassic
    conda install dacase::amberclassic  # linux only for now
    cd $CONDA_PREFIX
    source AmberClassic.sh
-   cd test && make test   # optional; right now only tests msander
+   cd test && make test   # optional
 ```
-* Conda build  (For developers: Only tested on linux-x86 in serial mode)
+* Conda build  (For developers)
 ```
    conda build recipe
       (note: you should have conda-forge at the top of your channel
