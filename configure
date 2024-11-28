@@ -274,7 +274,7 @@ fi
 #  Test if bison is available and works
 #--------------------------------------------------------------------------
 
-  printf "Testing bison: "
+  printf "Testing bison ..."
   cat <<EOF >testp.y
 %{
 static int curItemNo, curValueNo, itemIndex;
