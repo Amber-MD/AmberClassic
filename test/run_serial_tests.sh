@@ -8,9 +8,9 @@ difffile="${logprefix}.diff"
 
 mkdir -p ${logdir}
 
-echo "Running AmberClassic tests on $date_string" | tee ${logfile}
+echo "Running AmberClassic serial tests on $date_string" | tee ${logfile}
 
-(make --no-print-directory -k test.all 2>&1) | tee -a ${logfile}
+(make --no-print-directory -k test.allserial 2>&1) | tee -a ${logfile}
 
 passed_count=`grep PASS ${logfile} | wc -l`
 questionable_count=`grep "FAILURE:" ${logfile} | wc -l`

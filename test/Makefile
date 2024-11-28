@@ -1,7 +1,20 @@
-test:
-	@./run_tests.sh
+include ../config.h
 
-test.all: test.general test.rism test.xray test.nmr \
+test:  test.$(INSTALLTYPE)
+
+test.serial:
+	@./run_serial_tests.sh
+
+test.parallel:
+	@echo "parallel test suite is not yet ready!"
+
+test.cuda:
+	@echo "cuda test suite is not yet ready!"
+
+test.mpicuda:
+	@echo "mpicuda test suite is not yet ready!"
+
+test.allserial: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6
 
