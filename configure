@@ -24,10 +24,11 @@ conda="no"
 conda_incflags=""
 
 compiler="gnu"
-cc="gcc -Wno-unused-result"
-cxx="g++ -Wno-unused-result"
+cc="gcc"
+cxx="g++"
 mpicc="mpicc"
 iccflags=""
+gccflags="-Wno-unused-result"
 
 fc="gfortran"
 flibs_arch="-lgfortran -w"
@@ -42,6 +43,7 @@ ompflag=""
 ldflags=""
 fftw_flags=""
 mkl="no"    
+moft="moft"
 installtype="serial"
 
 plumed="no"
@@ -99,6 +101,8 @@ while [ $# -gt 0 ]; do
             conda="yes";;
         --mkl)
             mkl="yes";;
+        --noboost)
+            moft="skip";;
         --openblas)
             openblas="yes";;
         --static)
@@ -114,6 +118,7 @@ while [ $# -gt 0 ]; do
             mpicc="mpiicc -cc=icx"
             mpif90="mpiifort -fc=ifx"
             optflags="-g -O3"
+            gccflags=""
             flibs_arch="-lifport -lifcore -lsvml";;
         --clang)
             compiler="clang"
@@ -121,6 +126,7 @@ while [ $# -gt 0 ]; do
             cc="clang"
             cxx="clang"
             fc="gfortran"
+            gccflags=""
             optflags="-g -O3";;
         --mpi)
             mpi="yes"
@@ -148,9 +154,10 @@ if [ "$requested_help" = "yes" ] ; then
     printf " --cudaprec     [SPFP|DPFP], cuda precision, default is SPFP\n"
     printf " --cudaarch     <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\n"
-	printf " --openmp       make use of OPENMP\n"
+	printf " --openmp       make use of OPENMP in fortran codes\n"
 	printf " --mkl          use MKL routines from \$MKLROOT environment variable\n"
 	printf " --openblas     use BLAS routines from \$GOTO environment variable\n"
+	printf " --noboost      skip codes (metatwist) that require boost \n"
     printf "\n"
 	printf " --verbose      give build details, otherwise be more silent\n"
 	printf " --static       use static linking (experimental)\n"
@@ -724,7 +731,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags
+CFLAGS=$gccflags $clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
@@ -734,7 +741,7 @@ COPTFLAGS=$optflags
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
+FFLAGS=$gccflags $clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
 FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
@@ -755,6 +762,7 @@ VB=$verbose
 INSTALLTYPE=$installtype
 FLEX=flex
 BISON=bison
+MOFT=$moft
 
 # CUDA:
 CUDAFLAGS=$prec_model $cuda_arch_flags $cuda_dc_flags
