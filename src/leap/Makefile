@@ -118,7 +118,7 @@ $(BINDIR)/teLeap$(SFX): $(TLEAP_OBJ)
 	@echo "[TLEAP] CC $@"
 	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(TLEAP_OBJ) $(LM) $(NETCDFLIB)
 
-$(BINDIR)/tleap:
+$(BINDIR)/tleap: tleap
 	cp tleap $(BINDIR)
 
 utilMakeHelp$(SFX): $(UMH_OBJ)
@@ -146,10 +146,10 @@ clean::
 
 parser.c:       parser.y parser.h
 	@echo "[TLEAP] BISON $@"
-	$(VB)$(YACC) parser.y
+	$(VB)$(BISON) parser.y
 #	@echo "(The warning 'conflicts: 6 shift/reduce' is normal)"
 	$(VB)/bin/rm -f parser.c
-	@mv y.tab.c parser.c
+	@mv parser.tab.c parser.c
 
 helptext.c: helptext.text utilMakeHelp$(SFX)
 	$(VB)./utilMakeHelp$(SFX) helptext.text helptext.c

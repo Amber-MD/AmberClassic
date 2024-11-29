@@ -57,8 +57,7 @@
  *  Read a single UNIT from the TRIPOS file.
  *  Return the UNIT, or NULL if nothing was read.
  */
-UNIT uTriposReadUnit(fIn)
-FILE *fIn;
+UNIT uTriposReadUnit(FILE *fIn)
 {
     STRING sLine;
     int iAtoms;

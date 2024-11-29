@@ -778,7 +778,7 @@ iExpandDir( char *sExpanded, char *sOriginal )
 #else
 char		user[100];
 int		i;
-struct passwd 	*pw, *getpwnam();
+struct passwd 	*pw, *getpwnam(const char *);
 
 /* 
 TODO: add string size protection
@@ -1209,7 +1209,7 @@ myPuts( char *sLine, GENP PData )
     printf( "%s", sLine );
 }
 
-void	(*GfPrintStringCallback)() = myPuts;
+void	(*GfPrintStringCallback)(char *, GENP) = myPuts;
 
 
 #define	MAXCHARSPERPRINTF	5000		/* 5000 characters max */

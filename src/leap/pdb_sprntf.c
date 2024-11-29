@@ -8,9 +8,250 @@
 
 
 static  char scratch[BUFSIZ];
-static  char *outint(), *outunsigned(), *outstr(), *outfloat(), *outexp();
-static  void e_outfloat();
 
+static void
+e_outfloat(int width, char *where)
+{
+        register char   *c;
+
+        for (c = where; c < where + width; c++)
+                *c = '*';
+}
+
+static
+char *
+outint(int value, int width, int radix, char fill_char, char hex, 
+    int left_justify, char *p, char zero)
+{
+        register char   *s;
+        register int    n;
+        int             negative;
+
+        if (value < 0)
+                negative = 1, value = -value, width--;
+        else
+                negative = 0;
+        s = scratch;
+        if (value)
+                do {
+                        n = value % radix;
+                        *s++ = n < 10 ? '0' + n : hex + n - 10;
+                        value /= radix;
+                } while (value);
+        else
+                *s++ = zero;
+        n = s - scratch;
+
+        if (negative && fill_char == '0')
+                *p++ = '-';
+        if (!left_justify)
+                while (width-- > n)
+                        *p++ = fill_char;
+        if (negative && fill_char == ' ')
+                *p++ = '-';
+        while (--s >= scratch)
+                *p++ = *s;
+        if (left_justify)
+                while (width-- > n)
+                        *p++ = fill_char;
+        return p;
+}
+
+static
+char *
+outunsigned(unsigned value, int width, char fill_char, int left_justify, 
+    char *p)
+{
+        register char   *s;
+        register int    n;
+
+        s = scratch;
+        while (value) {
+                *s++ = value % 10 + '0';
+                value /= 10;
+        }
+        n = s - scratch;
+        if (n == 0)
+                *s++ = '0', n = 1;
+
+        if (!left_justify)
+                while (width-- > n)
+                        *p++ = fill_char;
+        while (--s >= scratch)
+                *p++ = *s;
+        if (left_justify)
+                while (width-- > n)
+                        *p++ = fill_char;
+        return p;
+}
+
+static
+char *
+outstr(char *s, int width, int maxstr, char fill_char, int left_justify,
+      char *p)
+{
+        register int    len;
+
+        len = strlen(s);
+        if (maxstr >= 0 && len > maxstr)
+                len = maxstr;
+        if (!left_justify)
+                while (width-- > len)
+                        *p++ = fill_char;
+        else
+                width -= len;
+        while (len--)
+                *p++ = *s++;
+        if (left_justify)
+                while (width-- > 0)
+                        *p++ = fill_char;
+        return p;
+}
+
+static
+char *
+outfloat(double value, int width, int nplace, char fill_char,
+        int left_justify, char *p)
+{
+        register int    i, intval;
+        register char   *place, *to, *from;
+        int             negative;
+
+        negative = value < 0.0 ? 1 : 0;
+                
+        if (negative)
+                value = -value;
+
+        for (i = 0; i < nplace; i++)
+                value *= 10.0;
+
+        intval = value + 0.5;
+
+        if (nplace + (nplace == 0 ? 1 : 2) > width) {
+                e_outfloat(width, p);
+                return p+width;
+        }
+
+        for (place = p+width-1; place >= p+width-nplace; place--) {
+                *place = '0' + intval % 10;
+                intval /= 10;
+        }
+
+        if (nplace > 0)
+                *place-- = '.';
+
+        if (intval == 0)
+                *place-- = '0';
+
+        for (; place >= p; place--) {
+                if (intval == 0)
+                        break;
+                else {
+                        *place = '0' + intval % 10;
+                        intval /= 10;
+                }
+        }
+
+        if (intval != 0) {
+                e_outfloat(width, p);
+                return p+width;
+        }
+
+        if (place < p && negative) {
+                e_outfloat(width, p);
+                return p+width;
+        }
+
+        if (left_justify) {
+                for (from = place+1, to = (negative ? p+1 : p); from < p+width;
+                  from++, to++)
+                        *to = *from;
+                for (; to < p+width; to++)
+                        *to = fill_char;
+                if (negative)
+                        *p = '-';
+        } else {
+                for (to = place; to >= p; to--)
+                        *to = fill_char;
+                if (negative) {
+                        if (fill_char == ' ')
+                                *place = '-';
+                        else
+                                *p = '-';
+		}
+        }
+
+        return p+width;
+}
+
+static
+char *
+outexp(double value, int width, int nplace, char fill_char, int
+       left_justify, char *p)
+{
+        register int    n;
+        register char   *s;
+        int             negative;
+        double          fraction;
+
+        if (value < 0)
+                negative = 1, value = -value, width--;
+        else
+                negative = 0;
+
+        n = 0;
+        while (value > 10)
+                n++, value /= 10;
+        if (value)
+                while (value < 1)
+                        n--, value *= 10;
+
+        s = scratch;
+        if (n < 0) {
+                n = -n;
+                *s++ = n % 10 + '0';
+                *s++ = n / 10 + '0';
+                *s++ = '-';
+        }
+        else {
+                *s++ = n % 10 + '0';
+                *s++ = n / 10 + '0';
+                *s++ = '+';
+        }
+        *s = 'e';
+
+        s = scratch + nplace + 4;       /* 4 == strlen("e+00") */
+        fraction = value - (int) value;
+        for (n = 0; n < nplace; n++) {
+                fraction *= 10.0;
+                *--s = '0' + (int) fraction;
+                fraction -= (int) fraction;
+        }
+
+        s = scratch + nplace + 4;
+        if (nplace)
+                *s++ = '.';
+        n = (int) value;
+        if (n)
+                *s++ = n % 10 + '0';
+        else
+                *s++ = '0';
+        n = s - scratch;
+
+        if (negative && fill_char == '0')
+                *p++ = '-';
+        if (!left_justify)
+                while (width-- > n)
+                        *p++ = fill_char;
+        if (negative && fill_char == ' ')
+                *p++ = '-';
+        while (--s >= scratch)
+                *p++ = *s;
+        if (left_justify)
+                while (width-- > n)
+                        *p++ = fill_char;
+        return p;
+}
 
 void 
 pdb_sprintf(char *outbuf, char *fmt, ...)
@@ -170,271 +411,3 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
         va_end(argv);
 }
 
-static
-char *
-outint(value, width, radix, fill_char, hex, left_justify, p, zero)
-register int    value, width;
-int             radix;
-char            fill_char;
-char            hex;
-int             left_justify;
-register char   *p;
-char            zero;
-{
-        register char   *s;
-        register int    n;
-        int             negative;
-
-        if (value < 0)
-                negative = 1, value = -value, width--;
-        else
-                negative = 0;
-        s = scratch;
-        if (value)
-                do {
-                        n = value % radix;
-                        *s++ = n < 10 ? '0' + n : hex + n - 10;
-                        value /= radix;
-                } while (value);
-        else
-                *s++ = zero;
-        n = s - scratch;
-
-        if (negative && fill_char == '0')
-                *p++ = '-';
-        if (!left_justify)
-                while (width-- > n)
-                        *p++ = fill_char;
-        if (negative && fill_char == ' ')
-                *p++ = '-';
-        while (--s >= scratch)
-                *p++ = *s;
-        if (left_justify)
-                while (width-- > n)
-                        *p++ = fill_char;
-        return p;
-}
-
-static
-char *
-outunsigned(value, width, fill_char, left_justify, p)
-register unsigned       value;
-register int            width;
-char                    fill_char;
-int                     left_justify;
-register char           *p;
-{
-        register char   *s;
-        register int    n;
-
-        s = scratch;
-        while (value) {
-                *s++ = value % 10 + '0';
-                value /= 10;
-        }
-        n = s - scratch;
-        if (n == 0)
-                *s++ = '0', n = 1;
-
-        if (!left_justify)
-                while (width-- > n)
-                        *p++ = fill_char;
-        while (--s >= scratch)
-                *p++ = *s;
-        if (left_justify)
-                while (width-- > n)
-                        *p++ = fill_char;
-        return p;
-}
-
-static
-char *
-outstr(s, width, maxstr, fill_char, left_justify, p)
-register char   *s;
-register int    width;
-int             maxstr;
-char            fill_char;
-int             left_justify;
-register char   *p;
-{
-        register int    len;
-
-        len = strlen(s);
-        if (maxstr >= 0 && len > maxstr)
-                len = maxstr;
-        if (!left_justify)
-                while (width-- > len)
-                        *p++ = fill_char;
-        else
-                width -= len;
-        while (len--)
-                *p++ = *s++;
-        if (left_justify)
-                while (width-- > 0)
-                        *p++ = fill_char;
-        return p;
-}
-
-static
-char *
-outfloat(value, width, nplace, fill_char, left_justify, p)
-double          value;
-int             width, nplace;
-char            fill_char;
-int             left_justify;
-register char   *p;
-{
-        register int    i, intval;
-        register char   *place, *to, *from;
-        int             negative;
-
-        negative = value < 0.0 ? 1 : 0;
-                
-        if (negative)
-                value = -value;
-
-        for (i = 0; i < nplace; i++)
-                value *= 10.0;
-
-        intval = value + 0.5;
-
-        if (nplace + (nplace == 0 ? 1 : 2) > width) {
-                e_outfloat(width, p);
-                return p+width;
-        }
-
-        for (place = p+width-1; place >= p+width-nplace; place--) {
-                *place = '0' + intval % 10;
-                intval /= 10;
-        }
-
-        if (nplace > 0)
-                *place-- = '.';
-
-        if (intval == 0)
-                *place-- = '0';
-
-        for (; place >= p; place--) {
-                if (intval == 0)
-                        break;
-                else {
-                        *place = '0' + intval % 10;
-                        intval /= 10;
-                }
-        }
-
-        if (intval != 0) {
-                e_outfloat(width, p);
-                return p+width;
-        }
-
-        if (place < p && negative) {
-                e_outfloat(width, p);
-                return p+width;
-        }
-
-        if (left_justify) {
-                for (from = place+1, to = (negative ? p+1 : p); from < p+width;
-                  from++, to++)
-                        *to = *from;
-                for (; to < p+width; to++)
-                        *to = fill_char;
-                if (negative)
-                        *p = '-';
-        } else {
-                for (to = place; to >= p; to--)
-                        *to = fill_char;
-                if (negative) {
-                        if (fill_char == ' ')
-                                *place = '-';
-                        else
-                                *p = '-';
-		}
-        }
-
-        return p+width;
-}
-
-static void
-e_outfloat(width, where)
-int     width;
-char    *where;
-{
-        register char   *c;
-
-        for (c = where; c < where + width; c++)
-                *c = '*';
-}
-
-static
-char *
-outexp(value, width, nplace, fill_char, left_justify, p)
-double          value;
-register int    width, nplace;
-char            fill_char;
-int             left_justify;
-register char   *p;
-{
-        register int    n;
-        register char   *s;
-        int             negative;
-        double          fraction;
-
-        if (value < 0)
-                negative = 1, value = -value, width--;
-        else
-                negative = 0;
-
-        n = 0;
-        while (value > 10)
-                n++, value /= 10;
-        if (value)
-                while (value < 1)
-                        n--, value *= 10;
-
-        s = scratch;
-        if (n < 0) {
-                n = -n;
-                *s++ = n % 10 + '0';
-                *s++ = n / 10 + '0';
-                *s++ = '-';
-        }
-        else {
-                *s++ = n % 10 + '0';
-                *s++ = n / 10 + '0';
-                *s++ = '+';
-        }
-        *s = 'e';
-
-        s = scratch + nplace + 4;       /* 4 == strlen("e+00") */
-        fraction = value - (int) value;
-        for (n = 0; n < nplace; n++) {
-                fraction *= 10.0;
-                *--s = '0' + (int) fraction;
-                fraction -= (int) fraction;
-        }
-
-        s = scratch + nplace + 4;
-        if (nplace)
-                *s++ = '.';
-        n = (int) value;
-        if (n)
-                *s++ = n % 10 + '0';
-        else
-                *s++ = '0';
-        n = s - scratch;
-
-        if (negative && fill_char == '0')
-                *p++ = '-';
-        if (!left_justify)
-                while (width-- > n)
-                        *p++ = fill_char;
-        if (negative && fill_char == ' ')
-                *p++ = '-';
-        while (--s >= scratch)
-                *p++ = *s;
-        if (left_justify)
-                while (width-- > n)
-                        *p++ = fill_char;
-        return p;
-}

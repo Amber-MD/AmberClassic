@@ -87,9 +87,6 @@ static  ORDERt  SoaOrders[] = {
  *      in which case the graphics routines aren't linked.
  */
 
-VFUNCTION       GfAtomClassGraphicsCreator = NULL;
-VFUNCTION       GfAtomClassGraphicsDestructor = NULL;
-
 VARARRAY        GvaVDWTypes, GvaVDWValues;
 
 /*
@@ -173,18 +170,8 @@ int     i;
     VectorDef( &(a->vVelocity), 0.0, 0.0, 0.0 );
     a->PGraphicsData = NULL;
 
-    if ( GfAtomClassGraphicsCreator != NULL ) {
-        GfAtomClassGraphicsCreator(a);
-    }
-
     return(a);
 }
-
-
-
-
-
-
 
 /*
  *      AtomDestroy
@@ -199,9 +186,6 @@ int     i;
 void
 AtomDestroy( ATOM *aPAtom )
 {
-    if ( GfAtomClassGraphicsDestructor != NULL ) {
-        GfAtomClassGraphicsDestructor(*aPAtom);
-    }
     FREE( *aPAtom );
     *aPAtom = NULL;
 }
@@ -759,15 +743,8 @@ ATOM    aNewAtom;
     MALLOC( aNewAtom, ATOM, sizeof(ATOMt) );
     memcpy( aNewAtom, aAtom, sizeof(ATOMt) );
     aNewAtom->iUniqueId = SiUniqueId++;
-    if ( GfAtomClassGraphicsCreator != NULL ) {
-        GfAtomClassGraphicsCreator(aNewAtom);
-    }
     return(aNewAtom);   
 }
-
-
-
-
 
 /*
  *      AtomResetPointers
