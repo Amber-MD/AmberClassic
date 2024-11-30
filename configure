@@ -741,7 +741,7 @@ COPTFLAGS=$optflags
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$gccflags $clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
+FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
 FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
