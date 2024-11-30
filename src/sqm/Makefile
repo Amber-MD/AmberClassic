@@ -18,7 +18,7 @@ SQMOBJ= file_io_dat.o constants.o findmask.o sqm.SQM.o \
 	qm2_energy.SQM.o \
 	qm2_read_nm_and_alloc.SQM.o \
 	qm2_scf.SQM.o \
-	qm2_dftb_scf.SQM.o
+	qm2_dftb_scf.SQM.o veclib.o
 
 #QMOBJ = Objects common to both SQM and libsqm
 QMOBJ = qm2_allocate_e_repul.o qm2_calc_charges.o qm2_calc_dipole.o \
@@ -66,6 +66,10 @@ $(BINDIR)/sqm: $(SQMOBJ) $(QMOBJ)
 xminC.o:  ../sff/xminC.c
 	@echo "[SQM]  CC $<"
 	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o xminC.o ../sff/xminC.c
+
+veclib.o: ../msander/veclib.F90
+	@echo '[SQM]  FC $<'
+	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ $<
 
 wallclock.o:  wallclock.c
 	@echo "[SQM]  CC $<"

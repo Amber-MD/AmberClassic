@@ -97,7 +97,7 @@ end subroutine mcbar_setup
 !*******************************************************************************
 
 subroutine mcbar_trial(xx, ix, ih, ipairs, x, xc, f, vir, fs, rborn, reff, &
-                       onereff, qsetup, do_list_update, nstep, nsp, amass)
+                onereff, qsetup, do_list_update, nstep, nsp, amass, nmropt)
 
    use constants, only : AVOGADRO, KB, THIRD, HALF, JPKC, TEN_TO_MINUS25
    use memory_module, only : natom, lcrdr
@@ -109,7 +109,6 @@ subroutine mcbar_trial(xx, ix, ih, ipairs, x, xc, f, vir, fs, rborn, reff, &
    ! need nmropt, nspm, pres0, and ntp
 #  include "../include/md.h"
 #  include "extra.h"
-#  include "nmr.h"
 
 ! Passed parameters
   
@@ -128,6 +127,7 @@ subroutine mcbar_trial(xx, ix, ih, ipairs, x, xc, f, vir, fs, rborn, reff, &
    integer, dimension(*)       :: ipairs      ! Pairlist array
    integer, dimension(*)       :: nsp         ! Molecule count array
    integer                     :: nstep       ! Step number we are on
+   integer                     :: nmropt      ! from nmr.h
 
    character(len=4), dimension(*) :: ih       ! Global Hollerith array
 

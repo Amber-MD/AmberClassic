@@ -329,7 +329,7 @@ subroutine sander()
 #else
 #  ifdef MPI
         call getcor(nr, x(lcrd), x(lvel), x(lforce), ntx, box, irest, &
-                      t, temp0, .TRUE., solvph, solve)
+                      t, temp0, .TRUE., solvph, solve, 0)
 #  else
         call getcor(nr, x(lcrd), x(lvel), x(lforce), ntx, box, irest, t, &
                       .TRUE.)

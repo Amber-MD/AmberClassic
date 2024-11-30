@@ -13,7 +13,7 @@ sff: $(LIBDIR)/libsff.a
 $(LIBDIR)/libsff.a: $(OBJS)
 	@echo "[SFF]  AR $@"
 	$(VB)-rm -f $(LIBDIR)/libsff.a
-	$(VB)$(AR) $(LIBDIR)/libsff.a $(OBJS)	> /dev/null
+	$(VB)$(AR) $(LIBDIR)/libsff.a $(OBJS)
 	$(VB)$(RANLIB) $(LIBDIR)/libsff.a
 
 uninstall:

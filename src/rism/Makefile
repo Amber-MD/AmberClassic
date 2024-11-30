@@ -32,7 +32,7 @@ $(BINDIR)/rism1d: rism1d_driver.o $(LIBDIR)/librism.a $(LIBDIR)/libxblas-amb.a
 
 $(LIBDIR)/librism.a: $(LIBOBJ)
 	@echo "[RISM]  AR $@"
-	$(VB)$(AR) $@ $(LIBOBJ) > /dev/null
+	$(VB)$(AR) $@ $(LIBOBJ)
 	$(VB)$(RANLIB) $@
 
 $(LIBDIR)/libxblas-amb.a:

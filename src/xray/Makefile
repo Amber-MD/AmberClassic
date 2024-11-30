@@ -28,7 +28,7 @@ libxray: $(LIBDIR)/libxray.a
 
 $(LIBDIR)/libxray.a: $(LIBOBJ)
 	@echo "[XRAY]  AR $@"
-	$(VB)$(AR) $@ $(LIBOBJ) > /dev/null
+	$(VB)$(AR) $@ $(LIBOBJ)
 	$(VB)$(RANLIB) $@
 
 $(BINDIR)/add_xray: add_xray.o nxtsec.o

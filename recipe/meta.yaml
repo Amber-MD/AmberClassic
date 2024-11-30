@@ -3,7 +3,8 @@ package:
 #  version 0.1   just trying to adapt recipe from amber_phenix
 #  version 0.2   try using more shared libs from conda-forge
 #  version 0.3   try using boost from conda-forge for metatwist
-  version: 0.3
+#  version 0.4   update xblas, other minor tweaks
+  version: 0.4
 
 source:
   path: ../

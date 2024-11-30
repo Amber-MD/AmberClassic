@@ -2727,7 +2727,8 @@ subroutine mdread2(x,ix,ih)
 #else
 #  ifndef API
 #  ifdef MPI
-         call getcor(nr,x(lcrd),x(lvel),x(lforce),ntx,box,irest,t,temp0,.FALSE.,solvph,solve)
+         call getcor(nr,x(lcrd),x(lvel),x(lforce),ntx,box,irest,t,temp0, &
+            .FALSE.,solvph,solve,0)
 #  else
          call getcor(nr,x(lcrd),x(lvel),x(lforce),ntx,box,irest,t,.FALSE.)
 #  endif
@@ -2854,7 +2855,7 @@ subroutine mdread2(x,ix,ih)
 #  endif
 #else
 #  ifdef MPI
-      call getcor(nr,x(lcrd),x(lvel),x(lforce),ntx,box,irest,t,temp0,.FALSE.,solvph,solve)
+      call getcor(nr,x(lcrd),x(lvel),x(lforce),ntx,box,irest,t,temp0,.FALSE.,solvph,solve, 0)
 #  else
 #    ifndef API
       call getcor(nr,x(lcrd),x(lvel),x(lforce),ntx,box,irest,t,.FALSE.)
