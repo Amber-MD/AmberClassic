@@ -1,9 +1,0 @@
-dnl
-include(cblas.m4)dnl
-include(routine-common.m4)dnl
-dnl
-dnl
-FOREACH(`ROUTINE_ARGS', `ROUTINE_HEAD(arg);
-')
-dnl
-dnl
