@@ -11,6 +11,7 @@ AXPBY_AMB_OBJS = $(AXPBY_AMB_SRCS:.c=.o)
 lib-amb: $(LIBDIR)/libxblas-amb.a
 
 $(LIBDIR)/libxblas-amb.a: $(AXPBY_AMB_OBJS)
+	@echo "[XBLAS] AR $@"
 	$(VB)$(AR) $@ $(AXPBY_AMB_OBJS)
 	$(VB)$(RANLIB) $@
 

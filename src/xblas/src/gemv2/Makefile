@@ -11,6 +11,7 @@ GEMV2_AMB_OBJS = $(GEMV2_AMB_SRCS:.c=.o)
 lib-amb: $(LIBDIR)/libxblas-amb.a
 
 $(LIBDIR)/libxblas-amb.a: $(GEMV2_AMB_OBJS)
+	@echo "[XBLAS] AR $@"
 	$(VB)$(AR) $@ $(GEMV2_AMB_OBJS)
 	$(VB)$(RANLIB) $@
 

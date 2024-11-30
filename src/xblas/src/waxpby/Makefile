@@ -11,6 +11,7 @@ WAXPBY_AMB_OBJS = $(WAXPBY_AMB_SRCS:.c=.o)
 lib-amb: $(LIBDIR)/libxblas-amb.a
 
 $(LIBDIR)/libxblas-amb.a: $(WAXPBY_AMB_OBJS)
+	@echo "[XBLAS] AR $@"
 	$(VB)$(AR) $@ $(WAXPBY_AMB_OBJS)
 	$(VB)$(RANLIB) $@
 

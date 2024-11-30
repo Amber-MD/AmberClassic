@@ -11,6 +11,7 @@ DOT_AMB_OBJS = $(DOT_AMB_SRCS:.c=.o)
 lib-amb: $(LIBDIR)/libxblas-amb.a
 
 $(LIBDIR)/libxblas-amb.a: $(DOT_AMB_OBJS)
+	@echo "[XBLAS] AR $@"
 	$(VB)$(AR) $@ $(DOT_AMB_OBJS)
 	$(VB)$(RANLIB) $@
 
