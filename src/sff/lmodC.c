@@ -108,9 +108,11 @@ static FILE *nabout;
 /*
     Defined elsewhere: (../arpack/dsarpack.f, parm.c)
 */
-extern int dsarpack_();
+extern int dsarpack_( int *, int *, int *, int *, int *, double *, double *,
+      double *, int *, int *, int *, int *, double *, double *, double *, 
+      double *, double *, double *, int *, double *, double *, int *, int * );
 extern int get_mytaskid();      /* for MPI */
-extern int setseed();           /* for use of NAB's own    */
+extern int setseed( int * );      /* for use of NAB's own    */
 extern int rseed();             /* random number genarator */
 extern double rand2();          /* see rand2.c             */
 

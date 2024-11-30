@@ -2485,8 +2485,8 @@ int n1, n2, n3, n4;
 	n4 = parm[id4].equtype;
 	if(n1 == 0 && n2 == 0) return 0.0;
 
-	tn1 = fabs(n1) + fabs(n2);
-	tn2 = fabs(n3) + fabs(n4);
+	tn1 = abs(n1) + abs(n2);
+	tn2 = abs(n3) + abs(n4);
 	if(tn2 == 3 && tn1 != 3) return wt.EQUTYPE;
 	if(tn1 == 3 && tn2 != 3) return wt.EQUTYPE;
 /*	e.g. for X-cd-cf-X, both X-cd-cd-X and X-cf-cf are possible replacement.  
