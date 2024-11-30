@@ -45,6 +45,7 @@ fftw_flags=""
 mkl="no"    
 moft="moft"
 installtype="serial"
+xblasflag="-DCONFIG_FC_UNDERSCORE"
 
 plumed="no"
 
@@ -731,7 +732,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags
+CFLAGS=$gccflags $clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
@@ -752,7 +753,7 @@ SHORT_ENE=$short_ene
 #  (6)  other flags:
 
 LDFLAGS=$ldflags
-AR=    ar rv
+AR=    ar r
 RANLIB=ranlib
 MV=mv
 CP=cp
