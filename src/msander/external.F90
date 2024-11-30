@@ -9,16 +9,12 @@
 !
 !*******************************************************************************
 
-#include "copyright.h"
 #include "../include/dprec.fh"
 #include "../include/assert.fh"
 
 module external_module
 
   use UtilitiesModule, only: Upcase
-#ifdef QUICK
-  use quick_api_module, only : setQuickJob, getQuickEnergyGradients, deleteQuickJob
-#endif
 #ifdef TORCHANI
   use torchani, only: &
       torchani_energy_force, &
@@ -103,22 +99,6 @@ module external_module
     integer :: iostat
     iostat = 0
 #endif
-#ifdef QUICK
-    character(256) :: keys
-#endif
-
-!    write (6,*) " -> Printing atom names"
-!    do i=1,natom
-!      write (6,*) "  * ", ih(m04+i-1)
-!    end do
-!    write (6,*) " -> Printing residue names"
-!    do i=1,nres
-!      write (6,*) "  * ", ih(m02+i-1)
-!    end do
-!    write (6,*) " -> Printing residue pointers"
-!    do i=1,nres
-!      write (6,*) "  * ", ix(i02+i-1)
-!    end do
 
     extprog = ''
     json = ''
@@ -142,12 +122,6 @@ module external_module
       call mexit(6, 1)
     end if
 
-    if (upcase(extprog) .eq. 'KMMD') then
-        call kmmd_init(trim(json)//CHAR(0))
-        return
-    end if
-    
-    
     do i=1, natom
       if(ix(i100) .eq. 1) then
         atomicnumber(i) = ix(i100+i)
@@ -156,74 +130,6 @@ module external_module
       end if
     end do
 
-    ! For MBX
-    if (Upcase(extprog) .eq. 'MBX') then
-#ifdef MBX
-      nmon = nres
-
-      allocate(nats(nmon),monomers(nmon),at_name(natom))
-
-      cnt = 1
-      do i=1,nmon
-         isvalid = .True.
-         if (ih(m02+i-1) == "WAT") then
-            val = 3
-            monomers(i) = "h2o"
-            at_name(cnt+0) = "O"
-            if (atomicnumber(cnt+0) .ne. 8) isvalid = .False.
-            at_name(cnt+1) = "H"
-            if (atomicnumber(cnt+1) .ne. 1) isvalid = .False.
-            at_name(cnt+2) = "H"
-            if (atomicnumber(cnt+2) .ne. 1) isvalid = .False.
-            cnt = cnt + val
-         else if (ih(m02+i-1) == "N2O") then
-            val = 7
-            monomers(i) = "n2o5"
-            at_name(cnt+0) = "O"
-            if (atomicnumber(cnt+0) .ne. 8) isvalid = .False.
-            at_name(cnt+1) = "N"
-            if (atomicnumber(cnt+1) .ne. 7) isvalid = .False.
-            at_name(cnt+2) = "N"
-            if (atomicnumber(cnt+2) .ne. 7) isvalid = .False.
-            at_name(cnt+3) = "O"
-            if (atomicnumber(cnt+3) .ne. 8) isvalid = .False.
-            at_name(cnt+4) = "O"
-            if (atomicnumber(cnt+4) .ne. 8) isvalid = .False.
-            at_name(cnt+5) = "O"
-            if (atomicnumber(cnt+5) .ne. 8) isvalid = .False.
-            at_name(cnt+6) = "O"
-            if (atomicnumber(cnt+6) .ne. 8) isvalid = .False.
-            cnt = cnt + val
-         else
-            write(6, '(a,a,a)') 'ERROR: The residue ',ih(m02+i-1),' is not recognized by MBX!'
-            call mexit(6, 1)
-         end if
-         if (val == ix(i02+i)-ix(i02+i-1)) then
-            nats(i) = val
-         else
-            write(6, '(a,a,a)') 'ERROR: The number of atoms in residue ',ih(m02+i-1),' does not match the expected by MBX!'
-            call mexit(6, 1)
-         end if
-         if (.not. isvalid) then
-            write(6, '(a,a,a)') 'ERROR: The order or type of the atoms in residue ',ih(m02+i-1),&
-                                    ' does not match the expected by MBX!'
-            call mexit(6, 1)
-         end if
-      end do
-
-      do i =1, natom
-        at_name(i)=trim(at_name(i))//CHAR(0)
-      end do
-      do i=1,nmon
-        monomers(i) = trim(monomers(i))//CHAR(0)
-      end do
-
-      if (json /= '') then
-        call initialize_system(coord, nats, at_name, monomers, nmon, trim(json)//CHAR(0))
-      else
-        call initialize_system(coord, nats, at_name, monomers, nmon)
-      end if
-#endif
 #ifdef TORCHANI
     elseif (upcase(extprog) == 'TORCHANI') then
         ! Init the "ani" namelist vars
@@ -262,39 +168,6 @@ module external_module
             use_cuaev &
         )
 #endif  /* TORCHANI */
-    ! For Quick
-    else if (Upcase(extprog) .eq. 'QUICK') then
-#ifdef QUICK
-      ! Check if input flags are ok
-      if (keywords .eq. '' .and. method .eq. '') then
-        write(6, '(a,a)') 'ERROR: Please specify the keywords flag or method and basis',&
-                              ' flags for QUICK in the extpot namelist!'
-        call mexit(6, 1)
-      end if
-      if (keywords .eq. '' .and. method .ne. '' .and. basis .eq. '') then
-        write(6, '(a,a)') 'ERROR: Please specify the basis set for QUICK using the',&
-                              ' basis flag in the extpot namelist!'
-        call mexit(6, 1)
-      end if
-
-      ! Constructing the keywords flag, if needed
-      if (keywords .eq. '') then
-        if (Upcase(method) .eq. 'HF') then
-          write(keys, '(4a,2(i0,a))') trim(method), ' BASIS=', trim(basis),&
-                                      ' CHARGE=', charge, ' MULT=', mult,' GRADIENT'
-        else
-          write(keys, '(5a,2(i0,a))') 'DFT ', trim(method), ' BASIS=', trim(basis),&
-                                      ' CHARGE=', charge, ' MULT=', mult,' GRADIENT'
-        end if
-      else
-        write(keys, '(a)') trim(keywords)
-      end if
-      call setQuickJob(outfprefix, keys, natom, atomicnumber, .true., ierr)
-      if ( ierr /= 0 ) then
-        write(6, '(a)') 'ERROR: setting up Quick in setQuickJob at external.F90'
-        call mexit(6, 1)
-      end if
-#endif
     else
       write(6, '(a,a,a)') 'ERROR: External program ',trim(extprog),&
              ' is not valid! Please set a valid value in the extprog flag'
@@ -315,32 +188,6 @@ module external_module
     _REAL_   ::  pot_ene
     integer  ::  i, i3
     _REAL_   ::  coord(3*natom), grads(3*natom)
-#ifdef QUICK
-    integer  ::  ierr
-    _REAL_, dimension(3,natom) :: crd_quick, frc_quick
-    _REAL_, dimension(:,:), pointer :: xc_coord       => null()
-    _REAL_, dimension(:,:), pointer :: ptchgGrad      => null()
-#endif
-
-    ! For MBX
-    if (Upcase(extprog) .eq. 'MBX') then
-#ifdef MBX
-      do i = 1, natom
-        i3=3*(i-1)
-        coord(3*(i-1)+1) = crd(i3+1)
-        coord(3*(i-1)+2) = crd(i3+2)
-        coord(3*(i-1)+3) = crd(i3+3)
-      end do
-
-      call get_energy_g(coord, natom, pot_ene, grads)
-
-      do i = 1, natom
-        i3=3*(i-1)
-        frc(i3+1) = frc(i3+1) - grads(3*(i-1)+1)
-        frc(i3+2) = frc(i3+2) - grads(3*(i-1)+2)
-        frc(i3+3) = frc(i3+3) - grads(3*(i-1)+3)
-      end do
-#endif
 #ifdef TORCHANI
     elseif (upcase(extprog) .eq. "TORCHANI") then
         ! Delegate non-PBC force calculation to TorchANI-Amber
@@ -363,49 +210,9 @@ module external_module
             pot_ene &
         )
 #endif /* TORCHANI */
-    ! For Quick
-    else if (Upcase(extprog) .eq. 'QUICK') then
-#ifdef QUICK
-      do i = 1, natom
-        crd_quick(1,i) = crd(3*(i-1)+1)
-        crd_quick(2,i) = crd(3*(i-1)+2)
-        crd_quick(3,i) = crd(3*(i-1)+3)
-        frc_quick(1,i) = 0.0
-        frc_quick(2,i) = 0.0
-        frc_quick(3,i) = 0.0
-      end do
-      call getQuickEnergyGradients(crd_quick, 0, xc_coord, pot_ene, frc_quick, ptchgGrad, ierr)
-      if ( ierr /= 0 ) then
-        write(6, '(a)') 'ERROR: getting energy and gradient with Quick in getQuickEnergyGradients at external.F90'
-        call mexit(6, 1)
-      end if
-      do i = 1, natom
-        frc(3*(i-1)+1) = - frc_quick(1,i) * AU_TO_EV * EV_TO_KCAL / BOHRS_TO_A
-        frc(3*(i-1)+2) = - frc_quick(2,i) * AU_TO_EV * EV_TO_KCAL / BOHRS_TO_A
-        frc(3*(i-1)+3) = - frc_quick(3,i) * AU_TO_EV * EV_TO_KCAL / BOHRS_TO_A
-      end do
-      pot_ene = pot_ene * AU_TO_EV * EV_TO_KCAL
-#endif
-    else if (upcase(extprog) .eq. 'KMMD') then
-      do i = 1, natom
-        coord(3*(i-1)+1) = crd(3*(i-1)+1)
-        coord(3*(i-1)+2) = crd(3*(i-1)+2)
-        coord(3*(i-1)+3) = crd(3*(i-1)+3)
-        grads(3*(i-1)+1) = 0.0
-        grads(3*(i-1)+2) = 0.0
-        grads(3*(i-1)+3) = 0.0
-      end do
-
-      call kmmd_frccalc(coord, grads, pot_ene)
-
-      do i = 1, natom
-        frc(3*(i-1)+1) = frc(3*(i-1)+1) + grads(3*(i-1)+1)
-        frc(3*(i-1)+2) = frc(3*(i-1)+2) + grads(3*(i-1)+2)
-        frc(3*(i-1)+3) = frc(3*(i-1)+3) + grads(3*(i-1)+3)
-      end do
     end if
 
-  end subroutine
+  end subroutine gb_external
 
   subroutine pme_external(crd, frc, pot_ene)
 
@@ -445,91 +252,24 @@ module external_module
     endif
 #endif  /* TORCHANI */
 
-    ! For MBX
-    if (Upcase(extprog) .eq. 'MBX') then
-#ifdef MBX
-      do i = 1, natom
-        i3=3*(i-1)
-        coord(3*(i-1)+1) = crd(i3+1)
-        coord(3*(i-1)+2) = crd(i3+2)
-        coord(3*(i-1)+3) = crd(i3+3)
-      end do
-
-      box(1) = ucell(1,1)
-      box(2) = ucell(2,1)
-      box(3) = ucell(3,1)
-      box(4) = ucell(1,2)
-      box(5) = ucell(2,2)
-      box(6) = ucell(3,2)
-      box(7) = ucell(1,3)
-      box(8) = ucell(2,3)
-      box(9) = ucell(3,3)
-
-      call get_energy_pbc_g(coord, natom, box, pot_ene, grads)
-
-      do i = 1, natom
-        i3=3*(i-1)
-        frc(i3+1) = frc(i3+1) - grads(3*(i-1)+1)
-        frc(i3+2) = frc(i3+2) - grads(3*(i-1)+2)
-        frc(i3+3) = frc(i3+3) - grads(3*(i-1)+3)
-      end do
-#endif
     end if
     
-    if (upcase(extprog) .eq. 'KMMD') then
-      do i = 1, natom
-        i3=3*(i-1)
-        coord(3*(i-1)+1) = crd(i3+i)
-        coord(3*(i-1)+2) = crd(i3+i+1)
-        coord(3*(i-1)+3) = crd(i3+i+2)
-        grads(3*(i-1)+1) = 0.0
-        grads(3*(i-1)+2) = 0.0
-        grads(3*(i-1)+3) = 0.0
-      end do
-
-      call kmmd_frccalc(coord, grads, pot_ene)
-
-      do i = 1, natom
-        i3=3*(i-1)
-        frc(i3+1) = frc(i3+1) + grads(3*(i-1)+1)
-        frc(i3+2) = frc(i3+2) + grads(3*(i-1)+2)
-        frc(i3+3) = frc(i3+3) + grads(3*(i-1)+3)
-      end do
-    end if
-
-  end subroutine
+  end subroutine pme_external
 
   subroutine external_cleanup()
+  end subroutine external_cleanup
 
-    IMPLICIT NONE
 
-    integer :: ierr
+! Calculate the energy and force from an external potential, using sander's
+! neighborlist At the point this function is called, the sander_neighborlist
+! needs to be built using a dummy mask that includes all pairs of atoms
+! NOTE: The coordinates passed to this function are image-ordered, and thus
+! don't match with the atomic numbers passed to external_init, re-ordering
+! is necessary if this is important for the external potential
 
-    ! For Quick
-    if (Upcase(extprog) .eq. 'QUICK') then
-#ifdef QUICK
-       call deleteQuickJob(ierr)
-       if ( ierr /= 0 ) then
-         write(6, '(a)') 'ERROR: ending Quick in deleteQuickJob at external.F90'
-         call mexit(6, 1)
-       end if
-#endif
-    end if
-
-  end subroutine
-
-! Calculate the energy and force from an external potential, using sander's neighborlist
-! At the point this function is called, the sander_neighborlist needs to be built
-! using a dummy mask that includes all pairs of atoms
-! NOTE: The coordinates passed to this function are image-ordered, and thus don't match
-! with the atomic numbers passed to external_init, re-ordering is necessary if this
-! is important for the external potential
 subroutine pme_external_from_neighborlist( &
-    sander_neighborlist, &
-    crd, &
-    frc, &
-    ene_pot &
-)
+    sander_neighborlist, crd, frc, ene_pot )
+
     ! numvdw and numbnd take atom-idx, not img-idx
     ! backptr takes img-idx and converts it to an atom-idx
     use nblist, only: tranvec, bckptr, numvdw, numhbnd, imagcrds, recip, &
@@ -552,11 +292,13 @@ subroutine pme_external_from_neighborlist( &
 #ifdef TORCHANI
     allocate(atom_ordered_coords(3, natom))
 
-    ! Both the "atom_ordered_coords" and the "image coords" are mapped to the central cell
-    ! But the "atom_ordered_coords" have the same order os the "atomic nums" passed to external_init
-    ! This could be re-written in such a way that only the atomic nums are
-    ! flipped once and cached, but 1 copy of the coords is not a bottleneck for ANI,
-    ! so that optimization is not really worth it
+    ! Both the "atom_ordered_coords" and the "image coords" are mapped to
+    ! the central cell But the "atom_ordered_coords" have the same order os
+    ! the "atomic nums" passed to external_init This could be re-written in
+    ! such a way that only the atomic nums are flipped once and cached, but
+    ! 1 copy of the coords is not a bottleneck for ANI, so that optimization
+    ! is not really worth it
+
     do j = 1, natom
         atom_ordered_coords(:, bckptr(j)) = imagcrds(:, j)
     end do
@@ -570,13 +312,16 @@ subroutine pme_external_from_neighborlist( &
     endif
 
     if (upcase(extprog) == "TORCHANI") then
-        ! sander_neighborlist holds 1-idxing img_idxs (into "img coords"), it
-        ! has shape (max-num-pairs,). Only the first (num-pairs,) are useful.
-        ! The order is relevant in this list, and corresponds to the img-order
+        ! sander_neighborlist holds 1-idxing img_idxs (into "img coords"),
+        ! it has shape (max-num-pairs,). Only the first (num-pairs,) are
+        ! useful.  The order is relevant in this list, and corresponds to
+        ! the img-order
 
         ! The obtained ani_neighborlist holds 0-idxing atom_idxs.
-        ! ani_neighborlist and ani_shifts are fshape (num-pairs, 2) and (3, num-pairs). The
-        ! order of the pairs is not relevant, but it is consistent for both
+        ! ani_neighborlist and ani_shifts are fshape (num-pairs, 2) and (3,
+        ! num-pairs). The order of the pairs is not relevant, but it is
+        ! consistent for both
+
         call convert_sander_neighborlist_to_ani_fmt( &
             bckptr, &
             numvdw, &
@@ -597,5 +342,6 @@ subroutine pme_external_from_neighborlist( &
         )
     end if
 #endif
-end subroutine
+end subroutine pme_external_from_neighborlist
+
 end module external_module

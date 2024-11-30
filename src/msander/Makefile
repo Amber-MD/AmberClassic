@@ -68,7 +68,7 @@ LESOBJ= \
     sander.LES.o  sander_lib.o set.LES.o sglds.o \
     shake.o short_ene.LES.o softcore.o \
     stack.o state.o thermo_int.o trajene.o wallclock.o \
-    xminC.o veclib.o dsarpack.o nxtsec.o sinr_t.o
+    xminC.o veclib.o dsarpack.o nxtsec.o sinr_t.o external.o
 
 XRAY_OBJS = \
    xray_globals.o xray_interface.o xray_interface_impl_cpu.o \
