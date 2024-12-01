@@ -31,7 +31,7 @@ int read_mdcrds(global_options_struct *global_options, parm_struct *parm_datas, 
   // Check that a coordinate file of some sort is defined 
   if (!global_options->mdcrd_list && !*s_datas) {
     printf("*** ERROR - must specify coordinate file(s) with -c or -cf! ***\n");
-    command_line_help("paramfit");
+    command_line_help();
     return UNKNOWN_OPT;
   }
   
