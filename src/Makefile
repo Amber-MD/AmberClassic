@@ -1,4 +1,4 @@
-#   top-level Makefile for msander
+#   top-level Makefile for AmberClassic
 
 include ../config.h
 
@@ -11,6 +11,7 @@ serial:
 	@cd addles && $(MAKE) addles
 	@cd leap && $(MAKE) leap
 	@cd sff && $(MAKE) sff
+	@cd nabc && $(MAKE) nabc
 	@cd antechamber && $(MAKE) install_ac
 	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
@@ -30,6 +31,11 @@ cuda:
 
 mpicuda:
 	@cd msander && $(MAKE) msander.cuda.MPI
+
+nab: serial
+	@cd ucpp-1.3 && make ucpp
+	@cd nab && make install_nab
+#	@cd nss & make install_nss  # compiles, but not tested yet
 
 clean:
 	-(cd blas && $(MAKE) clean )

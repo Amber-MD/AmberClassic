@@ -25,66 +25,66 @@ SYMOBJS=     		\
 	tss.o
 
 all:	libsym	\
-	matextract$(SFX)	\
-	matgen$(SFX)  		\
-	matmerge$(SFX)		\
-	matmul$(SFX)		\
-	transform$(SFX)		\
-	tss_init$(SFX)		\
-	tss_main$(SFX)		\
-	tss_next$(SFX)
+	matextract	\
+	matgen  		\
+	matmerge		\
+	matmul		\
+	transform		\
+	tss_init		\
+	tss_main		\
+	tss_next
 
-install:  all
-	mv matextract$(SFX) matgen$(SFX) matmerge$(SFX) matmul$(SFX) \
-		transform$(SFX) tss_init$(SFX) tss_main$(SFX) \
-		tss_next$(SFX) $(BINDIR)
+install_nss:  all
+	mv matextract matgen matmerge matmul \
+		transform tss_init tss_main \
+		tss_next $(BINDIR)
 
 uninstall: clean
-	/bin/rm -f $(BINDIR)/matextract$(SFX) $(BINDIR)/matgen$(SFX) \
-		$(BINDIR)/matmerge$(SFX) \
-		$(BINDIR)/matmul$(SFX) $(BINDIR)/transform$(SFX) \
-		$(BINDIR)/tss_init$(SFX) \
-		$(BINDIR)/tss_main$(SFX) $(BINDIR)/tss_next$(SFX)
+	/bin/rm -f $(BINDIR)/matextract $(BINDIR)/matgen \
+		$(BINDIR)/matmerge \
+		$(BINDIR)/matmul $(BINDIR)/transform \
+		$(BINDIR)/tss_init \
+		$(BINDIR)/tss_main $(BINDIR)/tss_next
 
 libsym:	$(SYMOBJS) 
 	$(AR) $(LIBDIR)/libnab.a $(SYMOBJS)
 	-ranlib $(LIBDIR)/libnab.a
 
-matextract$(SFX): matextract.o
-	$(NAB) -o matextract$(SFX) matextract.o
+matextract: matextract.o
+	$(NAB) -o matextract matextract.o
 
-matgen$(SFX):	matgen.o
-	$(NAB) -o matgen$(SFX) matgen.o
+matgen:	matgen.o
+	$(NAB) -o matgen matgen.o
 
-matmerge$(SFX):	matmerge.o
-	$(NAB) -o matmerge$(SFX) matmerge.o
+matmerge:	matmerge.o
+	$(NAB) -o matmerge matmerge.o
 
-matmul$(SFX):	matmul.o
-	$(NAB) -o matmul$(SFX) matmul.o
+matmul:	matmul.o
+	$(NAB) -o matmul matmul.o
 
-transform$(SFX):	transform.o
-	$(NAB) -o transform$(SFX) transform.o
+transform:	transform.o
+	$(NAB) -o transform transform.o
 
-tss_init$(SFX):	tss_init.o
-	$(NAB) -o tss_init$(SFX) tss_init.o
+tss_init:	tss_init.o
+	$(NAB) -o tss_init tss_init.o
 
-tss_main$(SFX):	tss_main.o
-	$(NAB) -o tss_main$(SFX) tss_main.o
+tss_main:	tss_main.o
+	$(NAB) -o tss_main tss_main.o
 
-tss_next$(SFX):	tss_next.o
-	$(NAB) -o tss_next$(SFX) tss_next.o
+tss_next:	tss_next.o
+	$(NAB) -o tss_next tss_next.o
 
 clean:
 	/bin/rm -f	\
 	*.o 		\
-	matextract$(SFX)	\
-	matgen$(SFX)		\
-	matmerge$(SFX)	\
-	matmul$(SFX)		\
-	transform$(SFX)	\
-	tss_init$(SFX)	\
-	tss_main$(SFX)	\
-	tss_next$(SFX)	\
+	matextract	\
+	matgen		\
+	matmerge	\
+	matmul		\
+	transform	\
+	tss_init	\
+	tss_main	\
+	tss_next
 	ma		\
 	mg_2_fold	\
 	mg_3_fold	\
