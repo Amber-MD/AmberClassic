@@ -768,6 +768,8 @@ SHORT_ENE=$short_ene
 
 #  (6)  other flags:
 
+# (FLIBS is for nab)
+FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $ciflib $flibs_arch
 LDFLAGS=$ldflags
 AR=    ar rv
 RANLIB=ranlib
