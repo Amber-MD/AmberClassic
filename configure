@@ -125,7 +125,7 @@ while [ $# -gt 0 ]; do
             compiler="clang"
             clangf="-DCLANG"
             cc="clang"
-            cxx="clang"
+            cxx="clang++"
             fc="gfortran"
             gccflags=""
             optflags="-g -O3";;
@@ -240,7 +240,8 @@ int main()
 }
 EOF
 
-printf "Testing $cc ..."
+cc_version=`$cc --version 2>&1 | head -1`
+printf "Testing $cc_version ..."
 $cc -o testp testp.c
 ./testp | grep "testing a C program" > /dev/null
 status=$?
@@ -264,7 +265,8 @@ cat <<EOF >testp.f
       end program testf
 EOF
 
-printf "Testing $fc ..."
+fc_version=`$fc --version 2>&1 | head -1`
+printf "Testing $fc_version ..."
 $fc -o testp testp.f
 ./testp | grep "testing a Fortran program" > /dev/null
 status=$?
@@ -511,9 +513,9 @@ elif [ "$flibs_fftw" != "" ]; then
 
    if [ ! -s "lib/libfftw3.a" ] || \
        [ "$mpi" == "yes" -a ! -s "lib/libfftw3_mpi.a" ] || \
-       [ "$openmp" == "yes" -a ! -s "lib/libfftw3_omp.a" ]; then
+       [ "$cc" != "clang" -a "$openmp" == "yes" -a ! -s "lib/libfftw3_omp.a" ]; then
 
-       if [ "$openmp" == "no" ]; then
+       if [ "$openmp" == "no" -o "$cc" == "clang" ]; then
           enableomp=""
        else
           enableomp="--enable-openmp"
@@ -697,6 +699,10 @@ cat <<EOF > config.h
 
 #  AmberClasic configuration file.
 #  Created on `date` via $command
+#
+#  Compilers:
+#      $cc_version
+#      $fc_version
 
 ###############################################################################
 
