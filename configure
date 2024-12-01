@@ -776,6 +776,17 @@ PLUMED_DEPENDENCIES=Plumed.o
 
 EOF
 
+#--------------------------------------------------------------------------
+#  create the config_test.h file:
+#--------------------------------------------------------------------------
+
+cat <<EOF > config_testing.h
+
+#  AmberClasic configuration file for testing.
+
+INSTALLTYPE=$installtype
+EOF
+
 printf "\nThe next step is to type 'make clean && make install'\n\n"
 
 exit 0

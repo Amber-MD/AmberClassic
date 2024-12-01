@@ -1,4 +1,4 @@
-include ../config.h
+include ../config_testing.h
 
 test:  test.$(INSTALLTYPE)
 
