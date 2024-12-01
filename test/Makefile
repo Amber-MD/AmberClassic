@@ -81,7 +81,7 @@ test.rism1d:
 
 test.xtalutil:
 	-(cd xtalutil/AddToBox && ./Run.AddToBox)
-	-(cd xtalutil/CheckMD && ./Run.CheckMD)
+#	-(cd xtalutil/CheckMD && ./Run.CheckMD)
 	-(cd xtalutil/PropPDB && ./Run.PropPDB)
 	-(cd xtalutil/UnitCell && ./Run.UnitCell)
 

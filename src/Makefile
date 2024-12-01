@@ -42,11 +42,14 @@ clean:
 	-(cd leap && $(MAKE) clean )
 	-(cd sff && $(MAKE) clean )
 	-(cd antechamber && $(MAKE) clean )
+	-(cd sqm && $(MAKE) clean )
 	-(cd nmr_aux && $(MAKE) clean )
 	-(cd xtalutil && $(MAKE) clean )
 	-(cd paramfit && $(MAKE) clean )
 	-(cd moft && $(MAKE) clean )
 	-(cd saxs && $(MAKE) clean )
+	-(cd xblas && $(MAKE) clean )
+	-(cd gbnsr6 && $(MAKE) clean )
 
 uninstall: clean
 	-(cd $(BINDIR) && /bin/rm -rf *)

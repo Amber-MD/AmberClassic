@@ -1,12 +1,14 @@
 #!/bin/sh
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
-logdir="$AMBERCLASSICHOME/logs"
+logdir="../logs"
 logprefix="${logdir}/${date_string}"
 logfile="${logprefix}.log"
 difffile="${logprefix}.diff"
 
 mkdir -p ${logdir}
+
+source ../AmberClassic.sh 
 
 echo "Running AmberClassic serial tests on $date_string" | tee ${logfile}
 
