@@ -1,0 +1,26 @@
+axis2frame.o: axis2frame.c nabc.h /home/case/nabc/include/sff.h
+bonded_atoms.o: bonded_atoms.c nabc.h /home/case/nabc/include/sff.h
+deform_ener.o: deform_ener.c defreal.h
+fd_helix.o: fd_helix.c
+frameutil.o: frameutil.c nabc.h /home/case/nabc/include/sff.h matop.h \
+ memutil.h defreal.h molutil.h select_atoms.h
+getdist.o: getdist.c nabc.h /home/case/nabc/include/sff.h
+jacobi.o: jacobi.c defreal.h memutil.h
+match.o: match.c nabc.h /home/case/nabc/include/sff.h select_atoms.h
+matop.o: matop.c matop.h nabc.h /home/case/nabc/include/sff.h
+molio.o: molio.c nabc.h /home/case/nabc/include/sff.h errormsg.h \
+ memutil.h defreal.h
+molsurf.o: molsurf.c nabc.h /home/case/nabc/include/sff.h molsurf.h \
+ molutil.h nabc.h
+molutil.o: molutil.c nabc.h /home/case/nabc/include/sff.h errormsg.h \
+ memutil.h defreal.h molutil.h select_atoms.h
+pointutil.o: pointutil.c nabc.h /home/case/nabc/include/sff.h
+prm.o: prm.c nabc.h /home/case/nabc/include/sff.h molutil.h ../sff/prm.h
+regexp.o: regexp.c
+select_atoms.o: select_atoms.c nabc.h /home/case/nabc/include/sff.h \
+ select_atoms.h molutil.h
+stringutil.o: stringutil.c nabc.h /home/case/nabc/include/sff.h
+traceback.o: traceback.c errormsg.h
+wc_basepair.o: wc_basepair.c nabc.h /home/case/nabc/include/sff.h
+wc_complement.o: wc_complement.c nabc.h /home/case/nabc/include/sff.h
+wc_helix.o: wc_helix.c nabc.h /home/case/nabc/include/sff.h

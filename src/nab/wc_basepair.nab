@@ -1,0 +1,94 @@
+// wc_basepair() - create Watson/Crick base pair
+#define AT_SEP 8.29
+#define CG_SEP 8.27
+molecule wc_basepair( residue sres, residue ares )
+{
+	molecule m, m_sense, m_anti;
+	float	sep;
+	string arname, srname;
+	string xtail, xhead;
+	string ytail, yhead;
+	matrix	mat;
+
+	m = newmolecule();
+	m_sense = newmolecule();
+	m_anti = newmolecule();
+	addstrand( m, "sense" );
+	addstrand( m, "anti" );
+	addstrand( m_sense, "sense" );
+	addstrand( m_anti, "anti" );
+
+	srname = getresname( sres );
+	arname = getresname( ares );
+	ytail = "sense::C1'";
+	yhead = "anti::C1'";
+	if( ( srname == "ADE" ) || ( srname =~ "D*A[35]*" ) ){
+		sep = AT_SEP;
+		xtail = "sense::C5";
+		xhead = "sense::N3";
+		addresidue( m_sense, "sense", sres );
+		setframe( 2, m_sense, "::C4", "::C5", "::N3", "::C4", "::N1" );
+	}else if( ( srname == "CYT" ) || ( srname =~ "D*C[35]*" ) ){
+		sep = CG_SEP;
+		xtail = "sense::C6";
+		xhead = "sense::N1";
+		addresidue( m_sense, "sense", sres );
+		setframe( 2, m_sense, "::C6", "::C5", "::N1", "::C6", "::N3" );
+	}else if( ( srname == "GUA" ) || ( srname =~ "D*G[35]*" ) ){
+		sep = CG_SEP;
+		xtail = "sense::C5";
+		xhead = "sense::N3";
+		addresidue( m_sense, "sense", sres );
+		setframe( 2, m_sense, "::C4", "::C5", "::N3", "::C4", "::N1" );
+	}else if( ( srname == "THY" ) || ( srname =~ "DT[35]*" ) ){
+		sep = AT_SEP;
+		xtail = "sense::C6";
+		xhead = "sense::N1";
+		addresidue( m_sense, "sense", sres );
+		setframe( 2, m_sense, "::C6", "::C5", "::N1", "::C6", "::N3" );
+	}else if( ( srname == "URA" ) || ( srname =~ "U[35]*" ) ){
+		sep = AT_SEP;
+		xtail = "sense::C6";
+		xhead = "sense::N1";
+		addresidue( m_sense, "sense", sres );
+		setframe( 2, m_sense, "::C6", "::C5", "::N1", "::C6", "::N3" );
+	}else{
+		fprintf( stderr,"wc_basepair : unknown sres %s\n",srname );
+ 		exit( 1 );
+	}
+	if( ( arname == "ADE" ) || ( arname =~ "D*A[35]*" ) ){
+		addresidue( m_anti, "anti", ares );
+		setframe( 2, m_anti, "::C4", "::C5", "::N3", "::C4", "::N1" );
+	}else if( ( arname == "CYT" ) || ( arname =~ "D*C[35]*" ) ){
+		addresidue( m_anti, "anti", ares );
+		setframe( 2, m_anti, "::C6", "::C5", "::N1", "::C6", "::N3" );
+	}else if( ( arname == "GUA" ) || ( arname =~ "D*G[35]*" ) ){
+		addresidue( m_anti, "anti", ares );
+		setframe( 2, m_anti, "::C4", "::C5", "::N3", "::C4", "::N1" );
+	}else if( ( arname == "THY" ) || ( arname =~ "DT[35]*" ) ){
+		addresidue( m_anti, "anti", ares );
+		setframe( 2, m_anti, "::C6", "::C5", "::N1", "::C6", "::N3" );
+	}else if( ( arname == "URA" ) || ( arname =~ "U[35]*" ) ){
+		addresidue( m_anti, "anti", ares );
+		setframe( 2, m_anti, "::C6", "::C5", "::N1", "::C6", "::N3" );
+	}else{
+		fprintf( stderr,"wc_basepair : unknown ares %s\n",arname );
+ 		exit( 1 );
+	}
+	
+	alignframe( m_sense, NULL );
+	alignframe( m_anti, NULL );
+	mat = newtransform( 0., 0., 0., 180., 0., 0. );
+	transformmol( mat, m_anti, NULL );
+	mat = newtransform( 0., sep, 0., 0., 0., 0. );
+	transformmol( mat, m_anti, NULL );
+	mergestr( m, "sense", "last", m_sense, "sense", "first" );
+	mergestr( m, "anti", "last", m_anti, "anti", "first" );
+
+	freemolecule( m_sense );
+	freemolecule( m_anti );
+
+	setframe( 2, m, "::C1'", xtail, xhead, ytail, yhead );
+	alignframe( m, NULL );
+	return( m );
+};

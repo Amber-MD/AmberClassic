@@ -1,0 +1,41 @@
+// wc_complement() - create W/C string to seq.
+string	wc_complement( string seq, string rlib, string rlt )
+//    (note the rlib is unused: just there for backwards compatibility)
+{
+	string	acbase, base, wcbase, wcseq;
+	int	i, len;
+
+	if( rlt == "dna" )
+		acbase = "t";
+	else if( rlt == "rna" )
+		acbase = "u";
+	else{
+		fprintf( stderr,
+		"wc_complement: rlt (%s) is not dna/rna, has no W/C complement\n",
+			rlt );
+		exit( 1 );
+	}
+	
+	len = length( seq );
+	wcseq = NULL;
+	for( i = 1; i <= len; i = i + 1 ){
+		base = substr( seq, i, 1 );
+		if( base == "a" || base == "A" )
+			wcbase = acbase;
+		else if( base == "c" || base == "C" )
+			wcbase = "g";
+		else if( base == "g" || base == "G" )
+			wcbase = "c";
+		else if( base == "t" || base == "T" )
+			wcbase = "a";
+		else if( base == "u" || base == "U" )
+			wcbase = "a";
+		else{
+			fprintf( stderr, "wc_complement: unknown base %s\n",
+				base );
+			exit( 1 );
+		}
+		wcseq = wcseq + wcbase;
+	}
+	return( wcseq );
+};

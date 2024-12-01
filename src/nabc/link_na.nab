@@ -1,0 +1,163 @@
+molecule build( string resletter, string library, string strandname )
+{
+	residue in_res;
+	string resname;
+	molecule newmol;
+
+	in_res = getresidue(resletter, library);
+	resname = getresname( in_res );
+	newmol = newmolecule();
+	addstrand( newmol, strandname );
+	addresidue( newmol, strandname, in_res );
+        return( newmol );
+};
+
+// creates extended conformation of nucleic acid sequence in 5'->3' direction:
+
+molecule link_na( string strandname, string seq, string reslib, 
+	string natype, string opts )
+{
+	molecule m1,m2;
+	matrix 	mat;
+	string 	rname;
+	float 	rotation,da,db,dai,dbi,delta_da,delta_db;
+	int 	i, len;
+
+	if( seq == NULL ){
+		fprintf( stderr, "link_na: no sequence\n" );
+		return( NULL );
+	}
+
+	setreslibkind( reslib, natype );
+	len = length( seq );
+	rname = substr( seq, 1, 1 );
+	if( natype == "DNA" ) rname = "D" + rname;
+	
+	if( opts =~ "5" ) rname = rname + "5";
+
+	// create first residue, m1:
+	m1 = build( rname, reslib, strandname );	
+
+	for( i = 2; i <= len-1; i = i + 1 ){
+
+		rname = substr( seq, i, 1 );	// create next residue, m2
+		if( natype == "DNA" ) rname = "D" + rname;
+		m2 = build( rname, reslib, strandname );
+					
+					// align m1:O3'->C3' with m2:P->O5'
+		setframe(2, m2, ":1:P", ":1:OP2", ":1:OP1", ":1:P", ":1:O5'");
+		setframe(2, m1, sprintf(":%d:O3'",i-1),  // sets frames on
+			sprintf(":%d:C2'",i-1),  // both residues
+			sprintf(":%d:C4'",i-1),  // and aligns them.
+			sprintf(":%d:O3'",i-1),  
+			sprintf(":%d:C3'",i-1));
+		alignframe(m2, NULL);		
+		alignframe(m1, NULL);
+		mat = newtransform(0., 0., 1.595, 0., 0., 0.);
+		transformmol(mat, m2, NULL);	// rise m2 1.595A from m1
+		mat = newtransform(0., 0., 0., 150., 0., 0.);
+		transformmol(mat, m1, NULL);	// make C3'-O3'-P=120 deg.
+	
+		mergestr( m1, strandname, "last",	// connect new residue m2
+			m2, strandname, "first" ); // to growing chain m1
+		connectres( m1, strandname,
+			i-1, "O3'", i, "P" );
+
+		setframe(1, m1, sprintf(":%d:P",i),  // make O3'-P-O5'=103 deg.
+			sprintf(":%d:P",i),  // need to rotate 13 deg.
+			sprintf(":%d:O3'",i-1), // started at 90 deg, 
+			sprintf(":%d:P",i),	// since the O3'-C3' and
+			sprintf(":%d:O5'",i));  // P-O5' axes were parallel
+		alignframe(m1, NULL);
+		mat = newtransform(0., 0., 0., 0., 0., 13.);
+		transformmol(mat, m1, sprintf(":%d:",i));
+
+		setframe(1, m1, sprintf(":%d:P",i),	// make so OP1-O3'=
+			sprintf(":%d:P",i),	// OP2-O3' (symmetry)
+			sprintf(":%d:O3'",i-1), // since OP1, OP2
+			sprintf(":%d:P",i),	// are same chemically,
+			sprintf(":%d:O5'",i));	// make link symmetric
+		alignframe(m1, NULL);
+		da = dist(m1, sprintf(":%d:OP2",i), sprintf(":%d:O3'",i-1));	
+		db = dist(m1, sprintf(":%d:OP1",i), sprintf(":%d:O3'",i-1));	
+		mat = newtransform(0., 0., 0., 0., 1., 0.);
+		transformmol(mat, m1, sprintf(":%d:",i)); // rotate along
+		setframe(1, m1, sprintf(":%d:P",i),	// P-O5' bond 1 deg
+			sprintf(":%d:P",i),	// and measure the
+			sprintf(":%d:O3'",i-1), // change in atom
+			sprintf(":%d:P",i),	// distance between
+			sprintf(":%d:O5'",i));	// OP1-O3', O2'-O3'
+		alignframe(m1, NULL);
+		dai = dist(m1, sprintf(":%d:OP2",i), sprintf(":%d:O3'",i-1));	
+		dbi = dist(m1, sprintf(":%d:OP1",i), sprintf(":%d:O3'",i-1));	
+		delta_da = dai - da;	// compute the rotation needed to 
+		delta_db = dbi - db;	// ensure OP1-O3' = OP2-O3'
+		rotation = (dbi - dai)/(delta_da - delta_db);	// rotate last
+		mat = newtransform(0., 0., 0., 0., rotation, 0.); // residue
+		transformmol(mat, m1, sprintf(":%d:",i));
+	}
+
+	i = len;         			// add in final residue pair
+	if( i > 1 ){
+		rname = substr( seq, i, 1 );
+		if( rname == "DNA" ) rname = "D" + rname;
+		if( opts =~ "3" ) rname = rname + "3";
+
+		// create last residue, m2
+		m2 = build( rname, reslib, strandname );	
+
+						// align m1:O3'->C3' with m2:P->O5'
+		setframe(2, m2, ":1:P", ":1:OP2", ":1:OP1", ":1:P", ":1:O5'");
+		setframe(2, m1, sprintf(":%d:O3'",i-1),	// sets frames on
+				sprintf(":%d:C2'",i-1),	// both residues
+				sprintf(":%d:C4'",i-1),	// and aligns them.
+				sprintf(":%d:O3'",i-1),
+				sprintf(":%d:C3'",i-1));
+		alignframe(m2, NULL);
+		alignframe(m1, NULL);
+		mat = newtransform(0., 0., 1.595, 0., 0., 0.);
+		transformmol(mat, m2, NULL);	// rise m2 1.595A from m1
+		mat = newtransform(0., 0., 0., 150., 0., 0.);
+		transformmol(mat, m1, NULL);	// make C3'-O3'-P=120 deg.
+
+		mergestr( m1, strandname, "last",	// connect new residue m2
+			m2, strandname, "first" );	// to growing chain m1
+		connectres( m1, strandname,
+			i-1, "O3'", i, "P" );
+
+		setframe(1, m1, sprintf(":%d:P",i),  // make O3'-P-O5'=103 deg.
+				sprintf(":%d:P",i),  // need to rotate 13 deg.
+				sprintf(":%d:O3'",i-1), // started at 90 deg,
+				sprintf(":%d:P",i),	// since the O3'-C3' and
+				sprintf(":%d:O5'",i));	// P-O5' axes were parallel
+		alignframe(m1, NULL);
+		mat = newtransform(0., 0., 0., 0., 0., 13.);
+		transformmol(mat, m1, sprintf(":%d:",i));
+
+		setframe(1, m1, sprintf(":%d:P",i),	// make so OP1-O3'=
+				sprintf(":%d:P",i),     // OP2-O3' (symmetry)
+				sprintf(":%d:O3'",i-1), // since OP1, OP2
+				sprintf(":%d:P",i),	// are same chemically,
+				sprintf(":%d:O5'",i));	// make link symmetric
+		alignframe(m1, NULL);
+		da = dist(m1, sprintf(":%d:OP2",i), sprintf(":%d:O3'",i-1));	
+		db = dist(m1, sprintf(":%d:OP1",i), sprintf(":%d:O3'",i-1));	
+		mat = newtransform(0., 0., 0., 0., 1., 0.);
+		transformmol(mat, m1, sprintf(":%d:",i)); // rotate along
+		setframe(1, m1, sprintf(":%d:P",i),	// P-O5' bond 1 deg	
+				sprintf(":%d:P",i),	// and measure the
+				sprintf(":%d:O3'",i-1), // change in atom
+				sprintf(":%d:P",i),	// distance between
+				sprintf(":%d:O5'",i));	// OP1-O3', O2'-O3'
+		alignframe(m1, NULL);
+		dai = dist(m1, sprintf(":%d:OP2",i), sprintf(":%d:O3'",i-1));	
+		dbi = dist(m1, sprintf(":%d:OP1",i), sprintf(":%d:O3'",i-1));	
+		delta_da = dai - da;	// compute the rotation needed to
+		delta_db = dbi - db;	// ensure OP1-O3' = OP2-O3'
+		rotation = (dbi - dai)/(delta_da - delta_db);	// rotate last
+		mat = newtransform(0., 0., 0., 0., rotation, 0.); // residue
+		transformmol(mat, m1, sprintf(":%d:",i));
+	}
+
+	return( m1 );
+};

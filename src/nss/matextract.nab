@@ -1,0 +1,72 @@
+#define	MAXIMATS	1000
+matrix	imats[ MAXIMATS ];
+int	n_imats;
+int	selected[ MAXIMATS ];	 
+int	ac, i, j, k, lo, hi;
+string	fields1[ 100 ];
+string	fields2[ 100 ];
+int	n_fields1, n_fields2;
+
+int	MAT_fscan() c;
+int	MAT_fprint() c;
+
+n_imats = MAT_fscan( stdin, MAXIMATS, imats );
+for( i = 1; i <= n_imats; i++ )
+	selected[ i ] = 0;
+
+for( ac = 2; ac <= argc; ac++ ){
+	n_fields1 = split( argv[ ac ], fields1, "," );
+	for( i = 1; i <= n_fields1; i++ ){
+		if( ( n_fields2 = split( fields1[i], fields2, "-" ) ) > 2 ){
+			fprintf( stderr, "%s: bad range: '%s'\n",
+				argv[1], fields1[i] );
+			exit( 1 );
+		}else if( n_fields2 == 2 ){
+			if( fields2[1] == "" )
+				lo = 1;
+			else 
+				lo = atoi( fields2[1] );
+			if( fields2[2] == "" )
+				hi = n_imats;
+			else 
+				hi = atoi( fields2[2] );
+			if( hi > n_imats ){
+				fprintf( stderr,
+			"%s: bad range: '%s', high value > #mats (%d)\n",
+					argv[1], fields1[i], n_imats );
+				exit( 1 );
+			}else if( lo > n_imats ){
+				fprintf( stderr,
+				"%s: bad range: '%s', low value > #mats (%d)\n",
+					argv[1], fields1[i], n_imats );
+				exit( 1 );
+			}else if( lo > hi ){
+				fprintf( stderr,
+				"%s: bad range: '%s', low value > high value\n",
+					argv[1], fields1[i] );
+				exit( 1 );
+			}
+		}else if( n_fields2 == 1 ){
+			if( fields2[1] == "" ){
+				lo = 1;
+				hi = n_imats;
+			}else{
+				hi = atoi( fields2[1] );
+				if( hi > n_imats ){
+					fprintf( stderr,
+				"%s: bad selector: '%s', value > #mats (%d)\n",
+						argv[1], fields1[i], n_imats );
+					exit( 1 );
+				}
+				lo = hi;
+			}
+		}
+		for( i = lo; i <= hi; i++ )
+			selected[ i ] = 1;
+	}
+}
+
+for( i = 1; i <= n_imats; i++ ){
+	if( selected[i] )
+		MAT_fprint( stdout, 1, imats[i] );
+}

@@ -1,0 +1,109 @@
+int	MAT_fscan() c;
+int	MAT_fprint() c;
+string	MAT_getsyminfo() c;
+int	getpid() c;
+
+file	f;
+
+#define	MAXIMATS	1000
+matrix	imats1[ MAXIMATS ];
+int	n_imats1;
+string	s_imats1;
+matrix	imats2[ MAXIMATS ];
+int	n_imats2;
+string	s_imats2;
+matrix	imats3[ MAXIMATS ];
+int	n_imats3;
+string	s_imats3;
+matrix	imats4[ MAXIMATS ];
+int	n_imats4;
+string	s_imats4;
+
+matrix	omats[ dynamic ];
+int	n_omats;
+
+int	mi, mo;
+
+if( argc < 3 || argc > 5 ){
+	fprintf( stderr, "usage: %s mf-1 mf-2 [ mf-3 [ mf-4 ] ]\n", argv[ 1 ] );
+	exit( 1 );
+}
+
+if( ( f = fopen( argv[ 2 ], "r" ) ) == NULL ){
+	fprintf( stderr, "%s: can't read mf-1 %s\n",
+		argv[ 1 ], argv[ 2 ] );
+	exit( 1 );
+}
+n_imats1 = MAT_fscan( f, MAXIMATS, imats1 );
+s_imats1 = MAT_getsyminfo();
+fclose( f );
+
+if( ( f = fopen( argv[ 3 ], "r" ) ) == NULL ){
+	fprintf( stderr, "%s: can't read mf-2 %s\n",
+		argv[ 1 ], argv[ 3 ] );
+	exit( 1 );
+}
+n_imats2 = MAT_fscan( f, MAXIMATS, imats2 );
+s_imats2 = MAT_getsyminfo();
+fclose( f );
+
+if( argc > 3 ){
+	if( ( f = fopen( argv[ 4 ], "r" ) ) == NULL ){
+		fprintf( stderr, "%s: can't read mf-3 %s\n",
+			argv[ 1 ], argv[ 4 ] );
+		exit( 1 );
+	}
+	n_imats3 = MAT_fscan( f, MAXIMATS, imats3 );
+	s_imats3 = MAT_getsyminfo();
+	fclose( f );
+}else
+	n_imats3 = 0;
+
+if( argc == 5 ){
+	if( ( f = fopen( argv[ 5 ], "r" ) ) == NULL ){
+		fprintf( stderr, "%s: can't read mf-3 %s\n",
+			argv[ 1 ], argv[ 5 ] );
+		exit( 1 );
+	}
+	n_imats4 = MAT_fscan( f, MAXIMATS, imats4 );
+	s_imats4 = MAT_getsyminfo();
+	fclose( f );
+}else
+	n_imats4 = 0;
+
+n_omats = n_imats1 + n_imats2 + n_imats3 + n_imats4;
+allocate omats[ n_omats ];
+
+mo = 0;
+for( mi = 1; mi <= n_imats1; mi++ ){
+	mo++;
+	omats[ mo ] = imats1[ mi ];
+}
+
+for( mi = 1; mi <= n_imats2; mi++ ){
+	mo++;
+	omats[ mo ] = imats2[ mi ];
+}
+
+for( mi = 1; mi <= n_imats3; mi++ ){
+	mo++;
+	omats[ mo ] = imats3[ mi ];
+}
+
+for( mi = 1; mi <= n_imats4; mi++ ){
+	mo++;
+	omats[ mo ] = imats4[ mi ];
+}
+
+printf( "#S{ merge %d\n", getpid() );
+printf( "%s", s_imats1 );
+printf( "%s", s_imats2 );
+if( n_imats3 > 0 )
+	printf( "%s", s_imats3 );
+if( n_imats4 > 0 )
+	printf( "%s", s_imats4 );
+printf( "#S}\n" );
+
+MAT_fprint( stdout, n_omats, omats );
+
+deallocate omats;

@@ -1,0 +1,174 @@
+
+residue	getres_aa( string r, string rlib )
+{
+	residue	res;
+	string map1to3[ hashed ];
+
+	map1to3["A"] = "ALA";
+	map1to3["C"] = "CYS";
+	map1to3["D"] = "ASP";
+	map1to3["E"] = "GLU";
+	map1to3["F"] = "PHE";
+	map1to3["G"] = "GLY";
+	map1to3["H"] = "HID";
+	map1to3["h"] = "HIE";
+	map1to3["I"] = "ILE";
+	map1to3["K"] = "LYS";
+	map1to3["L"] = "LEU";
+	map1to3["M"] = "MET";
+	map1to3["N"] = "ASN";
+	map1to3["P"] = "PRO";
+	map1to3["Q"] = "GLN";
+	map1to3["R"] = "ARG";
+	map1to3["S"] = "SER";
+	map1to3["T"] = "THR";
+	map1to3["V"] = "VAL";
+	map1to3["W"] = "TRP";
+	map1to3["X"] = "CYX";
+	map1to3["Y"] = "TYR";
+	map1to3["n"] = "ACE";
+	map1to3["c"] = "NME";
+	map1to3["3"] = "HIP";
+	map1to3["4"] = "RIE";
+	map1to3["a"] = "NH2";
+	map1to3["7"] = "ASH";   // ASP+
+	map1to3["8"] = "GLH";   // GLU+
+
+	if( r in map1to3 ) {
+		res = getresidue( map1to3[ r ], rlib );
+	}else{
+		fprintf( stderr, "undefined residue \"%s\"\n", r );
+		exit( 1 );
+	}
+	return( res );
+};
+
+
+
+molecule	linkprot( string strandname, string seq, string preslib )
+{
+
+//  take a strandname, a sequence string, and the name of the protein
+//    residue library as input; return a molecule that has this sequence
+//    in a molecule, with phi, psi and omega angles all at 180 deg.
+
+//  If preslib is empty, use default NAB library
+//     with charged N- and C-terminal residues.
+
+//  Special preslib strings:
+//          neut == use nab.lib with neutral end groups
+//         nneut ==      "           "       N-terminus, charged C-terminus
+//         cneut ==      "           "       C-terminus, charged N-terminus
+
+	molecule	m1, mres;
+	residue		pres;
+	int		i, slen;
+	string	resname, cpos, opos, capos, np1pos;
+	atom ares;
+
+	m1 = newmolecule();
+
+	slen = length( seq );
+    addstrand( m1, strandname );
+	resname = substr( seq, 1, 1 );
+	if( preslib == "" || preslib == "cneut" )
+		pres = getres_aa( resname, "nab.lib" );
+	else if( preslib == "nneut" || preslib == "neut")
+		pres = getres_aa( resname, "nab.lib" );
+	else
+		pres = getres_aa( resname, preslib );
+	addresidue( m1, strandname, pres );
+
+	cpos = sprintf( ":1:C");
+	opos = sprintf( ":1:O");
+	capos = sprintf( ":1:CA");
+	np1pos = sprintf( ":1:N");
+	setframe( 2, m1, cpos, opos, cpos, capos, cpos );
+	alignframe(m1,NULL);
+
+	for( i=2; i <= slen - 1; i = i + 1 ){
+
+//   align the growing molecule so that the C-CA bond of the last
+//     residue is along the -y-axis, with the C-O bond in the xy-plane:
+
+		cpos = sprintf( ":%d:C",  i-1 );
+		opos = sprintf( ":%d:O",  i-1 );
+		capos = sprintf( ":%d:CA", i-1 );
+		np1pos = sprintf( ":%d:N", i );
+		setframe( 2, m1, cpos, opos, cpos, capos, cpos );
+		alignframe( m1, NULL );
+
+//   now add the new residue; the setframe/alignframe commands will
+//     construct a trans peptide linkage.
+
+		resname = substr( seq, i, 1 );
+		if( preslib == "" || preslib == "nneut" || preslib == "cneut" ||
+			preslib == "neut" )
+			pres = getres_aa( resname, "nab.lib" );
+		else
+			pres = getres_aa( resname, preslib );
+		mres = newmolecule();
+		addstrand( mres, "new" );
+		addresidue( mres, "new", pres );
+		if( resname == "P" )
+			setframe( 2, mres, ":1:N", ":1:N", ":1:CD", ":1:N", ":1:CA" );
+		else if( resname == "a" )
+			setframe( 2, mres, ":1:N", ":1:N", ":1:H", ":1:N", ":1:H1" );
+		else
+			setframe( 2, mres, ":1:N", ":1:N", ":1:H", ":1:N", ":1:CA" );
+		alignframe( mres, NULL );
+		for( ares in mres ){
+			ares.x = ares.x + 1.2039;  ares.y = ares.y + 0.5768;
+		}
+		mergestr( m1, strandname, "last", mres, "new", "first" );
+		connectres( m1, strandname, i-1, "C", i, "N" );
+
+	}
+
+//   add the final residue in the string:
+
+		i = slen;
+		if( i >= 2 ) {	
+			cpos = sprintf( ":%d:C",  i-1 );
+			opos = sprintf( ":%d:O",  i-1 );
+			capos = sprintf( ":%d:CA", i-1 );
+			np1pos = sprintf( ":%d:N", i );
+			setframe( 2, m1, cpos, opos, cpos, capos, cpos );
+			alignframe( m1, NULL );
+
+//   now add the new residue; the setframe/alignframe commands will
+//     construct a trans peptide linkage.
+
+			resname = substr( seq, i, 1 );
+			if( preslib == "" || preslib == "nneut" )
+				pres = getres_aa( resname, "nab.lib" );
+			else if( preslib == "cneut" || preslib == "neut" )
+				pres = getres_aa( resname, "nab.lib" );
+			else
+				pres = getres_aa( resname, preslib );
+			mres = newmolecule();
+			addstrand( mres, "new" );
+			addresidue( mres, "new", pres );
+			if( resname == "P" )
+				setframe( 2, mres, ":1:N", ":1:N", ":1:CD", ":1:N", ":1:CA" );
+			else if( resname == "a" )
+				setframe( 2, mres, ":1:N", ":1:N", ":1:H", ":1:N", ":1:H1" );
+			else
+				setframe( 2, mres, ":1:N", ":1:N", ":1:H", ":1:N", ":1:CA" );
+			alignframe( mres, NULL );
+			for( ares in mres ){
+				ares.x = ares.x + 1.121;  ares.y = ares.y + 0.725;
+			}
+			mergestr( m1, strandname, "last", mres, "new", "first" );
+			connectres( m1, strandname, i-1, "C", i, "N" );
+		}
+	cpos = sprintf( ":1:C");
+	opos = sprintf( ":1:O");
+	capos = sprintf( ":1:CA");
+	np1pos = sprintf( ":1:N");
+	setframe( 2, m1, cpos, opos, cpos, capos, cpos );
+	alignframe(m1,NULL);
+
+
+	return( m1 );
+};
