@@ -51,6 +51,8 @@ plumed="no"
 
 boostlib="-lboost_program_options -lboost_iostreams -lboost_regex -lboost_system -lboost_timer -lboost_chrono -lboost_filesystem -lboost_graph"
 
+macAccelerate="no"
+
 cuda="no"
 cudaflags=''
 cudafflags=''
@@ -84,7 +86,6 @@ while [ $# -gt 0 ]; do
             debug="";;
         --openmp)
             ompflag='-fopenmp -DOPENMP';
-            flibs_fftw="-lfftw3_omp $flibs_fftw"
             openmp="yes";;
         --cuda)
             cuda="yes"
@@ -106,6 +107,8 @@ while [ $# -gt 0 ]; do
             moft="skip";;
         --openblas)
             openblas="yes";;
+        --macAccelerate)
+            macAccelerate="yes";;
         --static)
             ldflags="-static";;
         --plumed)
@@ -158,6 +161,7 @@ if [ "$requested_help" = "yes" ] ; then
 	printf " --openmp       make use of OPENMP in fortran codes\n"
 	printf " --mkl          use MKL routines from \$MKLROOT environment variable\n"
 	printf " --openblas     use BLAS routines from \$GOTO environment variable\n"
+	printf " --macAccelerate use use Apple Accelerate framework for linear algebra\n"
 	printf " --noboost      skip codes (metatwist) that require boost \n"
     printf "\n"
 	printf " --verbose      give build details, otherwise be more silent\n"
@@ -181,6 +185,9 @@ if [ "$mpi" == "yes" ]; then
 fi
 if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
+fi
+if [ "$openmp" == "yes" -a "$cc" != "clang" ]; then
+  flibs_fftw="-lfftw3_omp $flibs_fftw"
 fi
 
 #------------------------------------------------------------------------------
@@ -331,6 +338,9 @@ if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
    elif [ "$conda" == "yes" -a "$openblas" == "yes" ]; then
       echo "using OpenBLAS libraries from conda"
       flibs_la="$CONDA_PREFIX/lib/libopenblas.a -lpthread"
+   elif [ "$macAccelerate" == "yes" ]; then
+      echo "using macAccelerate frameworks"
+      flibs_la="-framework Accelerate"
    else
       # use the compiled versions;
       flibs_la="-llapack -lblas"
@@ -759,7 +769,7 @@ SHORT_ENE=$short_ene
 #  (6)  other flags:
 
 LDFLAGS=$ldflags
-AR=    ar r
+AR=    ar rv
 RANLIB=ranlib
 MV=mv
 CP=cp
