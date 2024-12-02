@@ -149,7 +149,7 @@ done
 
 if [ "$requested_help" = "yes" ] ; then
 	printf " --intel        use Intel compilers; default is gnu\n"
-	printf " --clang        use clang/gfortran as compilers\n"
+	printf " --clang        use clang/gfortran as compilers (no openmp support)\n"
 	printf " --nogcc10      use flags for gcc9 and below\n"
     printf "\n"
 	printf " --mpi          build only msander.MPI\n"
@@ -158,10 +158,10 @@ if [ "$requested_help" = "yes" ] ; then
     printf " --cudaprec     [SPFP|DPFP], cuda precision, default is SPFP\n"
     printf " --cudaarch     <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\n"
-	printf " --openmp       make use of OPENMP in fortran codes\n"
+	printf " --openmp       make use of OPENMP in Fortran codes\n"
 	printf " --mkl          use MKL routines from \$MKLROOT environment variable\n"
 	printf " --openblas     use BLAS routines from \$GOTO environment variable\n"
-	printf " --macAccelerate use use Apple Accelerate framework for linear algebra\n"
+	printf " --macAccelerate use Apple Accelerate framework for linear algebra\n"
 	printf " --noboost      skip codes (metatwist) that require boost \n"
     printf "\n"
 	printf " --verbose      give build details, otherwise be more silent\n"
