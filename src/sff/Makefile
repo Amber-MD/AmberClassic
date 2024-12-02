@@ -1,35 +1,60 @@
 include ../../config.h
 
-.c.o:
+%.o: %.c
 	@echo "[SFF]  CC $<"
-	$(VB)$(CC) -c $(COPTFLAGS) $(CFLAGS) -o $@ $<
+	$(VB)$(CC) -c $(COPTFLAGS) $(CFLAGS) $(NETCDFINC) -o $@ $<
 
-OBJS = conjgrad.o lmodC.o memutil.o nblist.o newton.o nmode.o wallclock.o \
-	   prm.o rand2.o sasad.o sff.o xminC.o ptrajmask.o
+%.o: %.cc
+	@echo "[SFF]  CC $<"
+	$(VB)g++ -c -I/usr/local/cuda/include $(COPTFLAGS) $(CFLAGS) $(NETCDFINC) -o $@ $<
 
-sff: $(LIBDIR)/libsff.a
-	$(VB)cp sff.h $(INCDIR)
+%.o: %.cu
+	@echo "[NABC] nvcc $<"
+	nvcc $(NVFLAGS) -I$(INCDIR) -c $< -o $@
+
+OBJS = conjgrad.o lmodC.o memutil.o nblist.o nmode.o \
+	   prm.o rand2.o sasad.o sff.o xminC.o AmberNetcdf.o ptrajmask.o \
+       wallclock.o
+
+install: libsff hcp_getpdb$(SFX)
+
+libsff: $(LIBDIR)/libsff.a
 
 $(LIBDIR)/libsff.a: $(OBJS)
 	@echo "[SFF]  AR $@"
-	$(VB)-rm -f $(LIBDIR)/libsff.a
-	$(VB)$(AR) $(LIBDIR)/libsff.a $(OBJS)
+	$(VB)/bin/rm -f $(LIBDIR)/libsff.a
+	$(VB)$(AR) $(LIBDIR)/libsff.a $(OBJS)	> /dev/null
 	$(VB)$(RANLIB) $(LIBDIR)/libsff.a
+	$(VB)cp sff.h AmberNetcdf.h $(INCDIR)
+
+libsff_mpi: $(OBJS)
+	@echo "[SFF]  AR $@"
+	$(VB)/bin/rm -f $(LIBDIR)/libsff_mpi.a
+	$(VB)$(AR) $(LIBDIR)/libsff_mpi.a $(OBJS)	> /dev/null
+	$(VB)$(RANLIB) $(LIBDIR)/libsff_mpi.a
+	$(VB)cp sff.h AmberNetcdf.h $(INCDIR)
 
 uninstall:
-	-rm -f $(LIBDIR)/libsff.a
-	-rm -f $(LIBDIR)/libsff_mpi.a
-	-rm -f $(INCDIR)/sff.h
+	/bin/rm -f $(BINDIR)/hcp_getpdb$(SFX)
+	/bin/rm -f $(LIBDIR)/libsff.a $(LIBDIR)/libsff_mpi.a
+	/bin/rm -f $(INCDIR)/sff.h $(INCDIR)/AmberNetcdf.h
 
 clean:
-	-/bin/rm -f *.o lex.mmo.c 
+	/bin/rm -f $(OBJS) lex.mmo.c
 
 lex.mmo.c: mm_options.l
-	$(LEX) mm_options.l 
+	@echo "[SFF]  FLEX $<"
+	$(VB)$(LEX) mm_options.l
 
-depend: $(OBJS:.o=.c) lex.mmo.c 
-	@echo "[SFF]  make depend"
-	$(VB)$(CC) -MM $^ > $@
+hcp_getpdb$(SFX): hcp_getpdb.c
+	@echo "[SFF]  CC $<"
+	$(VB)$(CC) -o $(BINDIR)/hcp_getpdb$(SFX) hcp_getpdb.c
+
+sff.c: lex.mmo.c
+
+#depend: $(OBJS:.o=.c)
+#	@echo "[SFF] make depend"
+#	$(VB)$(CC) -MM $^ > $@
 
 include depend
 

@@ -60,9 +60,9 @@ int main( int argc, char *argv[] )
 //   set up some md options:
 
    //  force-field related options:
-   mm_options( "cut=20.0, rgbmax=20.0, ntpr=1, nsnb=10, gb=1, diel=C" );
+   mm_options( "cut=20.0, rgbmax=20.0, ntpr=500, nsnb=10, gb=1, diel=C" );
    //  dynamics related options:
-   mm_options( "gamma_ln=5.0, temp0=300.0, ntpr_md=1, rattle=0" );
+   mm_options( "gamma_ln=5.0, temp0=300.0, ntpr_md=100, rattle=1" );
 
    // nothing frozen or constrained for now:
    int frozen[natm], constrained[natm];
@@ -73,7 +73,7 @@ int main( int argc, char *argv[] )
 
 //   run the md:
 
-   md( natm3, 50, x, f, v, mme );
+   md( natm3, 500, x, f, v, mme );
    // if( mytaskid == 0 )
    //    netcdfWriteRestart( "xfin.md2.x", natm, x, v, NULL, 1.0, 0.0 );
 
