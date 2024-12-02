@@ -47,6 +47,7 @@ clean:
 	-(cd xray/cuda && $(MAKE) clean )
 	-(cd leap && $(MAKE) clean )
 	-(cd sff && $(MAKE) clean )
+	-(cd nabc && $(MAKE) clean )
 	-(cd antechamber && $(MAKE) clean )
 	-(cd sqm && $(MAKE) clean )
 	-(cd nmr_aux && $(MAKE) clean )
@@ -56,6 +57,9 @@ clean:
 	-(cd saxs && $(MAKE) clean )
 	-(cd xblas && $(MAKE) clean )
 	-(cd gbnsr6 && $(MAKE) clean )
+	-(cd ucpp-1.3 && $(MAKE) clean )
+	-(cd nab && $(MAKE) clean )
+#	-(cd nss && $(MAKE) clean )
 
 uninstall: clean
 	-(cd $(BINDIR) && /bin/rm -rf *)
