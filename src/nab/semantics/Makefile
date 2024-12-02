@@ -42,16 +42,14 @@ SYM_TEST.rules \
 SYM_UPARROW.rules \
 SYM_UPARROW_ASSIGN.rules
 
-ATRFILE=attribute.tab
-
-SYMFILE=../nabgrm.tab.h
-
 checkexpr.c: $(RULES) attribute.tab parse2 ../nab.h ../nabgrm.y
-	./parse2 --y-tab-h ../nabgrm.tab.h --attributes-tab \
-     ./attribute.tab --nab-h-path ../nab.h -o $@ *.rules
+	@echo "[NAB] PARSE2 RULES"
+	$(VB)./parse2 --y-tab-h ../nabgrm.tab.h --attributes-tab \
+       ./attribute.tab --nab-h-path ../nab.h -o $@ *.rules
 
 parse2: parse2.c
-	$(CC) $(CFLAGS) $(AMBERCFLAGS) $(LDFLAGS) $(AMBERLDFLAGS) -o $@ $<
+	@echo "[NAB] CC $<"
+	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 clean::
 	/bin/rm -f parse2 *.html
