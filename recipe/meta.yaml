@@ -52,5 +52,9 @@ requirements:
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
-    license: GNU General Public License (GPL/LGPL)
+    license: GNU General Public License (GPL)
+    license_file: LICENSE
     summary: Subset of AmberTools, built around a "modern" version of sander; includes other useful tools
+  description: |
+     This repository contains msander, a "modern" version of parts of the Amber molecular dynamics program sander. Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and commonly-used) parts of AmberTools: tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d, saxs, gbnsr6, xtalutil and paramfit. All of the force field files from AmberTools are also included here. With these tools, many systems can be set up for simulation in msander.
+
