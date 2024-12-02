@@ -4,19 +4,11 @@ include ../../config.h
 	@echo "[SFF]  CC $<"
 	$(VB)$(CC) -c $(COPTFLAGS) $(CFLAGS) $(NETCDFINC) -o $@ $<
 
-%.o: %.cc
-	@echo "[SFF]  CC $<"
-	$(VB)g++ -c -I/usr/local/cuda/include $(COPTFLAGS) $(CFLAGS) $(NETCDFINC) -o $@ $<
-
-%.o: %.cu
-	@echo "[NABC] nvcc $<"
-	nvcc $(NVFLAGS) -I$(INCDIR) -c $< -o $@
-
 OBJS = conjgrad.o lmodC.o memutil.o nblist.o nmode.o \
 	   prm.o rand2.o sasad.o sff.o xminC.o AmberNetcdf.o ptrajmask.o \
        wallclock.o
 
-install: libsff hcp_getpdb$(SFX)
+# install: libsff hcp_getpdb$(SFX)
 
 libsff: $(LIBDIR)/libsff.a
 
