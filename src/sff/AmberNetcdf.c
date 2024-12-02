@@ -26,6 +26,8 @@ int netcdfTaskid() {
 int netcdfTaskid() { return 0; }
 #endif
     
+//   hard-wire netcdf support -- now always used
+#define BINTRAJ 1
 #ifdef BINTRAJ
 #include "netcdf.h"
 // ---------- Definitions of Netcdf variable labels ----------------------------
