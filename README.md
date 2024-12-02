@@ -1,16 +1,16 @@
 # Overview of AmberClassic
 
-This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and most-used) parts of AmberTools: `tleap, antechamber, sqm, metatwist, rism1d, saxs, gbnsr6, xtalutil` and `paramfit`. With these tools, many systems can be set up for simulation in `msander`.
+* This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and commonly-used) parts of AmberTools: `tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d, saxs, gbnsr6, xtalutil` and `paramfit`.  All of the force field files from AmberTools are also included here. With these tools, many systems can be set up for simulation in `msander`.
 
-The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
+* The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
+
+* This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic.  
+
+* This package may also be of interest to those who want just the subset included here of the far-more-complex `AmberTools` package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
 
 # Warning
 
-This is a work in progress, and may not always be in a stable state (although that is my goal for the main branch).  I may not be able to respond to requests for support, but please create a github issue if you have comments or suggestions.  (As an alternative, send email to dacase1@gmail.com.)
-
-This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic.  
-
-This package may also be of interest to those who want just the subset included here of the far-more-complex `AmberTools` package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
+* This is a work in progress, essentially creating a (modified) subset of `AmberTools`.  Please create a github issue if you have comments or suggestions.  (As an alternative, send email to dacase1@gmail.com.) Volunteers to help improve or extend the package are welcome.
 
 # Design goals
 
@@ -65,7 +65,7 @@ Force field evaluation is still slow compared to many other codes.  This project
 
 * Compiling, on MacOSX, Linux, probably WSL:
 ```
-   ./configure --help   #  then choose the options you want
+   ./configure --help   #  then re-run configure with the options you want
    make install
    source AmberClassic.sh
    make test
