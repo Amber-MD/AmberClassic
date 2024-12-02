@@ -21,6 +21,9 @@ serial:
 	@cd saxs && $(MAKE) saxs
 	@cd rism && $(MAKE) rism1d
 	@cd gbnsr6 && $(MAKE) install_gbnsr6
+	@cd ucpp-1.3 && make ucpp
+	@cd nab && make install_nab
+#	@cd nss & make install_nss  # compiles, but not tested yet
 
 parallel:
 	@cd msander && $(MAKE) msander.MPI
@@ -31,11 +34,6 @@ cuda:
 
 mpicuda:
 	@cd msander && $(MAKE) msander.cuda.MPI
-
-nab: serial
-	@cd ucpp-1.3 && make ucpp
-	@cd nab && make install_nab
-#	@cd nss & make install_nss  # compiles, but not tested yet
 
 clean:
 	-(cd blas && $(MAKE) clean )
