@@ -10,7 +10,7 @@ serial:
 	@cd xray && $(MAKE) xray
 	@cd addles && $(MAKE) addles
 	@cd leap && $(MAKE) leap
-	@cd sff && $(MAKE) sff
+	@cd sff && $(MAKE) libsff
 	@cd nabc && $(MAKE) nabc
 	@cd antechamber && $(MAKE) install_ac
 	@cd sqm && $(MAKE) install_sqm
