@@ -1,7 +1,5 @@
 #!/bin/sh
 
-export MKLROOT=/opt/intel/oneapi/mkl/latest
-
 ./configure --conda --openmp --openblas
 
 cd src
