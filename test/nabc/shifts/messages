@@ -1,0 +1,10 @@
+   shifts will be computed for atoms matching ::H*
+
+Running: /home/case/amber22/bin/teLeap -s -f leap.in -I/home/case/amber22/dat/leap/cmd -I/home/case/amber22/dat/leap/parm -I/home/case/amber22/dat/leap/prep -I/home/case/amber22/dat/leap/lib > tleap.out
+Reading parm file (tprmtop)
+title:
+default_name                                                                    
+
+Reading observed shifts from 132d.obs
+
+Molecule type is dna

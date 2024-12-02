@@ -1,0 +1,132 @@
+========== BEG. NETCDF DEBUG ==========
+nc_inq returned 0
+ndimsp=6  nvarsp=5  ngattsp=6  unlimdimidp=0
+NC VARIABLES:
+  Var 0 - spatial
+  Var 1 - time
+  Var 2 - coordinates
+  Var 3 - cell_spatial
+  Var 4 - cell_angular
+  TempVID = -1
+==========  END NETCDF DEBUG ==========
+  File is a NetCDF AMBER trajectory
+    223 atoms.
+    669 coordinates.
+    101 frames.
+First 3 coords of frame 0: -1.889000 9.159000 7.569000
+========== BEG. NETCDF DEBUG ==========
+nc_inq returned 0
+ndimsp=6  nvarsp=5  ngattsp=6  unlimdimidp=0
+NC VARIABLES:
+  Var 0 - time
+  Var 1 - spatial
+  Var 2 - coordinates
+  Var 3 - cell_spatial
+  Var 4 - cell_angular
+  TempVID = -1
+==========  END NETCDF DEBUG ==========
+  File is a NetCDF AMBER trajectory
+    223 atoms.
+    669 coordinates.
+    -1 frames.
+First 3 coords of frame 1: -1.889000 9.159000 7.569000
+First 3 coords of frame 2: 0.301000 5.095000 3.481000
+First 3 coords of frame 3: 2.208000 4.582000 0.757000
+First 3 coords of frame 4: -0.027000 5.820000 3.740000
+First 3 coords of frame 5: -1.321000 6.290000 6.385000
+First 3 coords of frame 6: -3.404000 9.181000 2.957000
+First 3 coords of frame 7: -4.593000 5.471000 0.325000
+First 3 coords of frame 8: -1.697000 0.275000 3.410000
+First 3 coords of frame 9: -2.172000 2.657000 2.793000
+First 3 coords of frame 10: -3.531000 2.565000 1.736000
+First 3 coords of frame 11: -1.606000 2.770000 4.464000
+First 3 coords of frame 12: -1.684000 5.329000 4.387000
+First 3 coords of frame 13: -1.136000 7.169000 4.585000
+First 3 coords of frame 14: -1.517000 9.119000 5.268000
+First 3 coords of frame 15: -2.925000 11.639000 2.999000
+First 3 coords of frame 16: -2.769000 13.634000 2.290000
+First 3 coords of frame 17: -0.527000 14.857000 2.019000
+First 3 coords of frame 18: -2.482000 14.407000 1.704000
+First 3 coords of frame 19: -4.274000 9.471000 1.193000
+First 3 coords of frame 20: -5.820000 7.877000 1.345000
+First 3 coords of frame 21: -3.984000 8.102000 0.873000
+First 3 coords of frame 22: -5.518000 8.504000 3.522000
+First 3 coords of frame 23: -5.618000 9.795000 4.959000
+First 3 coords of frame 24: -5.768000 10.434000 3.117000
+First 3 coords of frame 25: -1.753000 13.969000 3.643000
+First 3 coords of frame 26: -4.930000 12.017000 2.296000
+First 3 coords of frame 27: -5.958000 10.559000 5.234000
+First 3 coords of frame 28: -4.949000 12.649000 5.302000
+First 3 coords of frame 29: -4.781000 12.707000 6.417000
+First 3 coords of frame 30: -4.808000 12.013000 6.113000
+First 3 coords of frame 31: -5.242000 10.630000 6.468000
+First 3 coords of frame 32: -5.855000 10.416000 2.349000
+First 3 coords of frame 33: -6.738000 11.268000 4.206000
+First 3 coords of frame 34: -5.618000 9.121000 1.789000
+First 3 coords of frame 35: -6.056000 11.350000 1.912000
+First 3 coords of frame 36: -6.260000 12.125000 2.420000
+First 3 coords of frame 37: -4.699000 11.546000 0.949000
+First 3 coords of frame 38: -4.278000 13.449000 1.291000
+First 3 coords of frame 39: -3.374000 14.644000 2.745000
+First 3 coords of frame 40: -3.602000 12.907000 1.219000
+First 3 coords of frame 41: -4.184000 11.930000 2.282000
+First 3 coords of frame 42: -4.788000 8.764000 2.906000
+First 3 coords of frame 43: -3.312000 8.130000 3.582000
+First 3 coords of frame 44: -4.561000 11.495000 5.227000
+First 3 coords of frame 45: -5.934000 11.534000 2.999000
+First 3 coords of frame 46: -6.046000 9.621000 0.507000
+First 3 coords of frame 47: -5.465000 8.518000 0.634000
+First 3 coords of frame 48: -7.413000 10.823000 2.023000
+First 3 coords of frame 49: -6.565000 10.178000 -0.381000
+First 3 coords of frame 50: -7.280000 12.695000 4.159000
+First 3 coords of frame 51: -5.102000 13.243000 3.636000
+First 3 coords of frame 52: -4.335000 12.925000 5.943000
+First 3 coords of frame 53: -4.110000 12.411000 5.719000
+First 3 coords of frame 54: -4.772000 10.262000 3.127000
+First 3 coords of frame 55: -3.594000 12.985000 5.576000
+First 3 coords of frame 56: -2.625000 15.285000 3.280000
+First 3 coords of frame 57: -5.189000 14.892000 1.776000
+First 3 coords of frame 58: -7.237000 10.712000 2.268000
+First 3 coords of frame 59: -5.952000 9.583000 -1.797000
+First 3 coords of frame 60: -6.678000 14.324000 -0.814000
+First 3 coords of frame 61: -6.560000 12.690000 0.097000
+First 3 coords of frame 62: -4.987000 12.127000 0.226000
+First 3 coords of frame 63: -2.798000 13.673000 1.675000
+First 3 coords of frame 64: -0.713000 15.277000 1.662000
+First 3 coords of frame 65: -2.044000 15.097000 2.966000
+First 3 coords of frame 66: -5.618000 8.958000 1.008000
+First 3 coords of frame 67: -3.247000 11.914000 2.428000
+First 3 coords of frame 68: 1.221000 13.752000 2.297000
+First 3 coords of frame 69: 4.598000 10.377000 2.593000
+First 3 coords of frame 70: 3.166000 12.341000 -0.477000
+First 3 coords of frame 71: -2.090000 12.622000 -1.999000
+First 3 coords of frame 72: -4.386000 12.036000 -1.247000
+First 3 coords of frame 73: -4.942000 13.076000 -1.993000
+First 3 coords of frame 74: -2.492000 13.733000 -3.354000
+First 3 coords of frame 75: 0.030000 14.099000 -2.139000
+First 3 coords of frame 76: 2.568000 12.359000 0.093000
+First 3 coords of frame 77: 3.478000 11.249000 2.507000
+First 3 coords of frame 78: 1.260000 10.719000 5.267000
+First 3 coords of frame 79: 5.194000 7.892000 4.169000
+First 3 coords of frame 80: 6.612000 7.672000 2.495000
+First 3 coords of frame 81: 5.162000 6.470000 4.982000
+First 3 coords of frame 82: 3.689000 9.079000 2.261000
+First 3 coords of frame 83: 4.090000 9.759000 4.371000
+First 3 coords of frame 84: 1.271000 11.204000 2.404000
+First 3 coords of frame 85: 4.313000 10.370000 1.966000
+First 3 coords of frame 86: 4.422000 8.597000 3.082000
+First 3 coords of frame 87: 5.453000 8.964000 3.211000
+First 3 coords of frame 88: 2.536000 8.491000 5.063000
+First 3 coords of frame 89: 2.008000 10.901000 3.819000
+First 3 coords of frame 90: 3.172000 9.683000 1.243000
+First 3 coords of frame 91: 0.094000 9.538000 3.050000
+First 3 coords of frame 92: 5.441000 7.516000 3.543000
+First 3 coords of frame 93: 4.462000 7.106000 3.008000
+First 3 coords of frame 94: 4.677000 7.590000 2.894000
+First 3 coords of frame 95: 3.847000 9.167000 4.406000
+First 3 coords of frame 96: 2.834000 9.553000 3.041000
+First 3 coords of frame 97: 2.411000 8.305000 4.582000
+First 3 coords of frame 98: 5.773000 7.299000 3.811000
+First 3 coords of frame 99: 5.345000 8.746000 3.518000
+First 3 coords of frame 100: 2.959000 8.941000 4.062000
+First 3 coords of frame 101: 4.466000 8.801000 1.890000

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+. ../program_error.sh
+
+echo "Running test of sub() and gsub()"
+echo ""
+../../bin/nab -o gsub_test gsub_test.nab || error
+$DO_PARALLEL ./gsub_test > gsub_test.out || error
+
+../dacdif gsub_test.out.check gsub_test.out
+
+rm -f gsub_test gsub_test.c
+exit 0

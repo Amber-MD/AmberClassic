@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to compute NAB energy of 3dfr minus waters."
+echo ""
+../../bin/$NAB -o dhfrndpmtx dhfrndpmtx.nab || error
+$DO_PARALLEL ./dhfrndpmtx > dhfrndpmtx.out || error
+
+echo "Compare the NAB energy with the previously computed Amber energy:"
+echo "Amber8 total energy is 5184.0880"
+grep "NAB total energy" dhfrndpmtx.out
+echo ""
+
+../dacdif -a 1e-8 dhfrndpmtx.out.check dhfrndpmtx.out
+
+rm -f dhfrndpmtx dhfrndpmtx.c
+exit 0

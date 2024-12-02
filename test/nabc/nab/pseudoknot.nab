@@ -1,0 +1,86 @@
+// Program 8 - create a pseudoknot using distance bounds and refinement
+molecule m;
+float 	xyz[ dynamic ],f[ dynamic ],v[ dynamic ];
+bounds 	b;
+int	i, seqlen, ier, itrial;
+float	fret;
+string	seq, opt;
+
+seq = "gcggaaacgccgcguaagcg";
+
+seqlen = length(seq);
+
+m = link_na("1", seq, "rna.amber94.rlb", "rna", "35");
+
+allocate xyz[ 4*m.natoms ];
+allocate f[ 4*m.natoms ];
+allocate v[ 4*m.natoms ];
+
+b = newbounds(m, "");
+
+for ( i = 1; i <= seqlen; i = i + 1) {
+	useboundsfrom(b, m, sprintf("1:%d:??,H?[^'T]", i), m,
+		sprintf("1:%d:??,H?[^'T]", i), 0.0 );
+}
+
+setboundsfromdb(b, m, "1:1:", "1:2:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:2:", "1:3:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:3:", "1:18:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:18:", "1:19:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:19:", "1:20:", "arna.stack.db", 1.0);
+
+setboundsfromdb(b, m, "1:8:", "1:9:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:9:", "1:10:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:10:", "1:11:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:11:", "1:12:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:12:", "1:13:", "arna.stack.db", 1.0);
+
+setboundsfromdb(b, m, "1:1:", "1:13:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:2:", "1:12:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:3:", "1:11:", "arna.basepair.db", 1.0);
+
+setboundsfromdb(b, m, "1:8:", "1:20:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:9:", "1:19:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:10:", "1:18:", "arna.basepair.db", 1.0);
+
+tsmooth( b, 0.0005 );
+
+opt = "seed=776539, gdist=1, k4d=10.0, kchi=5.0, sqviol=0, randpair=5";
+// opt = "seed=776539, k4d=10.0, kchi=5.0, gdist=1, pembed=1, rbox=30., shuffle=1, riter=80000";
+
+dg_options( b, opt );
+
+for ( itrial=1; itrial<=10; itrial++ ){
+	printf( "---------------------------------------------------------\n" );
+	printf( "generate conformer %d:\n", itrial );
+
+	dg_options( b, "ntpr=10000, sqviol=0" );
+	embed(b, xyz );
+	dg_options( b, "pembed=1, shuffle=0, slearn=0.5, riter=80000" );
+	embed(b, xyz );
+
+
+	dg_options( b, "ntpr=100" );
+	ier = conjgrad( xyz, 4*m.natoms, fret, db_viol, 0.001, 10., 500 );
+	dg_options( b, "sqviol=1" );
+	ier = conjgrad( xyz, 4*m.natoms, fret, db_viol, 0.001, 10., 500 );
+
+#if 0
+	opt = "shuffle=0, riter=80000, ntpr=10000";
+	dg_options( b, opt );
+	embed(b, xyz );
+
+	dg_options( b, "ntpr=200" );
+	ier = conjgrad( xyz, 4*m.natoms, fret, db_viol, 0.001, 10., 1000 );
+
+	dg_options( b, "ntpr=1000" );
+	mm_options( "ntpr_md=200, zerov=1, tautp=0.6, temp0=1000." );
+	md( 4*m.natoms, 1000, xyz, f, v, db_viol );
+
+	mm_options( "zerov=0, temp0=0., tautp=1.0" );
+	md( 4*m.natoms, 8000, xyz, f, v, db_viol );
+#endif
+}
+
+// setmol_from_xyzw( m, NULL, xyz );
+// putpdb( "rna_pseudoknot.pdb", m );

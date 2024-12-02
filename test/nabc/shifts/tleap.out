@@ -1,0 +1,51 @@
+-s: Ignoring all leaprc startup files.
+-f: Source leap.in.
+-I: Adding /home/case/amber22/dat/leap/cmd to search path.
+-I: Adding /home/case/amber22/dat/leap/parm to search path.
+-I: Adding /home/case/amber22/dat/leap/prep to search path.
+-I: Adding /home/case/amber22/dat/leap/lib to search path.
+
+Welcome to LEaP!
+Sourcing: ./leap.in
+----- Source: /home/case/amber22/dat/leap/cmd/oldff/leaprc.ff14SB
+----- Source of /home/case/amber22/dat/leap/cmd/oldff/leaprc.ff14SB done
+Log file: ./leap.log
+Loading parameters: /home/case/amber22/dat/leap/parm/parm10.dat
+Reading title:
+PARM99 + frcmod.ff99SB + frcmod.parmbsc0 + OL3 for RNA
+Loading parameters: /home/case/amber22/dat/leap/parm/frcmod.ff14SB
+Reading force field modification type file (frcmod)
+Reading title:
+ff14SB protein backbone and sidechain parameters
+Loading library: /home/case/amber22/dat/leap/lib/amino12.lib
+Loading library: /home/case/amber22/dat/leap/lib/aminoct12.lib
+Loading library: /home/case/amber22/dat/leap/lib/aminont12.lib
+Loading library: /home/case/amber22/dat/leap/lib/nucleic12.lib
+Loading library: /home/case/amber22/dat/leap/lib/atomic_ions.lib
+Loading library: /home/case/amber22/dat/leap/lib/solvents.lib
+Loading PDB file: ./132d.atom
+  total atoms in file: 758
+Writing pdb file: 132d.atom.lpdb
+Checking Unit.
+
+/home/case/amber22/bin/teLeap: Warning!
+The unperturbed charge of the unit (-22.000000) is not zero.
+
+/home/case/amber22/bin/teLeap: Note.
+Ignoring the warning from Unit Checking.
+
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 164 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+ (no restraints)
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 1; Notes = 1.

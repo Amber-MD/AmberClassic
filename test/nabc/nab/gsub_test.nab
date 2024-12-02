@@ -1,0 +1,17 @@
+string target, regexp, replacement;
+
+target = "   water, water, everywhere";
+regexp = "at";
+replacement = "ith";
+sub( regexp, replacement, target );
+printf ("%s\n", target );
+
+target = "   water, 12345water, everywhere";
+gsub( regexp, replacement, target );
+printf ("%s\n", target );
+
+target = "   water, water, water, everywhere";
+replacement = "bbbb";
+gsub( regexp, replacement, target );
+printf ("%s\n", target );
+

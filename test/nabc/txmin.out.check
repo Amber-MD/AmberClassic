@@ -1,0 +1,46 @@
+Reading parm file (xfin.parm7)
+title:
+                                                                                
+	mm_options:  ntpr=1
+	mm_options:  gb=1
+	mm_options:  kappa=0.10395
+	mm_options:  rgbmax=99.
+	mm_options:  cut=99.0
+	mm_options:  diel=C
+     bond:      0.000000000
+    angle:    295.341771890
+ dihedral:    142.636208443
+    enb14:     86.724729531
+    eel14:    745.488538672
+      enb:   -163.941127108
+      eel:  -1544.183753989
+      egb:   -693.148948053
+    econs:      0.000000000
+    esurf:      0.000000000
+    Total:  -1131.082580613
+     frms:     14.985803557
+     frms:      9.269044651 (corrected for rattle)
+setting print frequency to 10
+Starting L-BFGS minimisation
+ MIN:  Iter =    0  E =   -1131.08258  RMSG =   9.2690447
+ MIN:  Iter =   10  E =   -1371.07403  RMSG =   0.8557303
+ MIN:  Iter =   20  E =   -1393.30671  RMSG =   1.3878996
+ MIN:  Iter =   30  E =   -1402.48577  RMSG =   0.3634791
+ MIN:  Iter =   40  E =   -1407.24149  RMSG =   0.9000446
+ MIN:  Iter =   50  E =   -1409.76336  RMSG =   0.2003228
+----------------------------------------------------------------
+ END:          :-)  E =   -1409.76336  RMSG =   0.2003228
+
+     bond:      0.000000000
+    angle:     76.868264671
+ dihedral:     84.906635065
+    enb14:     86.414259123
+    eel14:    771.786312194
+      enb:   -178.016288731
+      eel:  -1556.096600349
+      egb:   -695.625939874
+    econs:      0.000000000
+    esurf:      0.000000000
+    Total:  -1409.763357901
+     frms:      5.297084015
+     frms:      0.200322750 (corrected for rattle)

@@ -1,0 +1,11 @@
+int	ha[ hashed ];
+string	s;
+int	cnt;
+
+for( cnt = 0; scanf( "%s", s ) == 1; ){
+	cnt = cnt + 1;
+	ha[ s ] = cnt;
+}
+
+for( s in ha )
+	printf( "%3d %s\n", ha[ s ], s );

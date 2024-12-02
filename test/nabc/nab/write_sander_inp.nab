@@ -1,0 +1,124 @@
+int		unlink() c;
+
+int		write_sander_inp( string pdbfile, float observed[ hashed ],
+			string sanderfile, int nrings, int ringnum[ 1 ], float ringstr[ 1 ],
+			string ringname[ 1 ], int ringsize[ 1 ], string ringaname[ 1 ] ) {
+
+//
+//   prepare input for the SANDER module of AMBER, in order to carry
+//     out chemical shift refinement;  the observed shift array comes
+//     from the "read_obs_shifts" routine. The pdbfile MUST be one
+//     consistent with the AMBER nomenclature and numbering scheme;
+//     in practice this means it should/must have been created by
+//     EDIT or LEaP or ambpdb.  (Note: this also implies that the residues
+//     are numbered sequentially from 1 to the total number of residues,
+//     independent of how many different strands are in the molecule.)
+//
+
+string		oline, atomname, resname;
+file		pdbf, sanderf, temp;
+int			atnum[ hashed ];
+string		fields[ 20 ];
+string		key, id, cmd;
+int			i, nprot, ring, atring;
+string		five_six;
+
+pdbf = fopen( pdbfile, "r" );
+if( pdbf == NULL ){
+	fprintf( stderr, "can't open pdbfile %s\n", pdbfile ); exit( 1 );
+}
+sanderf = fopen( sanderfile, "w" );
+if( sanderf == NULL ){
+	fprintf( stderr, "can't open sander shifts file %s\n", sanderfile ); 
+	exit( 1 );
+}
+fprintf( sanderf, " &shf\n" );
+
+//  index atoms with string of the type "resname:resnum:atname":
+
+while( oline = getline( pdbf ) ){
+	if( substr(oline,1,4) == "ATOM" || substr(oline,1,6) == "HETATM" ){
+		split( oline, fields, " " );
+		id = fields[ 4 ] + ":" + fields[ 5 ] + ":" + fields[ 3 ];
+		atnum[ id ] = atoi( fields[ 2 ] );
+	}
+}
+
+//  output ring information:
+
+atring = 0;
+fprintf( sanderf, "  nring = %d,\n", nrings );
+for( ring=1; ring <= nrings; ring=ring+1 ){
+
+	five_six = " ";
+	if( ringname[ ring ] == "TRP" || ringname[ ring ] == "ADE" ||
+		ringname[ ring ] == "GUA" ) five_six = "5";
+	if( ringname[ ring ] == "TRP6" || ringname[ ring ] == "ADE6" ||
+		ringname[ ring ] == "GUA6" ) five_six = "6";
+
+	fprintf( sanderf, "  namr(%d) = '%3s%3d %1s', natr(%d)=%d, str(%d)=%8.3f,\n", 
+		ring, substr(ringname[ ring ],1,3), ringnum[ ring ], five_six, ring,
+		ringsize[ ring ], ring, ringstr[ ring ] );
+
+	fprintf( sanderf, "  iatr(1,%d) = ", ring );
+	for( i=1; i<=ringsize[ring]; i=i+1 ){
+		if( ringaname[ atring + i ] in atnum )
+			fprintf( sanderf, "%d,", atnum[ ringaname[ atring + i ] ] );
+		else
+			fprintf( sanderf, "Error: ring atom not found: %s\n", 
+				ringaname[ atring + i ] );
+	}
+	fprintf( sanderf, "\n" );
+	atring = atring + ringsize[ ring ];
+}
+
+//  output protons at which shifts are to be calculated:
+
+nprot = 0;
+for( key in observed ){
+	if( ! ( key in atnum ) ){
+		printf( "Error: %s\n", key ); continue;
+	}
+	nprot = nprot + 1;
+
+//  average methyls:
+
+	split( key, fields, ":" ); resname = fields[ 1 ]; atomname = fields[ 3 ];
+    if( resname == "ALA" && atomname =~ "HB3" ||
+        atomname =~ "HD[12]3" ||
+        resname == "MET" && atomname =~ "HE3" ||
+        resname == "THY" && atomname =~ "H73" ||
+        resname == "VAL" && atomname =~ "HG13" ||
+        atomname =~ "HG23" ||
+        atomname =~ "HH33"){
+		id = resname + ":" + fields[ 2 ] + ":" + 
+			substr( atomname, 1, length( atomname ) - 1 ) + "1";
+		fprintf( sanderf, "  iprot(%4d)=%4d, wt(%4d)=-1.0,\n", 
+			nprot, atnum[ id ], nprot );
+		nprot = nprot + 1;
+		id = resname + ":" + fields[ 2 ] + ":" + 
+			substr( atomname, 1, length( atomname ) - 1 ) + "2";
+		fprintf( sanderf, "  iprot(%4d)=%4d, wt(%4d)=-1.0,\n", 
+			nprot, atnum[ id ], nprot );
+		nprot = nprot + 1;
+	}
+
+//   average tyr and phe rings:
+
+	if( (resname == "PHE" || resname == "TYR") && atomname =~ "H[DE]2" ){
+		id = resname + ":" + fields[ 2 ] + ":" + 
+			substr( atomname, 1, length( atomname ) - 1 ) + "1";
+		fprintf( sanderf, "  iprot(%4d)=%4d, wt(%4d)=-1.0,\n", 
+			nprot, atnum[ id ], nprot );
+		nprot = nprot + 1;
+	}
+
+	fprintf( sanderf, "  iprot(%4d)=%4d, wt(%4d)= 1.0,  obs(%4d)=%8.3f,\n",
+		nprot, atnum[ key ], nprot, nprot, observed[ key ] );
+
+}
+
+fprintf( sanderf, "  nprot = %d,\n &end\n", nprot );
+
+return( 0 );
+};

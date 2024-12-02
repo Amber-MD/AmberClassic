@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+else
+    NAB="nab"
+fi
+
+echo "Running test of fibre-diffraction module"
+echo ""
+../../bin/$NAB -o fd fd.nab || error
+$DO_PARALLEL ./fd "arna" "cgcgcguuau" "rna" > /dev/null || error
+
+../dacdif fd.pdb.check fd.pdb
+
+rm -f fd fd.c tleap.out
+exit 0

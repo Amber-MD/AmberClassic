@@ -1,0 +1,21 @@
+Reading parm file (dhfrndpmtx.prmtop)
+title:
+3dfr minus water from mtx.gaff.mol2, ndp.gaff.mol2, dnm.ambpdb.
+	mm_options:  cut=999.0
+	mm_options:  gb=0
+	mm_options:  rgbmax=25
+Initialization complete.
+     bond:   2960.925326153
+    angle:   3722.740962351
+ dihedral:   1784.917014107
+    enb14:   1382.478802214
+    eel14:   8971.559235491
+      enb:   -244.914952597
+      eel:  -13393.618360175
+      egb:      0.000000000
+    econs:      0.000000000
+    esurf:      0.000000000
+    Total:   5184.088027543
+     frms:    155.577596243
+
+   NAB total energy is 5184.0880

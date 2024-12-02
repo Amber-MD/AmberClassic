@@ -1,0 +1,12 @@
+Reading parm file (2.prmtop)
+title:
+  title goes here
+old prmtop format => using old algorithm for GB parms
+	mm_options:  cut=99.
+	mm_options:  ntpr=10
+	mm_options:  diel=R
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0    891.93    990.10    539.80   -637.97      0.00      0.00  9.00e+01
+ff:    10     43.08    741.83    -19.42   -679.34      0.00      0.00  1.13e+01
+ff:    20   -254.68    536.06    -52.82   -737.92      0.00      0.00  8.58e+00
+conjgrad returns -3

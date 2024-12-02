@@ -1,0 +1,55 @@
+//   LMOD reverse communication external minimization package. 
+//   Written by Istvan Kolossvary.
+
+#include "xmin_opt.h"
+#include "lmod_opt.h"
+
+// M A I N  P R O G R A M  to carry out LMOD simulation on a molecule/complex:
+
+struct xmin_opt xo;
+struct lmod_opt lo;
+
+molecule mol;
+int   natm;
+float energy; 
+int lig_start[ dynamic ], lig_end[ dynamic ], lig_cent[ dynamic ];
+float xyz[ dynamic ], grad[ dynamic ], conflib[ dynamic ], 
+      lmod_trajectory[ dynamic ];
+float tr_min[ dynamic ], tr_max[ dynamic ], rot_min[ dynamic ], 
+      rot_max[ dynamic ];
+float glob_min_energy;
+point dummy;
+
+    lmod_opt_init( lo, xo );   //  set up defaults
+
+    lo.niter          = 3;     //  non-default options are here
+    lo.nconf          = 10;
+    lo.mc_option      = 2;
+    lo.nof_lmod_steps = 5;
+    lo.random_seed    = 99;
+    lo.print_level    = 2;
+
+    xo.ls_maxatmov    = 0.15;
+
+    mol = getpdb( "trpcage.pdb" );
+    readparm( mol, "trpcage.top" );
+    natm = mol.natoms;
+
+    allocate xyz[ 3*natm ]; allocate grad[ 3*natm ];
+    allocate conflib[ lo.nconf * 3*natm ]; 
+    allocate lmod_trajectory[ (lo.niter+1) * 3*natm ];
+    setxyz_from_mol( mol, NULL, xyz );
+
+    mm_options( "ntpr=99999, gb=0, cut=999.0, nsnb=9999, diel=R ");
+    mme_init( mol, NULL, "::ZZZ", dummy, NULL );
+
+    mme( xyz, grad, 1 );
+    glob_min_energy = lmod( natm, xyz, grad, energy,
+          conflib, lmod_trajectory, lig_start, lig_end, lig_cent,
+          tr_min, tr_max, rot_min, rot_max, xo, lo );
+
+    if(mytaskid==0)
+      printf( "\nGlob. min. E         = %12.3lf kcal/mol\n", glob_min_energy );
+
+
+// E N D  M A I N

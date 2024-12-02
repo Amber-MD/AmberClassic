@@ -1,0 +1,90 @@
+//test for 3D-RISM minimization with XMIN adapted from original code by 
+//Daniel Sindhikara
+
+//This specifically tests
+//-setting parameters and reinitializing multiple times
+//-minimization with XMIN
+//-correctly outputting thermodynamics and distributions for selected iterations
+#include "xmin_opt.h"
+struct xmin_opt xo;
+
+molecule mol;
+float 	xyz[dynamic], grad[dynamic];
+float   energy, grms;
+point dummy;
+float ier,dgrad,fret;
+
+//Load molecule
+mol = getpdb("ala.pdb");
+readparm(mol, "ala.parm7");
+
+//Below is GB parameters
+mm_options("ntpr=1,gbsa=1,gb=1,kappa=0.10395,rgbmax=99.,cut=99.0,diel=C");
+
+//apply parameters
+mme_init( mol, NULL, "::Z", xyz, NULL);
+//set tolerance
+dgrad = 3*mol.natoms*0.01;
+allocate xyz[3*mol.natoms];
+allocate grad[3*mol.natoms];
+
+//set coordinates
+setxyz_from_mol( mol, NULL, xyz );
+
+//run Conjugate gradient minimization
+ier = conjgrad(xyz, 3*mol.natoms, fret, mme, dgrad, 10.0, 1 );
+
+//setup L-BFGS method
+xmin_opt_init( xo );
+xo.maxiter=1;
+xo.grms_tol=0.01;
+xo.method=2; // LB method
+xo.print_level=0;
+energy = mme(xyz,grad,0);
+
+//Run L-BFGS in GB solvent
+energy = xmin(mme, mol.natoms, xyz,grad, energy, grms, xo);
+
+//Unset GB
+mm_options("gbsa=0,gb=0");
+
+//Below is 3DRISM
+mm_options( "ntpr=1, rism=1, closure=1, cut=9999.0");
+mm_options( "xvvfile=../rism1d/spc-kh/spc.xvv.save");
+mm_options( "verbose=1");
+//small, fixed size grid for testing purposes
+mm_options( "ljTolerance=0, asympKSpaceTolerance=0");
+mm_options( "treeDCF=0, treeTCF=0, treeCoulomb=0");
+mm_options( "buffer=-1, ng=30,30,30, solvbox=15,15,15");
+//low tolerance necessary for minimization
+mm_options( "tolerance=1e-11");
+//centering=2 and apply_rism_force=1 necessary for minimization
+mm_options( "apply_rism_force=1, centering=2");
+//XMIN will not print out standard detailed force field energies or
+//3D-RISM data
+mm_options( "ntpr_rism=1, ntwrism=0");
+mm_options( "uccoeff=-0.149818,-0.1136266,-0.00053163,0.0103954");
+mme_init( mol, NULL, "::Z", xyz, NULL);
+
+//xmin stuff
+xmin_opt_init( xo );
+xo.maxiter=5;
+xo.grms_tol=0.75; //short minimization
+xo.method=2; // LB method
+xo.print_level=0;
+//Run L-BFGS in 3DRISM
+if(mytaskid == 0)
+  printf("\nRUNNING 3D-RISM w/ XMIN\n\n");
+energy = xmin(mme, mol.natoms, xyz,grad, energy, grms, xo);
+
+//output final structure
+setmol_from_xyz( mol, NULL, xyz );
+putpdb ("ala.rismxmin.pdb",mol);
+
+//output solvent distribution from final structure
+mm_options( "guvfile=g.xmin, apply_rism_force=0, ntwrism=1");
+mm_options( "volfmt=dx");
+mme_init( mol, NULL, "::Z", xyz, NULL);
+mme(xyz,grad,0);
+
+

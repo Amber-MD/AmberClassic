@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo  "Running test of hashed arrays:"
+echo ""
+../../bin/nab -o hashed hash.nab || error
+./hashed < hash.in > hash.out || error
+
+../dacdif hash.out.check hash.out
+
+rm -f hashed
+exit 0

@@ -1,0 +1,63 @@
+//   This example shows how to define and use a target function that
+//   consists of a molecular mechanics part plus distance constraints that
+//   are based on the distance geometry code in NAB.
+
+//   We will define a new subroutine, mmdg(), that can be passed to the
+//   minimization or molecular dynamics routines.  The only tricky part is
+//   that is must have exactly the same signature (i.e. same arguments and
+//   returns) as the mme() or db_viol3() functions.  But it "really" needs
+//   some additional information: the number of atoms and a scratch array
+//   to accumulate forces.  We define those first, before defining the
+//   function itself; such variables will be visible both to the main routine
+//   and to our new subroutine.
+
+int  natom;
+float  tmpgrad[ dynamic ];
+
+float mmdg( float x[1], float f[1], int iter ) // (the "1" is just a
+                                               // placeholder, but is needed)
+{
+	float mm_energy, dg_energy;
+	int i;
+
+	dg_energy = db_viol3( x,tmpgrad,iter );
+	mm_energy = mme( x,f,iter );
+
+	for( i=1; i<= 3*natom; i++ ) f[i] += tmpgrad[i];  // combine the gradients
+
+	return( dg_energy + mm_energy );
+};          // (note semicolon: not needed in C, but is needed in NAB)
+
+//   Note that the above could be included from a header file, so that it
+//   could be repeated in other programs.  Also, the function could be more
+//   complex.  For example, there could be an additional variable that
+//   controls the relative weight of the MM and DG parts of the function; or
+//   it could be a much more complicated entity, computing an RMS to some
+//   target structure and adding a penalty function based on that, etc.  The
+//   mme() and db_viol3() functions are "built in" to NAB, but you can roll
+//   your own as well.
+
+//   Now we have our usual main routine.  In addition to whatever else is
+//   needed, we must be sure to initialize the natom variable, and to allocate
+//   space for tmpgrad[], before any calls to mmdg().
+
+float x[ dynamic ], f[ dynamic ];
+molecule m;
+
+m = getpdb( "test.pdb" );
+natom = m.natoms;
+
+allocate x[ 3*natom ];
+allocate f[ 3*natom ];
+allocate tmpgrad[ 3*natom ];
+
+//  here (not shown) one would need do several things:
+
+//     call rdparm(), mme_init() and mm_options() to set up the MM part
+//     call newbounds() and addbound() to set up the distance violations
+
+if(mytaskid==0)
+  printf( "initial energy is %10.5f\n", mmdg( x, f, 1 ));
+
+//     now we could issue calls to conjgrad() or md(), with "mmdg" taking
+//     the place of "mme" in the calling strings used in the Users' Manual

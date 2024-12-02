@@ -1,0 +1,27 @@
+//  test of netcdf capabilities.
+
+#include "nab_netcdf.h"
+
+struct AmberNetcdf ain, aout;
+float x[700];
+
+  netcdfLoad( ain, "trpcage.nc" );
+  netcdfDebug(ain);
+  netcdfInfo(ain);
+
+  netcdfGetFrame(ain,0,x,NULL,NULL);
+  if (mytaskid==0)
+    printf("First 3 coords of frame 0: %lf %lf %lf\n",x[1],x[2],x[3]);
+  netcdfCreate(aout, "trpcageTest.nc", ain.ncatom, 0);
+  netcdfDebug(aout);
+  netcdfInfo(aout);
+  while ( netcdfGetNextFrame(ain,x,NULL,NULL) ) {
+    if (mytaskid==0)
+      printf("First 3 coords of frame %i: %lf %lf %lf\n",ain.currentFrame,
+             x[1],x[2],x[3]);
+    netcdfWriteNextFrame(aout,x,NULL);
+  }  
+  netcdfClose(ain);
+  netcdfClose(aout);
+
+

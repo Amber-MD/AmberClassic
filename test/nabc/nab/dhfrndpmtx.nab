@@ -1,0 +1,30 @@
+// Amber vs NAB using 3dfr minus water
+molecule m;
+int  ier;
+float  m_xyz[ dynamic ], f_xyz[ dynamic ];
+float  dgrad, fret, dummy[2];
+
+m = getpdb( "dhfrndpmtx.ambpdb" );
+readparm( m, "dhfrndpmtx.prmtop" );
+
+allocate m_xyz[ 3*m.natoms ];  allocate f_xyz[ 3*m.natoms ];
+setxyz_from_mol( m, NULL, m_xyz );
+
+mm_options( "cut=999.0, gb=0, rgbmax=25" );
+mme_init( m, NULL, "::ZZZ", dummy, NULL );
+if(mytaskid==0)
+  printf( "Initialization complete.\n");
+fret = mme( m_xyz, f_xyz, -1 );
+if(mytaskid==0)
+  printf( "\n   NAB total energy is %9.4f\n", fret );
+
+// Expected Amber 8 output
+//| TOTAL SIZE OF NONBOND LIST =    3610082
+//
+// NSTEP =        0   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+// Etot   =      5184.0880  EKtot   =         0.0000  EPtot      =      5184.0880
+// BOND   =      2960.9253  ANGLE   =      3722.7410  DIHED      =      1784.9170
+// 1-4 NB =      1382.4788  1-4 EEL =      8971.5592  VDWAALS    =      -244.9150
+// EELEC  =    -13393.6184  EHBOND  =         0.0000  RESTRAINT  =         0.0000
+
+mme_timer();

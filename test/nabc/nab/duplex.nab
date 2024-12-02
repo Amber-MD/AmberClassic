@@ -1,0 +1,39 @@
+//
+//	nab test program that reads in a sequence of lines, each line
+//	containing a string followed by 4 numbers.  The string is used
+//	to create 2 files, one "string.pdb" that holds the coordinates of 
+//	the molecule in PDB format and two "string.lin" which hold amber
+//	linkin information
+//
+//	The 4 numbers describe a Watson/Crick dna:dna helix. The numbers
+//	are the base X-offset and inclination and the helical rise and twist.
+//	inclination is in degrees, the others are in Angstroms.
+//
+//	The created helix has 0 propeller twist.
+//
+
+#define NAB_DOUBLE_PRECISION
+//  above line is a hack; this program used to get NAB_DOUBLE_PRECISION
+//  from defreal.h; but that is no longer possible now that Scott has made
+//  defreal.h a C-only header, that won't work in nab.
+
+string		mname;
+molecule	m;
+float		xoff;
+float		incl;
+float		twist;
+float		rise;
+string		pdbfname;
+
+molecule	wc_helix();
+
+#ifdef NAB_DOUBLE_PRECISION
+while( scanf( "%s %lf %lf %lf %lf", mname, xoff, incl, twist, rise ) == 5 ){
+#else
+while( scanf( "%s %f %f %f %f", mname, xoff, incl, twist, rise ) == 5 ){
+#endif
+	m = wc_helix(	"gcgttaacgc", "", "dna", "cgcaattgcg", "", "dna",
+			xoff, incl, twist, rise, "s5a5s3a3" );
+	pdbfname = sprintf( "%s.pdb", mname );
+	putpdb( pdbfname, m, "-wwpdb" );
+}

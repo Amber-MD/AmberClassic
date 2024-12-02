@@ -1,0 +1,321 @@
+#---------------------------------------------------------------------
+# entry information saveframe:                                        
+#---------------------------------------------------------------------
+save_entry_information
+  _Saveframe_category entry_information
+  _Entry_title
+;
+  Calculated proton shifts for 132d
+;
+  _NMR_STAR_version       2.1.1
+  _Experimental_method    'theoretical calculation'
+  _Submission_date        2024-01-15
+  stop_
+save_
+
+#---------------------------------------------------------------------
+# contact persons saveframe:                                          
+#---------------------------------------------------------------------
+save_contact_persons
+   _Saveframe_category contact_persons
+  loop_
+  _Family_name
+  _Given_name
+  _Middle_initials
+  _Department_and_Insitution
+  _Mailing_address
+  _Phone_number
+  _Email_address
+  Case David A.
+;
+  Dept. of Chemistry & Chemical Biology
+  Rutgers University
+;
+;
+  174 Frelinghuysen Rd
+  Piscataway, NJ 08854
+;
+  '01 848 445 5885'
+  case@biomaps.rutgers.edu
+  stop_
+save_
+
+#---------------------------------------------------------------------
+# chemical shift reference saveframe:                                 
+#---------------------------------------------------------------------
+save_chemical_shift_reference
+  _Saveframe_category   chemical_shift_reference
+  _Details
+;
+   computed shifts are internally referenced to random-coil values,
+   but are reported relative to DSS/TMS
+;
+  loop_
+    _Atom_type _Atom_isotope_number_Chem_shift_units _Chem_shift_value
+   H 1 ppm 0.0
+ stop_
+save_
+
+#---------------------------------------------------------------------
+#  calculation type saveframe:                                        
+#---------------------------------------------------------------------
+save_proton_empirical_shifts
+   _Saveframe_category  shifts_calculation_type
+  loop_ _Software_label $shifts_v4.3 stop_
+  _Calculation_level empirical
+  _Chemical_shift_type  diamagnetic
+  _Sample_conditions_modeled
+;
+  aqueous solution
+;
+  _Chem_shift_reference_set_label shifts_v4.3
+save_
+
+#---------------------------------------------------------------------
+#  atomic coordinates saveframe:                                      
+#---------------------------------------------------------------------
+save_132d
+  _Saveframe_category     model_atomic_coordinates
+  _Coordinate_set_description
+;
+  Coordinates extracted from PDB entry 132d
+;
+  _Model_source_database  PDB
+  _Model_source_database_accession_number  132d
+save_
+
+#---------------------------------------------------------------------
+#  software saveframe:                                                
+#---------------------------------------------------------------------
+save_shifts_v4.3
+  _Saveframe_category calculation_type
+save_
+
+#---------------------------------------------------------------------
+#  theoretical chemical shifts saveframe:                             
+#---------------------------------------------------------------------
+save_theoretical_chemical_shifts
+  _Saveframe_category   theoretical_chemical_shifts
+  _Calculation_type_label  $shifts_v4.3 
+  _Model_atomic_coordinates_label  $132d
+  _Mol_system_component_name  132d
+  loop_
+    _Atom_shift_assign_ID
+    _Residue_author_seq_code
+    _Residue_seq_code
+    _Residue_label
+    _Atom_name
+    _Atom_type
+    _Chem_shift_value
+    _Chem_shift_value_error
+   _Chem_shift_ambiguity_code
+    1 .     1     DG   H5'   H      4.03  .   1
+    2 .     1     DG   H5''  H      3.91  .   1
+    3 .     1     DG   H4'   H      4.23  .   1
+    4 .     1     DG   H1'   H      6.19  .   1
+    5 .     1     DG   H8    H      8.11  .   1
+    6 .     1     DG   H3'   H      4.90  .   1
+    7 .     1     DG   H2'   H      2.84  .   1
+    8 .     1     DG   H2''  H      2.87  .   1
+    9 .     2     DC   H5'   H      4.07  .   1
+   10 .     2     DC   H5''  H      4.05  .   1
+   11 .     2     DC   H4'   H      4.17  .   1
+   12 .     2     DC   H1'   H      6.02  .   1
+   13 .     2     DC   H6    H      7.68  .   1
+   14 .     2     DC   H5    H      5.09  .   1
+   15 .     2     DC   H3'   H      4.77  .   1
+   16 .     2     DC   H2'   H      2.14  .   1
+   17 .     2     DC   H2''  H      2.44  .   1
+   18 .     3     DC   H5'   H      4.00  .   1
+   19 .     3     DC   H5''  H      4.01  .   1
+   20 .     3     DC   H4'   H      4.12  .   1
+   21 .     3     DC   H1'   H      6.00  .   1
+   22 .     3     DC   H6    H      7.64  .   1
+   23 .     3     DC   H5    H      5.35  .   1
+   24 .     3     DC   H3'   H      4.77  .   1
+   25 .     3     DC   H2'   H      2.30  .   1
+   26 .     3     DC   H2''  H      2.59  .   1
+   27 .     4     DG   H5'   H      4.05  .   1
+   28 .     4     DG   H5''  H      4.15  .   1
+   29 .     4     DG   H4'   H      4.33  .   1
+   30 .     4     DG   H1'   H      6.13  .   1
+   31 .     4     DG   H8    H      7.92  .   1
+   32 .     4     DG   H3'   H      4.89  .   1
+   33 .     4     DG   H2'   H      2.62  .   1
+   34 .     4     DG   H2''  H      2.66  .   1
+   35 .     5     DT   H5'   H      4.11  .   1
+   36 .     5     DT   H5''  H      4.18  .   1
+   37 .     5     DT   H4'   H      4.26  .   1
+   38 .     5     DT   H1'   H      6.04  .   1
+   39 .     5     DT   H6    H      7.24  .   1
+   40 .     5     DT   H73   H      0.69  .   1
+   41 .     5     DT   H3'   H      4.89  .   1
+   42 .     5     DT   H2'   H      2.24  .   1
+   43 .     5     DT   H2''  H      2.60  .   1
+   44 .     6     DT   H5'   H      4.05  .   1
+   45 .     6     DT   H5''  H      4.16  .   1
+   46 .     6     DT   H4'   H      4.23  .   1
+   47 .     6     DT   H1'   H      5.98  .   1
+   48 .     6     DT   H6    H      7.64  .   1
+   49 .     6     DT   H73   H      1.44  .   1
+   50 .     6     DT   H3'   H      4.92  .   1
+   51 .     6     DT   H2'   H      2.34  .   1
+   52 .     6     DT   H2''  H      2.69  .   1
+   53 .     7     DA   H5'   H      4.09  .   1
+   54 .     7     DA   H5''  H      4.10  .   1
+   55 .     7     DA   H4'   H      4.30  .   1
+   56 .     7     DA   H1'   H      6.00  .   1
+   57 .     7     DA   H8    H      8.36  .   1
+   58 .     7     DA   H2    H      6.08  .   1
+   59 .     7     DA   H3'   H      5.01  .   1
+   60 .     7     DA   H2'   H      2.87  .   1
+   61 .     7     DA   H2''  H      3.12  .   1
+   62 .     8     DA   H5'   H      4.19  .   1
+   63 .     8     DA   H5''  H      4.14  .   1
+   64 .     8     DA   H4'   H      4.44  .   1
+   65 .     8     DA   H1'   H      6.24  .   1
+   66 .     8     DA   H8    H      8.15  .   1
+   67 .     8     DA   H2    H      7.76  .   1
+   68 .     8     DA   H3'   H      5.01  .   1
+   69 .     8     DA   H2'   H      2.73  .   1
+   70 .     8     DA   H2''  H      2.89  .   1
+   71 .     9     DC   H5'   H      4.21  .   1
+   72 .     9     DC   H5''  H      4.07  .   1
+   73 .     9     DC   H4'   H      4.25  .   1
+   74 .     9     DC   H1'   H      5.97  .   1
+   75 .     9     DC   H6    H      7.37  .   1
+   76 .     9     DC   H5    H      4.17  .   1
+   77 .     9     DC   H3'   H      4.79  .   1
+   78 .     9     DC   H2'   H      2.23  .   1
+   79 .     9     DC   H2''  H      2.54  .   1
+   80 .    10     DG   H5'   H      4.07  .   1
+   81 .    10     DG   H5''  H      4.14  .   1
+   82 .    10     DG   H4'   H      4.32  .   1
+   83 .    10     DG   H1'   H      5.84  .   1
+   84 .    10     DG   H8    H      7.82  .   1
+   85 .    10     DG   H3'   H      4.91  .   1
+   86 .    10     DG   H2'   H      2.77  .   1
+   87 .    10     DG   H2''  H      2.70  .   1
+   88 .    11     DG   H5'   H      3.96  .   1
+   89 .    11     DG   H5''  H      4.10  .   1
+   90 .    11     DG   H4'   H      4.21  .   1
+   91 .    11     DG   H1'   H      5.94  .   1
+   92 .    11     DG   H8    H      7.48  .   1
+   93 .    11     DG   H3'   H      4.88  .   1
+   94 .    11     DG   H2'   H      2.67  .   1
+   95 .    11     DG   H2''  H      2.61  .   1
+   96 .    12     DC   H5'   H      4.06  .   1
+   97 .    12     DC   H5''  H      3.96  .   1
+   98 .    12     DC   H4'   H      4.13  .   1
+   99 .    12     DC   H1'   H      6.00  .   1
+  100 .    12     DC   H6    H      7.48  .   1
+  101 .    12     DC   H5    H      4.79  .   1
+  102 .    12     DC   H3'   H      4.65  .   1
+  103 .    12     DC   H2'   H      1.81  .   1
+  104 .    12     DC   H2''  H      2.20  .   1
+  105 .    13     DG   H5'   H      4.03  .   1
+  106 .    13     DG   H5''  H      3.91  .   1
+  107 .    13     DG   H4'   H      4.23  .   1
+  108 .    13     DG   H1'   H      6.19  .   1
+  109 .    13     DG   H8    H      8.11  .   1
+  110 .    13     DG   H3'   H      4.90  .   1
+  111 .    13     DG   H2'   H      2.84  .   1
+  112 .    13     DG   H2''  H      2.87  .   1
+  113 .    14     DC   H5'   H      4.07  .   1
+  114 .    14     DC   H5''  H      4.05  .   1
+  115 .    14     DC   H4'   H      4.17  .   1
+  116 .    14     DC   H1'   H      6.02  .   1
+  117 .    14     DC   H6    H      7.68  .   1
+  118 .    14     DC   H5    H      5.09  .   1
+  119 .    14     DC   H3'   H      4.77  .   1
+  120 .    14     DC   H2'   H      2.15  .   1
+  121 .    14     DC   H2''  H      2.44  .   1
+  122 .    15     DC   H5'   H      4.00  .   1
+  123 .    15     DC   H5''  H      4.01  .   1
+  124 .    15     DC   H4'   H      4.12  .   1
+  125 .    15     DC   H1'   H      6.00  .   1
+  126 .    15     DC   H6    H      7.64  .   1
+  127 .    15     DC   H5    H      5.35  .   1
+  128 .    15     DC   H3'   H      4.77  .   1
+  129 .    15     DC   H2'   H      2.30  .   1
+  130 .    15     DC   H2''  H      2.59  .   1
+  131 .    16     DG   H5'   H      4.05  .   1
+  132 .    16     DG   H5''  H      4.14  .   1
+  133 .    16     DG   H4'   H      4.33  .   1
+  134 .    16     DG   H1'   H      6.13  .   1
+  135 .    16     DG   H8    H      7.91  .   1
+  136 .    16     DG   H3'   H      4.89  .   1
+  137 .    16     DG   H2'   H      2.62  .   1
+  138 .    16     DG   H2''  H      2.65  .   1
+  139 .    17     DT   H5'   H      4.11  .   1
+  140 .    17     DT   H5''  H      4.17  .   1
+  141 .    17     DT   H4'   H      4.25  .   1
+  142 .    17     DT   H1'   H      6.04  .   1
+  143 .    17     DT   H6    H      7.22  .   1
+  144 .    17     DT   H73   H      0.68  .   1
+  145 .    17     DT   H3'   H      4.89  .   1
+  146 .    17     DT   H2'   H      2.23  .   1
+  147 .    17     DT   H2''  H      2.59  .   1
+  148 .    18     DT   H5'   H      4.05  .   1
+  149 .    18     DT   H5''  H      4.15  .   1
+  150 .    18     DT   H4'   H      4.23  .   1
+  151 .    18     DT   H1'   H      5.97  .   1
+  152 .    18     DT   H6    H      7.63  .   1
+  153 .    18     DT   H73   H      1.43  .   1
+  154 .    18     DT   H3'   H      4.91  .   1
+  155 .    18     DT   H2'   H      2.33  .   1
+  156 .    18     DT   H2''  H      2.68  .   1
+  157 .    19     DA   H5'   H      4.08  .   1
+  158 .    19     DA   H5''  H      4.10  .   1
+  159 .    19     DA   H4'   H      4.30  .   1
+  160 .    19     DA   H1'   H      5.99  .   1
+  161 .    19     DA   H8    H      8.34  .   1
+  162 .    19     DA   H2    H      6.07  .   1
+  163 .    19     DA   H3'   H      5.01  .   1
+  164 .    19     DA   H2'   H      2.86  .   1
+  165 .    19     DA   H2''  H      3.12  .   1
+  166 .    20     DA   H5'   H      4.19  .   1
+  167 .    20     DA   H5''  H      4.14  .   1
+  168 .    20     DA   H4'   H      4.44  .   1
+  169 .    20     DA   H1'   H      6.25  .   1
+  170 .    20     DA   H8    H      8.15  .   1
+  171 .    20     DA   H2    H      7.76  .   1
+  172 .    20     DA   H3'   H      5.01  .   1
+  173 .    20     DA   H2'   H      2.73  .   1
+  174 .    20     DA   H2''  H      2.89  .   1
+  175 .    21     DC   H5'   H      4.21  .   1
+  176 .    21     DC   H5''  H      4.07  .   1
+  177 .    21     DC   H4'   H      4.26  .   1
+  178 .    21     DC   H1'   H      5.98  .   1
+  179 .    21     DC   H6    H      7.38  .   1
+  180 .    21     DC   H5    H      4.18  .   1
+  181 .    21     DC   H3'   H      4.79  .   1
+  182 .    21     DC   H2'   H      2.24  .   1
+  183 .    21     DC   H2''  H      2.55  .   1
+  184 .    22     DG   H5'   H      4.07  .   1
+  185 .    22     DG   H5''  H      4.15  .   1
+  186 .    22     DG   H4'   H      4.32  .   1
+  187 .    22     DG   H1'   H      5.86  .   1
+  188 .    22     DG   H8    H      7.83  .   1
+  189 .    22     DG   H3'   H      4.91  .   1
+  190 .    22     DG   H2'   H      2.78  .   1
+  191 .    22     DG   H2''  H      2.71  .   1
+  192 .    23     DG   H5'   H      3.98  .   1
+  193 .    23     DG   H5''  H      4.11  .   1
+  194 .    23     DG   H4'   H      4.22  .   1
+  195 .    23     DG   H1'   H      5.95  .   1
+  196 .    23     DG   H8    H      7.51  .   1
+  197 .    23     DG   H3'   H      4.89  .   1
+  198 .    23     DG   H2'   H      2.68  .   1
+  199 .    23     DG   H2''  H      2.61  .   1
+  200 .    24     DC   H5'   H      4.07  .   1
+  201 .    24     DC   H5''  H      3.97  .   1
+  202 .    24     DC   H4'   H      4.13  .   1
+  203 .    24     DC   H1'   H      6.00  .   1
+  204 .    24     DC   H6    H      7.49  .   1
+  205 .    24     DC   H5    H      4.80  .   1
+  206 .    24     DC   H3'   H      4.65  .   1
+  207 .    24     DC   H2'   H      1.81  .   1
+  208 .    24     DC   H2''  H      2.20  .   1
+  stop_
+save_

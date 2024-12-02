@@ -1,0 +1,31 @@
+// Try some molecular mechanics.
+
+molecule m;
+int ier;
+float m_xyz[dynamic], f_xyz[dynamic];
+float dgrad, fret;
+
+m = getpdb("asp.pdb");
+allocate m_xyz[3*m.natoms];
+allocate f_xyz[3*m.natoms];
+
+readparm(m, "asp.top");
+
+mm_options("rgbmax=100., cut=100.0, ntpr=50, nsnb=999, gb=1, diel=C");
+mme_init(m, NULL, "::ZZZZ", m_xyz, NULL);
+
+// Do some conjugate gradients.
+dgrad = 0.005;
+setxyz_from_mol( m, NULL, m_xyz );
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 1.0, 500);
+
+// Do some Newton-Raphson.
+mm_options("ntpr=1");
+dgrad = 1.e-12;
+ier = newton(m_xyz, 3*m.natoms, fret, mme,mme2, dgrad, 0.0, 15);
+
+// get the normal modes:
+ier = nmode( m_xyz, 3*m.natoms,mme2, 20,3,0.5,0.5,0);
+if(mytaskid==0)
+  printf("nmode returns %d\n", ier );
+
