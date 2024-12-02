@@ -16,7 +16,7 @@ test.mpicuda:
 
 test.allserial: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
-          test.gbnsr6
+          test.gbnsr6 test.nabc test.nab
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -72,7 +72,7 @@ test.antechamber:
 	-(cd antechamber/tp && Run.tp2)
 
 test.paramfit:
-	-(cd paramfit && make test)
+	-(cd paramfit && $(MAKE) test)
 
 test.rism1d:
 	-(cd rism1d/spc-kh && ./Run.spc)
@@ -87,6 +87,12 @@ test.xtalutil:
 
 test.gbnsr6:
 	-(cd gbnsr6 && ./Run.gbnsr6.min)
+
+test.nabc:
+	-(cd nabc && $(MAKE) test)
+
+test.nab:
+	-(cd nab && $(MAKE) test)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff
