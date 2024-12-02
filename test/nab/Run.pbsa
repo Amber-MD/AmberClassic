@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+echo "Running test to do simple minimization (libpbsa)"
+echo "(this tests the PBSA implementation)"
+echo ""
+
+if [ -n "${DO_PARALLEL}" ] ; then
+   echo "Please note that PARALLEL PBSA is not implemented in nab."
+   echo "============================================================================"
+   exit 0
+fi
+
+../../bin/nab -o sff pbdmp.nab || error
+$DO_PARALLEL ./sff > pbdmp.out || error
+
+../dacdif pbdmp.out.check pbdmp.out
+
+rm -f sff pbdmp.c
+exit 0

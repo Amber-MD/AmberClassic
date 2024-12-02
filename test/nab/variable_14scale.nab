@@ -1,0 +1,13 @@
+molecule m;
+float m_xyz[36];
+float grad[36];
+float ier; 
+
+m = getpdb("NMA.pdb");
+readparm(m, "NMA_scee+scnb.prmtop");
+mm_options( "ntpr=1, gb=1, cut=99.0, diel=C, e_debug=0 ");
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+setxyz_from_mol( m, NULL, m_xyz );
+ier = mme(m_xyz, grad, 0);
+mme_timer();

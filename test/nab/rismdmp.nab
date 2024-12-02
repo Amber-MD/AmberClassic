@@ -1,0 +1,21 @@
+molecule m;
+float 	m_xyz[2000];
+float 	dgrad, fret;
+int 	ier; 
+
+m = getpdb("pbdmp.pdb");
+readparm(m, "pbdmp.prmtop");
+mm_options( "ntpr=1, rism=1, closure=kh, cut=99.0, xvvfile=../rism1d/spc-kh/spc.xvv.save");
+mm_options( "verbose=1, tolerance=1e-7, buffer=13, centering=2");
+mm_options( "ljTolerance=0, asympKSpaceTolerance=0");
+mm_options( "treeDCF=0, treeTCF=0, treeCoulomb=0");
+mm_options( "verbose=1, tolerance=1e-7, centering=2");
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+dgrad = 3*m.natoms*0.0001;
+setxyz_from_mol( m, NULL, m_xyz );
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 10.0, 3 );
+if(mytaskid==0)
+  printf( "conjgrad returns %d %f\n", ier, dgrad );
+
+mme_timer();

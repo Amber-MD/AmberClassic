@@ -1,0 +1,28 @@
+// Try some molecular mechanics. check r6 gb
+
+molecule m;
+int ier;
+float m_xyz[dynamic], f_xyz[dynamic];
+float dgrad, fret;
+
+m = getpdb("asp.pdb");
+allocate m_xyz[3*m.natoms];
+allocate f_xyz[3*m.natoms];
+
+readparm(m, "asp.top");
+
+mm_options("rgbmax=100., cut=100.0, ntpr=100, nsnb=999, gb_debug=1, gb=8, diel=C");
+mm_options("gb=8");
+mme_init(m, NULL, "::ZZZZ", m_xyz, NULL);
+setxyz_from_mol( m, NULL, m_xyz );
+mme( m_xyz, f_xyz, -1 );
+
+mm_options("gb_debug=0");
+
+// Do some conjugate gradients.
+dgrad = 0.0005;
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 1.0, 3000);
+if(mytaskid==0)
+  printf( "conjgrad returns %d\n", ier );
+
+mme_timer();

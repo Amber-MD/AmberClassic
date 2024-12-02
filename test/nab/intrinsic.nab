@@ -1,0 +1,75 @@
+//  Simple driver to read in a trajectory file, minimize each frame with xmin,
+//   then write out the minimized results as an output trajectory.
+
+//  Typical use would be  
+//      zcat mymol.trj.gz | implicit > implicit.log
+
+
+#include "xmin_opt.h"
+
+// M A I N  P R O G R A M  to carry out XMIN minimization on a molecule:
+
+struct xmin_opt xo;
+
+molecule mol;
+int i,natm, error_flag,ier,j,jlast,k,maxframes;
+float xyz[ dynamic ], grad[ dynamic ], v[dynamic];
+float fret,energy, grms, xmin_time;
+point dummy;
+file  trajout;
+string title, mymol;
+
+    xmin_opt_init( xo );
+
+    // edit the following lines for your needs:
+    mymol = "mymol";
+    mol = getpdb( mymol + ".pdb" );
+    readparm( mol, "prmtop" );
+    maxframes = 10;
+
+    natm = mol.natoms;
+    allocate xyz[ 3*natm ]; allocate grad[ 3*natm ];allocate v[3*natm];
+    
+    // kappa = 1.0395 does not apply. no salt in solution.
+    mm_options( "ntpr=10, gb=1, rgbmax=40., cut=99.0, diel=C ");
+    mme_init( mol, NULL, "::ZZZ", dummy, NULL );
+
+    xo.maxiter =10000;
+    xo.grms_tol =0.00000001;
+    grms =0.000001;
+    xo.method =3;
+    xo.numdiff =1;
+    xo.m_lbfgs =3;
+    xo.print_level =1;
+
+    if( mytaskid == 0 ){
+        trajout = fopen( mymol + ".min1.trj", "w" );
+        fprintf( trajout, "minimized gb3 conformations\n" );
+        title = getline( stdin );
+        printf( "Title: %s\n", title );
+
+        for( i=1; i<=maxframes; i++ ){
+
+	        for( j=1; j<=3*natm; j++ ){
+		        scanf( "%lf", xyz[ j ] );
+	        }
+
+            printf ("***************** %d *********************\n", i );
+
+
+            energy = mme( xyz, grad, 0 );
+            energy = xmin( mme, natm, xyz, grad, energy, grms, xo );
+            energy = mme( xyz, grad, -1 );
+
+	        for( j=1; j<=3*natm; j+=10 ){
+		        jlast = j+9;
+		        if( jlast > 3*natm ) jlast = 3*natm;
+		        for( k=j; k<=jlast; k++ ){
+			        fprintf( trajout, "%8.3f", xyz[k] );
+		        }
+		        fprintf( trajout, "\n" );
+	        }
+        }
+    }
+
+

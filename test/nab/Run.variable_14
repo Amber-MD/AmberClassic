@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test for variable 1-4 scaled nonbonded interactions"
+echo ""
+../../bin/$NAB -o sff variable_14scale.nab || error
+$DO_PARALLEL ./sff > variable_14scale.out || error
+
+../dacdif variable_14scale.out.check variable_14scale.out
+
+/bin/rm -f sff variable_14scale.c
+exit 0

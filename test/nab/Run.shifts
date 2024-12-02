@@ -1,0 +1,37 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo "Running test to compute chemical shifts"
+echo "(this tests many parts of the compiler and libraries)"
+echo ""
+../../bin/nab -c shifts.nab || error
+../../bin/nab -c get_pep_info.nab || error
+../../bin/nab -c get_ring_info.nab || error
+../../bin/nab -c get_sugar_info.nab || error
+../../bin/nab -c getresid_from_pdb.nab || error
+../../bin/nab -c pointplane.nab || error
+../../bin/nab -c read_obs_shifts.nab || error
+../../bin/nab -c sbcoil.nab || error
+../../bin/nab -c swap_shifts.nab || error
+../../bin/nab -c write_sander_inp.nab || error
+../../bin/nab -o shf shifts.o get_pep_info.o \
+	get_ring_info.o get_sugar_info.o \
+	getresid_from_pdb.o pointplane.o read_obs_shifts.o sbcoil.o \
+	swap_shifts.o write_sander_inp.o || error
+./shf 5pti > 5pti.shifts.tmp 2>/dev/null || error
+grep -v '\$Id:' 5pti.shifts.tmp | sed 's/  -0\.000/   0.000/' > 5pti.shifts
+rm 5pti.shifts.tmp
+
+../dacdif 5pti.shifts.check 5pti.shifts
+
+rm -f shf 5pti.shf 5pti.rdb
+rm -f shifts.o get_pep_info.o get_ring_info.o get_sugar_info.o \
+getresid_from_pdb.o pointplane.o read_obs_shifts.o sbcoil.o \
+swap_shifts.o write_sander_inp.o
+rm -f *.c
+exit 0

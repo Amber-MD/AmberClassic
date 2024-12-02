@@ -1,0 +1,18 @@
+molecule m;
+float 	m_xyz[2000], f[2000];
+float 	dgrad, fret;
+int 	ier; 
+
+m = getpdb("xfin.pdb");
+readparm(m, "xfin.top");
+mm_options( "ntpr=1, gb=1, gbsa=1, surften=0.005, cut=99.0, diel=C ");
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+dgrad = 3*m.natoms*0.0001;
+getxv( "xfin.x", m.natoms, fret, m_xyz, f );
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 10.0, 10 );
+if(mytaskid==0)
+  printf( "conjgrad returns %d\n", ier);
+// mme( m_xyz, f, -1 );
+
+mme_timer();

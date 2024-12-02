@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to do simple xmin minimization"
+echo ""
+../../bin/$NAB -o txmin txmin.nab || error
+$DO_PARALLEL ./txmin > txmin.out || error
+
+../dacdif -r 1.e-4 txmin.out.check txmin.out
+
+rm -f txmin txmin.c
+exit 0

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to do molecular dynamics with rattle"
+echo ""
+../../bin/$NAB -o sff rattle_md.nab || error
+$DO_PARALLEL ./sff > rattle_md.out || error
+
+../dacdif rattle_md.out.check rattle_md.out
+
+rm -f sff rattle_md.c
+exit 0

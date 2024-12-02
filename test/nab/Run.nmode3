@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to compute Langevin modes:"
+echo ""
+../../bin/$NAB -o asp_nm3 asp_nm3.nab || error
+$DO_PARALLEL ./asp_nm3 > asp_nm3.out.tmp || error
+cat asp_nm3.out.tmp | tail -67 > asp_nm3.out || error
+
+../dacdif asp_nm3.out.check asp_nm3.out
+
+rm -f asp_nm3 asp_nm3.c lmode lmodevecs asp_nm3.out.tmp
+exit 0

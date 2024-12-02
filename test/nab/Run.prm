@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    echo "skipping parallel prm_test, since teLeap might not be available"
+    exit 0
+else
+    NAB="nab"
+fi
+
+echo "Running test to create Amber force-field description"
+echo ""
+../../bin/$NAB -o prm prm.nab || error
+$DO_PARALLEL ./prm > prm.out1 || error
+tail -20 prm.out1 > prm.out
+../dacdif prm.out.check prm.out
+
+echo "checking the prmtop file:"
+echo ""
+../dacdif tprmtop.check tprmtop
+
+rm -f prm prm.c tleap.out leap.log tprmcrd prm.out1 gbrna.pdb.lpdb
+exit 0

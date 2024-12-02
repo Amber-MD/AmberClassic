@@ -1,0 +1,240 @@
+ATOM      1 COM  COM     1     -11.073  47.750 137.378
+ATOM      2 COM  COM     2      24.068  25.540 136.639
+ATOM      3 COM  COM     3     -15.067   8.721 135.124
+TER
+ATOM      1 COM  COM     1       9.619-101.923 103.897
+ATOM      2 COM  COM     2      48.925 -90.618  96.419
+ATOM      3 COM  COM     3      25.205-114.157  69.961
+TER
+ATOM      1 COM  COM     1      90.848-110.742 -27.537
+ATOM      2 COM  COM     2     114.684 -81.545  -9.984
+ATOM      3 COM  COM     3      99.088 -79.274 -49.586
+TER
+ATOM      1 COM  COM     1     120.359  33.480 -75.287
+ATOM      2 COM  COM     2     130.469  40.220 -35.524
+ATOM      3 COM  COM     3     104.478  65.163 -58.307
+TER
+ATOM      1 COM  COM     1      57.368 131.434  26.636
+ATOM      2 COM  COM     2      74.465 106.402  55.094
+ATOM      3 COM  COM     3      33.926 119.547  55.850
+TER
+ATOM      1 COM  COM     1      47.750-137.378  11.073
+ATOM      2 COM  COM     2      25.540-136.639 -24.068
+ATOM      3 COM  COM     3       8.721-135.124  15.067
+TER
+ATOM      1 COM  COM     1    -101.923-103.897  -9.619
+ATOM      2 COM  COM     2     -90.618 -96.419 -48.925
+ATOM      3 COM  COM     3    -114.157 -69.961 -25.205
+TER
+ATOM      1 COM  COM     1    -110.742  27.537 -90.848
+ATOM      2 COM  COM     2     -81.545   9.984-114.684
+ATOM      3 COM  COM     3     -79.274  49.586 -99.088
+TER
+ATOM      1 COM  COM     1      33.480  75.287-120.359
+ATOM      2 COM  COM     2      40.220  35.524-130.469
+ATOM      3 COM  COM     3      65.163  58.307-104.478
+TER
+ATOM      1 COM  COM     1     131.434 -26.636 -57.368
+ATOM      2 COM  COM     2     106.402 -55.094 -74.465
+ATOM      3 COM  COM     3     119.547 -55.850 -33.926
+TER
+ATOM      1 COM  COM     1    -137.378 -11.073 -47.750
+ATOM      2 COM  COM     2    -136.639  24.068 -25.540
+ATOM      3 COM  COM     3    -135.124 -15.067  -8.721
+TER
+ATOM      1 COM  COM     1    -103.897   9.619 101.923
+ATOM      2 COM  COM     2     -96.419  48.925  90.618
+ATOM      3 COM  COM     3     -69.961  25.205 114.157
+TER
+ATOM      1 COM  COM     1      27.537  90.848 110.742
+ATOM      2 COM  COM     2       9.984 114.684  81.545
+ATOM      3 COM  COM     3      49.586  99.088  79.274
+TER
+ATOM      1 COM  COM     1      75.287 120.359 -33.480
+ATOM      2 COM  COM     2      35.524 130.469 -40.220
+ATOM      3 COM  COM     3      58.307 104.478 -65.163
+TER
+ATOM      1 COM  COM     1     -26.636  57.368-131.434
+ATOM      2 COM  COM     2     -55.094  74.465-106.402
+ATOM      3 COM  COM     3     -55.850  33.926-119.547
+TER
+ATOM      1 COM  COM     1     -11.073 -47.750-137.378
+ATOM      2 COM  COM     2      24.068 -25.540-136.639
+ATOM      3 COM  COM     3     -15.067  -8.721-135.124
+TER
+ATOM      1 COM  COM     1       9.619 101.923-103.897
+ATOM      2 COM  COM     2      48.925  90.618 -96.419
+ATOM      3 COM  COM     3      25.205 114.157 -69.961
+TER
+ATOM      1 COM  COM     1      90.848 110.742  27.537
+ATOM      2 COM  COM     2     114.684  81.545   9.984
+ATOM      3 COM  COM     3      99.088  79.274  49.586
+TER
+ATOM      1 COM  COM     1     120.359 -33.480  75.287
+ATOM      2 COM  COM     2     130.469 -40.220  35.524
+ATOM      3 COM  COM     3     104.478 -65.163  58.307
+TER
+ATOM      1 COM  COM     1      57.368-131.434 -26.636
+ATOM      2 COM  COM     2      74.465-106.402 -55.094
+ATOM      3 COM  COM     3      33.926-119.547 -55.850
+TER
+ATOM      1 COM  COM     1      47.750 137.378 -11.073
+ATOM      2 COM  COM     2      25.540 136.639  24.068
+ATOM      3 COM  COM     3       8.721 135.124 -15.067
+TER
+ATOM      1 COM  COM     1    -101.923 103.897   9.619
+ATOM      2 COM  COM     2     -90.618  96.419  48.925
+ATOM      3 COM  COM     3    -114.157  69.961  25.205
+TER
+ATOM      1 COM  COM     1    -110.742 -27.537  90.848
+ATOM      2 COM  COM     2     -81.545  -9.984 114.684
+ATOM      3 COM  COM     3     -79.274 -49.586  99.088
+TER
+ATOM      1 COM  COM     1      33.480 -75.287 120.359
+ATOM      2 COM  COM     2      40.220 -35.524 130.469
+ATOM      3 COM  COM     3      65.163 -58.307 104.478
+TER
+ATOM      1 COM  COM     1     131.434  26.636  57.368
+ATOM      2 COM  COM     2     106.402  55.094  74.465
+ATOM      3 COM  COM     3     119.547  55.850  33.926
+TER
+ATOM      1 COM  COM     1    -137.378  11.073  47.750
+ATOM      2 COM  COM     2    -136.639 -24.068  25.540
+ATOM      3 COM  COM     3    -135.124  15.067   8.721
+TER
+ATOM      1 COM  COM     1    -103.897  -9.619-101.923
+ATOM      2 COM  COM     2     -96.419 -48.925 -90.618
+ATOM      3 COM  COM     3     -69.961 -25.205-114.157
+TER
+ATOM      1 COM  COM     1      27.537 -90.848-110.742
+ATOM      2 COM  COM     2       9.984-114.684 -81.545
+ATOM      3 COM  COM     3      49.586 -99.088 -79.274
+TER
+ATOM      1 COM  COM     1      75.287-120.359  33.480
+ATOM      2 COM  COM     2      35.524-130.469  40.220
+ATOM      3 COM  COM     3      58.307-104.478  65.163
+TER
+ATOM      1 COM  COM     1     -26.636 -57.368 131.434
+ATOM      2 COM  COM     2     -55.094 -74.465 106.402
+ATOM      3 COM  COM     3     -55.850 -33.926 119.547
+TER
+ATOM      1 COM  COM     1      11.073  47.750-137.378
+ATOM      2 COM  COM     2     -24.068  25.540-136.639
+ATOM      3 COM  COM     3      15.067   8.721-135.124
+TER
+ATOM      1 COM  COM     1      -9.619-101.923-103.897
+ATOM      2 COM  COM     2     -48.925 -90.618 -96.419
+ATOM      3 COM  COM     3     -25.205-114.157 -69.961
+TER
+ATOM      1 COM  COM     1     -90.848-110.742  27.537
+ATOM      2 COM  COM     2    -114.684 -81.545   9.984
+ATOM      3 COM  COM     3     -99.088 -79.274  49.586
+TER
+ATOM      1 COM  COM     1    -120.359  33.480  75.287
+ATOM      2 COM  COM     2    -130.469  40.220  35.524
+ATOM      3 COM  COM     3    -104.478  65.163  58.307
+TER
+ATOM      1 COM  COM     1     -57.368 131.434 -26.636
+ATOM      2 COM  COM     2     -74.465 106.402 -55.094
+ATOM      3 COM  COM     3     -33.926 119.547 -55.850
+TER
+ATOM      1 COM  COM     1     -47.750-137.378 -11.073
+ATOM      2 COM  COM     2     -25.540-136.639  24.068
+ATOM      3 COM  COM     3      -8.721-135.124 -15.067
+TER
+ATOM      1 COM  COM     1     101.923-103.897   9.619
+ATOM      2 COM  COM     2      90.618 -96.419  48.925
+ATOM      3 COM  COM     3     114.157 -69.961  25.205
+TER
+ATOM      1 COM  COM     1     110.742  27.537  90.848
+ATOM      2 COM  COM     2      81.545   9.984 114.684
+ATOM      3 COM  COM     3      79.274  49.586  99.088
+TER
+ATOM      1 COM  COM     1     -33.480  75.287 120.359
+ATOM      2 COM  COM     2     -40.220  35.524 130.469
+ATOM      3 COM  COM     3     -65.163  58.307 104.478
+TER
+ATOM      1 COM  COM     1    -131.434 -26.636  57.368
+ATOM      2 COM  COM     2    -106.402 -55.094  74.465
+ATOM      3 COM  COM     3    -119.547 -55.850  33.926
+TER
+ATOM      1 COM  COM     1     137.378 -11.073  47.750
+ATOM      2 COM  COM     2     136.639  24.068  25.540
+ATOM      3 COM  COM     3     135.124 -15.067   8.721
+TER
+ATOM      1 COM  COM     1     103.897   9.619-101.923
+ATOM      2 COM  COM     2      96.419  48.925 -90.618
+ATOM      3 COM  COM     3      69.961  25.205-114.157
+TER
+ATOM      1 COM  COM     1     -27.537  90.848-110.742
+ATOM      2 COM  COM     2      -9.984 114.684 -81.545
+ATOM      3 COM  COM     3     -49.586  99.088 -79.274
+TER
+ATOM      1 COM  COM     1     -75.287 120.359  33.480
+ATOM      2 COM  COM     2     -35.524 130.469  40.220
+ATOM      3 COM  COM     3     -58.307 104.478  65.163
+TER
+ATOM      1 COM  COM     1      26.636  57.368 131.434
+ATOM      2 COM  COM     2      55.094  74.465 106.402
+ATOM      3 COM  COM     3      55.850  33.926 119.547
+TER
+ATOM      1 COM  COM     1      11.073 -47.750 137.378
+ATOM      2 COM  COM     2     -24.068 -25.540 136.639
+ATOM      3 COM  COM     3      15.067  -8.721 135.124
+TER
+ATOM      1 COM  COM     1      -9.619 101.923 103.897
+ATOM      2 COM  COM     2     -48.925  90.618  96.419
+ATOM      3 COM  COM     3     -25.205 114.157  69.961
+TER
+ATOM      1 COM  COM     1     -90.848 110.742 -27.537
+ATOM      2 COM  COM     2    -114.684  81.545  -9.984
+ATOM      3 COM  COM     3     -99.088  79.274 -49.586
+TER
+ATOM      1 COM  COM     1    -120.359 -33.480 -75.287
+ATOM      2 COM  COM     2    -130.469 -40.220 -35.524
+ATOM      3 COM  COM     3    -104.478 -65.163 -58.307
+TER
+ATOM      1 COM  COM     1     -57.368-131.434  26.636
+ATOM      2 COM  COM     2     -74.465-106.402  55.094
+ATOM      3 COM  COM     3     -33.926-119.547  55.850
+TER
+ATOM      1 COM  COM     1     -47.750 137.378  11.073
+ATOM      2 COM  COM     2     -25.540 136.639 -24.068
+ATOM      3 COM  COM     3      -8.721 135.124  15.067
+TER
+ATOM      1 COM  COM     1     101.923 103.897  -9.619
+ATOM      2 COM  COM     2      90.618  96.419 -48.925
+ATOM      3 COM  COM     3     114.157  69.961 -25.205
+TER
+ATOM      1 COM  COM     1     110.742 -27.537 -90.848
+ATOM      2 COM  COM     2      81.545  -9.984-114.684
+ATOM      3 COM  COM     3      79.274 -49.586 -99.088
+TER
+ATOM      1 COM  COM     1     -33.480 -75.287-120.359
+ATOM      2 COM  COM     2     -40.220 -35.524-130.469
+ATOM      3 COM  COM     3     -65.163 -58.307-104.478
+TER
+ATOM      1 COM  COM     1    -131.434  26.636 -57.368
+ATOM      2 COM  COM     2    -106.402  55.094 -74.465
+ATOM      3 COM  COM     3    -119.547  55.850 -33.926
+TER
+ATOM      1 COM  COM     1     137.378  11.073 -47.750
+ATOM      2 COM  COM     2     136.639 -24.068 -25.540
+ATOM      3 COM  COM     3     135.124  15.067  -8.721
+TER
+ATOM      1 COM  COM     1     103.897  -9.619 101.923
+ATOM      2 COM  COM     2      96.419 -48.925  90.618
+ATOM      3 COM  COM     3      69.961 -25.205 114.157
+TER
+ATOM      1 COM  COM     1     -27.537 -90.848 110.742
+ATOM      2 COM  COM     2      -9.984-114.684  81.545
+ATOM      3 COM  COM     3     -49.586 -99.088  79.274
+TER
+ATOM      1 COM  COM     1     -75.287-120.359 -33.480
+ATOM      2 COM  COM     2     -35.524-130.469 -40.220
+ATOM      3 COM  COM     3     -58.307-104.478 -65.163
+TER
+ATOM      1 COM  COM     1      26.636 -57.368-131.434
+ATOM      2 COM  COM     2      55.094 -74.465-106.402
+ATOM      3 COM  COM     3      55.850 -33.926-119.547
+TER

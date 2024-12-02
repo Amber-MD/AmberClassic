@@ -1,0 +1,39 @@
+int		swap_shifts( float obs[ hashed ], float calc[ hashed ])
+{
+
+int		nswaps;
+string	idp, idp2;
+string	f[ 3 ];
+float	temp;
+
+
+nswaps = 0;
+//
+//  filter to swap the "observed" shifts of non-stereo assigned protons
+//   to best match the calculated shifts
+//
+//
+for( idp in obs ){
+
+	split( idp, f, ":" );
+	idp2 = "";
+
+	if( f[3]=="HB3"  && f[1]!="ALA" ) idp2 = f[1] + ":" + f[2] + ":HB2";
+	if( f[3]=="HG3" )                 idp2 = f[1] + ":" + f[2] + ":HG2";
+	if( f[3]=="HD3"  && f[1]!="ILE" ) idp2 = f[1] + ":" + f[2] + ":HD2";
+	if( f[3]=="HE3"  && f[1]=="LYS" ) idp2 = f[1] + ":" + f[2] + ":HE2";
+	if( f[3]=="HG13" && f[1]=="ILE" ) idp2 = f[1] + ":" + f[2] + ":HG12";
+	if( f[3]=="HG23" && f[1]=="VAL" ) idp2 = f[1] + ":" + f[2] + ":HG13";
+	if( f[3]=="HD23" && f[1]=="LEU" ) idp2 = f[1] + ":" + f[2] + ":HD13";
+
+	if( idp2 != "" ){
+		if ((obs[idp]-obs[idp2])*(calc[idp]-calc[idp2]) < 0.0) {
+			fprintf( stderr, "swapping %-13s %7.3f with %-13s %7.3f\n",
+				idp, obs[idp], idp2, obs[idp2] );
+			temp=obs[idp]; obs[idp]=obs[idp2]; obs[idp2]=temp;
+			nswaps = nswaps + 1;
+		}
+	}
+}
+return( nswaps );
+};

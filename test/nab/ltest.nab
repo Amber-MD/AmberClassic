@@ -1,0 +1,16 @@
+molecule m;
+float 	m_xyz[2000];
+float 	dgrad, fret;
+int 	natom, ier; 
+
+m = getpdb("2.pdb");
+readparm(m, "2.prmtop");
+natom = countmolatoms(m, NULL);
+mm_options( "cut=999., ntpr=10, nsnb=100, diel=R");
+mme_init( m, "::*[PT'],H5'*", "::Z", m_xyz, NULL);
+
+dgrad = 3*natom*0.0001;
+setxyz_from_mol( m, NULL, m_xyz );
+ier = conjgrad(m_xyz, 3*natom, fret, mme, dgrad, 10.0, 10 );
+
+mme_timer();

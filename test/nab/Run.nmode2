@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to compute GB normal modes using DSAUPD:"
+echo ""
+../../bin/$NAB -o asp_nm2 asp_nm2.nab || error
+$DO_PARALLEL ./asp_nm2 > asp_nm2.out.tmp || error
+cat asp_nm2.out.tmp | tail -15 > asp_nm2.out
+rm asp_nm2.out.tmp
+
+../dacdif -a 1.e-4 asp_nm2.out.check asp_nm2.out
+
+rm -f asp_nm2 asp_nm2.c vecs
+exit 0

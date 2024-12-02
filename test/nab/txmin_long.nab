@@ -1,0 +1,55 @@
+//   XMIN reverse communication external minimization package. 
+//   Written by Istvan Kolossvary.
+
+#include "xmin_opt.h"
+
+// M A I N  P R O G R A M  to carry out XMIN minimization on a molecule:
+
+struct xmin_opt xo;
+
+molecule mol;
+int natm;
+float xyz[ dynamic ], grad[ dynamic ];
+float energy, grms;
+point dummy;
+
+    xmin_opt_init( xo );  //  set up defaults: shown here:
+
+    // xo.mol_struct_opt = 1;
+    // xo.maxiter        = 1000;
+    // xo.grms_tol       = 0.05;
+    // xo.method         = 3;
+    // xo.numdiff        = 1;
+    // xo.m_lbfgs        = 5;
+    //        xo.ls_method   = 2;
+    //        xo.ls_maxiter  = 20;
+    //        xo.ls_maxatmov = 0.5;
+    //        xo.beta_armijo = 0.5;
+    //        xo.c_armijo    = 0.4;
+    //        xo.mu_armijo   = 1.0;
+    //        xo.ftol_wolfe  = 0.0001;
+    //        xo.gtol_wolfe  = 0.9;
+    // xo.print_level = 0;
+
+    //  non-defaults go here:
+    xo.maxiter = 500;       
+    xo.grms_tol = 0.00001;  
+    xo.ls_maxatmov = 0.15;
+    xo.print_level = 1;
+
+    mol = getpdb( "gbrna.pdb" );
+    readparm( mol, "gbrna.prmtop" );
+    natm = mol.natoms;
+    allocate xyz[ 3*natm ]; allocate grad[ 3*natm ];
+    setxyz_from_mol( mol, NULL, xyz );
+
+    mm_options( "ntpr=1, gb=1, kappa=0.10395, rgbmax=99., cut=99.0, diel=C ");
+    mme_init( mol, NULL, "::ZZZ", dummy, NULL );
+
+    energy = mme( xyz, grad, 0 );
+    energy = xmin( mme, natm, xyz, grad, energy, grms, xo );
+
+    //setmol_from_xyz( mol, NULL, xyz );
+    //putpdb( "gbrna_min.pdb", mol, "-brook" );
+
+// E N D  M A I N

@@ -1,0 +1,38 @@
+molecule m;
+float 	m_xyz[2000], m_f[2000], m_v[2000];
+float 	dgrad, fret;
+int 	ier, i; 
+
+for(i =0; i<2000; i++){
+      m_v[i] = 0;
+      m_f[i] = 0;
+}
+
+m = getpdb("ala.pdb");
+readparm(m, "ala.parm7");
+mm_options( "e_debug=0, ntpr=1, ntpr_md=1, cut=999.0, dt=0.001, rattle=0, tempi=0, zerov=0");
+mm_options( "rism=1, tolerance=1e-15, zerofrc=0, ntwrism=4");
+mm_options( "ljTolerance=0, asympKSpaceTolerance=0");
+mm_options( "treeDCF=0, treeTCF=0, treeCoulomb=0");
+mm_options( "grdspcx=2,grdspcy=2,grdspcz=2, verbose=1");
+mm_options( "xvvfile=../rism1d/spc-kh/spc.xvv.save");
+mm_options( "guvfile=guv, huvfile=huv, cuvfile=cuv");
+mm_options( "quvfile=quv, chgdistfile=chgdist");
+mm_options( "volfmt=dx");
+mm_options( "uccoeff=-0.149818,-0.1136266,-0.00053163,0.0103954");
+mm_options( "entropicDecomp=1");
+mm_options( "gfCorrection=1, pcplusCorrection=1");
+mm_options( "exchemfile=exchem, solvenefile=solvene, entropyfile=entropy");
+mm_options( "exchemGFfile=exchemGF, solveneGFfile=solveneGF, entropyGFfile=entropyGF");
+mm_options( "exchemPCPLUSfile=exchemPCPLUS, solvenePCPLUSfile=solvenePCPLUS, entropyPCPLUSfile=entropyPCPLUS");
+mm_options( "exchemUCfile=exchemUC, solveneUCfile=solveneUC, entropyUCfile=entropyUC");
+mm_options( "potUVfile=potUV");
+mm_options( "molReconstruct=1");
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+setxyz_from_mol( m, NULL, m_xyz );
+
+ier = md(3*m.natoms,4,m_xyz,m_f,m_v, mme );
+
+if(mytaskid==0)
+  printf( "md returns %d\n", ier );

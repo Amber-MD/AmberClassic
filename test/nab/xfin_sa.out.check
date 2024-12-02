@@ -1,0 +1,46 @@
+Reading parm file (xfin.top)
+title:
+                                                                                
+	mm_options:  ntpr=1
+	mm_options:  gb=1
+	mm_options:  gbsa=1
+	mm_options:  surften=0.005
+	mm_options:  cut=99.0
+	mm_options:  diel=C
+Using carbon SA parms for atom type ZN
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0  -1100.22    465.48    -79.31   -808.14     10.18   -688.42  1.74e+01
+ff:     1  -1109.97    455.97    -79.43   -808.08     10.18   -688.61  1.65e+01
+ff:     2  -1175.29    392.75    -80.29   -807.53     10.19   -690.40  9.84e+00
+ff:     3  -1200.47    369.66    -80.94   -806.90     10.22   -692.51  9.14e+00
+ff:     4  -1242.22    330.26    -83.51   -806.39     10.20   -692.78  6.29e+00
+ff:     5  -1256.68    317.82    -85.62   -805.87     10.17   -693.18  8.59e+00
+ff:     6  -1297.40    278.22    -89.77   -801.94     10.18   -694.09  7.71e+00
+ff:     7  -1298.76    276.82    -89.31   -802.54     10.18   -693.92  6.40e+00
+ff:     8  -1324.40    253.40    -90.62   -803.54     10.18   -693.82  4.88e+00
+ff:     9  -1324.66    253.34    -90.72   -803.65     10.19   -693.82  5.38e+00
+ff:    10  -1338.87    240.32    -91.88   -804.36     10.21   -693.16  5.32e+00
+conjgrad returns -3
+
+|Timing summary:
+|              Initialize       0.000
+|             Molec. Dyn.       0.000
+|             Normal Mode       0.000
+|             Conj. Grad.       0.000
+|                  Newton       0.000
+|-------------------------
+|                   Total       0.000
+
+|1st derivative timing summary:
+|             constraints       0.000
+|                   bonds       0.000
+|                  angles       0.001
+|                torsions       0.001
+|                pairlist       0.024
+|                 nonbond       0.000
+|               gen. Born       0.281
+|       Poisson Boltzmann       0.000
+|                 3D-RISM       0.000
+|                   Other       0.000
+|-------------------------
+|                   Total       0.308
