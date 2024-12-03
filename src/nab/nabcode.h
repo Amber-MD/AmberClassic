@@ -247,10 +247,10 @@ typedef	struct	{
 	} v_value;
 } VALUE_T;
 
-VALUE_T		*NAB_href();
-STRING_T	*NAB_hin();
-STRING_T	*NAB_hfirst();
-STRING_T	*NAB_hnext();
+VALUE_T		*NAB_href( HASH_T **htab, char key[], int type, int size );
+INT_T	*NAB_hin( HASH_T *htab, char key[] );
+INT_T	*NAB_hfirst( HASH_T *htab, CURHASH_T *c_hash );
+STRING_T	*NAB_hnext( HASH_T *htab, CURHASH_T *c_hash );
 
 #define	HRI(h,k,t)	NAB_href((h),(k),(t),0)->v_value.v_ival
 #define	HRSZ(h,k,t)	NAB_href((h),(k),(t),0)->v_value.v_szval
@@ -279,28 +279,28 @@ STRING_T	*NAB_hnext();
 	((p)[0]!=(q)[0]||(p)[1]!=(q)[1]||(p)[2]!=(q)[2])
 #define	PT_ISTRUE(p)	((p)[0]!=0.0||(p)[1]!=0.0||(p)[2]!=0.0)
 
-POINT_T	*NAB_ptcpy();
-POINT_T	*NAB_ptadd();
-POINT_T	*NAB_ptsub();
-POINT_T	*NAB_ptscl();
-POINT_T	*NAB_ptcrs();
-REAL_T	NAB_ptdot();
+POINT_T	*NAB_ptcpy( POINT_T, POINT_T );
+POINT_T	*NAB_ptadd( POINT_T, POINT_T, POINT_T );
+POINT_T	*NAB_ptsub( POINT_T, POINT_T, POINT_T );
+POINT_T	*NAB_ptscl( POINT_T, REAL_T, POINT_T );
+POINT_T	*NAB_ptcrs( POINT_T, POINT_T, POINT_T ); 
+REAL_T	NAB_ptdot( POINT_T, POINT_T );
 
 	/* functions for accessing parts of atoms & residues */
 
-INT_T		*NAB_ari();
-REAL_T		*NAB_arf();
-STRING_T	**NAB_arc();
+INT_T		*NAB_ari( ATOM_T *ap, char *key );
+REAL_T		*NAB_arf( ATOM_T *ap, char *key );
+STRING_T	**NAB_arc( ATOM_T *ap, char *key );
 POINT_T		*NAB_arp( ATOM_T *ap, char key[] );
-INT_T		*NAB_rri();
-STRING_T	**NAB_rrc();
-INT_T		*NAB_mri();
+INT_T		*NAB_rri( RESIDUE_T *res, char *key );
+STRING_T	**NAB_rrc( RESIDUE_T *res, char *key );
+INT_T		*NAB_mri( MOLECULE_T *mol, char *key );
 
 	/* functions for for( a in m ) etc	*/
 
 ATOM_T		*NAB_mnext (MOLECULE_T *mol, ATOM_T *cap);
-ATOM_T		*NAB_anext();
-RESIDUE_T	*NAB_rnext();
+ATOM_T		*NAB_anext( RESIDUE_T *res, ATOM_T *cap );
+RESIDUE_T	*NAB_rnext( MOLECULE_T *mol, RESIDUE_T *crp );
 
 	/* defines for string compares:	*/
 
@@ -316,17 +316,17 @@ int	NAB_strcmp( char *, char * );
 
 #define	length(s)	strlen(s)
 
-char	*NAB_readstring();
-char	*NAB_strcpy();
-char	*NAB_strcat();
+char	*NAB_readstring( char ** );
+char	*NAB_strcpy( char **, char [] );
+char	*NAB_strcat( char[], char[] );
 int	NAB_index( char [], char [] );
 int	NAB_rematch( char [], char [] );
 int NAB_gsub(int, char **, char **, char **);
 
 	/*  Other NAB declarations:  */
 
-int	NAB_matcpy();
-int	unlink();
+REF_MATRIX_T	NAB_matcpy( REF_MATRIX_T, REF_MATRIX_T );
+int	unlink( char * );
 int	NAB_aematch( ATOM_T *ap, char aex[] );
 
 	/* defines for assigning then using temp vars in exprs	*/
