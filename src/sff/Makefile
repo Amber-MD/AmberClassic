@@ -44,9 +44,9 @@ hcp_getpdb$(SFX): hcp_getpdb.c
 
 sff.c: lex.mmo.c
 
-#depend: $(OBJS:.o=.c)
-#	@echo "[SFF] make depend"
-#	$(VB)$(CC) -MM $^ > $@
+depend: $(OBJS:.o=.c)
+	@echo "[SFF] make depend"
+	$(VB)$(CC) -MM $^ > $@
 
 include depend
 
