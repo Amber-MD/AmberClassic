@@ -641,7 +641,7 @@ static void linkC(std::string linker, std::vector<std::string> objectFiles, std:
 
 	// set up RPATH
 #if defined(__APPLE__) || defined(__linux__)
-	// On OS X, Amber libraries use '@rpath/<name>.dylib` as their install_name, so we have to add $AMBERHOME/lib as the RPATH
+	// On OSX, Amber libraries use '@rpath/<name>.dylib` as their install_name, so we have to add $AMBERHOME/lib as the RPATH
 	// On Linux, we can still fall back to LD_LIBRARY_PATH, but setting the RPATH makes it a bit more convenient for the user.
 	cmd.arg("-Wl,-rpath," + amberhome + "/lib");
 #endif

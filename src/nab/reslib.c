@@ -502,8 +502,8 @@ static	RESLIB_T	*read_reslib_header( char reslib[], char offname[] )
 static	void	mk_fname( char sname[], char fname[] )
 {
     char *amberhome;
-    if( !( amberhome = (char *) getenv( "AMBERHOME" ) ) ){
-         fprintf( stderr, "AMBERHOME not defined.\n" );
+    if( !( amberhome = (char *) getenv( "AMBERCLASSICHOME" ) ) ){
+         fprintf( stderr, "AMBERCLASSICHOME not defined.\n" );
          exit( 1 );
     }
 

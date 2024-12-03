@@ -31,8 +31,8 @@ int	getdist( char **name, char **lib, int *dcount,
 	DISTREC	*dp;
 	int	i, j, k, cv;
 
-    if( !( amberhome = (char *) getenv( "AMBERHOME" ) ) ){
-         fprintf( stderr, "AMBERHOME not defined.\n" );
+    if( !( amberhome = (char *) getenv( "AMBERCLASSICHOME" ) ) ){
+         fprintf( stderr, "AMBERCLASSICHOME not defined.\n" );
          return( 1 );
     }
 	if ( ( strcmp ( *lib, savename ) != 0 ) ){

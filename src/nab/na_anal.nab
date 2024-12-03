@@ -905,8 +905,8 @@ int	baseanal( molecule m, int PrimaryStrand, int PrimaryBaseStart, int PrimaryBa
         molecule mrefPrimaryTop;
 		molecule mrefPrimaryBottom;
 
-        if( !( nabhome = getenv( "AMBERHOME" ) ) ){
-                fprintf( stderr, "AMBERHOME not defined.\n" );
+        if( !( nabhome = getenv( "AMBERCLASSICHOME" ) ) ){
+                fprintf( stderr, "AMBERCLASSICHOME not defined.\n" );
                 return( 1 );
         }
         nabhome = nabhome + "/dat";
@@ -1521,8 +1521,8 @@ int	basepairanal( molecule m, int PrimaryStrand, int PrimaryBaseStart,
 	molecule mref, mp1, mp2, mc1, mc2; 
 	molecule mrefPrimaryTop, mrefComplementaryTop, mrefPrimaryBottom, mrefComplementaryBottom;
 
-        if( !( nabhome = getenv( "AMBERHOME" ) ) ){
-                fprintf( stderr, "AMBERHOME not defined.\n" );
+        if( !( nabhome = getenv( "AMBERCLASSICHOME" ) ) ){
+                fprintf( stderr, "AMBERCLASSICHOME not defined.\n" );
                 return( 1 );
         }
 		nabhome = nabhome + "/dat";
@@ -1560,7 +1560,7 @@ int	basepairanal( molecule m, int PrimaryStrand, int PrimaryBaseStart,
 			printf("Which residue of the primary strand ( %d ) forms a non-Watson-Crick base pair (%d-%d) ", PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd );
 			scanf( "%s", nonWCAnswer );
 			NonWCPrimaryResidue[ j ] = atoi( nonWCAnswer );
-			printf("Which base pairing scheme should be used ( e.g., gu.XXVII - See $AMBERHOME/dat/dgdb/basepairs ) " );
+			printf("Which base pairing scheme should be used ( e.g., gu.XXVII - See $AMBERCLASSICHOME/dat/dgdb/basepairs ) " );
 			scanf( "%s", nonReference[ j++ ] );
 			printf("Does this helix have any other non-Watson-Crick base pairs? (y/n) " );
 			scanf( "%s", WCAnswer );

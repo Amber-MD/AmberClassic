@@ -726,7 +726,7 @@ static	void	read_bdb( int *n_bdb, BDBENT bdb[] )
 	BDBENT	*bp;
 	char	bdfname[ 256 ];
 
-	sprintf( bdfname, "%s/dat/reslib/bounds.db", getenv("AMBERHOME") );
+	sprintf( bdfname, "%s/dat/reslib/bounds.db", getenv("AMBERCLASSICHOME") );
 
 	if( ( fp = fopen( bdfname, "r" ) ) == NULL ){
 		fprintf( stderr, "read_b14tab: can't open db %s\n", bdfname );
