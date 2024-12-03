@@ -50,7 +50,8 @@ xblasflag="-DCONFIG_FC_UNDERSCORE"
 
 plumed="no"
 
-boostlib="-lboost_program_options -lboost_iostreams -lboost_regex -lboost_system -lboost_timer -lboost_chrono -lboost_filesystem -lboost_graph"
+boost="yes"
+boostlib="-lboost_program_options -lboost_iostreams"
 
 macAccelerate="no"
 
@@ -105,6 +106,7 @@ while [ $# -gt 0 ]; do
         --mkl)
             mkl="yes";;
         --noboost)
+            boost="no"
             moft="skip";;
         --openblas)
             openblas="yes";;
@@ -573,6 +575,21 @@ elif [ "$flibs_fftw" != "" ]; then
       cd ../..
    else
       echo "Using the existing fftw3  libraries"
+   fi
+fi
+
+#--------------------------------------------------------------------------
+#  Configure and build Boost subset:
+#--------------------------------------------------------------------------
+
+if [ "$boost" == "yes" ]; then
+   if [ ! -s "lib/libboost_iostreams.a" ]; then 
+      printf "\nInstalling boost subset: $boostlib\n"
+      cd src/boost_1_86_0
+      make install_boost
+      cd ../..
+   else
+      echo "Using the existing boost  libraries"
    fi
 fi
 
