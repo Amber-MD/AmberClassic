@@ -203,7 +203,7 @@ char	nfmask[];
     char *nabhome = NABHOME;
 	cmd_sz = 1024;
 	cmd = malloc(cmd_sz);
-	sprintf( cmd, "%s -I%s/include", CC, nabhome );
+	sprintf( cmd, "%s -Wno-parentheses -I%s/include", CC, nabhome );
 	for( ac = 1; ac < argc; ac++ ){
 		word[0] = '\0';
 		if( nfmask[ ac ] ){
