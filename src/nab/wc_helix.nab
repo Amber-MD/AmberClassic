@@ -5,8 +5,6 @@
 //     (same for aresib; sreslib and areslib should both be either
 //     empty or non-empty).
 
-string	wc_complement();
-molecule wc_basepair();
 molecule wc_helix(
 	string seq, string sreslib, string snatype,
 	string aseq, string areslib, string anatype,
