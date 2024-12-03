@@ -25,8 +25,6 @@ float		twist;
 float		rise;
 string		pdbfname;
 
-molecule	wc_helix();
-
 #ifdef NAB_DOUBLE_PRECISION
 while( scanf( "%s %lf %lf %lf %lf", mname, xoff, incl, twist, rise ) == 5 ){
 #else
