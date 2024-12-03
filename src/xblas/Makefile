@@ -1,21 +1,25 @@
 include ../../config.h
 
+OBJS = BLAS_error.o blas_malloc.o BLAS_fpinfo_x.o BLAS_fpinfo_x-f2c.o \
+	BLAS_ddot.o BLAS_ddot_x.o  BLAS_ddot-f2c.o BLAS_ddot_x-f2c.o  \
+	BLAS_daxpby.o BLAS_daxpby_x.o  BLAS_daxpby-f2c.o BLAS_daxpby_x-f2c.o  \
+	BLAS_dwaxpby.o BLAS_dwaxpby_x.o  BLAS_dwaxpby-f2c.o BLAS_dwaxpby_x-f2c.o \
+	BLAS_dgemm.o BLAS_dgemm_x.o  BLAS_dgemm-f2c.o BLAS_dgemm_x-f2c.o  \
+	BLAS_dgemv.o BLAS_dgemv_x.o BLAS_dgemv-f2c.o BLAS_dgemv_x-f2c.o  \
+	BLAS_dgemv2.o BLAS_dgemv2_x.o  BLAS_dgemv2-f2c.o BLAS_dgemv2_x-f2c.o  \
+
 lib-amb: $(LIBDIR)/libxblas-amb.a
 
-$(LIBDIR)/libxblas-amb.a:
-	cd src/common && $(MAKE) lib-amb
-	cd src/dot && $(MAKE) lib-amb
-	cd src/axpby && $(MAKE) lib-amb
-	cd src/waxpby && $(MAKE) lib-amb
-	cd src/gemv && $(MAKE) lib-amb
-	cd src/gemm && $(MAKE) lib-amb
-	cd src/gemv2 && $(MAKE) lib-amb
+$(LIBDIR)/libxblas-amb.a: $(OBJS)
+	@echo "[XBLAS] AR $@"
+	$(VB)$(AR) $@ $(OBJS) > /dev/null
+	$(VB)$(RANLIB) $@
+
+.c.o:
+	@echo "[XBLAS] CC $<"
+	$(VB)$(CC) $(CFLAGS)  -c -o $@ $<
 
 clean:
-	cd src/common && $(MAKE) clean
-	cd src/dot && $(MAKE) clean
-	cd src/axpby && $(MAKE) clean
-	cd src/waxpby && $(MAKE) clean
-	cd src/gemv && $(MAKE) clean
-	cd src/gemm && $(MAKE) clean
-	cd src/gemv2 && $(MAKE) clean
+	rm -f *.o *~ core
+
+
