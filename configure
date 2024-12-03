@@ -12,7 +12,6 @@ AmberClassicHome=`pwd`
 verbose="@"
 enablempi=
 requested_help="no"
-clangf=""
 openblas="no"
 sfx=""
 gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
@@ -29,6 +28,8 @@ cxx="g++"
 mpicc="mpicc"
 iccflags=""
 gccflags="-Wno-unused-result"
+clangflags=""
+clangf=""
 
 fc="gfortran"
 flibs_arch="-lgfortran -w"
@@ -127,10 +128,17 @@ while [ $# -gt 0 ]; do
         --clang)
             compiler="clang"
             clangf="-DCLANG"
+            clangflags="-Wno-parentheses"
             cc="clang"
             cxx="clang++"
             fc="gfortran"
             gccflags=""
+            # following assumes this is OSX:
+            for x in `gfortran -print-search-dirs | grep libraries | \
+                  sed -e "s/libraries: =//g" -e "s/:/ /g"`; do
+                test -f $x/libgfortran.dylib && break
+            done
+            flibs_arch="-L$x -lgfortran -w -Wl,-rpath $x"
             optflags="-g -O3";;
         --mpi)
             mpi="yes"
@@ -149,7 +157,8 @@ done
 
 if [ "$requested_help" = "yes" ] ; then
 	printf " --intel        use Intel compilers; default is gnu\n"
-	printf " --clang        use clang/gfortran as compilers (no openmp support)\n"
+	printf " --clang        use clang/gfortran as compilers\n"
+    printf "                  (implies OSX; no openmp support for now)\n"
 	printf " --nogcc10      use flags for gcc9 and below\n"
     printf "\n"
 	printf " --mpi          build only msander.MPI\n"
@@ -748,7 +757,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $inc $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
+CFLAGS=$gccflags $clangf $clangflags $inc $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
