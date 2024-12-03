@@ -19,6 +19,8 @@ HEADERS= \
    utilities/utilities.hpp      
 
 # BOOSTLIB=-lboost_program_options -lboost_iostreams -lboost_regex -lboost_system -lboost_timer -lboost_chrono -lboost_filesystem -lboost_graph
+BOOSTLIB=-lboost_program_options -lboost_iostreams
+
 
 skip:
 	@echo "Skipping build of metatwist"
@@ -31,7 +33,7 @@ metatwist.o:  metatwist.cpp $(HEADERS)
 
 $(BINDIR)/metatwist:  metatwist.o
 	@echo "[MoFT]  CXX $@"
-	$(VB)$(CXX) -std=c++14 -o $@ $< -L$(LIBDIR) $(BOOSTLIB) $(FLIBSF)
+	$(VB)$(CXX) -std=c++14 -o $@ $< -L$(LIBDIR) $(BOOSTLIB) -lfftw3_omp -lfftw3
 
 clean:
 	/bin/rm -f *.o
