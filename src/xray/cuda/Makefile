@@ -25,7 +25,8 @@ xray_cuda.o: $(CUOBJS)
 libxray_cuda: $(LIBDIR)/libxray_cuda.a
 
 $(LIBDIR)/libxray_cuda.a: xray_cuda.o
-	ar rvs $@ $< $(CUOBJS) $(CPPOBJS)
+	@echo "[XRAY]  AR $@"
+	$(VB)ar rvs $@ $< $(CUOBJS) $(CPPOBJS) > /dev/null
 
 clean:
 	/bin/rm -f *.o

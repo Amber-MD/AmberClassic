@@ -89,7 +89,7 @@ $(BINDIR)/msander$(SFX): libs $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) $(PLUMED_DEPENDENCIES) \
          dummy
 	@echo "[MSANDER]  FC $@"
-	$(VB)$(FC) $(FFLAGS) -o $@  $(MMOBJ) \
+	$(VB)$(FC) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
@@ -109,9 +109,9 @@ $(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
-	$(VB)$(FC) $(FFLAGS) -o $@ $(LESOBJ) \
-	     $(XRAY_OBJS) $(NFE_OBJECTS) -L$(LIBDIR) $(NETCDFLIBF) \
-	     $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+	$(VB)$(FC) -o $@ $(LESOBJ) \
+	     $(NFE_OBJECTS) $(XRAY_OBJS) \
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
 
