@@ -353,8 +353,8 @@ if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
       echo "using OpenBLAS libraries in $GOTO"
       flibs_la="$GOTO -lpthread"
    elif [ "$conda" == "yes" -a "$openblas" == "yes" ]; then
-      echo "using OpenBLAS libraries from conda"
-      flibs_la="$CONDA_PREFIX/lib/libopenblas.a -lpthread"
+      echo "using OpenBLAS libraries from conda-forge"
+      flibs_la="-L$CONDA_PREFIX/lib -lopenblas -lpthread"
    elif [ "$macAccelerate" == "yes" ]; then
       echo "using macAccelerate frameworks"
       flibs_la="-framework Accelerate"
@@ -467,7 +467,7 @@ fi
 if [ "$conda" == "yes" ]; then
 
    netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
-   echo "using netcdf   libraries from conda"
+   echo "using netcdf   libraries from conda-forge"
 
 elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
@@ -533,7 +533,7 @@ fi
 if [ "$conda" == "yes" ]; then
 
    flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
-   echo "using fftw     libraries from conda"
+   echo "using fftw     libraries from conda-forge"
 
 
 elif [ "$flibs_fftw" != "" ]; then
@@ -589,11 +589,18 @@ fi
 #--------------------------------------------------------------------------
 
 if [ "$boost" == "yes" ]; then
-   if [ ! -s "lib/libboost_iostreams.a" ]; then 
+   if [ "$conda" == "yes" ]; then
+ 
+      boostlib="-lboost_program_options -lboost_iostreams"
+      echo "using boost    libraries from conda-forge"
+
+   elif [ ! -s "lib/libboost_iostreams.a" ]; then 
+
       printf "\nInstalling boost subset: $boostlib\n"
       cd src/boost_1_86_0
       make install_boost
       cd ../..
+
    else
       echo "Using the existing boost  libraries"
    fi
@@ -801,7 +808,7 @@ SHORT_ENE=$short_ene
 #  (6)  other flags:
 
 # (FLIBS is for nab)
-FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $ciflib $flibs_arch $netcdflibf
+FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch
 LDFLAGS=$ldflags
 AR=    ar rv
 RANLIB=ranlib
