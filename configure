@@ -20,6 +20,7 @@ longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
 conda="no"
+conda_incflags=""
 
 compiler="gnu"
 cc="gcc"
@@ -47,10 +48,6 @@ moft="moft"
 installtype="serial"
 xblasflag="-DCONFIG_FC_UNDERSCORE"
 
-netcdflibf_static="$AmberClassicHome/lib/libnetcdff.a $AmberClassicHome/lib/libnetcdf.a"
-netcdflibf_shared="-L$AmberClassicHome/lib -lnetcdff -lnetcdf"
-netcdflibf=$netcdflibf_static
-
 plumed="no"
 
 boost="yes"
@@ -70,6 +67,11 @@ cuda_prec='SPFP'
 
 lapack="skip"
 blas="skip"
+
+inc="-I$AmberClassicHome/include"
+netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
+netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
+netcdflibf=$netcdflibf_static
 
 #short_ene=short_ene_omp.o
 short_ene=short_ene.o   # short_ene_omp may slow things down or even crash
@@ -101,8 +103,8 @@ while [ $# -gt 0 ]; do
             gcc10f=""
             gcc10c="";;
         --conda)
-            AmberClassicHome="\$CONDA_PREFIX"
-            inc="-I\$CONDA_PREFIX/include"
+            boostlib="-L$CONDA_PREFIX/lib $boostlib"
+            conda_incflags="-I$CONDA_PREFIX/include"
             conda="yes";;
         --mkl)
             mkl="yes";;
@@ -347,12 +349,12 @@ fi
 
 if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
 
-   if [ "$conda" == "yes" ]; then
-      echo "using OpenBLAS libraries from conda-forge"
-      flibs_la="-lopenblas -lpthread"
-   elif [ ! -z "$GOTO" -a "$openblas" == "yes" ]; then
+   if [ ! -z "$GOTO" -a "$openblas" == "yes" ]; then
       echo "using OpenBLAS libraries in $GOTO"
       flibs_la="$GOTO -lpthread"
+   elif [ "$conda" == "yes" ]; then
+      echo "using OpenBLAS libraries from conda-forge"
+      flibs_la="-L$CONDA_PREFIX/lib -lopenblas -lpthread"
    elif [ "$macAccelerate" == "yes" ]; then
       echo "using macAccelerate frameworks"
       flibs_la="-framework Accelerate"
@@ -464,7 +466,7 @@ fi
 
 if [ "$conda" == "yes" ]; then
 
-   netcdflibf="-lnetcdff -lnetcdf"
+   netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
    echo "using netcdf   libraries from conda-forge"
 
 elif [ ! -s "lib/libnetcdf.a" ]; then
@@ -530,6 +532,7 @@ fi
 
 if [ "$conda" == "yes" ]; then
 
+   flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
    echo "using fftw     libraries from conda-forge"
 
 elif [ "$flibs_fftw" != "" ]; then
@@ -783,7 +786,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $inc $gcc10c $iccflags $fpic $debug $xblasflag
+CFLAGS=$gccflags $clangf $clangflags $inc $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
@@ -793,7 +796,7 @@ COPTFLAGS=$optflags
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
+FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
 FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
