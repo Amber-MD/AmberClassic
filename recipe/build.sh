@@ -2,7 +2,7 @@
 
 ./configure --conda 
 
-cd src && make serial
+(cd src && make serial)
 
 rsync -a README.md LICENSE config.h AmberClassic.sh include dat bin lib test $PREFIX
 mkdir -p $PREFIX/doc
