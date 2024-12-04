@@ -72,7 +72,7 @@ install_nab: nabhome.h $(BINDIR)/$(MPI)nab$(SFX) \
 	@cp -p  nabcode.h nabtypes.h defreal.h nab.h nab_netcdf.h \
                xmin_opt.h lmod_opt.h $(INCDIR)
 #
-#   Following for nab.MPI, not yet supported here:
+#   Following for mpinab, not yet supported here:
 #	@mv $(BINDIR)/$(MPI)nab$(SFX) $(BINDIR)/to_be_dispatched/
 #	@cat nab_template | sed "s/REPLACE_ME/$(MPI)nab$(SFX)/g" > $(BINDIR)/$(MPI)nab$(SFX)
 #	@chmod +x $(BINDIR)/$(MPI)nab$(SFX)

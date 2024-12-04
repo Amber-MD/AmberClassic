@@ -72,7 +72,10 @@ test.antechamber:
 	-(cd antechamber/tp && Run.tp2)
 
 test.paramfit:
-	-(cd paramfit && $(MAKE) test)
+	-(cd write_qminput_nma; ./run_test.x)
+	-(cd simplex_perfect_fit_NMA; ./run_test.x)
+	-(cd ga_perfect_fit_NMA; ./run_test.x)
+	-(cd dihedral_least_squares_NMA; ./run_test.x)
 
 test.rism1d:
 	-(cd rism1d/spc-kh && ./Run.spc)

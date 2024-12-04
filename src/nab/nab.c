@@ -7,11 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "nabhome.h"
-#ifdef WIN32
-#   define L_SET SEEK_SET
-#else
 #   include <sys/wait.h>
-#endif
 
 typedef	unsigned long	NAB_SIZE_T;
 

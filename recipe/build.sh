@@ -1,11 +1,9 @@
 #!/bin/sh
 
-./configure --conda --openblas
+./configure --conda 
 
-cd src
-make serial
-cd ..
+cd src && make serial
 
-rsync -a README.md LICENSE config_testing.h AmberClassic.sh dat bin lib test $PREFIX
+rsync -a README.md LICENSE config.h AmberClassic.sh include dat bin lib test $PREFIX
 mkdir -p $PREFIX/doc
 rsync -a doc/AmberClassic.pdf $PREFIX/doc
