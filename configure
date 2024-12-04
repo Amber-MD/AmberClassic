@@ -809,7 +809,7 @@ SHORT_ENE=$short_ene
 
 # (FLIBS is for nab)
 FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch
-LDFLAGS=$ldflags
+LDFLAGS=$ldflags $lm
 AR=    ar rv
 RANLIB=ranlib
 MV=mv
