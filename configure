@@ -69,8 +69,8 @@ lapack="skip"
 blas="skip"
 
 inc="-I$AmberClassicHome/include"
-netcdflibf_static="$AmberClassicHome/lib/libnetcdff.a $AmberClassicHome/lib/libnetcdf.a"
-netcdflibf_shared="-L$AmberClassicHome/lib -lnetcdff -lnetcdf"
+netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
+netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
 netcdflibf=$netcdflibf_static
 
 #short_ene=short_ene_omp.o
@@ -89,7 +89,8 @@ while [ $# -gt 0 ]; do
         --debug)
             debug="";;
         --openmp)
-            ompflag='-fopenmp -DOPENMP';
+            ompflag='-DOPENMP';
+            ldflags="-fopenmp $ldflags"
             openmp="yes";;
         --cuda)
             cuda="yes"
@@ -115,7 +116,7 @@ while [ $# -gt 0 ]; do
         --macAccelerate)
             macAccelerate="yes";;
         --static)
-            ldflags="-static";;
+            ldflags="-static $ldflags";;
         --plumed)
             plumed="yes";;
         --intel)
@@ -171,7 +172,7 @@ if [ "$requested_help" = "yes" ] ; then
 	printf "    --nogcc10       use flags for gcc9 and below\n"
     printf "\nPerformance options:\n"
 	printf "    --openmp        make use of OPENMP in msander and libsff\n"
-	printf "    --mpi           build only msander.MPI\n"
+	printf "    --mpi           build only msander.MPI; uses mpi stack in PATH\n"
 	printf "    --cuda          build only msander.cuda\n"
     printf "                      [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
     printf "    --cudaprec      [SPFP|DPFP], cuda precision, default is SPFP\n"
