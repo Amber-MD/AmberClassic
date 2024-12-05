@@ -1,9 +1,9 @@
 #!/bin/sh
 
-./configure --conda 
+./configure --conda --openmp
 
 (cd src && make conda)
 
-rsync -a README.md LICENSE config.h AmberClassic.sh include dat bin lib test $PREFIX
+rsync -a README.md LICENSE AmberClassic.sh include dat bin lib $PREFIX
 mkdir -p $PREFIX/doc
 rsync -a doc/AmberClassic.pdf $PREFIX/doc
