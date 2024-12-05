@@ -91,7 +91,7 @@ $(BINDIR)/msander$(SFX): libs $(MMOBJ) \
 	@echo "[MSANDER]  FC $@"
 	$(VB)$(FC) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) \
-	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGSF) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
 $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
@@ -100,7 +100,7 @@ $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
 	@echo "[MSANDER]  FC $@"
 	$(VB)$(FC) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
-	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGSF) $(PLUMED_LOAD) \
          -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
          -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
@@ -111,7 +111,7 @@ $(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
 	@echo "[MSANDER_LES]  FC $@"
 	$(VB)$(FC) -o $@ $(LESOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) \
-	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGSF) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
 

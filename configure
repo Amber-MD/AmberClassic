@@ -42,6 +42,7 @@ optflags="-g -O3"
 openmp='no'
 ompflag=""
 ldflags=""
+ldflagsf=""
 fftw_flags=""
 mkl="no"    
 moft="moft"
@@ -90,7 +91,7 @@ while [ $# -gt 0 ]; do
             debug="";;
         --openmp)
             ompflag='-DOPENMP';
-            ldflags="-fopenmp $ldflags"
+            flibs_fftw="-lfftw3_omp $flibs_fftw"
             openmp="yes";;
         --cuda)
             cuda="yes"
@@ -104,6 +105,10 @@ while [ $# -gt 0 ]; do
             gcc10c="";;
         --conda)
             conda_incflags="-I$CONDA_PREFIX/include"
+            compiler="clang"
+            clangf="-DCLANG"
+            ldflagsf="-fopenmp"
+            clangflags="-Wno-parentheses"
             installtype="conda"
             conda="yes";;
         --mkl)
@@ -191,7 +196,10 @@ fi
 #      that need to be decided only after all arguments have been processed
 
 if [ "$compiler" == "intel" -a "$openmp" == "yes" ]; then
-  ompflag="-qopenmp -DOPENMP"
+  ldflags="-qopenmp $ldflags"
+  ldflagsf="-qopenmp $ldflagsf"
+elif [ "$compiler" == "gnu" -a "$openmp" == "yes" ]; then
+  ldflagsf="-fopenmp $ldflagsf"
 fi
 if [ "$compiler" == "intel" -a "$mpi" == "yes" ]; then
   optflags="-g -O3"
@@ -202,9 +210,6 @@ if [ "$mpi" == "yes" ]; then
 fi
 if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
-fi
-if [ "$openmp" == "yes" -a "$cc" != "clang" ]; then
-  flibs_fftw="-lfftw3_omp $flibs_fftw"
 fi
 
 #------------------------------------------------------------------------------
@@ -809,6 +814,7 @@ SHORT_ENE=$short_ene
 # (FLIBS is for nab)
 FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch
 LDFLAGS=$ldflags $lm
+LDFLAGSF=$ldflagsf $lm
 AR=    ar rv
 RANLIB=ranlib
 MV=mv

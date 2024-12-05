@@ -59,7 +59,7 @@ install_sqm: $(BINDIR)/sqm
 $(BINDIR)/sqm: $(SQMOBJ) $(QMOBJ) 
 	@echo "[SQM]  FC $@"
 	$(VB)$(FC) $(FFLAGS) -o $@ $(SQMOBJ) $(QMOBJ) \
-		-L$(LIBDIR) $(FLIBSF) $(LDFLAGS)
+		-L$(LIBDIR) $(FLIBSF) $(LDFLAGSF)
 
 #-----------LIBS
 
