@@ -686,7 +686,7 @@ PLUMED_DEPENDENCIES=Plumed.o
 EOF
 
 #--------------------------------------------------------------------------
-#  create the config_test.h file:
+#  create the config_testing.h file:
 #--------------------------------------------------------------------------
 
 cat <<EOF > config_testing.h
