@@ -809,7 +809,7 @@ void checkpoint(char *fname, int natom, REAL_T * x, int iter)
    /* Convert the iteration number to ascii. */
 
    buf = (char *) malloc(j + 1);
-   sprintf(buf, "%d\0", iter);
+   sprintf(buf, "%d", iter);
 
    k = strlen(fname);
    if ((i = strindex(fname, "%d")) < 0) {

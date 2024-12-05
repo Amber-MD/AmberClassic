@@ -2,8 +2,6 @@
 #include <string.h>
 #include "nabc.h"
 
-char	*getenv();
-
 #define	D_NAME_SIZE	20
 typedef	struct	distrec	{
 	char	d_name[ D_NAME_SIZE ];
