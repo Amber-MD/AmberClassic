@@ -59,6 +59,7 @@ clean:
 	-(cd rism && $(MAKE) clean )
 	-(cd msander && $(MAKE) clean )
 	-(cd xray && $(MAKE) clean )
+	-(cd addles && $(MAKE) clean )
 	-(cd xray/cuda && $(MAKE) clean )
 	-(cd leap && $(MAKE) clean )
 	-(cd sff && $(MAKE) clean )
@@ -75,6 +76,10 @@ clean:
 	-(cd ucpp-1.3 && $(MAKE) clean )
 	-(cd nab && $(MAKE) clean )
 #	-(cd nss && $(MAKE) clean )
+	-(cd netcdf-c-4.7.2 && make clean)
+	-(cd netcdf-fortran-4.5.2 && make clean)
+	-(cd fftw-3.3 && make clean)
+	-(cd boost_1_86_0 && make clean)
 
 uninstall: clean
 	-(cd $(BINDIR) && /bin/rm -rf *)

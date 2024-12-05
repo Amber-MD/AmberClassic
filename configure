@@ -42,7 +42,6 @@ optflags="-g -O3"
 openmp='no'
 ompflag=""
 ldflags=""
-ldflagsf=""
 fftw_flags=""
 mkl="no"    
 moft="moft"
@@ -90,7 +89,6 @@ while [ $# -gt 0 ]; do
         --debug)
             debug="";;
         --openmp)
-            ompflag='-DOPENMP';
             flibs_fftw="-lfftw3_omp $flibs_fftw"
             openmp="yes";;
         --cuda)
@@ -107,7 +105,6 @@ while [ $# -gt 0 ]; do
             conda_incflags="-I$CONDA_PREFIX/include"
             compiler="clang"
             clangf="-DCLANG"
-            ldflagsf="-fopenmp"
             clangflags="-Wno-parentheses"
             installtype="conda"
             conda="yes";;
@@ -184,7 +181,7 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\nLess-common options, generally not very helpful\n"
 	printf "    --mkl           use MKL routines from \$MKLROOT environment variable\n"
-	printf "    --openblas      use BLAS routines from \$GOTO environment variable\n"
+	printf "    --openblas      use openBLAS routines a system library\n"
 	printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
 	printf "    --noboost       skip codes (metatwist) that require boost \n"
 	printf "    --static        use static linking (experimental)\n"
@@ -196,10 +193,14 @@ fi
 #      that need to be decided only after all arguments have been processed
 
 if [ "$compiler" == "intel" -a "$openmp" == "yes" ]; then
+  ompflag="-qopenmp -DOPENMP"
   ldflags="-qopenmp $ldflags"
-  ldflagsf="-qopenmp $ldflagsf"
 elif [ "$compiler" == "gnu" -a "$openmp" == "yes" ]; then
-  ldflagsf="-fopenmp $ldflagsf"
+  ompflag="-fopenmp -DOPENMP"
+  ldflags="-fopenmp $ldflags"
+elif [ "$conda" == "yes" -a "$openmp" == "yes" ]; then
+  ompflag="-fopenmp -DOPENMP"
+  ldflags="-fopenmp $ldflags"
 fi
 if [ "$compiler" == "intel" -a "$mpi" == "yes" ]; then
   optflags="-g -O3"
@@ -354,9 +355,9 @@ fi
 
 if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
 
-   if [ ! -z "$GOTO" -a "$openblas" == "yes" ]; then
-      echo "using OpenBLAS libraries in $GOTO"
-      flibs_la="$GOTO -lpthread"
+   if [ "$openblas" == "yes" ]; then
+      echo "using system OpenBLAS libraries"
+      flibs_la="-lopenblas -lpthread"
    elif [ "$conda" == "yes" ]; then
       echo "using OpenBLAS libraries from conda-forge"
       flibs_la="-L$CONDA_PREFIX/lib -lopenblas -lpthread"
@@ -791,10 +792,12 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $inc $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
+CFLAGS=$gccflags $clangf $clangflags $inc $ompflag $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
+# (FLIBS is for C/NAB codes)
+FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
 
 ###############################################################################
 
@@ -811,10 +814,7 @@ SHORT_ENE=$short_ene
 
 #  (6)  other flags:
 
-# (FLIBS is for nab)
-FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch
 LDFLAGS=$ldflags $lm
-LDFLAGSF=$ldflagsf $lm
 AR=    ar rv
 RANLIB=ranlib
 MV=mv
