@@ -1,9 +1,8 @@
-include ../../config.h
 
 install_boost:
 	@echo "[BOOST] bootstrap"
 	@./bootstrap.sh --with-libraries=iostreams,program_options \
-          --prefix=$(BASEDIR)  > boost_build.log
+          --prefix=../..  > boost_build.log
 	@echo "[BOOST] b2 install"
 	@./b2 install >> boost_build.log
 
