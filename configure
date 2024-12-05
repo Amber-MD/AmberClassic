@@ -119,17 +119,6 @@ while [ $# -gt 0 ]; do
             ldflags="-static $ldflags";;
         --plumed)
             plumed="yes";;
-        --intel)
-            compiler="intel"
-            cc="icx"
-            cxx="icpx"
-            fc="ifx"
-            longlines=""
-            mpicc="mpiicc -cc=icx"
-            mpif90="mpiifort -fc=ifx"
-            optflags="-g -O3"
-            gccflags=""
-            flibs_arch="-lifport -lifcore -lsvml";;
         --clang)
             compiler="clang"
             clangf="-DCLANG"
@@ -163,9 +152,7 @@ done
 if [ "$requested_help" = "yes" ] ; then
     printf "Usage:  ./configure [OPTIONS]\n"
     printf "\nCompilers:\n"
-	printf "    --intel         use Intel compilers; default is gnu\n"
-    printf "                      (generally provides little performance boost)\n"
-	printf "    --clang         use clang/gfortran as compilers\n"
+	printf "    --clang         use clang/gfortran; gcc/gfortran is default\n"
     printf "                      (implies OSX; no openmp support for now)\n"
     printf "    --conda         conda-forge compilers, only for conda build\n"
 	printf "    --verbose       give build details, otherwise be more silent\n"
@@ -188,18 +175,9 @@ fi
 #  extra logic related to command-line arguments: generally, things
 #      that need to be decided only after all arguments have been processed
 
-if [ "$compiler" == "intel" -a "$openmp" == "yes" ]; then
-  ompflag="-qopenmp -DOPENMP"
-  ldflags="-qopenmp $ldflags"
-elif [ "$compiler" == "gnu" -a "$openmp" == "yes" ]; then
+if [ "$openmp" == "yes" ]; then
   ompflag="-fopenmp -DOPENMP"
   ldflags="-fopenmp $ldflags"
-elif [ "$conda" == "yes" -a "$openmp" == "yes" ]; then
-  ompflag="-fopenmp -DOPENMP"
-  ldflags="-fopenmp $ldflags"
-fi
-if [ "$compiler" == "intel" -a "$mpi" == "yes" ]; then
-  optflags="-g -O3"
 fi
 if [ "$mpi" == "yes" ]; then
   fc="$mpif90"
@@ -227,10 +205,6 @@ if [ "$OS" = "Darwin" ]; then
    shared_suffix=.dylib
    make_shared=-dynamiclib
    lm=
-   if [ "$compiler" = 'intel' ] ; then
-      optflags="-g -O3"
-      iccflags="-std=c99"
-   fi
 else
    is_mac='no'
    shared_suffix=.so
