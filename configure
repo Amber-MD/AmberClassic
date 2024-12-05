@@ -60,7 +60,6 @@ lapack="skip"
 blas="skip"
 macAccelerate="no"
 fftw_flags=""
-mkl="no"    
 
 #  --- cuda:
 cuda="no"
@@ -109,8 +108,6 @@ while [ $# -gt 0 ]; do
             clangflags="-Wno-parentheses"
             installtype="conda"
             conda="yes";;
-        --mkl)
-            mkl="yes";;
         --noboost)
             boost="no"
             moft="skip";;
@@ -224,22 +221,6 @@ cp src/msander/sander.h include
 #------------------------------------------------------------------------------
 #  Initialize variables that are architecture specific:
 #------------------------------------------------------------------------------
-processor=`uname -m`
-if [ "$processor" = "em64t" -o "$processor" = "x86_64" ] ; then
-    x86_64='yes'
-else
-    x86_64='no'
-fi
-
-# Determine linker type. Currently only matters for MKL
-ld_version=`ld -v 2>&1 | awk '{print $1}'`
-case "$ld_version" in
-    *GNU*)
-        gnuld='yes';;
-    *)
-        gnuld='no' ;;
-esac
-
 OS=`uname -s`
 if [ "$OS" = "Darwin" ]; then
    is_mac='yes'
@@ -341,129 +322,24 @@ fi
 /bin/rm -f testp.y y.tab.c
 
 #--------------------------------------------------------------------------
-#  Configure the MKL or openblas libraries for BLAS/LAPACK.
+#  Configure the linear algebra libraries:
 #--------------------------------------------------------------------------
 
-# Determine MKL home directory
-mklroot=''
-if [ ! -z "$MKLROOT" ] ; then
-    mklroot=$MKLROOT
-elif [ ! -z "$MKL_HOME" ] ; then
-    mklroot=$MKL_HOME
-fi
-
-if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
-
-   if [ "$openblas" == "yes" ]; then
-      echo "using system OpenBLAS libraries"
-      flibs_la="-lopenblas -lpthread"
-   elif [ "$conda" == "yes" ]; then
-      echo "using OpenBLAS libraries from conda-forge"
-      flibs_la="-L$CONDA_PREFIX/lib -lopenblas -lpthread"
-   elif [ "$macAccelerate" == "yes" ]; then
-      echo "using macAccelerate frameworks"
-      flibs_la="-framework Accelerate"
-   else
-      # use the compiled versions;
-      flibs_la="-llapack -lblas"
-      lapack=liblapack
-      blas=libblas
-   fi
-
+if [ "$openblas" == "yes" ]; then
+   echo "using OpenBLAS libraries from system"
+   flibs_la="-lopenblas -lpthread"
+elif [ "$conda" == "yes" ]; then
+   echo "using OpenBLAS libraries from conda-forge"
+   flibs_la="-L$CONDA_PREFIX/lib -lopenblas -lpthread"
+elif [ "$macAccelerate" == "yes" ]; then
+   echo "using macAccelerate frameworks"
+   flibs_la="-framework Accelerate"
 else
-
-  if [ "$mpi" == "yes" ]; then
-     echo "Using MKL for BLAS/LAPACK in $mklroot"
-     inc="-I$mklroot/include $inc"
-     lapack=skip
-     blas=skip
-  else
-     echo "Using MKL for BLAS/LAPACK/FFTW in $mklroot"
-     inc="-I$mklroot/include -I$mklroot/include/fftw $inc"
-     lapack=skip
-     blas=skip
-     flibs_fftw=""
-  fi
-
-  # Determine how we are linking MKL
-  if  [ "$compiler" = 'gnu' -o "$is_mac" = 'yes' ] ; then
-    link_type='line'
-  else
-    link_type='mkl'   #assuming Intel
-  fi
-
-  # We generally link to the sequential version of MKL since typically
-  # one runs an MPI thread for each core.  However, if openmp is
-  # specified, for example to turn on SMP diagonalizers for QMMM,
-  # then we link to the threaded version of MKL and inside the code
-  # the number of threads for vector functions etc will be set to 1.
-
-  # Always link static version of MKL - just easier from an end
-  # user perspective.
-
-  if [ "$link_type" = 'line' ] ; then
-
-    # ----- Link line advisor style. ------
-
-    mkll="$mklroot/lib/32"
-    mklinterfacelayer='libmkl_intel.a'
-    if [ "$is_mac" = 'yes' ] ; then
-      mkll="$mklroot/lib"
-      if [ "$x86_64" = 'yes' ]; then
-        mklinterfacelayer='libmkl_intel_lp64.a'
-      fi
-    elif [ "$x86_64" = 'yes' ]; then
-      if [ -d "$mklroot/lib/em64t" ]; then
-        mkll="$mklroot/lib/em64t"
-        mkl_procstring="em64t"
-      else
-        mkll="$mklroot/lib/intel64"
-        mkl_procstring="intel64"
-      fi
-      # lp64 is 32 bit integers on 64 bit platforms
-      mklinterfacelayer='libmkl_intel_lp64.a'
-    fi
-
-    # Determing threading interface if necessary
-    mklthread="$mkll/libmkl_sequential.a"
-    mklomp=''
-    if [ "$openmp" = 'yes' ] ; then
-      if [ "$compiler" = 'intel' ] ; then
-        mklthread="$mkll/libmkl_intel_thread.a"
-        mklomp='-liomp5'
-      elif [ "$compiler" = 'pgi' ] ; then
-        mklthread="$mkll/libmkl_pgi_thread.a"
-        mklomp='-pgf90libs -mp'
-      else
-        mklthread="$mkll/libmkl_gnu_thread.a"
-        mklomp='-lgomp'
-      fi
-      if [ "$is_mac" = 'yes' -a "$compiler" != 'intel' ] ; then
-        echo "Warning: OpenMP MKL not supported on OSX without Intel compilers. Using sequential."
-        mklthread="$mkll/libmkl_sequential.a"
-        mklomp=''
-      fi
-    fi
-
-    # Set link flags
-    if [ "$gnuld" = 'yes' ]; then
-      echo "GNU linker assumed."
-      flibs_la="-Wl,--start-group $mkll/$mklinterfacelayer $mklthread $mkll/libmkl_core.a -Wl,--end-group $mklomp -lpthread"
-    else
-      echo "Non-GNU linker assumed."
-      flibs_la="-L$mkll $mkll/$mklinterfacelayer $mklthread $mkll/libmkl_core.a $mklomp -lpthread"
-    fi
-    # GNU compilers with MKL requires -ldl
-    if [ "$compiler" = 'gnu' -o "$compiler" = 'clang' ]; then
-      flibs_la="$flibs_la -ldl"
-    fi
-
-  else
-    # ----- Use simple flag for Intel compilers on Linux ------------
-    flibs_la='-qmkl'
-  fi
+   # use the compiled versions;
+   flibs_la="-llapack -lblas"
+   lapack=liblapack
+   blas=libblas
 fi
-
 
 #--------------------------------------------------------------------------
 #  Configure and build netcdf:
@@ -540,7 +416,7 @@ if [ "$conda" == "yes" ]; then
    flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
    echo "using fftw     libraries from conda-forge"
 
-elif [ "$flibs_fftw" != "" ]; then
+else
 
    if [ ! -s "lib/libfftw3.a" ] || \
        [ "$mpi" == "yes" -a ! -s "lib/libfftw3_mpi.a" ] || \
@@ -555,8 +431,6 @@ elif [ "$flibs_fftw" != "" ]; then
        # enable_sse="--enable-sse=no --enable-sse2=no --enable-avx=no"
        enable_sse="--enable-sse2=yes --enable-avx=yes"
 
-       # DAC note, 12/18/19: adding -gcc-sys to CFLAGS below seems to
-       #   be required for Intel compilers.
        printf "\nConfiguring fftw-3.3 with $cc and $fc..."
        cd src/fftw-3.3 && \
            ./configure --disable-doc --prefix=$AmberClassicHome \
