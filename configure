@@ -27,7 +27,6 @@ compiler="gnu"
 cc="gcc"
 cxx="g++"
 mpicc="mpicc"
-iccflags=""
 gccflags="-Wno-unused-result"
 clangflags=""
 clangf=""
@@ -177,7 +176,6 @@ fi
 
 if [ "$openmp" == "yes" ]; then
   ompflag="-fopenmp -DOPENMP"
-  ldflags="-fopenmp $ldflags"
 fi
 if [ "$mpi" == "yes" ]; then
   fc="$mpif90"
@@ -185,6 +183,11 @@ if [ "$mpi" == "yes" ]; then
 fi
 if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
+fi
+if [ "$conda" == "yes" ]; then
+   cflags="$gccflags $clangf $clangflags $inc $gcc10c $fpic $debug $conda_incflags $xblasflag"
+else
+   cflags="$gccflags $clangf $clangflags $ompflag $inc $gcc10c $fpic $debug $xblasflag"
 fi
 
 #------------------------------------------------------------------------------
@@ -639,7 +642,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $inc $ompflag $gcc10c $iccflags $fpic $debug $conda_incflags $xblasflag
+CFLAGS=$cflags
 NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
