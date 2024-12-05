@@ -35,6 +35,23 @@ cuda:
 mpicuda:
 	@cd msander && $(MAKE) msander.cuda.MPI
 
+conda:
+	@cd msander && $(MAKE) msander
+	@cd msander && $(MAKE) msander.LES
+	@cd xray && $(MAKE) xray
+	@cd addles && $(MAKE) addles
+	@cd leap && $(MAKE) leap
+	@cd sff && $(MAKE) libsff
+	@cd antechamber && $(MAKE) install_ac
+	@cd sqm && $(MAKE) install_sqm
+	@cd nmr_aux && $(MAKE) nmr_aux
+	@cd xtalutil && $(MAKE) xtalutil
+	@cd paramfit && $(MAKE) paramfit
+	@cd moft && $(MAKE) $(MOFT)
+	@cd saxs && $(MAKE) saxs
+	@cd rism && $(MAKE) rism1d
+	@cd gbnsr6 && $(MAKE) install_gbnsr6
+
 clean:
 	-(cd blas && $(MAKE) clean )
 	-(cd lapack && $(MAKE) clean )

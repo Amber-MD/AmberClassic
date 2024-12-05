@@ -5,6 +5,9 @@ test:  test.$(INSTALLTYPE)
 test.serial:
 	@./run_serial_tests.sh
 
+test.conda:
+	@./run_conda_tests.sh
+
 test.parallel:
 	@echo "parallel test suite is not yet ready!"
 
@@ -17,6 +20,10 @@ test.mpicuda:
 test.allserial: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6 test.nabc test.nab
+
+test.allconda: test.general test.rism test.xray test.nmr \
+          test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
+          test.gbnsr6
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
