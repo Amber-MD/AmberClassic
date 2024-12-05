@@ -8,20 +8,21 @@ command=`echo "$0 $*"`
 #------------------------------------------------------------------------------
 #  Set up defaults:
 #------------------------------------------------------------------------------
+
+# --- General:
 AmberClassicHome=`pwd`
 verbose="@"
-enablempi=
 requested_help="no"
 openblas="no"
 sfx=""
-gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
-gcc10c="-fcommon"
-longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
 conda="no"
 conda_incflags=""
+installtype="serial"
+xblasflag="-DCONFIG_FC_UNDERSCORE"
 
+# --- C compiler:
 compiler="gnu"
 cc="gcc"
 cxx="g++"
@@ -30,7 +31,10 @@ iccflags=""
 gccflags="-Wno-unused-result"
 clangflags=""
 clangf=""
+gcc10c="-fcommon"
+ldflags=""
 
+# --- Fortran compiler:
 fc="gfortran"
 flibs_arch="-lgfortran -w"
 flibs_la=""
@@ -38,25 +42,27 @@ flibs_fftw="-lfftw3"
 mpif90="mpif90"
 gccsys=""
 optflags="-g -O3"
-
+gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
+longlines="-ffree-line-length-none"
+inc="-I$AmberClassicHome/include"
 openmp='no'
 ompflag=""
-ldflags=""
-fftw_flags=""
-mkl="no"    
-moft="moft"
-installtype="serial"
-xblasflag="-DCONFIG_FC_UNDERSCORE"
 
-plumed="no"
-
+# --- linear algebra, netcdf, boost, fftw:
 boost="yes"
 # following for shared libraries:
 #  boostlib="-lboost_program_options -lboost_iostreams"
 boostlib="\$(LIBDIR)/libboost_program_options.a \$(LIBDIR)/libboost_iostreams.a -lz -lbz2"
-
+netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
+netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
+netcdflibf=$netcdflibf_static
+lapack="skip"
+blas="skip"
 macAccelerate="no"
+fftw_flags=""
+mkl="no"    
 
+#  --- cuda:
 cuda="no"
 cudaflags=''
 cudafflags=''
@@ -65,16 +71,11 @@ cuda_arch_flags=''
 uspec_arch='false'
 cuda_prec='SPFP'
 
-lapack="skip"
-blas="skip"
-
-inc="-I$AmberClassicHome/include"
-netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
-netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
-netcdflibf=$netcdflibf_static
-
+#  --- other:
 #short_ene=short_ene_omp.o
 short_ene=short_ene.o   # short_ene_omp may slow things down or even crash
+moft="moft"
+plumed="no"
 
 #------------------------------------------------------------------------------
 #  Process command-line flags:
@@ -179,11 +180,9 @@ if [ "$requested_help" = "yes" ] ; then
     printf "                      [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
     printf "    --cudaprec      [SPFP|DPFP], cuda precision, default is SPFP\n"
     printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
-    printf "\nLess-common options, generally not very helpful\n"
-	printf "    --mkl           use MKL routines from \$MKLROOT environment variable\n"
-	printf "    --openblas      use openBLAS routines a system library\n"
+    printf "\nLess-common options:\n\n"
+	printf "    --openblas      use openBLAS routines from a system library\n"
 	printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
-	printf "    --noboost       skip codes (metatwist) that require boost \n"
 	printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
