@@ -7,13 +7,14 @@ package:
 #  version 0.5   add nabc/nab
 #  version 0.6   add boost
 #  version 0.7   leave nabc/nab out of conda build
-  version: 0.7
+#  version 0.8   adding MPI
+  version: 0.8
 
 source:
   path: ../
   
 build:
-  number: 1
+  number: 0
 
 requirements:
   build:
@@ -23,13 +24,13 @@ requirements:
    - {{ compiler('fortran') }}
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
-#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - {{ mpi }} # [ mpi == "openmpi" ]
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas
    - libnetcdf
    - netcdf-fortran
-   - fftw
+   - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
    - libboost-devel
 
   host:
@@ -39,8 +40,8 @@ requirements:
    - netcdf-fortran
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
-   - fftw
-#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
+   - {{ mpi }} # [ mpi == "openmpi" ]
 
   run:
    - libboost-devel
@@ -49,8 +50,8 @@ requirements:
    - openblas
    - libnetcdf
    - netcdf-fortran
-   - fftw
-#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
+   - {{ mpi }} # [ mpi == "openmpi" ]
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
@@ -58,4 +59,13 @@ about:
     license_file: 
        - LICENSE
     summary: 'Subset of AmberTools, built around a "modern" version of sander; includes other useful tools'
+    description: |
+      This repository contains msander, a "modern" version of parts of
+      the Amber molecular dynamics program sander. Also included are
+      various NMR, X-ray and cryoEM-related code and utilities, as well as
+      versions of a number of the "classic" (and commonly-used) parts
+      of AmberTools: tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d,
+      saxs, gbnsr6, xtalutil and paramfit. All of the force field files from
+      AmberTools are also included here. With these tools, many systems can
+      be set up for simulation in msander.
 
