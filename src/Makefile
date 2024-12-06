@@ -21,6 +21,7 @@ serial:
 	@cd saxs && $(MAKE) saxs
 	@cd rism && $(MAKE) rism1d
 	@cd gbnsr6 && $(MAKE) install_gbnsr6
+	@cd protonate && $(MAKE) install_protonate
 	@cd ucpp-1.3 && make ucpp
 	@cd nab && make install_nab
 #	@cd nss & make install_nss  # compiles, but not tested yet
@@ -51,6 +52,7 @@ conda:
 	@cd saxs && $(MAKE) saxs
 	@cd rism && $(MAKE) rism1d
 	@cd gbnsr6 && $(MAKE) install_gbnsr6
+	@cd protonate && $(MAKE) install_protonate
 
 clean:
 	-(cd blas && $(MAKE) clean )
@@ -73,6 +75,7 @@ clean:
 	-(cd saxs && $(MAKE) clean )
 	-(cd xblas && $(MAKE) clean )
 	-(cd gbnsr6 && $(MAKE) clean )
+	-(cd protonate && $(MAKE) clean )
 	-(cd ucpp-1.3 && $(MAKE) clean )
 	-(cd nab && $(MAKE) clean )
 #	-(cd nss && $(MAKE) clean )
