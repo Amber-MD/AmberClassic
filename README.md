@@ -72,13 +72,18 @@ Force field evaluation is still slow compared to many other codes.  This project
    source AmberClassic.sh
    make test
 ```
+See the *doc/AmberClassic.pdf* file for more details.
+
 * Installing pre-built executables via conda
 ```
    conda create --name AmberClassic   # you can choose the env name
    conda activate AmberClassic
    conda install dacase::amberclassic  # only linux-64 and osx-64 for now
    cd $CONDA_PREFIX
+   conda install -c conda-forge parmed # optional: brings in ParmEd
    source AmberClassic.sh
+   .... # go to some work directory and have fun!
+   conda deactivate  # to exit the conda environment when done
 ```
 * Conda build  (For developers)
 ```
