@@ -24,13 +24,14 @@ requirements:
    - {{ compiler('fortran') }}
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
-   - {{ mpi }} # [ mpi == "openmpi" ]
+   - {{ mpi }} # [ mpi == "mpich" ]
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas
    - libnetcdf
    - netcdf-fortran
-   - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
+#  - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
+   - fftw=3.3.10 mpi_mpich_hde2e182_3
    - libboost-devel
 
   host:
@@ -40,8 +41,9 @@ requirements:
    - netcdf-fortran
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
-   - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
-   - {{ mpi }} # [ mpi == "openmpi" ]
+#  - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
+   - fftw=3.3.10 mpi_mpich_hde2e182_3
+   - {{ mpi }} # [ mpi == "mpich" ]
 
   run:
    - libboost-devel
@@ -50,8 +52,9 @@ requirements:
    - openblas
    - libnetcdf
    - netcdf-fortran
-   - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
-   - {{ mpi }} # [ mpi == "openmpi" ]
+#  - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
+   - fftw=3.3.10 mpi_mpich_hde2e182_3
+   - {{ mpi }} # [ mpi == "mpich" ]
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
