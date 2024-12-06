@@ -4,7 +4,7 @@
 
 * The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
 
-* This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic.  
+* This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic -- see the *doc/AmberClassic.pdf* for details.
 
 * This package may also be of interest to those who want just the subset included here of the far-more-complex `AmberTools` package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
 

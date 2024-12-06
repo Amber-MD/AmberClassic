@@ -607,7 +607,7 @@ dacase1@gmail.com
 .)
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Section
 Design goals
 \end_layout
 
@@ -646,7 +646,28 @@ AmberTools
 , and I hope to create a conda package soon.
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Standard
+This project incorporates and supercedes two previous packages (
+\emph on
+msander
+\emph default
+ and 
+\emph on
+nabc
+\emph default
+) that were available at 
+\begin_inset CommandInset href
+LatexCommand href
+name "github.com/dacase"
+target "https://github.com/dacase"
+literal "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
 Key differences in functionality versus sander
 \end_layout
 
@@ -713,16 +734,17 @@ Replica exchange capabilities, except for constant pH and redox potential
  simulations
 \end_layout
 
-\begin_layout Subsection*
-Installation
+\begin_layout Section
+Installation from source
 \end_layout
 
 \begin_layout Standard
-In the top-level folder:
+For a serial build: in the top-level folder, do this
 \end_layout
 
 \begin_layout LyX-Code
-./configure --help      # then choose options
+./configure --help      # then re-run configure with the options (if any)
+ you want
 \end_layout
 
 \begin_layout LyX-Code
@@ -735,7 +757,55 @@ source AmberClassic.sh  # sets up environment variables; consider adding
 \end_layout
 
 \begin_layout LyX-Code
-make test               # optional--more info is below
+make test               
+\end_layout
+
+\begin_layout Standard
+To build 
+\emph on
+msander.MPI
+\emph default
+, 
+\emph on
+msander.cuda
+\emph default
+ and 
+\emph on
+msander.cuda.MPI
+\emph default
+, you will need to re-run configure and make install.
+ For example, to build all three options:
+\end_layout
+
+\begin_layout LyX-Code
+./configure --mpi
+\end_layout
+
+\begin_layout LyX-Code
+make clean && make install   # builds msander.MPI
+\end_layout
+
+\begin_layout LyX-Code
+./configure --cuda
+\end_layout
+
+\begin_layout LyX-Code
+make clean && make install   # builds msander.cuda
+\end_layout
+
+\begin_layout LyX-Code
+./confgiure --cuda --mpi
+\end_layout
+
+\begin_layout LyX-Code
+make clean && make install   # builds msander.cuda.MPI
+\end_layout
+
+\begin_layout Standard
+Please note: CUDA acceleration only affects the Xray restraint terms.
+ Further, msander.cuda.MPI is not parallelized across GPUs: the force field
+ terms are parallelized via MPI, and a single MPI thread runs the CUDA code
+ for Xray restraints.
 \end_layout
 
 \begin_layout Standard
@@ -755,7 +825,147 @@ cryoem
  folders to see sample inputs for these sorts of calculation.
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Section
+Installation via conda
+\end_layout
+
+\begin_layout Standard
+You can obtain the conda packaging system here: 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://conda-forge.org/download/"
+target "https://conda-forge.org/download/"
+literal "false"
+
+\end_inset
+
+.
+ You should familiarize yourself somewhat with how the system works.
+ But basically, one does the following:
+\end_layout
+
+\begin_layout LyX-Code
+conda create --name AmberClassic   # you can choose the environment name
+\end_layout
+
+\begin_layout LyX-Code
+conda activate AmberClassic
+\end_layout
+
+\begin_layout LyX-Code
+conda install dacase::amberclassic  # only linux-64 and osx-64 for now
+\end_layout
+
+\begin_layout LyX-Code
+cd $CONDA_PREFIX
+\end_layout
+
+\begin_layout LyX-Code
+source AmberClassic.sh   # creates the AMBERCLASSICHOME environment variable
+\end_layout
+
+\begin_layout LyX-Code
+conda install parmed     # optional, but brings in the very useful ParmEd
+ program
+\end_layout
+
+\begin_layout LyX-Code
+...
+ # go to some working directory and do your work
+\end_layout
+
+\begin_layout LyX-Code
+conda deactivate   # to exit your AmberClassic environment
+\end_layout
+
+\begin_layout Section
+Tutorials
+\end_layout
+
+\begin_layout Standard
+Many of the Amber tutorials (at 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://ambermd.org/tutorials/"
+target "https://ambermd.org/tutorials/"
+literal "false"
+
+\end_inset
+
+) apply with minimal or no modification to 
+\family typewriter
+AmberClassic
+\family default
+.
+ In particular, look at these:
+\end_layout
+
+\begin_layout Itemize
+1.2 Fundamentals of LEaP
+\end_layout
+
+\begin_layout Itemize
+1.4 Hydrogen Mass Repartitioning
+\end_layout
+
+\begin_layout Itemize
+1.5 Building a Peptide Sequence
+\end_layout
+
+\begin_layout Itemize
+1.6 Building Protein Systems in Explicit Water
+\end_layout
+
+\begin_layout Itemize
+1.7 Simulation of a protein crystal
+\end_layout
+
+\begin_layout Itemize
+1.13 Using 3D-RISM and MOFT to place waters and ions
+\end_layout
+
+\begin_layout Itemize
+2.1 Simulating a pharmaceutical compound with Antechamber and GAFF
+\end_layout
+
+\begin_layout Itemize
+3.1 Relaxation of Explicit Water Systems
+\end_layout
+
+\begin_layout Itemize
+3.2 Relaxation of Implicit Solvent System (GB) 
+\end_layout
+
+\begin_layout Itemize
+3.3 Running MD with pmemd 
+\emph on
+(basic ideas here also apply to msander, but simulations will be much slower)
+\end_layout
+
+\begin_layout Itemize
+5.1 Simple Simulation of Alanine Dipeptide
+\end_layout
+
+\begin_layout Itemize
+5.4 Calculating ion distributions around DNA using 3D-RISM
+\end_layout
+
+\begin_layout Itemize
+7.1 Thermodynamic Integration using soft core potentials
+\end_layout
+
+\begin_layout Itemize
+7.5 Umbrella sampling: A Potential of Mean Force in alanine dipeptide Phi/Psi
+ rotation
+\end_layout
+
+\begin_layout Itemize
+7.12 The Nonequilibrium Free Energy (NFE) Toolkit for pmemd 
+\emph on
+(also works with msander)
+\end_layout
+
+\begin_layout Section
 License
 \end_layout
 
