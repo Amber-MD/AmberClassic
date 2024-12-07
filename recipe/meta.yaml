@@ -14,7 +14,7 @@ source:
   path: ../
   
 build:
-  number: 0
+  number: 1
 
 requirements:
   build:
@@ -25,6 +25,8 @@ requirements:
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
    - {{ mpi }} # [ mpi == "mpich" ]
+   - {{ compiler('nvcc') }} 
+   - coreutils
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas

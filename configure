@@ -529,8 +529,8 @@ if [ "$cuda" = 'yes' ]; then
     sm60flags='-gencode arch=compute_60,code=sm_60'
     #SM5.0 = M40
     sm50flags='-gencode arch=compute_50,code=sm_50'
-    #SM3.0 = K80, K40, K20
-    sm30flags='-gencode arch=compute_30,code=sm_30'
+    #SM3.5 = Kepler (late)
+    sm35flags='-gencode arch=compute_35,code=sm_35'
 
     cudaversion=`$nvcc --version | awk '/release/{print substr($5,1,4)}'`
 
@@ -539,8 +539,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM5.0, SM6.0, SM7.0, SM7.5"
-        cuda_arch_flags="$sm50flags $sm60flags $sm70flags $sm75flags"
+        echo "Configuring for SM5.0,6.0,7.0,7.5,8.0,8.6,8.9"
+        cuda_arch_flags="$sm50flags $sm60flags $sm70flags $sm75flags $sm80flags $sm86flags $sm89flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:2}" = "11" ]; then
@@ -548,8 +548,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM5.0, SM6.0, SM7.0, SM7.5, SM8.0"
-        cuda_arch_flags="$sm50flags $sm60flags $sm70flags $sm75flags $sm80flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0,7.5,8.0"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags $sm75flags $sm80flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:2}" = "10" ]; then
@@ -557,8 +557,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM3.0, SM5.0, SM6.0, SM7.0 and SM7.5"
-        cuda_arch_flags="$sm30flags $sm50flags $sm60flags $sm70flags $sm75flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0,7.5"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags $sm75flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:1}" = "9" ]; then
@@ -566,8 +566,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM3.0, SM5.0, SM6.0 and SM7.0"
-        cuda_arch_flags="$sm30flags $sm50flags $sm60flags $sm70flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:1}" = "8" ]; then
@@ -575,8 +575,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM3.0, SM5.0, SM6.0"
-        cuda_arch_flags="$sm30flags $sm50flags $sm60flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     else
