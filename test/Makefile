@@ -9,7 +9,7 @@ test.conda:
 	@./run_conda_tests.sh
 
 test.parallel:
-	@echo "parallel test suite is not yet ready!"
+	@./run_parallel_tests.sh
 
 test.cuda:
 	@echo "cuda test suite is not yet ready!"
@@ -20,6 +20,8 @@ test.mpicuda:
 test.allserial: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6 test.nabc test.nab
+
+test.allparallel: test.general test.rism test.xray test.nmr 
 
 test.allconda: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
@@ -50,7 +52,7 @@ test.rism:
 test.nmr:
 	-(cd rdc && Run.nmr)
 	-(cd rdc && Run.dip)
-	-(cd rdc && Run.csa)
+	-(cd rdc && Run.csa_min)
 	-(cd rdc && Run.dip2)
 
 test.xray:
