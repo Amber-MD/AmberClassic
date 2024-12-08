@@ -8,7 +8,8 @@ package:
 #  version 0.6   add boost
 #  version 0.7   leave nabc/nab out of conda build
 #  version 0.8   adding MPI
-  version: 0.8
+#  version 0.9   adding cuda
+  version: 0.9
 
 source:
   path: ../
@@ -25,6 +26,8 @@ requirements:
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
    - {{ mpi }} # [ mpi == "mpich" ]
+   - {{ compiler('nvcc') }} # [ linux and not aarch64 ]
+   - coreutils
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas

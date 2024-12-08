@@ -6,7 +6,7 @@ include ../../../config.h
 #                              may want to set with configure later
 NVCC=nvcc \
    -Wno-deprecated-declarations -use_fast_math -O3 \
-   -I/usr/local/cuda/include -IB40C $(CUDAFLAGS) --std c++14
+   -I/usr/local/cuda/include -IB40C $(CUDAFLAGS) $(NVCC_CFLAGS) --std c++14
 
 CUOBJS = BulkMask.o BulkMaskCPU.o BulkMaskGPU.o \
          DPartial.o DPartialCPU.o DPartialGPU.o \
