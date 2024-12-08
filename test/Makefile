@@ -1,5 +1,7 @@
 include ../config_testing.h
 
+# -------- Targets from ../Makefile ----------------------------------------
+
 test:  test.$(INSTALLTYPE)
 
 test.serial:
@@ -12,10 +14,12 @@ test.parallel:
 	@./run_parallel_tests.sh
 
 test.cuda:
-	@echo "cuda test suite is not yet ready!"
+	@./run_cuda_tests.sh
 
 test.mpicuda:
 	@echo "mpicuda test suite is not yet ready!"
+
+# -------- Targets for run_* scripts, making the logfiles --------------------
 
 test.allserial: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
@@ -23,9 +27,13 @@ test.allserial: test.general test.rism test.xray test.nmr \
 
 test.allparallel: test.general test.rism test.xray test.nmr 
 
+test.allcuda: test.xray
+
 test.allconda: test.general test.rism test.xray test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6
+
+# -------- Lower-level test targets: ---------------------------------------
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
