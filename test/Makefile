@@ -17,7 +17,7 @@ test.cuda:
 	@./run_cuda_tests.sh
 
 test.mpicuda:
-	@echo "mpicuda test suite is not yet ready!"
+	@./run_mpicuda_tests.sh
 
 # -------- Targets for run_* scripts, making the logfiles --------------------
 
