@@ -11,7 +11,7 @@ date_string=`date +%Y-%m-%d_%H-%M-%S`
 logdir="$AMBERCLASSICHOME/logs"
 logprefix="${logdir}/${date_string}"
 logfile="${logprefix}.parallel.log"
-difffile="${logprefix}.diff"
+difffile="${logprefix}.parallel.diff"
 
 mkdir -p ${logdir}
 

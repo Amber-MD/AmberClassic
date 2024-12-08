@@ -5,8 +5,8 @@ source ../AmberClassic.sh
 date_string=`date +%Y-%m-%d_%H-%M-%S`
 logdir="$AMBERCLASSICHOME/logs"
 logprefix="${logdir}/${date_string}"
-logfile="${logprefix}.log"
-difffile="${logprefix}.diff"
+logfile="${logprefix}.serial.log"
+difffile="${logprefix}.serial.diff"
 
 mkdir -p ${logdir}
 

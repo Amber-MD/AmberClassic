@@ -2,16 +2,11 @@
 
 source ../AmberClassic.sh 
 
-if [ -z "$DO_PARALLEL" ]; then
-   echo "you must set the DO_PARALLEL environment variable to run parallel tests"
-   exit 1
-fi
-
 date_string=`date +%Y-%m-%d_%H-%M-%S`
 logdir="$AMBERCLASSICHOME/logs"
 logprefix="${logdir}/${date_string}"
 logfile="${logprefix}.cuda.log"
-difffile="${logprefix}.diff"
+difffile="${logprefix}.cuda.diff"
 
 mkdir -p ${logdir}
 

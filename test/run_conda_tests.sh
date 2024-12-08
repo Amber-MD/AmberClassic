@@ -5,8 +5,8 @@ source ../AmberClassic.sh
 date_string=`date +%Y-%m-%d_%H-%M-%S`
 logdir="$AMBERCLASSICHOME/logs"
 logprefix="${logdir}/${date_string}"
-logfile="${logprefix}.log"
-difffile="${logprefix}.diff"
+logfile="${logprefix}.conda.log"
+difffile="${logprefix}.conda.diff"
 
 mkdir -p ${logdir}
 
