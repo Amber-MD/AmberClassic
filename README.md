@@ -16,7 +16,7 @@
 
 * This project began as a fork of the `sander` code in `AmberTools`.  It tries to (greatly) simplify the code base, choosing the best and most useful parts of the code, and to serve as a test bed for how modern Fortran coding techniques can be used.  Key application areas are expected to be in structure refinements using NMR, cryoEM or Xray diffraction information.  This version has a fair amount of OpenMP support, especially for Xray and 3D-RISM calculations.  Parts of the Xray code use GPU acceleration.
 
-* One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and a serial conda package is available (see below.)
+* One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and a conda package is available (see below.)
 
 * This project incorporates and supercedes two previous packages (msander and nabc) that were available at github.com/dacase.
 
@@ -85,13 +85,7 @@ See the *doc/AmberClassic.pdf* file for more details.
    .... # go to some work directory and have fun!
    conda deactivate  # to exit the conda environment when done
 ```
-* Conda build  (For developers)
-```
-   conda build recipe
-      (note: you should have conda-forge at the top of your channel
-      list in ~/.condarc.  You should also have done a "conda install
-      conda-forge-pinning" in your conda build environment.
-```
+Again, see the *doc/AmberClassic.pdf* file for more details.
 
 # License
 
