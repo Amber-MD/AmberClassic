@@ -14781,48 +14781,6 @@ The PM6 implementation has not been extensively tested for all available
  
 \end_layout
 
-\begin_layout Standard
-If the PM6 Hamiltonian is used in a QM/MM simulation with 
-\emph on
-sander
-\emph default
- using electrostatic embedding (see 
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "sec:QMMM"
-
-\end_inset
-
-) or if an electric field of external point charges is used, then the electrosta
-tic interactions between QM and MM atoms are modeled using the MNDO type
- core repulsion function for interactions between QM and MM atoms.
- Parameters for the exponents 
-\begin_inset Formula $\alpha$
-\end_inset
-
- of the QM atoms are taken from PM3 (a default value of five is used for
- the exponents 
-\begin_inset Formula $\alpha$
-\end_inset
-
- of the MM atoms as is the case for MNDO, AM1 and PM3).
- Since PM3 does not have parameters for all elements that are supported
- by PM6, the missing exponents were defined in an ad hoc manner (see the
- source code in $AMBERHOME/AmberToosl/src/sqm/qm2_parameters.F90, variable
- alp_pm6).
- The magnitude of the coefficients 
-\begin_inset Formula $\alpha$
-\end_inset
-
- is probably not critical for the accuracy of QM/MM calculations but this
- should be tested on a case by case basis.
- This does not affect QM calculations with 
-\emph on
-sqm
-\emph default
-.
-\end_layout
-
 \begin_layout Section
 Dispersion and hydrogen bond correction
 \end_layout
@@ -19046,58 +19004,6 @@ where p(sgft) or
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-\noindent
-For convenience, two scripts, 
-\shape italic
-sgldinfo.sh
-\shape default
- and 
-\shape italic
-sgldwt.sh
-\shape default
-, are provided in the AMBERHOME/bin directory to extract SGLD properties
- and weighting factors from sander output files.
- For example, one can run:
-\end_layout
-
-\begin_layout LyX-Code
-
-\shape italic
-\emph on
-sgldinfo.sh mdout
-\end_layout
-
-\begin_layout Standard
-\noindent
-to examine the SGLD properties, and run:
-\end_layout
-
-\begin_layout LyX-Code
-
-\shape italic
-\emph on
-sgldwt.sh mdout
-\end_layout
-
-\begin_layout Standard
-\noindent
-to print weighting factors at each print time frame, averages and reweighted
- averages of the SGMD/SGLD properties.
- Ensemble average properties can be calculated through reweighting:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-<P>=\frac{\sum_{i=N_{0}}^{N}\mathbf{\mathit{w}}_{i}P_{i}}{\sum_{i=N_{0}}^{N}\mathbf{\mathit{w}}_{i}}
-\]
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -34385,7 +34291,7 @@ IAT(2) is prohibited, though translation is allowed.
  ICONSTR can be used together with harmonic restraints.
  RK2 and RK3 should be set to 0.0 if the two-center internal coordinate is
  a simple Lagrangian multiplier.
- An example has been included in $AMBERHOME/example/lagmul.
+ An example has been included in $AMBERCLASSICHOME/example/lagmul.
 \end_layout
 
 \begin_layout Standard
@@ -35296,7 +35202,7 @@ shifts -readobs -sander '::H*' gcg10
 \begin_layout Standard
 Sample input and output files are in 
 \family typewriter
-$AMBERHOME/test/rdc
+test/rdc
 \family default
 .
 \end_layout
@@ -36601,7 +36507,7 @@ kcsa
 .
  See 
 \emph on
-$AMBERHOME/test/pcsa/RST.csa
+test/pcsa/RST.csa
 \emph default
  for examples of how to set these.
 \end_layout
@@ -42460,7 +42366,7 @@ leaprc
  command line option.
  Sample script files are in 
 \emph on
-$AMBERHOME/dat/leap/cmd
+dat/leap/cmd
 \emph default
 , and you may wish to copy one of these to become "your" default file.
  LEaP will look first for a 
@@ -42630,7 +42536,7 @@ addPdbResMap
  commands to make systematic changes from the names in your PDB files to
  those in the Amber topology files; see the leaprc files in 
 \shape italic
-$AMBERHOME/dat/leap/cmd
+dat/leap/cmd
 \shape default
  for examples of this.
  
@@ -48960,10 +48866,13 @@ parmchk2
 parmchk2
 \shape default
  reads in an ac/mol2/prepi/prepc file, an atomtype similarity index file
- (the default is $AMBERHOME/dat/antechamber/PARMCHK.DAT) as well as a force
- field file (the default is 
+ (the default is 
+\emph on
+$AMBERCLASSICHOME/dat/antechamber/PARMCHK.DAT
+\emph default
+) as well as a force field file (the default is 
 \shape italic
-$AMBERHOME/dat/leap/parm/gaff.dat
+$AMBERCLASSCHOME/dat/leap/parm/gaff.dat
 \shape default
 ).
  It writes out a force field modification (frcmod) file containing any force
@@ -49275,7 +49184,7 @@ ATOM     13  H32 TP      1      -2.379  -0.916   0.901
 \begin_layout Standard
 (This file may be found at 
 \shape italic
-$AMBERHOME/AmberTools/test/antechamber/tp/tp.pdb
+$AMBERCLASSCHOME/test/antechamber/tp/tp.pdb
 \shape default
 ).
  The basic command to create a mol2 file for LEaP is just:
@@ -49586,7 +49495,7 @@ ng rules assume this implicitly.
 Further examples of using antechamber to create force field parameters can
  be found in the 
 \shape italic
-$AMBERHOME/test/antechamber
+$AMBERCLASSICHOME/test/antechamber
 \shape default
  directory.
  Here are some practical tips from Junmei Wang:
@@ -49600,7 +49509,7 @@ For the input molecules, make sure there are no open valences and the structures
  for that), or for other non-organic elements such as Boron.
  Look at the 
 \emph on
-$AMBERHOME/dat/leap/parm/gaff.dat
+$AMBERCLASSICHOME/dat/leap/parm/gaff.dat
 \emph default
  file to see what sorts of atomic environments are supported.
 \end_layout
@@ -49626,8 +49535,11 @@ Failures are most often produced when antechamber infers an incorrect connectivi
 ty.
  In such cases, you can revise by hand the connectivity information in "ac"
  or "mol2" files.
- Systematic errors could be corrected by revising the parameters in $AMBERHOME/d
-at/antechamber/CONNECT.TPL.
+ Systematic errors could be corrected by revising the parameters in $
+\emph on
+AMBERCLASSICHOME/dat/antechamber/CONNECT.TPL
+\emph default
+.
 \end_layout
 
 \begin_layout Enumerate
@@ -49798,8 +49710,11 @@ atomtype
 
 \begin_layout Standard
 Atomtype reads in an ac file and assigns the atom types.
- You may find the default definition files in $AMBERHOME/dat/antechamber:
- ATOMTYPE_AMBER.DEF (AMBER), ATOMTYPE_GFF.DEF (general AMBER force field).
+ You may find the default definition files in 
+\family typewriter
+$AMBERCLASSICHOME/dat/antechamber
+\family default
+: ATOMTYPE_AMBER.DEF (AMBER), ATOMTYPE_GFF.DEF (general AMBER force field).
  ATOMTYPE_GFF.DEF is the default definition file.
  It is pointed out that the usage of atomtype is not limited to assign force
  field atom types, it can also be used to assign atom types in other application
@@ -49893,8 +49808,11 @@ am1bcc
 \begin_layout Standard
 Am1bcc first reads in an ac or mol2 file with or without assigned AM1-BCC
  atom types and bond types.
- Then the bcc parameter file (the default, BCCPARM.DAT is in $AMBERHOME/dat/antec
-hamber) is read in.
+ Then the bcc parameter file (the default, BCCPARM.DAT is in 
+\family typewriter
+$AMBERCLASSICHOME/dat/antechamber
+\family default
+) is read in.
  An ac file with AM1-BCC charges 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -50087,11 +50005,11 @@ bondtype -i input file name
 \begin_layout Standard
 Examples can be found in 
 \emph on
-$AMBERHOME/test/antechamber/bondtype
+$AMBERCLASSICHOME/test/antechamber/bondtype
 \emph default
  and 
 \emph on
-$AMBERHOME/test/antechamber/chemokine
+$AMBERCLASSICHOME/test/antechamber/chemokine
 \emph default
 .
 \end_layout
@@ -50121,7 +50039,7 @@ Prepgen generates the prep input file from an ac file.
  you need a main chain file.
  Sample main chain files are in 
 \emph on
-$AMBERHOME/dat/antechamber
+$AMBERCLASSICHOME/dat/antechamber
 \emph default
 .
 \end_layout
@@ -50556,7 +50474,7 @@ sustiva_resp.ac
 .
  A more complicated example has been provided in 
 \emph on
-$AMBERHOME/test/antechamber/residuegen
+$AMBERCLASSICHOME/test/antechamber/residuegen
 \emph default
 .
  The last two 'respgen' commands generate resp input files for acetamide
@@ -51582,7 +51500,11 @@ reference "subsec:paramfit_bounds"
  You will have to extract the energies from the output files that the quantum
  package produces.
  An example script to do this for Gaussian formatted output files can be
- found in $AMBERHOME/AmberTools/src/paramfit/scripts.
+ found in 
+\family typewriter
+$AMBERCLASSICHOME/AmberTools/src/paramfit/scripts
+\family default
+.
 \end_layout
 
 \begin_layout Standard
@@ -53065,7 +52987,7 @@ QMHEADER=Gaussian.header
 \end_layout
 
 \begin_layout LyX-Code
-$AMBERHOME/bin/paramfit -i Job_Control.in -p prmtop -c mdcrd
+paramfit -i Job_Control.in -p prmtop -c mdcrd
 \end_layout
 
 \begin_layout Standard
@@ -53076,7 +52998,7 @@ After all 50 input files have been created, run the quantum program on them.
 \end_layout
 
 \begin_layout LyX-Code
-$AMBERHOME/AmberTools/src/paramfit/scripts/process_gaussian.x 
+$AMBERCLASSICHOME/src/paramfit/scripts/process_gaussian.x 
 \backslash
 
 \end_layout
@@ -53108,7 +53030,7 @@ PARAMETER_FILE_NAME=saved_params
 \end_layout
 
 \begin_layout LyX-Code
-$AMBERHOME/bin/paramfit -i Job_Control.in -p prmtop
+paramfit -i Job_Control.in -p prmtop
 \end_layout
 
 \begin_layout Standard
@@ -53152,7 +53074,7 @@ Then,
 \end_layout
 
 \begin_layout LyX-Code
-$AMBERHOME/bin/paramfit -i Job_Control.in -p prmtop -c mdcrd -q energies.dat
+paramfit -i Job_Control.in -p prmtop -c mdcrd -q energies.dat
 \end_layout
 
 \begin_layout Standard
@@ -53259,7 +53181,7 @@ If you have gnuplot, a script has been provided to quickly show each structure's
 \end_layout
 
 \begin_layout LyX-Code
-$AMBERHOME/AmberTools/src/paramfit/scripts/plot_energy.x energy.dat
+$AMBERCLASSICHOME/src/paramfit/scripts/plot_energy.x energy.dat
 \end_layout
 
 \begin_layout Standard
@@ -53290,7 +53212,7 @@ paramfit
 \end_layout
 
 \begin_layout LyX-Code
-$AMBERHOME/AmberTools/src/paramfit/scripts/scatterplots.sh
+$AMBERCLASSICHOME/src/paramfit/scripts/scatterplots.sh
 \end_layout
 
 \begin_layout Standard
@@ -53405,7 +53327,7 @@ reference "sec:hcp"
 \begin_layout Standard
 As a first step, we have prepared sample files in 
 \family typewriter
-$AMBERHOME/AmberTools/test/nabc
+$AMBERCLASSICHOME/AmberTools/test/nabc
 \family default
 , which illustrate how to use most of the 
 \emph on
@@ -53419,7 +53341,7 @@ Makefile
  in this directory can guide you through running several sample calculations.
  Looking at the code, and its comments, along with the header file (
 \family typewriter
-$AMBERHOME/include/sff.h
+$AMBERCLASSICHOME/include/sff.h
 \family default
 ) should go a long way towards allowing direct integration into C codes,
  without any reference to the NAB compiler.
@@ -56490,9 +56412,9 @@ NAB has several routines for reading/writing Amber NetCDF trajectory and
  it easier to use in loops.
  For an example of how to use NetCDF files in NAB see the NAB script in
  
-\series bold
-'$AMBERHOME/AmberTools/test/nab/tnetcdf.nab'
-\series default
+\emph on
+$AMBERCLASSICHOME/test/nab/tnetcdf.nab
+\emph default
 .
 \end_layout
 
@@ -57400,10 +57322,15 @@ real-life
 
  examples
 \series default
- of carrying out LMOD searches: look in 
-\emph on
-$AMBERHOME/AmberTools/examples/nab/lmod_*
-\emph default
+ of carrying out LMOD searches: these can be downloaded at
+\begin_inset CommandInset href
+LatexCommand href
+name "ambermd.org/Manuals.php"
+target "https://ambermd.org/Manuals.php"
+literal "false"
+
+\end_inset
+
 .
  Each directory has a README file that give more information.
 \end_layout
@@ -61893,7 +61820,7 @@ mc_option
  energy is printed from the sample NAB program, not from LMOD.
  The sample program in 
 \emph on
-$AMBERHOME/AmberTools/examples/nab/lmod_dock
+$AMBERCLASSICHOME/examples/nab/lmod_dock
 \emph default
  shows how one could write the top ten low-energy structures in separate,
  numbered PDB files.
@@ -63532,16 +63459,6 @@ The parallel execution capability of NAB was developed primarily on Sun
  and parallel runs give the same results.
 \end_layout
 
-\begin_layout Standard
-The 
-\emph on
-$AMBERHOME/benchmarks/nab
-\emph default
- directory has a series of timing benchmarks that can be helpful in assessing
- performance.
- See the README file there for more information.
-\end_layout
-
 \begin_layout Section
 
 \series bold
@@ -65029,7 +64946,7 @@ reslib
 \family default
  is assumed to be in the directory 
 \family sans
-$AMBERHOME/dat/reslib
+$AMBERCLASSICHOME/dat/reslib
 \family default
  unless it begins with a slash (
 \family sans
@@ -80063,7 +79980,7 @@ nab
 \shape default
  is double precision (see 
 \family sans
-$AMBERHOME/AmberTools/src/nab/defreal.h
+$AMBERCLASSICHOME/src/nab/defreal.h
 \family default
 , since this could be changed, or may be different on your system.) Formats
  for floats for the 
@@ -90018,11 +89935,11 @@ literal "true"
 
  The templates are in PDB format and are located in 
 \family sans
-$AMBERHOME/dat/dgdb/basepairs/
+$AMBERCLASSICHOME/dat/dgdb/basepairs/
 \family default
  and 
 \family sans
-$AMBERHOME/dat/dgdb/stacking/
+$AMBERCLASSICHOME/dat/dgdb/stacking/
 \family default
 .
 \end_layout
@@ -90055,7 +89972,7 @@ PATH
 \family default
  is 
 \family sans
-$AMBERHOME/dat/dgdb/stacking/
+$AMBERCLASSICHOME/dat/dgdb/stacking/
 \family default
 .
  This call sets the bounds of all the base atoms in residues 2 ( GUA ) and
@@ -90190,7 +90107,7 @@ note: a-rna represents the helical parameters of a'rna
  ).
  The stacking shemes can be found in the 
 \emph on
-$AMBERHOME/dat/dgdb/stacking
+$AMBERCLASSICHOME/dat/dgdb/stacking
 \emph default
  directory.
 \end_layout
@@ -90258,7 +90175,7 @@ dbase
 \shape default
  before checking the default database location, 
 \family sans
-$AMBERHOME/dat/dgdb.
+$AMBERCLASSICHOME/dat/dgdb.
 \end_layout
 
 \begin_layout Standard
@@ -90334,12 +90251,12 @@ http://www.ndbserver.ebi.ac.uk:5700/NDB/
  If one wishes to remake the databases, the coordinates of all the NDB structure
 s should be downloaded and kept in the 
 \family sans
-$AMBERHOME/dat/coords
+$AMBERCLASSICHOME/dat/coords
 \family default
  directory.
  The databases are made by issuing the command 
 \family sans
-$AMBERHOME/dat/dgdb/make_databases
+$AMBERCLASSICHOME/dat/dgdb/make_databases
 \family default
  
 \shape italic
@@ -90357,7 +90274,7 @@ etc.
  ).
  If one wants to add new structures to the structure repository at 
 \family sans
-$AMBERHOME/dat/coords
+$AMBERCLASSICHOME/dat/coords
 \family default
 , it is necessary to make sure that the first two letters of the pdb file
  identify the nucleic acid type.
@@ -90375,7 +90292,7 @@ nab
 \family default
  functions used to create the databases are located in 
 \family sans
-$AMBERHOME/dat/dgdb/functions
+$AMBERCLASSCHOME/dat/dgdb/functions
 \family default
 .
  The stacking databases were constructed as follows: If two residues stacked
@@ -90540,7 +90457,7 @@ db
 \family default
 , and can be found in the 
 \emph on
-$AMBERHOME/dat/dgdb
+$AMBERCLASSICHOME/dat/dgdb
 \emph default
  directory.
 \end_layout
@@ -90824,7 +90741,7 @@ rattle_md
 \shape default
  programs in the 
 \family sans
-$AMBERHOME/AmberTools/test/nab
+$AMBERCLASSICHOME/test/nab
 \family default
  directory.
 \end_layout
@@ -97163,51 +97080,6 @@ putbnd()
 putdna()
 \family default
  returns to the caller.
-\end_layout
-
-\begin_layout Section
-Other examples
-\end_layout
-
-\begin_layout Standard
-There are several additional pedagogical (and useful!) examples in 
-\shape italic
-$AMBERHOME/examples
-\shape default
-.
- These can be consulted to gain ideas of how some useful molecular manipulation
- programs can be constructed.
-\end_layout
-
-\begin_layout Itemize
-The 
-\shape italic
-peptides
-\shape default
- example was created by Paul Beroza to construct peptides with given backbone
- torsion angles.
- The idea is to call 
-\family sans
-linkprot
-\family default
- to create a peptide in an extended conformation, then to set frames and
- do rotations to construct the proper torsions.
- This can be used as just a stand-alone program to perform this task, or
- as a source for ideas for constructing similar functionality in other 
-\family sans
-nab
-\family default
- programs.
-\end_layout
-
-\begin_layout Itemize
-The 
-\shape italic
-suppose
-\shape default
- example was created by Jarrod Smith to provide a driver to carry out rms-superp
-ositions.
- It has a man page that shows how to use it.
 \end_layout
 
 \begin_layout Standard
