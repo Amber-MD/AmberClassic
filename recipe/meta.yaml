@@ -15,7 +15,7 @@ source:
   path: ../
   
 build:
-  number: 0
+  number: 1
 
 requirements:
   build:
@@ -28,13 +28,12 @@ requirements:
    - {{ mpi }} # [ mpi == "mpich" ]
    - {{ compiler('nvcc') }} # [ linux and not aarch64 ]
    - coreutils
-   - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
+   - libgomp      # [linux and not aarch64]
+   - fftw=3.3.10=mpi_mpich*
    - openblas
    - libnetcdf
    - netcdf-fortran
-#  - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
-   - fftw=3.3.10 mpi_mpich_hde2e182_3
    - libboost-devel
 
   host:
@@ -44,9 +43,8 @@ requirements:
    - netcdf-fortran
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
-#  - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
-   - fftw=3.3.10 mpi_mpich_hde2e182_3
    - {{ mpi }} # [ mpi == "mpich" ]
+   - fftw=3.3.10=mpi_mpich*
 
   run:
    - libboost-devel
@@ -55,9 +53,8 @@ requirements:
    - openblas
    - libnetcdf
    - netcdf-fortran
-#  - fftw=3.3.10 mpi_openmpi_h4a81ba8_8
-   - fftw=3.3.10 mpi_mpich_hde2e182_3
    - {{ mpi }} # [ mpi == "mpich" ]
+   - fftw=3.3.10=mpi_mpich*
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
@@ -66,12 +63,12 @@ about:
        - LICENSE
     summary: 'Subset of AmberTools, built around a "modern" version of sander; includes other useful tools'
     description: |
-      This repository contains msander, a "modern" version of parts of
-      the Amber molecular dynamics program sander. Also included are
-      various NMR, X-ray and cryoEM-related code and utilities, as well as
-      versions of a number of the "classic" (and commonly-used) parts
-      of AmberTools: tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d,
-      saxs, gbnsr6, xtalutil and paramfit. All of the force field files from
+      This repository contains msander, a "modern" version of parts of the
+      Amber molecular dynamics program sander. Also included are various
+      NMR, X-ray and cryoEM-related code and utilities, as well as versions
+      of a number of the "classic" (and commonly-used) parts of AmberTools:
+      tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d, saxs, gbnsr6,
+      xtalutil, protonate and paramfit. All of the force field files from
       AmberTools are also included here. With these tools, many systems can
       be set up for simulation in msander.
 
