@@ -33,7 +33,7 @@ $DO_PARALLEL $sander -O -i mdin -o 6o2h.min.o \
     -p alt3_uc.parm7 -c alt3_uc.min2.x \
     < /dev/null || { echo "  $0:  Program error"; exit 1; }
 
-# ../../dacdif -r 1e-4 6o2h.min.o.save 6o2h.min.o
+../../dacdif -r 1e-4 6o2h.min.o.save 6o2h.min.o
 
 /bin/rm -f mdin mdinfo restrt
 exit 0
