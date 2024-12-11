@@ -21,15 +21,15 @@ test.mpicuda:
 
 # -------- Targets for run_* scripts, making the logfiles --------------------
 
-test.allserial: test.general test.rism test.xray test.nmr \
+test.allserial: test.general test.rism test.xray test.cryoem test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6 test.nabc test.nab
 
-test.allparallel: test.general test.rism test.xray test.nmr 
+test.allparallel: test.general test.rism test.xray test.cryoem test.nmr 
 
 test.allcuda: test.xray
 
-test.allconda: test.general test.rism test.xray test.nmr \
+test.allconda: test.general test.rism test.xray test.cryoem test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6
 
@@ -74,6 +74,8 @@ test.xray:
 	-(cd xray/2ol9 && ./Run.2ol9)
 	-(cd xray/2ol9 && ./Run.2ol9.min)
 #	-(cd xray/2msi && ./Run.2msi)
+
+test.cryoem:
 	-(cd cryoem/3j9d && ./Run.3j9d)
 	-(cd cryoem/emap && ./Run.emap)
 
