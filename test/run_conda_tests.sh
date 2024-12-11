@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -n "$DO_PARALLEL" -o -n "$DO_CUDA" ]; then
+   echo "Both DO_CUDA and DO_PARALLEL unset to run the conda_serial tests"
+   exit 1
+fi
+
 source ../AmberClassic.sh 
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
@@ -10,7 +15,7 @@ difffile="${logprefix}.conda.diff"
 
 mkdir -p ${logdir}
 
-echo "Running AmberClassic conda tests on $date_string" | tee ${logfile}
+echo "Running AmberClassic conda_serial tests on $date_string" | tee ${logfile}
 
 (make --no-print-directory -k test.allconda 2>&1) | tee -a ${logfile}
 

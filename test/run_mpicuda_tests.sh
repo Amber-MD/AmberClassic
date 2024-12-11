@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -z "$DO_PARALLEL" -o -z "$DO_CUDA" ]; then
+   echo "Both DO_PARALLEL and DO_CUDA must be set to run mpicuda tests"
+   exit 1
+fi
+
 source ../AmberClassic.sh 
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
@@ -10,7 +15,7 @@ difffile="${logprefix}.mpicuda.diff"
 
 mkdir -p ${logdir}
 
-echo "Running AmberClassic cuda tests on $date_string" | tee ${logfile}
+echo "Running AmberClassic mpicuda tests on $date_string" | tee ${logfile}
 
 (make --no-print-directory -k test.allcuda 2>&1) | tee -a ${logfile}
 

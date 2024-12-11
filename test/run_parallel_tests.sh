@@ -1,11 +1,11 @@
 #!/bin/bash
 
-source ../AmberClassic.sh 
-
-if [ -z "$DO_PARALLEL" ]; then
-   echo "you must set the DO_PARALLEL environment variable to run parallel tests"
+if [ -n "$DO_PARALLEL" -o -z "$DO_CUDA" ]; then
+   echo "DO_PARALLEL must be set, and DO_CUDA unset to run parallel tests"
    exit 1
 fi
+
+source ../AmberClassic.sh 
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
 logdir="$AMBERCLASSICHOME/logs"

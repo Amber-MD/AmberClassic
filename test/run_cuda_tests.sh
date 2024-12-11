@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -n "$DO_PARALLEL" -o -z "$DO_CUDA" ]; then
+   echo "DO_CUDA must be set, and DO_PARALLEL unset to run cuda tests"
+   exit 1
+fi
+
 source ../AmberClassic.sh 
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
