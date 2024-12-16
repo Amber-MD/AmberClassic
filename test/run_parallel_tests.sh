@@ -1,6 +1,9 @@
 #!/bin/bash
 
-if [ -n "$DO_PARALLEL" -o -z "$DO_CUDA" ]; then
+echo $DO_PARALLEL
+echo $DO_CUDA
+
+if [ -z "$DO_PARALLEL" -o -n "$DO_CUDA" ]; then
    echo "DO_PARALLEL must be set, and DO_CUDA unset to run parallel tests"
    exit 1
 fi
