@@ -26,7 +26,7 @@ TOOLHOME = ../toolclasses
 PDBHOME = ../libpdb
 
 install_reduce: $(BINDIR)/reduce
-	@guzip -c ../reduce_wwPDB_het_dict.txt.gz > $(DATDIR)/reduce_wwPDB_het_dict.txt
+	@gunzip -c ../reduce_wwPDB_het_dict.txt.gz > $(DATDIR)/reduce_wwPDB_het_dict.txt
 
 $(BINDIR)/reduce:     $(OBJS)
 	@echo "[REDUCE] CXX $@"
