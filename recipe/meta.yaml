@@ -9,13 +9,14 @@ package:
 #  version 0.7   leave nabc/nab out of conda build
 #  version 0.8   adding MPI
 #  version 0.9   adding cuda
-  version: 0.9
+#  version 0.10  adding reduce, pdb2pqr, parmed
+  version: 0.10
 
 source:
   path: ../
   
 build:
-  number: 1
+  number: 0
 
 requirements:
   build:
@@ -55,6 +56,8 @@ requirements:
    - netcdf-fortran
    - {{ mpi }} # [ mpi == "mpich" ]
    - fftw=3.3.10=mpi_mpich*
+   - pdb2pqr
+   - parmed
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
