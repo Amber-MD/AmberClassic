@@ -19,3 +19,8 @@ fi
 rsync -a README.md LICENSE AmberClassic.sh config_testing.h include dat bin lib $PREFIX
 mkdir -p $PREFIX/doc
 rsync -a doc/AmberClassic.pdf $PREFIX/doc
+
+# Export AMBERCLASSICHOME automatically
+mkdir -p ${PREFIX}/etc/conda/{activate,deactivate}.d
+cp ${RECIPE_DIR}/activate.sh ${PREFIX}/etc/conda/activate.d/amberclassic.sh
+cp ${RECIPE_DIR}/deactivate.sh ${PREFIX}/etc/conda/deactivate.d/amberclassic.sh
