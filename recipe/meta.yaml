@@ -14,9 +14,15 @@ package:
 
 source:
   path: ../
+# url:
+# sha256: 
   
+mpi:
+   - mpich
+
 build:
   number: 0
+  skip: True # [win or ppc65le or aarch64]
 
 requirements:
   build:
@@ -31,13 +37,14 @@ requirements:
    - coreutils
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
-   - fftw=3.3.10=mpi_mpich*
-   - openblas
    - libnetcdf
    - netcdf-fortran
    - libboost-devel
+   - fftw
 
   host:
+   - bzip2
+   - zlib
    - libboost-devel
    - openblas
    - libnetcdf
@@ -45,7 +52,7 @@ requirements:
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
    - {{ mpi }} # [ mpi == "mpich" ]
-   - fftw=3.3.10=mpi_mpich*
+   - fftw
 
   run:
    - libboost-devel
@@ -53,15 +60,20 @@ requirements:
    - libgomp      # [linux and not aarch64]
    - openblas
    - libnetcdf
+   - fftw
    - netcdf-fortran
    - {{ mpi }} # [ mpi == "mpich" ]
    - fftw=3.3.10=mpi_mpich*
    - pdb2pqr
    - parmed
 
+test:
+  commands:
+   - antechamber -h
+
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
-    license: GNU General Public License (GPL)
+    license: GPL-2.0-or-later AND BSD-3-Clause AND MIT
     license_file: 
        - LICENSE
     summary: 'Subset of AmberTools, built around a "modern" version of sander; includes other useful tools'
