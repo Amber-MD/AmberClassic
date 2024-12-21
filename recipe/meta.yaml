@@ -63,7 +63,7 @@ requirements:
    - fftw
    - netcdf-fortran
    - {{ mpi }} # [ mpi == "mpich" ]
-   - fftw=3.3.10=mpi_mpich*
+   - fftw
    - pdb2pqr
    - parmed
 
