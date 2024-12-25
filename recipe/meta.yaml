@@ -14,7 +14,7 @@ mpi:
    - mpich
 
 build:
-  number: 3
+  number: 4
   skip: True # [win or ppc65le or aarch64]
 
 mpi:
@@ -34,6 +34,7 @@ requirements:
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas
+   - arpack
    - libnetcdf
    - netcdf-fortran
    - fftw=* mpi_{{ mpi }}*
@@ -44,6 +45,7 @@ requirements:
    - zlib
    - libboost-devel
    - openblas
+   - arpack
    - libnetcdf
    - netcdf-fortran
    - llvm-openmp  # [osx]
@@ -56,6 +58,7 @@ requirements:
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
    - openblas
+   - arpack
    - libnetcdf
    - netcdf-fortran
    - {{ mpi }} # [ mpi == "mpich" ]

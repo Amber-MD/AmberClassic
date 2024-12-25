@@ -47,6 +47,7 @@ inc="-I$AmberClassicHome/include"
 openmp='no'
 ompflag=""
 ompcflag=""
+arpack="libarpack"
 
 # --- linear algebra, netcdf, boost, fftw:
 boost="yes"
@@ -110,6 +111,7 @@ while [ $# -gt 0 ]; do
             cxx=$CXX
             fc=$FC
             ldflags=$LDFLAGS
+            arpack="skip"
             conda="yes";;
         --noboost)
             boost="no"
@@ -157,7 +159,6 @@ if [ "$requested_help" = "yes" ] ; then
     printf "\nCompilers:\n"
     printf "    --clang         use clang/gfortran; gcc/gfortran is default\n"
     printf "                      (implies OSX; no openmp support for now)\n"
-    printf "    --conda         conda-forge compilers, only for conda build\n"
     printf "    --verbose       give build details, otherwise be more silent\n"
     printf "    --nogcc10       use flags for gcc9 and below\n"
     printf "\nPerformance options:\n"
@@ -315,13 +316,14 @@ if [ "$openblas" == "yes" ]; then
    flibs_la="-lopenblas -lpthread"
 elif [ "$conda" == "yes" ]; then
    echo "using OpenBLAS libraries from conda-forge"
-   flibs_la="-L$CONDA_PREFIX/lib -lopenblas -lpthread"
+   echo "using arpack   libraries from conda-forge"
+   flibs_la="-L$CONDA_PREFIX/lib -lopenblas -larpack -lpthread"
 elif [ "$macAccelerate" == "yes" ]; then
    echo "using macAccelerate frameworks"
    flibs_la="-framework Accelerate"
 else
    # use the compiled versions;
-   flibs_la="-llapack -lblas"
+   flibs_la="-llapack -lblas -larpack"
    lapack=liblapack
    blas=libblas
 fi
@@ -654,7 +656,7 @@ CFLAGS=$cflags
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)
-FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
+FLIBS= -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
 
 ###############################################################################
 
@@ -662,7 +664,7 @@ FLIBS= -lsff -lnabc -larpack $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arc
 
 FC=$fc
 FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
-FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
+FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
 SHORT_ENE=$short_ene
@@ -683,6 +685,7 @@ INSTALLTYPE=$installtype
 FLEX=flex
 BISON=bison
 MOFT=$moft
+ARPACK=$arpack
 
 # CUDA:
 CUDAFLAGS=$prec_model $cuda_arch_flags $cuda_dc_flags
