@@ -323,7 +323,7 @@ elif [ "$macAccelerate" == "yes" ]; then
    flibs_la="-framework Accelerate"
 else
    # use the compiled versions;
-   flibs_la="-llapack -lblas -larpack"
+   flibs_la="-larpack -llapack -lblas"
    lapack=liblapack
    blas=libblas
 fi
