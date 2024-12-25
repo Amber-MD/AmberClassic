@@ -46,6 +46,7 @@ longlines="-ffree-line-length-none"
 inc="-I$AmberClassicHome/include"
 openmp='no'
 ompflag=""
+ompcflag=""
 
 # --- linear algebra, netcdf, boost, fftw:
 boost="yes"
@@ -102,10 +103,13 @@ while [ $# -gt 0 ]; do
             gcc10c="";;
         --conda)
             conda_incflags="-I$CONDA_PREFIX/include"
-            compiler="clang"
             clangf="-DCLANG"
             clangflags="-Wno-parentheses"
             installtype="conda"
+            cc=$CC
+            cxx=$CXX
+            fc=$FC
+            ldflags=$LDFLAGS
             conda="yes";;
         --noboost)
             boost="no"
@@ -151,22 +155,22 @@ done
 if [ "$requested_help" = "yes" ] ; then
     printf "Usage:  ./configure [OPTIONS]\n"
     printf "\nCompilers:\n"
-	printf "    --clang         use clang/gfortran; gcc/gfortran is default\n"
+    printf "    --clang         use clang/gfortran; gcc/gfortran is default\n"
     printf "                      (implies OSX; no openmp support for now)\n"
     printf "    --conda         conda-forge compilers, only for conda build\n"
-	printf "    --verbose       give build details, otherwise be more silent\n"
-	printf "    --nogcc10       use flags for gcc9 and below\n"
+    printf "    --verbose       give build details, otherwise be more silent\n"
+    printf "    --nogcc10       use flags for gcc9 and below\n"
     printf "\nPerformance options:\n"
-	printf "    --openmp        make use of OPENMP in msander and libsff\n"
-	printf "    --mpi           build only msander.MPI; uses mpi stack in PATH\n"
-	printf "    --cuda          build only msander.cuda\n"
+    printf "    --openmp        make use of OPENMP in msander and libsff\n"
+    printf "    --mpi           build only msander.MPI; uses mpi stack in PATH\n"
+    printf "    --cuda          build only msander.cuda\n"
     printf "                      [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
     printf "    --cudaprec      [SPFP|DPFP], cuda precision, default is SPFP\n"
     printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\nLess-common options:\n\n"
-	printf "    --openblas      use openBLAS routines from a system library\n"
-	printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
-	printf "    --static        use static linking (experimental)\n"
+    printf "    --openblas      use openBLAS routines from a system library\n"
+    printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
+    printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
 fi
@@ -175,7 +179,11 @@ fi
 #      that need to be decided only after all arguments have been processed
 
 if [ "$openmp" == "yes" ]; then
-  ompflag="-fopenmp -DOPENMP"
+  if [ "$compiler" == "clang" ]; then
+     ompcflag="-Xclang -fopenmp -DOPENMP"
+  else
+     ompcflag="-fopenmp -DOPENMP"
+  fi
 fi
 if [ "$mpi" == "yes" ]; then
   fc="$mpif90"
@@ -185,9 +193,9 @@ if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
 fi
 if [ "$conda" == "yes" ]; then
-   cflags="$gccflags $clangf $clangflags $inc $gcc10c $fpic $debug $conda_incflags $xblasflag"
+   cflags="$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag"
 else
-   cflags="$gccflags $clangf $clangflags $ompflag $inc $gcc10c $fpic $debug $xblasflag"
+   cflags="$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $xblasflag"
 fi
 
 #------------------------------------------------------------------------------
