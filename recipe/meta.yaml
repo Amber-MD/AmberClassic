@@ -1,16 +1,9 @@
+{% set version = "0.10" %}
+{% set mpi = "mpich" %}
+
 package:
   name: amberclassic
-#  version 0.1   just trying to adapt recipe from amber_phenix
-#  version 0.2   try using more shared libs from conda-forge
-#  version 0.3   try using boost from conda-forge for metatwist
-#  version 0.4   update xblas, other minor tweaks
-#  version 0.5   add nabc/nab
-#  version 0.6   add boost
-#  version 0.7   leave nabc/nab out of conda build
-#  version 0.8   adding MPI
-#  version 0.9   adding cuda
-#  version 0.10  adding reduce, pdb2pqr, parmed
-  version: 0.10
+  version: {{ version }}
 
 source:
   path: ../
@@ -21,8 +14,11 @@ mpi:
    - mpich
 
 build:
-  number: 0
+  number: 3
   skip: True # [win or ppc65le or aarch64]
+
+mpi:
+   - {{ mpi }}
 
 requirements:
   build:
@@ -35,12 +31,13 @@ requirements:
    - {{ mpi }} # [ mpi == "mpich" ]
    - {{ compiler('nvcc') }} # [ linux and not aarch64 ]
    - coreutils
-   - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
+   - llvm-openmp  # [osx]
+   - openblas
    - libnetcdf
    - netcdf-fortran
+   - fftw=* mpi_{{ mpi }}*
    - libboost-devel
-   - fftw
 
   host:
    - bzip2
@@ -52,7 +49,7 @@ requirements:
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
    - {{ mpi }} # [ mpi == "mpich" ]
-   - fftw
+   - fftw=* mpi_{{ mpi }}*
 
   run:
    - libboost-devel
@@ -60,10 +57,9 @@ requirements:
    - libgomp      # [linux and not aarch64]
    - openblas
    - libnetcdf
-   - fftw
    - netcdf-fortran
    - {{ mpi }} # [ mpi == "mpich" ]
-   - fftw
+   - fftw=* mpi_{{ mpi }}*
    - pdb2pqr
    - parmed
 
