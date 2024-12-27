@@ -9,7 +9,7 @@
 #    computed structure factors.  The remaining steps just process the
 #    output mtz files, with an eye to minimizing disk storage.
 
-#    (I generally remove files in the $pdbprefix and save_hkl folders
+#    (I generally remove files in the $pdbprefix and $save_hkl folders
 #    once I am done, since the input pdb files, and output mtz files,
 #    can take up a *lot* of space for large problems.)
 
@@ -32,20 +32,21 @@
 #=============================================================================
 #  Input variables: edit these to match your problem:
 
-pdbprefix="../PDBdata/lys_ortho"     # pdbfiles will be called
+pdbprefix="/media/case/gamow1/PDBdata/rga"     # pdbfiles will be called
                                       # $pdbprefix.$frame.pdb
-dprefix="lys_ortho"                  # basename for final output files
+save_hkl="/media/case/gamow1/save_hkl"  # folder for intermediate hkl files
+dprefix="RGA"                         # basename for final output files
 numframes=2500                       # number of pdb-format snapshots
 
-cell="CRYST1   30.490   56.385   73.824  90.00  90.00  90.00 P 21 21 21    4\n"
+cell="CRYST1  122.436  122.436  153.031  90.00  90.00 120.00 P 1\n"
                                 # should take this from the first pdb file
-title="Diffuse/Bragg for lys_ortho"  # for mtz and map files
+title="Diffuse/Bragg for RGA"  # for mtz and map files
 vf000=""                              # cell volume and number of electrons
 grid=""                               # grid dimensions for final map
                                       # (see step 7 for vf000 and grid)
 
-resolution=1.12                   # high resolution limit for output
-let resolutionm=$resolution-0.1   # give a slightly better resolution to
+resolution=2.19                   # high resolution limit for output
+resolutionm=2.10                  # give a slightly better resolution to
                                   # sfall to esure that no hkl points get
                                   # omitted
 
@@ -60,17 +61,17 @@ if false; then
 cpptraj <<EOF
 #  sample cpptraj script to create pdb snapshots for diffuse scattering analysis
 # 
-parm ../lys_ortho_1uc.parm7
-reference ../md-1.x
-trajin ../md9.nc
-trajin ../md10.nc
-trajin ../md11.nc
-trajin ../md12.nc
-trajin ../md13.nc
-trajin ../md14.nc
-trajin ../md15.nc
-trajin ../md16.nc
-trajin ../md17.nc
+parm ../rga2_uc.parm7
+reference ../rga2_uc.rst7
+trajin ../rga2_003.nc
+trajin ../rga2_004.nc
+trajin ../rga2_005.nc
+trajin ../rga2_006.nc
+trajin ../rga2_007.nc
+trajin ../rga2_008.nc
+trajin ../rga2_009.nc
+trajin ../rga2_010.nc
+trajin ../rga2_011.nc
 rms reference bb '@C,CA,N' norotate out fit.dat time 0.4
 image byatom
 trajout $pdbprefix.pdb pdb multi pdbv3 keepext sg "P 1"
@@ -135,7 +136,7 @@ fi
 
 if false; then
 
-mkdir -p save_hkl
+mkdir -p $save_hkl
 
 #  script to add constant bfact to input snapshot PDB file:
 cat <<EOF > modify_pdb
@@ -235,7 +236,8 @@ gcc -std=gnu99  -o mtz2fcphic mtz2fcphic.c
 
 #  Loop over input files:
 
-for frame in {1..$numframes}; do
+numframes=5
+for frame in $(eval echo "{1..$numframes}"); do
 
 #  set all b-factors to 15:
 ./modify_pdb < ${pdbprefix}.$frame.pdb > $frame.pdb
@@ -251,7 +253,7 @@ end
 EOF
 
 #  for smaller, binary (fcphic) output:
-./mtz2fcphic $frame.pdb.mtz > save_hkl/$frame.fcphic
+./mtz2fcphic $frame.pdb.mtz > $save_hkl/$frame.fcphic
 
 /bin/rm $frame.pdb $frame.pdb.mtz $frame.sfall2.log
 
@@ -337,8 +339,8 @@ int main( int argc, char** argv )
    FILE *fp;
    for( int ifile=nfile1; ifile<=nfile2; ifile+=nskip ){
 
-      snprintf( filename, 250, "save_hkl/%d.fcphic", ifile );
-      fprintf( stderr, "%s\n", filename );
+      snprintf( filename, 250, "$save_hkl/%d.fcphic", ifile );
+      // fprintf( stderr, "%s\n", filename );
       fp = fopen( filename, "r" ); assert( fp );
       nfiles += 1;
       nread = fread( fc, sizeof(float), nrec, fp );
