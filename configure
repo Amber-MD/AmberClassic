@@ -313,14 +313,14 @@ fi
 
 if [ "$openblas" == "yes" ]; then
    echo "using OpenBLAS libraries from system"
-   flibs_la="-lopenblas -lpthread"
+   flibs_la="-larpack -lopenblas -lpthread"
 elif [ "$conda" == "yes" ]; then
    echo "using OpenBLAS libraries from conda-forge"
    echo "using arpack   libraries from conda-forge"
    flibs_la="-L$CONDA_PREFIX/lib -lopenblas -larpack -lpthread"
 elif [ "$macAccelerate" == "yes" ]; then
    echo "using macAccelerate frameworks"
-   flibs_la="-framework Accelerate"
+   flibs_la="-larpack -framework Accelerate"
 else
    # use the compiled versions;
    flibs_la="-larpack -llapack -lblas"
