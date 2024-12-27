@@ -193,11 +193,6 @@ fi
 if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
 fi
-if [ "$conda" == "yes" ]; then
-   cflags="$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag"
-else
-   cflags="$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $xblasflag"
-fi
 
 #------------------------------------------------------------------------------
 #  Make some needed directories:
@@ -615,8 +610,8 @@ cat <<EOF > config.h
 #  Created on `date` via $command
 #
 #  Compilers:
-#      $cc_version
-#      $fc_version
+#      $cc : $cc_version
+#      $fc : $fc_version
 
 ###############################################################################
 
@@ -652,7 +647,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$cflags
+CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)
