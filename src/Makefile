@@ -24,7 +24,8 @@ serial:
 	@cd gbnsr6 && $(MAKE) install_gbnsr6
 	@cd protonate && $(MAKE) install_protonate
 	@cd ucpp-1.3 && make ucpp
-	@cd nab && make install_nab
+	@cd nab && $(MAKE) install_nab
+	@cd packmol && $(MAKE) install_packmol
 #	@cd nss & make install_nss  # compiles, but not tested yet
 
 parallel:
@@ -55,6 +56,7 @@ conda:
 	@cd rism && $(MAKE) rism1d
 	@cd gbnsr6 && $(MAKE) install_gbnsr6
 	@cd protonate && $(MAKE) install_protonate
+	@cd packmol && $(MAKE) install_packmol
 
 clean:
 	-(cd blas && $(MAKE) clean )
@@ -84,8 +86,9 @@ clean:
 #	-(cd nss && $(MAKE) clean )
 	-(cd netcdf-c-4.7.2 && make clean)
 	-(cd netcdf-fortran-4.5.2 && make clean)
-	-(cd fftw-3.3 && make clean)
-	-(cd boost_1_86_0 && make clean)
+	-(cd fftw-3.3 && $(MAKE) clean)
+	-(cd boost_1_86_0 && $(MAKE) clean)
+	-(cd packmol && $(MAKE) clean)
 
 uninstall: clean
 	-(cd $(BINDIR) && /bin/rm -rf *)
