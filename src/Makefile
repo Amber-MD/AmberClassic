@@ -26,6 +26,7 @@ serial:
 	@cd ucpp-1.3 && make ucpp
 	@cd nab && $(MAKE) install_nab
 	@cd packmol && $(MAKE) install_packmol
+	@cd mdgx && $(MAKE) install_mdgx
 #	@cd nss & make install_nss  # compiles, but not tested yet
 
 parallel:
@@ -91,12 +92,14 @@ clean:
 	-(cd fftw-3.3 && $(MAKE) clean)
 	-(cd boost_1_86_0 && $(MAKE) clean)
 	-(cd packmol && $(MAKE) clean)
+	-(cd mdgx && $(MAKE) clean)
 
 uninstall: clean
 	-(cd $(BINDIR) && /bin/rm -rf *)
-	-(cd $(LIBDIR) && /bin/rm -f liblapack.a libblas.a \
-        libarpack.a librism.a libsff.a )
-	/bin/rm -f $(INCDIR)/* ../config.h
+	-(cd $(LIBDIR) && /bin/rm -f liblapack.a libblas.a libxray.a pdb++.a \
+        libarpack.a librism.a libsff.a libnab.c libnabc.a libxblas-amb.a \
+        toolclasses.a )
+	/bin/rm -f $(INCDIR)/sander.h ../config.h ../config_testing.h
 
 distclean: uninstall
 	-(/bin/rm -f netcdf*.log )

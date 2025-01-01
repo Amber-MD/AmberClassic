@@ -10,16 +10,13 @@ yes:  install
 no:
 	@echo "Skipping installation of mdgx"
 
-cuda: $(BINDIR)/mdgx.cuda
-
-noparallel:
-	@echo "Skipping installation of mdgx"
+mdgx.cuda: $(BINDIR)/mdgx.cuda
 
 install: $(BINDIR)/mdgx $(MDGXWRAP_OBJS) $(LIBDIR)/libmdgx$(SHARED_SUFFIX)
 
 install_mdgx: $(BINDIR)/mdgx
 
-parallel: $(BINDIR)/mdgx.MPI
+mdgx.MPI: $(BINDIR)/mdgx.MPI
 
 uninstall:
 	/bin/rm -f $(BINDIR)/mdgx $(BINDIR)/mdgx.MPI $(BINDIR)/mdgx.cuda
@@ -188,8 +185,9 @@ $(BINDIR)/mdgx : $(MDGX_OBJS)
 $(BINDIR)/mdgx.cuda : $(MDGX_CUDA_OBJS) $(MDGX_OBJS)
 	@echo "[MDGX]  CC  $@"
 	$(VB)$(CC) $(COPTFLAGS) $(CFLAGS) \
-	-o $@ $(MDGX_CUDA_OBJS) $(MDGX_OBJS) $(MDGX_CU_LIBS) -L$(LIBDIR)
-$(MDGXLIBS) $(LDFLAGS)
+	-o $@ $(MDGX_CUDA_OBJS) $(MDGX_OBJS) -L$(LIBDIR) $(MDGXLIBS) \
+    -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
+         -lcurand -lcufft -lcudart -lcudadevrt -lnvidia-ml $(LM)
 
 $(BINDIR)/mdgx.MPI : $(MDGX_OBJS)
 	@echo "[MDGX]  CC  $@"
@@ -211,6 +209,11 @@ $(BINDIR)/ucpp:
 	$(VB)$(CC) -c $(COPTFLAGS) $(CFLAGS) $(MDGX_CU_DEFINES) $(MDGX_CU_INCLUDES) -I$(INCDIR) -o $@ $<
 
 # This is puerile, but simply enumerate the CUDA units here.
+
+NVCC=nvcc \
+   -Wno-deprecated-declarations -use_fast_math -O3 \
+   -I/usr/local/cuda/include -IB40C $(CUDAFLAGS) $(NVCC_CFLAGS) --std c++14
+
 ArraySimulator.o : ArraySimulator.cu
 	@echo "[MDGX]  NVCC  $<"
 	$(VB)$(NVCC) $(MDGX_CU_DEFINES) $(MDGX_CU_INCLUDES) -c -I$(INCDIR) -o $@ $<

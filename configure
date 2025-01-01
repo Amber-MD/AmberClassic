@@ -684,7 +684,7 @@ ARPACK=$arpack
 MDGXLIBS=$flibs_fftw $flibs_la $netcdflib
 
 # CUDA:
-CUDAFLAGS=$prec_model $cuda_arch_flags $cuda_dc_flags
+CUDAFLAGS=$cudafflags $prec_model $cuda_arch_flags $cuda_dc_flags
 CUDAFFLAGS=$cudafflags
 NVCC_CFLAGS=-Wno-deprecated-gpu-targets $clangf $inc $fpic $debug $conda_incflags
 
