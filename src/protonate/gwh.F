@@ -51,10 +51,24 @@ c
             iddd = 1
           else if (arg.eq.'-elstat') then
             iord = 1
+          else if (arg.eq.'-h' .or. arg.eq.'--help') then
+            write(0,*) 'Usage: gwh [-p prmtop ] [-w watpdb ]',
+     .       ' [-consd] [-elstat] < input-pdb-file > output-pdb-file'
+      write(0,*) '  watpdb contains new waters to have hydrogens fixed'
+      write(0,*) '  -consd: use a constant dielectric'
+      write(0,*) '  -elstat: sort on electrostatics; otherwise sort on'
+      write(0,*) '           minimum H-bond distance'
+      write(0,*) 'Note: waters in input-pdb-file will not be modified'
+            call mexit(0,1)
           else
             write(0,*) 'Bad argument: ',iarg,arg
             write(0,*) 'Usage: gwh [-p prmtop ] [-w watpdb ]',
      .       ' [-consd] [-elstat] < input-pdb-file > output-pdb-file'
+      write(0,*) '  watpdb contains new waters to have hydrogens fixed'
+      write(0,*) '  -consd: use a constant dielectric'
+      write(0,*) '  -elstat: sort on electrostatics; otherwise sort on'
+      write(0,*) '           minimum H-bond distance'
+      write(0,*) 'Note: waters in input-pdb-file will not be modified'
             call mexit(0,1)
           end if
       if (iarg.lt.nargs) go to 10
