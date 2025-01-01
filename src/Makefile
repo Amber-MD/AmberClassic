@@ -31,9 +31,11 @@ serial:
 parallel:
 	@cd msander && $(MAKE) msander.MPI
 #	@cd msander && $(MAKE) msander.LES.MPI
+	@cd mdgx && $(MAKE) mdgx.MPI
 
 cuda:
 	@cd msander && $(MAKE) msander.cuda
+	@cd mdgx && $(MAKE) mdgx.cuda
 
 mpicuda:
 	@cd msander && $(MAKE) msander.cuda.MPI

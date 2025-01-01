@@ -681,6 +681,7 @@ FLEX=flex
 BISON=bison
 MOFT=$moft
 ARPACK=$arpack
+MDGXLIBS=$flibs_fftw $flibs_la $netcdflib
 
 # CUDA:
 CUDAFLAGS=$prec_model $cuda_arch_flags $cuda_dc_flags
