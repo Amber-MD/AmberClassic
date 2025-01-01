@@ -37,14 +37,14 @@ ldflags=""
 fc="gfortran"
 flibs_arch="-lgfortran -w"
 flibs_la=""
-flibs_fftw="-lfftw3"
+flibs_fftw="-lfftw3_omp -lfftw3"
 mpif90="mpif90"
 gccsys=""
 optflags="-g -O3"
 gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
 longlines="-ffree-line-length-none"
 inc="-I$AmberClassicHome/include"
-openmp='no'
+openmp='yes'
 ompflag=""
 ompcflag=""
 arpack="libarpack"
@@ -89,9 +89,9 @@ while [ $# -gt 0 ]; do
             verbose="";;
         --debug)
             debug="";;
-        --openmp)
-            flibs_fftw="-lfftw3_omp $flibs_fftw"
-            openmp="yes";;
+        --noopenmp)
+            flibs_fftw="-lfftw3"
+            openmp="no";;
         --cuda)
             cuda="yes"
             installtype="cuda"
@@ -141,9 +141,8 @@ while [ $# -gt 0 ]; do
             optflags="-g -O3";;
         --mpi)
             mpi="yes"
-            fftw_flags="--enable-mpi=yes $fftw_flags"
+            fftw_flags="--enable-mpi=yes"
             mpiflag="-DMPI"
-            flibs_fftw="-lfftw3_mpi $flibs_fftw -lmpi"
             short_ene=short_ene.o
             installtype="parallel"
             sfx=".MPI";;
@@ -162,8 +161,8 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --verbose       give build details, otherwise be more silent\n"
     printf "    --nogcc10       use flags for gcc9 and below\n"
     printf "\nPerformance options:\n"
-    printf "    --openmp        make use of OPENMP in msander and libsff\n"
-    printf "    --mpi           build only msander.MPI; uses mpi stack in PATH\n"
+    printf "    --noopenmp      don't use of OPENMP in msander and libsff\n"
+    printf "    --mpi           build only msander.MPI and mdgx.MPI; uses mpi stack in PATH\n"
     printf "    --cuda          build only msander.cuda\n"
     printf "                      [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
     printf "    --cudaprec      [SPFP|DPFP], cuda precision, default is SPFP\n"
@@ -189,6 +188,7 @@ fi
 if [ "$mpi" == "yes" ]; then
   fc="$mpif90"
   cc="$mpicc"
+  flibs_fftw="-lfftw3_mpi $flibs_fftw -lmpi"
 fi
 if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
