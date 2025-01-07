@@ -61,6 +61,14 @@ conda:
 	@cd protonate && $(MAKE) install_protonate
 	@cd packmol && $(MAKE) install_packmol
 
+# remove files that may rely on MPI or CUDA ifdefs
+clean2:
+	-(cd rism && $(MAKE) clean )
+	-(cd msander && $(MAKE) clean )
+	-(cd xray && $(MAKE) clean )
+	-(cd xray/cuda && $(MAKE) clean )
+	-(cd mdgx && $(MAKE) clean)
+
 clean:
 	-(cd blas && $(MAKE) clean )
 	-(cd lapack && $(MAKE) clean )

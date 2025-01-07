@@ -28,7 +28,7 @@ requirements:
    - {{ compiler('fortran') }}
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
-   - {{ mpi }} # [ mpi == "mpich" ]
+   - mpich-mpicc # [ mpi == "mpich" ]
    - {{ compiler('nvcc') }} # [ linux and not aarch64 ]
    - coreutils
    - libgomp      # [linux and not aarch64]

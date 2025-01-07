@@ -186,7 +186,7 @@ $(BINDIR)/mdgx.cuda : $(MDGX_CUDA_OBJS) $(MDGX_OBJS)
 	@echo "[MDGX]  CC  $@"
 	$(VB)$(CC) $(COPTFLAGS) $(CFLAGS) \
 	-o $@ $(MDGX_CUDA_OBJS) $(MDGX_OBJS) -L$(LIBDIR) $(MDGXLIBS) \
-    -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
+    -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib64/stubs \
          -lcurand -lcufft -lcudart -lcudadevrt -lnvidia-ml $(LM)
 
 $(BINDIR)/mdgx.MPI : $(MDGX_OBJS)
@@ -222,4 +222,4 @@ ArraySimulator.o : ArraySimulator.cu
 ArraySimulator.cu : KernelMacros.h kDynamicsNv.h kDynamicsAmd.h
 
 clean:
-	/bin/rm -f $(MDGX_OBJS) $(MDGX_CUDA_OBJS) $(MDGXWRAP_OBJS)
+	/bin/rm -f *.o
