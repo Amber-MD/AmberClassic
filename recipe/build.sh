@@ -2,11 +2,11 @@
 
 export CUDA_HOME=/usr/local/cuda
 
-./configure --conda --mpi
-(cd src && make parallel)
-
 ./configure --conda
-(cd src && make clean2 && make conda)
+(cd src && make conda)
+
+./configure --conda --mpi
+(cd src && make clean2 && make parallel)
 
 if [ "`uname`" == "Linux" ]; then
    ./configure --conda --cuda

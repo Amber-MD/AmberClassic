@@ -1,4 +1,4 @@
-{% set version = "0.10" %}
+{% set version = "1.0" %}
 {% set mpi = "mpich" %}
 
 package:
@@ -14,7 +14,7 @@ mpi:
    - mpich
 
 build:
-  number: 4
+  number: 1
   skip: True # [win or ppc65le or aarch64]
 
 mpi:
@@ -81,8 +81,8 @@ about:
       Amber molecular dynamics program sander. Also included are various
       NMR, X-ray and cryoEM-related code and utilities, as well as versions
       of a number of the "classic" (and commonly-used) parts of AmberTools:
-      tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d, saxs, gbnsr6,
-      xtalutil, protonate and paramfit. All of the force field files from
-      AmberTools are also included here. With these tools, many systems can
-      be set up for simulation in msander.
+      tleap, antechamber, sqm, sff, mdgx, metatwist, rism1d, saxs, gbnsr6,
+      xtalutil, protonate, reduce, packmol and paramfit. All of the force
+      field files from AmberTools are also included here. With these tools,
+      many systems can be set up for simulation in msander.
 

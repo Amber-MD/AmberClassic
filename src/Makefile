@@ -66,7 +66,6 @@ clean2:
 	-(cd rism && $(MAKE) clean )
 	-(cd msander && $(MAKE) clean )
 	-(cd xray && $(MAKE) clean )
-	-(cd xray/cuda && $(MAKE) clean )
 	-(cd mdgx && $(MAKE) clean)
 
 clean:
