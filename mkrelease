@@ -2,7 +2,7 @@
 
 version=$1
 
-tar cvf ../AmberClassic-$version.tar AmberClassic.sh configure dat \
+tar cvf ../AmberClassic-$version.tar AmberClassic.sh configure dat test \
    LICENSE Makefile src doc/AmberClassic.pdf README.md
 cd ..
 gzip AmberClassic-$version.tar
