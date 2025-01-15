@@ -43,11 +43,11 @@ PROGS = \
 	$(BINDIR)/parmchk2 \
 	$(BINDIR)/prepgen \
 	$(BINDIR)/residuegen \
-	$(BINDIR)/respgen \
+	$(BINDIR)/respgen
 
 #############################################################################
 
-install_ac: $(DISPATCHEDPROGS) dispatch
+install_ac: $(DISPATCHEDPROGS) dispatch $(BINDIR)/resp
 
 dispatch:
 	$(VB)BINDIR=$(BINDIR) sh patch.sh
@@ -66,6 +66,14 @@ $(LIBDIR)/libcifparse.a:
 .c.o:
 	@echo "[ANTECHAMBER]  CC $<"
 	$(VB)$(CC) -c $(CNOOPTFLAGS) $(CFLAGS) $(AMBERCFLAGS) -o $@ $<
+
+$(BINDIR)/resp: lapack.o resp.F
+	@echo "[ANTECHAMBER] FC $<
+	$(VB)$(FC) $(FFLAGS) $(FOPTFLAGS) $< lapack.o -o $@
+
+lapack.o: lapack.F
+	@echo "[ANTECHAMBER] FC $<
+	$(VB)$(FC) $(FFLAGS) $(FOPTFLAGS) -c -o $@ $<
 
 #_____________________________________________________________________________
 
