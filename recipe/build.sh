@@ -16,7 +16,7 @@ if [ "`uname`" == "Linux" ]; then
    (cd src && make clean2 && make mpicuda)
 fi
 
-rsync -a README.md LICENSE AmberClassic.sh config_testing.h include dat bin lib $PREFIX
+rsync -a README.md LICENSE AmberClassic.sh config_testing.h include dat bin lib test $PREFIX
 mkdir -p $PREFIX/doc
 rsync -a doc/AmberClassic.pdf $PREFIX/doc
 

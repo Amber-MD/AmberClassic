@@ -1,4 +1,4 @@
-{% set version = "1.0" %}
+{% set version = "1.1" %}
 {% set mpi = "mpich" %}
 
 package:
@@ -14,7 +14,7 @@ mpi:
    - mpich
 
 build:
-  number: 1
+  number: 0
   skip: True # [win or ppc65le or aarch64]
 
 mpi:
