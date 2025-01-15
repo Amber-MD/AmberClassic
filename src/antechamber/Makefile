@@ -68,11 +68,11 @@ $(LIBDIR)/libcifparse.a:
 	$(VB)$(CC) -c $(CNOOPTFLAGS) $(CFLAGS) $(AMBERCFLAGS) -o $@ $<
 
 $(BINDIR)/resp: lapack.o resp.F
-	@echo "[ANTECHAMBER] FC $<
-	$(VB)$(FC) $(FFLAGS) $(FOPTFLAGS) $< lapack.o -o $@
+	@echo "[ANTECHAMBER] FC $<"
+	$(VB)$(FC) $(FFLAGS) $(FOPTFLAGS) resp.F lapack.o -o $@
 
 lapack.o: lapack.F
-	@echo "[ANTECHAMBER] FC $<
+	@echo "[ANTECHAMBER] FC $<"
 	$(VB)$(FC) $(FFLAGS) $(FOPTFLAGS) -c -o $@ $<
 
 #_____________________________________________________________________________
