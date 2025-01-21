@@ -14,8 +14,8 @@ mpi:
    - mpich
 
 build:
-  number: 0
-  skip: True # [win or ppc65le or aarch64]
+  number: 1
+  skip: True # [win or ppc65le]
 
 mpi:
    - {{ mpi }}
@@ -65,6 +65,7 @@ requirements:
    - fftw=* mpi_{{ mpi }}*
    - pdb2pqr
    - parmed
+   - propka
 
 test:
   commands:
