@@ -651,7 +651,7 @@ CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)
-FLIBS= -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
+FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
 
 ###############################################################################
 
