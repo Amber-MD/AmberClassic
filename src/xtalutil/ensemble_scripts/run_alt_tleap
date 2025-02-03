@@ -10,46 +10,11 @@ set default reorder_residues off
 source leaprc.protein.ff19SB
 source leaprc.water.spce
 source leaprc.gaff2
-SO4 = loadMol2 SO4.mol2
-loadAmberParams SO4.frcmod
+EOH = loadMol2 EOH.mol2
+loadAmberParams EOH.frcmod
 x = loadPdb $id.pdb
-bond x.26.SG  x.42.SG
-bond x.150.SG  x.165.SG
-bond x.176.SG  x.201.SG
-bond x.614.SG  x.630.SG
-bond x.738.SG  x.753.SG
-bond x.764.SG  x.789.SG
-bond x.1202.SG  x.1218.SG
-bond x.1326.SG  x.1341.SG
-bond x.1352.SG  x.1377.SG
-bond x.1790.SG  x.1806.SG
-bond x.1914.SG  x.1929.SG
-bond x.1940.SG  x.1965.SG
-bond x.2378.SG  x.2394.SG
-bond x.2502.SG  x.2517.SG
-bond x.2528.SG  x.2553.SG
-bond x.2966.SG  x.2982.SG
-bond x.3090.SG  x.3105.SG
-bond x.3116.SG  x.3141.SG
-bond x.3554.SG  x.3570.SG
-bond x.3678.SG  x.3693.SG
-bond x.3704.SG  x.3729.SG
-bond x.4142.SG  x.4158.SG
-bond x.4266.SG  x.4281.SG
-bond x.4292.SG  x.4317.SG
-bond x.4730.SG  x.4746.SG
-bond x.4854.SG  x.4869.SG
-bond x.4880.SG  x.4905.SG
-bond x.5318.SG  x.5334.SG
-bond x.5442.SG  x.5457.SG
-bond x.5468.SG  x.5493.SG
-bond x.5906.SG  x.5922.SG
-bond x.6030.SG  x.6045.SG
-bond x.6056.SG  x.6081.SG
-bond x.6494.SG  x.6510.SG
-bond x.6618.SG  x.6633.SG
-bond x.6644.SG  x.6669.SG
-set x box { 99.870   74.100   80.518 }
+source sslinks
+set x box { 68.175   37.534   41.059 }
 saveAmberParm x $id.parm7 foo.rst7
 quit
 EOF
@@ -57,11 +22,11 @@ EOF
 tleap -f tleap.in > tleap.out
 /bin/rm tleap.in
 
-ChBox -c foo.rst7 -o ${id}_uc.rst7 -al 102.46 -bt 103.81 -gm 102.07 -X 99.87 -Y 74.1 -Z 80.518
+ChBox -c foo.rst7 -o ${id}_uc.rst7 -al 90.00 -bt 90.55 -gm 90.00 -X 68.175 -Y 37.534 -Z 41.059
 
-$MSANDERHOME/bin/add_pdb -i $id.parm7 -p ${id}.pdb -o foo.parm7 
-$MSANDERHOME/bin/add_xray -i foo.parm7 -o ${id}_uc.parm7
+$AMBERCLASSICHOME/bin/add_pdb -i $id.parm7 -p ${id}.pdb -o foo.parm7 
+$AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}_uc.parm7
 
-/home/case/xtaltools/src/ambpdb -p ${id}_uc.parm7 -ext < ${id}_uc.rst7 > ${id}_000.pdb
+$AMBERCLASSICHOME/bin/ambpdb -p ${id}_uc.parm7 -ext < ${id}_uc.rst7 > ${id}_000.pdb
 
 /bin/rm -f foo.parm7 foo.rst7 $id.parm7
