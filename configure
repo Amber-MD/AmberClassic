@@ -184,6 +184,7 @@ if [ "$openmp" == "yes" ]; then
   else
      ompcflag="-fopenmp -DOPENMP"
   fi
+  ompflag="-fopenmp -DOPENMP"
 fi
 if [ "$mpi" == "yes" ]; then
   fc="$mpif90"
