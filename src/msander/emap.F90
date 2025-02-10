@@ -37,7 +37,7 @@ public
       integer(int32),pointer :: bdata(:)=> null()     !   integer data
       integer(int64),pointer :: idata(:)=> null()     !   integer data
       real(real32),pointer:: rdata(:)=> null()        !   real data
-      complex(real64), pointer :: Cdata(:)=> null()  !   double precision data
+      complex(real64), pointer :: Cdata(:)=> null()   !   double precision data
       type (emapobject), pointer :: next   !  pointer to next emap object
       type (emapobject), pointer :: ref    !  pointer to a reference emap object
     END TYPE EMAPOBJECT
@@ -154,6 +154,7 @@ contains
         emrigs(i)%atmask=atmask
         emrigs(i)%mapid=mapid
         emrigs(i)%fcons=fcons
+        write(0,*) 'setting fcons: ', i, fcons
         emrigs(i)%resolution=resolution
         emrigs(i)%movable=move>0
         emrigs(i)%fitting=ifit>0
@@ -185,13 +186,7 @@ contains
       use constants, only: KB
       use findmask,only:atommask
       use md_scheme, only: gamma_ln
-#ifdef MPI
-      use mpi
-#endif
       implicit none
-#ifdef MPI
-#  include "parallel.h"
-#endif
 #  include "../include/memory.h"
 #  include "../include/md.h"
       _REAL_ dtmol,tempmol
@@ -204,9 +199,8 @@ contains
       _REAL_ RESO
       INTEGER, allocatable, dimension(:)::mask
       _REAL_, allocatable, dimension(:)::TMP_CRD,TMP_AMASS
-#ifdef MPI
-      INTEGER ierr
-#endif
+      character(len=20) dprec
+      dprec = '_REAL_'
 !
       BORDER=6
       UNITOUT=6
@@ -219,36 +213,6 @@ contains
       xgamma=gamma_ln/(gamma_ln+gammamap)
       XAVG1=0.01d0
       XAVG0=1.0d0-XAVG1
-#ifdef MPI
-      if ( sandersize > 1 ) then
-        if ( sanderrank > 0 ) then
-          UNITOUT=-1
-          if(allocated(EMRIGS))deallocate(EMRIGS)
-          allocate(EMRIGS(NRIGID),stat=alloc_err)
-          if(alloc_err /= 0 ) write(6,*)"unable to allocate EMRIGS"
-          if(allocated(EMAPS))deallocate(EMAPS)
-          allocate(EMAPS(NEMAP),stat=alloc_err)
-          if(alloc_err /= 0 ) write(6,*)"unable to allocate EMAPS"
-        end if
-        DO I=1,NRIGID
-          if ( sanderrank > 0 )call rigid_init(emrigs(i))
-          call mpi_bcast(emrigs(i)%mapid,1,MPI_INTEGER,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%rigid,1,MPI_INTEGER,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%name,80,MPI_CHARACTER,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%mapfit,80,MPI_CHARACTER,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%atmask,256,MPI_CHARACTER,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%fcons,1,MPI_DOUBLE_PRECISION,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%resolution,1,MPI_DOUBLE_PRECISION,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%movable,1,MPI_LOGICAL,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%fitting,1,MPI_LOGICAL,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%nminim,1,MPI_INTEGER,0,commsander,ierr)
-          call mpi_bcast(emrigs(i)%grids,6,MPI_INTEGER,0,commsander,ierr)
-        ENDDO
-        DO I=1,NEMAP
-          call mpi_bcast(emaps(i)%mapfile,80,MPI_CHARACTER,0,commsander,ierr)
-        ENDDO
-      end if
-#endif
 
       DO I=1,NEMAP
         CALL RDEMAP(EMAPS(I)%MAPFILE,I,UNITOUT)
@@ -346,23 +310,12 @@ contains
 !  Clean and quit EMAP module
 !                    By Xiongwu Wu, wuxw@nhlbi.nih.gov
 !_________________________________________________________________
-#ifdef MPI
-      use mpi
-#endif
       implicit none
-#ifdef MPI
-#  include "parallel.h"
-#endif
 #  include "../include/memory.h"
 
       INTEGER I,dealloc_err,UNITOUT
 !
       UNITOUT=6
-#ifdef MPI
-      if ( sanderrank > 0 ) then
-        UNITOUT=-1
-      end if
-#endif
 
       DO I=1,NRIGID
         if(UNITOUT>0)call RIGMAP(emrigs(i),UNITOUT)
@@ -2136,14 +2089,8 @@ subroutine emapforce(natom,enemap,amass,x,f)
 !_________________________________________________________________
 !
       use ew_bspline,only:fill_bspline_1
-#ifdef MPI
-      use mpi
-#endif
       implicit none
 !
-#ifdef MPI
-#  include "parallel.h"
-#endif
       INTEGER NATOM
       REAL*8 ENRIG,SCRIG,AMASS(*),X(*)
       type(EMAPRIGID) :: rigobj
@@ -2161,21 +2108,8 @@ subroutine emapforce(natom,enemap,amass,x,f)
       REAL*8 VAL0,VAL0A
       INTEGER ID,IAT,IATX,IATY,IATZ,I,J,K,M1,M2,M3,NSTA,NEND
       INTEGER ITH1,ITH2,ITH3,IPT1,IPT2,IPT3
-#ifdef MPI
-      INTEGER IERR
-      _REAL_ TEMP1(10),TEMP2(10)
-
-   if ( mpi_orig ) then
-      nsta = 1
-      nend = natom
-   else
-      nsta = iparpt(mytaskid) + 1
-      nend = iparpt(mytaskid+1)
-   end if
-#else
    nsta = 1
    nend = natom
-#endif
       mapobj=emaps(rigobj%mapid)
       MNX=MAPOBJ%MX
       MNY=MAPOBJ%MY
@@ -2260,15 +2194,6 @@ subroutine emapforce(natom,enemap,amass,x,f)
 !
       ENDDO
       ENRIG=-CFACT*SCRIG
-#ifdef MPI
-        IF(SANDERSIZE > 1)THEN
-!  Combining all node results
-!
-          TEMP1(1)=SCRIG
-          call mpi_allreduce(MPI_IN_PLACE,temp1,1,MPI_DOUBLE_PRECISION,MPI_SUM,commsander,ierr)
-          ENRIGM=TEMP1(1)
-        ENDIF
-#endif
       ENRIGM=-CFACT*SCRIG
       rigobj%energy=enrigm
       RETURN
@@ -2283,14 +2208,8 @@ subroutine emapforce(natom,enemap,amass,x,f)
 !_________________________________________________________________
 !
       use ew_bspline,only:fill_bspline_1
-#ifdef MPI
-      use mpi
-#endif
       implicit none
 !
-#ifdef MPI
-#  include "parallel.h"
-#endif
       INTEGER NATOM
       REAL*8 ENRIG,SCRIG,AMASS(*),X(*),F(*)
       type(EMAPRIGID) :: rigobj
@@ -2309,23 +2228,8 @@ subroutine emapforce(natom,enemap,amass,x,f)
       REAL*8 VAL0,VAL1,VAL2,VAL3,VAL0A,VAL1A,VAL2A,VAL3A
       INTEGER ID,IAT,IATX,IATY,IATZ,I,J,K,M1,M2,M3,NSTA,NEND
       INTEGER ITH1,ITH2,ITH3,IPT1,IPT2,IPT3
-#ifdef MPI
-      INTEGER IERR
-      _REAL_ TEMP1(10),TEMP2(10)
-#endif
-!
-#ifdef MPI
-   if ( mpi_orig ) then
-      nsta = 1
-      nend = natom
-   else
-      nsta = iparpt(mytaskid) + 1
-      nend = iparpt(mytaskid+1)
-   end if
-#else
    nsta = 1
    nend = natom
-#endif
       mapobj=emaps(rigobj%mapid)
       MNX=MAPOBJ%MX
       MNY=MAPOBJ%MY
@@ -2452,27 +2356,6 @@ subroutine emapforce(natom,enemap,amass,x,f)
          rtz=rtz+xi*fy-yi*fx
       ENDDO
       ENRIG=-CFACT*SCRIG
-#ifdef MPI
-        IF(SANDERSIZE > 1)THEN
-!  Combining all node results
-!
-          TEMP1(1)=SCRIG
-          TEMP1(2)=RFX
-          TEMP1(3)=RFY
-          TEMP1(4)=RFZ
-          TEMP1(5)=RTX
-          TEMP1(6)=RTY
-          TEMP1(7)=RTZ
-          call mpi_allreduce(MPI_IN_PLACE,temp1,7,MPI_DOUBLE_PRECISION,MPI_SUM,commsander,ierr)
-          SCRIG=TEMP1(1)
-          RFX=TEMP1(2)
-          RFY=TEMP1(3)
-          RFZ=TEMP1(4)
-          RTX=TEMP1(5)
-          RTY=TEMP1(6)
-          RTZ=TEMP1(7)
-        ENDIF
-#endif
       ENRIGM=-CFACT*SCRIG
       rigobj%energy=enrigm
       rigobj%force(1)=rfx

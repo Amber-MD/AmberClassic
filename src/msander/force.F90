@@ -512,12 +512,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 
   ! Step 1/2 to save emap + entr + ecap forces
 
-  ! Calculate the EMAP constraint energy
-  if (temap) then   ! ntr=1 (positional restraints)
-    call emapforce(natom, enemap, xx(lmass), x, f)
-    pot%emap = enemap
-  end if
-
   ! Calculate the position constraint energy
 #ifdef MPI /* SOFT CORE */
   ! Zero all restraint/constraint energies
@@ -630,6 +624,11 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
     if (iredir(7) /= 0) call pcshift(natom,x,f)
     if (iredir(9) /= 0) call csa1(natom,x,f)
     if (iredir(8) /= 0) call align1(natom,x,f,xx(lmass))
+    if (temap) then
+      call emapforce(natom, enemap, xx(lmass), x, f)
+      pot%emap = enemap
+    end if
+
   end if
 
   ! MuSiC - GAL17 force field
