@@ -1,5 +1,34 @@
 !<compile=optimized>
 
+! The 3D-RISM-KH software found here is copyright (c) 2010-2012 by
+! Tyler Luchko and David A. Case.
+!
+! This program is free software: you can redistribute it and/or modify it
+! under the terms of the GNU General Public License as published by the Free
+! Software Foundation, either version 3 of the License, or (at your option)
+! any later version.
+!
+! This program is distributed in the hope that it will be useful, but
+! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+! or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public License in the
+! ../../LICENSE file.  If not, see <http://www.gnu.org/licenses/>.
+!
+! Users of the 3D-RISM capability found here are requested to acknowledge
+! use of the software in reports and publications.  Such acknowledgement
+! should include the following citations:
+!
+! 1) A. Kovalenko and F. Hirata. J. Chem. Phys., 110:10095-10112  (1999);
+! ibid. 112:10391-10417 (2000).
+!
+! 2) A. Kovalenko,  in:  Molecular  Theory  of  Solvation,  edited  by
+! F. Hirata  (Kluwer Academic Publishers, Dordrecht, 2003), pp.169-275.
+!
+! 3) T. Luchko, S. Gusarov, D.R. Roe, C. Simmerling, D.A. Case, J. Tuszynski,
+! and  A. Kovalenko, J. Chem. Theory Comput., 6:607-624 (2010).
+
 #include "../include/dprec.fh"
 
 !> Functions and subroutines to safely allocate, reallocate (data preserving)
@@ -22,7 +51,7 @@
 !!
 !!   ! At any point you can get a summary of the current and maximum
 !!   ! allocated memory in bytes.
-!!   integer(kind=int64) :: memstats(10)
+!!   integer(kind=8) :: memstats(10)
 !!   memstats = memStatus()
 !!   write(unit,'(a)') "Type         Current         Maximum"
 !!   write(unit,'(a,i12,a,f12.5,a)') "Integer  ",memstats(1)," B ",&
@@ -61,9 +90,14 @@
 !!   the resident memory.
 
 module safemem
+  use ISO_FORTRAN_ENV
   use rism_report_c
+#ifndef CUDA
   use FFTW3
-  use iso_fortran_env, only: int64
+#else
+  use iso_c_binding
+#endif /*CUDA*/
+
   implicit none
   public
   type memTracker
@@ -73,21 +107,21 @@ module safemem
      ! logical :: Current number of bytes of logical memory allocated
      ! char    :: Current number of bytes of character memory allocated
      ! total   :: Current number of bytes of total memory allocated
-     integer(kind=int64) :: int = 0, real = 0, logical = 0, char = 0, total = 0
+     integer(8) :: int = 0, real = 0, logical = 0, char = 0, total = 0
      ! maxint     :: Current number of bytes of integer memory allocated
      ! maxreal    :: Current number of bytes of real memory allocated
      ! maxlogical :: Current number of bytes of logical memory allocated
      ! maxchar    :: Current number of bytes of character memory allocated
      ! max        :: Current number of bytes of total memory allocated
-     integer(kind=int64) :: maxint = 0, maxreal = 0, maxlogical = 0, maxchar = 0, max = 0
+     integer(8) :: maxint = 0, maxreal = 0, maxlogical = 0, maxchar = 0, max = 0
   end type memTracker
 
   ! BYTES_PER_GIGABYTES :: used to convert between bytes and GB
-  integer(kind=int64), parameter :: BYTES_PER_GB = 1024**3
+  integer(8), parameter :: BYTES_PER_GB = 1024**3
   ! BYTES_PER_MEGABYTES :: used to convert between bytes and MB
-  integer(kind=int64), parameter :: BYTES_PER_MB = 1024**2
+  integer(8), parameter :: BYTES_PER_MB = 1024**2
   ! BYTES_PER_KILOBYTES :: used to convert between bytes and KB
-  integer(kind=int64), parameter :: BYTES_PER_KB = 1024**1
+  integer(8), parameter :: BYTES_PER_KB = 1024**1
 
   type(memTracker), private, save :: totalMem
 
@@ -104,20 +138,32 @@ module safemem
   !! @param[in] preserve boolean indicating whether or not to preserve the contents of
   !!                     the array (optional)
   interface safemem_realloc
+     module procedure safemem_realloc_1d_real_int32
      module procedure safemem_realloc_1d_real
+     module procedure safemem_realloc_2d_real_int32
      module procedure safemem_realloc_2d_real
+     module procedure safemem_realloc_3d_real_int32
      module procedure safemem_realloc_3d_real
+     module procedure safemem_realloc_4d_real_int32
      module procedure safemem_realloc_4d_real
+     module procedure safemem_realloc_5d_real_int32
      module procedure safemem_realloc_5d_real
+     module procedure safemem_realloc_5d_real_interp_int32
      module procedure safemem_realloc_5d_real_interp
 
+     module procedure safemem_realloc_1d_integer_int32
      module procedure safemem_realloc_1d_integer
+     module procedure safemem_realloc_1d_int64
+     module procedure safemem_realloc_2d_integer_int32
      module procedure safemem_realloc_2d_integer
 
      module procedure safemem_realloc_1d_character
+     module procedure safemem_realloc_1d_character_int32
      module procedure safemem_realloc_2d_character
+     module procedure safemem_realloc_2d_character_int32
 
      module procedure safemem_realloc_1d_logical
+     module procedure safemem_realloc_1d_logical_int32
   end interface safemem_realloc
 
 
@@ -135,6 +181,7 @@ module safemem
      module procedure safemem_dealloc_pointer_3d_int
      module procedure safemem_dealloc_pointer_4d_int
      module procedure safemem_dealloc_pointer_5d_int
+     module procedure safemem_dealloc_pointer_1d_int64
      module procedure safemem_dealloc_pointer_1d_character
      module procedure safemem_dealloc_pointer_2d_character
      module procedure safemem_dealloc_pointer_1d_logical
@@ -155,6 +202,7 @@ module safemem
      module procedure arraySize_3d_int
      module procedure arraySize_4d_int
      module procedure arraySize_5d_int
+     module procedure arraySize_1d_int64
      module procedure arraySize_1d_character
      module procedure arraySize_2d_character
      module procedure arraySize_1d_logical
@@ -239,14 +287,24 @@ contains
   !!                  preserve the contents of the array
   !!    o_aligned :: (optional) Use the FFTW library to allocate 16-byte
   !!                 aligned memory necessary to SIMD operations
+  function safemem_realloc_1d_real_int32(p, n1, o_preserve, o_aligned)
+    implicit none
+    _REAL_, pointer, dimension(:) :: safemem_realloc_1d_real_int32
+    _REAL_, pointer, dimension(:):: p
+    logical, optional, intent(in) :: o_preserve,o_aligned
+    integer, intent(in) :: n1
+    safemem_realloc_1d_real_int32 => safemem_realloc_1d_real(p, int(n1,kind=int64), o_preserve, o_aligned)    
+  end function safemem_realloc_1d_real_int32
+  
   function safemem_realloc_1d_real(p, n1, o_preserve, o_aligned)
     implicit none
     _REAL_, pointer, dimension(:) :: safemem_realloc_1d_real
     _REAL_, pointer, dimension(:):: p
     logical, optional, intent(in) :: o_preserve,o_aligned
-    integer, intent(in) :: n1
+    integer(kind=int64), intent(in) :: n1
     logical :: preserve,aligned
-    integer :: nold1, err
+    integer(kind=int64) :: i,nold1
+    integer :: err
 
     type(C_PTR) :: cptr=C_NULL_PTR
 
@@ -266,6 +324,7 @@ contains
     end if
     !get new memory
     if (aligned) then
+#ifndef CUDA
        err = 0
        cptr = fftw_alloc_real(int(n1, C_SIZE_T))
        if (.not.c_associated(cptr)) then
@@ -273,9 +332,13 @@ contains
        else
           call c_f_pointer(cptr,safemem_realloc_1d_real,[n1])
        end if
+#else
+       call rism_report_error('1: Cannot allocate aligned memory when using CUDA. Check you Fortran calls to safemem.')
+#endif /*CUDA*/
     else
        allocate(safemem_realloc_1d_real(n1), STAT=err)
     end if
+    
     if (err /= 0)&
          call rism_report_error("reallocation_pointer allocate error: 1D REAL")
     call memadd_r(totalmem,arraySize(safemem_realloc_1d_real))
@@ -303,15 +366,25 @@ contains
   !!                  preserve the contents of the array
   !!    o_aligned :: (optional) Use the FFTW library to allocate 16-byte
   !!                 aligned memory necessary to SIMD operations
+  function safemem_realloc_2d_real_int32(p,n1, n2,o_preserve,o_aligned)
+    implicit none
+    _REAL_, pointer, dimension(:,:) :: safemem_realloc_2d_real_int32
+    _REAL_, pointer, dimension(:,:) :: p
+    logical,optional, intent(in) :: o_preserve,o_aligned
+    integer, intent(in) :: n1,n2
+    safemem_realloc_2d_real_int32 => safemem_realloc_2d_real(p, int(n1, kind=int64), int(n2, kind=int64), o_preserve, o_aligned)
+  end function safemem_realloc_2d_real_int32
+
   function safemem_realloc_2d_real(p,n1, n2,o_preserve,o_aligned)
     implicit none
     _REAL_, pointer, dimension(:,:) :: safemem_realloc_2d_real
     _REAL_, pointer, dimension(:,:) :: p
     logical,optional, intent(in) :: o_preserve,o_aligned
-    integer, intent(in) :: n1,n2
+    integer(kind=int64), intent(in) :: n1,n2
     logical :: preserve, aligned
-    integer :: nold1, nold2, err
-    integer :: i2
+    integer(kind=int64) :: nold1, nold2
+    integer :: err
+    integer(kind=int64) :: i2
     type(C_PTR) :: cptr=C_NULL_PTR
 
 #ifdef RISM_DEBUG
@@ -330,6 +403,7 @@ contains
             call rism_report_error("reallocation_pointer deallocate error: 2D REAL 1")
     end if
     if (aligned) then
+#ifndef CUDA
        err = 0
        cptr = fftw_alloc_real(int(n1*n2, C_SIZE_T))
        if (.not.c_associated(cptr)) then
@@ -337,6 +411,10 @@ contains
        else
           call c_f_pointer(cptr,safemem_realloc_2d_real,[n1,n2])
        end if
+#else
+        call backtrace
+        call rism_report_error('2: Cannot allocate aligned memory when using CUDA. Check you Fortran calls to safemem.')
+#endif /*CUDA*/
     else
        allocate(safemem_realloc_2d_real(1:n1,1:n2), STAT=err)
     end if
@@ -369,15 +447,27 @@ contains
   !!    o_aligned :: (optional) Use the FFTW library to allocate 16-byte
   !!                 aligned memory necessary to SIMD operations
   !
+  function safemem_realloc_3d_real_int32(p, n1, n2, n3, o_preserve,o_aligned)
+    implicit none
+    _REAL_, pointer, dimension(:,:,:) :: safemem_realloc_3d_real_int32
+    _REAL_, pointer, dimension(:,:,:):: p
+    logical, optional, intent(in) :: o_preserve,o_aligned
+    integer, intent(in) :: n1, n2, n3
+    safemem_realloc_3d_real_int32 => safemem_realloc_3d_real(p, &
+         int(n1, kind=int64), int(n2, kind=int64), int(n3, kind=int64), &
+         o_preserve,o_aligned)
+  end function safemem_realloc_3d_real_int32
+
   function safemem_realloc_3d_real(p, n1, n2, n3, o_preserve,o_aligned)
     implicit none
     _REAL_, pointer, dimension(:,:,:) :: safemem_realloc_3d_real
     _REAL_, pointer, dimension(:,:,:):: p
     logical, optional, intent(in) :: o_preserve,o_aligned
-    integer, intent(in) :: n1, n2, n3
+    integer(kind=int64), intent(in) :: n1, n2, n3
     logical :: preserve,aligned
-    integer :: nold1, nold2, nold3, err
-    integer :: i2, i3
+    integer(kind=int64) :: nold1, nold2, nold3
+    integer :: err
+    integer(kind=int64) :: i2, i3
     type(C_PTR) :: cptr=C_NULL_PTR
 
 #ifdef RISM_DEBUG
@@ -395,6 +485,7 @@ contains
             call rism_report_error("reallocation_pointer deallocate error: 3D REAL")
     end if
     if (aligned) then
+#ifndef CUDA    
        err = 0
        cptr = fftw_alloc_real(int(n1*n2*n3, C_SIZE_T))
        if (.not.c_associated(cptr)) then
@@ -402,6 +493,9 @@ contains
        else
           call c_f_pointer(cptr,safemem_realloc_3d_real,[n1,n2,n3])
        end if
+#else
+        call rism_report_error('3: Cannot allocate aligned memory when using CUDA. Check you Fortran calls to safemem.')
+#endif /*CUDA*/
     else
        allocate(safemem_realloc_3d_real(1:n1,1:n2,1:n3), STAT=err)
     end if
@@ -442,15 +536,27 @@ contains
   !!    o_aligned :: (optional) Use the FFTW library to allocate 16-byte
   !!                 aligned memory necessary to SIMD operations
   !
+  function safemem_realloc_4d_real_int32(p, n1, n2, n3, n4, o_preserve, o_center,o_aligned)
+    implicit none
+    _REAL_, pointer, dimension(:,:,:,:) :: safemem_realloc_4d_real_int32
+    _REAL_, pointer, dimension(:,:,:,:):: p
+    logical,optional, intent(in) :: o_preserve, o_center,o_aligned
+    integer, intent(in) :: n1, n2, n3, n4
+    safemem_realloc_4d_real_int32 => safemem_realloc_4d_real(p, &
+         int(n1,kind=int64), int(n2,kind=int64), int(n3,kind=int64), int(n4,kind=int64),&
+         o_preserve, o_center,o_aligned)
+  end function safemem_realloc_4d_real_int32
+  
   function safemem_realloc_4d_real(p, n1, n2, n3, n4, o_preserve, o_center,o_aligned)
     implicit none
     _REAL_, pointer, dimension(:,:,:,:) :: safemem_realloc_4d_real
     _REAL_, pointer, dimension(:,:,:,:):: p
     logical,optional, intent(in) :: o_preserve, o_center,o_aligned
-    integer, intent(in) :: n1, n2, n3, n4
+    integer(kind=int64), intent(in) :: n1, n2, n3, n4
     logical :: preserve, center,aligned
-    integer :: nold1, nold2, nold3, nold4, err, offset(4)
-    integer :: i2,i3,i4
+    integer(kind=int64) :: nold1, nold2, nold3, nold4, offset(4)
+    integer :: err
+    integer(kind=int64) :: i2,i3,i4
     type(C_PTR) :: cptr=C_NULL_PTR
 
 #ifdef RISM_DEBUG
@@ -471,6 +577,7 @@ contains
             call rism_report_error("reallocation_pointer deallocate error: 4D REAL")
     end if
     if (aligned) then
+#ifndef CUDA
        err = 0
        cptr = fftw_alloc_real(int(n1*n2*n3*n4, C_SIZE_T))
        if (.not.c_associated(cptr)) then
@@ -478,6 +585,9 @@ contains
        else
           call c_f_pointer(cptr,safemem_realloc_4d_real,[n1,n2,n3,n4])
        end if
+#else
+       call rism_report_error('4: Cannot allocate aligned memory when using CUDA. Check you Fortran calls to safemem.')
+#endif /*CUDA*/
     else
        allocate(safemem_realloc_4d_real(n1,n2,n3,n4), STAT=err)
     end if
@@ -541,6 +651,19 @@ contains
   !!    o_aligned :: (optional) Use the FFTW library to allocate 16-byte
   !!                 aligned memory necessary to SIMD operations
   !
+  function safemem_realloc_5d_real_interp_int32(p, n1, n2, n3, n4, n5,&
+       xi1,xi2,xi3,xo1,xo2,xo3,o_aligned)
+    implicit none
+    _REAL_, pointer, dimension(:,:,:,:,:) :: safemem_realloc_5d_real_interp_int32
+    _REAL_, pointer, dimension(:,:,:,:,:):: p
+    _REAL_, dimension(:), intent(in) :: xi1,xi2,xi3,xo1,xo2,xo3
+    logical ,optional, intent(in) :: o_aligned
+    integer, intent(in) :: n1, n2, n3, n4, n5
+    safemem_realloc_5d_real_interp_int32 => safemem_realloc_5d_real_interp(p, &
+         int(n1,kind=int64), int(n2,kind=int64), int(n3,kind=int64), int(n4,kind=int64), int(n5,kind=int64), &
+         xi1,xi2,xi3,xo1,xo2,xo3,o_aligned)
+  end function safemem_realloc_5d_real_interp_int32
+  
   function safemem_realloc_5d_real_interp(p, n1, n2, n3, n4, n5,&
        xi1,xi2,xi3,xo1,xo2,xo3,o_aligned)
     implicit none
@@ -548,10 +671,13 @@ contains
     _REAL_, pointer, dimension(:,:,:,:,:):: p
     _REAL_, dimension(:), intent(in) :: xi1,xi2,xi3,xo1,xo2,xo3
     logical ,optional, intent(in) :: o_aligned
-    integer, intent(in) :: n1, n2, n3, n4, n5
+    integer(kind=int64), intent(in) :: n1, n2, n3, n4, n5
     logical :: aligned
-    integer :: err
-    integer :: i1,i2,i3, i4,i5,index(3)
+    _REAL_ :: dy
+    integer(kind=int64) :: nold1, nold2,nold3, nold4,nold5,order =3
+    integer :: err    
+    integer(kind=int64) :: i1,i2,i3, i4,i5,index(3), id
+    _REAL_ :: x(0:1,0:1,0:1),r,s,t
     type(C_PTR) :: cptr=C_NULL_PTR
 
 #ifdef RISM_DEBUG
@@ -561,7 +687,13 @@ contains
     aligned = .false.
     if (present(o_aligned)) aligned = o_aligned
 
+    nold1 = min(Ubound(p,1), n1)
+    nold2 = min(ubound(p,2), n2)
+    nold3 = min(ubound(p,3), n3)
+    nold4 = min(ubound(p,4), n4)
+    nold5 = min(ubound(p,5), n5)
     if (aligned) then
+#ifndef CUDA
        err = 0
        cptr = fftw_alloc_real(int(n1*n2*n3*n4*n5, C_SIZE_T))
        if (.not.c_associated(cptr)) then
@@ -569,6 +701,9 @@ contains
        else
           call c_f_pointer(cptr,safemem_realloc_5d_real_interp,[n1,n2,n3,n4,n5])
        end if
+#else
+       call rism_report_error('5: Cannot allocate aligned memory when using CUDA. Check you Fortran calls to safemem.')
+#endif /*CUDA*/
     else
        allocate(safemem_realloc_5d_real_interp(n1,n2,n3,n4,n5), STAT=err)
     end if
@@ -576,6 +711,11 @@ contains
          call rism_report_error("reallocation_pointer allocate error: 5D REAL Interpolate")
     call memadd_r(totalmem,arraySize(safemem_realloc_5d_real_interp))
     if (.not. associated(p)) return
+    nold1 = min(Ubound(p,1), n1)
+    nold2 = min(ubound(p,2), n2)
+    nold3 = min(ubound(p,3), n3)
+    nold4 = min(ubound(p,4), n4)
+    nold5 = min(ubound(p,5), n5)
 
     do i5 = 1 , n5
        do i4 = 1 , n4
@@ -583,7 +723,9 @@ contains
              do i2 = 1 , n2
                 do i1 = 1 , n1
                    !find nearest original point
-                   index = nearestindex(xi1,xi2,xi3,ubound(p,1),ubound(p,2),ubound(p,3),xo1(i1),xo2(i2),xo3(i3))
+                   index = nearestindex(xi1,xi2,xi3,&
+                        ubound(p,1),ubound(p,2),ubound(p,3),&
+                        xo1(i1),xo2(i2),xo3(i3))
                    if (index(1) == 1 .or. index(2) == 1 .or. index(3) == 1 .or.&
                         index(1) == ubound(p,1) .or. index(2) == ubound(p,2) .or. index(3) == ubound(p,3)) then
                       safemem_realloc_5d_real_interp(i1,i2,i3,i4,i5) = p(index(1),index(2),index(3),i4,i5)
@@ -616,15 +758,27 @@ contains
   !!              index
   !!    o_aligned :: (optional) Use the FFTW library to allocate 16-byte
   !!                 aligned memory necessary to SIMD operations
+  function safemem_realloc_5d_real_int32(p, n1, n2, n3, n4, n5, o_preserve, o_center,o_aligned)
+    implicit none
+    _REAL_, pointer, dimension(:,:,:,:,:) :: safemem_realloc_5d_real_int32
+    _REAL_, pointer, dimension(:,:,:,:,:):: p
+    logical, optional, intent(in) :: o_preserve, o_center,o_aligned
+    integer, intent(in) :: n1, n2, n3, n4, n5
+    safemem_realloc_5d_real_int32 => safemem_realloc_5d_real(p, &
+         int(n1, kind=int64), int(n2, kind=int64), int(n3, kind=int64), int(n4, kind=int64), int(n5, kind=int64), &
+         o_preserve, o_center,o_aligned)
+  end function safemem_realloc_5d_real_int32
+
   function safemem_realloc_5d_real(p, n1, n2, n3, n4, n5, o_preserve, o_center,o_aligned)
     implicit none
     _REAL_, pointer, dimension(:,:,:,:,:) :: safemem_realloc_5d_real
     _REAL_, pointer, dimension(:,:,:,:,:):: p
     logical, optional, intent(in) :: o_preserve, o_center,o_aligned
-    integer, intent(in) :: n1, n2, n3, n4, n5
+    integer(kind=int64), intent(in) :: n1, n2, n3, n4, n5
     logical :: preserve,center,aligned
-    integer :: nold1, nold2, nold3, nold4, nold5, err, offset(5)
-    integer :: i2,i3,i4,i5
+    integer(kind=int64) :: nold1, nold2, nold3, nold4, nold5, offset(5)
+    integer :: err
+    integer(kind=int64) :: i1,i2,i3,i4,i5
     type(C_PTR) :: cptr=C_NULL_PTR
 
 #ifdef RISM_DEBUG
@@ -645,6 +799,7 @@ contains
             call rism_report_error("reallocation_pointer deallocate error: 5D REAL")
     end if
     if (aligned) then
+#ifndef CUDA
        err = 0
        cptr = fftw_alloc_real(int(n1*n2*n3*n4*n5, C_SIZE_T))
        if (.not.c_associated(cptr)) then
@@ -652,6 +807,9 @@ contains
        else
           call c_f_pointer(cptr,safemem_realloc_5d_real,[n1,n2,n3,n4,n5])
        end if
+#else
+       call rism_report_error('6: Cannot allocate aligned memory when using CUDA. Check you Fortran calls to safemem.')
+#endif /*CUDA*/
     else
        allocate(safemem_realloc_5d_real(n1,n2,n3,n4,n5), STAT=err)
     end if
@@ -707,18 +865,28 @@ contains
   !!    n1    :: size of the first dimension
   !!    o_preserve :: boolean indicating whether or not to preserve the contents of
   !!            the array (optional)
-  function safemem_realloc_1d_integer(p, n1,o_preserve)
+  function safemem_realloc_1d_integer_int32(p, n1, o_preserve)
+    implicit none
+    integer, pointer, dimension(:) :: safemem_realloc_1d_integer_int32
+    integer, pointer, dimension(:) :: p
+    logical, optional, intent(in) :: o_preserve
+    integer, intent(in) :: n1
+    safemem_realloc_1d_integer_int32 => safemem_realloc_1d_integer(p, int(n1, kind=int64), o_preserve)
+  end function safemem_realloc_1d_integer_int32
+  
+  function safemem_realloc_1d_integer(p, n1, o_preserve)
     implicit none
     integer, pointer, dimension(:) :: safemem_realloc_1d_integer
     integer, pointer, dimension(:) :: p
     logical, optional, intent(in) :: o_preserve
-    integer, intent(in) :: n1
+    integer(kind=int64), intent(in) :: n1
     logical :: preserve
-    integer :: nold1, err
-    integer :: i1
+    integer(kind=int64) :: nold1
+    integer :: err    
+    integer(kind=int64) :: i1
 
 #ifdef RISM_DEBUG
-    write(6,*) "safemem_realloc_5d_integer", associated(p),n1,preserve
+    write(6,*) "safemem_realloc_1d_integer", associated(p),n1,preserve
     call flush(6)
 #endif /*RISM_DEBUG*/
     preserve = .true.
@@ -743,6 +911,43 @@ contains
     end if
   end function SAFEMEM_REALLOC_1D_integer
 
+  function safemem_realloc_1d_int64(p, n1, o_preserve)
+    implicit none
+    integer(kind=int64), pointer, dimension(:) :: safemem_realloc_1d_int64
+    integer(kind=int64), pointer, dimension(:) :: p
+    logical, optional, intent(in) :: o_preserve
+    integer(kind=int64), intent(in) :: n1
+    logical :: preserve
+    integer(kind=int64) :: nold1
+    integer :: err    
+    integer(kind=int64) :: i1
+
+#ifdef RISM_DEBUG
+    write(6,*) "safemem_realloc_1d_int64", associated(p),n1,preserve
+    call flush(6)
+#endif /*RISM_DEBUG*/
+    preserve = .true.
+    if (present(o_preserve)) preserve = o_preserve
+
+    if (.not.preserve) then
+       if (safemem_dealloc(p) /= 0)&
+            call rism_report_error("reallocation_pointer deallocate error: 1D int64")
+    end if
+    allocate(safemem_realloc_1d_int64(1:n1), STAT=err)
+    call memadd_i(totalmem,arraySize(safemem_realloc_1d_int64))
+    if (err /= 0)&
+         call rism_report_error("reallocation_pointer allocate error: 1D int64")
+    if (associated(p) .and. preserve .and. n1 > 0) then
+       nold1 = min(ubound(p,1), n1)
+       !explicit loop to prevent stack overflow with intel compilers
+       do i1=1,nold1
+          safemem_realloc_1d_int64(i1) = p(i1)
+       end do
+       if (safemem_dealloc(p) /= 0)&
+            call rism_report_error("reallocation_pointer deallocate error: 1D int64")
+    end if
+  end function safemem_realloc_1d_int64
+
   !
   !! reallocate memory of a specific pointer during the simulation. This can
   !! handle 2 dimension and preserves the contents of the array.
@@ -753,15 +958,26 @@ contains
   !!    o_preserve :: boolean indicating whether or not to preserve the contents of
   !!            the array (optional)
   !
+  function safemem_realloc_2d_integer_int32(p, n1, n2,o_preserve)
+    implicit none
+    integer, pointer, dimension(:,:) :: safemem_realloc_2d_integer_int32
+    integer, pointer, dimension(:,:) :: p
+    logical, optional, intent(in) :: o_preserve
+    integer, intent(in) :: n1,n2
+    logical :: preserve
+    safemem_realloc_2d_integer_int32 => safemem_realloc_2d_integer(p, int(n1, kind=int64), int(n2, kind=int64), o_preserve)
+  end function safemem_realloc_2d_integer_int32
+
   function safemem_realloc_2d_integer(p, n1, n2,o_preserve)
     implicit none
     integer, pointer, dimension(:,:) :: safemem_realloc_2d_integer
     integer, pointer, dimension(:,:) :: p
     logical, optional, intent(in) :: o_preserve
-    integer, intent(in) :: n1,n2
+    integer(kind=int64), intent(in) :: n1,n2
     logical :: preserve
-    integer :: nold1,nold2, err
-    integer :: i1, i2
+    integer(kind=int64) :: nold1,nold2
+    integer :: err    
+    integer(kind=int64) :: i1, i2
 
 #ifdef RISM_DEBUG
     write(6,*) "safemem_realloc_2d_integer", associated(p),n1,n2,preserve
@@ -802,16 +1018,27 @@ contains
   !!    o_preserve :: boolean indicating whether or not to preserve the contents of
   !!            the array (optional)
   !
+  function safemem_realloc_1d_character_int32(p, length, n1,o_preserve)
+    implicit none
+    integer, intent(in) :: length
+    character(len=length), pointer, dimension(:) :: safemem_realloc_1d_character_int32
+    character(len=length), pointer, dimension(:) :: p
+    logical, optional, intent(in) :: o_preserve
+    integer, intent(in) :: n1
+    safemem_realloc_1d_character_int32 => safemem_realloc_1d_character(p, length, int(n1, kind=int64), o_preserve)
+  end function safemem_realloc_1d_character_int32
+  
   function safemem_realloc_1d_character(p, length, n1,o_preserve)
     implicit none
     integer, intent(in) :: length
     character(len=length), pointer, dimension(:) :: safemem_realloc_1d_character
     character(len=length), pointer, dimension(:) :: p
     logical, optional, intent(in) :: o_preserve
-    integer, intent(in) :: n1
+    integer(kind=int64), intent(in) :: n1
     logical :: preserve
-    integer :: nold1, err
-    integer :: i1
+    integer(kind=int64) :: nold1
+    integer :: err
+    integer(kind=int64) :: i1
 
 #ifdef RISM_DEBUG
     write(6,*) "safemem_realloc_1d_character", associated(p),n1,o_preserve
@@ -850,16 +1077,26 @@ contains
   !!    o_preserve :: boolean indicating whether or not to o_preserve the contents of
   !!            the array (optional)
   !
+  function safemem_realloc_2d_character_int32(p, length, n1, n2,o_preserve)
+    implicit none
+    integer, intent(in) :: length
+    character(len=length), pointer, dimension(:,:) :: safemem_realloc_2d_character_int32
+    character(len=length), pointer, dimension(:,:) :: p
+    logical, optional, intent(in) :: o_preserve
+    integer, intent(in) :: n1, n2
+    safemem_realloc_2d_character_int32 => safemem_realloc_2d_character(p, length, int(n1, kind=int64), int(n2, kind=int64), o_preserve)
+  end function safemem_realloc_2d_character_int32
   function safemem_realloc_2d_character(p, length, n1, n2,o_preserve)
     implicit none
     integer, intent(in) :: length
     character(len=length), pointer, dimension(:,:) :: safemem_realloc_2d_character
     character(len=length), pointer, dimension(:,:) :: p
     logical, optional, intent(in) :: o_preserve
-    integer, intent(in) :: n1, n2
+    integer(kind=int64), intent(in) :: n1, n2
     logical :: preserve
-    integer :: nold1, nold2, err
-    integer :: i1, i2
+    integer(kind=int64) :: nold1, nold2
+    integer :: err
+    integer(kind=int64) :: i1, i2
 
 #ifdef RISM_DEBUG
     write(6,*) "safemem_realloc_2d_character", associated(p),n1,n2,o_preserve
@@ -899,15 +1136,25 @@ contains
   !!    o_preserve :: boolean indicating whether or not to preserve the contents of
   !!            the array (optional)
 
+  function safemem_realloc_1d_logical_int32(p, n1,o_preserve)
+    implicit none
+    logical, pointer, dimension(:) :: safemem_realloc_1d_logical_int32
+    logical, pointer, dimension(:) :: p
+    logical, optional, intent(in) :: o_preserve
+    integer, intent(in) :: n1
+    safemem_realloc_1d_logical_int32 => safemem_realloc_1d_logical(p, int(n1, kind=int64) ,o_preserve)
+  end function safemem_realloc_1d_logical_int32
+  
   function safemem_realloc_1d_logical(p, n1,o_preserve)
     implicit none
     logical, pointer, dimension(:) :: safemem_realloc_1d_logical
     logical, pointer, dimension(:) :: p
     logical, optional, intent(in) :: o_preserve
-    integer, intent(in) :: n1
+    integer(kind=int64), intent(in) :: n1
     logical :: preserve
-    integer :: nold1, err
-    integer :: i1
+    integer(kind=int64) :: nold1
+    integer :: err
+    integer(kind=int64) :: i1
 
 #ifdef RISM_DEBUG
     write(6,*) "safemem_realloc_1d_logical", associated(p),n1,preserve
@@ -960,10 +1207,14 @@ contains
     if (associated(p)) then
        call memadd_r(totalmem,-arraySize(p))
        if (aligned) then
+#ifndef CUDA
           cptr = c_loc(p(1))
           call fftw_free(cptr)
           nullify(p)
           temp=0
+#else
+          call rism_report_error('How do we got here???')
+#endif /*CUDA*/
        else
           deallocate(p,STAT=temp)
        end if
@@ -996,9 +1247,13 @@ contains
     if (associated(p)) then
        call memadd_r(totalmem,-arraySize(p))
        if (aligned) then
+#ifndef CUDA
           cptr = c_loc(p(1,1))
           call fftw_free(cptr)
           nullify(p)
+#else
+          call rism_report_error('How do we got here???')
+#endif /*CUDA*/
        else
           deallocate(p,STAT=temp)
        end if
@@ -1031,9 +1286,13 @@ contains
     if (associated(p)) then
        call memadd_r(totalmem,-arraySize(p))
        if (aligned) then
+#ifndef CUDA
           cptr = c_loc(p(1,1,1))
           call fftw_free(cptr)
           nullify(p)
+#else
+          call rism_report_error('How do we got here???')
+#endif /*CUDA*/
        else
           deallocate(p,STAT=temp)
        end if
@@ -1066,9 +1325,13 @@ contains
     if (associated(p)) then
        call memadd_r(totalmem,-arraySize(p))
        if (aligned) then
+#ifndef CUDA
           cptr = c_loc(p(1,1,1,1))
           call fftw_free(cptr)
           nullify(p)
+#else
+          call rism_report_error('How do we got here???')
+#endif /*CUDA*/
        else
           deallocate(p,STAT=temp)
        end if
@@ -1101,9 +1364,13 @@ contains
     if (associated(p)) then
        call memadd_r(totalmem,-arraySize(p))
        if (aligned) then
+#ifndef CUDA
           cptr = c_loc(p(1,1,1,1,1))
           call fftw_free(cptr)
           nullify(p)
+#else
+          call rism_report_error('How do we got here???')
+#endif /*CUDA*/
        else
           deallocate(p,STAT=temp)
        end if
@@ -1127,6 +1394,20 @@ contains
     end if
     safemem_dealloc_pointer_1d_int=temp
   end function safemem_dealloc_pointer_1d_int
+  
+  function safemem_dealloc_pointer_1d_int64(p)
+    implicit none
+    integer(kind = int64), pointer, dimension(:) :: p
+    integer :: safemem_dealloc_pointer_1d_int64, temp
+    temp=0
+    !work around for old gfortran bug
+    !  if (associated(p)) deallocate(p,STAT=safemem_dealloc_pointer_1d_int64)
+    if (associated(p)) then
+       call memadd_i(totalmem, -arraySize(p))
+       deallocate(p,STAT=temp)
+    end if
+    safemem_dealloc_pointer_1d_int64=temp
+  end function safemem_dealloc_pointer_1d_int64
 
   
   !> Checks if the pointer is allocated before deallocating.  Returns
@@ -1263,7 +1544,6 @@ contains
   !! IN:
   !!    this : memTracker object
   function memStatus_obj(this) result(mem)
-    use iso_fortran_env, only: int64
     implicit none
     type(memTracker), intent(in) :: this
     integer(kind=int64) :: mem(10)
@@ -1346,7 +1626,15 @@ contains
     nbytes = size(array,kind=int64)*STORAGE_SIZE(array)/BITS_PER_BYTE
 
   end function arraySize_1d_int
-    
+
+  function arraySize_1d_int64(array) result (nbytes)
+    implicit none
+    integer(kind=int64), intent(in) :: array(:)
+    integer(kind=int64) :: nbytes
+    nbytes = size(array,kind=int64)*STORAGE_SIZE(array)/BITS_PER_BYTE
+
+  end function arraySize_1d_int64
+  
   function arraySize_2d_int(array) result (nbytes)
     implicit none
     integer, intent(in) :: array(:,:)
