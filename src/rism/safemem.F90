@@ -1,34 +1,5 @@
 !<compile=optimized>
 
-! The 3D-RISM-KH software found here is copyright (c) 2010-2012 by
-! Tyler Luchko and David A. Case.
-!
-! This program is free software: you can redistribute it and/or modify it
-! under the terms of the GNU General Public License as published by the Free
-! Software Foundation, either version 3 of the License, or (at your option)
-! any later version.
-!
-! This program is distributed in the hope that it will be useful, but
-! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-! or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public License in the
-! ../../LICENSE file.  If not, see <http://www.gnu.org/licenses/>.
-!
-! Users of the 3D-RISM capability found here are requested to acknowledge
-! use of the software in reports and publications.  Such acknowledgement
-! should include the following citations:
-!
-! 1) A. Kovalenko and F. Hirata. J. Chem. Phys., 110:10095-10112  (1999);
-! ibid. 112:10391-10417 (2000).
-!
-! 2) A. Kovalenko,  in:  Molecular  Theory  of  Solvation,  edited  by
-! F. Hirata  (Kluwer Academic Publishers, Dordrecht, 2003), pp.169-275.
-!
-! 3) T. Luchko, S. Gusarov, D.R. Roe, C. Simmerling, D.A. Case, J. Tuszynski,
-! and  A. Kovalenko, J. Chem. Theory Comput., 6:607-624 (2010).
-
 #include "../include/dprec.fh"
 
 !> Functions and subroutines to safely allocate, reallocate (data preserving)
@@ -51,7 +22,7 @@
 !!
 !!   ! At any point you can get a summary of the current and maximum
 !!   ! allocated memory in bytes.
-!!   integer(kind=8) :: memstats(10)
+!!   integer(kind=int64) :: memstats(10)
 !!   memstats = memStatus()
 !!   write(unit,'(a)') "Type         Current         Maximum"
 !!   write(unit,'(a,i12,a,f12.5,a)') "Integer  ",memstats(1)," B ",&
@@ -90,10 +61,10 @@
 !!   the resident memory.
 
 module safemem
-  use ISO_FORTRAN_ENV
   use rism_report_c
 #ifndef CUDA
   use FFTW3
+  use iso_fortran_env, only: int64
 #else
   use iso_c_binding
 #endif /*CUDA*/
@@ -107,21 +78,21 @@ module safemem
      ! logical :: Current number of bytes of logical memory allocated
      ! char    :: Current number of bytes of character memory allocated
      ! total   :: Current number of bytes of total memory allocated
-     integer(8) :: int = 0, real = 0, logical = 0, char = 0, total = 0
+     integer(kind=int64) :: int = 0, real = 0, logical = 0, char = 0, total = 0
      ! maxint     :: Current number of bytes of integer memory allocated
      ! maxreal    :: Current number of bytes of real memory allocated
      ! maxlogical :: Current number of bytes of logical memory allocated
      ! maxchar    :: Current number of bytes of character memory allocated
      ! max        :: Current number of bytes of total memory allocated
-     integer(8) :: maxint = 0, maxreal = 0, maxlogical = 0, maxchar = 0, max = 0
+     integer(kind=int64) :: maxint = 0, maxreal = 0, maxlogical = 0, maxchar = 0, max = 0
   end type memTracker
 
   ! BYTES_PER_GIGABYTES :: used to convert between bytes and GB
-  integer(8), parameter :: BYTES_PER_GB = 1024**3
+  integer(kind=int64), parameter :: BYTES_PER_GB = 1024**3
   ! BYTES_PER_MEGABYTES :: used to convert between bytes and MB
-  integer(8), parameter :: BYTES_PER_MB = 1024**2
+  integer(kind=int64), parameter :: BYTES_PER_MB = 1024**2
   ! BYTES_PER_KILOBYTES :: used to convert between bytes and KB
-  integer(8), parameter :: BYTES_PER_KB = 1024**1
+  integer(kind=int64), parameter :: BYTES_PER_KB = 1024**1
 
   type(memTracker), private, save :: totalMem
 
