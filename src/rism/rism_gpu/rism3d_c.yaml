@@ -1,0 +1,370 @@
+library: RISM3D
+format:
+  F_filename_suffix: F90
+cxx_header: rism3d.hpp
+
+splicer:
+  f:
+  -  fsplicer.f
+  c:
+  - csplicer.c
+
+declarations:
+- decl: namespace rism3d_c
+  declarations:
+  - decl: |
+      struct solvent_cpp{
+        double temperature;
+        double dielconst;
+        double xappa;
+        double xikt;
+        double smear;
+        double xikt_dT;
+        int numAtomTypes;
+        int numMolecules;
+        int numRDFpoints;
+        int* atomMultiplicity;
+        int* numAtoms;
+        string* atomName;
+        double gridSpacingR;
+        double gridSpacingK;
+        double* waveNumbers;
+        double* xvv;
+        double* xvv_dT;
+        double* charge;
+        double* charge_sp;
+        double* density;
+        double* density_sp;
+        double* ljSigma;
+        double* ljEpsilon;
+        double* coord;
+        double* background_correction;
+        double* delhv0;
+        double* delhv0_dT;
+        bool ionic;
+        double xvv_version;
+      };
+    options:
+      literalinclude: True
+      F_struct_getter_setter: False
+  - decl: |
+      struct solute_cpp {
+        int numAtoms;
+        double* mass;
+        double* charge;
+        double* origCharge;
+        double* position;
+        double* ljSigma;
+        double* ljEpsilon;
+        bool charged;
+        double totalCharge;
+        double* centerOfMass;
+        double* translation;
+      };
+    options:
+      literalinclude: True
+      F_struct_getter_setter: False
+  - decl: |
+      struct timer_cpp{
+        string* name;
+        bool running;
+        bool startedParent;
+        bool displaced;
+        int sublevels;
+        double total;
+        double timestamp;
+        timer_cpp *parent;
+        timer_cpp **child;
+      };
+    # fields:
+    #   c_type: RIS_timer_cpp
+    options:
+      literalinclude: True
+      F_struct_getter_setter: False
+  - decl: class rism3d
+    declarations:
+    # set struct
+    # - decl: |
+    #     struct solvent{
+    #       double temperature;
+    #       double dielconst;
+    #       double xappa;
+    #       double xikt;
+    #       double smear;
+    #       double xikt_dT;
+    #       int numAtomTypes;
+    #       int numMolecules;
+    #       int numRDFpoints;
+    #       int* atomMultiplicity;
+    #       int* numAtoms;
+    #       string* atomName;
+    #       double gridSpacingR;
+    #       double gridSpacingK;
+    #       double* waveNumbers;
+    #       double* xvv;
+    #       double* xvv_dT;
+    #       double* charge;
+    #       double* charge_sp;
+    #       double* density;
+    #       double* density_sp;
+    #       double* ljSigma;
+    #       double* ljEpsilon;
+    #       double* coord;
+    #       double* background_correction;
+    #       double* delhv0;
+    #       double* delhv0_dT;
+    #       bool ionic;
+    #       double xvv_version;
+    #     };
+    #   options:
+    #     literalinclude: True
+    # - decl: |
+    #     struct solute {
+    #       int numAtoms;
+    #       double* mass;
+    #       double* charge;
+    #       double* origCharge;
+    #       double* position;
+    #       double* ljSigma;
+    #       double* ljEpsilon;
+    #       bool charged;
+    #       double totalCharge;
+    #       double* centerOfMass;
+    #       double* translation;
+    #     };
+    #   options:
+    #     literalinclude: True    
+    # defining constructor and destructor:
+    - decl: rism3d(solute_cpp *solu_f, solvent_cpp *solv_f, int centering, int ncuvsteps,
+        char** closure +intent(in), double cut, int mdiis_nvec, double mdiis_del, int mdiis_method,
+        double mdiis_restart, bool treeDCF, bool treeTCF, bool treeCoulomb, 
+        double treeDCFMAC, double treeTCFMAC, double treeCoulombMAC,
+        int treeDCFOrder, int treeTCFOrder, int treeCoulombOrder, 
+        int treeDCFN0, int treeTCFN0, int treeCoulombN0,
+        double asympKSpaceTolerance, double ljTolerance, double chargeSmear,
+        double o_buffer, double* o_grdspc +rank(1), int o_mpicomm,
+        char* o_periodic, double* o_unitCellDimensions +rank(1), 
+        double o_biasPotential) +name(new)
+      # format:
+      #   function_suffix: _new
+    - decl: rism3d(solute_cpp *solu_f, solvent_cpp *solv_f, int centering, int ncuvsteps,
+        char** closure +intent(in), double cut, int mdiis_nvec, double mdiis_del, int mdiis_method,
+        double mdiis_restart, bool treeDCF, bool treeTCF, bool treeCoulomb, 
+        double treeDCFMAC, double treeTCFMAC, double treeCoulombMAC,
+        int treeDCFOrder, int treeTCFOrder, int treeCoulombOrder, 
+        int treeDCFN0, int treeTCFN0, int treeCoulombN0,
+        double asympKSpaceTolerance, double ljTolerance, double chargeSmear,
+        double* o_boxlen +rank(1), int* o_ng3 +rank(1), int o_mpicomm, 
+        char* o_periodic, double* o_unitCellDimensions +rank(1), 
+        double o_biasPotential) +name(new)
+      # format:
+      #   function_suffix: _new
+    - decl: ~rism3d() +name(delete)
+    ####################################################################################################################
+    # setting: attributes called from amber_rism_interface
+    - decl: void createelectrondensitymap(int iv, double* electronRDF +rank(1)+intent(in), double electronRDFGridSpacing,int totalSolventElectrons, double density, double* electronmap_ptr +rank(3)+intent(out))
+    - decl: double* get_spacing(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: double* get_voxelvectorsr(int* len1 +hidden, int* len2 +hidden) +deref(pointer) +dimension(len1,len2)
+    - decl: double* get_unitcellangles(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: double* get_unitcellvectorsk(int* len1 +hidden, int* len2 +hidden) +deref(pointer) +dimension(len1,len2)    
+    - decl: double* get_unitcellvectorsr(int* len1 +hidden, int* len2 +hidden) +deref(pointer) +dimension(len1,len2)    
+    - decl: double* get_boxlength(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: int get_totallocalpointsr()
+    - decl: void set_nsolution(int nsol)
+    - decl: int get_nsolution()
+    - decl: double get_voxelvolume()
+    - decl: int* get_localdimsr(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: int get_localdimsr(int indx)
+    - decl: int* get_globaldimsr(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: int get_globaldimsr(int indx)
+    # - decl: void get_atomname(char** names + deref(pointer), int* names_len +hidden, int str_len +hidden)
+    #   fstatements:
+    #     f:
+    #       f_module: 
+    #         iso_c_binding: ["C_LOC","C_F_POINTER"]
+    - decl: void get_atomname(
+            string** names +intent(out)+dimension(name_len),
+            int* name_len +intent(out)+hidden);
+    - decl: double get_xikt_dt()
+    - decl: double get_temperature()
+    # - decl: int get_numatomtypes() ## defined at fsplicer
+    - decl: double* get_charge(int* len +intent(out)+hidden) +deref(pointer) +dimension(len)
+    - decl: double get_charge(int indx)
+    - decl: double* get_density(int* len +intent(out)+hidden) +deref(pointer) +dimension(len)
+    - decl: double get_density(int indx)
+    - decl: bool get_ionic()
+    - decl: double* get_centerofmass(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: double* get_translation(int* len +hidden) +deref(pointer) +dimension(len)
+    - decl: bool get_charged()
+    # - decl: int get_numatoms() ## defined at fsplicer
+    - decl: double* get_mass(int* dim1 +intent(out)+hidden) +deref(pointer) +dimension(dim1)
+    
+    - decl: double* get_guv(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int arg1, int arg2) +deref(pointer) +dimension(dim1,dim2)
+    - decl: double* get_guv(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int arg) +deref(pointer) +dimension(dim1,dim2)
+
+    - decl: double* get_huv(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int arg1, int arg2) +deref(pointer) +dimension(dim1,dim2)
+    - decl: double* get_huv(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int arg) +deref(pointer) +dimension(dim1,dim2)
+    
+    - decl: double get_cuv(int arg1, int arg2, int arg3, int arg4)
+    - decl: double* get_cuv(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int *dim3 +intent(out)+hidden, int *dim4 +intent(out)+hidden, int arg) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+
+    # - decl: double* get_guv_dt(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2)
+    - decl: double* get_guv_dt(int *dim +intent(out)+hidden, int arg) +deref(pointer) +dimension(dim)
+    - decl: double* get_guv_dt(int *dim +intent(out)+hidden, int arg1, int arg2) +deref(pointer) +dimension(dim)
+    
+    - decl: double* get_electronmap(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int *dim3 +intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* get_tcflongrangeasympr(int *dim1 +intent(out)+hidden) +deref(pointer) +dimension(dim1)
+    - decl: double* get_dcflongrangeasympr(int *dim1 +intent(out)+hidden) +deref(pointer) +dimension(dim1)
+    - decl: double get_dcflongrangeasympr(int indx)
+    - decl: double* get_uuv(int *dim1 +intent(out)+hidden, int *dim2 +intent(out)+hidden, int *dim3 +intent(out)+hidden, int *dim4 +intent(out)+hidden, int indx) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+
+    - decl: bool get_periodic()
+    - decl: bool get_failure()
+    # - decl: void set_solvent(solvent *arg)
+    # - decl: void set_atomnames(char** names+intent(in), int numAtomTypes +hidden, int str_len +hidden)
+    - decl: void set_atomname(char **names+intent(in))
+    # - decl: void set_solute(solute *arg)
+
+    # setting: functions called from amber_rism_interface
+    - decl: void setverbosity(int verbosity)
+    - decl: void settimerparent(timer_cpp *timer)
+    - decl: void setcoord(double* solutePositions +rank(2)+intent(in))
+    - decl: bool calculatesolution(int ksave, int kshow, int maxSteps, bool failure, double* tolerance +rank(1), int tol_size)
+    - decl: void force(double *ff +rank(2))
+    - decl: double excesschemicalpotential_tot(bool o_lr = true)
+    - decl: double* excesschemicalpotential(int *len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    - decl: double* excesschemicalpotentialgf(int *len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    - decl: double excesschemicalpotentialpcplus(bool o_lr = true)
+    - decl: double excesschemicalpotentialuc(double* coeff +rank(1), bool o_lr = true)
+    
+    - decl: double* excesschemicalpotential_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* excesschemicalpotentialgf_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* excesschemicalpotentialpcplus_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* excesschemicalpotentialuc_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden, double* coeff +intent(in)+rank(1)) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* solventpotene_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* solvationenergy_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* solvationenergygf_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* solvationenergypcplus_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3)
+    - decl: double* solvationenergyuc_tot_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3+intent(out)+hidden, double* coeff +intent(in)+rank(1)) +deref(pointer) +dimension(dim1,dim2,dim3)
+
+    - decl: double* excesschemicalpotential_site_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3 +intent(out)+hidden, int* dim4 +intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+    - decl: double* excesschemicalpotentialgf_site_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3 +intent(out)+hidden, int* dim4 +intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+    - decl: double* solventpotene_site_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3 +intent(out)+hidden, int* dim4 +intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+    - decl: double* solvationenergy_site_map(int* dim1 +intent(out)+hidden, int* dim2 +intent(out)+hidden, int* dim3 +intent(out)+hidden, int* dim4 +intent(out)+hidden) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+
+    - decl: double* solventpotene(int *len +intent(out)+hidden) +deref(pointer) +dimension(len)
+    - decl: double partialmolarvolume()
+    - decl: double* excessparticles(int *len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    # - decl: std::vector<double> excessparticles(bool o_lr = true)
+    - decl: double* kirkwoodbuff(int *len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    # - decl: std::vector<double> kirkwoodbuff(bool o_lr = true)
+    - decl: double* dcfintegral(int* len +intent(out)+hidden) +deref(pointer) +dimension(len)
+    # - decl: std::vector<double> dcfintegral()
+    - decl: bool cancalc_dt()
+    - decl: bool calculatesolution_dt(int kshow, int maxSteps, bool failure, double tolerance)
+    - decl: double* solvationenergy(int* len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    - decl: double* solvationenergygf(int* len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    - decl: double* solvationenergygf_site_map(int* dim1 +hidden, int* dim2 +hidden, int* dim3 +hidden, int* dim4 +hidden) +deref(pointer) +dimension(dim1,dim2,dim3,dim4)
+    - decl: double* excessparticles_dt(int* len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    - decl: double* kirkwoodbuff_dt(int *len +intent(out)+hidden, bool o_lr = true) +deref(pointer) +dimension(len)
+    - decl: double* dcfintegral_dt(int* len +intent(out)+hidden) +deref(pointer) +dimension(len)
+    - decl: double solvationenergypcplus(bool o_lr = true)
+    - decl: double solvationenergyuc(double* coeff +rank(1), bool o_lr = true)
+    - decl: double partialmolarvolume_dt()
+    - decl: void unsetcharges()
+    - decl: void resetcharges()
+    - decl: void map_site_to_site_flat(double* thermo_map_flat +rank(2), int center_site)
+    - decl: void map_site_to_site_3D(double* thermo_map +rank(4), int center_site)
+    - decl: void selftest()
+    # - decl: double* excesschemicalpotential(int* len+intent(out)+hidden, bool o_lr = true) +deref(pointer) +rank(1)
+    
+    # SetClosureList: will get list of closures to be used from Fortran and asign to closurelist attribute
+    - decl: void set_closurelist(char **names +intent(in), int *N +intent(in))
+      # splicer:
+      #   f:
+      #   - "integer :: clsize"
+      #   - "clsize = size(names)"
+      #   - "call c_rism3d_setclosurelist_bufferify(obj%cxxmem, names, &"
+      #   - "size(names, kind=C_LONG), len(names, kind=C_INT), clsize)"
+    # Print some class attributes: temporary... just to check
+    - decl: void PrintTests()
+
+    # Function for writing volumetric data
+    - decl: void opendx_write_cpp(int atomType, string *file +intent(in))
+    - decl: void mrc_map_write_cpp(int atomType, string *file +intent(in))
+    - decl: void xyzv_write_cpp(int atomType, string *file +intent(in))
+  
+  # - decl: |
+  #     struct solvent{
+  #       double temperature;
+  #       double dielconst;
+  #       double xappa;
+  #       double xikt;
+  #       double smear;
+  #       double xikt_dT;
+  #       int numAtomTypes;
+  #       int numMolecules;
+  #       int numRDFpoints;
+  #       int* atomMultiplicity;
+  #       int* numAtoms;
+  #       string* atomName;
+  #       double gridSpacingR;
+  #       double gridSpacingK;
+  #       double* waveNumbers;
+  #       double* xvv;
+  #       double* xvv_dT;
+  #       double* charge;
+  #       double* charge_sp;
+  #       double* density;
+  #       double* density_sp;
+  #       double* ljSigma;
+  #       double* ljEpsilon;
+  #       double* coord;
+  #       double* background_correction;
+  #       double* delhv0;
+  #       double* delhv0_dT;
+  #       bool ionic;
+  #       double xvv_version;
+  #     };
+  #   options:
+  #     literalinclude: True
+  # - decl: |
+  #     struct solute {
+  #       int numAtoms;
+  #       double* mass;
+  #       double* charge;
+  #       double* origCharge;
+  #       double* position;
+  #       double* ljSigma;
+  #       double* ljEpsilon;
+  #       bool charged;
+  #       double totalCharge;
+  #       double* centerOfMass;
+  #       double* translation;
+  #     };
+  #   options:
+  #     literalinclude: True
+
+
+    # - decl: int *get_test_ptr(int *len+intent(out)+hidden) +deref(pointer) +rank(1)
+    #   splicer:
+    #     f:
+    #     - "type(C_PTR) :: SHT_ptr"
+    #     - "SHT_ptr = c_class1_get_test_ptr(obj%cxxmem, len)"
+    #     - "call c_f_pointer(SHT_ptr, SHT_rv, [len])"
+    # - decl: int *get_TwoDarray_ptr(int *len1+intent(out)+hidden, int *len2+intent(out)+hidden) +deref(pointer) +rank(2)
+    #   splicer:
+    #     f:
+    #     - "type(C_PTR) :: SHT_ptr"
+    #     - "SHT_ptr = c_class1_get__two_darray_ptr(obj%cxxmem, len1, len2)"
+    #     - "call c_f_pointer(SHT_ptr, SHT_rv, [len1,len2])"
+    # - decl: void set_test(int N)
+    # - decl: void set_TwoDarray(int N, int M)
+    # - decl: void Method1()
+    # - decl: void acceptCharArrayIn(char **names +intent(in), int clsize+hidden)
+    #   splicer:
+    #     f:
+    #     - "clsize = size(names)"
+    #     - "call c_class1_accept_char_array_in_bufferify(obj%cxxmem, names, &"
+    #     - "size(names, kind=C_LONG), len(names, kind=C_INT), clsize)"
+    # - decl: bool check(int N)
