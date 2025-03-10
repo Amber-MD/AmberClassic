@@ -314,9 +314,6 @@ module amber_rism_interface
   type(rismthermo_t), save :: rismthermo_pol
   type(rismthermo_t), save :: rismthermo_apol
   type(rism3d), save :: rism_3d
-#ifdef RISM_CRDINTERP  
-  type(fce), save :: fce_o
-#endif /*RISM_CRDINTERP*/
   type(rism3d_solvent), save :: solvent
   type(rism3d_solute), save :: solute
 #ifdef CUDA
@@ -380,9 +377,6 @@ module amber_rism_interface
   !working memory for rism_force() so it is not reallocated every time
   !ff :: forces
   _REAL_, pointer :: ff(:, :) => NULL()
-#if defined(RISM_CRDINTERP)
-  _REAL_, pointer :: atomPositions_fce(:, :) => NULL()
-#endif /*RISM_CRDINTERP*/
 
   private :: rism_mpi_bcast
 
@@ -480,7 +474,6 @@ contains
     integer :: iclosure, iclosurechar, un, ier
     logical :: op
     character(len=5) omp_threads
-    integer ::  un
 
     ! In case this is not the first time init has been called (i.e.,
     ! multiple runs) destroy timers and re-create them.
@@ -607,8 +600,8 @@ contains
        end if
        call flush(outunit)
     end if
-
     call rism_timer_stop(timer_init)
+    return
 
   end subroutine rism_setparam
 
@@ -623,9 +616,6 @@ contains
 #ifdef MPI
     use mpi
 #endif
-#ifdef RISM_CRDINTERP
-    use fce_c
-#endif /*RISM_CRDINTERP*/
     implicit none
     integer, intent(in) :: comm
 
@@ -728,7 +718,7 @@ contains
     end if
     call rism3d_setverbosity(rism_3d, rismprm%verbose)
 #ifndef CUDA
-    call rism3d_setTimerParent(rism_3d, timer)
+    ! call rism3d_setTimerParent(rism_3d, timer)
 #else
     call rism3d_setTimerParent(rism_3d, timer_c)
 #endif /*CUDA*/
@@ -736,7 +726,8 @@ contains
     call rismthermo_new(rismthermo, rism_3d%solvent%numAtomTypes, mpicomm)
 
     ! Allocate working memory.
-    ff => safemem_realloc(ff, 3, rism3d_get_numAtoms(rism_3d))
+    ! ff => safemem_realloc(ff, 3, rism3d_get_numAtoms(rism_3d))
+    ff => safemem_realloc(ff, 3, rism_3d%solute%numAtoms)
 
     ! Free up a bit of memory.
     call rism3d_solvent_destroy(solvent)
@@ -802,8 +793,10 @@ contains
 
 
     integer, intent(in) :: irespa
-    _REAL_, intent(in) :: atomPositions_md(3, rism3d_get_numAtoms(rism_3d))
-    _REAL_, intent(inout) :: frc(3, rism3d_get_numAtoms(rism_3d))
+    ! _REAL_, intent(in) :: atomPositions_md(3, rism3d_get_numAtoms(rism_3d))
+    ! _REAL_, intent(inout) :: frc(3, rism3d_get_numAtoms(rism_3d))
+    _REAL_, intent(in) :: atomPositions_md(3, rism_3d%solute%numAtoms)
+    _REAL_, intent(inout) :: frc(3, rism_3d%solute%numAtoms)
     _REAL_, intent(out) :: epol
     integer, intent(in) :: imin
     ! Solvation energy and entropy.
@@ -844,20 +837,25 @@ contains
        ! solution counter back one to ignore one of the duplicate
        ! solutions.
        if (irespa == 1) then
-          call rism3d_set_nsolution(rism_3d,1)
+          ! call rism3d_set_nsolution(rism_3d,1)
+          rism_3d%nsolution = 1
        end if
        if (rismprm%apply_rism_force == 1) then
           call rism3d_force(rism_3d, ff)
           if (rismprm%zerofrc == 1) then
 #ifdef MPI
-             call corr_drift(ff, rism3d_get_mass(rism_3d), rism3d_get_numAtoms(rism_3d), &
+             ! call corr_drift(ff, rism3d_get_mass(rism_3d), rism3d_get_numAtoms(rism_3d), &
+             !      mpirank, mpisize, mpicomm)
+             call corr_drift(ff, rism_3d%solute%mass, rism_3d%solute%numAtoms, &
                   mpirank, mpisize, mpicomm)
 #else
-             call corr_drift(ff, rism3d_get_mass(rism_3d), rism3d_get_numAtoms(rism_3d))
+             ! call corr_drift(ff, rism3d_get_mass(rism_3d), rism3d_get_numAtoms(rism_3d))
+             call corr_drift(ff, rism_3d%solute%mass, rism_3d%solute%numAtoms)
 #endif /*MPI*/
           end if
           ! Convert to [kcal/mol/A].
-          ff = ff * KB * rism3d_get_temperature(rism_3d)
+          ! ff = ff * KB * rism3d_get_temperature(rism_3d)
+          ff = ff * KB * rism_3d%solvent%temperature
        end if
 
        ! Get the excess chemical potential.
@@ -911,18 +909,25 @@ contains
 
     ! Calculate thermodynamics.
     call rism_timer_stop(timer_write)
+    ! rismthermo%excessChemicalPotential = &
+    !      rism_3d%excessChemicalPotential(rismprm%asympCorr)* KB * rism3d_get_temperature(rism_3d)
     rismthermo%excessChemicalPotential = &
-         rism_3d%excessChemicalPotential(rismprm%asympCorr)* KB * rism3d_get_temperature(rism_3d)
-    rismthermo%solventPotentialEnergy = rism3d_solventPotEne(rism_3d) * KB * rism3d_get_temperature(rism_3d)
+         rism3d_excessChemicalPotential(rism_3d)* KB * rism_3d%solvent%temperature
+    rismthermo%solventPotentialEnergy = rism3d_solventPotEne(rism_3d) * KB * rism_3d%solvent%temperature
+    ! rismthermo%solventPotentialEnergy = rism3d_solventPotEne(rism_3d) * KB * rism3d_get_temperature(rism_3d)
     rismthermo%partialMolarVolume = rism3d_partialMolarVolume(rism_3d)
 #ifndef CUDA
-    rismthermo%excessParticlesBox = rism_3d%excessParticles(.false.)
+    ! rismthermo%excessParticlesBox = rism_3d%excessParticles(.false.)
+    rismthermo%excessParticlesBox = rism3d_excessParticles(rism_3d)
 #else
     rismthermo%excessParticlesBox => rism_3d%excessParticles(.false.)
 #endif /*CUDA*/
+    ! rismthermo%totalParticlesBox = rismthermo%excessParticlesBox &
+    !      + rism3d_get_voxelVolume(rism_3d) &
+    !      * rism3d_get_totalLocalPointsR(rism_3d) * rism_3d%get_density()
     rismthermo%totalParticlesBox = rismthermo%excessParticlesBox &
-         + rism3d_get_voxelVolume(rism_3d) &
-         * rism3d_get_totalLocalPointsR(rism_3d) * rism_3d%get_density()
+         + rism_3d%grid%voxelVolume &
+         * rism_3d%grid%totalLocalPointsR * rism_3d%solvent%density
          ! this is the local volume for the MPI process.
 #ifndef CUDA
     rismthermo%kirkwoodBuff = rism3d_kirkwoodbuff(rism_3d)
@@ -974,6 +979,7 @@ contains
           call thermo_print_descr_line('solutePotentialEnergy', '[kcal/mol]', 'Total', '', &
                (/'LJ        ', 'Coulomb   ', 'Bond      ', 'Angle     ', 'Dihedral  ', &
                'H-Bond    ', 'LJ-14     ', 'Coulomb-14', 'Restraints', '3D-RISM   '/), 10)
+#if 0
           call thermo_print_descr_line('rism_excessChemicalPotential', '[kcal/mol]', 'Total', 'ExcChemPot_', &
                atomName, rism3d_get_numAtomTypes(rism_3d))
           call thermo_print_descr_line('rism_solventPotentialEnergy', '[kcal/mol]', 'Total', 'UV_potential_', &
@@ -994,13 +1000,35 @@ contains
                atomName, rism3d_get_numAtomTypes(rism_3d))
           call thermo_print_descr_line('rism_DCFintegral', '[A^3]', '', 'DCFI_', &
                atomName, rism3d_get_numAtomTypes(rism_3d))
+#else
+          call thermo_print_descr_line('rism_excessChemicalPotential', '[kcal/mol]', 'Total', 'ExcChemPot_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+          call thermo_print_descr_line('rism_solventPotentialEnergy', '[kcal/mol]', 'Total', 'UV_potential_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
 
+          ! Thermodynamic properties not related to free energy.
+          call thermo_print_descr_line('rism_partialMolarVolume', '[A^3]', 'PMV', '', &
+               rism_3d%solvent%atomName, 0)
+          call thermo_print_descr_line('rism_totalParticlesBox', '[#]', '', 'TotalNum_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+          call thermo_print_descr_line('rism_totalChargeBox', '[e]', 'Total', 'TotalChg_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+          call thermo_print_descr_line('rism_excessParticlesBox', '[#]', '', 'ExNum_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+          call thermo_print_descr_line('rism_excessChargeBox', '[e]', 'Total', 'ExChg_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+          call thermo_print_descr_line('rism_KirkwoodBuff', '[A^3]', '', 'KB_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+          call thermo_print_descr_line('rism_DCFintegral', '[A^3]', '', 'DCFI_', &
+               rism_3d%solvent%atomName, rism_3d%solvent%numAtomTypes)
+#endif
        end if
     else
        ! DATA: free energy-based properties.
        if (mpirank==0 .and. associated(rismthermo%excessChemicalPotential)) then
 
           ! Cast the SANDER array into the order of the NAB array.
+#if 0
           call thermo_print_results_line('solutePotentialEnergy', soluPot(1), (/soluPot(2), &
                soluPot(3), soluPot(5), soluPot(6), soluPot(7), soluPot(13), &
                soluPot(8), soluPot(9), soluPot(10), soluPot(24)/), 10)
@@ -1035,7 +1063,42 @@ contains
                rismthermo%kirkwoodBuff, rism3d_get_numAtomTypes(rism_3d))
           call thermo_print_results_line('rism_DCFintegral', HUGE(1d0), &
                rismthermo%DCFintegral, rism3d_get_numAtomTypes(rism_3d))
+#else
+          call thermo_print_results_line('solutePotentialEnergy', soluPot(1), (/soluPot(2), &
+               soluPot(3), soluPot(5), soluPot(6), soluPot(7), soluPot(13), &
+               soluPot(8), soluPot(9), soluPot(10), soluPot(24)/), 10)
+          call thermo_print_results_line('rism_excessChemicalPotential', sum(rismthermo%excessChemicalPotential), &
+               rismthermo%excessChemicalPotential, rism_3d%solvent%numAtomTypes)
+          call thermo_print_results_line('rism_solventPotentialEnergy', &
+               sum(rismthermo%solventPotentialEnergy), &
+               rismthermo%solventPotentialEnergy, &
+               rism_3d%solvent%numAtomTypes)
 
+          ! Non-free energy-based properties.
+          call thermo_print_results_line('rism_partialMolarVolume', &
+               rismthermo%partialMolarVolume, (/1d0/), 0)
+          call thermo_print_results_line('rism_totalParticlesBox', &
+               HUGE(1d0), rismthermo%totalParticlesBox, &
+               rism_3d%solvent%numAtomTypes)
+          call thermo_print_results_line('rism_totalChargeBox', &
+               sum(rismthermo%totalParticlesBox * rism_3d%solvent%charge) &
+               * sqrt((KB * rism_3d%solvent%temperature) / COULOMB_CONST_E), &
+               rismthermo%totalParticlesBox * rism_3d%solvent%charge &
+               * sqrt((KB * rism_3d%solvent%temperature) / COULOMB_CONST_E), &
+               rism_3d%solvent%numAtomTypes)
+          call thermo_print_results_line('rism_excessParticlesBox', &
+               HUGE(1d0), rismthermo%excessParticlesBox, rism_3d%solvent%numAtomTypes)
+          call thermo_print_results_line('rism_excessChargeBox', &
+               sum(rismthermo%excessParticlesBox * rism_3d%solvent%charge) &
+               * sqrt((KB * rism_3d%solvent%temperature) / COULOMB_CONST_E), &
+               rismthermo%excessParticlesBox * rism_3d%solvent%charge &
+               * sqrt((KB * rism_3d%solvent%temperature) / COULOMB_CONST_E), &
+               rism_3d%solvent%numAtomTypes)
+          call thermo_print_results_line('rism_KirkwoodBuff', HUGE(1d0), &
+               rismthermo%kirkwoodBuff, rism_3d%solvent%numAtomTypes)
+          call thermo_print_results_line('rism_DCFintegral', HUGE(1d0), &
+               rismthermo%DCFintegral, rism_3d%solvent%numAtomTypes)
+#endif
        end if
     end if
     call flush(outunit)
@@ -1333,7 +1396,7 @@ contains
     use rism3d_opendx
     use rism3d_xyzv
 #ifndef CUDA
-    use rism3d_c, only: rism3d_map_site_to_site
+    ! use rism3d_c, only: rism3d_map_site_to_site
 #else
     use rism3d_rism3d_c_mod
 #endif /*CUDA*/
@@ -1357,6 +1420,7 @@ contains
 
     
     if (len_trim(guvfile) /= 0 .or. len_trim(huvfile) /= 0) then
+#if 0
        work => safemem_realloc(work, this%get_globalDimsR(1), this%get_globalDimsR(2), this%get_localDimsR(3))
     end if
     do iv = 1, rism3d_get_numAtomTypes(this)
@@ -1364,12 +1428,22 @@ contains
        cstep = adjustl(cstep)
        suffix = '.'//trim(atomName(iv))//'.'//trim(cstep)
        suffix = trim(suffix)//extension
+#else
+       work => safemem_realloc(work, this%grid%globalDimsR(1), this%grid%globalDimsR(2), this%grid%localDimsR(3))
+    end if
+    do iv = 1, this%solvent%numAtomTypes
+       write(cstep, '(i16)') step
+       cstep = adjustl(cstep)
+       suffix = '.'//trim(rism_3d%solvent%atomName(iv))//'.'//trim(cstep)
+       suffix = trim(suffix)//extension
+#endif
        
        ! Solute-solvent RDF.
        if (len_trim(guvfile) /= 0)  then
 
 #ifndef CUDA
 #  if defined(MPI)
+#if 0
           do k = 1, this%get_localDimsR(3)
              do j = 1, this%get_globalDimsR(2)
                 do i = 1, this%get_globalDimsR(1)
@@ -1377,6 +1451,15 @@ contains
                         this%get_guv(i + (j - 1) * (this%get_globalDimsR(1) + 2) &
                         + (k - 1) * (this%get_globalDimsR(1) + 2) &
                         * this%get_globalDimsR(2), iv)
+#else
+          do k = 1, this%grid%localDimsR(3)
+             do j = 1, this%grid%globalDimsR(2)
+                do i = 1, this%grid%globalDimsR(1)
+                   work(i, j, k) = &
+                        this%guv(i + (j - 1) * (this%grid%globalDimsR(1) + 2) &
+                        + (k - 1) * (this%grid%globalDimsR(1) + 2) &
+                        * this%grid%globalDimsR(2), iv)
+#endif
                 end do
              end do
           end do
@@ -1396,6 +1479,7 @@ contains
        if (len_trim(huvfile) /= 0)  then
 #ifndef CUDA
 #  if defined(MPI)
+#if 0
           do k = 1, this%get_localDimsR(3)
              do j = 1, this%get_globalDimsR(2)
                 do i = 1, this%get_globalDimsR(1)
@@ -1403,6 +1487,15 @@ contains
                         this%get_huv(i + (j - 1) * (this%get_globalDimsR(1) + 2) &
                         + (k - 1) * (this%get_globalDimsR(1) + 2) &
                         * this%get_globalDimsR(2), iv)
+#else
+          do k = 1, this%grid%localDimsR(3)
+             do j = 1, this%grid%globalDimsR(2)
+                do i = 1, this%grid%globalDimsR(1)
+                   work(i, j, k) = &
+                        this%huv(i + (j - 1) * (this%grid%globalDimsR(1) + 2) &
+                        + (k - 1) * (this%grid%globalDimsR(1) + 2) &
+                        * this%grid%globalDimsR(2), iv)
+#endif
                 end do
              end do
           end do
@@ -1419,12 +1512,21 @@ contains
        ! Solute-solvent DCF.
        if (len_trim(cuvfile) /= 0)  then
 #ifndef CUDA
+#if 0
           do k = 1, this%get_localDimsR(3)
              do j = 1, this%get_globalDimsR(2)
                 do i = 1, this%get_globalDimsR(1)
                    ig = i + (j - 1) * this%get_localDimsR(1) + &
                         (k - 1) * this%get_localDimsR(2) * this%get_localDimsR(1)
                    work(i, j, k) = this%get_cuv(i,j,k, iv)
+#else
+          do k = 1, this%grid%localDimsR(3)
+             do j = 1, this%grid%globalDimsR(2)
+                do i = 1, this%grid%globalDimsR(1)
+                   ig = i + (j - 1) * this%grid%localDimsR(1) + &
+                        (k - 1) * this%grid%localDimsR(2) * this%grid%localDimsR(1)
+                   work(i, j, k) = this%cuv(i,j,k, iv)
+#endif
                 end do
              end do
           end do
@@ -1455,7 +1557,7 @@ contains
     use rism3d_opendx
     use rism3d_xyzv
 #ifndef CUDA
-    use rism3d_c, only: rism3d_map_site_to_site
+    ! use rism3d_c, only: rism3d_map_site_to_site
 #else
     use rism3d_rism3d_c_mod
 #endif /*CUDA*/
@@ -1491,10 +1593,12 @@ contains
        cstep = adjustl(cstep)
        suffix = '.'//trim(cstep)
        suffix = trim(suffix)//extension
-       work => safemem_realloc(work, this%get_globalDimsR(1), this%get_globalDimsR(2), this%get_localDimsR(3))
+       ! work => safemem_realloc(work, this%get_globalDimsR(1), this%get_globalDimsR(2), this%get_localDimsR(3))
+       work => safemem_realloc(work, this%grid%globalDimsR(1), this%grid%globalDimsR(2), this%grid%localDimsR(3))
        work = 0
        ! Sum the contributions from each solvent type at each grid
        ! point and convert units to [e/A^3].
+#if 0
        do iv = 1, rism3d_get_numAtomTypes(this)
 #  if defined(MPI)
           do k = 1, this%get_localDimsR(3)
@@ -1513,6 +1617,26 @@ contains
                *this%get_charge(iv)*this%get_density(iv), this%get_guv(1, iv), 1, work, 1)
 #  endif /*defined(MPI)*/
        end do
+#else
+       do iv = 1, this%solvent%numAtomTypes
+#  if defined(MPI)
+          do k = 1, this%grid%localDimsR(3)
+             do j = 1, this%grid%globalDimsR(2)
+                do i = 1, this%grid%globalDimsR(1)
+                   work(i, j, k) = work(i, j, k) &
+                        + this%guv(i + (j - 1) * (this%grid%globalDimsR(1) + 2) &
+                        & + (k - 1) * (this%grid%globalDimsR(1) + 2) * this%grid%globalDimsR(2), iv) &
+                        * sqrt((KB *this%solvent%temperature) / COULOMB_CONST_E) &
+                        * this%solvent%charge(iv) * this%solvent%density(iv)
+                end do
+             end do
+          end do
+#  else
+          call DAXPY(this%grid%totalLocalPointsR, sqrt((KB *this%solvent%temperature)/COULOMB_CONST_E) &
+               *this%solvent%charge(iv)*this%solvent%density(iv), this%guv(1, iv), 1, work, 1)
+#  endif /*defined(MPI)*/
+       end do
+#endif
        if (len_trim(quvfile) /= 0) then
           call writeVolume(trim(quvfile)//suffix, work, this%grid, &
                this%solute, mpirank, mpisize, mpicomm)
