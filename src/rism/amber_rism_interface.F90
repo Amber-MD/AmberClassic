@@ -2086,3 +2086,26 @@ contains
 
 end module sander_rism_interface
 #endif
+
+#ifdef OPENMP
+  subroutine set_omp_num_threads_rism()
+    use constants_rism, only: omp_num_threads
+    implicit none
+    character(len=5) :: omp_threads
+    integer :: ier
+
+    call get_environment_variable('OMP_NUM_THREADS', omp_threads, status=ier)
+    if( ier .ne. 1 ) read( omp_threads, * ) omp_num_threads
+#ifndef API
+    write(6,'(a,i3,a)') '| Running RISM OpenMP with ',omp_num_threads,' threads'
+#endif
+  end subroutine set_omp_num_threads_rism
+#endif
+
+subroutine rism_defaults()
+   use sander_rism_interface, only: defaults
+   implicit none
+   call defaults()
+   return
+end subroutine rism_defaults
+
