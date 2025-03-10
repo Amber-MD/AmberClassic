@@ -101,7 +101,7 @@ $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
 	$(VB)$(FC) $(FFLAGS) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
-         -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
+         -lxray_cuda -lrism_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
          -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
@@ -129,6 +129,7 @@ libs:
     
 lib_cuda:
 	$(VB)cd ../xray/cuda && $(MAKE) libxray_cuda
+	$(VB)cd ../rism/rism_gpu && $(MAKE) librism_cuda
 #---------------------------------------------------------------------------
 Plumed.o: Plumed.c
 	@echo "[MSANDER]  CC $<"
