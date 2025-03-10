@@ -26,9 +26,10 @@ namespace rism3d_c {
         GPUtype rs2i, rs6i;
         GPUtype r2;
 
-        int idx = threadIdx.x + blockIdx.x * blockDim.x;
+        // Use long long int to handle large systems
+        long long int idx = threadIdx.x + (long long int)blockIdx.x * blockDim.x;
 
-        if (idx < solvent_numAtomTypes * x_dim * y_dim * z_dim) {
+        if (idx < (long long int)solvent_numAtomTypes * x_dim * y_dim * z_dim) {
             for(int solu_n = 0; solu_n < solute_numAtoms; solu_n++){
 
                 int i = idx / (x_dim * y_dim * z_dim); // solvent numAtomTypes index
@@ -36,6 +37,13 @@ namespace rism3d_c {
                 int m = (idx / (y_dim * z_dim)) % x_dim; // x index
                 int l = (idx / z_dim) % y_dim; // y index
                 int k = idx % z_dim; // z index
+
+                // Checking out-of-bound access
+                int mem_idx = i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k;
+                int max_size = solvent_numAtomTypes * x_dim * y_dim * (z_dim + 2);
+                if (mem_idx >= max_size) {
+                    printf("Thread %lld attempted out-of-bounds access: %d >= %d\n", idx, mem_idx, max_size);
+                }
 
                 rz = k*gridspc_z;
                 // If pos is column major
@@ -57,7 +65,7 @@ namespace rism3d_c {
 
                 r2 = dx2 + dy2 + dz2;
 
-                rs2i = 1.0/r2;
+                rs2i = (GPUtype)1.0/r2;
                 rs6i = rs2i*rs2i*rs2i;
 
                 // old column major order
@@ -179,6 +187,11 @@ namespace rism3d_c {
                                                                         uuv.m_data + iv * grid_p->localDimsR[0] * grid_p->localDimsR[1] * (grid_p->localDimsR[2] + 2),
                                                                         solventclass_p->charge.m_data[iv]);
                     }
+                    cudaError_t err2 = cudaGetLastError();
+                    if (err2 != cudaSuccess) {
+                        cout << "k_coulomb_potential_calc kernel launch failed: " << cudaGetErrorString(err2) << endl;
+                        abort();
+                    }
                     cudaDeviceSynchronize();
 
                     // Saving values to compare with fortran version: i am keeping this for now
@@ -215,8 +228,16 @@ namespace rism3d_c {
             cout << "Sorry: periodic systems not supported, yet!" << endl;
             abort();
         } else{
-            int num_blocks = (solventclass_p->numAtomTypes*soluteclass_p->numAtoms*grid_p->globalDimsR[0]*grid_p->globalDimsR[1]*grid_p->globalDimsR[2]+255)/256;
+            // using long long type to ensure we will not get overflow while computing num_blocks
+            long long num_blocks = (static_cast<long long>(solventclass_p->numAtomTypes) * static_cast<long long>(soluteclass_p->numAtoms) * 
+                                    static_cast<long long>(grid_p->globalDimsR[0]) * static_cast<long long>(grid_p->globalDimsR[1]) * 
+                                    static_cast<long long>(grid_p->globalDimsR[2]) + 255) / 256;
             int num_threads = 256;
+
+            // Checking GPU kernel properties (uncomment below to see values)
+            // cudaDeviceProp prop;
+            // cudaGetDeviceProperties(&prop, 0);
+            // cout << prop.maxGridSize[0] << " " << prop.maxGridSize[1] << " " << prop.maxGridSize[2] << endl;
 
             k_potential_calc<<<num_blocks, num_threads>>>(uuv.m_data, ljAUV.m_data, ljBUV.m_data, 
                                                           solventclass_p->numAtomTypes, soluteclass_p->numAtoms, 
@@ -225,6 +246,11 @@ namespace rism3d_c {
                                                           grid_p->spacing[0], grid_p->spacing[1], grid_p->spacing[2]);
             
             cudaDeviceSynchronize();
+            cudaError_t err3 = cudaGetLastError();
+            if (err3 != cudaSuccess) {
+                cout << "k_potential_calc kernel launch failed: " << cudaGetErrorString(err3) << endl;
+                abort();
+            }
 
         }
 
@@ -667,7 +693,7 @@ namespace rism3d_c {
                             GPUtype* sumsin_0){
         *sumcos_0 = 0.0;
         *sumsin_0 = 0.0;
-        int count = 0;
+        // int count = 0;
         for(int j = 0; j < numAtoms; j++){
             GPUtype phase = position[j]*waveVectorX_0 + position[j + numAtoms]*waveVectorY_0 + position[j + 2*numAtoms]*waveVectorZ_0;
             *sumcos_0 += charge[j] * cos(phase);

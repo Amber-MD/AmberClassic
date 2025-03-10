@@ -407,7 +407,7 @@ namespace rism3d_c{
             // Checking errors while launching kernel
             cudaError_t err = cudaGetLastError();
             if (err != cudaSuccess) {
-                cout << "getPadded kernel launch failed: " << cudaGetErrorString(err) << endl;
+                cout << "set_padding2zero_cu kernel launch failed: " << cudaGetErrorString(err) << endl;
                 abort();
             }
         }
