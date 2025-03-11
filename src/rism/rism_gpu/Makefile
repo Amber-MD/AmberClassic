@@ -22,7 +22,7 @@ LIBOBJ_CUDA = mdiis.o k_rism3d.o \
     k_kh.o rism3d_closure_hnc.o rism3d_closure_psen.o \
     k_grid.o rism3d_fft.o rism_util.o k_rism_util.o \
     rism3d.o rism3d_solute_class.o rism3d_solvent_class.o \
-    rism3d_potential.o k_potential.o 
+    rism3d_potential.o k_potential.o wraprism3d_c_rism3d.o
 
 librism_cuda: $(LIBDIR)/librism_cuda.a
 

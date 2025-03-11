@@ -232,9 +232,6 @@ module amber_rism_interface
 #endif /*CUDA*/
   use rism3d_solvent_c
   use rism3d_solute_c
-#ifdef RISM_CRDINTERP
-  use fce_c
-#endif /*RISM_CRDINTERP*/
   use rism_report_c
   use rism_timer_c
   use safemem
@@ -666,8 +663,8 @@ contains
     call rism_3d%delete
 #endif /*CUDA*/
 
-#ifndef CUDA
     if (rismprm%ng3(1) == -1) then
+#ifndef CUDA
        call rism3d_new(rism_3d, solute, solvent, rismprm%npropagate, &
           closurelist, rismprm%solvcut, &
           rismprm%mdiis_nvec, rismprm%mdiis_del, rismprm%mdiis_method, &

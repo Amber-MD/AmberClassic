@@ -4007,7 +4007,7 @@ contains
         REAL, target :: trans(3)
 
         COM = solute%centerOfMass
-        trans = solute%translation
+        ! trans = solute%translation
 
         this%numAtoms = solute%numAtoms
         this%charged = solute%charged
@@ -4031,7 +4031,7 @@ contains
         this%xappa = solvent%xappa
         this%xikt = solvent%xikt
         this%smear = solvent%smear
-        this%xikt_dT = solvent%xikt_dT
+        ! this%xikt_dT = solvent%xikt_dT
         this%numAtomTypes = solvent%numAtomTypes
         this%numMolecules = solvent%numMolecules
         this%numRDFpoints = solvent%numRDFpoints
@@ -4041,7 +4041,7 @@ contains
         this%gridSpacingK = solvent%gridSpacingK
         this%waveNumbers = C_LOC(solvent%waveNumbers)
         this%xvv = C_LOC(solvent%xvv)
-        this%xvv_dT = C_LOC(solvent%xvv_dT)
+        ! this%xvv_dT = C_LOC(solvent%xvv_dT)
         this%charge = C_LOC(solvent%charge)
         this%charge_sp = C_LOC(solvent%charge_sp)
         this%density = C_LOC(solvent%density)
@@ -4051,7 +4051,7 @@ contains
         this%coord = C_LOC(solvent%coord)
         this%background_correction = C_LOC(solvent%background_correction)
         this%delhv0 = C_LOC(solvent%delhv0)
-        this%delhv0_dT = C_LOC(solvent%delhv0_dT)
+        ! this%delhv0_dT = C_LOC(solvent%delhv0_dT)
         this%ionic = solvent%ionic
         this%xvv_version = solvent%xvv_version
     end subroutine cpy_solvent

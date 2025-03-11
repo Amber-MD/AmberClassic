@@ -62,9 +62,9 @@
 
 module safemem
   use rism_report_c
+  use iso_fortran_env, only: int64
 #ifndef CUDA
   use FFTW3
-  use iso_fortran_env, only: int64
 #else
   use iso_c_binding
 #endif /*CUDA*/

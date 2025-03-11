@@ -7,10 +7,12 @@ amber_rism_interface.o: \
                     ../include/assert.fh\
                     safemem.o\
                     rism_report_c.o\
+                    rism_timer_c.o\
                     rism3d_c.o\
+                    wrapfRISM3D_rism3d_c.o\
                     rism3d_solvent_c.o\
                     rism3d_solute_c.o\
-                    binrestart.o\
+                    ../msander/binrestart.o\
                     constants_rism.o\
                     rism_util.o\
                     def_time.h\
@@ -24,13 +26,13 @@ amber_rism_interface.o: \
 amber_rism_interface.o:   amber_rism_interface.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ amber_rism_interface.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ amber_rism_interface.F90
 
 
 array_util.o:   array_util.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ array_util.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ array_util.F90
 
 bspline.o: \
                     ../include/dprec.fh\
@@ -40,7 +42,7 @@ bspline.o: \
 bspline.o:   bspline.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ bspline.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ bspline.F90
 
 constants.o: \
                     ../include/dprec.fh
@@ -49,7 +51,7 @@ constants.o: \
 constants.o:   constants.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ constants.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ constants.F90
 
 constants_rism.o: \
                     ../include/dprec.fh
@@ -58,7 +60,7 @@ constants_rism.o: \
 constants_rism.o:   constants_rism.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ constants_rism.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ constants_rism.F90
 
 erfcfun.o: \
                     ../include/dprec.fh
@@ -67,13 +69,13 @@ erfcfun.o: \
 erfcfun.o:   erfcfun.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ erfcfun.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ erfcfun.F90
 
 
 fftw3.o:   fftw3.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ fftw3.F90
+		$(FNOOPTFLAGS) -I../msander $(FFLAGS) -o $@ fftw3.F90
 
 mdiis_blas2_c.o: \
                     ../include/dprec.fh\
@@ -85,7 +87,7 @@ mdiis_blas2_c.o: \
 mdiis_blas2_c.o:   mdiis_blas2_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ mdiis_blas2_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ mdiis_blas2_c.F90
 
 mdiis_blas_c.o: \
                     ../include/dprec.fh\
@@ -97,7 +99,7 @@ mdiis_blas_c.o: \
 mdiis_blas_c.o:   mdiis_blas_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ mdiis_blas_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ mdiis_blas_c.F90
 
 mdiis_c.o: \
                     ../include/dprec.fh\
@@ -109,7 +111,7 @@ mdiis_c.o: \
 mdiis_c.o:   mdiis_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ mdiis_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ mdiis_c.F90
 
 mdiis_orig_c.o: \
                     ../include/dprec.fh\
@@ -121,7 +123,7 @@ mdiis_orig_c.o: \
 mdiis_orig_c.o:   mdiis_orig_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ mdiis_orig_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ mdiis_orig_c.F90
 
 pubfft.o: \
                     ../include/dprec.fh\
@@ -131,7 +133,7 @@ pubfft.o: \
 pubfft.o:   pubfft.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ pubfft.F90
+		$(FNOOPTFLAGS) -I../msander $(FFLAGS) -o $@ pubfft.F90
 
 quaternion.o: \
                     ../include/dprec.fh
@@ -140,7 +142,7 @@ quaternion.o: \
 quaternion.o:   quaternion.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ quaternion.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ quaternion.F90
 
 rism1d_c.o: \
                     ../include/dprec.fh\
@@ -159,7 +161,7 @@ rism1d_c.o: \
 rism1d_c.o:   rism1d_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_c.F90
 
 rism1d_closure_c.o: \
                     ../include/dprec.fh\
@@ -181,7 +183,7 @@ rism1d_closure_c.o: \
 rism1d_closure_c.o:   rism1d_closure_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_closure_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_closure_c.F90
 
 rism1d_devb_c.o: \
                     ../include/dprec.fh\
@@ -193,7 +195,7 @@ rism1d_devb_c.o: \
 rism1d_devb_c.o:   rism1d_devb_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_devb_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_devb_c.F90
 
 rism1d_driver.o: \
                     ../include/dprec.fh\
@@ -211,7 +213,7 @@ rism1d_driver.o: \
 rism1d_driver.o:   rism1d_driver.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_driver.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_driver.F90
 
 rism1d_hnc_c.o: \
                     ../include/dprec.fh\
@@ -222,7 +224,7 @@ rism1d_hnc_c.o: \
 rism1d_hnc_c.o:   rism1d_hnc_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_hnc_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_hnc_c.F90
 
 rism1d_kh_c.o: \
                     ../include/dprec.fh\
@@ -233,7 +235,7 @@ rism1d_kh_c.o: \
 rism1d_kh_c.o:   rism1d_kh_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_kh_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_kh_c.F90
 
 rism1d_mv0_c.o: \
                     ../include/dprec.fh\
@@ -244,7 +246,7 @@ rism1d_mv0_c.o: \
 rism1d_mv0_c.o:   rism1d_mv0_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_mv0_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_mv0_c.F90
 
 rism1d_nub_c.o: \
                     ../include/dprec.fh\
@@ -258,7 +260,7 @@ rism1d_nub_c.o: \
 rism1d_nub_c.o:   rism1d_nub_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_nub_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_nub_c.F90
 
 rism1d_polyt_c.o: \
                     ../include/dprec.fh\
@@ -269,7 +271,7 @@ rism1d_polyt_c.o: \
 rism1d_polyt_c.o:   rism1d_polyt_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_polyt_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_polyt_c.F90
 
 rism1d_potential_c.o: \
                     ../include/dprec.fh\
@@ -284,7 +286,7 @@ rism1d_potential_c.o: \
 rism1d_potential_c.o:   rism1d_potential_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_potential_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_potential_c.F90
 
 rism1d_psen_c.o: \
                     ../include/dprec.fh\
@@ -296,7 +298,7 @@ rism1d_psen_c.o: \
 rism1d_psen_c.o:   rism1d_psen_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_psen_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_psen_c.F90
 
 rism1d_py_c.o: \
                     ../include/dprec.fh\
@@ -307,7 +309,7 @@ rism1d_py_c.o: \
 rism1d_py_c.o:   rism1d_py_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_py_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism1d_py_c.F90
 
 rism3d_c.o: \
                     ../include/dprec.fh\
@@ -330,7 +332,7 @@ rism3d_c.o: \
 rism3d_c.o:   rism3d_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_c.F90
 
 rism3d_closure_c.o: \
                     ../include/dprec.fh\
@@ -350,7 +352,7 @@ rism3d_closure_c.o: \
 rism3d_closure_c.o:   rism3d_closure_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_closure_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_closure_c.F90
 
 rism3d_debug_c.o: \
                     ../include/dprec.fh\
@@ -362,7 +364,7 @@ rism3d_debug_c.o: \
 rism3d_debug_c.o:   rism3d_debug_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_debug_c.F90
+		$(FNOOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_debug_c.F90
 
 rism3d_fft.o: \
                     ../include/dprec.fh\
@@ -375,7 +377,7 @@ rism3d_fft.o: \
 rism3d_fft.o:   rism3d_fft.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_fft.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_fft.F90
 
 rism3d_grid_c.o: \
                     ../include/dprec.fh\
@@ -387,7 +389,7 @@ rism3d_grid_c.o: \
 rism3d_grid_c.o:   rism3d_grid_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_grid_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_grid_c.F90
 
 rism3d_hnc_c.o: \
                     ../include/dprec.fh\
@@ -399,7 +401,7 @@ rism3d_hnc_c.o: \
 rism3d_hnc_c.o:   rism3d_hnc_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_hnc_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_hnc_c.F90
 
 rism3d_kh_c.o: \
                     ../include/dprec.fh\
@@ -411,7 +413,7 @@ rism3d_kh_c.o: \
 rism3d_kh_c.o:   rism3d_kh_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_kh_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_kh_c.F90
 
 rism3d_mrc.o: \
                     ../include/dprec.fh\
@@ -426,7 +428,7 @@ rism3d_mrc.o: \
 rism3d_mrc.o:   rism3d_mrc.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_mrc.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_mrc.F90
 
 rism3d_opendx.o: \
                     ../include/dprec.fh\
@@ -441,7 +443,7 @@ rism3d_opendx.o: \
 rism3d_opendx.o:   rism3d_opendx.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_opendx.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_opendx.F90
 
 rism3d_potential_c.o: \
                     ../include/dprec.fh\
@@ -461,7 +463,7 @@ rism3d_potential_c.o: \
 rism3d_potential_c.o:   rism3d_potential_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_potential_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_potential_c.F90
 
 rism3d_psen_c.o: \
                     ../include/dprec.fh\
@@ -473,7 +475,7 @@ rism3d_psen_c.o: \
 rism3d_psen_c.o:   rism3d_psen_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_psen_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_psen_c.F90
 
 rism3d_restart.o: \
                     ../include/dprec.fh\
@@ -483,7 +485,7 @@ rism3d_restart.o: \
 rism3d_restart.o:   rism3d_restart.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_restart.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_restart.F90
 
 rism3d_solute_c.o: \
                     ../include/dprec.fh\
@@ -497,7 +499,7 @@ rism3d_solute_c.o: \
 rism3d_solute_c.o:   rism3d_solute_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_solute_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_solute_c.F90
 
 rism3d_solvent_c.o: \
                     ../include/dprec.fh\
@@ -511,7 +513,7 @@ rism3d_solvent_c.o: \
 rism3d_solvent_c.o:   rism3d_solvent_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_solvent_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_solvent_c.F90
 
 rism3d_xyzv.o: \
                     ../include/dprec.fh\
@@ -525,7 +527,7 @@ rism3d_xyzv.o: \
 rism3d_xyzv.o:   rism3d_xyzv.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism3d_xyzv.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism3d_xyzv.F90
 
 rism_io.o: \
                     ../include/dprec.fh\
@@ -533,19 +535,20 @@ rism_io.o: \
                     rism_report_c.o\
                     rism3d_grid_c.o\
                     rism3d_solute_c.o\
+                    wrapfRISM3D_rism3d_c.o\
                     rism_util.o
 
 
 rism_io.o:   rism_io.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_io.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism_io.F90
 
 
 rism_parm.o:   rism_parm.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_parm.F90
+		$(FNOOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism_parm.F90
 
 rism_report_c.o: \
                     ../include/dprec.fh
@@ -554,7 +557,7 @@ rism_report_c.o: \
 rism_report_c.o:   rism_report_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_report_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism_report_c.F90
 
 rism_timer_c.o: \
                     ../include/dprec.fh\
@@ -564,7 +567,7 @@ rism_timer_c.o: \
 rism_timer_c.o:   rism_timer_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_timer_c.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism_timer_c.F90
 
 rism_util.o: \
                     ../include/dprec.fh\
@@ -576,7 +579,7 @@ rism_util.o: \
 rism_util.o:   rism_util.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_util.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ rism_util.F90
 
 safemem.o: \
                     ../include/dprec.fh\
@@ -587,7 +590,7 @@ safemem.o: \
 safemem.o:   safemem.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ safemem.F90
+		$(FOPTFLAGS) -I../msander $(FFLAGS) -o $@ safemem.F90
 
 solvmdl_c.o: \
                     ../include/dprec.fh\
@@ -601,7 +604,17 @@ solvmdl_c.o: \
 solvmdl_c.o:   solvmdl_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
-		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ solvmdl_c.F90
+		$(FNOOPTFLAGS) -I../msander $(FFLAGS) -o $@ solvmdl_c.F90
+
+wrapfRISM3D_rism3d_c.o: \
+                    rism3d_solute_c.o\
+                    rism3d_solvent_c.o
+
+
+wrapfRISM3D_rism3d_c.o:   wrapfRISM3D_rism3d_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FNOOPTFLAGS) -I../msander $(FFLAGS) -o $@ wrapfRISM3D_rism3d_c.F90
 
 binrestart.o: 
 	@(test -e $@ || touch $@)

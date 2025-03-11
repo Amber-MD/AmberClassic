@@ -14,14 +14,15 @@ EOF
 
 # There exist modules, for example, defined by the fortran standard.
 # Ignore these for dependencies
-$ignore{"iso_fortran_env"}=$ignore{"mpi"}=$ignore{"intrinsic"}=$ignore{"ieee_arithmetic"}=1;
+$ignore{"iso_c_binding"}=$ignore{"iso_fortran_env"}=$ignore{"mpi"}=$ignore{"intrinsic"}=$ignore{"ieee_arithmetic"}=1;
 
 #  In order to get a mapping between module names and file names, we have
 #  have to set up the following hash.
 #$modulefile{"mkl_dfti"} = "mkl_fft";
 $modulefile{"treecode_procedures"} = "rism3d_tree_cp";
 $modulefile{"AmberNetcdf_mod"} = "AmberNetcdf";
-$modulefile{"binrestart"} = "binrestart";
+$modulefile{"binrestart"} = "../msander/binrestart";
+$modulefile{"rismrism3d_rism3d_c_mod"} = "wrapfRISM3D_rism3d_c.F90";
 
 foreach $file ( <*.F90> ) {
     next if $file =~ /^_/;
@@ -108,12 +109,12 @@ sub printDep {
     my $condition = shift;
     printf "$fileroot${suffix}.o: $deps\n\n" unless $deps eq "";
 
-    #  Construct the compilation rules:
+    #  Construct the compilation rules: enforce no CUDA for now
 
     printf "\n$fileroot${suffix}.o:   $fileroot.F90\n";
     print "\t\@echo \[RISM\]  FC \$<\n";
     printf  "\t\$(VB)\$(FC) -c \\\n"
-            ."\t\t%s \$(LOCALFLAGS) \$(FFLAGS) -o \$@ $fileroot.F90",
+            ."\t\t%s -I../msander \$(FFLAGS) -o \$@ $fileroot.F90",
             ( $optimized{$fileroot}?"\$(FOPTFLAGS)":"\$(FNOOPTFLAGS)");
     printf "\n\n";
 }
