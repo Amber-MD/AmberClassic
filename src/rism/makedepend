@@ -114,7 +114,7 @@ sub printDep {
     printf "\n$fileroot${suffix}.o:   $fileroot.F90\n";
     print "\t\@echo \[RISM\]  FC \$<\n";
     printf  "\t\$(VB)\$(FC) -c \\\n"
-            ."\t\t%s -I../msander \$(FFLAGS) -o \$@ $fileroot.F90",
+            ."\t\t%s -I../msander \$(CUDAFFLAGS) \$(FFLAGS) -o \$@ $fileroot.F90",
             ( $optimized{$fileroot}?"\$(FOPTFLAGS)":"\$(FNOOPTFLAGS)");
     printf "\n\n";
 }
