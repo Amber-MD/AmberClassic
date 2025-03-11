@@ -15,7 +15,6 @@
 module rismthermo_c
   use safemem
   use rism_report_c
-  use rism_timer_c
 
   !> Derived type to store thermodynamic results.  To facilitate MPI
   !! communication, many values are stored in a common array.
@@ -318,9 +317,6 @@ module amber_rism_interface
   type(solute_cpp), save :: solu_cpp
   type(timer_cpp), save :: timer_c
 #endif /*CUDA*/
-  type(rism_timer), save :: timer
-  type(rism_timer), save :: timer_write
-  type(rism_timer), save :: timer_init
   integer :: pa_orient, rmsd_orient
   _REAL_ :: centerOfMass(3)
   ! Read from prmtop file during parameter processing and passed to
@@ -472,16 +468,6 @@ contains
     logical :: op
     character(len=5) omp_threads
 
-    ! In case this is not the first time init has been called (i.e.,
-    ! multiple runs) destroy timers and re-create them.
-    call rism_timer_destroy(timer_write)
-    call rism_timer_destroy(timer_init)
-    call rism_timer_destroy(timer)
-    call rism_timer_new(timer, "3D-RISM Total")
-    call rism_timer_new(timer_init, "3D-RISM initialization", timer)
-    call rism_timer_start(timer_init)
-    call rism_timer_new(timer_write, "3D-RISM Output", timer)
-
     write(whtspc, '(a16)')" "
 
 #ifdef MPI
@@ -497,16 +483,10 @@ contains
 #endif /*MPI*/
 
     ! If this is not a RISM run, we're done.
-    if (rismprm%rism == 0) then
-       call rism_timer_stop(timer_init)
-       return
-    end if
+    if (rismprm%rism == 0) return
 
     ! Rank 0 only.
-    if (mpirank /= 0) then
-       call rism_timer_stop(timer_init)
-       return
-    end if
+    if (mpirank /= 0) return
 
 #ifndef API
     call defaults()
@@ -597,7 +577,6 @@ contains
        end if
        call flush(outunit)
     end if
-    call rism_timer_stop(timer_init)
     return
 
   end subroutine rism_setparam
@@ -618,17 +597,6 @@ contains
 
     integer :: err
 
-    
-    ! Ensure that timers have been created incase RISM_SETPARAM was
-    ! only called by the master node.
-    if (trim(timer%name) .ne. "3D-RISM Total") &
-         call rism_timer_new(timer, "3D-RISM Total")
-    if (trim(timer_init%name) .ne. "3D-RISM initialization") &
-         call rism_timer_new(timer_init, "3D-RISM initialization", timer)
-    call rism_timer_start(timer_init)
-    if (trim(timer_write%name) .ne. "3D-RISM Output") &
-         call rism_timer_new(timer_write, "3D-RISM Output", timer)
-
     call rism_report_setMUnit(6)
     call rism_report_setWUnit(6)
     call rism_report_setEUnit(6)
@@ -647,10 +615,7 @@ contains
 #endif /*MPI*/
 
     ! STOP HERE IF THIS IS NOT A RISM RUN.
-    if (rismprm%rism == 0) then
-       call rism_timer_stop(timer_init)
-       return
-    end if
+    if (rismprm%rism == 0) return
 
     ! 3D-RISM may have already been initialized. In the absence of a
     ! subroutine to set all of these parameters individually, we
@@ -714,11 +679,6 @@ contains
 #endif /*CUDA*/
     end if
     call rism3d_setverbosity(rism_3d, rismprm%verbose)
-#ifndef CUDA
-    ! call rism3d_setTimerParent(rism_3d, timer)
-#else
-    call rism3d_setTimerParent(rism_3d, timer_c)
-#endif /*CUDA*/
 
     call rismthermo_new(rismthermo, rism_3d%solvent%numAtomTypes, mpicomm)
 
@@ -731,7 +691,6 @@ contains
     call rism3d_solute_destroy(solute)
 
     call flush(outunit)
-    call rism_timer_stop(timer_init)
 
   end subroutine rism_init
 
@@ -810,7 +769,7 @@ contains
 
     if (rism_calc_type(irespa) == RISM_NONE) then
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     !!!No forces this steps. DO NOTHING!!!
+     !!!No forces this step. DO NOTHING!!!
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     else
        if (rismprm%verbose >= 2) call rism_report_message("|FULL RISM!!!")
@@ -870,7 +829,6 @@ contains
     if (rismprm%apply_rism_force==1) frc = frc + ff
 
     call flush(outunit)
-    call rism_timer_stop(timer)
   end subroutine rism_force
 
   
@@ -897,7 +855,6 @@ contains
     integer, intent(in) :: step
     integer :: err
     logical :: converged
-    call rism_timer_start(timer_write)
     call rismthermo_reset(rismthermo)
     if (associated(rismthermo_pol%excessChemicalPotential)) &
          call rismthermo_reset(rismthermo_pol)
@@ -905,7 +862,6 @@ contains
          call rismthermo_reset(rismthermo_apol)
 
     ! Calculate thermodynamics.
-    call rism_timer_stop(timer_write)
     ! rismthermo%excessChemicalPotential = &
     !      rism_3d%excessChemicalPotential(rismprm%asympCorr)* KB * rism3d_get_temperature(rism_3d)
     rismthermo%excessChemicalPotential = &
@@ -937,10 +893,8 @@ contains
     ! Output distributions.
     if (writedist .and. step >= 0) &
          call rism_writeVolumetricData(rism_3d, step)
-    call rism_timer_start(timer_write)
 
     call rismthermo_mpireduce(rismthermo)
-    call rism_timer_stop(timer_write)
   end subroutine rism_solvdist_thermo_calc
 
   
@@ -1099,9 +1053,7 @@ contains
        end if
     end if
     call flush(outunit)
-    call rism_timer_stop(timer_write)
   end subroutine rism_thermo_print
-
   
   !> Prints out a description line for thermodynamics output.
   !! @param[in] category Name of the thermodynamic quantity.
@@ -1190,15 +1142,6 @@ contains
   end subroutine thermo_print_results_line
 
   
-  !> Prints out the heirarchical timer summary.
-  subroutine rism_printTimer()
-    use amber_rism_interface
-    implicit none
-    call rism_timer_start(timer)
-    call rism_timer_summary(timer, '|', outunit, mpicomm)
-    call rism_timer_stop(timer)
-  end subroutine rism_printTimer
-
   !> Finalizes all of the 3D-RISM objects and frees memory.
   subroutine rism_finalize()
     use amber_rism_interface
@@ -1208,9 +1151,6 @@ contains
     implicit none
     integer :: err
     integer(kind=int64) :: memstats(10)
-    call rism_timer_destroy(timer_write)
-    call rism_timer_destroy(timer_init)
-    call rism_timer_destroy(timer)
     if (rismprm%rism == 1) then
 #ifndef CUDA
        call rism3d_destroy(rism_3d)
@@ -1321,11 +1261,6 @@ contains
     procedure (writeVolumeInterface), pointer :: writeVolume => NULL()
 #else
     procedure (writeVolumeInterface_cpp), pointer :: writeVolume => NULL()
-#endif /*CUDA*/
-
-    call rism_timer_start(timer_write)
-
-#ifdef CUDA
      if(volfmt .ne. 'dx') then
           call rism_report_warn("Only dx format is supported for the GPU version at the moment." &
                               //" No volume data will be written.")
@@ -1377,7 +1312,7 @@ contains
 #ifndef CUDA
     call rism_writePdfTcfDcf(this, writeVolume, step, extension)
     call rism_writeThermo(this, writeVolume, step, extension)
-    call rism_timer_stop(timer_write)
+
   end subroutine rism_writeVolumetricData
 
   !> Outputs PDF, TCF, and DCF. Each distribution
@@ -1843,7 +1778,7 @@ contains
     rismprm%mdiis_restart     = 10d0
     rismprm%maxstep           = 10000
     rismprm%npropagate        = 5
-    
+
     !imin = 1 (minimization)
     rismprm%zerofrc          = 1
 
