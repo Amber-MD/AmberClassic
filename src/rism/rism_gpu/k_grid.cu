@@ -122,6 +122,8 @@ namespace rism3d_c {
         waveVectors2.set_memalloc(memalloc_p, true);
         waveVectors2.alloc_mem(totalLocalPointsK/2);
         cudaMemPrefetchAsync(waveVectors2.m_data, (totalLocalPointsK/2)*sizeof(GPUtype), 0);
+        cudaDeviceSynchronize();
+        cudaMemset(waveVectors2.m_data, 0, totalLocalPointsK/2 * sizeof(GPUtype));
 
         // ?? Do we need a synchronization step here?
 

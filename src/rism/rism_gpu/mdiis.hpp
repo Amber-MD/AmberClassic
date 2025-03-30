@@ -9,6 +9,7 @@
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 #include "rism3d_safemem.hpp"
+#include "rism_util.hpp"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ namespace rism3d_c {
 
             // current overlap matrix dimension: goes from 2 to NVec
             int current_NVec;
+            int IS;
             
             GPUtype mdiis_del;
 
@@ -45,10 +47,10 @@ namespace rism3d_c {
             cusolverDnHandle_t handle_solv;
 
             // overlap matrix
-            array_class<GPUtype> a;
+            array_class<GPUMDIISType> a;
 
             // b vector
-            array_class<GPUtype> b;
+            array_class<GPUMDIISType> b;
             
         public:
             GPUtype residual;
@@ -59,9 +61,11 @@ namespace rism3d_c {
 
             void resize(GPUtype *vecData, GPUtype *resVecData, int numAtomTypes, int numKx, int numKy, int numKz);
 
-            void advance();
+            void advance(double tolerance);
 
             int getWRKvec();
+
+            int getIS();
 
     };
 

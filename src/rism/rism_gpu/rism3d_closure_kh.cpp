@@ -124,7 +124,7 @@ namespace rism3d_c {
         are zeroed out, because huvlr = 0, excessChemicalPotentialh2lr = 0 
         and excessChemicalPotentialhclr(iv) = 0.
         */
-        if(long_range_corr == true and solv->ionic == true){
+        if(long_range_corr == true and solv->ionic == true and solu->charged == true){
             cu_set_heaviside(heaviside.m_data, huv, solv->numAtomTypes * size);
             cudaDeviceSynchronize();
 
@@ -297,7 +297,7 @@ namespace rism3d_c {
     }
     
     void kh :: get_KB(GPUtype* huv, bool long_range_corr){
-        if(long_range_corr == true and solv->ionic == true){
+        if(long_range_corr == true and solv->ionic == true and solu->charged == true){
             int Nx = grid_p->localDimsR[0];
             int Ny = grid_p->localDimsR[1];
             int Nz = grid_p->localDimsR[2];

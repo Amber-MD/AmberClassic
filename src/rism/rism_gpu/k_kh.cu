@@ -271,6 +271,7 @@ namespace rism3d_c {
                                    GPUtype* tcfLongRangeAsympR, 
                                    int Nx, int Ny, int Nz){
 
+        
         int N = Nx * Ny * Nz;
 
         int block_size = 256; // number of threads in each block
@@ -279,6 +280,7 @@ namespace rism3d_c {
 
         GPUtype *block_kb;
         cudaMallocManaged(&block_kb, (N + 255) / 256 * sizeof(GPUtype));
+        cudaMemset(block_kb, 0, (N + 255) / 256 * sizeof(GPUtype));
 
         k_akirkwoodBuff2<<<grid_size, block_size, shared_memory_size>>>(huv, solvent_charge_sp, 
                                                                         tcfLongRangeAsympR, 
@@ -293,6 +295,8 @@ namespace rism3d_c {
 
         cudaFree(block_kb);
         return akb_iv;
+        // possible alternative:
+        return cu_reduce_sum(huv, Nx * Ny * Nz) + solvent_charge_sp * cu_reduce_sum(tcfLongRangeAsympR, Nx * Ny * Nz);
     }
 
 }

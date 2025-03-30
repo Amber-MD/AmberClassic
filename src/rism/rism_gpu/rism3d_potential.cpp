@@ -603,6 +603,7 @@ namespace rism3d_c {
                                          asympKSpaceTolerance);
             if (std::isnan(cut2_chlk)) {
                 cout << "Could not converge k-space asymptotics cutoff. 'Try using a smaller error tolerance or no cutoff." << endl;
+                abort();
             }
         }
     }

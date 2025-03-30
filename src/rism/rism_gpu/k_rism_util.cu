@@ -4,6 +4,26 @@
 #include "rism_util.hpp"
 using namespace std;
 
+#if defined(__CUDA_ARCH__ ) && __CUDA_ARCH__ < 600
+__device__ double atomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+#endif
+
 namespace rism3d_c {
 
     __device__ void polynomialInterpolation(GPUtype *x0, GPUtype* y0, int n, GPUtype x, GPUtype *y){
@@ -59,7 +79,10 @@ namespace rism3d_c {
 
     }
 
-    __global__ void memcpy_kernel(GPUtype *src, GPUtype *dst, int size){
+    // Templates for cu_memcpy. These allow us copy memory to variables with different precision
+
+    template <typename SrcType, typename DstType>
+    __global__ void memcpy_kernel(const SrcType *src, DstType *dst, int size){
         int idx = threadIdx.x + blockIdx.x * blockDim.x;
         
         if(idx < size){
@@ -67,17 +90,47 @@ namespace rism3d_c {
         }
     }
 
-    __global__ void reduction_kernel(GPUtype* input, GPUtype* output, int N) {
-        extern __shared__ GPUtype shared_data[];
+    template __global__ void memcpy_kernel<float, float>(const float *src, float *dst, int size);
+    template __global__ void memcpy_kernel<double, double>(const double *src, double *dst, int size);
+    template __global__ void memcpy_kernel<double, float>(const double *src, float *dst, int size);
+    template __global__ void memcpy_kernel<float, double>(const float *src, double *dst, int size);
+
+    template <typename SrcType, typename DstType>
+    void cu_memcpy(const SrcType *src, DstType *dst, int size){
+        int num_blocks = (size + 255) / 256;
+        int num_threads = 256;
+
+        memcpy_kernel<SrcType,DstType><<<num_blocks, num_threads>>>(src, dst, size);
+        cudaDeviceSynchronize();
+    }
+
+    void cu_memcpy(const float *src, float *dst, int size) {
+        cu_memcpy<float, float>(src, dst, size);
+    }
+    
+    void cu_memcpy(const double *src, double *dst, int size) {
+        cu_memcpy<double, double>(src, dst, size);
+    }
+    
+    void cu_memcpy(const double *src, float *dst, int size) {
+        cu_memcpy<double, float>(src, dst, size);
+    }
+    
+    void cu_memcpy(const float *src, double *dst, int size) {
+        cu_memcpy<float, double>(src, dst, size);
+    }
+    
+    __global__ void reduction_kernel(GPUtype* input, GPUReduceAccumType* output, int N) {
+        extern __shared__ GPUReduceAccumType shared_data[];
 
         int idx = threadIdx.x + blockIdx.x * blockDim.x; // global index
         int tid = threadIdx.x; // thread's local id within the block (ranging from 0 to blockDim.x - 1).
 
         // Load elements into shared memory
         if (idx < N) {
-            shared_data[tid] = input[idx];
+            shared_data[tid] = static_cast<GPUReduceAccumType>(input[idx]);
         } else {
-            shared_data[tid] = 0.0f;
+            shared_data[tid] = 0.0;//f;
         }
 
         __syncthreads();  // Synchronize threads in the block
@@ -108,6 +161,7 @@ namespace rism3d_c {
         // sum for that block) will be asigned to the output array at the block 
         // id position
         if (tid == 0) {
+            // output[blockIdx.x] = static_cast<GPUtype>(shared_data[0]);
             output[blockIdx.x] = shared_data[0];
         }
     }
@@ -116,14 +170,6 @@ namespace rism3d_c {
         for(int i = 0; i < 100; i++){
             cout << xvv[i] << endl;
         }
-    }
-
-    void cu_memcpy(GPUtype *src, GPUtype *dst, int size){
-        int num_blocks = (size + 255) / 256;
-        int num_threads = 256;
-
-        memcpy_kernel<<<num_blocks, num_threads>>>(src, dst, size);
-        cudaDeviceSynchronize();
     }
 
     void cu_polinomialInterpolation(int maxPointsToInterp, int waveNumberArraySize, 
@@ -165,8 +211,9 @@ namespace rism3d_c {
         int grid_size = (N + block_size - 1) / block_size; // total number of blocks to be used
         int shared_memory_size = block_size * sizeof(GPUtype);
 
-        GPUtype *output;
+        GPUReduceAccumType *output;
         cudaMallocManaged(&output, (N + 255) / 256 * sizeof(GPUtype));  // One per block
+        cudaMemset(output, 0, (N + 255) / 256 * sizeof(GPUtype));
 
         // Launch the kernel
         // This will ensure that there will be lauched grid_size blocks,
@@ -177,7 +224,7 @@ namespace rism3d_c {
         cudaDeviceSynchronize();  // Wait for the kernel to finish
 
         // Final reduction on the host
-        GPUtype final_sum = 0.0;
+        GPUReduceAccumType final_sum = 0.0;
         for (int i = 0; i < grid_size; i++) {
             final_sum += output[i];
         }
@@ -185,7 +232,102 @@ namespace rism3d_c {
         // Cleanup
         cudaFree(output);
 
-        return final_sum;
+        return static_cast<GPUtype>(final_sum);
     }
 
+    // Helper inline functions for FMA in device code.
+    __device__ inline float myFMA(float a, float b, float c) {
+        return __fmaf_rn(a, b, c);  // FMA in single precision
+    }
+
+    __device__ inline double myFMA(double a, double b, double c) {
+        return __fma_rn(a, b, c);   // FMA in double precision
+    }
+
+
+    // Kernel to compute dot product with mixed precision.
+    // Input arrays x and y are in single precision, but the accumulation is either float or double.
+    // It may be possible to use a template this but the shared is problematic.
+    __global__ void SDDotKernel(const float* x, const float* y, int n, float* result) {
+        extern __shared__ float share_floats[];
+        int tid = threadIdx.x;
+        int idx = blockIdx.x * blockDim.x + tid;
+        float sum = 0.0;
+        
+        // Each thread processes multiple elements if necessary.
+        while (idx < n) {
+            // sum += (float)x[idx] * (float)y[idx];
+            sum = myFMA(x[idx], y[idx], sum);
+            idx += blockDim.x * gridDim.x;
+        }
+        share_floats[tid] = sum;
+        __syncthreads();
+        
+        // Reduction in shared memory.
+        for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+            if (tid < s) {
+                share_floats[tid] += share_floats[tid + s];
+            }
+            __syncthreads();
+        }
+        
+        // The first thread in each block atomically adds the block's sum to the global result.
+        if (tid == 0) {
+            atomicAdd(result, share_floats[0]);
+        }
+    }
+
+    __global__ void SDDotKernel(const float* x, const float* y, int n, double* result) {
+        extern __shared__ double share_doubles[];
+        int tid = threadIdx.x;
+        int idx = blockIdx.x * blockDim.x + tid;
+        double sum = 0.0;
+        
+        // Each thread processes multiple elements if necessary.
+        while (idx < n) {
+            // sum += (double)x[idx] * (double)y[idx];
+            sum = myFMA((double)x[idx], (double)y[idx], sum);
+            idx += blockDim.x * gridDim.x;
+        }
+        share_doubles[tid] = sum;
+        __syncthreads();
+        
+        // Reduction in shared memory.
+        for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+            if (tid < s) {
+                share_doubles[tid] += share_doubles[tid + s];
+            }
+            __syncthreads();
+        }
+        
+        // The first thread in each block atomically adds the block's sum to the global result.
+        if (tid == 0) {
+            atomicAdd(result, share_doubles[0]);
+        }
+    }
+
+    // Mixed precision dot product: single precision inputs, double precision result.
+    template <typename SrcType, typename DstType>
+    void cu_SDDot(int n, const SrcType* d_x, const SrcType* d_y, DstType* d_result) {
+        int blockSize = 256;
+        int gridSize = (n + blockSize - 1) / blockSize;
+        
+        // Initialize the result to 0.
+        cudaMemset(d_result, 0, sizeof(DstType));
+        
+        // Launch the kernel. Allocate shared memory for block reduction.
+        SDDotKernel<<<gridSize, blockSize, blockSize * sizeof(DstType)>>>(d_x, d_y, n, d_result);
+        
+        // Synchronize to ensure the kernel has completed.
+        cudaDeviceSynchronize();
+    }
+    void cu_SDDot(int n, const float* d_x, const float* d_y, float* d_result) {
+        cu_SDDot<float, float>(n, d_x, d_y, d_result);
+    }
+    void cu_SDDot(int n, const float* d_x, const float* d_y, double* d_result) {
+        cu_SDDot<float, double>(n, d_x, d_y, d_result);
+    }
+    // void cu_SDDot(int n, const double* d_x, const double* d_y, double* d_result) {
+    //     cu_SDDot<double, double>(n, d_x, d_y, d_result);
+    // }
 }

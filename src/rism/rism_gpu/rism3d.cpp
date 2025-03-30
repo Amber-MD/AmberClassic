@@ -309,7 +309,7 @@ namespace rism3d_c {
     // So, it should not be hard to add the time tracking in this 
     // code. However, I am giving priority to get it working first.
     void rism3d :: settimerparent(timer_cpp *timer){
-        cout << "Sorry: rism3d_setTimerParent not implemented, yet." << endl;
+        // cout << "Sorry: rism3d_setTimerParent not implemented, yet." << endl;
     }
 
     // Sets solute coordinates.
@@ -402,7 +402,7 @@ namespace rism3d_c {
                     if(verbose > 0){
                         cout << "|No Lennard-Jones cutoff" << endl;
                     }
-                    cout << "No LJ tolerance or cutoff correction used. For more" << endl;
+                    cout << "WARNING> No LJ tolerance or cutoff correction used. For more" << endl;
                     cout << "accurate calculations, increase the tolerance, box" << endl;
                     cout << "dimensions, or use buffer=0" << endl;
                 }
@@ -428,14 +428,38 @@ namespace rism3d_c {
 
         if(verbose > 0){
             cout << "||Setting solvation box to" << endl;
-            cout << "|grid size: " << grid.globalDimsR[0] << " X " << grid.globalDimsR[1] << " X " << grid.globalDimsR[2] << endl;
-            cout << "|box size [A]: " << grid.boxLength[0] << " X " << grid.boxLength[1] << " X " << grid.boxLength[2] << endl;
-            cout << "|grid spacing [A]: " << grid.spacing[0] << " X " << grid.spacing[1] << " X " << grid.spacing[2] << endl;
+            
+            // cout << "|grid size: " << grid.globalDimsR[0] << " X " << grid.globalDimsR[1] << " X " << grid.globalDimsR[2] << endl;
+            std::cout << "|grid size:" 
+                      << std::setw(11) << grid.globalDimsR[0] << " X" 
+                      << std::setw(11) << grid.globalDimsR[1] << " X" 
+                      << std::setw(11) << grid.globalDimsR[2] << std::endl;
+
+            // cout << "|box size [A]: " << grid.boxLength[0] << " X " << grid.boxLength[1] << " X " << grid.boxLength[2] << endl;
+            std::cout << "|box size [A]:" 
+                      << std::fixed << std::setprecision(3)
+                      << std::setw(12) << grid.boxLength[0] << " X" 
+                      << std::setw(11) << grid.boxLength[1] << " X" 
+                      << std::setw(11) << grid.boxLength[2] << std::endl;
+            
+            // cout << "|grid spacing [A]: " << grid.spacing[0] << " X " << grid.spacing[1] << " X " << grid.spacing[2] << endl;
+            std::cout << "|grid spacing [A]:"
+                      << std::fixed << std::setprecision(3)
+                      << std::setw(11) << grid.spacing[0] << " X"
+                      << std::setw(11) << grid.spacing[1] << " X"
+                      << std::setw(11) << grid.spacing[2] << std::endl;
+            
             if(periodic){
                 cout << "Periodic box not supported, yet" << endl;
             }
+            
             effective_buffer();
-            cout << "|effective buffer [A]: " << effect_buffer[0] << " X " << effect_buffer[1] << " X " << effect_buffer[2] << endl;
+            // cout << "|effective buffer [A]: " << effect_buffer[0] << " X " << effect_buffer[1] << " X " << effect_buffer[2] << endl;
+            std::cout << "|effective buffer [A]:"
+                      << std::fixed << std::setprecision(3)
+                      << std::setw(10) << effect_buffer[0] << " X"
+                      << std::setw(11) << effect_buffer[1] << " X"
+                      << std::setw(11) << effect_buffer[2] << std::endl;
         } 
 
         // fit the LJ cutoff inside the solvent box
@@ -451,7 +475,7 @@ namespace rism3d_c {
         // 2) Caclualte long range aymptotics of the direct and total 
         // correlation functions about the solute
         pot.dcf_tcf_long_range_asymptotics(soluteclass.charged, periodic);
-        
+
         // 3) Calculate Lennard-Jones potential about the solute
         // to do: add electrostatic potential
         pot.potential_calc();
@@ -730,6 +754,8 @@ namespace rism3d_c {
         xvva.set_memalloc(&memalloc, true);
         xvva.alloc_mem(solventclass.numAtomTypes, solventclass.numAtomTypes, grid.waveNumberArraySize);
 
+        cudaMemset(guv.m_data, 0, solventclass.numAtomTypes * grid.globalDimsK[0] * grid.globalDimsK[1] * grid.globalDimsK[2]);
+        cudaMemset(xvva.m_data, 0, solventclass.numAtomTypes * solventclass.numAtomTypes * grid.waveNumberArraySize);
         
         cuvWRK.set_memalloc(&memalloc, true);
         cuvWRK.alloc_mem(NVec, solventclass.numAtomTypes, grid.globalDimsK[0], grid.globalDimsK[1], grid.globalDimsK[2]);
@@ -860,7 +886,7 @@ namespace rism3d_c {
     // We need to copy data over for the case of ncuvsteps > 0. Since it is not the case right now,
     // I will just skip this implementation for now
     void rism3d :: guessDCF(){
-        cout << "Nothing is being doing in guessDCF now, since we are using ncuvsteps = 0." << endl;
+        // cout << "Nothing is being doing in guessDCF now, since we are using ncuvsteps = 0." << endl;
     }
 
     void rism3d :: setclosure(string type){
@@ -871,7 +897,7 @@ namespace rism3d_c {
         size_t ispse = type.find("PSE", 0, 3);
 
         if(type == "KH"){
-            cout << "| Setting " << type << endl;
+            // cout << "| Setting " << type << endl;
             rism3d_closure* closure_child = new kh(&solventclass, &soluteclass, &grid, &pot, &memalloc);
             closure = closure_child;
         }
@@ -955,9 +981,22 @@ namespace rism3d_c {
 
         converged = false;
         for(int i = 0; i < maxSteps; i++){
-            single3DRISMsolution();
+            single3DRISMsolution(tolerance);
+            
+            if(verbose == 2){
+                std::cout << " Step=" << std::setw(5) << i + 1 << "     Resid= ";
+                if (std::abs(mdiisclass.residual) >= 1e-1) {
+                    std::cout << std::fixed << std::setprecision(3) << mdiisclass.residual;
+                    std::cout << "         IS=" << std::setw(3) << mdiisclass.getIS() << std::endl;
+                } else {
+                    std::cout << std::scientific << std::setprecision(3) << std::uppercase << mdiisclass.residual;
+                    std::cout << "     IS=" << std::setw(3) << mdiisclass.getIS() << std::endl;
+                }
+            }
+
             if(mdiisclass.residual < tolerance){
                 converged = true;
+                cout << "|RXRISM converged in" << std::setw(6) << i + 1 << " steps" << endl;
                 break;
             }
         }
@@ -990,7 +1029,9 @@ namespace rism3d_c {
 
         // Comment line below to hide time to solve 3D-RISM equation. This will not
         // be necessary anymore after implementing the time tracking.
-        cout << "Time for solving 3D-RISM equations: " << duration.count() << endl;
+        if(verbose == 2){
+            cout << "Time for solving 3D-RISM equations: " << duration.count() << endl;
+        }
     }
 
     // Function: single3DRISMsolution
@@ -1000,7 +1041,7 @@ namespace rism3d_c {
     //     - All data manipulation must be done in the GPU to avoid sending data back and forth between
     //       CPU and GPU;
     //     - So far it is solving MDIIS only for NVec = 1. So, it must be generalized.
-    void rism3d :: single3DRISMsolution(){
+    void rism3d :: single3DRISMsolution(double tolerance){
         // --------------------------------------------------------------
         // Subtract short-range part from Cuv(r) (if not periodic);
         // Cuv(r) is then loaded into the guv array.
@@ -1060,9 +1101,9 @@ namespace rism3d_c {
         for(int iv = 0; iv < solventclass.numAtomTypes; iv++){
             GPUtype *data2transform = (guv.m_data + iv * grid.globalDimsK[0]*grid.globalDimsK[1]*grid.globalDimsK[2]);
 #if defined(RISMCUDA_DOUBLE)
-            cufftExecD2Z(fft.plan, data2transform, (cufftDoubleComplex*)data2transform);
+            cufftExecD2Z(fft.plan, reinterpret_cast<double*>(data2transform), reinterpret_cast<cufftDoubleComplex*>(data2transform));
 #else
-            cufftExecR2C(fft.plan, data2transform, (cufftComplex*)data2transform);
+            cufftExecR2C(fft.plan, reinterpret_cast<float*>(data2transform), reinterpret_cast<cufftComplex*>(data2transform));
 #endif
 
             cudaDeviceSynchronize();
@@ -1076,7 +1117,8 @@ namespace rism3d_c {
         // }
 
         // New CUDA version:
-        GPUtype normalization = 1.0 / (grid.globalDimsR[0] * grid.globalDimsR[1] * grid.globalDimsR[2]);
+        double normFactor = 1.0 / (grid.globalDimsR[0] * grid.globalDimsR[1] * grid.globalDimsR[2]);
+        GPUtype normalization = static_cast<GPUtype>(normFactor);
 #if RISMCUDA_DOUBLE
         cublasDscal(handle, solventclass.numAtomTypes * grid.totalLocalPointsK, &normalization, guv.m_data, 1);
 #else
@@ -1176,9 +1218,9 @@ namespace rism3d_c {
         for(int iv = 0; iv < solventclass.numAtomTypes; iv++){
             GPUtype *data2transform_inv = (huv.m_data + iv * grid.totalLocalPointsK);
 #if defined(RISMCUDA_DOUBLE)
-            cufftExecZ2D(fft.plan_inv, (cufftDoubleComplex*)data2transform_inv, data2transform_inv);
+            cufftExecZ2D(fft.plan_inv, reinterpret_cast<cufftDoubleComplex*>(data2transform_inv), reinterpret_cast<double*>(data2transform_inv));
 #else
-            cufftExecC2R(fft.plan_inv, (cufftComplex*)data2transform_inv, data2transform_inv);
+            cufftExecC2R(fft.plan_inv, reinterpret_cast<cufftComplex*>(data2transform_inv), reinterpret_cast<float*>(data2transform_inv));
 #endif
         }
         cudaDeviceSynchronize();
@@ -1271,8 +1313,7 @@ namespace rism3d_c {
         // --------------------------------------------------------------
         // MDIIS
         // --------------------------------------------------------------
-
-        mdiisclass.advance();
+        mdiisclass.advance(tolerance);
 
         // Getting next work vector
         cuv.m_data = cuvWRK.m_data + (mdiisclass.getWRKvec() - 1) * solventclass.numAtomTypes*grid.globalDimsK[0]*grid.globalDimsK[1]*grid.globalDimsK[2];
@@ -1298,9 +1339,6 @@ namespace rism3d_c {
 //         // }
 //         myfile1.close();
 // #endif //RISMCUDA_DOUBLE
-
-        // Printing residue
-        cout << "res = " << mdiisclass.residual << endl;
 
         fft.destroy_plans();
     }
@@ -2343,9 +2381,21 @@ namespace rism3d_c {
         // Uncomment these lines below to check the atomType index and file name:
         // cout << "atomType number = " << atomType << endl;
         // cout << "file name: " << *file << endl;
-        dxclass.write_dx(file, grid.localDimsR[0], grid.localDimsR[1], grid.localDimsR[2], 
-                         grid.spacing[0], grid.spacing[1], grid.spacing[2], soluteclass.translation,
-                         guv.m_data + atomType * grid.localDimsR[0] * grid.localDimsR[1] * (grid.localDimsR[2] + 2));
+        // if(soluteclass.charged == true){
+#if defined(CUDA_NOSWAP)
+            dxclass.write_dx(file, grid.localDimsR[0], grid.localDimsR[1], grid.localDimsR[2], 
+                             grid.spacing[0], grid.spacing[1], grid.spacing[2], soluteclass.translation,
+                             guv.m_data + atomType * grid.localDimsR[0] * grid.localDimsR[1] * (grid.localDimsR[2] + 2));
+#else
+            dxclass.write_swapped_dx(file, grid.localDimsR[0], grid.localDimsR[1], grid.localDimsR[2], 
+                             grid.spacing[0], grid.spacing[1], grid.spacing[2], soluteclass.translation,
+                             guv.m_data + atomType * grid.localDimsR[0] * grid.localDimsR[1] * (grid.localDimsR[2] + 2));
+#endif
+        //     } else{
+        //     dxclass.write_dx(file, grid.localDimsR[0], grid.localDimsR[1], grid.localDimsR[2], 
+        //                      grid.spacing[0], grid.spacing[1], grid.spacing[2], soluteclass.translation,
+        //                      guv.m_data + atomType * grid.localDimsR[0] * grid.localDimsR[1] * (grid.localDimsR[2] + 2));
+        // }
     }
 
     void rism3d :: mrc_map_write_cpp(int atomType, string *file){

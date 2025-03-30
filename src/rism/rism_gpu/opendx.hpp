@@ -20,6 +20,10 @@ namespace rism3d_c {
             void write_dx(string *file, int nx, int ny, int nz, 
                           GPUtype hx, GPUtype hy, GPUtype hz, 
                           GPUtype translation[3], GPUtype *u);
+
+            void write_swapped_dx(string *file, int nx, int ny, int nz, 
+                          GPUtype hx, GPUtype hy, GPUtype hz, 
+                          GPUtype translation[3], GPUtype *u);
     };
 
 }

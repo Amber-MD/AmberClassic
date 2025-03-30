@@ -39,8 +39,11 @@ namespace rism3d_c{
                                     GPUtype *xvv, GPUtype *gridWaveNumbers,
                                     GPUtype *xvva, int idy, int idz, int Nyz);
 
-    void cu_memcpy(GPUtype *src, GPUtype *dst, int size);
-
+    void cu_memcpy(const float *src, float *dst, int size);
+    void cu_memcpy(const double *src, double *dst, int size);
+    void cu_memcpy(const double *src, float *dst, int size);
+    void cu_memcpy(const float *src, double *dst, int size);
+                                                            
     void indexArray(const GPUtype* val, int* ptr, int n);
 
     void siftDown(const GPUtype* val, int* ptr, int root, int n);
@@ -49,6 +52,13 @@ namespace rism3d_c{
 
     void gaussquad_legendre(GPUtype a, GPUtype b, GPUtype* x, GPUtype* weights, int n);
     void legendre(GPUtype x, GPUtype& y, GPUtype& dy, int n);
+    void cu_cpyFloatToDouble(const float* src, double* dst, int n);
+    void cu_cpyDoubleToFloat(const double* src, float* dst, int n);
+
+    void cu_SDDot(int n, const float* d_x, const float* d_y, float* d_result);
+    void cu_SDDot(int n, const float* d_x, const float* d_y, double* d_result);
+    // void cu_SDDot(int n, const double* d_x, const double* d_y, double* d_result);
+
 
 }
 

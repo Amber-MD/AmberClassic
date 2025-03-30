@@ -26,24 +26,26 @@ namespace rism3d_c {
         GPUtype rs2i, rs6i;
         GPUtype r2;
 
+        GPUPotAccumType potential = 0.0;
+
         // Use long long int to handle large systems
         long long int idx = threadIdx.x + (long long int)blockIdx.x * blockDim.x;
 
         if (idx < (long long int)solvent_numAtomTypes * x_dim * y_dim * z_dim) {
+            int i = idx / (x_dim * y_dim * z_dim); // solvent numAtomTypes index
+            int m = (idx / (y_dim * z_dim)) % x_dim; // x index
+            int l = (idx / z_dim) % y_dim; // y index
+            int k = idx % z_dim; // z index
             for(int solu_n = 0; solu_n < solute_numAtoms; solu_n++){
 
-                int i = idx / (x_dim * y_dim * z_dim); // solvent numAtomTypes index
                 int j = solu_n; // solute numAtoms idex
-                int m = (idx / (y_dim * z_dim)) % x_dim; // x index
-                int l = (idx / z_dim) % y_dim; // y index
-                int k = idx % z_dim; // z index
-
+    
                 // Checking out-of-bound access
-                int mem_idx = i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k;
-                int max_size = solvent_numAtomTypes * x_dim * y_dim * (z_dim + 2);
-                if (mem_idx >= max_size) {
-                    printf("Thread %lld attempted out-of-bounds access: %d >= %d\n", idx, mem_idx, max_size);
-                }
+                // int mem_idx = i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k;
+                // int max_size = solvent_numAtomTypes * x_dim * y_dim * (z_dim + 2);
+                // if (mem_idx >= max_size) {
+                //     printf("Thread %lld attempted out-of-bounds access: %d >= %d\n", idx, mem_idx, max_size);
+                // }
 
                 rz = k*gridspc_z;
                 // If pos is column major
@@ -68,27 +70,33 @@ namespace rism3d_c {
                 rs2i = (GPUtype)1.0/r2;
                 rs6i = rs2i*rs2i*rs2i;
 
-                // old column major order
-                // lj[m + l*x_dim + k*x_dim*y_dim + i*x_dim*y_dim*z_dim] += rs6i*(rs6i*A[j*solvent_numAtomTypes+i] - B[j*solvent_numAtomTypes+i]);
-
-                // add 2 to z_dim in order to account the extra padding not used
-                lj[i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k] += rs6i*(rs6i*A[j*solvent_numAtomTypes+i] - B[j*solvent_numAtomTypes+i]);
+                potential += rs6i*(rs6i*A[j*solvent_numAtomTypes+i] - B[j*solvent_numAtomTypes+i]);
 
             }
+            // old column major order
+            // lj[m + l*x_dim + k*x_dim*y_dim + i*x_dim*y_dim*z_dim] += rs6i*(rs6i*A[j*solvent_numAtomTypes+i] - B[j*solvent_numAtomTypes+i]);
+
+            // add 2 to z_dim in order to account the extra padding not used
+            lj[i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k] += static_cast<GPUtype>(potential);
+
+            if(lj[i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k] > max_value || isnan(lj[i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k])){
+                lj[i*x_dim*y_dim*(z_dim + 2) + m*y_dim*(z_dim + 2) + l*(z_dim + 2) + k] = sqrt(max_value);
+            }
+
         }
     }
 
-    // Kernel to calculate Coulomb potential
-    __global__ void k_coulomb_potential_calc(int target_x_low_ind,  int target_x_high_ind,
-                                             int target_y_low_ind,  int target_y_high_ind,
-                                             int target_z_low_ind,  int target_z_high_ind,
-                                             GPUtype grid_xmin,      GPUtype grid_ymin,      GPUtype grid_zmin,
-                                             GPUtype grid_spacing_x,       GPUtype grid_spacing_y,       GPUtype grid_spacing_z,
-                                             int grid_dim_x,   int grid_dim_y,   int grid_dim_z,
-                                             int solute_numAtoms, int solute_numAtoms_idx_start,
-                                             const GPUtype *solute_position_x, const GPUtype *solute_position_y, const GPUtype *solute_position_z, const GPUtype *solute_charge,
-                                             GPUtype *potential, GPUtype solvent_charge){
-        
+     // Kernel to calculate Coulomb potential
+     __global__ void k_coulomb_potential_calc(int target_x_low_ind,  int target_x_high_ind,
+        int target_y_low_ind,  int target_y_high_ind,
+        int target_z_low_ind,  int target_z_high_ind,
+        GPUtype grid_xmin,      GPUtype grid_ymin,      GPUtype grid_zmin,
+        GPUtype grid_spacing_x,       GPUtype grid_spacing_y,       GPUtype grid_spacing_z,
+        int grid_dim_x,   int grid_dim_y,   int grid_dim_z,
+        int solute_numAtoms, int solute_numAtoms_idx_start,
+        const GPUtype *solute_position_x, const GPUtype *solute_position_y, const GPUtype *solute_position_z, const GPUtype *solute_charge,
+        GPUtype *potential, GPUtype solvent_charge){
+
         // Remeber: our potential array has (two) extra paddings in the z dimentions
         // Thus, we need to account this to get the correct indexes
         int target_yz_dim = grid_dim_y * (grid_dim_z + 2);
@@ -101,7 +109,7 @@ namespace rism3d_c {
         if (ix > target_x_high_ind || iy > target_y_high_ind || iz > target_z_high_ind) return;
 
         int ii = (ix * target_yz_dim) + (iy * (grid_dim_z + 2)) + iz;
-        GPUtype temporary_potential = 0.0;
+        GPUPotAccumType temporary_potential = 0.0;
 
         GPUtype tx = grid_xmin + (ix - target_x_low_ind) * grid_spacing_x;
         GPUtype ty = grid_ymin + (iy - target_y_low_ind) * grid_spacing_y;
@@ -116,14 +124,14 @@ namespace rism3d_c {
             GPUtype r  = sqrt(dx*dx + dy*dy + dz*dz);
 
             if (r > 0) {
-                temporary_potential += solute_charge[jj] / r;
+            temporary_potential += static_cast<GPUPotAccumType>(solute_charge[jj] / r);
             }
         }
 
         // Use atomicAdd to safely update the shared potential array
         // atomicAdd(&potential[ii], temporary_potential);
         // No atomicAdd needed, since each thread handles a unique ii
-        potential[ii] = temporary_potential * solvent_charge;
+        potential[ii] = static_cast<GPUtype>(temporary_potential * solvent_charge);
 
         if(potential[ii] > max_value || isnan(potential[ii])){
             potential[ii] = sqrt(max_value);
@@ -310,7 +318,7 @@ namespace rism3d_c {
         GPUtype ty = grid_ymin + (iy - target_y_low_ind) * grid_spacing_y;
         GPUtype tz = grid_zmin + (iz - target_z_low_ind) * grid_spacing_z;
 
-        GPUtype temporary_dcf_long_range_asymptotics = 0.0;
+        GPUPotAccumType temporary_dcf_long_range_asymptotics = 0.0;
 
         // Each thread processes all source points for one (ix, iy, iz)
         for (int j = 0; j < solute_numAtoms; j++) {
@@ -321,15 +329,15 @@ namespace rism3d_c {
             GPUtype r  = sqrt(dx*dx + dy*dy + dz*dz);
 
             if (r > 0) {
-                temporary_dcf_long_range_asymptotics -= solute_charge[jj] * erf(r / eta) / r;
+                temporary_dcf_long_range_asymptotics -= static_cast<GPUPotAccumType>(solute_charge[jj] * erf(r / eta) / r);
             }
             else{
-                temporary_dcf_long_range_asymptotics -= solute_charge[jj] / (sqrt(PI) * eta) * 2.0;
+                temporary_dcf_long_range_asymptotics -= static_cast<GPUPotAccumType>(solute_charge[jj] / (sqrt(PI) * eta) * 2.0);
             }
         }
 
         // No atomicAdd needed, since each thread handles a unique ii
-        dcf_long_range_asymptotics[ii] = temporary_dcf_long_range_asymptotics;
+        dcf_long_range_asymptotics[ii] = static_cast<GPUtype>(temporary_dcf_long_range_asymptotics);
     }
 
     void rism3d_potential :: dcf_long_range_asymptotics_R(int target_x_low_ind, int target_x_high_ind,
@@ -403,7 +411,7 @@ namespace rism3d_c {
         GPUtype ty = grid_ymin + (iy - target_y_low_ind) * grid_spacing_y;
         GPUtype tz = grid_zmin + (iz - target_z_low_ind) * grid_spacing_z;
 
-        GPUtype temporary_tcf_long_range_asymptotics = 0.0;
+        GPUPotAccumType temporary_tcf_long_range_asymptotics = 0.0;
 
         // Loop over sources
         for (int j = 0; j < solute_numAtoms; j++) {
@@ -417,21 +425,21 @@ namespace rism3d_c {
             GPUtype r_eta = r / eta;
 
             if (r > 0) {
-                temporary_tcf_long_range_asymptotics += - solute_charge[jj] / r
+                temporary_tcf_long_range_asymptotics += static_cast<GPUPotAccumType>(- solute_charge[jj] / r
                                                         * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
-                                                        -  exp( kap_r) * erfc(kap_eta_2 + r_eta)) / 2;
+                                                        -  exp( kap_r) * erfc(kap_eta_2 + r_eta)) / 2);
             }
             else{
-                temporary_tcf_long_range_asymptotics += - solute_charge[jj]
+                temporary_tcf_long_range_asymptotics += static_cast<GPUPotAccumType>(- solute_charge[jj]
                                                         * (2 / (sqrt(PI) * eta)
-                                                        -  exp( kap_eta_2 * kap_eta_2) * kap * erfc(kap_eta_2)) / exp( kap_eta_2 * kap_eta_2);
-            }
+                                                        -  exp( kap_eta_2 * kap_eta_2) * kap * erfc(kap_eta_2)) / exp( kap_eta_2 * kap_eta_2));
+                }
         }
 
         // Atomic update to prevent race conditions
         // atmicAdd(&potential[ii], temporary_tcf_long_range_asymptotics);
         // No atomicAdd needed, since each thread handles a unique ii
-        tcf_long_range_asymptotics[ii] = temporary_tcf_long_range_asymptotics * exp( kap_eta_2 * kap_eta_2) / solvent_dielconst;
+        tcf_long_range_asymptotics[ii] = static_cast<GPUtype>(temporary_tcf_long_range_asymptotics * exp(kap_eta_2 * kap_eta_2) / solvent_dielconst);
     }
 
     void rism3d_potential :: tcf_long_range_asymptotics_R(int target_x_low_ind, int target_x_high_ind,
@@ -507,8 +515,8 @@ namespace rism3d_c {
             GPUtype ky = waveVectorY[ig];
             GPUtype kz = waveVectorZ[ig];
 
-            GPUtype sumCos = 0;
-            GPUtype sumSin = 0;
+            GPUPotAccumType sumCos = 0;
+            GPUPotAccumType sumSin = 0;
 
             for (int iu = 0; iu < numAtoms; ++iu) {
                 // Compute indices for x, y, z components of the atom
@@ -520,7 +528,7 @@ namespace rism3d_c {
                 GPUtype phase = kx * x + ky * y + kz * z;
 
                 // Accumulate cosine and sine contributions
-                sumCos = sumCos + charge[iu] * cos(phase);
+                sumCos = sumCos + static_cast<GPUPotAccumType>(charge[iu] * cos(phase));
 
                 // Because we are using half of z axis for the in-place FFTW 
                 // our CUDA version needs to use the 
@@ -529,19 +537,19 @@ namespace rism3d_c {
                 // to get the correct result.
                 // There is a phase shift compared to Fortran version,
                 // which takes half of x axis for the FFTW.
-                sumSin = sumSin - charge[iu] * sin(phase);
+                sumSin = sumSin - static_cast<GPUPotAccumType>(charge[iu] * sin(phase));
             }
 
             GPUtype uc1g = asympk_const * exp(-smear2_4 * waveVectors2[ig]);
             GPUtype uc1gc = uc1g / waveVectors2[ig];
 
-            dcfLongRangeAsympK[2*ig] = uc1gc * sumCos;
-            dcfLongRangeAsympK[2*ig+1] = uc1gc * sumSin;
+            dcfLongRangeAsympK[2*ig] = static_cast<GPUtype>(uc1gc * sumCos);
+            dcfLongRangeAsympK[2*ig+1] = static_cast<GPUtype>(uc1gc * sumSin);
 
             if(ionic == true){
                 GPUtype uc1gh = uc1g / ((waveVectors2[ig] + xappa2) * solvent_dielconst);
-                tcfLongRangeAsympK[2*ig] = uc1gh * sumCos;
-                tcfLongRangeAsympK[2*ig+1] = uc1gh * sumSin;
+                tcfLongRangeAsympK[2*ig] = static_cast<GPUtype>(uc1gh * sumCos);
+                tcfLongRangeAsympK[2*ig+1] = static_cast<GPUtype>(uc1gh * sumSin);
             }
 
 
@@ -639,9 +647,9 @@ namespace rism3d_c {
                                                     int numAtoms,
                                                     GPUtype *blockCos,   // Partial sums (cosines)
                                                     GPUtype *blockSin) { // Partial sums (sines)
-        extern __shared__ GPUtype sharedMemory[]; // Shared memory for partial sums
-        GPUtype *sharedCos = sharedMemory;        // First half for cosines
-        GPUtype *sharedSin = sharedMemory + blockDim.x; // Second half for sines
+        extern __shared__ GPUPotAccumType sharedMemory[]; // Shared memory for partial sums
+        GPUPotAccumType *sharedCos = sharedMemory;        // First half for cosines
+        GPUPotAccumType *sharedSin = sharedMemory + blockDim.x; // Second half for sines
 
         int tid = threadIdx.x;
         int idx = blockIdx.x * blockDim.x + tid;
@@ -652,17 +660,20 @@ namespace rism3d_c {
 
         // Each thread processes a subset of atoms
         for (int i = idx; i < numAtoms; i += blockDim.x * gridDim.x) {
-            GPUtype x = positions[3 * i];
-            GPUtype y = positions[3 * i + 1];
-            GPUtype z = positions[3 * i + 2];
+            // GPUtype x = positions[3 * i];
+            // GPUtype y = positions[3 * i + 1];
+            // GPUtype z = positions[3 * i + 2];
+            GPUtype x = positions[i];
+            GPUtype y = positions[numAtoms + i];
+            GPUtype z = positions[2 * numAtoms + i];
             GPUtype charge = charges[i];
 
             // Calculate phase
             GPUtype phase = waveVectorX * x + waveVectorY * y + waveVectorZ * z;
 
             // Accumulate cos and sin contributions
-            sharedCos[tid] += charge * cos(phase);
-            sharedSin[tid] -= charge * sin(phase);
+            sharedCos[tid] += static_cast<GPUPotAccumType>(charge * cos(phase));
+            sharedSin[tid] -= static_cast<GPUPotAccumType>(charge * sin(phase));
         }
 
         __syncthreads();
@@ -678,8 +689,8 @@ namespace rism3d_c {
 
         // Store the block's result in global memory
         if (tid == 0) {
-            blockCos[blockIdx.x] = sharedCos[0];
-            blockSin[blockIdx.x] = sharedSin[0];
+            blockCos[blockIdx.x] = static_cast<GPUtype>(sharedCos[0]);
+            blockSin[blockIdx.x] = static_cast<GPUtype>(sharedSin[0]);
         }
     }
 
@@ -732,7 +743,7 @@ namespace rism3d_c {
         int numThreads = 256;
         int numBlocks = (numAtoms + numThreads - 1) / numThreads;
 
-        int sharedMemSize = 2 * numThreads * sizeof(GPUtype);
+        int sharedMemSize = 2 * numThreads * sizeof(GPUPotAccumType);
 
         GPUtype *blockCos, *blockSin;
         cudaMallocManaged((void**)&blockCos, numBlocks * sizeof(GPUtype));

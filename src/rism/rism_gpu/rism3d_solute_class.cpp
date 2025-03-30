@@ -19,6 +19,8 @@ namespace rism3d_c {
 
         set_solute(solu_f);
 
+
+
     }
 
     rism3d_solute_class :: ~rism3d_solute_class(){
@@ -97,11 +99,28 @@ namespace rism3d_c {
     }
 
     void rism3d_solute_class :: setCoord(double* solutePositions){
-        for(int i = 0; i < 3; i++){
-            for(int j = 0; j < numAtoms; j++){
-                position(i,j) = solutePositions[i + j*3];
+        // if(charged == true){
+#if defined(CUDA_NOSWAP)
+            for(int i = 0; i < 3; i++){
+                for(int j = 0; j < numAtoms; j++){
+                    position(i,j) = solutePositions[i + j*3];
+                }
             }
-        }
+#else
+            for(int j = 0; j < numAtoms; j++){
+                position(0,j) = solutePositions[2 + j*3];
+                position(1,j) = solutePositions[1 + j*3];
+                position(2,j) = solutePositions[0 + j*3];
+            }
+#endif
+        // } else{
+        //     for(int i = 0; i < 3; i++){
+        //         for(int j = 0; j < numAtoms; j++){
+        //             position(i,j) = solutePositions[i + j*3];
+        //         }
+        //     }
+        // }
+
 // #if RISMCUDA_DOUBLE
 //             ofstream myfile2;
 //             myfile2.open("/home/fcarvalho/rism3d.cuda.test/coords_db.txt");

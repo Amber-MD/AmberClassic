@@ -343,7 +343,7 @@ namespace rism3d_c {
       // @param[in,out] converged Returns true if the solution has converged.
       // @param[in] tolerance Target residual tolerance for convergence.
       // MY COMMENT: IN .F90 PRIVATE LIST
-      void single3DRISMsolution();
+      void single3DRISMsolution(double tolerance);
 
       void convert2nr();
       void convert2nr_cu();

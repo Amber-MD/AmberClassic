@@ -2,10 +2,40 @@
 #include "mdiis.hpp"
 using namespace std;
 
+
+#include <cstdio>
+#include <cstdlib>
+
+// Templates for the LAPACK routines getrf and getrs
+template <typename T> cusolverStatus_t cusolverDnGetrf_bufferSize(cusolverDnHandle_t handle, int m, int n, T* A, int lda, int* lwork);
+template <> cusolverStatus_t cusolverDnGetrf_bufferSize<float>(cusolverDnHandle_t handle, int m, int n, float* A, int lda, int* lwork) {
+     return cusolverDnSgetrf_bufferSize(handle, m, n, A, lda, lwork); 
+    }
+template <> cusolverStatus_t cusolverDnGetrf_bufferSize<double>(cusolverDnHandle_t handle, int m, int n, double* A, int lda, int* lwork) { 
+    return cusolverDnDgetrf_bufferSize(handle, m, n, A, lda, lwork); 
+}
+
+template <typename T> cusolverStatus_t cusolverDnGetrf(cusolverDnHandle_t handle, int m, int n, T* A, int lda, T* Workspace, int* devIpiv, int* devInfo);
+template <> cusolverStatus_t cusolverDnGetrf<float>(cusolverDnHandle_t handle, int m, int n, float* A, int lda, float* Workspace, int* devIpiv, int* devInfo) { 
+    return cusolverDnSgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo); 
+}
+template <> cusolverStatus_t cusolverDnGetrf<double>(cusolverDnHandle_t handle, int m, int n, double* A, int lda, double* Workspace, int* devIpiv, int* devInfo) { 
+    return cusolverDnDgetrf(handle, m, n, A, lda, Workspace, devIpiv, devInfo); 
+}
+
+// Templated cusolverDnGetrs wrapper declarations and specializations (one line each):
+template <typename T> cusolverStatus_t cusolverDnGetrs(cusolverDnHandle_t handle, cublasOperation_t trans, int n, int nrhs, const T* A, int lda, const int* devIpiv, T* B, int ldb, int* devInfo);
+template <> cusolverStatus_t cusolverDnGetrs<float>(cusolverDnHandle_t handle, cublasOperation_t trans, int n, int nrhs, const float* A, int lda, const int* devIpiv, float* B, int ldb, int* devInfo) { 
+    return cusolverDnSgetrs(handle, trans, n, nrhs, A, lda, devIpiv, B, ldb, devInfo); 
+}
+template <> cusolverStatus_t cusolverDnGetrs<double>(cusolverDnHandle_t handle, cublasOperation_t trans, int n, int nrhs, const double* A, int lda, const int* devIpiv, double* B, int ldb, int* devInfo) { 
+    return cusolverDnDgetrs(handle, trans, n, nrhs, A, lda, devIpiv, B, ldb, devInfo); 
+}
+
 namespace rism3d_c {
 
     mdiis :: mdiis(int nvec, double del, rism3d_safemem *memalloc) :
-    a(array_class<GPUtype>::ROW_MAJOR),
+    a(array_class<GPUMDIISType>::ROW_MAJOR),
     b()
     {
         memalloc_p = memalloc;
@@ -61,30 +91,45 @@ namespace rism3d_c {
         ri = resVecData;
     }
 
-    void mdiis :: advance(){
+    void mdiis :: advance(double tolerance){
+        IS = current_NVec;
+
         // Allocating memory for R*
         GPUtype *ri_star;
         cudaMallocManaged(&ri_star, np * sizeof(GPUtype));
         cudaMemset(ri_star, 0, np * sizeof(GPUtype));
 
-        // Create temporary workspace for b
+        // Create temporary new solution array and workspaces for a and b
         GPUtype *temp_b;
-        GPUtype *temp_a;
+        GPUMDIISType *temp_b_dbl;
+        GPUMDIISType *temp_a;
         GPUtype *new_sol;
         cudaMallocManaged(&temp_b, (NVec + 1) * sizeof(GPUtype));
-        cudaMallocManaged(&temp_a, (NVec + 1) * (NVec + 1) * sizeof(GPUtype));
+        cudaMallocManaged(&temp_b_dbl, (NVec + 1) * sizeof(GPUMDIISType));
+        cudaMallocManaged(&temp_a, (NVec + 1) * (NVec + 1) * sizeof(GPUMDIISType));
         cudaMallocManaged(&new_sol, np * sizeof(GPUtype));
 
-        // Copy original b to temp_b
-        cudaMemcpy(temp_b, b.m_data, (NVec + 1) * sizeof(GPUtype), cudaMemcpyDeviceToDevice);
-        
+        // initialize memory to zero
+        cudaMemset(temp_a, 0, (NVec + 1) * (NVec + 1) * sizeof(GPUMDIISType));
+        cudaMemset(temp_b, 0, (NVec + 1) * sizeof(GPUtype));
+        cudaMemset(temp_b_dbl, 0, (NVec + 1) * sizeof(GPUMDIISType));
+        cudaMemset(new_sol, 0, np * sizeof(GPUtype));
+
+#if RISMCUDA_DOUBLE
+            cudaMemcpy(temp_b, b.m_data, (NVec + 1) * sizeof(GPUtype), cudaMemcpyDeviceToDevice);
+#else
+            cu_memcpy(b.m_data, temp_b_dbl, NVec + 1);
+#endif // RISMCUDA_DOUBLE
         // Calculating overlaping matrix values 
         for(int i = 0; i < current_NVec; i++){
                 for(int j = 0; j < current_NVec; j++){
 #if RISMCUDA_DOUBLE
                     cublasDdot(handle, np, &ri[i*np], 1, &ri[j*np], 1, &a.m_data[(i+1) * (NVec + 1) + (j+1)]);
 #else
-                    cublasSdot(handle, np, &ri[i*np], 1, &ri[j*np], 1, &a.m_data[(i+1) * (NVec + 1) + (j+1)]);
+                    // cublasSdot(handle, np, &ri[i*np], 1, &ri[j*np], 1, &a.m_data[(i+1) * (NVec + 1) + (j+1)]);
+                    // printf("blas a[%d][%d] = %e\n", i + 1, j + 1, a.m_data[(i + 1) * (NVec + 1) + (j + 1)]);
+                    cu_SDDot(np, &ri[i*np], &ri[j*np], &a.m_data[(i+1) * (NVec + 1) + (j+1)]);
+                    // printf("mine a[%d][%d] = %e\n", i + 1, j + 1, a.m_data[(i + 1) * (NVec + 1) + (j + 1)]);
 #endif // RISMCUDA_DOUBLE
                 }
         }
@@ -93,11 +138,18 @@ namespace rism3d_c {
         // the real space
         residual = sqrt(a(current_NVec, current_NVec)/np_real);
 
+        if(residual < tolerance){
+            return;
+        }
+
         // Synchronize device before proceeding
         cudaDeviceSynchronize();
 
-        // Copy a data into temp_a
+#if RISMCUDA_DOUBLE
         cudaMemcpy(temp_a, a.m_data, (NVec + 1) * (NVec + 1) * sizeof(GPUtype), cudaMemcpyDeviceToDevice);
+#else
+        cu_memcpy(a.m_data, temp_a, (NVec + 1) * (NVec + 1));
+#endif // RISMCUDA_DOUBLE
 
         // Prepare the necessary variables for LU factorization
         int *d_ipiv; // Pivot indices
@@ -107,9 +159,10 @@ namespace rism3d_c {
         // Allocate memory for pivot array and info
         cudaMallocManaged(&d_ipiv, (NVec + 1) * sizeof(int));
         cudaMallocManaged(&d_info, sizeof(int));
+        cudaMemset(d_info, 0, sizeof(int));
 
         // Solving Ax = b using LU decomposition and storing solution into a temp array
-        GPUtype *d_work;
+        GPUMDIISType *d_work;
 #if RISMCUDA_DOUBLE
         // Query the workspace size
         cusolverDnDgetrf_bufferSize(handle_solv, (current_NVec + 1), (current_NVec + 1), temp_a, (NVec + 1), &lwork);
@@ -122,22 +175,24 @@ namespace rism3d_c {
 
         // Solve the system Ax = b
         cusolverDnDgetrs(handle_solv, CUBLAS_OP_T, (current_NVec + 1), 1, temp_a, (NVec + 1), d_ipiv, temp_b, (NVec + 1), d_info);
-        cudaDeviceSynchronize();
 #else
-        // Query the workspace size
-        cusolverDnSgetrf_bufferSize(handle_solv, (current_NVec + 1), (current_NVec + 1), temp_a, (NVec + 1), &lwork);
         
-        cudaMallocManaged(&d_work, lwork * sizeof(GPUtype));
+        // Query the workspace size
+        cusolverDnGetrf_bufferSize(handle_solv, (current_NVec + 1), (current_NVec + 1), temp_a, (NVec + 1), &lwork);
+        
+        cudaMallocManaged(&d_work, lwork * sizeof(GPUMDIISType));
 
         // Perform LU factorization
-        cusolverDnSgetrf(handle_solv, (current_NVec + 1), (current_NVec + 1), temp_a, (NVec + 1), d_work, d_ipiv, d_info);
+        cusolverDnGetrf(handle_solv, (current_NVec + 1), (current_NVec + 1), temp_a, (NVec + 1), d_work, d_ipiv, d_info);
         cudaDeviceSynchronize();
 
         // Solve the system Ax = b
-        cusolverDnSgetrs(handle_solv, CUBLAS_OP_T, (current_NVec + 1), 1, temp_a, (NVec + 1), d_ipiv, temp_b, (NVec + 1), d_info);
+        cusolverDnGetrs(handle_solv, CUBLAS_OP_T, (current_NVec + 1), 1, temp_a, (NVec + 1), d_ipiv, temp_b_dbl, (NVec + 1), d_info);
         cudaDeviceSynchronize();
-#endif // RISMCUDA_DOUBLE
 
+        cu_memcpy(temp_b_dbl, temp_b, NVec + 1);
+#endif // RISMCUDA_DOUBLE
+        cudaDeviceSynchronize();
         // Just checking results:
         // For NVec = 1:
         // A = | 0  -1  |
@@ -167,40 +222,37 @@ namespace rism3d_c {
         for(int i = 0; i < current_NVec; i++){
 #if RISMCUDA_DOUBLE
             cublasDaxpy(handle, np, &temp_b[i+1], &ri[i*np], 1, ri_star, 1);
-            cudaDeviceSynchronize();
 #else
             cublasSaxpy(handle, np, &temp_b[i+1], &ri[i*np], 1, ri_star, 1);
-            cudaDeviceSynchronize();
 #endif // RISMCUDA_DOUBLE
         }
 
         for(int i = 0; i < current_NVec; i++){
 #if RISMCUDA_DOUBLE
             cublasDaxpy(handle, np, &temp_b[i+1], &xi[i*np], 1, new_sol, 1);
-            cudaDeviceSynchronize();
 #else
             cublasSaxpy(handle, np, &temp_b[i+1], &xi[i*np], 1, new_sol, 1);
-            cudaDeviceSynchronize();
 #endif // RISMCUDA_DOUBLE
         }
-
 
         // The final solution in the MDIIS method is calculated as 
         // f_final = new_sol + del * ri_star
         // The code below is performing this calculation
 #if RISMCUDA_DOUBLE
         cublasDaxpy(handle, np, &del, ri_star, 1, new_sol, 1);
-        cudaDeviceSynchronize();
 #else
         cublasSaxpy(handle, np, &del, ri_star, 1, new_sol, 1);
-        cudaDeviceSynchronize();
 #endif // RISMCUDA_DOUBLE
+        cudaDeviceSynchronize();
 
         // Move data starting from the second array to the beginning to free space for new solutions
+        
         if(current_NVec == NVec){
-            cudaMemcpy(xi, xi + np, (NVec - 1)*np*sizeof(GPUtype), cudaMemcpyDeviceToDevice);
-            cudaMemcpy(ri, ri + np, (NVec - 1)*np*sizeof(GPUtype), cudaMemcpyDeviceToDevice);
-            cudaDeviceSynchronize();
+            for(int i = 0; i < NVec - 1; i++){
+                cudaMemcpy(xi + i * np, xi + (i + 1) * np, np * sizeof(GPUtype), cudaMemcpyDeviceToDevice);
+                cudaMemcpy(ri + i * np, ri + (i + 1) * np, np * sizeof(GPUtype), cudaMemcpyDeviceToDevice);
+                cudaDeviceSynchronize();
+            }
         }
 
         // Increment the current overlap matrix size
@@ -209,10 +261,7 @@ namespace rism3d_c {
         }
 
         // Need to copy solution to the next array to be used in the RISM/Picard[?] iteration
-        if(current_NVec > 1){
-            cudaMemcpy(xi + (current_NVec - 1)*np, new_sol, np*sizeof(GPUtype), cudaMemcpyDeviceToDevice);
-            cudaDeviceSynchronize();
-        }
+        cudaMemcpy(xi + (current_NVec - 1) * np, new_sol, np * sizeof(GPUtype), cudaMemcpyDeviceToDevice);
 
         // free space
         cudaFree(temp_b);
@@ -226,6 +275,10 @@ namespace rism3d_c {
 
     int mdiis :: getWRKvec(){
         return current_NVec;
+    }
+
+    int mdiis :: getIS(){
+        return IS;
     }
 
 }
