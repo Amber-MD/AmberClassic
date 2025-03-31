@@ -5252,8 +5252,7 @@ RET:
  *  vaSolventResidues() - make array of residue pointers
  *      TODO - maybe restrict it to dShellExtent?
  */
-VARARRAY        vaSolventResidues( uUnit )
-UNIT            uUnit;
+VARARRAY        vaSolventResidues( UNIT uUnit )
 {
 VARARRAY        vaSolvent;
 LOOP            lRes;

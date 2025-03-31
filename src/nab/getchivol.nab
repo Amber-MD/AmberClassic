@@ -1,0 +1,40 @@
+float getchivolp(point a1,point a2,point a3,point a4)
+
+//  see Crippen & Havel book, p. 27.
+{
+	return ((a1.z*a2.y*a3.x
+		-a1.y*a2.z*a3.x
+		-a1.z*a2.x*a3.y
+		+a1.x*a2.z*a3.y
+		+a1.y*a2.x*a3.z
+		-a1.x*a2.y*a3.z
+		-a1.z*a2.y*a4.x
+		+a1.y*a2.z*a4.x
+		+a1.z*a3.y*a4.x
+		-a2.z*a3.y*a4.x
+		-a1.y*a3.z*a4.x
+		+a2.y*a3.z*a4.x
+		+a1.z*a2.x*a4.y
+		-a1.x*a2.z*a4.y
+		-a1.z*a3.x*a4.y
+		+a2.z*a3.x*a4.y
+		+a1.x*a3.z*a4.y
+		-a2.x*a3.z*a4.y
+		-a1.y*a2.x*a4.z
+		+a1.x*a2.y*a4.z
+		+a1.y*a3.x*a4.z
+		-a2.y*a3.x*a4.z
+		-a1.x*a3.y*a4.z
+		+a2.x*a3.y*a4.z)/6.);
+};
+
+float getchivol(molecule m, string aex1, string aex2, string aex3, string aex4)
+{
+	point	p1, p2, p3, p4;
+
+	setxyz_from_mol( m, aex1, p1 ); 
+	setxyz_from_mol( m, aex2, p2 ); 
+	setxyz_from_mol( m, aex3, p3 ); 
+	setxyz_from_mol( m, aex4, p4 ); 
+	return( getchivolp( p1, p2, p3, p4 ));
+};

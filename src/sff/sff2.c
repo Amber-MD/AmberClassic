@@ -7,8 +7,8 @@
  *
  * Main interface is through routines "mme2" and "mme_init".
  *
- * Second derivatives, in particular the egb2 function, were
- * implemented by Russ Brown (russ.brown@sun.com).
+ * Second derivatives, including the egb2 function, were
+ * implemented by Russ Brown (russ.brown@yahoo.com).
  *
  * Changes to difang, eangl2 and ephi2 by David A. Case (case@scripps.edu).
  *

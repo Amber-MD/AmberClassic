@@ -791,7 +791,6 @@ void calc_approx_q_hcpo(REAL_T * x, REAL_T * x_hcp1, REAL_T * x_hcp2, REAL_T * x
              		q_hcp2[j4a+0] = rbar2[0];
              		q_hcp2[j4a+1] = rbar2[1];
              		q_hcp2[j4a+2] = rbar2[2];
-             		j4a = 4 * (s * hcp + 0);
              		j4a = 4 * (s * hcp + 1);
                                 
 		}  /* end for each strand */
@@ -1101,19 +1100,7 @@ void calc_energy_atom(int j, int *iexw, PARMSTRUCT_T *prm, REAL_T *x, int i, int
 			ic =prm->Cno[iaci + prm->Iac[j] - 1];
 			if (ic > 0) 
 			{
-
-				if (ic > 0) 
-				{
-					ic--;
-				} 
-				else 
-				{
-					ibig = prm->Iac[i] > prm->Iac[j] ?
-						prm->Iac[i] : prm->Iac[j];
-					isml = prm->Iac[i] > prm->Iac[j] ?
-						prm->Iac[j] : prm->Iac[i];
-					ic = ibig * (ibig - 1) / 2 + isml - 1;
-				}
+				ic--;
 				r6 = r2inv * r2inv * r2inv;
 				f2 = prm->Cn2[ic] * r6;
 				f1 = prm->Cn1[ic] * r6 * r6;

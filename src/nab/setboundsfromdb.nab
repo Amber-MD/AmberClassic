@@ -1,0 +1,106 @@
+//  query a database of structures and insert relevant bounds into the
+//  boundsmatrix for molecule m.  Input atom expressions are parsed to
+//  just extract the residue information.
+
+int	getdist();
+
+int	setboundsfromdb( bounds b, molecule m, string ri, string rj, string lib, float mul )
+{
+	atom	ai, aj;
+	string	rit, rjt;
+	string	aexi, aexj, fields[4];
+	string	dname, dname2, i_strandname, j_strandname;
+	string	i_resname, j_resname;
+	string	i_resnum, j_resnum;
+	residue	r;
+	int	ri_resnum, rj_resnum;
+	int	dcnt;
+	float	dval, dsd, dmin, dmax;
+
+//  get residue info from input atom expression strings:
+
+	split(ri, fields, ":");
+	i_strandname = fields[1];
+	i_resnum = fields[2];
+	ri_resnum = atoi(i_resnum);
+
+	split(rj, fields, ":");
+	j_strandname = fields[1];
+	j_resnum = fields[2];
+	rj_resnum = atoi(j_resnum);
+
+	for (r in m) {
+		if ( r.resnum == ri_resnum && r.strandname == i_strandname ){
+			i_resname = r.resname;
+			rit = substr( i_resname, 1, 1 );
+            if( rit == "D" ) rit = substr( i_resname, 2, 1 );
+		}
+		if ( r.resnum == rj_resnum && r.strandname == j_strandname ){
+			j_resname = r.resname;
+			rjt = substr( j_resname, 1, 1 );
+            if( rjt == "D" ) rjt = substr( j_resname, 2, 1 );
+		}
+	}
+
+	fprintf( stderr, "setboundsfromdb: %s, %s -> %s (%s -> %s)\n", 
+             lib, ri, rj, i_resname, j_resname );
+
+	if( !i_resname ){
+		fprintf( stderr, "setboundsfromdb: 1st residue type unknown\n" );
+		return( 1 );
+	}
+	if( !j_resname ){
+		fprintf( stderr, "setboundsfromdb: 2nd residue type unknown\n" );
+		return( 1 );
+	}
+
+	for( ai in m ){
+		if ( ai !~ ri )	continue;
+
+		if( ai.atomname =~ "[H]" ) continue; // skip hydrogens -- needed?
+
+		aexi = sprintf( "%s:%d:%s",i_strandname, ri_resnum, ai.atomname );
+		for( aj in m ){
+			if ( aj !~ rj ) continue;
+
+			if( aj.atomname =~ "[H]" ) continue;
+
+			if( (aj.atomname =~ "[P\\*']" ) || (ai.atomname =~ "[P\\*']") ){
+				aexj = sprintf( "%s:%d:%s",j_strandname, rj_resnum, aj.atomname );
+                if( aexi == aexj ) continue;
+				dname = sprintf( "%s:%s-%s:%s",
+					rit, ai.atomname, rjt, aj.atomname );
+				dname2 = sprintf( "%s:%s-%s:%s",
+					rjt, aj.atomname, rit, ai.atomname );
+				if( !getdist(dname, lib, dcnt, dval, dsd, dmin, dmax )){
+					andbounds( b, m, aexi, aexj, dmin, dmax);
+				}
+				else if( !getdist(dname2, lib, dcnt, dval, dsd, dmin, dmax )){
+					andbounds( b, m, aexi, aexj, dmin, dmax);
+				}
+				else
+					fprintf(stderr, "setboundsfromdb: Couldn't find entry for %s in %s: %s %s\n", dname, lib, aexi, aexj );
+			}
+			else{
+				aexj = sprintf( "%s:%d:%s",j_strandname, rj_resnum, aj.atomname );
+                if( aexi == aexj ) continue;
+				dname = sprintf( "%s:%s-%s:%s",
+					rit, ai.atomname, rjt, aj.atomname );
+				dname2 = sprintf( "%s:%s-%s:%s",
+					rjt, aj.atomname, rit, ai.atomname );
+				if( !getdist(dname, lib, dcnt, dval, dsd, dmin, dmax )){
+					andbounds( b, m, aexi, aexj,
+						dval - mul*dsd, dval + mul*dsd );
+				}
+				else if( !getdist(dname2, lib, dcnt, dval, dsd, dmin, dmax )){
+					andbounds( b, m, aexi, aexj,
+						dval - mul*dsd, dval + mul*dsd );
+				}
+				else
+					fprintf(stderr, "setboundsfromdb: Couldn't find entry for %s in %s: %s %s\n", dname, lib, aexi, aexj );
+			}
+		}
+	}
+
+	return( 0 );
+};

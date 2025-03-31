@@ -1,0 +1,20 @@
+molecule m;
+float 	x[2000], f[2000], v[2000];
+float 	dgrad, fret;
+float	t1,t2;
+int 	ier; 
+
+m = getpdb("aladip.pdb");
+readparm(m, "aladip.top");
+mm_options( "ntpr=200000, ntpr_md=20000, gb=1, kappa=0.10395, cut=99.0, diel=C, tempi=300., rattle=2");
+mm_options( "dt=0.0005");
+mme_init( m, NULL, "::Z", x, NULL);
+
+setxyz_from_mol( m, NULL, x );
+t1 = second();
+ier = md(3*m.natoms, 200000000, x, f, v, mme );
+t2 = second();
+if(mytaskid==0){
+  printf( "md returns %d; elapsed time was %8.3f\n", ier, t2-t1 );
+  putxv( "aladip1.x", "equil", m.natoms, 0.0, x, v );
+}

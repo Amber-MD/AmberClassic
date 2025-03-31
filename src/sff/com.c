@@ -14,7 +14,7 @@ int com2zero(REAL_T *x, REAL_T *minv)
 
    n = 3 * prm->Natom;
 
-   xs = ys = zs = 0.0;
+   xs = ys = zs = m_t = 0.0;
 
    /* total mass */
    for (i = 0; i < n/3; i++)
@@ -63,7 +63,7 @@ int com_vw2zero(REAL_T *x, REAL_T *v,REAL_T *minv)
 
    n = 3 * prm->Natom;
 
-   vsx = vsy = vsz = 0.0;
+   vsx = vsy = vsz = m_t = 0.0;
 
    /* total mass */
    for(i=0;i<n/3;i++)
@@ -130,8 +130,6 @@ int com_vw2zero(REAL_T *x, REAL_T *v,REAL_T *minv)
    com_psinv(I, Iinv);
 
    /* rotation: angular velocity */
-   Omx = Omy = Omz = 0.0;
-
    Omx = Iinv[0]*Lx + Iinv[1]*Ly + Iinv[2]*Lz;
    Omy = Iinv[3]*Lx + Iinv[4]*Ly + Iinv[5]*Lz;
    Omz = Iinv[6]*Lx + Iinv[7]*Ly + Iinv[8]*Lz;

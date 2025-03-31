@@ -1,10 +1,13 @@
 #!/bin/bash
 
 export XRAY_NUM_THREADS=10
-# export DO_PARALLEL='mpirun -np 8'
 export CUDA_VISIBLE_DEVICES=0
 
 sander="../../../bin/msander"
+
+if [ ! -z "$DO_CUDA" ]; then
+   sander=$sander.cuda
+fi
 
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI

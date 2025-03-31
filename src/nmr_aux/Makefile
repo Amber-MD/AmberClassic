@@ -2,7 +2,7 @@ include ../../config.h
 
 nmr_aux::	
 	$(VB)cd prepare_input && $(MAKE) nmr_aux
-	$(VB)rsync -a senergy sviol sviol2 $(BINDIR)
+	$(VB)cp senergy sviol sviol2 $(BINDIR)
 
 clean::	
 	cd prepare_input && $(MAKE) clean 

@@ -757,7 +757,7 @@ qm2_parameters.o: \
 
 qm2_parameters.o:   qm2_parameters.F90
 	@echo '[SQM]  FC $<'
-	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ qm2_parameters.F90
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ qm2_parameters.F90
 
 qm2_params_module.o: \
                     copyright.h\

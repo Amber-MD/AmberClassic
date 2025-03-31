@@ -1,11 +1,11 @@
 
 include ../../config.h
 
+# Add search paths for .mod files
+LOCALFLAGS = -I../rism -I../xray
+
 SHELL=/bin/sh
 VPATH=
-
-# Add search paths for .mod files
-LOCALFLAGS = $(CUDAFFLAGS) -I../rism -I../xray 
 
 NFE_OBJECTS = \
     nfe-abmd-hooks.o nfe-bbmd-ctxt.o nfe-bbmd-hooks.o  \
@@ -98,7 +98,7 @@ $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
-	$(VB)$(FC) -o $@  $(MMOBJ) \
+	$(VB)$(FC) $(FFLAGS) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
          -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
@@ -110,8 +110,8 @@ $(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
 	$(VB)$(FC) $(FFLAGS) -o $@ $(LESOBJ) \
-	     $(XRAY_OBJS) $(NFE_OBJECTS) -L$(LIBDIR) $(NETCDFLIBF) \
-	     $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+	     $(NFE_OBJECTS) $(XRAY_OBJS) \
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
 

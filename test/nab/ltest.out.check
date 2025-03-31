@@ -1,0 +1,12 @@
+Reading parm file (2.prmtop)
+title:
+  title goes here
+old prmtop format => using old algorithm for GB parms
+	mm_options:  cut=999.
+	mm_options:  ntpr=10
+	mm_options:  nsnb=100
+	mm_options:  diel=R
+freezing 221 atoms using expression ::*[PT'],H5'* for moving atoms
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0   1536.20   1156.50    375.61      4.10      0.00      0.00  5.97e+01
+ff:    10    807.74    802.28      9.63     -4.17      0.00      0.00  7.00e+00

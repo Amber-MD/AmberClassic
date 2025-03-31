@@ -15,7 +15,6 @@ void setArrayInt ( char *str, int *a, int n);
 void setArrayDbl ( char *str, double *a, int n);
 
 %}
-
 Float [+-]?((([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 Int [+-]?[0-9]+
 PosInt [+]?[1-9][0-9]*
@@ -24,7 +23,6 @@ NonNegInt [+]?[0-9]+
 Str [^,\ =]+
 Assign (\ *=\ *|\ +)
 ListSep (\ *,\ *)
-
 %%
 
 cut{Assign}{Float}                 { ECHO; cut = setVarDbl(yytext); }
@@ -62,7 +60,7 @@ k4d{Assign}{Float}                 { ECHO; k4d = setVarDbl(yytext); }
 
 ips{Assign}[0123]                  { ECHO; ips = setVarInt(yytext); }
 
-gb{Assign}[012578]                 { ECHO; gb = setVarInt(yytext); }
+gb{Assign}[0123578]                { ECHO; gb = setVarInt(yytext); }
 gb_debug{Assign}[01]               { ECHO; gb_debug = setVarInt(yytext); }
 nr_debug{Assign}[01]               { ECHO; nr_debug = setVarInt(yytext); }
 gb2_debug{Assign}[01]              { ECHO; gb2_debug = setVarInt(yytext); }
@@ -87,103 +85,6 @@ dynamic_loops{Assign}[01]          { ECHO; dynamic_loops = setVarInt(yytext); }
 blocksize{Assign}{NonNegInt}       { ECHO; blocksize = setVarInt(yytext); }
 gbsa{Assign}[01]                   { ECHO; gbsa = setVarInt(yytext); }
 dim{Assign}[34]                    { ECHO; dim = setVarInt(yytext); }
-
-rism{Assign}[01]                   { ECHO; rismData.rism=setVarInt(yytext);}
-xvvfile{Assign}{Str}               { ECHO; xvvfile=setVarStr(yytext);}
-guvfile{Assign}{Str}               { ECHO; guvfile=setVarStr(yytext); }
-huvfile{Assign}{Str}               { ECHO; huvfile=setVarStr(yytext); }
-cuvfile{Assign}{Str}               { ECHO; cuvfile=setVarStr(yytext); }
-uuvfile{Assign}{Str}               { ECHO; uuvfile=setVarStr(yytext); }
-asympfile{Assign}{Str}             { ECHO; asympfile=setVarStr(yytext); }
-quvfile{Assign}{Str}               { ECHO; quvfile=setVarStr(yytext); }
-chgdistfile{Assign}{Str}           { ECHO; chgdistfile=setVarStr(yytext); }
-exchemfile{Assign}{Str}            { ECHO; exchemfile=setVarStr(yytext); }
-solvenefile{Assign}{Str}           { ECHO; solvenefile=setVarStr(yytext); }
-entropyfile{Assign}{Str}           { ECHO; entropyfile=setVarStr(yytext); }
-exchemGFfile{Assign}{Str}          { ECHO; exchemGFfile=setVarStr(yytext); }
-solveneGFfile{Assign}{Str}         { ECHO; solveneGFfile=setVarStr(yytext); }
-entropyGFfile{Assign}{Str}         { ECHO; entropyGFfile=setVarStr(yytext); }
-exchemPCPLUSfile{Assign}{Str}      { ECHO; exchemPCPLUSfile=setVarStr(yytext); }
-solvenePCPLUSfile{Assign}{Str}     { ECHO; solvenePCPLUSfile=setVarStr(yytext);}
-entropyPCPLUSfile{Assign}{Str}     { ECHO; entropyPCPLUSfile=setVarStr(yytext);}
-exchemUCfile{Assign}{Str}          { ECHO; exchemUCfile=setVarStr(yytext); }
-solveneUCfile{Assign}{Str}         { ECHO; solveneUCfile=setVarStr(yytext); }
-entropyUCfile{Assign}{Str}         { ECHO; entropyUCfile=setVarStr(yytext); }
-potUVfile{Assign}{Str}             { ECHO; potUVfile=setVarStr(yytext); }
-electronMapfile{Assign}{Str}       { ECHO; electronMapfile=setVarStr(yytext); }
-volfmt{Assign}{Str}                { ECHO; volfmt=setVarStr(yytext); }
-periodic{Assign}{Str}              { ECHO; periodic=setVarStr(yytext); }
-rst{Assign}{Str}                   { ECHO; rst=setVarStr(yytext); }
- /*
-closure{Assign}0                   { ECHO; closure="hnc"; }
-closure{Assign}1                   { ECHO; closure="kh"; }
-closure{Assign}2                   { ECHO; closure="pse"; }
- */
-
- /* read in an array of closure names (strings). */
- /* This is tricky because we need to avoid eating trailing keywords */
- /* in the same mm_options call. To do this we first enforce the rule */
- /* that there must be a comma before a trailing keyword. This differs */
- /* from the rest of mm_options input where either whitespace or a comma */
- /* may be used. The we have two rules:*/
- /* 1) More keywords follow the list. Reads everything in list, */
- /* including the comma, with the requirement of being followed by a */
- /* keyword. */
-closure{Assign}({Str}{ListSep}){1,10}/{Str}{Assign} {
-               /* find the trailing comma and replace it with a null character */
-               char * comma = strrchr(yytext,',');
-               *comma='\0';
-               ECHO; 
-               setArrayStr(yytext,closure[0],CLOSURELEN,NCLOSURE); 
-}
- /* 2) Last keyword in the input line.  Should read the rest of the */
- /* line. By enforcing comma separated structure we avoid eating up */
- /* key-value pairs that are separated by white space only*/
-closure{Assign}({Str}\ *,\ *){0,9}{Str} { ECHO; setArrayStr(yytext,closure[0],CLOSURELEN,NCLOSURE); }
-
-closureOrder{Assign}{PosInt}    { ECHO; rismData.closureOrder=setVarInt(yytext); }
-asympCorr{Assign}[01]           { ECHO; rismData.asympCorr=setVarInt(yytext); }
-solvcut{Assign}{Float}          { ECHO; rismData.solvcut=setVarDbl(yytext); }
-buffer{Assign}{Float}           { ECHO; rismData.buffer=setVarDbl(yytext); }
-grdspcx{Assign}{Float}          { ECHO; rismData.grdspc[0]=setVarDbl(yytext); }
-grdspcy{Assign}{Float}          { ECHO; rismData.grdspc[1]=setVarDbl(yytext); }
-grdspcz{Assign}{Float}          { ECHO; rismData.grdspc[2]=setVarDbl(yytext); }
-grdspc{Assign}{Float}(\ *,\ *{Float}){2,2}      { ECHO; setArrayDbl(yytext,rismData.grdspc,3);}
-ngx{Assign}{Int}                { ECHO; rismData.ng3[0]=setVarInt(yytext); }
-ngy{Assign}{Int}                { ECHO; rismData.ng3[1]=setVarInt(yytext); }
-ngz{Assign}{Int}                { ECHO; rismData.ng3[2]=setVarInt(yytext); }
-ng{Assign}{Int}(\ *,\ *{Int}){2,2}       { ECHO; setArrayInt(yytext,rismData.ng3,3);}
-solvboxx{Assign}{Float}         { ECHO; rismData.solvbox[0]=setVarDbl(yytext); }
-solvboxy{Assign}{Float}         { ECHO; rismData.solvbox[1]=setVarDbl(yytext); }
-solvboxz{Assign}{Float}         { ECHO; rismData.solvbox[2]=setVarDbl(yytext); }
-solvbox{Assign}{Float}(\ *,\ *{Float}){2,2} { ECHO; setArrayDbl(yytext,rismData.solvbox,3);}
-tolerance{Assign}{Float}({ListSep}{Float})* { ECHO; setArrayDbl(yytext,rismtol,NCLOSURE); }
-mdiis_del{Assign}{Float}        { ECHO; rismData.mdiis_del=setVarDbl(yytext); }
-mdiis_restart{Assign}{Float}    { ECHO; rismData.mdiis_restart=setVarDbl(yytext); }
-mdiis_nvec{Assign}{PosInt}      { ECHO; rismData.mdiis_nvec=setVarInt(yytext); }
-mdiis_method{Assign}[012]       { ECHO; rismData.mdiis_method=setVarInt(yytext); }
-maxstep{Assign}{PosInt}         { ECHO; rismData.maxstep=setVarInt(yytext); }
-npropagate{Assign}[0-5]         { ECHO; rismData.npropagate=setVarInt(yytext); }
-centering{Assign}[0-4\-\+]+     { ECHO; rismData.centering=setVarInt(yytext); }
-zerofrc{Assign}[01]             { ECHO; rismData.zerofrc=setVarInt(yytext); }
-apply_rism_force{Assign}[01]    { ECHO; rismData.apply_rism_force=setVarInt(yytext); }
-polarDecomp{Assign}[01]         { ECHO; rismData.polarDecomp=setVarInt(yytext); }
-entropicDecomp{Assign}[01]      { ECHO; rismData.entropicDecomp=setVarInt(yytext); }
-gfCorrection{Assign}[01]        { ECHO; rismData.gfCorrection=setVarInt(yytext); }
-pcplusCorrection{Assign}[01]    { ECHO; rismData.pcplusCorrection=setVarInt(yytext); }
-rismnrespa{Assign}{PosInt}      { ECHO; rismData.rismnrespa=setVarInt(yytext); }
-fcestride{Assign}{NonNegInt}    { ECHO; rismData.fcestride=setVarInt(yytext); }
-fcecut{Assign}{Float}           { ECHO; rismData.fcecut=setVarDbl(yytext); }
-fcenbasis{Assign}{PosInt}       { ECHO; rismData.fcenbasis=setVarInt(yytext); }
-fcecrd{Assign}[012]             { ECHO; rismData.fcecrd=setVarInt(yytext); }
-saveprogress{Assign}{NonNegInt} { ECHO; rismData.saveprogress=setVarInt(yytext); }
-ntwrism{Assign}{Int}            { ECHO; rismData.ntwrism=setVarInt(yytext); }
-verbose{Assign}[012]            { ECHO; rismData.verbose=setVarInt(yytext); }
-progress{Assign}{NonNegInt}     { ECHO; rismData.progress=setVarInt(yytext); }
-ntpr_rism{Assign}{NonNegInt}    { ECHO; ntpr_rism=setVarInt(yytext); }
-uccoeff{Assign}{Float}({ListSep}{Float})* { ECHO; setArrayDbl(yytext,rismData.uccoeff,4); }
-biasPotential{Assign}{Float}    { ECHO; rismData.biasPotential=setVarDbl(yytext); }
-selftest{Assign}[01]            { ECHO; rismData.selftest=setVarInt(yytext); }
 
 diel{Assign}Yammp               { ECHO; dield = -5; }
 diel{Assign}R94                 { ECHO; dield = -4; }
@@ -380,4 +281,3 @@ int mm_options(char *opts)
    yy_delete_buffer(YY_CURRENT_BUFFER);
    return (0);
 }
-

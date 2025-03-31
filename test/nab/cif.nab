@@ -1,0 +1,13 @@
+molecule m, m2, m3, m4;
+
+m = getpdb( "gbrna.pdb" );
+putcif( "gbrna.cif", "1DAC", m );
+
+m2 = getcif( "gbrna.cif", "1DAC" );
+putpdb( "gbrna2.pdb", m2, "-nobocc" );
+
+m3 = getcompcif( "component.00D.cif", "00D" );
+putpdb( "component.00D.pdb", m3, "-nobocc" );
+
+m4 = getcif( "1BNA.cif", "1BNA" );
+putpdb( "1BNA2.pdb", m4, "-nobocc" );

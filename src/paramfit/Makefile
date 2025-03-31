@@ -28,7 +28,7 @@ calc_r_squared.o: $(HEADERS)
 paramfit: $(BINDIR)/paramfit
 
 $(BINDIR)/paramfit: 	$(OBJECTS) 
-	@echo "[PARAMFIT]  CC $<"
+	@echo "[PARAMFIT]  CC $@"
 	$(VB)$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS) $(LM) 
 
 .c.o:

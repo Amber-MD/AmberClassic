@@ -1,0 +1,23 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to compute non-GB Newton-Raphson and normal modes:"
+echo ""
+../../bin/$NAB -o aspnb aspnb.nab || error
+$DO_PARALLEL ./aspnb > aspnb.out.tmp || error
+cat aspnb.out.tmp | tail -67 > aspnb.out
+rm aspnb.out.tmp
+
+echo "Note: Small differences are common and do not necessarily"
+echo "indicate a problem."
+../dacdif aspnb.out.check aspnb.out
+
+rm -f aspnb aspnb.c
+exit 0

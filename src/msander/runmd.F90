@@ -275,6 +275,8 @@ subroutine runmd(xx, ix, ih, ipairs, x, winv, amass, f, v, vold, xc, &
   _REAL_ onstepvel(3*natom)
   ! Used to save coordinates at time=t for on-step output
   _REAL_ onstepcrd(3*natom)
+  ! scratch for ndvptx
+  integer iscrth(natom)
 
 
 !------------------------------------------------------------------------------
@@ -548,7 +550,7 @@ subroutine runmd(xx, ix, ih, ipairs, x, winv, amass, f, v, vold, xc, &
   if (ntp > 0 .and. barostat == 2 .and. mod(total_nstep+1, mcbarint) == 0) &
     call mcbar_trial(xx, ix, ih, ipairs, x, xc, f, ener%vir, xx(l96), &
                      xx(l97), xx(l98), xx(l99), qsetup, do_list_update, &
-                     nstep, nsp, amass)
+                     nstep, nsp, amass, nmropt)
 
 !------------------------------------------------------------------------------
   ! Step 1b: get the forces for the system's current coordinates
@@ -1478,7 +1480,7 @@ subroutine runmd(xx, ix, ih, ipairs, x, winv, amass, f, v, vold, xc, &
           call pcshift(-1, x, f)
         end if
         
-        call ndvptx(x, f, ih(m04), ih(m02), ix(i02), nres, xx(l95), &
+        call ndvptx(x, f, ih(m04), ih(m02), ix(i02), nres, iscrth, &
                     natom, xx(lwinv), xx(lnmr01), ix(inmr02), 6)
       end if
 

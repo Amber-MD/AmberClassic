@@ -107,8 +107,9 @@ SUBROUTINE SetupSlaterAuxiliary(N,SA,SB,RAB)
 !$DIR MAX_TRIPS(64)                                                     
 !VDIR LOOPCNT=64                                                        
 !VOCL LOOP,REPEAT(63)                                                   
-         DO 20 I=1,N+1 
-   20    B(I) = B0(I) 
+         DO I=1,N+1 
+            B(I) = B0(I) 
+         end do
          RETURN 
       ENDIF 
 !     LARGE ARGUMENT.                                                   
@@ -120,9 +121,10 @@ SUBROUTINE SetupSlaterAuxiliary(N,SA,SB,RAB)
          EXPMX  = 1.0D0/EXPX 
          RX     = 1.0D0/BETA 
          B(1)   = (EXPX-EXPMX)*RX 
-         DO 30 I=1,N 
-         EXPX   = -EXPX 
-   30    B(I+1)= (I*B(I)+EXPX-EXPMX)*RX 
+         DO I=1,N 
+            EXPX   = -EXPX 
+            B(I+1)= (I*B(I)+EXPX-EXPMX)*RX 
+         end do
          RETURN 
       ENDIF 
 !     SMALL ARGUMENT.                                                   
@@ -136,14 +138,17 @@ SUBROUTINE SetupSlaterAuxiliary(N,SA,SB,RAB)
          LAST = 15 
       ENDIF 
       BETPOW(1) = 1.0D0 
-      DO 40 M=1,LAST 
-   40 BETPOW(M+1) = -BETA*BETPOW(M) 
-      DO 60 I=1,N+1 
-      Y      = 0.0D0 
-      MA     = 1-MOD(I,2) 
-      DO 50 M=MA,LAST,2 
-   50 Y      = Y+BETPOW(M+1)/(FC(M+1)*(M+I)) 
-   60 B(I)   = Y*2.0D0 
+      DO M=1,LAST 
+         BETPOW(M+1) = -BETA*BETPOW(M) 
+      end do
+      DO I=1,N+1 
+         Y      = 0.0D0 
+         MA     = 1-MOD(I,2) 
+         DO M=MA,LAST,2 
+            Y      = Y+BETPOW(M+1)/(FC(M+1)*(M+I)) 
+         end do
+         B(I)   = Y*2.0D0 
+      end do
       RETURN 
 END SUBROUTINE SetupSlaterAuxiliary                                          
 
@@ -181,14 +186,15 @@ FUNCTION CalculateOverlap (NA,LA,MM,NB,LB,ALPHA,BETA)
       IF((LA.GT.0).OR.(LB.GT.0)) GO TO 20 
       IADA   = IAD(NA+1) 
       IADB   = IAD(NB+1) 
-      DO 10 I=0,NA 
-      IBA    = IBINOM(IADA+I) 
-      DO 10 J=0,NB 
-      IBB    = IBA*IBINOM(IADB+J) 
-      IF(MOD(J,2).EQ.1) IBB=-IBB 
-      IJ     = I+J 
-      X      = X+IBB*A(NAB-IJ)*B(IJ+1) 
-   10 CONTINUE 
+      DO I=0,NA 
+         IBA    = IBINOM(IADA+I) 
+         DO J=0,NB 
+            IBB    = IBA*IBINOM(IADB+J) 
+            IF(MOD(J,2).EQ.1) IBB=-IBB 
+            IJ     = I+J 
+            X      = X+IBB*A(NAB-IJ)*B(IJ+1) 
+         end do
+      end do
       SS     = X  * 0.5D0 
       SS     = SS * SQRT( ALPHA**(2*NA+1)*BETA**(2*NB+1)/               &
      &                    (FC(2*NA+1)*FC(2*NB+1)) )                     
@@ -204,21 +210,24 @@ FUNCTION CalculateOverlap (NA,LA,MM,NB,LB,ALPHA,BETA)
       NBMV   = NB-IV 
       IADNA  = IAD(NAMU+1) 
       IADNB  = IAD(NBMV+1) 
-      DO 130 KC=0,IU 
-      IC     = NAB-IU-IV+KC 
-      JC     = 1+KC 
-      DO 130 KD=0,IV 
-      ID     = IC+KD 
-      JD     = JC+KD 
-      DO 130 KE=0,NAMU 
-      IBE    = IBINOM(IADNA+KE) 
-      IE     = ID-KE 
-      JE     = JD+KE 
-      DO 130 KF=0,NBMV 
-      IBF    = IBE*IBINOM(IADNB+KF) 
-      IF(MOD(KD+KF,2).EQ.1) IBF=-IBF 
-      X      = X+IBF*A(IE-KF)*B(JE+KF) 
-  130 CONTINUE 
+      DO KC=0,IU 
+         IC     = NAB-IU-IV+KC 
+         JC     = 1+KC 
+         DO KD=0,IV 
+            ID     = IC+KD 
+            JD     = JC+KD 
+            DO KE=0,NAMU 
+               IBE    = IBINOM(IADNA+KE) 
+               IE     = ID-KE 
+               JE     = JD+KE 
+               DO KF=0,NBMV 
+                  IBF    = IBE*IBINOM(IADNB+KF) 
+                  IF(MOD(KD+KF,2).EQ.1) IBF=-IBF 
+                  X      = X+IBF*A(IE-KF)*B(JE+KF) 
+               end do
+            end do
+         end do
+      end do
       SS     = X  * SQRT( (2*LA+1)*(2*LB+1)*0.25D0 ) 
 !     COMPUTE OVERLAP INTEGRAL FROM REDUCED OVERLAP INTEGRAL.           
       SS     = SS * SQRT( ALPHA**(2*NA+1)*BETA**(2*NB+1)/               &
@@ -230,17 +239,18 @@ FUNCTION CalculateOverlap (NA,LA,MM,NB,LB,ALPHA,BETA)
 ! *** SPECIAL CASE LA=LB=M=1, P(PI)-P(PI).                              
   220 IADNA  = IAD(NA) 
       IADNB  = IAD(NB) 
-      DO 230 KE=0,NA-1 
-      IBE    = IBINOM(IADNA+KE) 
-      IE     = NAB-KE 
-      JE     = KE+1 
-      DO 230 KF=0,NB-1 
-      IBF    = IBE*IBINOM(IADNB+KF) 
-      IF(MOD(KF,2).EQ.1) IBF=-IBF 
-      I      = IE-KF 
-      J      = JE+KF 
-      X      = X+IBF*(A(I)*B(J)-A(I)*B(J+2)-A(I-2)*B(J)+A(I-2)*B(J+2)) 
-  230 CONTINUE 
+      DO KE=0,NA-1 
+         IBE    = IBINOM(IADNA+KE) 
+         IE     = NAB-KE 
+         JE     = KE+1 
+         DO KF=0,NB-1 
+            IBF    = IBE*IBINOM(IADNB+KF) 
+            IF(MOD(KF,2).EQ.1) IBF=-IBF 
+            I      = IE-KF 
+            J      = JE+KF 
+            X      = X+IBF*(A(I)*B(J)-A(I)*B(J+2)-A(I-2)*B(J)+A(I-2)*B(J+2)) 
+         end do
+      end do
       SS     = X  * 0.75D0 
 !     COMPUTE OVERLAP INTEGRAL FROM REDUCED OVERLAP INTEGRAL.           
       SS     = SS * SQRT( ALPHA**(2*NA+1)*BETA**(2*NB+1)/               &
@@ -258,46 +268,52 @@ FUNCTION CalculateOverlap (NA,LA,MM,NB,LB,ALPHA,BETA)
       IU1    = MOD(LAM,2) 
       IV1    = MOD(LBM,2) 
       IUC    = 0 
-      DO 340 IU=IU1,LAM,2 
-      IUC    = IUC+1 
-      CU     = CC(IADA,IUC) 
-      NAMU   = NA-M-IU 
-      IADNA  = IAD(NAMU+1) 
-      IADU   = IAD(IU+1) 
-      IVC    = 0 
-      DO 340 IV=IV1,LBM,2 
-      IVC    = IVC+1 
-      NBMV   = NB-M-IV 
-      IADNB  = IAD(NBMV+1) 
-      IADV   = IAD(IV+1) 
-      SUM    = 0.0D0 
-      DO 330 KC=0,IU 
-      IBC    = IBINOM(IADU+KC) 
-      IC     = NAB-IU-IV+KC 
-      JC     = 1+KC 
-      DO 330 KD=0,IV 
-      IBD    = IBC*IBINOM(IADV+KD) 
-      ID     = IC+KD 
-      JD     = JC+KD 
-      DO 330 KE=0,NAMU 
-      IBE    = IBD*IBINOM(IADNA+KE) 
-      IE     = ID-KE 
-      JE     = JD+KE 
-      DO 330 KF=0,NBMV 
-      IBF    = IBE*IBINOM(IADNB+KF) 
-      IFF    = IE-KF 
-      JFF    = JE+KF 
-      DO 330 KA=0,M 
-      IBA    = IBF*IBINOM(IADM+KA) 
-      I      = IFF-2*KA 
-      DO 330 KB=0,M 
-      IBB    = IBA*IBINOM(IADM+KB) 
-      IF(MOD(KA+KB+KD+KF,2).EQ.1) IBB=-IBB 
-      J      = JFF+2*KB 
-      SUM    = SUM+IBB*A(I)*B(J) 
-  330 CONTINUE 
-      X      = X+SUM*CU*CC(IADB,IVC) 
-  340 CONTINUE 
+      DO IU=IU1,LAM,2 
+         IUC    = IUC+1 
+         CU     = CC(IADA,IUC) 
+         NAMU   = NA-M-IU 
+         IADNA  = IAD(NAMU+1) 
+         IADU   = IAD(IU+1) 
+         IVC    = 0 
+         DO IV=IV1,LBM,2 
+            IVC    = IVC+1 
+            NBMV   = NB-M-IV 
+            IADNB  = IAD(NBMV+1) 
+            IADV   = IAD(IV+1) 
+            SUM    = 0.0D0 
+            DO KC=0,IU 
+               IBC    = IBINOM(IADU+KC) 
+               IC     = NAB-IU-IV+KC 
+               JC     = 1+KC 
+               DO KD=0,IV 
+                  IBD    = IBC*IBINOM(IADV+KD) 
+                  ID     = IC+KD 
+                  JD     = JC+KD 
+                  DO KE=0,NAMU 
+                     IBE    = IBD*IBINOM(IADNA+KE) 
+                     IE     = ID-KE 
+                     JE     = JD+KE 
+                     DO KF=0,NBMV 
+                        IBF    = IBE*IBINOM(IADNB+KF) 
+                        IFF    = IE-KF 
+                        JFF    = JE+KF 
+                        DO KA=0,M 
+                           IBA    = IBF*IBINOM(IADM+KA) 
+                           I      = IFF-2*KA 
+                           DO KB=0,M 
+                              IBB    = IBA*IBINOM(IADM+KB) 
+                              IF(MOD(KA+KB+KD+KF,2).EQ.1) IBB=-IBB 
+                              J      = JFF+2*KB 
+                              SUM    = SUM+IBB*A(I)*B(J) 
+                           end do
+                        end do
+                     end do
+                  end do
+               end do
+            end do
+            X      = X+SUM*CU*CC(IADB,IVC) 
+         end do
+      end do
       SS     = X*(FC(M+2)/8.0D0)**2* SQRT( (2*LA+1)*FC(LA-M+1)*         &
      &         (2*LB+1)*FC(LB-M+1)/(4.0D0*FC(LA+M+1)*FC(LB+M+1)))       
 !     COMPUTE OVERLAP INTEGRAL FROM REDUCED OVERLAP INTEGRAL.           
@@ -359,14 +375,16 @@ function GetSlaterCondonParameter(K,NA,EA,NB,EB,NC,EC,ND,ED) result(slaterCondon
       S1     = ZERO
       S2     = ZERO
       M      = NCD-K
-      DO 10 I=1,M
-      S0     = S0*E/ECD
-   10 S1     = S1+S0*(BinomialCoefficient(NCD-K,I)-BinomialCoefficient(NCD+K+1,I))/BinomialCoefficient(N,I)
+      DO I=1,M
+         S0     = S0*E/ECD
+         S1     = S1+S0*(BinomialCoefficient(NCD-K,I)-BinomialCoefficient(NCD+K+1,I))/BinomialCoefficient(N,I)
+      end do
       M1     = M+1
       M2     = NCD+K+1
-      DO 20 I=M1,M2
-      S0     = S0*E/ECD
-   20 S2     = S2+S0*BinomialCoefficient(M2,I)/BinomialCoefficient(N,I)
+      DO I=M1,M2
+         S0     = S0*E/ECD
+         S2     = S2+S0*BinomialCoefficient(M2,I)/BinomialCoefficient(N,I)
+      end do
       S3     = EXP(AE*N-ACD*M2-AAB*(NAB-K))/BinomialCoefficient(N,M2)
       slaterCondon = C*(S1-S2+S3)
       RETURN

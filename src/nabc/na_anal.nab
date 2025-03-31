@@ -1,0 +1,2314 @@
+// plane.nab -> returns coefficients of plane equation
+// Program returns the equation of the best fitting plain in type Point.
+// Atoms have equal weight in this implementation
+
+#define TRUE 1
+#define FALSE 0
+#define PI 3.14159265358979323844
+
+int get_atom_position(atom atomi, float x_pos, float y_pos, float z_pos, float atom_counter, 
+	float x_squared, float y_squared, float xy, float xz, float yz )
+{       // accumulate matrix coefficients
+	x_pos = x_pos + atomi.x;
+	y_pos = y_pos + atomi.y;
+	z_pos = z_pos + atomi.z;
+	atom_counter = atom_counter + 1.;
+	x_squared = x_squared + atomi.x*atomi.x;
+	y_squared = y_squared + atomi.y*atomi.y;
+	xy = xy + atomi.x*atomi.y;
+	xz = xz + atomi.x*atomi.z;
+	yz = yz + atomi.y*atomi.z;
+	return( 0 );
+};
+
+
+int plane(molecule q, string aex, float X, float Y, float Z)
+{       // Find axis of inertia, given molecule and atom expression
+	atom ak;
+	float x_pos, y_pos, z_pos, atom_counter, total_mass, x_squared;
+	float xy,xz,y_squared,yz;
+	float mat[3,4];
+	int row[5],c,k,p,t,i,n, counter;
+	float qnum,sum,x[5];
+
+	x_pos = 0.;
+	y_pos = 0.;
+	z_pos = 0.;
+	x_squared = 0.;
+	y_squared = 0.;
+	xy = 0.;
+	xz = 0.;
+	yz = 0.;
+	total_mass = 0.;
+	atom_counter = 0.;
+	counter = 0;
+	for (ak in q) 
+		if (ak =~ aex){
+			get_atom_position(ak, x_pos, y_pos, z_pos, atom_counter, x_squared, 
+				y_squared, xy, xz, yz );
+			counter++;
+		}
+	mat[1,1] = x_squared;
+	mat[1,2] = xy;
+	mat[1,3] = x_pos;
+	mat[1,4] = xz;
+	mat[2,1] = xy;
+	mat[2,2] = y_squared;
+	mat[2,3] = y_pos;
+	mat[2,4] = yz;
+	mat[3,1] = x_pos;
+	mat[3,2] = y_pos;
+	mat[3,3] = atom_counter;
+	mat[3,4] = z_pos;
+	sum = 0.;
+	n = 3;
+	for (i = 1; i <= n; i = i+1)
+		row[i] = i;         
+	for (p = 1; p <= n-1; p = p+1) {
+		for (k = p+1; k <= n; k = k + 1) {
+			if (fabs(mat[row[k],p]) > 
+						fabs(mat[row[p],p])) {
+				t = row[p];
+				row[p] = row[k];
+				row[k] = t;
+			}
+		} 
+		if (mat[row[p],p] == 0.) {
+			fprintf(stderr, "plane: matrix is singular.\n");
+			exit(1);
+		}
+		for (k = p+1; k <= n; k = k+1) {
+			qnum = mat[row[k],p]/mat[row[p],p];
+			for (c = p+1; c <= n+1; c = c+1) 
+				mat[row[k],c] = mat[row[k],c] -
+				qnum*mat[row[p],c];
+		}
+	}
+	if (mat[row[n],n] == 0.) {
+		fprintf(stderr, "plane: matrix is singular.\n");
+		exit(1);
+	}
+	x[n] = (mat[row[n],n+1])/(mat[row[n],n]);
+	for (k = n-1; k >= 1; k = k-1) {
+		sum = 0.;
+		for (c = k+1; c <= n; c = c + 1)
+			sum = sum + x[c]*mat[row[k],c];
+		x[k] = (mat[row[k],n+1]-sum)/(mat[row[k],k]);
+	}
+	X = x[1];
+	Y = x[2];
+	Z = x[3];
+
+	return( counter );
+};
+
+int is_ADE( string rname )
+{
+	if ( ( rname == "ADE" ) || ( rname == "A" ) || ( rname == "DA" ) || 
+  		( rname == "RA" ) || ( rname =~ "A[35]" ) ||
+		( rname == "1MA" ) || ( rname == "6MA" ) || ( rname == "6TA" ) )
+        {
+		return( TRUE );
+        }
+	else
+		return( FALSE );
+};
+
+int is_CYT( string rname )
+{
+	if ( ( rname == "CYT" ) || ( rname == "C" ) || ( rname == "DC" ) ||
+		( rname == "RC" ) || ( rname =~ "C[35]" ) ||
+		( rname == "5MC" ) || ( rname == "2SC" ) || ( rname == "3MC" ) ||
+		( rname == "OMC" ) )
+		return( TRUE );
+	else
+		return( FALSE );
+};
+
+int is_GUA( string rname )
+{
+	if ( ( rname == "GUA" ) || ( rname == "G" ) || ( rname == "DG" ) ||
+		( rname == "RG" ) || ( rname =~ "G[35]" ) ||
+		( rname == "I" ) || ( rname == "M2G" ) || ( rname == "2MG" ) ||
+		( rname == "1MG" ) || ( rname == "7MG" ) || ( rname == "1MI" ) ||
+		( rname == "Q" ) || ( rname == "QUO" ) || ( rname == "OMG" ) ||
+		( rname == "YG" ) )
+		return( TRUE );
+	else
+		return( FALSE );
+};
+
+int is_THY( string rname )
+{
+	if ( ( rname == "THY" ) || ( rname == "T" ) || ( rname == "DT" ) ||
+		( rname =~ "DT[35]" ) )
+		return( TRUE );
+	else
+		return( FALSE );
+};
+
+int is_URA( string rname )
+{
+	if ( ( rname == "URA" ) || ( rname == "U" ) || ( rname == "RU" ) ||
+		( rname =~ "U[35]" ) ||
+		( rname == "PSU" ) || ( rname == "V" ) || ( rname == "D" ) ||
+		( rname == "4SU" ) || ( rname == "H2U" ) || ( rname == "5MU" ) )
+		return( TRUE );
+	else
+		return( FALSE );
+};
+
+int is_pyrimidine( string rname )
+{
+	if( is_CYT( rname ) || is_THY( rname ) || is_URA( rname ) )
+		return( TRUE );
+	else
+		return( FALSE );
+};
+
+int is_purine( string rname )
+{
+	if( is_ADE( rname ) || is_GUA( rname ) )
+		return( TRUE );
+	else
+		return( FALSE );
+};
+
+int is_DNA( residue r )
+{
+	atom 	a;
+	for ( a in r )
+		if( ( a.atomname == "O2'" ) || ( a.atomname == "O2*" ) )
+			return( FALSE );
+	if( is_ADE( r.resname ) || is_CYT( r.resname ) || is_GUA( r.resname ) || 
+		is_THY( r.resname ) ) return( TRUE );
+	return( FALSE );
+};
+
+int is_RNA( residue r )
+{
+	atom 	a;
+	if( is_ADE( r.resname ) || is_CYT( r.resname ) || is_GUA( r.resname ) || 
+		is_URA( r.resname ) )
+		for ( a in r )
+			if( ( a.atomname == "O2'" ) || ( a.atomname == "O2*" ) )
+				return( TRUE );
+	return( FALSE );
+};
+
+string	standard_resname( string rname )
+{
+	if ( is_ADE( rname ) )
+		return( "ADE" );
+	else if ( is_CYT( rname ) )
+		return( "CYT" ); 
+	else if ( is_GUA( rname ) )
+		return( "GUA" ); 
+	else if ( is_THY( rname ) )
+		return( "THY" ); 
+	else if ( is_URA( rname ) )
+		return( "URA" ); 
+	else{
+		fprintf(stderr, "helixanal: could not determine residue type %s\n",
+			rname );
+		exit( 1 );
+	}
+	return( "" );
+};
+
+float	norm( point vec )
+{
+	return( sqrt( vec.x*vec.x + vec.y*vec.y + vec.z*vec.z ) );
+};
+
+int	fill_rotation_matrix( float R[3,3], float PsiX, float PsiY, float PsiZ )
+{
+	float	Psi, Ux, Uy, Uz;
+
+	Psi = sqrt( PsiX*PsiX + PsiY*PsiY + PsiZ*PsiZ );
+	Ux = PsiX / Psi;
+	Uy = PsiY / Psi;
+	Uz = PsiZ / Psi;
+
+	R[1,1] = cos( Psi ) + ( 1.0 - cos( Psi ))*Ux*Ux;
+	R[1,2] = ( 1.0 - cos( Psi ) )*Ux*Uy - Uz*sin( Psi );
+	R[1,3] = ( 1.0 - cos( Psi ) )*Ux*Uz + Uy*sin( Psi );
+	R[2,1] = ( 1.0 - cos( Psi ) )*Ux*Uy + Uz*sin( Psi );
+	R[2,2] = cos( Psi ) + ( 1.0 - cos( Psi ) )*Uy*Uy;
+	R[2,3] = ( 1.0 - cos( Psi ) )*Uy*Uz - Ux*sin( Psi );
+	R[3,1] = ( 1.0 - cos( Psi ) )*Ux*Uz - Uy*sin( Psi );
+	R[3,2] = ( 1.0 - cos( Psi ) )*Uy*Uz + Ux*sin( Psi );
+	R[3,3] = cos( Psi ) + ( 1.0 - cos( Psi ) )*Uz*Uz;
+
+	return( R[1,1] );
+};
+
+int	make_rotation_matrix( float R[3,3], point X, point Y, point Z )
+{
+	R[1,1] = X.x;
+	R[2,1] = X.y;
+	R[3,1] = X.z;
+	R[1,2] = Y.x;
+	R[2,2] = Y.y;
+	R[3,2] = Y.z;
+	R[1,3] = Z.x;
+	R[2,3] = Z.y;
+	R[3,3] = Z.z;
+	
+	return( 0 );
+};
+
+int	make_3x2_matrix( float R[3,2], point X, point Y )
+{
+	R[1,1] = X.x;
+	R[2,1] = X.y;
+	R[3,1] = X.z;
+	R[1,2] = Y.x;
+	R[2,2] = Y.y;
+	R[3,2] = Y.z;
+	
+	return( 0 );
+};
+
+int	fill_diagonal( float R[3,3], float num1, float num2, float num3 )
+{
+	R[1,1] = num1;  R[1,2] = 0.0;  R[1,3] = 0.0;
+	R[2,1] = 0.0;   R[2,2] = num2; R[2,3] = 0.0;
+	R[3,1] = 0.0;	R[3,2] = 0.0;  R[3,3] = num3;
+
+	return( 0 );
+};
+	
+int	transpose( float R[3,3], float R_Transpose[3,3] )
+{
+	R_Transpose[1,1] = R[1,1];
+	R_Transpose[1,2] = R[2,1];
+	R_Transpose[1,3] = R[3,1];
+	R_Transpose[2,1] = R[1,2];
+	R_Transpose[2,2] = R[2,2];
+	R_Transpose[2,3] = R[3,2];
+	R_Transpose[3,1] = R[1,3];
+	R_Transpose[3,2] = R[2,3];
+	R_Transpose[3,3] = R[3,3];
+
+	return( 0 );
+};
+
+int	transpose3x2( float R[3,2], float R_Transpose[2,3] )
+{
+	R_Transpose[1,1] = R[1,1];
+	R_Transpose[1,2] = R[2,1];
+	R_Transpose[1,3] = R[3,1];
+	R_Transpose[2,1] = R[1,2];
+	R_Transpose[2,2] = R[2,2];
+	R_Transpose[2,3] = R[3,2];
+
+	return( 0 );
+};
+
+int	inverse2x2( float R[2,2], float R_Inverse[2,2] )
+{
+	R_Inverse[1,1] = R[2,2]/(R[1,1]*R[2,2]-R[1,2]*R[2,1]);
+	R_Inverse[1,2] = - R[1,2]/(R[1,1]*R[2,2]-R[1,2]*R[2,1]);
+	R_Inverse[2,1] = - R[2,1]/(R[1,1]*R[2,2]-R[1,2]*R[2,1]);
+	R_Inverse[2,2] = R[1,1]/(R[1,1]*R[2,2]-R[1,2]*R[2,1]);
+
+	return( 0 );
+};
+
+int	inverse3x3( float R[3,3], float R_Inverse[3,3] )
+{
+	float	det, cofactor;
+	det = R[1,1] * ( R[2,2]*R[3,3] - R[3,2]*R[2,3] )
+		-R[1,2] * ( R[2,1]*R[3,3] - R[3,1]*R[2,3] )
+		+R[1,3] * ( R[2,1]*R[3,2] - R[3,1]*R[2,2] );
+	cofactor = R[2,2]*R[3,3]-R[3,2]*R[2,3];
+	R_Inverse[1,1] = cofactor/det;	
+	cofactor = - R[2,1]*R[3,3]-R[3,1]*R[2,3];
+	R_Inverse[1,2] = cofactor/det;	
+	cofactor = R[2,1]*R[3,2]-R[3,1]*R[2,2];
+	R_Inverse[1,3] = cofactor/det;	
+	cofactor = - R[1,2]*R[3,3]-R[3,2]*R[1,3];
+	R_Inverse[2,1] = cofactor/det;	
+	cofactor = R[1,1]*R[3,3]-R[3,1]*R[1,3];
+	R_Inverse[2,2] = cofactor/det;	
+	cofactor = - R[1,1]*R[3,2]-R[3,1]*R[1,2];
+	R_Inverse[2,3] = cofactor/det;	
+	cofactor = R[1,2]*R[2,3]-R[2,2]*R[1,3];
+	R_Inverse[3,1] = cofactor/det;	
+	cofactor = - R[1,1]*R[2,3]-R[2,1]*R[1,3];
+	R_Inverse[3,2] = cofactor/det;	
+	cofactor = R[1,1]*R[2,2]-R[2,1]*R[1,2];
+	R_Inverse[3,3] = cofactor/det;	
+
+	return( 0 );
+};
+
+int	matrix_multiply_matrix( float R1[3,3], float R2[3,3], float R3[3,3] )
+{
+	R3[1,1] = R1[1,1]*R2[1,1] + R1[1,2]*R2[2,1] + R1[1,3]*R2[3,1];
+	R3[1,2] = R1[1,1]*R2[1,2] + R1[1,2]*R2[2,2] + R1[1,3]*R2[3,2];
+	R3[1,3] = R1[1,1]*R2[1,3] + R1[1,2]*R2[2,3] + R1[1,3]*R2[3,3];
+	R3[2,1] = R1[2,1]*R2[1,1] + R1[2,2]*R2[2,1] + R1[2,3]*R2[3,1];
+	R3[2,2] = R1[2,1]*R2[1,2] + R1[2,2]*R2[2,2] + R1[2,3]*R2[3,2];
+	R3[2,3] = R1[2,1]*R2[1,3] + R1[2,2]*R2[2,3] + R1[2,3]*R2[3,3];
+	R3[3,1] = R1[3,1]*R2[1,1] + R1[3,2]*R2[2,1] + R1[3,3]*R2[3,1];
+	R3[3,2] = R1[3,1]*R2[1,2] + R1[3,2]*R2[2,2] + R1[3,3]*R2[3,2];
+	R3[3,3] = R1[3,1]*R2[1,3] + R1[3,2]*R2[2,3] + R1[3,3]*R2[3,3];
+
+	return( 0 );
+};
+
+int	matrix_multiply_matrix3x2( float R1[2,3], float R2[3,2], float R3[2,2] )
+{
+	R3[1,1] = R1[1,1]*R2[1,1] + R1[1,2]*R2[2,1] + R1[1,3]*R2[3,1];
+	R3[1,2] = R1[1,1]*R2[1,2] + R1[1,2]*R2[2,2] + R1[1,3]*R2[3,2];
+	R3[2,1] = R1[2,1]*R2[1,1] + R1[2,2]*R2[2,1] + R1[2,3]*R2[3,1];
+	R3[2,2] = R1[2,1]*R2[1,2] + R1[2,2]*R2[2,2] + R1[2,3]*R2[3,2];
+
+	return( 0 );
+};
+
+int	matrix_multiply_matrix2x3( float R1[3,2], float R2[2,2], float R3[3,2] )
+{
+	R3[1,1] = R1[1,1]*R2[1,1] + R1[1,2]*R2[2,1];
+	R3[2,1] = R1[2,1]*R2[1,1] + R1[2,2]*R2[2,1];
+	R3[3,1] = R1[3,1]*R2[1,1] + R1[3,2]*R2[2,1];
+	R3[1,2] = R1[1,1]*R2[1,2] + R1[1,2]*R2[2,2];
+	R3[2,2] = R1[2,1]*R2[1,2] + R1[2,2]*R2[2,2];
+	R3[3,2] = R1[3,1]*R2[1,2] + R1[3,2]*R2[2,2];
+
+	return( 0 );
+};
+
+int	matrix_multiply_vector( float R[3,3], float V[3], float Out[3] )
+{
+	Out[1] = R[1,1]*V[1] + R[1,2]*V[2] + R[1,3]*V[3];	
+	Out[2] = R[2,1]*V[1] + R[2,2]*V[2] + R[2,3]*V[3];	
+	Out[3] = R[3,1]*V[1] + R[3,2]*V[2] + R[3,3]*V[3];	
+
+	return( 0 );
+};
+
+int	matrix_multiply_vector2x3( float R[2,3], float V[3,1], float Out[2,1] )
+{
+	Out[1,1] = R[1,1]*V[1,1] + R[1,2]*V[2,1] + R[1,3]*V[3,1];	
+	Out[2,1] = R[2,1]*V[1,1] + R[2,2]*V[2,1] + R[2,3]*V[3,1];	
+
+	return( 0 );
+};
+
+int	matrix_multiply_vector2x1( float R[3,2], float V[2,1], float Out[3,1] )
+{
+	Out[1,1] = R[1,1]*V[1,1] + R[1,2]*V[2,1];
+	Out[2,1] = R[2,1]*V[1,1] + R[2,2]*V[2,1];
+	Out[3,1] = R[3,1]*V[1,1] + R[3,2]*V[2,1];
+
+	return( 0 );
+};
+
+molecule	make_nab_NA( molecule m )
+{
+	int		star_pos;
+	atom		new_a, a;
+	float		dummy[3];
+	string		new_atom_name, laststrand, reslib;
+	residue		newres, r;
+	molecule	newmol;
+
+	newmol = newmolecule();
+	laststrand = "\0";
+	for ( r in m ){
+		if ( r.strandname != laststrand ){
+			addstrand( newmol, r.strandname );
+			laststrand = r.strandname;
+		}
+		if ( is_DNA( r ) )
+			reslib = "dna.amber94.rlb";
+		else if ( is_RNA( r ) )
+			reslib = "rna.amber94.rlb";
+		else
+			reslib = "all_nucleic94.lib";
+		if ( r.resname == "HOH" )
+			continue;
+		else if ( is_ADE( r.resname ) )
+			newres = getresidue( "ADE", reslib );
+		else if ( is_CYT( r.resname ) )
+			newres = getresidue( "CYT", reslib );
+		else if ( is_GUA( r.resname ) )
+			newres = getresidue( "GUA", reslib );
+		else if ( is_THY( r.resname ) )
+			newres = getresidue( "THY", reslib );
+		else if ( is_URA( r.resname ) )
+			newres = getresidue( "URA", reslib );
+		else{	
+			fprintf( stderr, "make_nab_NA: Unknown residue %s\n",
+				r.resname );
+			exit( 1 );
+		}
+		addresidue( newmol, r.strandname, newres );
+		for ( a in r ){
+			for ( new_a in newres ){
+				new_atom_name = a.atomname;
+				star_pos = index( a.atomname, "*" );
+				if ( star_pos ){
+					new_atom_name = substr( a.atomname, 1, 
+						star_pos - 1 );
+					new_atom_name = new_atom_name + "'";
+					a.atomname = new_atom_name;
+				}
+				else if ( a.atomname == "C5M" )
+					new_atom_name = "C7";
+				if ( ( a.atomname == new_a.atomname ) || 
+					( new_atom_name == new_a.atomname ) ){
+					dummy[1] = a.x; dummy[2] = a.y; dummy[3] = a.z;
+					setmol_from_xyz( newmol, sprintf( "%s:%d:%s", 
+						r.strandname, r.resnum, new_a.atomname ), 
+						dummy );
+				}
+			}
+		}
+	}
+	return( newmol );
+};
+
+float	mean( float Parameter[ Number_of_Parameters ], int Number_of_Parameters ){
+	int	i;
+	float	sum;
+
+	sum = 0;
+	for ( i = 1; i <= Number_of_Parameters; i = i + 1 )
+		sum = sum + Parameter[ i ];
+	return( sum / Number_of_Parameters );
+};
+
+float	standard_deviation( float Parameter[ Number_of_Parameters ], float Mean, 
+		int Number_of_Parameters ){
+	int	i;
+	float	sum, answer;
+
+	sum = 0;
+	for ( i = 1; i <= Number_of_Parameters; i = i + 1 )
+		sum = sum + ( Parameter[ i ] - Mean ) * ( Parameter[ i ] - Mean );
+	if ( Number_of_Parameters >= 2 ){
+		answer = sqrt( sum / ( Number_of_Parameters - 1 ) );
+		return( answer );
+	}
+	else
+		return( 0 );
+};
+
+int sugarpuckeranal( molecule m, int str, int startres, int endres )
+{
+	int	res, increment, LowerRes, HigherRes, bases, i;
+	float	AlphaMean, BetaMean, GammaMean, DeltaMean, EpsilonMean, ZetaMean;
+	float	ChiMean, PseudorotationMean;
+	float   alpha, beta, gamma, delta, pseudorotation, epsilon, zeta;
+	float   chi;
+	float   nu0, nu1, nu2, nu3, nu4;
+	float	Alpha[ dynamic ], Beta[ dynamic ], Gamma[ dynamic ], Delta[ dynamic ];
+	float	Epsilon[ dynamic ], Zeta[ dynamic ], Chi[ dynamic ]; 
+	float	Pseudorotation[ dynamic ];
+	float	AlphaSD, BetaSD, GammaSD, DeltaSD, EpsilonSD, ZetaSD, ChiSD; 
+	float	PseudorotationSD;
+	residue r;
+
+	AlphaMean = BetaMean = GammaMean = DeltaMean = EpsilonMean = ZetaMean = 0;
+	ChiMean = PseudorotationMean = 0;
+	AlphaSD = BetaSD = GammaSD = DeltaSD = EpsilonSD = ZetaSD = 0;
+	ChiSD = PseudorotationSD = 0;
+	if( startres <= endres ){
+		increment = 1;
+		LowerRes = startres;
+		HigherRes = endres;
+	}
+	else if( startres > endres ){
+		increment = -1;
+		LowerRes = endres;
+		HigherRes = startres;
+	}
+	bases = HigherRes - LowerRes + 1;
+	allocate Alpha[ bases ];
+	allocate Beta[ bases ];
+	allocate Gamma[ bases ];
+	allocate Delta[ bases ];
+	allocate Epsilon[ bases ];
+	allocate Zeta[ bases ];
+	allocate Chi[ bases ];
+	allocate Pseudorotation[ bases ];
+	i = 1;
+	fprintf(stderr, 
+		"                *** Sugar Pucker Analysis : Strand number %d. ***\n", 
+		str );
+		fprintf(stderr, 
+	" Res Type   Alpha   Beta    Gamma  Delta  Epsilon   Zeta    Chi Pseudorotation\n");
+	for (res = startres;  res != endres + increment ; res = res + increment ){
+		if ( res > LowerRes ) {
+			alpha = torsion( m, sprintf("%d:%d:O3'", str, res - 1 ),
+					sprintf("%d:%d:P", str, res ),
+					sprintf("%d:%d:O5'", str, res ),
+					sprintf("%d:%d:C5'", str, res ));
+		}
+		else
+			 alpha = 0;
+		beta = torsion( m, sprintf("%d:%d:P,H5T", str, res ),
+				sprintf("%d:%d:O5'", str, res ),
+				sprintf("%d:%d:C5'", str, res ),
+				sprintf("%d:%d:C4'", str, res ));
+		gamma = torsion( m, sprintf("%d:%d:O5'", str, res ),
+				sprintf("%d:%d:C5'", str, res ),
+				sprintf("%d:%d:C4'", str, res ),
+				sprintf("%d:%d:C3'", str, res ));
+		delta = torsion( m, sprintf("%d:%d:C5'", str, res ),
+				sprintf("%d:%d:C4'", str, res ),
+				sprintf("%d:%d:C3'", str, res ),
+				sprintf("%d:%d:O3'", str, res ));
+		if ( res < HigherRes ){
+			epsilon = torsion( m, sprintf("%d:%d:C4'", str, res ),
+					sprintf("%d:%d:C3'", str, res ),
+					sprintf("%d:%d:O3'", str, res ),
+					sprintf("%d:%d:P", str, res + 1 ));
+			zeta = torsion( m, sprintf("%d:%d:C3'", str, res ),
+					sprintf("%d:%d:O3'", str, res ),
+					sprintf("%d:%d:P", str, res + 1 ),
+					sprintf("%d:%d:O5'", str, res + 1 ));
+		}else{
+			epsilon = 0;
+			zeta = 0;
+		}
+		nu0 = torsion( m, sprintf("%d:%d:C4'", str, res ),
+				sprintf("%d:%d:O4'", str, res ),
+				sprintf("%d:%d:C1'", str, res ),
+				sprintf("%d:%d:C2'", str, res ));
+		nu1 = torsion( m, sprintf("%d:%d:O4'", str, res ),
+				sprintf("%d:%d:C1'", str, res ),
+				sprintf("%d:%d:C2'", str, res ),
+				sprintf("%d:%d:C3'", str, res ));
+		nu2 = torsion( m, sprintf("%d:%d:C1'", str, res ),
+				sprintf("%d:%d:C2'", str, res ),
+				sprintf("%d:%d:C3'", str, res ),
+				sprintf("%d:%d:C4'", str, res ));
+		nu3 = torsion( m, sprintf("%d:%d:C2'", str, res ),
+				sprintf("%d:%d:C3'", str, res ),
+				sprintf("%d:%d:C4'", str, res ),
+				sprintf("%d:%d:O4'", str, res ));
+		nu4 = torsion( m, sprintf("%d:%d:C3'", str, res ),
+				sprintf("%d:%d:C4'", str, res ),
+				sprintf("%d:%d:O4'", str, res ),
+				sprintf("%d:%d:C1'", str, res ));
+		pseudorotation = atan(((nu4+nu1)-(nu3+nu0))/(2*nu2*(
+				sin(36.)+sin(72.))));
+		if(nu2 <0) pseudorotation +=180.0;
+		if ( pseudorotation<0.0 ) pseudorotation += 360.0;
+		for ( r in m )
+			if (( r.strandnum == str ) && ( r.resnum == res ))
+				break;
+		if( is_purine( r.resname ) ){
+			chi = torsion( m, sprintf("%d:%d:O4'", str, res ),
+				sprintf("%d:%d:C1'", str, res ),
+				sprintf("%d:%d:N9", str, res ),
+				sprintf("%d:%d:C4", str, res ));
+		} else if( is_pyrimidine( r.resname ) ){
+			chi = torsion( m, sprintf("%d:%d:O4'", str, res ),
+				sprintf("%d:%d:C1'", str, res ),
+				sprintf("%d:%d:N1", str, res ),
+				sprintf("%d:%d:C2", str, res ));
+		} else{
+			chi = torsion( m, sprintf("%d:%d:O4'", str, res ),
+				sprintf("%d:%d:C1'", str, res ),
+				sprintf("%d:%d:N1,N9", str, res ),
+				sprintf("%d:%d:C2", str, res ));
+		}
+		if ( LowerRes == HigherRes )
+			fprintf(stderr, 
+		"%2d:%2d%4s    -   %8.2f%8.2f%8.2f    -       -   %8.2f%8.2f\n", 
+		str, res, r.resname, beta, gamma, delta, chi, pseudorotation );
+		else if ( res == LowerRes )
+			fprintf(stderr, 
+		"%2d:%2d%4s    -   %8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+		str, res, r.resname, beta, gamma, delta, epsilon, zeta, chi, 
+		pseudorotation );
+		else if ( res == HigherRes )
+			fprintf(stderr, 
+		"%2d:%2d%4s%8.2f%8.2f%8.2f%8.2f    -       -   %8.2f%8.2f\n", 
+		str, res, r.resname, alpha, beta, gamma, delta, chi, pseudorotation );
+		else
+			fprintf(stderr, 
+		"%2d:%2d%4s%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+		str, res, r.resname, alpha, beta, gamma, delta, epsilon, zeta, chi, 
+		pseudorotation );
+		Alpha[ i ] = alpha;
+		Beta[ i ] = beta;
+		Gamma[ i ] = gamma;
+		Delta[ i ] = delta;
+		Epsilon[ i ] = epsilon;
+		Zeta[ i ] = zeta;
+		Chi[ i ] = chi;
+		Pseudorotation[ i ] = pseudorotation;
+		i = i + 1;
+	}
+	if ( startres <= endres )
+		for ( i = 1; i < bases; i++ ){
+			Alpha[ i ] = Alpha[ i + 1 ];
+		}
+	else
+		for ( i = 1; i < bases; i++ ){
+			Epsilon[ i ] = Epsilon[ i + 1];
+			Zeta[ i ] = Zeta[ i + 1 ];
+		}
+	if ( bases >= 2 ){
+		AlphaMean = mean( Alpha, bases - 1 );
+		EpsilonMean = mean( Epsilon, bases - 1 );
+		ZetaMean = mean( Zeta, bases - 1 );
+		BetaMean = mean( Beta, bases );
+		GammaMean = mean( Gamma, bases );
+		DeltaMean = mean( Delta, bases );
+		ChiMean = mean( Chi, bases );
+		PseudorotationMean = mean( Pseudorotation, bases );
+		fprintf( stderr, "  Mean   %8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n",
+			AlphaMean, BetaMean, GammaMean, DeltaMean, EpsilonMean, ZetaMean,
+			ChiMean, PseudorotationMean );
+	}
+	else{
+		fprintf( stderr, 
+		"  Mean       -   %8.2f%8.2f%8.2f    -       -   %8.2f%8.2f\n", 
+			beta, gamma, delta, chi, pseudorotation);
+	}
+	Alpha[ 1 ] = AlphaMean;
+	Epsilon[ bases ] = EpsilonMean;
+	Zeta[ bases ] = ZetaMean;
+	if ( bases >= 2 ){
+		AlphaSD = standard_deviation( Alpha, AlphaMean, bases - 1 );
+		BetaSD = standard_deviation( Beta, BetaMean, bases );
+		GammaSD = standard_deviation( Gamma, GammaMean, bases );
+		DeltaSD = standard_deviation( Delta, DeltaMean, bases );
+		EpsilonSD = standard_deviation( Epsilon, EpsilonMean, bases - 1 );
+		ZetaSD = standard_deviation( Zeta, ZetaMean, bases - 1 );
+		ChiSD = standard_deviation( Chi, ChiMean, bases );
+		PseudorotationSD = standard_deviation( Pseudorotation, 
+			PseudorotationMean, bases );
+		fprintf( stderr, " Std Dev %8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n",
+			AlphaSD, BetaSD, GammaSD, DeltaSD, EpsilonSD, ZetaSD,
+			ChiSD, PseudorotationSD );
+	}
+	else
+		fprintf( stderr, 
+		" Std Dev     -   %8.2f%8.2f%8.2f    -       -   %8.2f%8.2f\n", 
+			0.0, 0.0, 0.0, 0.0, 0.0 );
+	fprintf(stderr, "\n");
+	return( 0 );
+};
+
+int	local_helical_parameters( int Number_of_Parameters, int PrimaryStrand, 
+		int PrimaryBaseStart, int PrimaryBaseEnd,
+		int PrimaryBaseIncrement, int ComplementaryStrand, 
+		int ComplementaryBaseStart, int ComplementaryBaseEnd, 
+		int ComplementaryBaseIncrement, 
+		float Inclination[ Number_of_Parameters ], 
+		float Tip[ Number_of_Parameters ], 
+		float HTwist[ Number_of_Parameters ], 
+		float dx[ Number_of_Parameters ], 
+		float dy[ Number_of_Parameters ], 
+		float dz[ Number_of_Parameters ] ){
+
+	int 	i, PrimaryBaseTop, ComplementaryBaseTop, PrimaryBaseBottom;
+	int	ComplementaryBaseBottom;
+	float	InclinationMean, TipMean, HTwistMean, dxMean, dyMean, dzMean;
+	float	InclinationSD, TipSD, HTwistSD, dxSD, dySD, dzSD;
+
+	if( ComplementaryStrand * ComplementaryBaseStart * 
+		ComplementaryBaseEnd * ComplementaryBaseIncrement == 0 ){
+		fprintf(stderr, 
+		"\n                 *** Local Helical Analysis : Strand %d. ***\n", 
+		PrimaryStrand );
+		fprintf(stderr, "   Top Base   /   Bottom Base   Inclination Tip   HTwist     DX      DY      DZ\n" );
+	}else{
+		fprintf(stderr, 
+		"\n                 *** Local Helical Analysis : Strands %d and %d. ***\n", 
+		PrimaryStrand, ComplementaryStrand );
+		fprintf(stderr, " Top Basepair / Bottom Basepair Inclination Tip   HTwist     DX      DY      DZ\n" );
+	}
+
+	PrimaryBaseTop = PrimaryBaseStart;	
+	PrimaryBaseBottom = PrimaryBaseStart + PrimaryBaseIncrement;
+	ComplementaryBaseTop = ComplementaryBaseStart;	
+	ComplementaryBaseBottom = ComplementaryBaseStart + ComplementaryBaseIncrement;
+	for ( i = 1; i <= Number_of_Parameters ; i = i + 1 ){
+		if( ComplementaryStrand * ComplementaryBaseStart * 
+			ComplementaryBaseEnd * ComplementaryBaseIncrement == 0 ){
+			fprintf( stderr,  
+			"    %2d:%2d     /     %2d:%2d       %8.2f" + 
+			"%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+			PrimaryStrand, PrimaryBaseTop, 
+			PrimaryStrand, PrimaryBaseBottom,
+			Inclination[ i ], Tip[ i ], HTwist[ i ], dx[ i ], dy[ i ], 
+			dz[ i ] );
+		}else
+			fprintf( stderr,  
+			"%2d:%2d - %2d:%2d / %2d:%2d - %2d:%2d   %8.2f" + 
+			"%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+			PrimaryStrand, PrimaryBaseTop, 
+			ComplementaryStrand, ComplementaryBaseTop, 
+			PrimaryStrand, PrimaryBaseBottom,
+			ComplementaryStrand,
+			ComplementaryBaseBottom, 
+			Inclination[ i ], Tip[ i ], HTwist[ i ], dx[ i ], dy[ i ], 
+			dz[ i ] );
+		PrimaryBaseTop = PrimaryBaseTop + PrimaryBaseIncrement;
+		PrimaryBaseBottom = PrimaryBaseBottom + PrimaryBaseIncrement;
+		ComplementaryBaseTop = ComplementaryBaseTop + 
+			ComplementaryBaseIncrement;
+		ComplementaryBaseBottom = ComplementaryBaseBottom + 
+			ComplementaryBaseIncrement;
+	}
+	InclinationMean = mean( Inclination, Number_of_Parameters );
+	TipMean = mean( Tip, Number_of_Parameters );
+	HTwistMean = mean( HTwist, Number_of_Parameters );
+	dxMean = mean( dx, Number_of_Parameters );
+	dyMean = mean( dy, Number_of_Parameters );
+	dzMean = mean( dz, Number_of_Parameters );
+	fprintf( stderr, 
+		"             Mean               %8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+		InclinationMean, TipMean, HTwistMean, dxMean, dyMean, dzMean );
+	InclinationSD = standard_deviation( Inclination, InclinationMean, 
+		Number_of_Parameters );
+	TipSD = standard_deviation( Tip, TipMean, Number_of_Parameters );
+	HTwistSD = standard_deviation( HTwist, HTwistMean, Number_of_Parameters );
+	dxSD = standard_deviation( dx, dxMean, Number_of_Parameters );
+	dySD = standard_deviation( dy, dyMean, Number_of_Parameters );
+	dzSD = standard_deviation( dz, dzMean, Number_of_Parameters );
+	fprintf( stderr, 
+		"      Standard Deviation        %8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+		InclinationSD, TipSD, HTwistSD, dxSD, dySD, dzSD );
+
+	return( 0 );
+};
+
+int	helix_properties( int Number_of_Parameters, int PrimaryStrand, 
+		int PrimaryBaseStart, int PrimaryBaseEnd, 
+		int PrimaryBaseIncrement, int ComplementaryStrand, 
+		int ComplementaryBaseStart, int ComplementaryBaseEnd, 
+		int ComplementaryBaseIncrement, 
+		float Tilt[ Number_of_Parameters ], 
+		float Roll[ Number_of_Parameters ], 
+		float Twist[ Number_of_Parameters ], 
+		float Angle[ Number_of_Parameters ], 
+		float Shift[ Number_of_Parameters ], 
+		float Slide[ Number_of_Parameters ], 
+		float Rise[ Number_of_Parameters ],
+		float Dist[ Number_of_Parameters ] )
+{
+	int 	i, PrimaryBaseTop, ComplementaryBaseTop, PrimaryBaseBottom;
+	int	ComplementaryBaseBottom;
+	float	TiltMean, RollMean, TwistMean, AngleMean, ShiftMean, SlideMean, DistMean;
+	float	RiseMean, TiltSD, RollSD, TwistSD, AngleSD, ShiftSD, SlideSD, RiseSD, DistSD;
+
+	if( ComplementaryStrand * ComplementaryBaseStart * 
+		ComplementaryBaseEnd * ComplementaryBaseIncrement == 0 ){
+		fprintf(stderr, 
+		"\n                *** Adjacent Base Analysis : Strand %d. ***\n", 
+		PrimaryStrand );
+		fprintf(stderr, "    Top Base  /   Bottom Base        Tilt    Roll   Twist   Angle   Shift   Slide    Rise    Dist\n" );
+	}
+	else{
+		fprintf(stderr, 
+		"\n                *** Local Basepair Analysis : Strands %d and %d. ***\n", 
+		PrimaryStrand, ComplementaryStrand );
+		fprintf(stderr, " Top Basepair / Bottom Basepair      Tilt    Roll   Twist   Angle   Shift   Slide    Rise    Dist\n" );
+	}
+
+	PrimaryBaseTop = PrimaryBaseStart;	
+	PrimaryBaseBottom = PrimaryBaseStart + PrimaryBaseIncrement;
+	ComplementaryBaseTop = ComplementaryBaseStart;	
+	ComplementaryBaseBottom = ComplementaryBaseStart + ComplementaryBaseIncrement;
+	for ( i = 1; i <= Number_of_Parameters ; i = i + 1 ){
+		if( ComplementaryStrand * ComplementaryBaseStart * 
+			ComplementaryBaseEnd * ComplementaryBaseIncrement == 0 ){
+			fprintf( stderr,  
+			"    %2d:%2d     /     %2d:%2d  ::  %8.2f" + 
+			"%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+			PrimaryStrand, PrimaryBaseTop, 
+			PrimaryStrand, PrimaryBaseBottom,
+			Tilt[ i ], Roll[ i ], Twist[ i ], Angle[ i ], Shift[ i ],
+			Slide[ i ], Rise[ i ], Dist[ i ] );
+		}else
+			fprintf( stderr,  
+			"%2d:%2d - %2d:%2d / %2d:%2d - %2d:%2d :: %8.2f" + 
+			"%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+			PrimaryStrand, PrimaryBaseTop, 
+			ComplementaryStrand, ComplementaryBaseTop, 
+			PrimaryStrand, PrimaryBaseBottom,
+			ComplementaryStrand,
+			ComplementaryBaseBottom, 
+			Tilt[ i ], Roll[ i ], Twist[ i ], Angle[ i ], Shift[ i ],
+			Slide[ i ], Rise[ i ], Dist[ i ] );
+		PrimaryBaseTop = PrimaryBaseTop + PrimaryBaseIncrement;
+		PrimaryBaseBottom = PrimaryBaseBottom + PrimaryBaseIncrement;
+		ComplementaryBaseTop = ComplementaryBaseTop + 
+			ComplementaryBaseIncrement;
+		ComplementaryBaseBottom = ComplementaryBaseBottom + 
+			ComplementaryBaseIncrement;
+	}
+	TiltMean = mean( Tilt, Number_of_Parameters );
+	RollMean = mean( Roll, Number_of_Parameters );
+	TwistMean = mean( Twist, Number_of_Parameters );
+	AngleMean = mean( Angle, Number_of_Parameters );
+	ShiftMean = mean( Shift, Number_of_Parameters );
+	SlideMean = mean( Slide, Number_of_Parameters );
+	RiseMean = mean( Rise, Number_of_Parameters ); 
+	DistMean = mean( Dist, Number_of_Parameters ); 
+	fprintf( stderr,  "             Mean                %8.2f" + 
+		"%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", TiltMean, RollMean, TwistMean,
+		AngleMean, ShiftMean, SlideMean, RiseMean, DistMean );
+	TiltSD = standard_deviation( Tilt, TiltMean, Number_of_Parameters );
+	RollSD = standard_deviation( Roll, RollMean, Number_of_Parameters );
+	TwistSD = standard_deviation( Twist, TwistMean, Number_of_Parameters );
+	AngleSD = standard_deviation( Angle, AngleMean, Number_of_Parameters );
+	ShiftSD = standard_deviation( Shift, ShiftMean, Number_of_Parameters );
+	SlideSD = standard_deviation( Slide, SlideMean, Number_of_Parameters );
+	RiseSD = standard_deviation( Rise, RiseMean, Number_of_Parameters ); 
+	DistSD = standard_deviation( Dist, DistMean, Number_of_Parameters ); 
+	fprintf( stderr,  "       Standard Deviation        %8.2f" + 
+		"%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", TiltSD, RollSD, TwistSD,
+		AngleSD, ShiftSD, SlideSD, RiseSD, DistSD );
+
+	return( 0 );
+};
+
+int	baseanal( molecule m, int PrimaryStrand, int PrimaryBaseStart, int PrimaryBaseEnd, point PivotPoint ){
+        int     PrimaryLowerRes, PrimaryHigherRes;
+        int     PrimaryBase;
+        int     PrimaryBaseIncrement;
+        int     TauSign, RhoSign, OmegaSign, OmegahSign, dzSign;
+        int     i;
+        point   ytailTop, ytailBottom;
+        point   ymidPrimaryTop, ymidPrimaryBottom;
+        point   PrimaryTopC6, PrimaryBottomC6;
+        point   X, Y, Z, XP1, XP2, OP1, OP2, difference;
+        point   YP1, YP2, ZP1, ZP2, Vi, Vj;
+        point   X1, Y1, Z1, X2, Y2, Z2, sum, O1, O2, V1, V2, product, RjVj;
+        point   Xi, Yi, Zi, Xj, Yj, Zj, Oi, Oj, Oij, RitRjVj, S_Vector;
+        point   RXYijVi, RXYijVj, RXYijOij, RZijdifference2, difference1, difference2;
+        point   PrimaryTopC1Reference, PrimaryBottomC1Reference;
+        float   Ri[3,3], Rj[3,3], R[3,3], Rit[3,3], RXYij[3,3], Hij_inv[3,3], RZij[3,3];
+        float   Omega, Tau, Rho, Omegah[ dynamic ], Angle[ dynamic ], Nu, Theta;
+        float   dx[ dynamic ], dy[ dynamic ], dz[ dynamic ];
+        float   numerator, denominator;
+        float   Tilt[ dynamic ], Roll[ dynamic ], Twist[ dynamic ], Shift[ dynamic ];
+        float   Slide[ dynamic ], Rise[ dynamic ], HTwist[ dynamic ], Tip[ dynamic ];
+        float   Dist1[ dynamic ], Dist2[ dynamic ];
+        float   Inclination[ dynamic ];
+        string  PrimaryTopBase, PrimaryBottomBase;
+        string  nabhome;
+        residue r, res;
+        molecule mref, mp1, mp2;
+        molecule mrefPrimaryTop;
+		molecule mrefPrimaryBottom;
+
+        if( !( nabhome = getenv( "AMBERHOME" ) ) ){
+                fprintf( stderr, "AMBERHOME not defined.\n" );
+                return( 1 );
+        }
+        nabhome = nabhome + "/dat";
+
+        if( PrimaryBaseStart <= PrimaryBaseEnd ){
+                PrimaryBaseIncrement = 1;
+                PrimaryLowerRes = PrimaryBaseStart;
+                PrimaryHigherRes = PrimaryBaseEnd;
+        }
+        else if( PrimaryBaseStart > PrimaryBaseEnd ){
+                PrimaryBaseIncrement = -1;
+                PrimaryLowerRes = PrimaryBaseEnd;
+                PrimaryHigherRes = PrimaryBaseStart;
+        }
+        allocate Dist1[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Dist2[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Tilt[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Roll[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Twist[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Shift[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Slide[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Rise[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Omegah[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Angle[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Inclination[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate Tip[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate HTwist[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate dx[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate dy[ PrimaryHigherRes - PrimaryLowerRes ];
+        allocate dz[ PrimaryHigherRes - PrimaryLowerRes ];
+        i = 1;
+        for (PrimaryBase = PrimaryBaseStart;
+                        PrimaryBase != PrimaryBaseEnd + PrimaryBaseIncrement ;
+                        PrimaryBase = PrimaryBase + PrimaryBaseIncrement ){
+
+                mref = newmolecule();
+                mp1 = newmolecule();
+                mp2 = newmolecule();
+
+                addstrand( mref, "1" );
+
+                addstrand( mp1, "1" );
+                addstrand( mp2, "1" );
+
+                for ( r in m ){
+                        if( ( r.strandnum == PrimaryStrand ) &&
+                                        ( r.resnum == PrimaryBase ) ){
+                                PrimaryTopBase = r.resname;
+                                if ( is_DNA( r ) ){
+                                        setreslibkind( "dna.amber94.rlb", "dna" );
+                                        res = getresidue( standard_resname( r.resname ),
+                                                "dna.amber94.rlb" );
+                                        if( is_ADE( r.resname ) )
+                                                mrefPrimaryTop = getpdb( nabhome +
+                                                        "/dgdb/basepairs/at.XX.pdb" );
+                                }else{
+                                        setreslibkind( "rna.amber94.rlb", "rna" );
+                                        res = getresidue( standard_resname( r.resname ),
+                                                "rna.amber94.rlb" );
+                                        if( is_ADE( r.resname ) )
+                                                mrefPrimaryTop = getpdb( nabhome +
+                                                        "/dgdb/basepairs/au.XX.pdb" );
+                                        else if( is_URA( r.resname ) )
+                                                mrefPrimaryTop = getpdb( nabhome +
+                                                        "/dgdb/basepairs/ua.XX.pdb" );
+                                }
+                                if( is_CYT( r.resname ) )
+                                        mrefPrimaryTop = getpdb( nabhome +
+                                                "/dgdb/basepairs/cg.XIX.pdb" );
+                                else if( is_GUA( r.resname ) )
+                                        mrefPrimaryTop = getpdb( nabhome +
+                                                "/dgdb/basepairs/gc.XIX.pdb" );
+                                else if( is_THY( r.resname ) )
+                                        mrefPrimaryTop = getpdb( nabhome +
+                                                "/dgdb/basepairs/ta.XX.pdb" );
+                                addresidue( mp1, "1", res );
+                        }
+                        if( ( r.strandnum == PrimaryStrand ) &&
+                                ( r.resnum == PrimaryBase + PrimaryBaseIncrement ) ){
+                                PrimaryBottomBase = r.resname;
+                                if ( is_DNA( r ) ){
+                                        setreslibkind( "dna.amber94.rlb", "dna" );
+                                        res = getresidue( standard_resname( r.resname ),
+                                                "dna.amber94.rlb" );
+                                        if( is_ADE( r.resname ) )
+                                                mrefPrimaryBottom = getpdb( nabhome +
+                                                        "/dgdb/basepairs/at.XX.pdb" );
+                                }else{
+                                        setreslibkind( "rna.amber94.rlb", "rna" );
+                                        res = getresidue( standard_resname( r.resname ),
+                                                "rna.amber94.rlb" );
+                                        if( is_ADE( r.resname ) )
+                                                mrefPrimaryBottom = getpdb( nabhome +
+                                                        "/dgdb/basepairs/au.XX.pdb" );
+                                        else if( is_URA( r.resname ) )
+                                                mrefPrimaryBottom = getpdb( nabhome +
+                                                        "/dgdb/basepairs/ua.XX.pdb" );
+                                }
+                                if( is_CYT( r.resname ) )
+                                        mrefPrimaryBottom = getpdb( nabhome +
+                                                "/dgdb/basepairs/cg.XIX.pdb" );
+                                else if( is_GUA( r.resname ) )
+                                        mrefPrimaryBottom = getpdb( nabhome +
+                                                "/dgdb/basepairs/gc.XIX.pdb" );
+                                else if( is_THY( r.resname ) )
+                                        mrefPrimaryBottom = getpdb( nabhome +
+                                                "/dgdb/basepairs/ta.XX.pdb" );
+                                addresidue( mp2, "1", res );
+                        }
+                }
+
+                superimpose( mp1, "1:1:[^H]?,C1'", m, sprintf( "%d:%d:[^H]?,C1'",
+                        PrimaryStrand, PrimaryBase ) );
+                superimpose( mrefPrimaryTop, "1:1:[^H]?,C1'", mp1, "1:1:[^H]?,C1'" );
+                if ( PrimaryBase != PrimaryBaseEnd ){
+                        superimpose( mp2, "1:1:[^H]?,C1'", m, sprintf( "%d:%d:[^H]?,C1'",
+                                PrimaryStrand, PrimaryBase + PrimaryBaseIncrement ) );
+                        superimpose( mrefPrimaryBottom, "1:1:[^H]?,C1'", mp2, "1:1:[^H]?,C1'" );
+                }
+                mergestr( mref, "1", "last", mp1, "1", "first" );
+                if ( PrimaryBase != PrimaryBaseEnd )
+                        mergestr( mref, "1", "last", mp2, "1", "first" );
+
+                setxyz_from_mol( mref, "1:1:C1'", ytailTop );
+                setxyz_from_mol( mrefPrimaryTop, "2:1:C1'", PrimaryTopC1Reference );
+                if ( PrimaryBase != PrimaryBaseEnd ){
+                        setxyz_from_mol( mref, "1:2:C1'", ytailBottom );
+                        setxyz_from_mol( mrefPrimaryBottom, "2:1:C1'", PrimaryBottomC1Reference );
+                }
+                ymidPrimaryTop = ( ytailTop + PrimaryTopC1Reference ) / 2.0;
+                setxyz_from_mol( mref, "1:1:C6", PrimaryTopC6 );
+                if ( PrimaryBase != PrimaryBaseEnd ){
+                        setxyz_from_mol( mref, "1:2:C6", PrimaryBottomC6 );
+                }
+                if ( PrimaryBase != PrimaryBaseEnd ){
+                        ymidPrimaryBottom = ( ytailBottom + PrimaryBottomC1Reference ) / 2.0;
+                }
+
+                Y = ytailTop - ymidPrimaryTop;
+                Y = Y / norm(Y);
+                X = PrimaryTopC6 - ymidPrimaryTop;
+                X = X / norm(X);
+                Z = X ^ Y;
+                Z = Z / norm(Z);
+                X = Y ^ Z;
+                X = X / norm(X);
+                OP1 = ymidPrimaryTop + 2.485*X;
+                XP1 = X;
+                YP1 = Y;
+                ZP1 = Z;
+
+                if ( PrimaryBase != PrimaryBaseEnd ){
+
+                        Y = ytailBottom - ymidPrimaryBottom;
+                        Y = Y / norm(Y);
+                        X = PrimaryBottomC6 - ymidPrimaryBottom;
+                        X = X / norm(X);
+                        Z = X ^ Y;
+                        Z = Z / norm(Z);
+                        X = Y ^ Z;
+                        X = X / norm(X);
+                        OP2 = ymidPrimaryBottom + 2.485*X;
+                        XP2 = X;
+                        YP2 = Y;
+                        ZP2 = Z;
+                }
+
+                V1.x = V2.x = PivotPoint.x;
+                V1.y = V2.y = PivotPoint.y;
+                V1.z = V2.z = PivotPoint.z;
+
+                Xi = X1 = XP1;
+                Yi = Y1 = YP1;
+                Zi = Z1 = ZP1;
+                Xj = X2 = XP2;
+                Yj = Y2 = YP2;
+                Zj = Z2 = ZP2;
+                Oi = O1 = OP1;
+                Oj = O2 = OP2;
+
+                if ( PrimaryBase != PrimaryBaseEnd ){
+
+                        numerator = - Xi @ Xj + Yi @ Yj + Zi @ Zj - 1.0;
+                        denominator =  Xi @ Xj + Yi @ Yj + Zi @ Zj - 3.0;
+                        Omegah[ i ] = acos( 0.5*( Xi @ Xj + Yi @ Yj + Zi @ Zj - 1.0 ) );
+                        Tau = Omegah[ i ]* sqrt( fabs( numerator / denominator ) );
+                        numerator =  Xi @ Xj - Yi @ Yj + Zi @ Zj - 1.0;
+                        Rho = Omegah[ i ] * sqrt( fabs( numerator / denominator ) );
+                        numerator = Xi @ Xj + Yi @ Yj - Zi @ Zj - 1.0;
+                        Omega = Omegah[ i ] * sqrt( fabs( numerator / denominator ) );
+                        if (    ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                        ( fabs( Tau ) >= fabs( Omega ) ) &&
+                                        ( ( Zi @ Yj ) >= ( Yi @ Zj ) ) ) ||
+                                ( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                        ( fabs( Rho ) >= fabs( Omega ) ) &&
+                                        ( ( Xi @ Zj ) >= ( Zi @ Xj ) ) &&
+                                        ( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) >= 0 ) ) ||
+                                ( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                        ( fabs( Rho ) >= fabs( Omega ) ) &&
+                                        ( ( Xi @ Zj ) < ( Zi @ Xj) ) &&
+                                        ( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) < 0 ) ) ||
+                                ( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                        ( fabs( Omega ) >= fabs( Rho ) ) &&
+                                        ( ( Yi @ Xj ) >= ( Xi @ Yj ) ) &&
+                                        ( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) >= 0 ) ) ||
+                                ( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                        ( fabs( Omega ) >= fabs( Rho ) ) &&
+                                        ( ( Yi @ Xj ) < ( Xi @ Yj ) ) &&
+                                        ( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) < 0 ) ) )
+                                TauSign = 1;
+                        else
+                                TauSign = -1;
+                        Tau = Tau * TauSign;
+                        if (    ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                        ( fabs( Tau ) >= fabs( Omega ) ) &&
+                                        ( ( Zi @ Yj ) >= ( Yi @ Zj ) ) &&
+                                        ( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) >= 0 ) ) ||
+                                ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                        ( fabs( Tau ) >= fabs( Omega ) ) &&
+                                        ( ( Zi @ Yj ) < ( Yi @ Zj ) ) &&
+                                        ( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) < 0 ) ) ||
+                                ( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                        ( fabs( Rho ) >= fabs( Omega ) ) &&
+                                        ( ( Xi @ Zj ) >= ( Zi @ Xj ) ) ) ||
+                                ( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                        ( fabs( Omega ) >= fabs( Rho ) ) &&
+                                        ( ( Yi @ Xj ) >= ( Xi @ Yj ) ) &&
+                                        ( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) >= 0 ) ) ||
+                                ( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                        ( fabs( Omega ) >= fabs( Rho ) ) &&
+                                        ( ( Yi @ Xj ) < ( Xi @ Yj ) ) &&
+                                        ( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) < 0 ) ) )
+                                RhoSign = 1;
+                        else
+                                RhoSign = -1;
+                        Rho = Rho * RhoSign;
+                        if (    ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                        ( fabs( Tau ) >= fabs( Omega ) ) &&
+                                        ( ( Zi @ Yj ) >= ( Yi @ Zj ) ) &&
+                                        ( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) >= 0 ) ) ||
+                                ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                        ( fabs( Tau ) >= fabs( Omega ) ) &&
+                                        ( ( Zi @ Yj ) < ( Yi @ Zj ) ) &&
+                                        ( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) < 0 ) ) ||
+                                ( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                        ( fabs( Rho ) >= fabs( Omega ) ) &&
+                                        ( ( Xi @ Zj ) >= ( Zi @ Xj ) ) &&
+                                        ( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) >= 0 ) ) ||
+                                ( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                        ( fabs( Rho ) >= fabs( Omega ) ) &&
+                                        ( ( Xi @ Zj ) < ( Zi @ Xj ) ) &&
+                                        ( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) < 0 ) ) ||
+                                ( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                        ( fabs( Omega ) >= fabs( Rho ) ) &&
+                                        ( ( Yi @ Xj ) >= ( Xi @ Yj ) ) ) )
+                                OmegaSign = 1;
+                        else
+                                OmegaSign = -1;
+                        Omega = Omega * OmegaSign;
+                        Tilt[ i ] = Tau;
+                        Roll[ i ] = Rho;
+                        Twist[ i ] = Omega;
+                        Angle[ i ] = Omegah[ i ];
+                        Vi.x = Vi.y = Vi.z = Vj.x = Vj.y = Vj.z = 0.0;
+                        fill_rotation_matrix( R, -Tilt[ i ]/2.0,
+                                -Roll[ i ]/2.0, -Twist[ i ]/2.0 );
+                        difference = Oj - Oi;
+                        make_rotation_matrix( Ri, Xi, Yi, Zi );
+                        make_rotation_matrix( Rj, Xj, Yj, Zj );
+                        transpose( Ri, Rit );
+                        matrix_multiply_vector( Rit, difference, Oij );
+                        matrix_multiply_vector( Rj, Vj, RjVj );
+                        matrix_multiply_vector( Rit, RjVj, RitRjVj );
+                        sum = Oij + RitRjVj - Vi;
+                        matrix_multiply_vector( R, sum, product );
+                        S_Vector = product + Vi - Vj;
+                        Shift[ i ] = S_Vector.x;
+                        Slide[ i ] = S_Vector.y;
+                        Rise[ i ] = S_Vector.z;
+                        Dist2[ i ] = sqrt( Shift[ i ]*Shift[ i ] + Slide[ i ]*Slide[ i ] +
+                                Rise[ i ]*Rise[ i ] );
+                        if ( Tau*Tau + Rho*Rho > 0 ){
+                                if ( Omega >= 0 )
+                                        OmegahSign = 1;
+                                else
+                                        OmegahSign = -1;
+                                Nu = OmegahSign * ( Rho / sqrt( Tau*Tau + Rho*Rho ) ) *
+                                        acos( Omega / Omegah[ i ] );
+                                Theta = OmegahSign * ( - Tau / sqrt( Tau*Tau + Rho*Rho ) ) *
+                                        acos( Omega / Omegah [ i ]);
+                                Inclination[ i ] = Nu;
+                                Tip[ i ] = Theta;
+                                HTwist[ i ] = OmegahSign * Omegah[ i ];
+                                Hij_inv[1,1] = -0.5;
+                                Hij_inv[1,2] = - sin( Omegah[ i ] ) /
+                                        ( 2.0 * cos( Omegah[ i ] - 1.0 ) );
+                                Hij_inv[1,3] = 0.0;
+                                Hij_inv[2,1] = - Hij_inv[1,2];
+                                Hij_inv[2,2] = -0.5;
+                                Hij_inv[2,3] = 0.0;
+                                Hij_inv[3,1] = 0.0;
+                                Hij_inv[3,2] = 0.0;
+                                Hij_inv[3,3] = 1.0;
+                                fill_rotation_matrix( RXYij, Nu, Theta, 0.0 );
+                                fill_rotation_matrix( RZij, 0.0, 0.0, Omegah[ i ] );
+                                matrix_multiply_vector( RXYij, Vi, RXYijVi );
+                                matrix_multiply_vector( RXYij, Vj, RXYijVj );
+                                matrix_multiply_vector( RXYij, Oij, RXYijOij );
+                                difference1 = RXYijVi - Vi;
+                                difference2 = RXYijVj - Vj;
+                                matrix_multiply_vector( RZij, difference2,
+                                        RZijdifference2 );
+                                sum = RXYijOij + RZijdifference2 - difference1;
+                                matrix_multiply_vector( Hij_inv, sum, S_Vector );
+                                dx[ i ] = S_Vector.x;
+                                dy[ i ] = S_Vector.y;
+                                dz[ i ] = S_Vector.z;
+                        }
+                        else if( ( Tau*Tau + Rho*Rho == 0 ) && ( Omega*Omega > 0 ) ){
+                                Inclination[ i ] = 0.0;
+                                Tip[ i ] = 0.0;
+                                HTwist[ i ] = Omega;
+                                Hij_inv[1,1] = -0.5;
+                                Hij_inv[1,2] = - sin( Omegah[ i ] ) /
+                                        ( 2.0 * cos( Omegah[ i ] - 1.0 ) );
+                                Hij_inv[1,3] = 0.0;
+                                Hij_inv[2,1] = - Hij_inv[1,2];
+                                Hij_inv[2,2] = -0.5;
+                                Hij_inv[2,3] = 0.0;
+                                Hij_inv[3,1] = 0.0;
+                                Hij_inv[3,2] = 0.0;
+                                Hij_inv[3,3] = 1.0;
+                                matrix_multiply_vector( Hij_inv, Oij, S_Vector );
+                                dx[ i ] = S_Vector.x;
+                                dy[ i ] = S_Vector.y;
+                                dz[ i ] = S_Vector.z;
+                        }
+                        else{
+                                if ( Oij.z >= 0 )
+                                        dzSign = 1;
+                                else
+                                        dzSign = -1;
+                                dx[ i ] = 0.0;
+                                dy[ i ] = 0.0;
+                                dz[ i ] = dzSign * norm( Oij );
+                                Nu = dzSign * ( Oij.y / sqrt( Oij.x*Oij.x +
+                                        Oij.y*Oij.y ) ) * acos( Oij.z / dz[ i ] );
+                                Theta = dzSign * ( - Oij.x / sqrt( Oij.x*Oij.x +
+                                        Oij.y*Oij.y ) ) * acos( Oij.z / dz[ i ] );
+                                Inclination[ i ] = Nu;
+                                Tip[ i ] = Theta;
+                                HTwist[ i ] = 0;
+                        }
+                }
+                i++;
+        }
+
+        if( ( PrimaryBaseEnd - PrimaryBaseStart >= 1 ) ||
+                ( PrimaryBaseStart - PrimaryBaseEnd >= 1 ) ){
+                helix_properties( i - 2, PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd,
+                        PrimaryBaseIncrement, 0, 0, 0, 0, Tilt, Roll, Twist, Angle, Shift,
+                        Slide, Rise, Dist2 );
+                local_helical_parameters( i - 2, PrimaryStrand, PrimaryBaseStart,
+                        PrimaryBaseEnd, PrimaryBaseIncrement, 0, 0, 0, 0, Inclination, 
+			Tip, HTwist, dx, dy, dz );
+        }
+	return( 0 );
+};
+
+int	get_base_parameters(point X1, point Y1, point Z1, point O1, point X2, point Y2,
+		point Z2, point O2, point V1, point V2, float Buckle, float PropellerTwist,
+		float Opening, float Angle, float Shear, float Stretch, float Stagger, 
+		float Dist, point Origin, int AntiParallel )
+{
+	
+	int	KappaSign, OmegaSign, SigmaSign;
+	float	numerator, denominator, Kappa, Omega, Sigma, Phi;
+	float	F[3,3], R1[3,3], R2[3,3], R2t[3,3], Rb[3,3];
+	float	RP1[3,3];
+	point	FR2tR1V1, R2tR1V1, R1V1, FO21, O21, FV2, S_Vector, sum;
+	point	product, R2V2, Rbprod, difference;
+
+	if ( AntiParallel ){
+		Phi = acos( 0.5 * ( X1 @ X2 - Y1 @ Y2 - Z1 @ Z2 - 1.0 ) );
+		numerator = - X1 @ X2 - Y1 @ Y2 - Z1 @ Z2 - 1.0;
+		denominator =  X1 @ X2 - Y1 @ Y2 - Z1 @ Z2 - 3.0;
+		Kappa = Phi * sqrt( fabs( numerator / denominator ) );
+		numerator =  X1 @ X2 + Y1 @ Y2 - Z1 @ Z2 - 1.0;
+		Omega = Phi * sqrt( fabs( numerator / denominator ) );
+		numerator = X1 @ X2 - Y1 @ Y2 + Z1 @ Z2 - 1.0;
+		Sigma = Phi * sqrt( fabs( numerator / denominator ) );
+		if ( 	( ( fabs( Kappa ) >= fabs( Omega ) ) && 
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) <= ( Z1 @ Y2 ) ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) >= ( - X1 @ Z2 ) ) &&
+				( ( ( X1 @ Y2 ) - ( Y1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) < ( - X1 @ Z2 ) ) &&
+				( ( ( X1 @ Y2 ) - ( Y1 @ X2 ) ) > 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) <= ( - Y1 @ X2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) > ( - Y1 @ X2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) > 0 ) ) )
+			KappaSign = 1;
+		else
+			KappaSign = -1;
+		Kappa = Kappa * KappaSign;
+		if ( 	( ( fabs( Kappa ) >= fabs( Omega ) ) && 
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) <= ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Y2 ) - ( Y1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Kappa ) >= fabs( Omega ) ) &&
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) > ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Y2 ) - ( Y1 @ X2 ) ) > 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) >= ( - X1 @ Z2 ) ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) <= ( - Y1 @ X2 ) ) &&
+				( ( ( Y1 @ Z2 ) + ( Z1 @ Y2 ) ) <= 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) > ( - Y1 @ X2 ) ) &&
+				( ( ( Y1 @ Z2 ) + ( Z1 @ X2 ) ) > 0 ) ) )
+			OmegaSign = 1;
+		else
+			OmegaSign = -1;
+		Omega = Omega * OmegaSign;
+		if ( 	( ( fabs( Kappa ) >= fabs( Omega ) ) && 
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) <= ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Kappa ) >= fabs( Omega ) ) &&
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) > ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) > 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) >= ( - X1 @ Z2 ) ) &&
+				( ( ( Y1 @ Z2 ) + ( Z1 @ Y2 ) ) <= 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) < ( - X1 @ Z2 ) ) &&
+				( ( ( Y1 @ Z2 ) + ( Z1 @ Y2 ) ) > 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) <= ( - Y1 @ X2 ) ) ) )
+			SigmaSign = 1;
+		else
+			SigmaSign = -1;
+		Sigma = Sigma * SigmaSign;
+	}else{
+		Phi = acos( -0.5 * ( X1 @ X2 + Y1 @ Y2 - Z1 @ Z2 + 1.0 ) );
+		numerator = - X1 @ X2 + Y1 @ Y2 - Z1 @ Z2 + 1.0;
+		denominator =  X1 @ X2 + Y1 @ Y2 - Z1 @ Z2 + 3.0;
+		Kappa = Phi * sqrt( fabs( numerator / denominator ) );
+		numerator =  X1 @ X2 - Y1 @ Y2 - Z1 @ Z2 + 1.0;
+		Omega = Phi * sqrt( fabs( numerator / denominator ) );
+		numerator = X1 @ X2 + Y1 @ Y2 + Z1 @ Z2 + 1.0;
+		Sigma = Phi * sqrt( fabs( numerator / denominator ) );
+		if ( 	( ( fabs( Kappa ) >= fabs( Omega ) ) && 
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) >= - ( Z1 @ Y2 ) ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) <= ( - X1 @ Z2 ) ) &&
+				( ( ( X1 @ Y2 ) + ( Y1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) > ( - X1 @ Z2 ) ) &&
+				( ( ( X1 @ Y2 ) + ( Y1 @ X2 ) ) > 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) <= ( Y1 @ X2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) >= 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) > ( Y1 @ X2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) < 0 ) ) )
+			KappaSign = 1;
+		else
+			KappaSign = -1;
+		Kappa = Kappa * KappaSign;
+		if ( 	( ( fabs( Kappa ) >= fabs( Omega ) ) && 
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) >= - ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Y2 ) + ( Y1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Kappa ) >= fabs( Omega ) ) &&
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) < - ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Y2 ) + ( Y1 @ X2 ) ) > 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) <= ( - X1 @ Z2 ) ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) <= ( Y1 @ X2 ) ) &&
+				( ( ( Y1 @ Z2 ) - ( Z1 @ Y2 ) ) >= 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) > ( Y1 @ X2 ) ) &&
+				( ( ( Y1 @ Z2 ) - ( Z1 @ Y2 ) ) < 0 ) ) )
+			OmegaSign = 1;
+		else
+			OmegaSign = -1;
+		Omega = Omega * OmegaSign;
+		if ( 	( ( fabs( Kappa ) >= fabs( Omega ) ) && 
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) >= - ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) <= 0 ) ) ||
+			( ( fabs( Kappa ) >= fabs( Omega ) ) &&
+				( fabs( Kappa ) >= fabs( Sigma ) ) &&
+				( ( Y1 @ Z2 ) < - ( Z1 @ Y2 ) ) &&
+				( ( ( X1 @ Z2 ) - ( Z1 @ X2 ) ) < 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) <= ( - X1 @ Z2 ) ) &&
+				( ( ( Y1 @ Z2 ) - ( Z1 @ Y2 ) ) >= 0 ) ) ||
+			( ( fabs( Omega ) >= fabs( Kappa ) ) &&
+				( fabs( Omega ) >= fabs( Sigma ) ) &&
+				( ( Z1 @ X2 ) > ( - X1 @ Z2 ) ) &&
+				( ( ( Y1 @ Z2 ) - ( Z1 @ Y2 ) ) < 0 ) ) ||
+			( ( fabs( Sigma ) >= fabs( Kappa ) ) &&
+				( fabs( Sigma ) >= fabs( Omega ) ) &&
+				( ( X1 @ Y2 ) <= ( Y1 @ X2 ) ) ) )
+			SigmaSign = 1;
+		else
+			SigmaSign = -1;
+		Sigma = Sigma * SigmaSign;
+	}
+        Angle = Phi;
+        Buckle = Kappa;
+        PropellerTwist = Omega;
+        Opening = Sigma;
+        fill_rotation_matrix( RP1, -Buckle/2.0, -PropellerTwist/2.0, 
+		-Opening/2.0 );
+        if ( AntiParallel )
+                fill_diagonal( F, 1.0, -1.0, -1.0 );
+        else
+                fill_diagonal( F, -1.0, -1.0, 1.0 );
+        make_rotation_matrix( R1, X1, Y1, Z1 );
+        make_rotation_matrix( R2, X2, Y2, Z2 );
+        transpose( R2, R2t );
+        difference = O1 - O2;
+        matrix_multiply_vector( R2t, difference, O21 );
+        matrix_multiply_vector( F, O21, FO21 );
+        matrix_multiply_vector( R1, V1, R1V1 );
+        matrix_multiply_vector( R2t, R1V1, R2tR1V1 );
+        matrix_multiply_vector( F, R2tR1V1, FR2tR1V1 );
+        matrix_multiply_vector( F, V2, FV2 );
+        matrix_multiply_vector( R1, RP1, Rb );
+        matrix_multiply_vector( R2, V2, R2V2 );
+        sum = V1 + FV2;
+        matrix_multiply_vector( Rb, sum, Rbprod );
+        Origin = 0.5*( O1 + O2 + R1V1 + R2V2 - Rbprod );
+        sum = FO21 + FR2tR1V1 - FV2;
+        matrix_multiply_vector( RP1, sum, product );
+        S_Vector = product + FV2 - V1;
+	Shear = S_Vector.x;
+	Stretch = S_Vector.y;
+	Stagger = S_Vector.z;
+	Dist = sqrt( Shear*Shear + Stretch*Stretch + Stagger*Stagger );
+	return( 0 );
+};
+
+int	basepairanal( molecule m, int PrimaryStrand, int PrimaryBaseStart, 
+		int PrimaryBaseEnd, int ComplementaryStrand, int ComplementaryBaseStart,
+		int ComplementaryBaseEnd, point PivotPoint, int AntiParallel ){
+
+	int	PrimaryLowerRes, PrimaryHigherRes, ComplementaryLowerRes;
+	int	PrimaryBase, ComplementaryBase;
+	int	ComplementaryHigherRes, PrimaryBaseIncrement, ComplementaryBaseIncrement;
+	int	TauSign, RhoSign, OmegaSign, OmegahSign, dzSign;
+	int	i, j, k, NotValidAnswer, NonWCPrimaryResidue[ dynamic ];
+	point	ytailTop, ytailBottom, yheadTop, yheadBottom;
+	point	ymidPrimaryTop, ymidComplementaryTop, ymidPrimaryBottom, ymidComplementaryBottom;
+	point	PrimaryTopC6, ComplementaryTopC6, PrimaryBottomC6, ComplementaryBottomC6;
+	point	X, Y, Z, XP1, XP2, XC1, XC2, OP1, OP2, OC1, OC2, difference;
+	point	YP1, YP2, YC1, YC2, ZP1, ZP2, ZC1, ZC2, Vi, Vj;
+	point	X1, Y1, Z1, X2, Y2, Z2, sum, O1, O2, V1, V2, product, RjVj;
+	point	Xi, Yi, Zi, Xj, Yj, Zj, Oi, Oj, Oij, Origin_i, Origin_j, RitRjVj, S_Vector;
+	point	RXYijVi, RXYijVj, RXYijOij, RZijdifference2, difference1, difference2;
+	point   PrimaryTopC1Reference, ComplementaryTopC1Reference, PrimaryBottomC1Reference;
+	point	ComplementaryBottomC1Reference; // whew!
+	float	Ri[3,3], Rj[3,3], R[3,3], Rit[3,3], RXYij[3,3], Hij_inv[3,3], RZij[3,3];
+	float	Omega, Tau, Rho, Omegah[ dynamic ], Angle[ dynamic ], Nu, Theta; 
+	float	dx[ dynamic ], dy[ dynamic ], dz[ dynamic ];
+	float	Buckle_i, PropellerTwist_i, Opening_i, Angle_i, Shear_i, Stagger_i;
+	float	Buckle_j, PropellerTwist_j, Opening_j, Angle_j, Shear_j, Stagger_j;
+	float	Stretch_i, Stretch_j, Dist1_i, Dist1_j, numerator, denominator;
+	float	Tilt[ dynamic ], Roll[ dynamic ], Twist[ dynamic ], Shift[ dynamic ]; 
+	float	Slide[ dynamic ], Rise[ dynamic ], HTwist[ dynamic ], Tip[ dynamic ];
+	float	Buckle[ dynamic ], PropellerTwist[ dynamic ], Opening[ dynamic ];
+	float	Angle2[ dynamic ], Shear[ dynamic ], Stretch[ dynamic ], Stagger[ dynamic ];
+	float	Dist1[ dynamic ], Dist2[ dynamic ], Dist1SD, Dist1Mean;
+	float	Inclination[ dynamic ], BuckleMean, BuckleSD, PropellerTwistMean;
+	float	PropellerTwistSD, OpeningMean, OpeningSD, Angle2Mean, Angle2SD;
+	float	ShearMean, ShearSD, StretchMean, StretchSD, StaggerMean, StaggerSD;
+	string	PrimaryTopBase, PrimaryBottomBase; 
+	string	ComplementaryTopBase, ComplementaryBottomBase;
+	string  nabhome, WCAnswer, nonWCAnswer, nonReference[ dynamic ];
+	residue	r, res;
+	molecule mref, mp1, mp2, mc1, mc2; 
+	molecule mrefPrimaryTop, mrefComplementaryTop, mrefPrimaryBottom, mrefComplementaryBottom;
+
+        if( !( nabhome = getenv( "AMBERHOME" ) ) ){
+                fprintf( stderr, "AMBERHOME not defined.\n" );
+                return( 1 );
+        }
+		nabhome = nabhome + "/dat";
+
+	if( PrimaryBaseStart <= PrimaryBaseEnd ){
+		PrimaryBaseIncrement = 1;
+		PrimaryLowerRes = PrimaryBaseStart;
+		PrimaryHigherRes = PrimaryBaseEnd;
+	}
+	else if( PrimaryBaseStart > PrimaryBaseEnd ){
+		PrimaryBaseIncrement = -1;
+		PrimaryLowerRes = PrimaryBaseEnd;
+		PrimaryHigherRes = PrimaryBaseStart;
+	}
+	if( ComplementaryBaseStart <= ComplementaryBaseEnd ){
+		ComplementaryBaseIncrement = 1;
+		ComplementaryLowerRes = ComplementaryBaseStart;
+		ComplementaryHigherRes = ComplementaryBaseEnd;
+	}
+	else if( ComplementaryBaseStart > ComplementaryBaseEnd ){
+		ComplementaryBaseIncrement = -1;
+		ComplementaryLowerRes = ComplementaryBaseEnd;
+		ComplementaryHigherRes = ComplementaryBaseStart;
+	}
+	
+	allocate	NonWCPrimaryResidue[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate	nonReference[ PrimaryHigherRes - PrimaryLowerRes ];
+
+	NotValidAnswer = TRUE;
+	printf("Does this helix have any non-Watson-Crick base pairs? (y/n) " );
+	scanf( "%s", WCAnswer );
+	j = 1;
+	while( NotValidAnswer ){
+		if( ( WCAnswer == "y") || ( WCAnswer == "Y" ) ){
+			printf("Which residue of the primary strand ( %d ) forms a non-Watson-Crick base pair (%d-%d) ", PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd );
+			scanf( "%s", nonWCAnswer );
+			NonWCPrimaryResidue[ j ] = atoi( nonWCAnswer );
+			printf("Which base pairing scheme should be used ( e.g., gu.XXVII - See $AMBERHOME/dat/dgdb/basepairs ) " );
+			scanf( "%s", nonReference[ j++ ] );
+			printf("Does this helix have any other non-Watson-Crick base pairs? (y/n) " );
+			scanf( "%s", WCAnswer );
+		}
+		else if( ( WCAnswer == "n") || ( WCAnswer == "N" ) ){
+			NotValidAnswer = FALSE;
+		}
+		else{
+			printf( "%s is not a valid answer.\n", WCAnswer );
+			NotValidAnswer = TRUE;
+		}
+	}
+
+	fprintf(stderr, "                *** Basepair Analysis : Strands %d and %d. ***\n", 
+		PrimaryStrand, ComplementaryStrand );
+	fprintf(stderr, "       Basepair         Buckle   Prop  Opening  Angle   Shear  Stretch  Stagger  Dist\n" );
+	ComplementaryBase = ComplementaryBaseStart;
+	allocate Buckle[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate PropellerTwist[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Opening[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Angle2[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Shear[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Stretch[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Stagger[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Dist1[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Dist2[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Tilt[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Roll[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Twist[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Shift[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Slide[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Rise[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Omegah[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Angle[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Inclination[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate Tip[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate HTwist[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate dx[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate dy[ PrimaryHigherRes - PrimaryLowerRes ];
+	allocate dz[ PrimaryHigherRes - PrimaryLowerRes ];
+	i = 1;
+	for (PrimaryBase = PrimaryBaseStart; 
+			PrimaryBase != PrimaryBaseEnd + PrimaryBaseIncrement ; 
+			PrimaryBase = PrimaryBase + PrimaryBaseIncrement ){
+
+		mref = newmolecule();
+		mp1 = newmolecule();
+		mp2 = newmolecule();
+		mc1 = newmolecule();
+		mc2 = newmolecule();
+
+		addstrand( mref, "1" );
+		addstrand( mref, "2" );
+
+		addstrand( mp1, "1" );
+		addstrand( mp2, "1" );
+		addstrand( mc1, "1" );
+		addstrand( mc2, "1" );
+
+		for ( r in m ){
+                        if( ( r.strandnum == PrimaryStrand ) && 
+					( r.resnum == PrimaryBase ) ){
+                                PrimaryTopBase = r.resname;
+				if ( is_DNA( r ) ){
+					setreslibkind( "dna.amber94.rlb", "dna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"dna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefPrimaryTop = getpdb( nabhome + 
+							"/dgdb/basepairs/at.XX.pdb" );
+				}else{
+					setreslibkind( "rna.amber94.rlb", "rna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"rna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefPrimaryTop = getpdb( nabhome + 
+							"/dgdb/basepairs/au.XX.pdb" );
+					else if( is_URA( r.resname ) )
+						mrefPrimaryTop = getpdb( nabhome + 
+							"/dgdb/basepairs/ua.XX.pdb" );
+				}
+				if( is_CYT( r.resname ) )
+					mrefPrimaryTop = getpdb( nabhome + 
+						"/dgdb/basepairs/cg.XIX.pdb" );
+				else if( is_GUA( r.resname ) )
+					mrefPrimaryTop = getpdb( nabhome + 
+						"/dgdb/basepairs/gc.XIX.pdb" );
+				else if( is_THY( r.resname ) )
+					mrefPrimaryTop = getpdb( nabhome + 
+						"/dgdb/basepairs/ta.XX.pdb" );
+				addresidue( mp1, "1", res );
+                        }
+                        else if( ( r.strandnum == ComplementaryStrand ) &&
+                                ( r.resnum == ComplementaryBase ) ){
+                                ComplementaryTopBase = r.resname;
+				if ( is_DNA( r ) ){
+					setreslibkind( "dna.amber94.rlb", "dna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"dna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefComplementaryTop = getpdb( nabhome + 
+							"/dgdb/basepairs/at.XX.pdb" );
+				}else{
+					setreslibkind( "rna.amber94.rlb", "rna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"rna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefComplementaryTop = getpdb( nabhome + 
+							"/dgdb/basepairs/au.XX.pdb" );
+					else if( is_URA( r.resname ) )
+						mrefComplementaryTop = getpdb( nabhome + 
+							"/dgdb/basepairs/ua.XX.pdb" );
+				}
+				if( is_CYT( r.resname ) )
+					mrefComplementaryTop = getpdb( nabhome + 
+						"/dgdb/basepairs/cg.XIX.pdb" );
+				else if( is_GUA( r.resname ) )
+					mrefComplementaryTop = getpdb( nabhome + 
+						"/dgdb/basepairs/gc.XIX.pdb" );
+				else if( is_THY( r.resname ) )
+					mrefComplementaryTop = getpdb( nabhome + 
+						"/dgdb/basepairs/ta.XX.pdb" );
+				addresidue( mc1, "1", res );
+                        }
+                        if( ( r.strandnum == PrimaryStrand ) && 
+				( r.resnum == PrimaryBase + PrimaryBaseIncrement ) ){
+                                PrimaryBottomBase = r.resname;
+				if ( is_DNA( r ) ){
+					setreslibkind( "dna.amber94.rlb", "dna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"dna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefPrimaryBottom = getpdb( nabhome + 
+							"/dgdb/basepairs/at.XX.pdb" );
+				}else{
+					setreslibkind( "rna.amber94.rlb", "rna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"rna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefPrimaryBottom = getpdb( nabhome + 
+							"/dgdb/basepairs/au.XX.pdb" );
+					else if( is_URA( r.resname ) )
+						mrefPrimaryBottom = getpdb( nabhome + 
+							"/dgdb/basepairs/ua.XX.pdb" );
+				}
+				if( is_CYT( r.resname ) )
+					mrefPrimaryBottom = getpdb( nabhome + 
+						"/dgdb/basepairs/cg.XIX.pdb" );
+				else if( is_GUA( r.resname ) )
+					mrefPrimaryBottom = getpdb( nabhome + 
+						"/dgdb/basepairs/gc.XIX.pdb" );
+				else if( is_THY( r.resname ) )
+					mrefPrimaryBottom = getpdb( nabhome + 
+						"/dgdb/basepairs/ta.XX.pdb" );
+				addresidue( mp2, "1", res );
+                        } 
+			else if( ( r.strandnum == ComplementaryStrand ) &&
+                                ( r.resnum == ComplementaryBase + 
+				ComplementaryBaseIncrement ) ){
+                                ComplementaryBottomBase = r.resname;
+				if ( is_DNA( r ) ){
+					setreslibkind( "dna.amber94.rlb", "dna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"dna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefComplementaryBottom = getpdb( nabhome + 
+							"/dgdb/basepairs/at.XX.pdb" );
+				}else{
+					setreslibkind( "rna.amber94.rlb", "rna" );
+					res = getresidue( standard_resname( r.resname ), 
+						"rna.amber94.rlb" );
+					if( is_ADE( r.resname ) )
+						mrefComplementaryBottom = getpdb( nabhome + 
+							"/dgdb/basepairs/au.XX.pdb" );
+					else if( is_URA( r.resname ) )
+						mrefComplementaryBottom = getpdb( nabhome + 
+							"/dgdb/basepairs/ua.XX.pdb" );
+				}
+				if( is_CYT( r.resname ) )
+					mrefComplementaryBottom = getpdb( nabhome + 
+						"/dgdb/basepairs/cg.XIX.pdb" );
+				else if( is_GUA( r.resname ) )
+					mrefComplementaryBottom = getpdb( nabhome + 
+						"/dgdb/basepairs/gc.XIX.pdb" );
+				else if( is_THY( r.resname ) )
+					mrefComplementaryBottom = getpdb( nabhome + 
+						"/dgdb/basepairs/ta.XX.pdb" );
+				addresidue( mc2, "1", res );
+                        }
+                }
+		for ( k = 1; k <= j; k++ ){
+			if( NonWCPrimaryResidue[ k ] == PrimaryBase ){
+				mrefPrimaryTop = getpdb( nabhome + "/dgdb/basepairs/"+
+					nonReference[ k ] + ".pdb" );
+			}else if( NonWCPrimaryResidue[ k ] == PrimaryBase + PrimaryBaseIncrement ){
+				mrefPrimaryBottom = getpdb( nabhome + "/dgdb/basepairs/"+
+					nonReference[ k ] + ".pdb" );
+			}
+		}
+		superimpose( mp1, "1:1:[^H]?,C1'", m, sprintf( "%d:%d:[^H]?,C1'",
+			PrimaryStrand, PrimaryBase ) );
+		superimpose( mrefPrimaryTop, "1:1:[^H]?,C1'", mp1, "1:1:[^H]?,C1'" );
+		if ( PrimaryBase != PrimaryBaseEnd ){
+			superimpose( mp2, "1:1:[^H]?,C1'", m, sprintf( "%d:%d:[^H]?,C1'",
+				PrimaryStrand, PrimaryBase + PrimaryBaseIncrement ) );
+			superimpose( mrefPrimaryBottom, "1:1:[^H]?,C1'", mp2, "1:1:[^H]?,C1'" );
+		}
+		superimpose( mc1, "1:1:[^H]?,C1'", m, sprintf( "%d:%d:[^H]?,C1'",
+			ComplementaryStrand, ComplementaryBase ) );
+		superimpose( mrefComplementaryTop, "1:1:[^H]?,C1'", mc1, "1:1:[^H]?,C1'" );
+		if ( ComplementaryBase != ComplementaryBaseEnd ){
+			superimpose( mc2, "1:1:[^H]?,C1'", m, sprintf( "%d:%d:[^H]?,C1'",
+				ComplementaryStrand, ComplementaryBase + 
+				ComplementaryBaseIncrement ) );
+			superimpose( mrefComplementaryBottom, "1:1:[^H]?,C1'", mc2, "1:1:[^H]?,C1'" );
+		}
+		mergestr( mref, "1", "last", mp1, "1", "first" );
+		if ( PrimaryBase != PrimaryBaseEnd )
+			mergestr( mref, "1", "last", mp2, "1", "first" );
+		mergestr( mref, "2", "last", mc1, "1", "first" );
+		if ( ComplementaryBase != ComplementaryBaseEnd )
+			mergestr( mref, "2", "last", mc2, "1", "first" );
+
+		setxyz_from_mol( mref, "1:1:C1'", ytailTop );
+		setxyz_from_mol( mrefPrimaryTop, "2:1:C1'", PrimaryTopC1Reference );
+		setxyz_from_mol( mref, "2:1:C1'", yheadTop );
+		setxyz_from_mol( mrefComplementaryTop, "2:1:C1'", ComplementaryTopC1Reference );
+		if ( PrimaryBase != PrimaryBaseEnd ){
+			setxyz_from_mol( mref, "1:2:C1'", ytailBottom );
+			setxyz_from_mol( mrefPrimaryBottom, "2:1:C1'", PrimaryBottomC1Reference );
+		}
+		if ( ComplementaryBase != ComplementaryBaseEnd ){
+			setxyz_from_mol( mref, "2:2:C1'", yheadBottom );
+			setxyz_from_mol( mrefComplementaryBottom, "2:1:C1'", 
+				ComplementaryBottomC1Reference );
+		}
+		ymidPrimaryTop = ( ytailTop + PrimaryTopC1Reference ) / 2.0;
+		ymidComplementaryTop = ( yheadTop + ComplementaryTopC1Reference ) / 2.0;
+		setxyz_from_mol( mref, "1:1:C6", PrimaryTopC6 );
+		setxyz_from_mol( mref, "2:1:C6", ComplementaryTopC6 );
+		if ( PrimaryBase != PrimaryBaseEnd ){
+			setxyz_from_mol( mref, "1:2:C6", PrimaryBottomC6 );
+		}
+		if ( ComplementaryBase != ComplementaryBaseEnd ){
+			setxyz_from_mol( mref, "2:2:C6", ComplementaryBottomC6 );
+		}
+		if ( ( PrimaryBase != PrimaryBaseEnd ) && 
+			( ComplementaryBase != ComplementaryBaseEnd ) ){
+			ymidPrimaryBottom = ( ytailBottom + PrimaryBottomC1Reference ) / 2.0;
+			ymidComplementaryBottom = ( yheadBottom + ComplementaryBottomC1Reference ) 
+				/ 2.0;
+		}
+
+		Y = ytailTop - ymidPrimaryTop;
+		Y = Y / norm(Y);
+		X = PrimaryTopC6 - ymidPrimaryTop;
+		X = X / norm(X);
+		Z = X ^ Y;
+		Z = Z / norm(Z);
+		X = Y ^ Z;
+		X = X / norm(X);
+		OP1 = ymidPrimaryTop + 2.485*X;
+		XP1 = X;
+		YP1 = Y;
+		ZP1 = Z;
+
+		if ( PrimaryBase != PrimaryBaseEnd ){
+
+			Y = ytailBottom - ymidPrimaryBottom;
+			Y = Y / norm(Y);
+			X = PrimaryBottomC6 - ymidPrimaryBottom;
+			X = X / norm(X);
+			Z = X ^ Y;
+			Z = Z / norm(Z);
+			X = Y ^ Z;
+			X = X / norm(X);
+			OP2 = ymidPrimaryBottom + 2.485*X;
+			XP2 = X;
+			YP2 = Y;
+			ZP2 = Z;
+		}
+
+		Y = yheadTop - ymidComplementaryTop;
+		Y = Y / norm(Y);
+		X = ComplementaryTopC6 - ymidComplementaryTop;
+		X = X / norm(X);
+		Z = X ^ Y;
+		Z = Z / norm(Z);
+		X = Y ^ Z;
+		X = X / norm(X);
+		OC1 = ymidComplementaryTop + 2.485*X;
+		XC1 = X;
+		YC1 = Y;
+		ZC1 = Z;
+
+		if ( ComplementaryBase != ComplementaryBaseEnd ){
+
+			Y = yheadBottom - ymidComplementaryBottom;
+			Y = Y / norm(Y);
+			X = ComplementaryBottomC6 - ymidComplementaryBottom;
+			X = X / norm(X);
+			Z = X ^ Y;
+			Z = Z / norm(Z);
+			X = Y ^ Z;
+			X = X / norm(X);
+			OC2 = ymidComplementaryBottom + 2.485*X;
+			XC2 = X;
+			YC2 = Y;
+			ZC2 = Z;
+		}
+
+		V1.x = V2.x = PivotPoint.x;
+		V1.y = V2.y = PivotPoint.y;
+		V1.z = V2.z = PivotPoint.z;
+
+		X1 = Xi = XP1;
+		Y1 = Yi = YP1;
+		Z1 = Zi = ZP1;
+		X2 = XC1;
+		Y2 = YC1;
+		Z2 = ZC1;
+		O1 = OP1;
+		O2 = OC1;
+
+		get_base_parameters(X1, Y1, Z1, O1, X2, Y2, Z2, O2, V1, V2, Buckle_i,
+			PropellerTwist_i, Opening_i, Angle_i, Shear_i, Stretch_i, Stagger_i,
+			Dist1_i, Origin_i, AntiParallel);
+		Oi = Origin_i;
+
+		if ( ( PrimaryBase != PrimaryBaseEnd ) && 
+			( ComplementaryBase != ComplementaryBaseEnd ) ){
+			X1 = Xj = XP2;
+			Y1 = Yj = YP2;
+			Z1 = Zj = ZP2;
+			X2 = XC2;
+			Y2 = YC2;
+			Z2 = ZC2;
+			O1 = OP2;
+			O2 = OC2;
+		}
+
+		if ( ( PrimaryBase != PrimaryBaseEnd ) && 
+			( ComplementaryBase != ComplementaryBaseEnd ) ){
+			get_base_parameters(X1, Y1, Z1, O1, X2, Y2, Z2, O2, V1, V2, Buckle_j,
+				PropellerTwist_j, Opening_j, Angle_j, Shear_j, Stretch_j, Stagger_j,
+				Dist1_j, Origin_j, AntiParallel);
+			Oj = Origin_j;
+
+                	numerator = - Xi @ Xj + Yi @ Yj + Zi @ Zj - 1.0;
+                	denominator =  Xi @ Xj + Yi @ Yj + Zi @ Zj - 3.0;
+			Omegah[ i ] = acos( 0.5*( Xi @ Xj + Yi @ Yj + Zi @ Zj - 1.0 ) );
+                	Tau = Omegah[ i ]* sqrt( fabs( numerator / denominator ) );
+                	numerator =  Xi @ Xj - Yi @ Yj + Zi @ Zj - 1.0;
+                	Rho = Omegah[ i ] * sqrt( fabs( numerator / denominator ) );
+                	numerator = Xi @ Xj + Yi @ Yj - Zi @ Zj - 1.0;
+                	Omega = Omegah[ i ] * sqrt( fabs( numerator / denominator ) );
+                	if (    ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                	( fabs( Tau ) >= fabs( Omega ) ) &&
+                                	( ( Zi @ Yj ) >= ( Yi @ Zj ) ) ) ||
+                        	( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                	( fabs( Rho ) >= fabs( Omega ) ) &&
+                                	( ( Xi @ Zj ) >= ( Zi @ Xj ) ) &&
+                                	( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) >= 0 ) ) ||
+                        	( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                	( fabs( Rho ) >= fabs( Omega ) ) &&
+                                	( ( Xi @ Zj ) < ( Zi @ Xj) ) &&
+                                	( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) < 0 ) ) ||
+                        	( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                	( fabs( Omega ) >= fabs( Rho ) ) &&
+                                	( ( Yi @ Xj ) >= ( Xi @ Yj ) ) &&
+                                	( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) >= 0 ) ) ||
+                        	( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                	( fabs( Omega ) >= fabs( Rho ) ) &&
+                                	( ( Yi @ Xj ) < ( Xi @ Yj ) ) &&
+                                	( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) < 0 ) ) )
+                        	TauSign = 1;
+                	else
+                        	TauSign = -1;
+                	Tau = Tau * TauSign;
+                	if (    ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                	( fabs( Tau ) >= fabs( Omega ) ) &&
+                                	( ( Zi @ Yj ) >= ( Yi @ Zj ) ) &&
+                                	( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) >= 0 ) ) ||
+                        	( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                	( fabs( Tau ) >= fabs( Omega ) ) &&
+                                	( ( Zi @ Yj ) < ( Yi @ Zj ) ) &&
+                                	( ( ( Yi @ Xj ) + ( Xi @ Yj ) ) < 0 ) ) ||
+                        	( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                	( fabs( Rho ) >= fabs( Omega ) ) &&
+                                	( ( Xi @ Zj ) >= ( Zi @ Xj ) ) ) ||
+                        	( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                	( fabs( Omega ) >= fabs( Rho ) ) &&
+                                	( ( Yi @ Xj ) >= ( Xi @ Yj ) ) &&
+                                	( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) >= 0 ) ) ||
+                        	( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                	( fabs( Omega ) >= fabs( Rho ) ) &&
+                                	( ( Yi @ Xj ) < ( Xi @ Yj ) ) &&
+                                	( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) < 0 ) ) )
+                        	RhoSign = 1;
+                	else
+                        	RhoSign = -1;
+                	Rho = Rho * RhoSign;
+                	if (    ( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                	( fabs( Tau ) >= fabs( Omega ) ) &&
+                                	( ( Zi @ Yj ) >= ( Yi @ Zj ) ) &&
+                                	( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) >= 0 ) ) ||
+                        	( ( fabs( Tau ) >= fabs( Rho ) ) &&
+                                	( fabs( Tau ) >= fabs( Omega ) ) &&
+                                	( ( Zi @ Yj ) < ( Yi @ Zj ) ) &&
+                                	( ( ( Zi @ Xj ) + ( Xi @ Zj ) ) < 0 ) ) ||
+                        	( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                	( fabs( Rho ) >= fabs( Omega ) ) &&
+                                	( ( Xi @ Zj ) >= ( Zi @ Xj ) ) &&
+                                	( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) >= 0 ) ) ||
+                        	( ( fabs( Rho ) >= fabs( Tau ) ) &&
+                                	( fabs( Rho ) >= fabs( Omega ) ) &&
+                                	( ( Xi @ Zj ) < ( Zi @ Xj ) ) &&
+                                	( ( ( Zi @ Yj ) + ( Yi @ Zj ) ) < 0 ) ) ||
+                        	( ( fabs( Omega ) >= fabs( Tau ) ) &&
+                                	( fabs( Omega ) >= fabs( Rho ) ) &&
+                                	( ( Yi @ Xj ) >= ( Xi @ Yj ) ) ) )
+                        	OmegaSign = 1;
+                	else
+                        	OmegaSign = -1;
+                	Omega = Omega * OmegaSign;
+			Tilt[ i ] = Tau;
+			Roll[ i ] = Rho;
+			Twist[ i ] = Omega;
+			Angle[ i ] = Omegah[ i ];
+			Vi.x = Vi.y = Vi.z = Vj.x = Vj.y = Vj.z = 0.0;
+			fill_rotation_matrix( R, -Tilt[ i ]/2.0, 
+				-Roll[ i ]/2.0, -Twist[ i ]/2.0 );
+			difference = Oj - Oi;
+			make_rotation_matrix( Ri, Xi, Yi, Zi );
+			make_rotation_matrix( Rj, Xj, Yj, Zj );
+			transpose( Ri, Rit );
+			matrix_multiply_vector( Rit, difference, Oij );
+			matrix_multiply_vector( Rj, Vj, RjVj );
+			matrix_multiply_vector( Rit, RjVj, RitRjVj );
+			sum = Oij + RitRjVj - Vi;
+			matrix_multiply_vector( R, sum, product );
+			S_Vector = product + Vi - Vj;
+			Shift[ i ] = S_Vector.x;
+			Slide[ i ] = S_Vector.y;
+			Rise[ i ] = S_Vector.z;
+			Dist2[ i ] = sqrt( Shift[ i ]*Shift[ i ] + Slide[ i ]*Slide[ i ] +
+				Rise[ i ]*Rise[ i ] );
+			if ( Tau*Tau + Rho*Rho > 0 ){
+				if ( Omega >= 0 )
+					OmegahSign = 1;
+				else
+					OmegahSign = -1;
+				Nu = OmegahSign * ( Rho / sqrt( Tau*Tau + Rho*Rho ) ) * 
+					acos( Omega / Omegah[ i ] );	
+				Theta = OmegahSign * ( - Tau / sqrt( Tau*Tau + Rho*Rho ) ) * 
+					acos( Omega / Omegah [ i ]);	
+				Inclination[ i ] = Nu;
+				Tip[ i ] = Theta;
+				HTwist[ i ] = OmegahSign * Omegah[ i ];
+				Hij_inv[1,1] = -0.5;
+				Hij_inv[1,2] = - sin( Omegah[ i ] ) / 
+					( 2.0 * cos( Omegah[ i ] - 1.0 ) );
+				Hij_inv[1,3] = 0.0;
+				Hij_inv[2,1] = - Hij_inv[1,2];
+				Hij_inv[2,2] = -0.5;
+				Hij_inv[2,3] = 0.0;
+				Hij_inv[3,1] = 0.0;
+				Hij_inv[3,2] = 0.0;
+				Hij_inv[3,3] = 1.0;
+				fill_rotation_matrix( RXYij, Nu, Theta, 0.0 );
+				fill_rotation_matrix( RZij, 0.0, 0.0, Omegah[ i ] );
+				matrix_multiply_vector( RXYij, Vi, RXYijVi );
+				matrix_multiply_vector( RXYij, Vj, RXYijVj );
+				matrix_multiply_vector( RXYij, Oij, RXYijOij );
+				difference1 = RXYijVi - Vi;
+				difference2 = RXYijVj - Vj;
+				matrix_multiply_vector( RZij, difference2, 
+					RZijdifference2 );
+				sum = RXYijOij + RZijdifference2 - difference1;
+				matrix_multiply_vector( Hij_inv, sum, S_Vector );
+				dx[ i ] = S_Vector.x;
+				dy[ i ] = S_Vector.y;
+				dz[ i ] = S_Vector.z;
+			}
+			else if( ( Tau*Tau + Rho*Rho == 0 ) && ( Omega*Omega > 0 ) ){	
+				Inclination[ i ] = 0.0;
+				Tip[ i ] = 0.0;
+				HTwist[ i ] = Omega;
+				Hij_inv[1,1] = -0.5;
+				Hij_inv[1,2] = - sin( Omegah[ i ] ) / 
+					( 2.0 * cos( Omegah[ i ] - 1.0 ) );
+				Hij_inv[1,3] = 0.0;
+				Hij_inv[2,1] = - Hij_inv[1,2];
+				Hij_inv[2,2] = -0.5;
+				Hij_inv[2,3] = 0.0;
+				Hij_inv[3,1] = 0.0;
+				Hij_inv[3,2] = 0.0;
+				Hij_inv[3,3] = 1.0;
+				matrix_multiply_vector( Hij_inv, Oij, S_Vector );
+				dx[ i ] = S_Vector.x;
+				dy[ i ] = S_Vector.y;
+				dz[ i ] = S_Vector.z;
+			}
+			else{
+				if ( Oij.z >= 0 )
+					dzSign = 1;
+				else
+					dzSign = -1;
+				dx[ i ] = 0.0;
+				dy[ i ] = 0.0;
+				dz[ i ] = dzSign * norm( Oij );
+				Nu = dzSign * ( Oij.y / sqrt( Oij.x*Oij.x + 
+					Oij.y*Oij.y ) ) * acos( Oij.z / dz[ i ] );
+				Theta = dzSign * ( - Oij.x / sqrt( Oij.x*Oij.x + 
+					Oij.y*Oij.y ) ) * acos( Oij.z / dz[ i ] );
+				Inclination[ i ] = Nu;
+				Tip[ i ] = Theta;
+				HTwist[ i ] = 0;
+			}
+		}
+
+		fprintf(stderr, 
+			"%2d:%2d%4s - %2d:%2d%4s%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", 
+			PrimaryStrand, PrimaryBase, PrimaryTopBase, ComplementaryStrand,
+			ComplementaryBase, ComplementaryTopBase, Buckle_i, 
+			PropellerTwist_i, Opening_i, Angle_i, Shear_i, Stretch_i, 
+			Stagger_i, Dist1_i ); 
+		
+		ComplementaryBase = ComplementaryBase + ComplementaryBaseIncrement;
+		Buckle[ i ] = Buckle_i;
+		PropellerTwist[ i ] = PropellerTwist_i;
+		Opening[ i ] = Opening_i;
+		Angle2[ i ] = Angle_i;
+		Shear[ i ] = Shear_i;
+		Stretch[ i ] = Stretch_i;
+		Stagger[ i ] = Stagger_i;
+		Dist1[ i ] = Dist1_i;
+		i++;
+	}
+	BuckleMean = mean( Buckle, i - 1 );
+	PropellerTwistMean = mean( PropellerTwist, i - 1 );
+	OpeningMean = mean( Opening, i - 1 );
+	Angle2Mean = mean( Angle2, i - 1 );
+	ShearMean = mean( Shear, i - 1 );
+	StretchMean = mean( Stretch, i - 1 );
+	StaggerMean = mean( Stagger, i - 1 ); 
+	Dist1Mean = mean( Dist1, i - 1 ); 
+	fprintf( stderr,  "         Mean        %8.2f" + 
+		"%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", BuckleMean, PropellerTwistMean, 
+		OpeningMean, Angle2Mean, ShearMean, StretchMean, StaggerMean, Dist1Mean );
+	BuckleSD = standard_deviation( Buckle, BuckleMean, i - 1 );
+	PropellerTwistSD = standard_deviation( PropellerTwist, PropellerTwistMean, i - 1 );
+	OpeningSD = standard_deviation( Opening, OpeningMean, i - 1 );
+	Angle2SD = standard_deviation( Angle2, Angle2Mean, i - 1 );
+	ShearSD = standard_deviation( Shear, ShearMean, i - 1 );
+	StretchSD = standard_deviation( Stretch, StretchMean, i - 1 );
+	StaggerSD = standard_deviation( Stagger, StaggerMean, i - 1 ); 
+	Dist1SD = standard_deviation( Dist1, Dist1Mean, i - 1 ); 
+	fprintf( stderr,  " Standard Deviation  %8.2f" + 
+		"%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", BuckleSD, PropellerTwistSD, OpeningSD,
+		Angle2SD, ShearSD, StretchSD, StaggerSD, Dist1SD );
+
+	if( ( ( PrimaryBaseEnd - PrimaryBaseStart >= 1 ) || 
+		( PrimaryBaseStart - PrimaryBaseEnd >= 1 ) ) &&
+		( ( ComplementaryBaseEnd - ComplementaryBaseStart >= 1 ) ||
+		( ComplementaryBaseStart - ComplementaryBaseEnd >= 1 ) ) ){
+		helix_properties( i - 2, PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd,
+			PrimaryBaseIncrement, ComplementaryStrand, 
+			ComplementaryBaseStart, ComplementaryBaseEnd, 
+			ComplementaryBaseIncrement, Tilt, Roll, Twist, Angle, Shift, 
+			Slide, Rise, Dist2 );
+		local_helical_parameters( i - 2, PrimaryStrand, PrimaryBaseStart, 
+			PrimaryBaseEnd, PrimaryBaseIncrement, ComplementaryStrand, 
+			ComplementaryBaseStart, ComplementaryBaseEnd, 
+			ComplementaryBaseIncrement, Inclination, Tip, HTwist, 
+			dx, dy, dz );
+	}
+	
+	return( 0 );
+};
+
+int	helixanal( molecule in_mol )
+{
+	int 	NotValidAnswer, PrimaryStrand, ComplementaryStrand;
+	int	PrimaryBaseStart, PrimaryBaseEnd;
+	int	ComplementaryBaseStart, ComplementaryBaseEnd;
+	int	PrimaryStrandResidues, ComplementaryStrandResidues;
+	int	SingleStranded, DifferentStrandLength, AntiParallel;
+	string 	ParallelAnswer, PrimaryStrandChar, ComplementaryStrandChar;
+	string	PrimaryBaseStartChar, PrimaryBaseEndChar;
+	string	ComplementaryBaseStartChar, ComplementaryBaseEndChar;
+	string	PivotAnswer;
+	point	PivotPoint;
+	molecule m;
+
+	m = make_nab_NA( in_mol );	
+	NotValidAnswer = TRUE;
+	DifferentStrandLength = TRUE;
+	while( DifferentStrandLength ){
+		while( NotValidAnswer ){
+			printf("Is this helix (A)nti-parallel, (P)arallel, or (S)ingle stranded? ");
+			scanf( "%s", ParallelAnswer );
+			if( ( ParallelAnswer == "A") || ( ParallelAnswer == "a" ) ){
+				printf( "Anti-parallel double helix\n" );
+				NotValidAnswer = FALSE;
+				AntiParallel = TRUE;
+				SingleStranded = FALSE;
+			}
+			else if( ( ParallelAnswer == "P") || ( ParallelAnswer == "p" ) ){
+				printf( "Parallel double helix\n" );
+				NotValidAnswer = FALSE;
+				AntiParallel = FALSE;
+				SingleStranded = FALSE;
+			}
+			else if( ( ParallelAnswer == "S") || ( ParallelAnswer == "s" ) ){
+				printf( "Single stranded\n" );
+				NotValidAnswer = FALSE;
+				AntiParallel = FALSE;
+				SingleStranded = TRUE;
+			}
+			else{
+				printf( "%s is not a valid answer.\n", ParallelAnswer );
+				NotValidAnswer = TRUE;
+			}
+		}
+		NotValidAnswer = TRUE;
+		while( NotValidAnswer ){
+			if ( m.nstrands > 1 ){
+				printf( "Which strand should be considered the primary strand (1-%d)? ", m.nstrands );
+				scanf( "%s", PrimaryStrandChar );
+				PrimaryStrand = atoi( PrimaryStrandChar );
+				if( !SingleStranded ){
+					printf( "Which strand should be considered the complementary strand (1-%d)? ", m.nstrands );
+					scanf( "%s", ComplementaryStrandChar );	
+					ComplementaryStrand = atoi( ComplementaryStrandChar );
+				}else
+					ComplementaryStrand = PrimaryStrand;
+			}else{
+	 			PrimaryStrand = 1;
+				ComplementaryStrand = 1;
+			}	
+			if( ( PrimaryStrand > 0 ) && ( PrimaryStrand <= m.nstrands ) && 
+					( ComplementaryStrand > 0 ) && 
+					( ComplementaryStrand <= m.nstrands ) )
+				NotValidAnswer = FALSE;
+			else
+				printf( "Strand numbers must be between 1 and %d.\n", m.nstrands );
+		}	
+		NotValidAnswer = TRUE;
+		while( NotValidAnswer ){
+			if ( m.nstrands > 1 ){
+				PrimaryStrandResidues = countstrandresidues( m, PrimaryStrand );
+				printf( "What is the primary strand starting residue number (1-%d)? ", PrimaryStrandResidues );
+				scanf( "%s", PrimaryBaseStartChar );
+				PrimaryBaseStart = atoi( PrimaryBaseStartChar );
+				printf( "What is the primary strand ending residue number (1-%d)? ", PrimaryStrandResidues );
+				scanf( "%s", PrimaryBaseEndChar );
+				PrimaryBaseEnd = atoi( PrimaryBaseEndChar );
+			}else{
+				PrimaryBaseStart = 1;
+				PrimaryBaseEnd = 1;
+			}
+			if( ( PrimaryBaseStart > 0 ) && 
+					( PrimaryBaseStart <= PrimaryStrandResidues ) &&
+					( PrimaryBaseEnd <= PrimaryStrandResidues ) )
+				NotValidAnswer = FALSE;
+			else
+				printf( "Primary strand residue numbers must be between 1 and %d.\n", PrimaryStrandResidues );
+		}		
+		NotValidAnswer = TRUE;
+		if ( !SingleStranded ){
+			while( NotValidAnswer ){
+				if ( m.nstrands > 1 ){
+					ComplementaryStrandResidues = 
+						countstrandresidues( m, ComplementaryStrand );
+					printf( "What is the complementary strand starting residue number { paired with %d:%d } (1-%d)? ", PrimaryStrand, PrimaryBaseStart, ComplementaryStrandResidues );
+					scanf( "%s", ComplementaryBaseStartChar );
+					ComplementaryBaseStart = atoi( ComplementaryBaseStartChar );
+					printf( "What is the complementary strand ending residue number { paired with %d:%d } (1-%d)? ", PrimaryStrand, PrimaryBaseEnd, ComplementaryStrandResidues );
+					scanf( "%s", ComplementaryBaseEndChar );
+					ComplementaryBaseEnd = atoi( ComplementaryBaseEndChar );
+				}else{
+					ComplementaryBaseStart = 1;
+					ComplementaryBaseEnd = 1;
+				}
+				if( ( ComplementaryBaseStart > 0 ) && 
+					( ComplementaryBaseStart <= 
+					ComplementaryStrandResidues ) &&
+					( ComplementaryBaseEnd <= 
+					ComplementaryStrandResidues ) )
+					NotValidAnswer = FALSE;
+				else
+					printf( "Complementary strand residue numbers must be between 1 and %d.\n", ComplementaryStrandResidues );
+				if( ( ( PrimaryBaseEnd - PrimaryBaseStart ) == 
+					( ComplementaryBaseEnd - 
+					ComplementaryBaseStart ) ) || 
+					( ( PrimaryBaseEnd - PrimaryBaseStart ) == 
+					- ( ComplementaryBaseEnd - 
+					ComplementaryBaseStart ) ) )
+					DifferentStrandLength = FALSE;
+				else{
+					printf(	"Primary strand and complementary strand must have the same number of residues.\n" );
+					DifferentStrandLength = TRUE;
+				}
+			}		
+		}
+		else
+			DifferentStrandLength = FALSE;
+	}
+	NotValidAnswer = TRUE;
+	while( NotValidAnswer ){
+		printf( "Do you wish to use the default Pivot Point [ 0, 1.808, 0 ]? (y/n) " );
+		scanf( "%s", PivotAnswer );
+		if( ( PivotAnswer == "n" ) || ( PivotAnswer == "N" ) ){
+			printf( "Enter Pivot Point x-coordinate = " );
+			scanf( "%s", PivotAnswer );
+			PivotPoint.x = atof( PivotAnswer );
+			printf( "Enter Pivot Point y-coordinate = " );
+			scanf( "%s", PivotAnswer );
+			PivotPoint.y = atof( PivotAnswer );
+			printf( "Enter Pivot Point z-coordinate = " );
+			scanf( "%s", PivotAnswer );
+			PivotPoint.z = atof( PivotAnswer );
+			NotValidAnswer = FALSE;
+		}
+		else if( ( PivotAnswer == "Y" ) || ( PivotAnswer == "y" ) ){
+			PivotPoint.x = 0.0;
+			PivotPoint.y = 1.808;
+			PivotPoint.z = 0.0;
+			NotValidAnswer = FALSE;
+		}
+		if ( NotValidAnswer ){
+			printf( "\n" );
+			fprintf( stderr, "Please enter (y) or (n)\n" );
+		}
+	}
+
+	if ( SingleStranded )
+		baseanal( m, PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd, PivotPoint );
+	else{
+		basepairanal( m, PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd,
+			ComplementaryStrand, ComplementaryBaseStart, 
+			ComplementaryBaseEnd, PivotPoint, AntiParallel );
+	}
+	printf( "\n" );
+	sugarpuckeranal( m, PrimaryStrand, PrimaryBaseStart, PrimaryBaseEnd );
+	if( ( !SingleStranded ) && ( ComplementaryStrand ) )
+		sugarpuckeranal( m, ComplementaryStrand, ComplementaryBaseStart, 
+		ComplementaryBaseEnd );
+	return( 0 );
+};

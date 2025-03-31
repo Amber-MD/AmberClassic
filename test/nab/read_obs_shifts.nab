@@ -1,0 +1,144 @@
+int		read_obs_shifts( string obsfile, float observed[ hashed ] )
+{
+
+string		omap[ hashed ];           //  varaibles for reading observed
+string		oline, idp;
+file		obsf;
+string		ofields[ 30 ], mapfields[ 30 ];
+int			i, nmap, nfields;
+
+//============================================================================
+//
+
+//    set up arrays to help read observed shifts files:
+
+omap["GLY"] = "H HA2 HA3";
+omap["ALA"] = "H HA HB3";
+omap["VAL"] = "H HA HB HG13 HG23";
+omap["LEU"] = "H HA HB2 HB3 HG HD13 HD23";
+omap["ILE"] = "H HA HB HG12 HG13 HG23 HD13";
+omap["SER"] = "H HA HB2 HB3";
+omap["THR"] = "H HA HB HG23";
+omap["PHE"] = "H HA HB2 HB3 HD2 HE2 HZ";
+omap["HIS"] = "H HA HB2 HB3 HE1 HD2";
+omap["TYR"] = "H HA HB2 HB3 HD2 HE2 HH";
+omap["TRP"] = "H HA HB2 HB3 HE1 HD1 HE3 HZ2 HH2 HZ3";
+omap["PRO"] = "HA HB2 HB3 HG2 HG3 HD2 HD3";
+omap["ASP"] = "H HA HB2 HB3";
+omap["GLU"] = "H HA HB2 HB3 HG2 HG3";
+omap["ASN"] = "H HA HB2 HB3 HD21 HD22";
+omap["GLN"] = "H HA HB2 HB3 HG2 HG3 HE21 HE22";
+omap["ARG"] = "H HA HB2 HB3 HG2 HG3 HD2 HD3";
+omap["LYS"] = "H HA HB2 HB3 HG2 HG3 HD2 HD3 HE2 HE3";
+omap["MET"] = "H HA HB2 HB3 HG2 HG3 HE3";
+omap["CYS"] = "H HA HB2 HB3 HG";
+omap["CYX"] = "H HA HB2 HB3";
+omap["MTH"] = "H1 H2 H3 H4";
+omap["CYT"] = "H1' H2'1 H2'2 H3' H4' H5'1 H5'2 H41 H42 H5 H6";
+omap["THY"] = "H1' H2'1 H2'2 H3' H4' H5'1 H5'2 H3 H6 H73";
+omap["ADE"] = "H1' H2'1 H2'2 H3' H4' H5'1 H5'2 H2 H61 H62 H8";
+omap["GUA"] = "H1' H2'1 H2'2 H3' H4' H5'1 H5'2 H1 H21 H22 H8";
+omap["URA"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H3 H5 H6";
+omap["PSU"] = "H1' H2'1 HO'22 H3' H4' H5'1 H5'2 H1 H3 H6";
+omap["H2U"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H3 H51 H52 H61 H62";
+omap["7MG"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H1 H21 H22 H73 H8";
+omap["1MA"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H11 H12 H13 H2 H6 H8";
+omap["2MG"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H1 H2 HA3 H8";
+omap["M2G"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H1 H8 HB3 HB3";
+omap["5MC"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H41 H42 H6 H73";
+omap["5MU"] = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H3 H6 H73";
+omap["OMG"] = "H1' H2'1 HA'3 H3' H4' H5'1 H5'2 H1 H21 H22 H8";
+omap["OMC"] = "H1' H2'1 HA'3 H3' H4' H5'1 H5'2 H41 H42 H5 H6";
+omap["YG"]  = "H1' H2'1 HO'2 H3' H4' H5'1 H5'2 H33 H2 H8 H103 H133 H141 H142 H15 H193 H20 H243";
+omap["MTH"] = "H1 H2 H3 H4";
+omap["BEN"] = "H1 H2 H3 H4 H5 H6";
+omap["PRT"] = "HP";
+omap["NRG"] = "H HA HB2 HB3 HG2 HG3 HD2 HD3";
+omap["CLA"] = "H HA HB3";
+omap["NME"] = "H";
+
+//    Read in the observed shifts file.  (After this loop, the
+//     "observed" array will contain the shifts, indexed by a
+//     string that contains the residue name, resiude number, and atomname
+//     with "absolute" residue numbers (that go from
+//     one to the total number of residues.
+
+
+	obsf = fopen( obsfile, "r" );
+	if( obsf == NULL ) return( 0 );
+
+	printf( "\nReading observed shifts from %s\n\n", obsfile );
+	while( oline = getline( obsf ) ) {
+		if( length( oline ) == 0 || substr( oline,1,1 ) == "#") {
+			printf( "%s\n", oline ); continue;
+		}
+		if( oline =~ ":" ){          // assume file is a proton "table" file
+
+			nfields = split( oline, ofields, ":" );
+
+			if( ofields[1] in omap ) {
+				nmap = split( omap[ofields[1]], mapfields, " " );
+				if( nfields > nmap + 2 ) {
+					fprintf( stderr, "bad line in obs file:\n%s\n", oline );
+					fprintf( stderr, "nfields = %d, nmap = %d\n", nfields, nmap);
+					exit( 1 );
+				}
+			} else {
+				fprintf( stderr, "bad line in obs file:\n%s\n", oline );
+				fprintf( stderr, "residue not found: %s\n", ofields[1] );
+				exit( 1 );
+			}
+
+			for( i=3; i<= nfields; i = i+1 ) {
+				if( ofields[ i ] =~ "^[ \t]*$" ) continue;
+                                    // skip fields with white-space only
+				idp = ofields[1] + ":" + sprintf( "%d", atoi(ofields[2])) + 
+					":" + mapfields[ i-2 ];
+				observed[ idp ] = atof( ofields[ i ] );
+//				fprintf( stderr, "%s  %8.2f\n", idp, observed[ idp ] );
+			}
+
+		} else {                   // read the file as a GPG shifts file
+
+			nfields = split( oline, ofields, " " );
+			if( ofields[ 1 ] == "0" ) continue;
+			if( ofields[ 3 ] == "HN" ) ofields[ 3 ] = "H";
+			if( substr( ofields[ 3 ], 1, 1 ) == "M" ){  // convert methyl names
+				if( ofields[ 2 ] == "ILE" ){
+					if( ofields[ 3 ] == "MD1" ) ofields[ 3 ] = "HD13";
+					if( ofields[ 3 ] == "MG2" ) ofields[ 3 ] = "HG23";
+				} else if( ofields[ 2 ] == "LEU" ){
+					if( ofields[ 3 ] == "MDX" ) ofields[ 3 ] = "HD13";
+					if( ofields[ 3 ] == "MDY" ) ofields[ 3 ] = "HD23";
+					if( ofields[ 3 ] == "MD1" ) ofields[ 3 ] = "HD13";
+					if( ofields[ 3 ] == "MD2" ) ofields[ 3 ] = "HD23";
+				} else if( ofields[ 2 ] == "VAL" ){
+					if( ofields[ 3 ] == "MGX" ) ofields[ 3 ] = "HG13";
+					if( ofields[ 3 ] == "MGY" ) ofields[ 3 ] = "HG23";
+					if( ofields[ 3 ] == "MG1" ) ofields[ 3 ] = "HG13";
+					if( ofields[ 3 ] == "MG2" ) ofields[ 3 ] = "HG23";
+				} else if( ofields[ 2 ] == "ALA" ){
+					if( ofields[ 3 ] == "MB" ) ofields[ 3 ] = "HB3";
+				} else if( ofields[ 2 ] == "MET" ){
+					if( ofields[ 3 ] == "ME" ) ofields[ 3 ] = "HE3";
+				} else if( ofields[ 2 ] == "THR" ){
+					if( ofields[ 3 ] == "MG2" ) ofields[ 3 ] = "HG3";
+				}
+			}
+
+			if( substr( ofields[ 3 ], 1, 1 ) == "Q" )  // methylene names
+				ofields[ 3 ] = "H" + substr( ofields[3],2,1 ) + "2";
+			
+			if( substr( ofields[ 3 ], 1, 1 ) != "H" ) continue;
+			
+			idp = ofields[2] + ":" + sprintf( "%d", atoi(ofields[1])) + 
+				":" + ofields[3];
+			observed[ idp ] = atof( ofields[ 4 ] );
+#ifdef DEBUG
+			fprintf( stderr, "GPG: %s  %8.3f\n", idp, observed[idp] );
+#endif
+
+		}
+	}
+	return( 1 );
+};

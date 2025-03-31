@@ -1,0 +1,56 @@
+Processing file: "132d.pdb"
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DT will be treated as hydrogen
+WARNING: atom H2'' from  DT will be treated as hydrogen
+WARNING: atom H2'' from  DA will be treated as hydrogen
+WARNING: atom H2'' from  DA will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DT will be treated as hydrogen
+WARNING: atom H2'' from  DT will be treated as hydrogen
+WARNING: atom H2'' from  DA will be treated as hydrogen
+WARNING: atom H2'' from  DA will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DG will be treated as hydrogen
+WARNING: atom H2'' from  DC will be treated as hydrogen
+Building His ring NH Hydrogens.
+Building or keeping OH & SH Hydrogens.
+Rotating existing OH & SH Hydrogens
+VDW dot density = 16/A^2
+Probe radius = 0.25A
+Orientation penalty scale = 1 (100%)
+Eliminate contacts within 3 bonds.
+Ignore atoms with |occupancy| <= 0.01 during adjustments.
+Waters ignored if B-Factor >= 40 or |occupancy| < 0.66
+Aromatic rings in amino acids accept hydrogen bonds.
+Flipping Asn, Gln and His groups.
+For each flip state, bumps where gap is more than 0.4A are indicated with '!'.
+Rotating NH3 Hydrogens.
+Not processing Met methyls.
+ Singles(size 8): A   1  DG O5' : A   5  DT C7  : A   6  DT C7  : A  12  DC O3' 
+  : B  13  DG O5' : B  17  DT C7  : B  18  DT C7  : B  24  DC O3' 
+ orientation 1: A   1  DG O5' :   rot  180: bump=0.000, HB=0.000, total=0.000
+ orientation 1: A   5  DT C7  :methyl  150: bump=-2.803, HB=0.000, total=0.501
+ orientation 1: A   6  DT C7  :methyl  150: bump=-6.547, HB=0.000, total=-4.546, BADBUMP
+ orientation 1: A  12  DC O3' :   rot  171: bump=0.000, HB=0.000, total=0.151
+ orientation 1: B  13  DG O5' :   rot  180: bump=0.000, HB=0.000, total=0.000
+ orientation 1: B  17  DT C7  :methyl  150: bump=-2.952, HB=0.000, total=-0.054
+ orientation 1: B  18  DT C7  :methyl  150: bump=-6.365, HB=0.000, total=-4.131, BADBUMP
+ orientation 1: B  24  DC O3' :   rot  171: bump=0.000, HB=0.000, total=0.170
+Found 256 hydrogens (0 hets)
+Standardized 320 hydrogens (0 hets)
+Added 16 hydrogens (0 hets)
+Adjusted 4 group(s)
+If you publish work which uses reduce, please cite:
+Word, et. al. (1999) J. Mol. Biol. 285, 1735-1747.
+For more information see http://kinemage.biochem.duke.edu

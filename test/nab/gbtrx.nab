@@ -1,0 +1,17 @@
+molecule m;
+float 	m_xyz[6000];
+float 	dgrad, fret;
+int 	ier; 
+
+m = getpdb("trxox.2.4ns.pdb");
+readparm(m, "prmtop.gb2");
+mm_options( "ntpr=1, gb=2, kappa=0.14701, rgbmax=99.0, cut=99.0, diel=C ");
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+dgrad = 3*m.natoms*0.0001;
+setxyz_from_mol( m, NULL, m_xyz );
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 10.0, 10 );
+if(mytaskid==0)
+  printf( "conjgrad returns %d\n", ier );
+
+mme_timer();

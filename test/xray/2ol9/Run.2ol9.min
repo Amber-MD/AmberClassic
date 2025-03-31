@@ -1,7 +1,6 @@
 #!/bin/bash
 
 export XRAY_NUM_THREADS=4
-# export DO_PARALLEL='mpirun -np 8'
 
 in=$1
 let out=$in+1

@@ -1,0 +1,13 @@
+	dg_options:  gdist=0
+	dg_options:  ntpr=50
+	dg_options:  k4d=2.0
+	dg_options:  randpair=5
+	dg_options:  seed=75537
+embed attempt 1
+random metrization for 357 pairs
+average bounds gap =    2.269
+eigenvector 1: 14264.730  iter:   8
+eigenvector 2: 5255.288  iter:   6
+eigenvector 3:  859.204  iter:  43
+
+radius of gyration:   13.032

@@ -1,0 +1,482 @@
+matrix	MAT_concat() c;
+
+int	MAT_cube( point pts[3], matrix mats[24] )
+{
+	point		org, ax1, ax2, ax3;
+	point		p1, p2, p3;
+	matrix		mat;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_cube: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[3] ){
+		fprintf( stderr, "MAT_cube: pts[1] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[3] ){
+		fprintf( stderr, "MAT_cube: pts[2] == pts[3]\n" );
+		return( 1 );
+	}
+
+	org = pts[1];
+	ax1 = pts[2] - org;
+	ax2 = pts[3] - org;
+	ax3 = ax2 ^ ax1;
+	ax2 = ax1 ^ ax3;
+
+	// 4-fold about ax3
+	p1 = org;
+	p2 = ax2 + org;
+
+	mats[ 1] = rot4p( p1, p2,   0.0 );
+	mats[ 2] = rot4p( p1, p2,  90.0 );
+	mats[ 3] = rot4p( p1, p2, 180.0 );
+	mats[ 4] = rot4p( p1, p2, 270.0 );
+
+	// 3-fold about body diag
+	p2 = ax1 + ax2;
+	p2 += ax3;
+	p2 += org;
+
+	mat = rot4p( p1, p2, 120.0 );
+	mats[ 5] = MAT_concat( mats[ 1], mat );
+	mats[ 6] = MAT_concat( mats[ 2], mat );
+	mats[ 7] = MAT_concat( mats[ 3], mat );
+	mats[ 8] = MAT_concat( mats[ 4], mat );
+
+	mat = rot4p( p1, p2, 240.0 );
+	mats[ 9] = MAT_concat( mats[ 1], mat );
+	mats[10] = MAT_concat( mats[ 2], mat );
+	mats[11] = MAT_concat( mats[ 3], mat );
+	mats[12] = MAT_concat( mats[ 4], mat );
+
+	// 2-fold about something
+	p2 = ax2 - ax3;
+	p2 += org;
+	mat = rot4p( p1, p2, 180.0 );
+	mats[13] = MAT_concat( mats[ 1], mat );
+	mats[14] = MAT_concat( mats[ 2], mat );
+	mats[15] = MAT_concat( mats[ 3], mat );
+	mats[16] = MAT_concat( mats[ 4], mat );
+	mats[17] = MAT_concat( mats[ 5], mat );
+	mats[18] = MAT_concat( mats[ 6], mat );
+	mats[19] = MAT_concat( mats[ 7], mat );
+	mats[20] = MAT_concat( mats[ 8], mat );
+	mats[21] = MAT_concat( mats[ 9], mat );
+	mats[22] = MAT_concat( mats[10], mat );
+	mats[23] = MAT_concat( mats[11], mat );
+	mats[24] = MAT_concat( mats[12], mat );
+
+	return( 0 );
+};
+
+int	MAT_cyclic( point pts[2], float tw, int cnt, matrix mats[1] )
+{
+	int	t;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_cyclic: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( cnt < 1 ){
+		fprintf( stderr, "MAT_cyclic: cnt < 1\n" );
+		return( 1 );
+	}
+
+	for( t = 1; t <= cnt; t++ )
+		mats[t] = rot4p( pts[1], pts[2], (t-1)*tw );
+
+	return( 0 );
+}; 
+
+int	MAT_dihedral( point pts[3], int nfold, matrix mats[1] )
+{
+	point		org, ax1, ax2, ax3;
+	point		p1, p2, p3;
+	int		n;
+	float		ang;
+	matrix		mat;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_dihedral: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[3] ){
+		fprintf( stderr, "MAT_dihedral: pts[1] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[3] ){
+		fprintf( stderr, "MAT_dihedral: pts[2] == pts[3]\n" );
+		return( 1 );
+	}
+	if( nfold < 1 ){
+		fprintf( stderr, "MAT_dihedral: nfold < 1\n" );
+		return( 1 );
+	}
+
+	org = pts[ 1 ];
+	ax1 = pts[ 2 ] - org;
+	ax2 = pts[ 3 ] - org;
+	ax3 = ax2 ^ ax1;
+	ax2 = ax1 ^ ax3;
+	
+	// N-fold about ax1
+	p1 = org;
+	p2 = ax1 + org;
+	ang = 360. / nfold;
+	for( n = 1; n <= nfold; n++ )
+		mats[n] = rot4p( p1, p2, (n-1)*ang );
+
+	// 2-fold about ax2
+	p2 = ax2 + org;
+
+	mat = rot4p( p1, p2, 180.0 );
+	for( n = 1; n <= nfold; n++ )
+		mats[nfold+n] = MAT_concat( mats[n], mat );
+
+	return( 0 );
+};
+
+int	MAT_helix( point pts[2],
+	float tw, float pi, int cnt, matrix mats[1] )
+{
+	int	t;
+	matrix	mat;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_helix: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( cnt < 1 ){
+		fprintf( stderr, "MAT_helix: cnt < 1\n" );
+		return( 1 );
+	}
+
+	for( t = 1; t <= cnt; t++ ){
+		mats[t] = rot4p( pts[1], pts[2], (t-1)*tw );
+		mat = trans4p( pts[1], pts[2], (t-1)*pi );
+		mats[t] = MAT_concat( mats[t], mat );
+	}
+
+	return( 0 );
+}; 
+
+int	MAT_ico( point pts[3], matrix mats[60] )
+{ 
+	float		ang;
+	point		org, ax1, ax2, ax3;
+	point		p1, p2, p3;
+	matrix		mat;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_ico: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[3] ){
+		fprintf( stderr, "MAT_ico: pts[1] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[3] ){
+		fprintf( stderr, "MAT_ico: pts[2] == pts[3]\n" );
+		return( 1 );
+	}
+
+	org = pts[ 1 ];
+	ax1 = pts[ 2 ] - org;
+	ax2 = pts[ 3 ] - org;
+	ax3 = ax2 ^ ax1;
+	ax2 = ax1 ^ ax3;
+
+	// 5-fold about this axis
+	ang = 31.717;
+	mat = rot4p( org, org + ax2, -ang );
+	p1 = org;
+	p2 = org + ax1;
+	transformpts( mat, p2, 1 );
+
+	mats[ 1] = rot4p( p1, p2,   0.0 );
+	mats[ 2] = rot4p( p1, p2,  72.0 );
+	mats[ 3] = rot4p( p1, p2, 144.0 );
+	mats[ 4] = rot4p( p1, p2, 216.0 );
+	mats[ 5] = rot4p( p1, p2, 288.0 );
+
+	// 3-fold about body diag
+	p1 = org;
+	p2 = org + ax1;
+	p2 += ax2;
+	p2 += ax3;
+
+	mat = rot4p( p1, p2, 120.0 );
+	mats[ 6] = MAT_concat( mats[ 1], mat );
+	mats[ 7] = MAT_concat( mats[ 2], mat );
+	mats[ 8] = MAT_concat( mats[ 3], mat );
+	mats[ 9] = MAT_concat( mats[ 4], mat );
+	mats[10] = MAT_concat( mats[ 5], mat );
+	mat = rot4p( p1, p2, 240.0 );
+	mats[11] = MAT_concat( mats[ 1], mat );
+	mats[12] = MAT_concat( mats[ 2], mat );
+	mats[13] = MAT_concat( mats[ 3], mat );
+	mats[14] = MAT_concat( mats[ 4], mat );
+	mats[15] = MAT_concat( mats[ 5], mat );
+
+	// 2-fold about ax1
+	p1 = org;
+	p2 = org + ax1;
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[16] = MAT_concat( mats[ 1], mat );
+	mats[17] = MAT_concat( mats[ 2], mat );
+	mats[18] = MAT_concat( mats[ 3], mat );
+	mats[19] = MAT_concat( mats[ 4], mat );
+	mats[20] = MAT_concat( mats[ 5], mat );
+	mats[21] = MAT_concat( mats[ 6], mat );
+	mats[22] = MAT_concat( mats[ 7], mat );
+	mats[23] = MAT_concat( mats[ 8], mat );
+	mats[24] = MAT_concat( mats[ 9], mat );
+	mats[25] = MAT_concat( mats[10], mat );
+	mats[26] = MAT_concat( mats[11], mat );
+	mats[27] = MAT_concat( mats[12], mat );
+	mats[28] = MAT_concat( mats[13], mat );
+	mats[29] = MAT_concat( mats[14], mat );
+	mats[30] = MAT_concat( mats[15], mat );
+
+	// 2-fold about ax2
+	p1 = org;
+	p2 = org + ax2;
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[31] = MAT_concat( mats[ 1], mat );
+	mats[32] = MAT_concat( mats[ 2], mat );
+	mats[33] = MAT_concat( mats[ 3], mat );
+	mats[34] = MAT_concat( mats[ 4], mat );
+	mats[35] = MAT_concat( mats[ 5], mat );
+	mats[36] = MAT_concat( mats[ 6], mat );
+	mats[37] = MAT_concat( mats[ 7], mat );
+	mats[38] = MAT_concat( mats[ 8], mat );
+	mats[39] = MAT_concat( mats[ 9], mat );
+	mats[40] = MAT_concat( mats[10], mat );
+	mats[41] = MAT_concat( mats[11], mat );
+	mats[42] = MAT_concat( mats[12], mat );
+	mats[43] = MAT_concat( mats[13], mat );
+	mats[44] = MAT_concat( mats[14], mat );
+	mats[45] = MAT_concat( mats[15], mat );
+
+	// 2-fold about ax3
+	p1 = org;
+	p2 = org + ax3;
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[46] = MAT_concat( mats[ 1], mat );
+	mats[47] = MAT_concat( mats[ 2], mat );
+	mats[48] = MAT_concat( mats[ 3], mat );
+	mats[49] = MAT_concat( mats[ 4], mat );
+	mats[50] = MAT_concat( mats[ 5], mat );
+	mats[51] = MAT_concat( mats[ 6], mat );
+	mats[52] = MAT_concat( mats[ 7], mat );
+	mats[53] = MAT_concat( mats[ 8], mat );
+	mats[54] = MAT_concat( mats[ 9], mat );
+	mats[55] = MAT_concat( mats[10], mat );
+	mats[56] = MAT_concat( mats[11], mat );
+	mats[57] = MAT_concat( mats[12], mat );
+	mats[58] = MAT_concat( mats[13], mat );
+	mats[59] = MAT_concat( mats[14], mat );
+	mats[60] = MAT_concat( mats[15], mat );
+
+	return( 0 );
+};
+
+int	MAT_octa( point pts[3], matrix mats[24] )
+{
+	point		org, ax1, ax2, ax3;
+	point		p1, p2, p3;
+	matrix		mat;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_octa: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[3] ){
+		fprintf( stderr, "MAT_octa: pts[1] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[3] ){
+		fprintf( stderr, "MAT_octa: pts[2] == pts[3]\n" );
+		return( 1 );
+	}
+
+	org = pts[ 1 ];
+	ax1 = pts[ 2 ] - org;
+	ax2 = pts[ 3 ] - org;
+	ax3 = ax2 ^ ax1;
+	ax2 = ax1 ^ ax3;
+
+	// 3-fold about body diag
+	p1 = org;
+	p2 = ax1 + ax2 + ax3 + org;
+
+	mats[ 1] = rot4p( p1, p2,   0.0 );
+	mats[ 2] = rot4p( p1, p2, 120.0 );
+	mats[ 3] = rot4p( p1, p2, 240.0 );
+
+	// 4-fold about ax3
+	p2 = org + ax3;
+
+	mat = rot4p( p1, p2,  90.0 );
+	mats[ 4] = MAT_concat( mats[ 1], mat );
+	mats[ 5] = MAT_concat( mats[ 2], mat );
+	mats[ 6] = MAT_concat( mats[ 3], mat );
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[ 7] = MAT_concat( mats[ 1], mat );
+	mats[ 8] = MAT_concat( mats[ 2], mat );
+	mats[ 9] = MAT_concat( mats[ 3], mat );
+
+	mat = rot4p( p1, p2, 270.0 );
+	mats[10] = MAT_concat( mats[ 1], mat );
+	mats[11] = MAT_concat( mats[ 2], mat );
+	mats[12] = MAT_concat( mats[ 3], mat );
+
+	// 2-fold about ax2
+	p2 = ax2 + org;
+	mat = rot4p( p1, p2, 180.0 );
+	mats[13] = MAT_concat( mats[ 1], mat );
+	mats[14] = MAT_concat( mats[ 2], mat );
+	mats[15] = MAT_concat( mats[ 3], mat );
+	mats[16] = MAT_concat( mats[ 4], mat );
+	mats[17] = MAT_concat( mats[ 5], mat );
+	mats[18] = MAT_concat( mats[ 6], mat );
+	mats[19] = MAT_concat( mats[ 7], mat );
+	mats[20] = MAT_concat( mats[ 8], mat );
+	mats[21] = MAT_concat( mats[ 9], mat );
+	mats[22] = MAT_concat( mats[10], mat );
+	mats[23] = MAT_concat( mats[11], mat );
+	mats[24] = MAT_concat( mats[12], mat );
+
+	return( 0 );
+};
+
+int	MAT_orient( point pts[1], float angs[1], matrix mats[1] )
+{
+	matrix	mat1, mat2, mat3;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_orient: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[3] ){
+		fprintf( stderr, "MAT_orient: pts[1] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[4] ){
+		fprintf( stderr, "MAT_orient: pts[1] == pts[4]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[3] ){
+		fprintf( stderr, "MAT_orient: pts[2] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[4] ){
+		fprintf( stderr, "MAT_orient: pts[2] == pts[4]\n" );
+		return( 1 );
+	}
+	if( pts[3] == pts[4] ){
+		fprintf( stderr, "MAT_orient: pts[3] == pts[4]\n" );
+		return( 1 );
+	}
+
+	mat1 = rot4p( pts[1], pts[2], angs[ 1 ] );
+	mat2 = rot4p( pts[1], pts[3], angs[ 2 ] );
+	mat3 = rot4p( pts[1], pts[4], angs[ 3 ] );
+
+	mats[ 1 ] = MAT_concat( mat1, mat2 );
+	mats[ 1 ] = MAT_concat( mats[ 1 ], mat3 );
+
+	return( 0 );
+}; 
+
+int	MAT_rotate( point pts[1], float tw, matrix mats[1] )
+{
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_rotate: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+
+	mats[1] = rot4p( pts[1], pts[2], tw );
+
+	return( 0 );
+}; 
+
+int	MAT_tetra( point pts[3], matrix mats[ 12 ] )
+{
+	point		org, ax1, ax2, ax3;
+	point		p1, p2, p3;
+	matrix		mat;
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_tetra: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+	if( pts[1] == pts[3] ){
+		fprintf( stderr, "MAT_tetra: pts[1] == pts[3]\n" );
+		return( 1 );
+	}
+	if( pts[2] == pts[3] ){
+		fprintf( stderr, "MAT_tetra: pts[2] == pts[3]\n" );
+		return( 1 );
+	}
+
+	org = pts[ 1 ];
+	ax1 = pts[ 2 ] - org;
+	ax2 = pts[ 3 ] - org;
+	ax3 = ax2 ^ ax1;
+	ax2 = ax1 ^ ax3;
+	
+	// 3-fold about body diag
+	p1 = org;
+	p2 = ax1 + ax2 + ax3 + org;
+
+	mats[ 1] = rot4p( p1, p2,   0.0 );
+	mats[ 2] = rot4p( p1, p2, 120.0 );
+	mats[ 3] = rot4p( p1, p2, 240.0 );
+
+	// 2-fold about ax1
+	p2 = ax1 + org;
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[ 4] = MAT_concat( mats[ 1], mat );
+	mats[ 5] = MAT_concat( mats[ 2], mat );
+	mats[ 6] = MAT_concat( mats[ 3], mat );
+
+	// 2-fold about ax2
+	p2 = ax2 + org;
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[ 7] = MAT_concat( mats[ 1], mat );
+	mats[ 8] = MAT_concat( mats[ 2], mat );
+	mats[ 9] = MAT_concat( mats[ 3], mat );
+
+	// 2-fold about ax3
+	p2 = ax3 + org;
+
+	mat = rot4p( p1, p2, 180.0 );
+	mats[10] = MAT_concat( mats[ 1], mat );
+	mats[11] = MAT_concat( mats[ 2], mat );
+	mats[12] = MAT_concat( mats[ 3], mat );
+
+	return( 0 );
+};
+
+int	MAT_translate( point pts[1], float di, matrix mats[1] )
+{
+
+	if( pts[1] == pts[2] ){
+		fprintf( stderr, "MAT_translate: pts[1] == pts[2]\n" );
+		return( 1 );
+	}
+
+	mats[1] = trans4p( pts[1], pts[2], di );
+
+	return( 0 );
+}; 

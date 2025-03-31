@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo "Running Reflexive test:"
+echo ""
+../../bin/nab -o refl reflexive.nab || error
+./refl > ref.out || error
+
+../dacdif ref.out.check ref.out
+
+rm -f refl
+exit 0

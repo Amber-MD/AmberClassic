@@ -9,4 +9,5 @@ echo "*** Create Gaussian Input Files (new prmtop) ***"
 ../../dacdif saved_output/Job.2.gjf.saved Job.2.gjf
 ../../dacdif saved_output/Job.3.gjf.saved Job.3.gjf
 ../../dacdif saved_output/Job.4.gjf.saved Job.4.gjf
-/bin/rm prog_out.txt
+
+/bin/rm -f prog_out.txt

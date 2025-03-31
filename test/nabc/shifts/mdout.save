@@ -1,0 +1,392 @@
+
+          -------------------------------------------------------
+          Amber 14 SANDER                              2014
+          -------------------------------------------------------
+
+| Run on 09/28/2015 at 12:25:48
+
+|   Executable path: sander
+| Working directory: /scratch2/swails/src/shifts/test
+|          Hostname: Unknown
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: mdin                                                                  
+| MDOUT: mdout.save                                                            
+|INPCRD: inpcrd                                                                
+|  PARM: prmtop                                                                
+|RESTRT: restrt.save                                                           
+|  REFC: refc                                                                  
+| MDVEL: mdvel.save                                                            
+| MDFRC: mdfrc.save                                                            
+|  MDEN: mden.save                                                             
+| MDCRD: mdcrd.save                                                            
+|MDINFO: mdinfo.save                                                           
+|  MTMD: mtmd                                                                  
+|INPDIP: inpdip                                                                
+|RSTDIP: rstdip                                                                
+|INPTRA: inptraj                                                               
+
+
+ Here is the input file:
+
+  test of distance, angle, rdc and chemical shifts restraints for a DNA duplex 
+ &cntrl                                                                        
+    pencut=0.05, nmropt=2,                                                     
+    imin=1, maxcyc=1, igb=6, rgbmax=15.,                                       
+    ntpr=1,                                                                    
+    ipnlty=1, cut=999.0, ntb=0, iscale=5, scalm=300.,                          
+    ntc=1, ntb=0,                                                              
+ /                                                                             
+ &wt type='SHIFTS', value1=2.0, /                                              
+ &wt type='END'  /                                                             
+LISTOUT=POUT                                                                   
+SHIFTS=132d.shf                                                                
+END                                                                            
+                                                                               
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+| New format PARM file being parsed.
+| Version =    1.000 Date = 09/24/15 Time = 16:19:18
+ NATOM  =     758 NTYPES =      15 NBONH =     272 MBONA  =     544
+ NTHETH =     640 MTHETA =     836 NPHIH =    1294 MPHIA  =    1520
+ NHPARM =       0 NPARM  =       0 NNB   =    4210 NRES   =      24
+ NBONA  =     544 NTHETA =     836 NPHIA =    1520 NUMBND =      41
+ NUMANG =      86 NPTRA  =      48 NATYP =      26 NPHB   =       0
+ IFBOX  =       0 NMXRS  =      33 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+ Implicit solvent radii are modified Bondi radii (mbondi)                                                   
+
+|     Memory Use     Allocated
+|     Real              192621
+|     Hollerith           2300
+|     Integer           161784
+|     Max Pairs              1
+|     nblistReal             0
+|     nblist Int             0
+|       Total             2145 kbytes
+
+| Note: 1-4 EEL scale factors are being read from the topology file.
+
+| Note: 1-4 VDW scale factors are being read from the topology file.
+| Duplicated    0 dihedrals
+| Duplicated    0 dihedrals
+
+--------------------------------------------------------------------------------
+   2.  CONTROL  DATA  FOR  THE  RUN
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+
+General flags:
+     imin    =       1, nmropt  =       2
+
+Nature and format of input:
+     ntx     =       1, irest   =       0, ntrx    =       1
+
+Nature and format of output:
+     ntxo    =       1, ntpr    =       1, ntrx    =       1, ntwr    =     500
+     iwrap   =       0, ntwx    =       0, ntwv    =       0, ntwe    =       0
+     ioutfm  =       0, ntwprt  =       0, idecomp =       0, rbornstat=      0
+
+Potential function:
+     ntf     =       1, ntb     =       0, igb     =       6, nsnb    =      25
+     ipol    =       0, gbsa    =       0, iesp    =       0
+     dielc   =   1.00000, cut     = 999.00000, intdiel =   1.00000
+
+Frozen or restrained atoms:
+     ibelly  =       0, ntr     =       0
+
+Energy minimization:
+     maxcyc  =       1, ncyc    =      10, ntmin   =       1
+     dx0     =   0.01000, drms    =   0.00010
+
+NMR refinement options:
+     iscale  =       5, noeskp  =       1, ipnlty  =       1, mxsub   =       1
+     scalm   = 300.00000, pencut  =   0.05000, tausw   =   0.10000
+|  INFO: Old style inpcrd file read
+
+
+--------------------------------------------------------------------------------
+   3.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+ begin time read from input coords =     0.000 ps
+
+
+
+           Begin reading energy term weight changes/NMR restraints
+ WEIGHT CHANGES:
+ SHIFTS        0      0    2.000000    0.000000      0      0
+
+ RESTRAINTS:
+ Requested file redirections:
+  LISTOUT   = POUT
+  SHIFTS    = 132d.shf
+                          ** No restraint defined **
+
+                  Done reading weight changes/NMR restraints
+
+
+ Number of triangulated 3-point waters found:        0
+
+--------------------------------------------------------------------------------
+   4.  RESULTS
+--------------------------------------------------------------------------------
+
+ Chemical shifts will be read from file: 132d.shf
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      1       1.7109E+03     2.5874E+01     2.2362E+02     C1'       738
+
+ BOND    =      248.8125  ANGLE   =      459.8454  DIHED      =      532.2037
+ VDWAALS =     -217.8604  EEL     =     3461.2769  EGB        =        0.0000
+ 1-4 VDW =      230.4254  1-4 EEL =    -3062.1547  RESTRAINT  =       58.3763
+ EAMBER  =     1652.5488
+ NMR restraints: Bond =    0.000   Angle =     0.000   Torsion =     0.000
+               : Noesy=    0.000   Shift =    58.376   Pcshift =     0.000
+===============================================================================
+
+
+  Maximum number of minimization cycles reached.
+
+
+                    FINAL RESULTS
+
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      1       1.7109E+03     2.5874E+01     2.2362E+02     C1'       738
+
+ BOND    =      248.8125  ANGLE   =      459.8454  DIHED      =      532.2037
+ VDWAALS =     -217.8604  EEL     =     3461.2769  EGB        =        0.0000
+ 1-4 VDW =      230.4254  1-4 EEL =    -3062.1547  RESTRAINT  =       58.3763
+ EAMBER  =     1652.5488
+ NMR restraints: Bond =    0.000   Angle =     0.000   Torsion =     0.000
+               : Noesy=    0.000   Shift =    58.376   Pcshift =     0.000
+===============================================================================
+ ------------------------------------------------------------------------------
+
+
+ Final Restraint Analysis for coords: restrt.save                             
+
+
+ Restraints, deviations, and energy contributions:    pencut =    0.05
+
+ ------------------------------------------------------------------------------
+     First atom        Last atom    curr. value target deviation  penalty
+ ------------------------------------------------------------------------------
+|                               RMS deviation from ideal bonds :      0.0309
+|                               RMS deviation from ideal angles:      4.327
+ ------------------------------------------------------------------------------
+
+
+  Chemical shifts analysis:
+
+
+             Proton       Calc.     Observed   Penalty                          
+          ---------------------------------------------                         
+      200 H1'  DA     7      0.82      0.65      0.34                           
+      218 H2'  DA     7      0.50      0.33      0.35                           
+      216 H3'  DA     7      0.22      0.24      0.05                           
+      197 H4'  DA     7      0.08      0.17      0.18                           
+      232 H1'  DA     8      0.98      0.81      0.35                           
+      250 H2'  DA     8      0.37      0.14      0.47                           
+      248 H3'  DA     8      0.23      0.20      0.06                           
+      229 H4'  DA     8      0.22      0.18      0.08                           
+       43 H1'  DC     2      0.22      0.27      0.09                           
+       59 H2'  DC     2      0.01     -0.02      0.05                           
+       57 H3'  DC     2      0.08      0.17      0.18                           
+       40 H4'  DC     2      0.07      0.12      0.11                           
+       73 H1'  DC     3      0.18     -0.23      0.83                           
+       89 H2'  DC     3      0.16     -0.05      0.41                           
+       87 H3'  DC     3      0.08      0.16      0.15                           
+       70 H4'  DC     3      0.02      0.00      0.03                           
+      264 H1'  DC     9      0.14     -0.32      0.90                           
+      280 H2'  DC     9      0.11     -0.44      1.09                           
+      278 H3'  DC     9      0.11      0.05      0.13                           
+      261 H4'  DC     9      0.13     -0.06      0.37                           
+       10 H1'  DG5    1      0.86      0.66      0.41                           
+       29 H2'  DG5    1      0.42      0.15      0.54                           
+       27 H3'  DG5    1      0.14      0.09      0.11                           
+        7 H4'  DG5    1      0.04      0.06      0.06                           
+      103 H1'  DG     4      0.81      0.74      0.15                           
+      122 H2'  DG     4      0.19      0.21      0.04                           
+      120 H3'  DG     4      0.14      0.23      0.18                           
+      100 H4'  DG     4      0.13      0.19      0.13                           
+      136 H1'  DT     5      0.16      0.08      0.15                           
+      154 H2'  DT     5      0.07     -0.17      0.49                           
+      152 H3'  DT     5      0.09      0.03      0.13                           
+      133 H4'  DT     5      0.10      0.03      0.15                           
+      168 H1'  DT     6      0.08     -0.23      0.63                           
+      186 H2'  DT     6      0.18     -0.19      0.74                           
+      184 H3'  DT     6      0.13      0.06      0.14                           
+      165 H4'  DT     6      0.07     -0.08      0.30                           
+      212 H2   DA     7     -2.49     -1.65      1.69                           
+      244 H2   DA     8     -0.80     -0.99      0.37                           
+      579 H1'  DA    19      0.82      0.65      0.34                           
+      597 H2'  DA    19      0.49      0.33      0.33                           
+      595 H3'  DA    19      0.22      0.24      0.06                           
+      576 H4'  DA    19      0.08      0.17      0.18                           
+      611 H1'  DA    20      0.99      0.81      0.37                           
+      629 H2'  DA    20      0.37      0.14      0.46                           
+      627 H3'  DA    20      0.23      0.20      0.06                           
+      608 H4'  DA    20      0.22      0.18      0.08                           
+      219 H2'' DA     7      0.44      0.20      0.47                           
+      251 H2'' DA     8      0.21      0.09      0.25                           
+      360 H1'  DC3   12      0.25      0.29      0.08                           
+      376 H2'  DC3   12     -0.35      0.06      0.83                           
+      374 H3'  DC3   12     -0.05     -0.20      0.31                           
+      357 H4'  DC3   12      0.03     -0.13      0.31                           
+      422 H1'  DC    14      0.22      0.27      0.10                           
+      438 H2'  DC    14      0.01     -0.02      0.06                           
+      436 H3'  DC    14      0.08      0.17      0.18                           
+      419 H4'  DC    14      0.07      0.12      0.11                           
+      452 H1'  DC    15      0.18     -0.23      0.83                           
+      468 H2'  DC    15      0.16     -0.05      0.42                           
+      466 H3'  DC    15      0.08      0.16      0.15                           
+      449 H4'  DC    15      0.02      0.00      0.03                           
+      643 H1'  DC    21      0.14     -0.32      0.92                           
+      659 H2'  DC    21      0.11     -0.44      1.10                           
+      657 H3'  DC    21      0.11      0.05      0.13                           
+      640 H4'  DC    21      0.13     -0.06      0.38                           
+      739 H1'  DC3   24      0.26      0.29      0.08                           
+      755 H2'  DC3   24     -0.35      0.06      0.83                           
+      753 H3'  DC3   24     -0.05     -0.20      0.31                           
+      736 H4'  DC3   24      0.03     -0.13      0.32                           
+       60 H2'' DC     2      0.06      0.15      0.18                           
+       48 H5   DC     2     -1.02     -0.81      0.42                           
+       90 H2'' DC     3      0.21      0.08      0.27                           
+       78 H5   DC     3     -0.73     -0.55      0.37                           
+      281 H2'' DC     9      0.17     -0.15      0.65                           
+      269 H5   DC     9     -1.94     -1.03      1.82                           
+      294 H1'  DG    10      0.59      0.29      0.60                           
+      313 H2'  DG    10      0.34      0.16      0.37                           
+      311 H3'  DG    10      0.15      0.18      0.06                           
+      291 H4'  DG    10      0.13      0.07      0.11                           
+      327 H1'  DG    11      0.68      0.67      0.03                           
+      346 H2'  DG    11      0.22      0.04      0.37                           
+      344 H3'  DG    11      0.09      0.19      0.20                           
+      324 H4'  DG    11      0.03      0.15      0.25                           
+      389 H1'  DG5   13      0.86      0.66      0.41                           
+      408 H2'  DG5   13      0.42      0.15      0.54                           
+      406 H3'  DG5   13      0.14      0.09      0.11                           
+      386 H4'  DG5   13      0.04      0.06      0.05                           
+      482 H1'  DG    16      0.81      0.74      0.14                           
+      501 H2'  DG    16      0.19      0.21      0.04                           
+      499 H3'  DG    16      0.14      0.23      0.18                           
+      479 H4'  DG    16      0.13      0.19      0.13                           
+       30 H2'' DG5    1      0.34      0.24      0.19                           
+      673 H1'  DG    22      0.61      0.29      0.65                           
+      692 H2'  DG    22      0.35      0.16      0.38                           
+      690 H3'  DG    22      0.15      0.18      0.05                           
+      670 H4'  DG    22      0.13      0.07      0.12                           
+      706 H1'  DG    23      0.69      0.67      0.05                           
+      725 H2'  DG    23      0.23      0.04      0.39                           
+      723 H3'  DG    23      0.10      0.19      0.18                           
+      703 H4'  DG    23      0.04      0.15      0.23                           
+      123 H2'' DG     4      0.14      0.32      0.35                           
+      515 H1'  DT    17      0.15      0.08      0.14                           
+      533 H2'  DT    17      0.06     -0.17      0.47                           
+      531 H3'  DT    17      0.09      0.03      0.12                           
+      512 H4'  DT    17      0.10      0.03      0.13                           
+      547 H1'  DT    18      0.08     -0.23      0.62                           
+      565 H2'  DT    18      0.17     -0.19      0.73                           
+      563 H3'  DT    18      0.12      0.06      0.13                           
+      544 H4'  DT    18      0.07     -0.08      0.29                           
+      155 H2'' DT     5      0.13      0.06      0.13                           
+      187 H2'' DT     6      0.22     -0.08      0.59                           
+       46 H6   DC     2     -0.08     -0.31      0.46                           
+       76 H6   DC     3     -0.11     -0.34      0.47                           
+      267 H6   DC     9     -0.39     -0.69      0.61                           
+      139 H6   DT     5     -0.47     -0.52      0.10                           
+      171 H6   DT     6     -0.06     -0.42      0.71                           
+      203 H8   DA     7     -0.16     -0.30      0.28                           
+      235 H8   DA     8     -0.37     -0.47      0.20                           
+       13 H8   DG5    1      0.01     -0.20      0.42                           
+      106 H8   DG     4     -0.16     -0.20      0.08                           
+      591 H2   DA    19     -2.50     -1.65      1.71                           
+      623 H2   DA    20     -0.80     -0.99      0.36                           
+      144 H73  DT     5     -1.49     -0.55      1.88                           
+      176 H73  DT     6     -0.53     -0.33      0.40                           
+      598 H2'' DA    19      0.43      0.20      0.46                           
+      630 H2'' DA    20      0.21      0.09      0.25                           
+      377 H2'' DC3   12     -0.12     -0.12      0.00                           
+      365 H5   DC3   12     -1.35     -1.02      0.67                           
+      439 H2'' DC    14      0.06      0.15      0.18                           
+      427 H5   DC    14     -1.01     -0.81      0.41                           
+      469 H2'' DC    15      0.21      0.08      0.27                           
+      457 H5   DC    15     -0.73     -0.55      0.37                           
+      660 H2'' DC    21      0.18     -0.15      0.66                           
+      648 H5   DC    21     -1.93     -1.03      1.81                           
+      756 H2'' DC3   24     -0.12     -0.12      0.01                           
+      744 H5   DC3   24     -1.34     -1.02      0.65                           
+      314 H2'' DG    10      0.20      0.20      0.01                           
+      347 H2'' DG    11      0.13      0.20      0.14                           
+      409 H2'' DG5   13      0.34      0.24      0.19                           
+      502 H2'' DG    16      0.14      0.32      0.36                           
+      693 H2'' DG    22      0.21      0.20      0.03                           
+      726 H2'' DG    23      0.14      0.20      0.13                           
+      534 H2'' DT    17      0.12      0.06      0.12                           
+      566 H2'' DT    18      0.21     -0.08      0.57                           
+      363 H6   DC3   12     -0.30     -0.51      0.43                           
+      425 H6   DC    14     -0.08     -0.31      0.47                           
+      455 H6   DC    15     -0.11     -0.34      0.47                           
+      646 H6   DC    21     -0.38     -0.69      0.63                           
+      742 H6   DC3   24     -0.29     -0.51      0.44                           
+      518 H6   DT    17     -0.48     -0.52      0.07                           
+      550 H6   DT    18     -0.07     -0.42      0.69                           
+      582 H8   DA    19     -0.17     -0.30      0.26                           
+      614 H8   DA    20     -0.38     -0.47      0.19                           
+      297 H8   DG    10     -0.28     -0.36      0.16                           
+      330 H8   DG    11     -0.63     -0.44      0.38                           
+      392 H8   DG5   13      0.01     -0.20      0.42                           
+      485 H8   DG    16     -0.17     -0.20      0.06                           
+      676 H8   DG    22     -0.27     -0.36      0.19                           
+      709 H8   DG    23     -0.61     -0.44      0.34                           
+      523 H73  DT    17     -1.50     -0.55      1.90                           
+      555 H73  DT    18     -0.54     -0.33      0.42                           
+                                        Total shift    constraint:   58.38      
+                                                                                
+                     #  Pearson r   rms error                                   
+                  -----------------------------------                           
+Shift correlation:  160   0.89592   0.25832                                     
+ ------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+   5.  TIMINGS
+--------------------------------------------------------------------------------
+
+|    Read coords time           0.00 ( 1.92% of Total)
+|    Fast Water setup           0.00 ( 0.01% of Total)
+|                Calc gb off-diag           0.03 (100.0% of Gen B)
+|                Other                      0.00 ( 0.01% of Gen B)
+|             Gen Born time              0.03 (100.0% of Nonbo)
+|          Nonbond force              0.03 (58.37% of Force)
+|          Bond/Angle/Dihedral        0.00 ( 4.80% of Force)
+|             shift der time             0.00 (24.21% of Noe c)
+|             Ringcurr time              0.01 (75.19% of Noe c)
+|             Electro. noe time          0.00 ( 0.35% of Noe c)
+|             Anisotr. noe time          0.00 ( 0.25% of Noe c)
+|          Noe calc time              0.01 (24.03% of Force)
+|          Other                      0.01 (12.80% of Force)
+|       Force time                 0.05 (100.0% of Runmd)
+|    Runmd Time                 0.05 (70.40% of Total)
+|    Other                      0.02 (27.67% of Total)
+| Total time                 0.07 (100.0% of ALL  )
+
+| Number of list builds   :          0
+
+| Highest rstack allocated:          0
+| Highest istack allocated:          0
+|           Job began  at 12:25:48.019  on 09/28/2015
+|           Setup done at 12:25:48.039  on 09/28/2015
+|           Run   done at 12:25:48.092  on 09/28/2015
+|     wallclock() was called    2050 times

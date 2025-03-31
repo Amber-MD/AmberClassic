@@ -1,0 +1,1479 @@
+-I: Adding /home/case/amber14/dat/leap/prep to search path.
+-I: Adding /home/case/amber14/dat/leap/lib to search path.
+-I: Adding /home/case/amber14/dat/leap/parm to search path.
+-I: Adding /home/case/amber14/dat/leap/cmd to search path.
+-f: Source leap.in.
+
+Welcome to LEaP!
+(no leaprc in search path)
+Sourcing: ./leap.in
+----- Source: /home/case/amber14/dat/leap/cmd/leaprc.ff14SB
+----- Source of /home/case/amber14/dat/leap/cmd/leaprc.ff14SB done
+Log file: ./leap.log
+Loading parameters: /home/case/amber14/dat/leap/parm/parm10.dat
+Reading title:
+PARM99 + frcmod.ff99SB + frcmod.parmbsc0 + OL3 for RNA
+Loading parameters: /home/case/amber14/dat/leap/parm/frcmod.ff14SB
+Reading force field modification type file (frcmod)
+Reading title:
+ff14SB protein backbone and sidechain parameters
+Loading library: /home/case/amber14/dat/leap/lib/amino12.lib
+Loading library: /home/case/amber14/dat/leap/lib/aminoct12.lib
+Loading library: /home/case/amber14/dat/leap/lib/aminont12.lib
+Loading library: /home/case/amber14/dat/leap/lib/nucleic12.lib
+Loading library: /home/case/amber14/dat/leap/lib/atomic_ions.lib
+Loading library: /home/case/amber14/dat/leap/lib/solvents.lib
+Loading parameters: /home/case/amber14/dat/leap/parm/frcmod.ionsjc_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Monovalent ion parameters for Ewald and TIP3P water from Joung & Cheatham JPCB (2008)
+Loading parameters: /home/case/amber14/dat/leap/parm/frcmod.ionslrcm_hfe_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Divalent ion parameters(HFE set) for Particle Mesh Ewald and TIP3P water model from Li, Roberts, Chakravorty and Merz (JCTC 2013, 9, 2733-2748) 
+Loading PDB file: ./1d3z1.pdb
+  total atoms in file: 1231
+Checking Unit.
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 216 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CGLY	1
+	NMET	1
+  )
+ (no restraints)
+	Quit
+
+          -------------------------------------------------------
+          Amber 14 SANDER                              2014
+          -------------------------------------------------------
+
+| Run on 08/19/2015 at 15:37:41
+
+|   Executable path: sander
+| Working directory: /Users/case/shifts/test
+|          Hostname: Unknown
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: mdin                                                                  
+| MDOUT: 1d3z1.min.o                                                           
+|INPCRD: 1d3z1.x                                                               
+|  PARM: 1d3z1.parm7                                                           
+|RESTRT: 1d3z1.min.x                                                           
+|  REFC: 1d3z1.x                                                               
+| MDVEL: mdvel                                                                 
+| MDFRC: mdfrc                                                                 
+|  MDEN: mden                                                                  
+| MDCRD: mdcrd                                                                 
+|MDINFO: mdinfo                                                                
+|  MTMD: mtmd                                                                  
+|INPDIP: inpdip                                                                
+|RSTDIP: rstdip                                                                
+|INPTRA: inptraj                                                               
+
+
+ Here is the input file:
+
+  constrained minimization                                                     
+ &cntrl                                                                        
+   imin=1, ntb=0, igb=1, cut=99.0, rgbmax=10.0,                                
+   ntmin=3, maxcyc=50, drms=0.001, ntpr=1,                                     
+   restraint_wt=5.0, restraintmask=':*', ntr=1,                                
+ /                                                                             
+ &lmod                                                                         
+   xmin_method='TNCG', xmin_verbosity=0,                                       
+ /                                                                             
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+| New format PARM file being parsed.
+| Version =    1.000 Date = 08/19/15 Time = 15:37:40
+ NATOM  =    1231 NTYPES =      14 NBONH =     629 MBONA  =     608
+ NTHETH =    1439 MTHETA =     818 NPHIH =    2860 MPHIA  =    2638
+ NHPARM =       0 NPARM  =       0 NNB   =    6824 NRES   =      76
+ NBONA  =     608 NTHETA =     818 NPHIA =    2638 NUMBND =      56
+ NUMANG =     130 NPTRA  =     167 NATYP =      28 NPHB   =       0
+ IFBOX  =       0 NMXRS  =      24 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+ Implicit solvent radii are modified Bondi radii (mbondi)                                                   
+
+|     Memory Use     Allocated
+|     Real              113001
+|     Hollerith           3771
+|     Integer            89014
+|     Max Pairs              1
+|     nblistReal             0
+|     nblist Int             0
+|       Total             1245 kbytes
+
+| Note: 1-4 EEL scale factors are being read from the topology file.
+
+| Note: 1-4 VDW scale factors are being read from the topology file.
+| Duplicated    0 dihedrals
+| Duplicated    0 dihedrals
+
+--------------------------------------------------------------------------------
+   2.  CONTROL  DATA  FOR  THE  RUN
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+
+General flags:
+     imin    =       1, nmropt  =       0
+
+Nature and format of input:
+     ntx     =       1, irest   =       0, ntrx    =       1
+
+Nature and format of output:
+     ntxo    =       1, ntpr    =       1, ntrx    =       1, ntwr    =     500
+     iwrap   =       0, ntwx    =       0, ntwv    =       0, ntwe    =       0
+     ioutfm  =       0, ntwprt  =       0, idecomp =       0, rbornstat=      0
+
+Potential function:
+     ntf     =       1, ntb     =       0, igb     =       1, nsnb    =      25
+     ipol    =       0, gbsa    =       0, iesp    =       0
+     dielc   =   1.00000, cut     =  99.00000, intdiel =   1.00000
+     saltcon =   0.00000, offset  =   0.09000, gbalpha=    1.00000
+     gbbeta  =   0.00000, gbgamma =   0.00000, surften =   0.00500
+     rdt     =   0.00000, rgbmax  =  10.00000  extdiel =  78.50000
+     alpb  =        0
+
+Frozen or restrained atoms:
+     ibelly  =       0, ntr     =       1
+     restraint_wt =   5.00000
+
+Energy minimization:
+     maxcyc  =      50, ncyc    =      10, ntmin   =       3
+     dx0     =   0.01000, drms    =   0.00100
+
+LMOD:
+     xmin_method                  = TNCG 
+     lbfgs_memory_depth           =       3
+     matrix_vector_product_method = forward finite difference
+     xmin_verbosity               =       0
+|  INFO: Old style inpcrd file read
+
+
+    LOADING THE CONSTRAINED ATOMS AS GROUPS
+
+
+   5.  REFERENCE ATOM COORDINATES
+
+  defa
+     Mask :*; matches  1231 atoms
+
+--------------------------------------------------------------------------------
+   3.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+ begin time read from input coords =     0.000 ps
+
+ Number of triangulated 3-point waters found:        0
+
+--------------------------------------------------------------------------------
+   4.  RESULTS
+--------------------------------------------------------------------------------
+
+  LMOD XMIN Minimization.
+
+  Note: Owing to the behaviour of the XMIN algorithm,
+        coordinates in the trajectory and intermediate
+        restart files will not match up with energies
+        in the mdout and mdinfo files. The final energy
+        and final coordinates do match.
+
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      0      -2.5644E+03     1.1904E+01     8.5091E+01     OG1       349
+
+ BOND    =      107.7806  ANGLE   =       67.2622  DIHED      =      908.5065
+ VDWAALS =     -414.0998  EEL     =    -5167.7396  EGB        =    -1408.7455
+ 1-4 VDW =      367.0691  1-4 EEL =     2975.6001  RESTRAINT  =        0.0000
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      1      -2.7755E+03     3.3654E+00     2.5898E+01     OG1       349
+
+ BOND    =       31.0682  ANGLE   =       79.3971  DIHED      =      906.2594
+ VDWAALS =     -485.1736  EEL     =    -5175.8285  EGB        =    -1421.5762
+ 1-4 VDW =      334.5854  1-4 EEL =     2952.7683  RESTRAINT  =        2.9735
+ EAMBER  =    -2778.4999
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      2      -2.8806E+03     2.1481E+00     2.5270E+01     OG1       200
+
+ BOND    =       32.6449  ANGLE   =      106.3762  DIHED      =      896.6036
+ VDWAALS =     -550.0948  EEL     =    -5149.0798  EGB        =    -1425.1332
+ 1-4 VDW =      282.2199  1-4 EEL =     2900.3802  RESTRAINT  =       25.4909
+ EAMBER  =    -2906.0831
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      3      -2.9023E+03     8.5557E-01     1.4217E+01     CG        514
+
+ BOND    =       32.5635  ANGLE   =      108.9440  DIHED      =      890.0524
+ VDWAALS =     -565.4707  EEL     =    -5142.0442  EGB        =    -1425.0753
+ 1-4 VDW =      265.3118  1-4 EEL =     2888.7015  RESTRAINT  =       44.7670
+ EAMBER  =    -2947.0170
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      4      -2.9091E+03     5.9556E-01     1.7584E+01     NE       1206
+
+ BOND    =       31.9890  ANGLE   =      106.9610  DIHED      =      882.8779
+ VDWAALS =     -567.2948  EEL     =    -5143.9100  EGB        =    -1423.9070
+ 1-4 VDW =      265.4329  1-4 EEL =     2883.1959  RESTRAINT  =       55.5646
+ EAMBER  =    -2964.6551
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      5      -2.9108E+03     2.9353E-01     9.2478E+00     NE       1206
+
+ BOND    =       31.6361  ANGLE   =      106.1710  DIHED      =      879.4499
+ VDWAALS =     -567.5197  EEL     =    -5144.6408  EGB        =    -1422.9612
+ 1-4 VDW =      265.3357  1-4 EEL =     2883.0923  RESTRAINT  =       58.5988
+ EAMBER  =    -2969.4367
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      6      -2.9113E+03     1.1925E-01     3.1532E+00     NE       1206
+
+ BOND    =       31.1914  ANGLE   =      106.1046  DIHED      =      878.3146
+ VDWAALS =     -567.2405  EEL     =    -5145.0458  EGB        =    -1423.1381
+ 1-4 VDW =      265.8071  1-4 EEL =     2884.1694  RESTRAINT  =       58.5512
+ EAMBER  =    -2969.8373
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      7      -2.9114E+03     4.7410E-02     7.4944E-01     CG        334
+
+ BOND    =       31.1255  ANGLE   =      105.9716  DIHED      =      877.7015
+ VDWAALS =     -567.1425  EEL     =    -5145.1377  EGB        =    -1422.9867
+ 1-4 VDW =      266.2215  1-4 EEL =     2884.0112  RESTRAINT  =       58.8255
+ EAMBER  =    -2970.2356
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      8      -2.9114E+03     2.1346E-02     2.3977E-01     CG        922
+
+ BOND    =       31.2434  ANGLE   =      106.1065  DIHED      =      877.6687
+ VDWAALS =     -567.3141  EEL     =    -5145.0307  EGB        =    -1422.8605
+ 1-4 VDW =      265.9608  1-4 EEL =     2883.6565  RESTRAINT  =       59.1401
+ EAMBER  =    -2970.5693
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      9      -2.9114E+03     3.6712E-02     1.3559E+00     OG       1042
+
+ BOND    =       31.2512  ANGLE   =      106.1025  DIHED      =      877.7275
+ VDWAALS =     -567.2877  EEL     =    -5145.3630  EGB        =    -1422.6250
+ 1-4 VDW =      265.9694  1-4 EEL =     2883.6426  RESTRAINT  =       59.1466
+ EAMBER  =    -2970.5825
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     10      -2.9114E+03     6.6976E-02     2.6591E+00     HG       1043
+
+ BOND    =       31.2498  ANGLE   =      106.0702  DIHED      =      877.8234
+ VDWAALS =     -567.2227  EEL     =    -5145.9036  EGB        =    -1422.2461
+ 1-4 VDW =      265.9761  1-4 EEL =     2883.6142  RESTRAINT  =       59.1964
+ EAMBER  =    -2970.6388
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     11      -2.9115E+03     1.3141E-01     5.4806E+00     HG       1043
+
+ BOND    =       31.2535  ANGLE   =      106.0668  DIHED      =      877.9247
+ VDWAALS =     -567.1352  EEL     =    -5146.8725  EGB        =    -1421.7078
+ 1-4 VDW =      266.0107  1-4 EEL =     2883.6628  RESTRAINT  =       59.3396
+ EAMBER  =    -2970.7972
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     12      -2.9115E+03     7.2330E-02     3.0685E+00     HG       1043
+
+ BOND    =       31.2429  ANGLE   =      106.0271  DIHED      =      877.9846
+ VDWAALS =     -567.0478  EEL     =    -5147.7227  EGB        =    -1421.1949
+ 1-4 VDW =      266.0094  1-4 EEL =     2883.6724  RESTRAINT  =       59.5253
+ EAMBER  =    -2971.0290
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     13      -2.9115E+03     1.3891E-01     5.8446E+00     HG       1043
+
+ BOND    =       31.2877  ANGLE   =      106.0276  DIHED      =      878.0374
+ VDWAALS =     -567.0040  EEL     =    -5148.4890  EGB        =    -1420.8173
+ 1-4 VDW =      266.0016  1-4 EEL =     2883.6814  RESTRAINT  =       59.7275
+ EAMBER  =    -2971.2747
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     14      -2.9116E+03     2.0311E-01     8.3216E+00     HG       1043
+
+ BOND    =       31.3174  ANGLE   =      106.0381  DIHED      =      878.0744
+ VDWAALS =     -566.9306  EEL     =    -5149.4638  EGB        =    -1420.3925
+ 1-4 VDW =      266.0093  1-4 EEL =     2883.7640  RESTRAINT  =       59.9686
+ EAMBER  =    -2971.5837
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     15      -2.9117E+03     3.0841E-01     1.1586E+01     HG       1043
+
+ BOND    =       31.4413  ANGLE   =      106.0382  DIHED      =      878.0297
+ VDWAALS =     -566.7828  EEL     =    -5151.1874  EGB        =    -1419.6528
+ 1-4 VDW =      265.9859  1-4 EEL =     2883.8214  RESTRAINT  =       60.5579
+ EAMBER  =    -2972.3066
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     16      -2.9119E+03     1.1863E-01     4.3695E+00     HG       1043
+
+ BOND    =       31.2719  ANGLE   =      106.0654  DIHED      =      877.9322
+ VDWAALS =     -566.6802  EEL     =    -5152.1131  EGB        =    -1419.1945
+ 1-4 VDW =      265.9499  1-4 EEL =     2883.9016  RESTRAINT  =       60.9401
+ EAMBER  =    -2972.8668
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     17      -2.9120E+03     1.2556E-01     4.5165E+00     HG       1043
+
+ BOND    =       31.2943  ANGLE   =      106.1031  DIHED      =      877.8356
+ VDWAALS =     -566.6085  EEL     =    -5152.8247  EGB        =    -1418.8984
+ 1-4 VDW =      265.9258  1-4 EEL =     2883.9086  RESTRAINT  =       61.2626
+ EAMBER  =    -2973.2642
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     18      -2.9121E+03     1.9277E-01     5.7731E+00     HG       1043
+
+ BOND    =       31.3961  ANGLE   =      106.1999  DIHED      =      877.5826
+ VDWAALS =     -566.4700  EEL     =    -5154.1115  EGB        =    -1418.3900
+ 1-4 VDW =      265.8760  1-4 EEL =     2883.8644  RESTRAINT  =       61.9513
+ EAMBER  =    -2974.0526
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     19      -2.9122E+03     4.7870E-02     9.1606E-01     HB3      1041
+
+ BOND    =       31.2793  ANGLE   =      106.1977  DIHED      =      877.5058
+ VDWAALS =     -566.4477  EEL     =    -5154.2110  EGB        =    -1418.2634
+ 1-4 VDW =      265.8792  1-4 EEL =     2883.8432  RESTRAINT  =       62.0628
+ EAMBER  =    -2974.2169
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     20      -2.9122E+03     3.6726E-02     7.5898E-01     HG       1043
+
+ BOND    =       31.2808  ANGLE   =      106.1116  DIHED      =      877.4357
+ VDWAALS =     -566.4059  EEL     =    -5154.4150  EGB        =    -1418.2102
+ 1-4 VDW =      265.9509  1-4 EEL =     2883.9386  RESTRAINT  =       62.1279
+ EAMBER  =    -2974.3134
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     21      -2.9122E+03     1.0330E-02     1.2424E-01     CG        514
+
+ BOND    =       31.2585  ANGLE   =      106.1395  DIHED      =      877.4484
+ VDWAALS =     -566.4181  EEL     =    -5154.3664  EGB        =    -1418.2144
+ 1-4 VDW =      265.9328  1-4 EEL =     2883.9172  RESTRAINT  =       62.1097
+ EAMBER  =    -2974.3025
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     22      -2.9122E+03     5.6332E-03     6.8629E-02     HB3      1041
+
+ BOND    =       31.2566  ANGLE   =      106.1292  DIHED      =      877.4591
+ VDWAALS =     -566.4035  EEL     =    -5154.3547  EGB        =    -1418.1962
+ 1-4 VDW =      265.9252  1-4 EEL =     2883.8717  RESTRAINT  =       62.1186
+ EAMBER  =    -2974.3126
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     23      -2.9122E+03     2.5664E-03     3.2322E-02     CG        835
+
+ BOND    =       31.2622  ANGLE   =      106.1330  DIHED      =      877.4596
+ VDWAALS =     -566.3995  EEL     =    -5154.3706  EGB        =    -1418.1876
+ 1-4 VDW =      265.9212  1-4 EEL =     2883.8598  RESTRAINT  =       62.1277
+ EAMBER  =    -2974.3220
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     24      -2.9122E+03     1.3817E-03     2.5846E-02     CG        922
+
+ BOND    =       31.2628  ANGLE   =      106.1338  DIHED      =      877.4582
+ VDWAALS =     -566.3982  EEL     =    -5154.3775  EGB        =    -1418.1864
+ 1-4 VDW =      265.9171  1-4 EEL =     2883.8635  RESTRAINT  =       62.1324
+ EAMBER  =    -2974.3267
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     25      -2.9122E+03     5.8637E-04     5.9235E-03     HB3      1041
+
+ BOND    =       31.2630  ANGLE   =      106.1340  DIHED      =      877.4562
+ VDWAALS =     -566.3977  EEL     =    -5154.3800  EGB        =    -1418.1871
+ 1-4 VDW =      265.9183  1-4 EEL =     2883.8664  RESTRAINT  =       62.1326
+ EAMBER  =    -2974.3270
+
+--------------------------------------------------------------------------------
+   5.  TIMINGS
+--------------------------------------------------------------------------------
+
+|                Calc gb radii              3.94 (12.40% of Gen B)
+|                Calc gb diag               7.72 (24.29% of Gen B)
+|                Calc gb off-diag          20.13 (63.31% of Gen B)
+|             Gen Born time             31.80 (100.0% of Nonbo)
+|          Nonbond force             31.80 (98.68% of Force)
+|          Bond/Angle/Dihedral        0.42 ( 1.31% of Force)
+|          Other                      0.00 ( 0.02% of Force)
+|       Force time                32.23 (100.0% of Runmd)
+|    Runmd Time                32.23 (99.02% of Total)
+|    Other                      0.32 ( 0.98% of Total)
+| Total time                32.55 (100.0% of ALL  )
+
+| Number of list builds   :          0
+
+| Highest rstack allocated:          0
+| Highest istack allocated:          0
+|           Job began  at 15:37:41.037  on 08/19/2015
+|           Setup done at 15:37:41.086  on 08/19/2015
+|           Run   done at 15:38:13.584  on 08/19/2015
+|     wallclock() was called    4402 times
+
+CPPTRAJ: Trajectory Analysis. V16.00b
+    ___  ___  ___  ___
+     | \/ | \/ | \/ | 
+    _|_/\_|_/\_|_/\_|_
+
+| Date/time: 08/19/15  15:38:13
+| Available memory: 4337.87 MB
+
+	Reading '1d3z1.parm7' as Amber Topology
+INPUT: Reading Input from STDIN
+  [reference 1d3z1.x]
+	Reading '1d3z1.x' as Amber Restart
+  [trajin 1d3z1.min.x]
+	Reading '1d3z1.min.x' as Amber Restart
+  [rms all_heavy reference !@H= out rms.dat]
+	Reference mask: [!@H*](602)
+    RMSD: (!@H*), reference is "1d3z1.x" (!@H*), with fitting.
+  [rms backbone reference @C,CA,N,P,O3',O5',C3',C4',C5' out rms.dat]
+	Reference mask: [@C,CA,N,P,O3',O5',C3',C4',C5'](228)
+    RMSD: (@C,CA,N,P,O3',O5',C3',C4',C5'), reference is "1d3z1.x" (@C,CA,N,P,O3',O5',C3',C4',C5'), with fitting.
+---------- RUN BEGIN -------------------------------------------------
+
+PARAMETER FILES:
+ 0: '1d3z1.parm7', 1231 atoms, 76 res, box: None, 1 mol, 1 frames
+
+INPUT TRAJECTORIES:
+ 0: '1d3z1.min.x' is an AMBER restart file, no velocities, Parm 1d3z1.parm7 (reading 1 of 1)
+  Coordinate processing will occur on 1 frames.
+
+REFERENCE FRAMES (1 total):
+    0: '1d3z1.x', frame 1
+	Active reference frame for distance-based masks is 0
+TIME: Run Initialization took 0.0000 seconds.
+
+BEGIN TRAJECTORY PROCESSING:
+.....................................................
+ACTION SETUP FOR PARM '1d3z1.parm7' (2 actions):
+  0: [rms all_heavy reference !@H= out rms.dat]
+	Target mask: [!@H*](602)
+  1: [rms backbone reference @C,CA,N,P,O3',O5',C3',C4',C5' out rms.dat]
+	Target mask: [@C,CA,N,P,O3',O5',C3',C4',C5'](228)
+----- 1d3z1.min.x (1-1, 1) -----
+100% Complete.
+
+Read 1 frames and processed 1 frames.
+TIME: Trajectory processing: 0.0003 s
+TIME: Avg. throughput= 3039.5137 frames / second.
+
+ACTION OUTPUT:
+
+DATASETS:
+  3 data sets:
+	1d3z1.x:1 "default_name" (reference), size is 1, refindex 0 (1231 atoms)
+	all_heavy "all_heavy" (double, rms), size is 1
+	backbone "backbone" (double, rms), size is 1
+
+DATAFILES:
+  rms.dat (Standard Data File):  all_heavy backbone
+---------- RUN END ---------------------------------------------------
+TIME: Total execution time: 0.0473 seconds.
+--------------------------------------------------------------------------------
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+  Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+  Theory Comput., 2013, 9 (7), pp 3084-3095.
+
+#Frame      all_heavy     backbone
+       1       0.0887       0.0679
+  1231 atoms
+     0 omitted
+     0 collision only
+  1231 surface
+ surface point density =    0.50000     probe radius =    0.00000
+    71 neighbors maximum
+  2080 contact and     0 saddle and     0 concave surface points
+     2080 total surface points
+ contact area:  5282.861  reentrant area:     0.000  total area:  5282.861
+
+          -------------------------------------------------------
+          PBSA VERSION 2009                       UC Irvine
+          -------------------------------------------------------
+
+| Run on 08/19/2015 at 15:38:14
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: min.in                                                                
+| MDOUT: pbsa.out                                                              
+|INPCRD: 1d3z1.min.x                                                           
+|  PARM: 1d3z1.parm7                                                           
+|
+
+ Here is the input file:
+
+ test of pbsa                                                                  
+ &cntrl                                                                        
+   ntx=1, imin=1, igb=10, inp=0,                                               
+ /                                                                             
+ &pb                                                                           
+   npbverb=0, istrng=0, epsout=80.0, epsin=1.0, space=0.5,                     
+   accept=0.001, sprob=1.6, radiopt=0, fillratio=4, eneopt=2,                  
+   frcopt=2, isurfchg=1,                                                       
+ /                                                                             
+ PB Info in pb_read(): bcopt has been reset from 5 to 6 for frcopt= 2 - 4
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+| New format PARM file being parsed.
+| Version =    1.000 Date = 08/19/15 Time = 15:37:40
+ NATOM  =    1231 NTYPES =      14 NBONH =     629 MBONA  =     608
+ NTHETH =    1439 MTHETA =     818 NPHIH =    2860 MPHIA  =    2638
+ NHPARM =       0 NPARM  =       0 NNB   =    6824 NRES   =      76
+ NBONA  =     608 NTHETA =     818 NPHIA =    2638 NUMBND =      56
+ NUMANG =     130 NPTRA  =     167 NATYP =      28 NPHB   =       0
+ IFBOX  =       0 NMXRS  =      24 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+
+|     Memory Use     Allocated
+|     Real               45606
+|     Hollerith           3771
+|     Integer            79076
+|     Max Pairs              1
+|     Max Rstack             1
+|     Max Istack             1
+|       Total              679 kbytes
+
+--------------------------------------------------------------------------------
+   2.  CONTROL  DATA  FOR  THE  RUN
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+
+General flags:
+     imin    =       1, nmropt  =       0
+
+Nature and format of input:
+     ntx     =       1, irest   =       0, ntrx    =       1
+
+Nature and format of output:
+     ntxo    =       1, ntpr    =      50, ntrx    =       1, ntwr    =     500
+     iwrap   =       0, ntwx    =       0, ntwv    =       0, ntwe    =       0
+     ioutfm  =       0, ntwprt  =       0, idecomp =       0, rbornstat=      0
+
+Potential function:
+     ntf     =       1, ntb     =       1, ipb     =       2, nsnb    =      25
+     ipol    =       0, gbsa    =       0, iesp    =       0
+     dielc   =   1.00000, cut     =   8.00000, intdiel =   1.00000
+
+Frozen or restrained atoms:
+     ibelly  =       0, ntr     =       0
+
+Energy minimization:
+     maxcyc  =       1, ncyc    =      10, ntmin   =       1
+     dx0     =   0.01000, drms    =   0.00010
+
+--------------------------------------------------------------------------------
+   3.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+defa                                                                            
+ begin time read from input coords =     0.000 ps
+
+ Number of triangulated 3-point waters found:        0
+
+--------------------------------------------------------------------------------
+   4.  RESULTS
+--------------------------------------------------------------------------------
+
+ Total surface charge       0.0159
+ Reaction field energy  -1331.3469
+ Total solvation force      2.6326     -3.9920    -12.5668
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =     -7052.1246  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =         0.0000  VDWAALS    =      -566.3977
+ EELEC  =     -5154.3800  EPB     =     -1331.3469  RESTRAINT  =         0.0000
+ ECAVITY=         0.0000  EDISPER =         0.0000
+ ------------------------------------------------------------------------------
+
+
+
+  Maximum number of minimization cycles reached.
+
+
+                    FINAL RESULTS
+
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =     -7052.1246  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =         0.0000  VDWAALS    =      -566.3977
+ EELEC  =     -5154.3800  EPB     =     -1331.3469  RESTRAINT  =         0.0000
+ ECAVITY=         0.0000  EDISPER =         0.0000
+ ------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+   5.  TIMINGS
+--------------------------------------------------------------------------------
+
+| Total time                     8.86
+| Read prm/crd time              0.59
+| Force time                     8.22
+| Nonbond force                  8.22
+| PB Nonbond                     8.22
+| PB NB list                     0.03
+| PB FD grid                     0.07
+| PB Sasa                        0.60
+| PB FD force                    7.45
+| PB Set linear sys              0.59
+| PB Solver                      4.86
+| PB Direct                      0.04
+| PB SA srf                      0.08
+| PB SA arc                      0.52
+| PB SA arc setup                0.02
+| PB circle                      0.43
+| PB exclude                     0.08
+| PB exmol                       0.56
+| PB exmol setup                 0.04
+| PB exmol part a                0.04
+| PB exmol part b                0.07
+| PB exmol part c                0.02
+| PB exmol part d                0.01
+| PB exmol part e                0.05
+| PB exmol part f                0.13
+| PB epsbnd                      0.09
+| PB epsmap                      0.07
+|           Job began  at 15:38:14.537  on 08/19/2015
+|           Setup done at 15:38:15.166  on 08/19/2015
+|           Run   done at 15:38:23.444  on 08/19/2015
+|     wallclock() was called      94 times
+ ngrid =        27149
+ natom =         1231 , molcharge =    1.0880185641326534E-014
+closec =  0.000, nclose =     38/ 27149
+ nsurf =         2080
+ dgelss returns            0         406
+ bsum =   0.32779401675922964     
+                         Column 1         Column 2       Difference
+Minimums                  -0.4767          -0.4740          -0.0239
+Maximums                   0.5128           0.5092           0.0341
+Sums                     -34.7798         -34.8349           0.0551
+SumSquares                26.3249          26.3044           0.0184
+Means                     -0.0283          -0.0283           0.0000
+SDs                        0.1435           0.1435           0.0039
+t(1230)                   -6.9060          -6.9202           0.4066
+p                          0.0000           0.0000           0.6843
+
+     Correlation        r-squared          t(1229)                p
+          0.9996           0.9993        1302.3153          -0.0000
+       Intercept            Slope         rmsError
+         -0.0001           0.9992           0.0039
+
+ **********************************************
+ AF-NMR
+
+ Authors : Xiao He, Kenneth Merz,
+           Sishi Tang and David A. Case
+ **********************************************
+  Cannot find h-bond file 'hbond.hbn' skipping hbond analysis
+
+==== Residue    1 ===========================================================
+                        1 MET    1    1   17    1    1
+                        1 GLN    2   18   34    0    1
+                        1 ILE    3   35   53    0    1
+                        1 GLU   16  254  268   -1    0
+                        1 VAL   17  269  284    0    0
+                        1 ILE   61  960  978    0    0
+    1    0
+
+==== Residue    2 ===========================================================
+                        2 MET    1    1   17    1    1
+                        2 GLN    2   18   34    0    1
+                        2 ILE    3   35   53    0    1
+                        2 THR   14  221  234    0    1
+                        2 LEU   15  235  253    0    1
+                        2 GLU   16  254  268   -1    0
+                        2 LYS   63  996 1017    1    1
+                        2 GLU   64 1018 1032   -1    0
+    2    0
+
+==== Residue    3 ===========================================================
+                        3 MET    1    1   17    1    1
+                        3 GLN    2   18   34    0    1
+                        3 ILE    3   35   53    0    1
+                        3 PHE    4   54   73    0    1
+                        3 THR   14  221  234    0    1
+                        3 LEU   15  235  253    0    1
+                        3 VAL   17  269  284    0    1
+                        3 SER   65 1033 1043    0    1
+                        3 LEU   67 1058 1076    0    1
+    3    1
+
+==== Residue    4 ===========================================================
+                        4 ILE    3   35   53    0    0
+                        4 PHE    4   54   73    0    0
+                        4 VAL    5   74   89    0    0
+                        4 THR   12  188  201    0    0
+                        4 ILE   13  202  220    0    0
+                        4 THR   14  221  234    0    0
+                        4 GLU   64 1018 1032   -1   -1
+                        4 SER   65 1033 1043    0   -1
+                        4 THR   66 1044 1057    0   -1
+                        4 LEU   67 1058 1076    0   -1
+    4   -1
+
+==== Residue    5 ===========================================================
+                        5 PHE    4   54   73    0    0
+                        5 VAL    5   74   89    0    0
+                        5 LYS    6   90  111    1    1
+                        5 THR   12  188  201    0    1
+                        5 ILE   13  202  220    0    1
+                        5 ILE   30  469  487    0    1
+                        5 LEU   67 1058 1076    0    1
+                        5 LEU   69 1094 1112    0    1
+    5    1
+
+==== Residue    6 ===========================================================
+                        6 VAL    5   74   89    0    0
+                        6 LYS    6   90  111    1    1
+                        6 THR    7  112  125    0    1
+                        6 LYS   11  166  187    1    2
+                        6 THR   12  188  201    0    2
+                        6 THR   66 1044 1057    0    2
+                        6 LEU   67 1058 1076    0    2
+                        6 HID   68 1077 1093    0    2
+                        6 LEU   69 1094 1112    0    2
+    6    2
+
+==== Residue    7 ===========================================================
+                        7 LYS    6   90  111    1    1
+                        7 THR    7  112  125    0    1
+                        7 LEU    8  126  144    0    1
+                        7 THR    9  145  158    0    1
+                        7 GLY   10  159  165    0    1
+                        7 LYS   11  166  187    1    2
+    7    2
+
+==== Residue    8 ===========================================================
+                        8 THR    7  112  125    0    0
+                        8 LEU    8  126  144    0    0
+                        8 THR    9  145  158    0    0
+                        8 GLY   10  159  165    0    0
+                        8 LEU   69 1094 1112    0    0
+                        8 VAL   70 1113 1128    0    0
+                        8 LEU   71 1129 1147    0    0
+    8    0
+
+==== Residue    9 ===========================================================
+                        9 THR    7  112  125    0    0
+                        9 LEU    8  126  144    0    0
+                        9 THR    9  145  158    0    0
+                        9 GLY   10  159  165    0    0
+    9    0
+
+==== Residue   10 ===========================================================
+                       10 THR    7  112  125    0    0
+                       10 LEU    8  126  144    0    0
+                       10 THR    9  145  158    0    0
+                       10 GLY   10  159  165    0    0
+                       10 LYS   11  166  187    1    1
+   10    1
+
+==== Residue   11 ===========================================================
+                       11 LYS    6   90  111    1    1
+                       11 THR    7  112  125    0    1
+                       11 GLY   10  159  165    0    1
+                       11 LYS   11  166  187    1    2
+                       11 THR   12  188  201    0    2
+   11    2
+
+==== Residue   12 ===========================================================
+                       12 PHE    4   54   73    0    0
+                       12 VAL    5   74   89    0    0
+                       12 LYS    6   90  111    1    1
+                       12 LYS   11  166  187    1    2
+                       12 THR   12  188  201    0    2
+                       12 ILE   13  202  220    0    2
+   12    2
+
+==== Residue   13 ===========================================================
+                       13 PHE    4   54   73    0    0
+                       13 VAL    5   74   89    0    0
+                       13 THR   12  188  201    0    0
+                       13 ILE   13  202  220    0    0
+                       13 THR   14  221  234    0    0
+                       13 GLU   34  539  553   -1   -1
+   13   -1
+
+==== Residue   14 ===========================================================
+                       14 GLN    2   18   34    0    0
+                       14 ILE    3   35   53    0    0
+                       14 PHE    4   54   73    0    0
+                       14 ILE   13  202  220    0    0
+                       14 THR   14  221  234    0    0
+                       14 LEU   15  235  253    0    0
+                       14 LYS   33  517  538    1    1
+   14    1
+
+==== Residue   15 ===========================================================
+                       15 GLN    2   18   34    0    0
+                       15 ILE    3   35   53    0    0
+                       15 THR   14  221  234    0    0
+                       15 LEU   15  235  253    0    0
+                       15 GLU   16  254  268   -1   -1
+                       15 ILE   30  469  487    0   -1
+                       15 LYS   33  517  538    1    0
+   15    0
+
+==== Residue   16 ===========================================================
+                       16 MET    1    1   17    1    1
+                       16 GLN    2   18   34    0    1
+                       16 LEU   15  235  253    0    1
+                       16 GLU   16  254  268   -1    0
+                       16 VAL   17  269  284    0    0
+                       16 LYS   29  447  468    1    1
+   16    1
+
+==== Residue   17 ===========================================================
+                       17 MET    1    1   17    1    1
+                       17 ILE    3   35   53    0    1
+                       17 GLU   16  254  268   -1    0
+                       17 VAL   17  269  284    0    0
+                       17 GLU   18  285  299   -1   -1
+                       17 ASP   21  325  336   -1   -2
+                       17 VAL   26  399  414    0   -2
+                       17 LEU   56  883  901    0   -2
+   17   -2
+
+==== Residue   18 ===========================================================
+                       18 VAL   17  269  284    0    0
+                       18 GLU   18  285  299   -1   -1
+                       18 PRO   19  300  313    0   -1
+                       18 SER   20  314  324    0   -1
+                       18 ASP   21  325  336   -1   -2
+                       18 LEU   56  883  901    0   -2
+   18   -2
+
+==== Residue   19 ===========================================================
+                       19 GLU   18  285  299   -1   -1
+                       19 PRO   19  300  313    0   -1
+                       19 SER   20  314  324    0   -1
+                       19 ASP   21  325  336   -1   -2
+                       19 THR   55  869  882    0   -2
+                       19 LEU   56  883  901    0   -2
+                       19 SER   57  902  912    0   -2
+   19   -2
+
+==== Residue   20 ===========================================================
+                       20 GLU   18  285  299   -1   -1
+                       20 PRO   19  300  313    0   -1
+                       20 SER   20  314  324    0   -1
+                       20 ASP   21  325  336   -1   -2
+   20   -2
+
+==== Residue   21 ===========================================================
+                       21 VAL   17  269  284    0    0
+                       21 GLU   18  285  299   -1   -1
+                       21 PRO   19  300  313    0   -1
+                       21 SER   20  314  324    0   -1
+                       21 ASP   21  325  336   -1   -2
+                       21 THR   22  337  350    0   -2
+                       21 THR   55  869  882    0   -2
+                       21 LEU   56  883  901    0   -2
+   21   -2
+
+==== Residue   22 ===========================================================
+                       22 ASP   21  325  336   -1   -1
+                       22 THR   22  337  350    0   -1
+                       22 ILE   23  351  369    0   -1
+                       22 ASN   25  385  398    0   -1
+                       22 VAL   26  399  414    0   -1
+                       22 ARG   54  845  868    1    0
+                       22 THR   55  869  882    0    0
+   22    0
+
+==== Residue   23 ===========================================================
+                       23 THR   22  337  350    0    0
+                       23 ILE   23  351  369    0    0
+                       23 GLU   24  370  384   -1   -1
+                       23 VAL   26  399  414    0   -1
+                       23 LYS   27  415  436    1    0
+                       23 LEU   43  678  696    0    0
+                       23 LEU   50  792  810    0    0
+                       23 GLU   51  811  825   -1   -1
+                       23 ASP   52  826  837   -1   -2
+                       23 ARG   54  845  868    1   -1
+                       23 LEU   56  883  901    0   -1
+   23   -1
+
+==== Residue   24 ===========================================================
+                       24 ILE   23  351  369    0    0
+                       24 GLU   24  370  384   -1   -1
+                       24 ASN   25  385  398    0   -1
+                       24 LYS   27  415  436    1    0
+                       24 ALA   28  437  446    0    0
+                       24 ASP   52  826  837   -1   -1
+   24   -1
+
+==== Residue   25 ===========================================================
+                       25 THR   22  337  350    0    0
+                       25 GLU   24  370  384   -1   -1
+                       25 ASN   25  385  398    0   -1
+                       25 VAL   26  399  414    0   -1
+                       25 ALA   28  437  446    0   -1
+                       25 LYS   29  447  468    1    0
+   25    0
+
+==== Residue   26 ===========================================================
+                       26 VAL   17  269  284    0    0
+                       26 THR   22  337  350    0    0
+                       26 ILE   23  351  369    0    0
+                       26 ASN   25  385  398    0    0
+                       26 VAL   26  399  414    0    0
+                       26 LYS   27  415  436    1    1
+                       26 LYS   29  447  468    1    2
+                       26 ILE   30  469  487    0    2
+                       26 LEU   56  883  901    0    2
+   26    2
+
+==== Residue   27 ===========================================================
+                       27 ILE   23  351  369    0    0
+                       27 GLU   24  370  384   -1   -1
+                       27 VAL   26  399  414    0   -1
+                       27 LYS   27  415  436    1    0
+                       27 ALA   28  437  446    0    0
+                       27 ILE   30  469  487    0    0
+                       27 GLN   31  488  504    0    0
+                       27 PRO   38  594  607    0    0
+                       27 GLN   41  637  653    0    0
+                       27 LEU   43  678  696    0    0
+                       27 ASP   52  826  837   -1   -1
+   27   -1
+
+==== Residue   28 ===========================================================
+                       28 GLU   24  370  384   -1   -1
+                       28 ASN   25  385  398    0   -1
+                       28 LYS   27  415  436    1    0
+                       28 ALA   28  437  446    0    0
+                       28 LYS   29  447  468    1    1
+                       28 GLN   31  488  504    0    1
+                       28 ASP   32  505  516   -1    0
+   28    0
+
+==== Residue   29 ===========================================================
+                       29 GLU   16  254  268   -1   -1
+                       29 ASN   25  385  398    0   -1
+                       29 VAL   26  399  414    0   -1
+                       29 ALA   28  437  446    0   -1
+                       29 LYS   29  447  468    1    0
+                       29 ILE   30  469  487    0    0
+                       29 ASP   32  505  516   -1   -1
+                       29 LYS   33  517  538    1    0
+   29    0
+
+==== Residue   30 ===========================================================
+                       30 VAL    5   74   89    0    0
+                       30 LEU   15  235  253    0    0
+                       30 VAL   26  399  414    0    0
+                       30 LYS   27  415  436    1    1
+                       30 LYS   29  447  468    1    2
+                       30 ILE   30  469  487    0    2
+                       30 GLN   31  488  504    0    2
+                       30 LYS   33  517  538    1    3
+                       30 GLU   34  539  553   -1    2
+                       30 GLN   41  637  653    0    2
+                       30 LEU   43  678  696    0    2
+   30    2
+
+==== Residue   31 ===========================================================
+                       31 LYS   27  415  436    1    1
+                       31 ALA   28  437  446    0    1
+                       31 ILE   30  469  487    0    1
+                       31 GLN   31  488  504    0    1
+                       31 ASP   32  505  516   -1    0
+                       31 GLY   35  554  560    0    0
+                       31 ILE   36  561  579    0    0
+                       31 PRO   38  594  607    0    0
+   31    0
+
+==== Residue   32 ===========================================================
+                       32 ALA   28  437  446    0    0
+                       32 LYS   29  447  468    1    1
+                       32 GLN   31  488  504    0    1
+                       32 ASP   32  505  516   -1    0
+                       32 LYS   33  517  538    1    1
+   32    1
+
+==== Residue   33 ===========================================================
+                       33 THR   14  221  234    0    0
+                       33 LEU   15  235  253    0    0
+                       33 LYS   29  447  468    1    1
+                       33 ILE   30  469  487    0    1
+                       33 ASP   32  505  516   -1    0
+                       33 LYS   33  517  538    1    1
+                       33 GLU   34  539  553   -1    0
+   33    0
+
+==== Residue   34 ===========================================================
+                       34 ILE   13  202  220    0    0
+                       34 ILE   30  469  487    0    0
+                       34 LYS   33  517  538    1    1
+                       34 GLU   34  539  553   -1    0
+                       34 GLY   35  554  560    0    0
+                       34 ILE   36  561  579    0    0
+   34    0
+
+==== Residue   35 ===========================================================
+                       35 GLN   31  488  504    0    0
+                       35 GLU   34  539  553   -1   -1
+                       35 GLY   35  554  560    0   -1
+                       35 ILE   36  561  579    0   -1
+                       35 PRO   37  580  593    0   -1
+   35   -1
+
+==== Residue   36 ===========================================================
+                       36 GLN   31  488  504    0    0
+                       36 GLU   34  539  553   -1   -1
+                       36 GLY   35  554  560    0   -1
+                       36 ILE   36  561  579    0   -1
+                       36 PRO   37  580  593    0   -1
+                       36 GLN   41  637  653    0   -1
+                       36 LEU   69 1094 1112    0   -1
+   36   -1
+
+==== Residue   37 ===========================================================
+                       37 GLY   35  554  560    0    0
+                       37 ILE   36  561  579    0    0
+                       37 PRO   37  580  593    0    0
+                       37 PRO   38  594  607    0    0
+                       37 ASP   39  608  619   -1   -1
+                       37 GLN   40  620  636    0   -1
+                       37 GLN   41  637  653    0   -1
+   37   -1
+
+==== Residue   38 ===========================================================
+                       38 LYS   27  415  436    1    1
+                       38 GLN   31  488  504    0    1
+                       38 PRO   37  580  593    0    1
+                       38 PRO   38  594  607    0    1
+                       38 ASP   39  608  619   -1    0
+                       38 GLN   40  620  636    0    0
+                       38 GLN   41  637  653    0    0
+   38    0
+
+==== Residue   39 ===========================================================
+                       39 PRO   37  580  593    0    0
+                       39 PRO   38  594  607    0    0
+                       39 ASP   39  608  619   -1   -1
+                       39 GLN   40  620  636    0   -1
+                       39 GLN   41  637  653    0   -1
+   39   -1
+
+==== Residue   40 ===========================================================
+                       40 PRO   37  580  593    0    0
+                       40 PRO   38  594  607    0    0
+                       40 ASP   39  608  619   -1   -1
+                       40 GLN   40  620  636    0   -1
+                       40 GLN   41  637  653    0   -1
+                       40 LEU   71 1129 1147    0   -1
+                       40 ARG   72 1148 1171    1    0
+   40    0
+
+==== Residue   41 ===========================================================
+                       41 LYS   27  415  436    1    1
+                       41 ILE   30  469  487    0    1
+                       41 ILE   36  561  579    0    1
+                       41 PRO   37  580  593    0    1
+                       41 PRO   38  594  607    0    1
+                       41 ASP   39  608  619   -1    0
+                       41 GLN   40  620  636    0    0
+                       41 GLN   41  637  653    0    0
+                       41 ARG   42  654  677    1    1
+                       41 LEU   69 1094 1112    0    1
+                       41 VAL   70 1113 1128    0    1
+   41    1
+
+==== Residue   42 ===========================================================
+                       42 GLN   41  637  653    0    0
+                       42 ARG   42  654  677    1    1
+                       42 LEU   43  678  696    0    1
+                       42 GLN   49  775  791    0    1
+                       42 LEU   69 1094 1112    0    1
+                       42 VAL   70 1113 1128    0    1
+                       42 ARG   72 1148 1171    1    2
+   42    2
+
+==== Residue   43 ===========================================================
+                       43 ILE   23  351  369    0    0
+                       43 LYS   27  415  436    1    1
+                       43 ILE   30  469  487    0    1
+                       43 ARG   42  654  677    1    2
+                       43 LEU   43  678  696    0    2
+                       43 ILE   44  697  715    0    2
+                       43 GLN   49  775  791    0    2
+                       43 LEU   50  792  810    0    2
+                       43 HID   68 1077 1093    0    2
+                       43 LEU   69 1094 1112    0    2
+   43    2
+
+==== Residue   44 ===========================================================
+                       44 LEU   43  678  696    0    0
+                       44 ILE   44  697  715    0    0
+                       44 PHE   45  716  735    0    0
+                       44 LYS   48  753  774    1    1
+                       44 GLN   49  775  791    0    1
+                       44 LEU   67 1058 1076    0    1
+                       44 HID   68 1077 1093    0    1
+   44    1
+
+==== Residue   45 ===========================================================
+                       45 ILE   44  697  715    0    0
+                       45 PHE   45  716  735    0    0
+                       45 ALA   46  736  745    0    0
+                       45 GLY   47  746  752    0    0
+                       45 LYS   48  753  774    1    1
+                       45 LEU   50  792  810    0    1
+                       45 SER   65 1033 1043    0    1
+                       45 THR   66 1044 1057    0    1
+   45    1
+
+==== Residue   46 ===========================================================
+                       46 PHE   45  716  735    0    0
+                       46 ALA   46  736  745    0    0
+                       46 GLY   47  746  752    0    0
+                       46 LYS   48  753  774    1    1
+   46    1
+
+==== Residue   47 ===========================================================
+                       47 PHE   45  716  735    0    0
+                       47 ALA   46  736  745    0    0
+                       47 GLY   47  746  752    0    0
+                       47 LYS   48  753  774    1    1
+   47    1
+
+==== Residue   48 ===========================================================
+                       48 ILE   44  697  715    0    0
+                       48 PHE   45  716  735    0    0
+                       48 ALA   46  736  745    0    0
+                       48 GLY   47  746  752    0    0
+                       48 LYS   48  753  774    1    1
+                       48 GLN   49  775  791    0    1
+                       48 TYR   59  925  945    0    1
+   48    1
+
+==== Residue   49 ===========================================================
+                       49 ARG   42  654  677    1    1
+                       49 LEU   43  678  696    0    1
+                       49 ILE   44  697  715    0    1
+                       49 LYS   48  753  774    1    2
+                       49 GLN   49  775  791    0    2
+                       49 LEU   50  792  810    0    2
+   49    2
+
+==== Residue   50 ===========================================================
+                       50 ILE   23  351  369    0    0
+                       50 LEU   43  678  696    0    0
+                       50 PHE   45  716  735    0    0
+                       50 GLN   49  775  791    0    0
+                       50 LEU   50  792  810    0    0
+                       50 GLU   51  811  825   -1   -1
+                       50 TYR   59  925  945    0   -1
+                       50 LEU   67 1058 1076    0   -1
+   50   -1
+
+==== Residue   51 ===========================================================
+                       51 ILE   23  351  369    0    0
+                       51 LEU   50  792  810    0    0
+                       51 GLU   51  811  825   -1   -1
+                       51 ASP   52  826  837   -1   -2
+                       51 GLY   53  838  844    0   -2
+                       51 ARG   54  845  868    1   -1
+                       51 TYR   59  925  945    0   -1
+   51   -1
+
+==== Residue   52 ===========================================================
+                       52 ILE   23  351  369    0    0
+                       52 GLU   24  370  384   -1   -1
+                       52 LYS   27  415  436    1    0
+                       52 GLU   51  811  825   -1   -1
+                       52 ASP   52  826  837   -1   -2
+                       52 GLY   53  838  844    0   -2
+                       52 ARG   54  845  868    1   -1
+   52   -1
+
+==== Residue   53 ===========================================================
+                       53 GLU   51  811  825   -1   -1
+                       53 ASP   52  826  837   -1   -2
+                       53 GLY   53  838  844    0   -2
+                       53 ARG   54  845  868    1   -1
+   53   -1
+
+==== Residue   54 ===========================================================
+                       54 THR   22  337  350    0    0
+                       54 ILE   23  351  369    0    0
+                       54 GLU   51  811  825   -1   -1
+                       54 ASP   52  826  837   -1   -2
+                       54 GLY   53  838  844    0   -2
+                       54 ARG   54  845  868    1   -1
+                       54 THR   55  869  882    0   -1
+                       54 TYR   59  925  945    0   -1
+   54   -1
+
+==== Residue   55 ===========================================================
+                       55 PRO   19  300  313    0    0
+                       55 ASP   21  325  336   -1   -1
+                       55 THR   22  337  350    0   -1
+                       55 ARG   54  845  868    1    0
+                       55 THR   55  869  882    0    0
+                       55 LEU   56  883  901    0    0
+                       55 ASP   58  913  924   -1   -1
+                       55 TYR   59  925  945    0   -1
+   55   -1
+
+==== Residue   56 ===========================================================
+                       56 VAL   17  269  284    0    0
+                       56 GLU   18  285  299   -1   -1
+                       56 PRO   19  300  313    0   -1
+                       56 ASP   21  325  336   -1   -2
+                       56 ILE   23  351  369    0   -2
+                       56 VAL   26  399  414    0   -2
+                       56 THR   55  869  882    0   -2
+                       56 LEU   56  883  901    0   -2
+                       56 SER   57  902  912    0   -2
+                       56 ASP   58  913  924   -1   -3
+                       56 TYR   59  925  945    0   -3
+                       56 ILE   61  960  978    0   -3
+   56   -3
+
+==== Residue   57 ===========================================================
+                       57 PRO   19  300  313    0    0
+                       57 LEU   56  883  901    0    0
+                       57 SER   57  902  912    0    0
+                       57 ASP   58  913  924   -1   -1
+                       57 TYR   59  925  945    0   -1
+                       57 ASN   60  946  959    0   -1
+   57   -1
+
+==== Residue   58 ===========================================================
+                       58 THR   55  869  882    0    0
+                       58 LEU   56  883  901    0    0
+                       58 SER   57  902  912    0    0
+                       58 ASP   58  913  924   -1   -1
+                       58 TYR   59  925  945    0   -1
+                       58 ASN   60  946  959    0   -1
+   58   -1
+
+==== Residue   59 ===========================================================
+                       59 LYS   48  753  774    1    1
+                       59 LEU   50  792  810    0    1
+                       59 GLU   51  811  825   -1    0
+                       59 ARG   54  845  868    1    1
+                       59 THR   55  869  882    0    1
+                       59 LEU   56  883  901    0    1
+                       59 SER   57  902  912    0    1
+                       59 ASP   58  913  924   -1    0
+                       59 TYR   59  925  945    0    0
+                       59 ASN   60  946  959    0    0
+                       59 ILE   61  960  978    0    0
+   59    0
+
+==== Residue   60 ===========================================================
+                       60 SER   57  902  912    0    0
+                       60 ASP   58  913  924   -1   -1
+                       60 TYR   59  925  945    0   -1
+                       60 ASN   60  946  959    0   -1
+                       60 ILE   61  960  978    0   -1
+                       60 GLN   62  979  995    0   -1
+   60   -1
+
+==== Residue   61 ===========================================================
+                       61 MET    1    1   17    1    1
+                       61 LEU   56  883  901    0    1
+                       61 TYR   59  925  945    0    1
+                       61 ASN   60  946  959    0    1
+                       61 ILE   61  960  978    0    1
+                       61 GLN   62  979  995    0    1
+                       61 SER   65 1033 1043    0    1
+                       61 LEU   67 1058 1076    0    1
+   61    1
+
+==== Residue   62 ===========================================================
+                       62 ASN   60  946  959    0    0
+                       62 ILE   61  960  978    0    0
+                       62 GLN   62  979  995    0    0
+                       62 LYS   63  996 1017    1    1
+                       62 SER   65 1033 1043    0    1
+   62    1
+
+==== Residue   63 ===========================================================
+                       63 GLN    2   18   34    0    0
+                       63 GLN   62  979  995    0    0
+                       63 LYS   63  996 1017    1    1
+                       63 GLU   64 1018 1032   -1    0
+                       63 SER   65 1033 1043    0    0
+   63    0
+
+==== Residue   64 ===========================================================
+                       64 GLN    2   18   34    0    0
+                       64 PHE    4   54   73    0    0
+                       64 LYS   63  996 1017    1    1
+                       64 GLU   64 1018 1032   -1    0
+                       64 SER   65 1033 1043    0    0
+   64    0
+
+==== Residue   65 ===========================================================
+                       65 ILE    3   35   53    0    0
+                       65 PHE    4   54   73    0    0
+                       65 PHE   45  716  735    0    0
+                       65 ILE   61  960  978    0    0
+                       65 GLN   62  979  995    0    0
+                       65 LYS   63  996 1017    1    1
+                       65 GLU   64 1018 1032   -1    0
+                       65 SER   65 1033 1043    0    0
+                       65 THR   66 1044 1057    0    0
+                       65 LEU   67 1058 1076    0    0
+   65    0
+
+==== Residue   66 ===========================================================
+                       66 PHE    4   54   73    0    0
+                       66 LYS    6   90  111    1    1
+                       66 PHE   45  716  735    0    1
+                       66 SER   65 1033 1043    0    1
+                       66 THR   66 1044 1057    0    1
+                       66 LEU   67 1058 1076    0    1
+   66    1
+
+==== Residue   67 ===========================================================
+                       67 ILE    3   35   53    0    0
+                       67 PHE    4   54   73    0    0
+                       67 VAL    5   74   89    0    0
+                       67 LYS    6   90  111    1    1
+                       67 ILE   44  697  715    0    1
+                       67 LEU   50  792  810    0    1
+                       67 ILE   61  960  978    0    1
+                       67 SER   65 1033 1043    0    1
+                       67 THR   66 1044 1057    0    1
+                       67 LEU   67 1058 1076    0    1
+                       67 HID   68 1077 1093    0    1
+   67    1
+
+==== Residue   68 ===========================================================
+                       68 LYS    6   90  111    1    1
+                       68 LEU   43  678  696    0    1
+                       68 ILE   44  697  715    0    1
+                       68 LEU   67 1058 1076    0    1
+                       68 HID   68 1077 1093    0    1
+                       68 LEU   69 1094 1112    0    1
+   68    1
+
+==== Residue   69 ===========================================================
+                       69 VAL    5   74   89    0    0
+                       69 LYS    6   90  111    1    1
+                       69 LEU    8  126  144    0    1
+                       69 ILE   36  561  579    0    1
+                       69 GLN   41  637  653    0    1
+                       69 ARG   42  654  677    1    2
+                       69 LEU   43  678  696    0    2
+                       69 HID   68 1077 1093    0    2
+                       69 LEU   69 1094 1112    0    2
+                       69 VAL   70 1113 1128    0    2
+   69    2
+
+==== Residue   70 ===========================================================
+                       70 LEU    8  126  144    0    0
+                       70 GLN   41  637  653    0    0
+                       70 ARG   42  654  677    1    1
+                       70 LEU   69 1094 1112    0    1
+                       70 VAL   70 1113 1128    0    1
+                       70 LEU   71 1129 1147    0    1
+   70    1
+
+==== Residue   71 ===========================================================
+                       71 LEU    8  126  144    0    0
+                       71 GLN   40  620  636    0    0
+                       71 VAL   70 1113 1128    0    0
+                       71 LEU   71 1129 1147    0    0
+                       71 ARG   72 1148 1171    1    1
+   71    1
+
+==== Residue   72 ===========================================================
+                       72 GLN   40  620  636    0    0
+                       72 ARG   42  654  677    1    1
+                       72 LEU   71 1129 1147    0    1
+                       72 ARG   72 1148 1171    1    2
+                       72 LEU   73 1172 1190    0    2
+                       72 ARG   74 1191 1214    1    3
+   72    3
+
+==== Residue   73 ===========================================================
+                       73 ARG   72 1148 1171    1    1
+                       73 LEU   73 1172 1190    0    1
+                       73 ARG   74 1191 1214    1    2
+                       73 GLY   75 1215 1221    0    2
+   73    2
+
+==== Residue   74 ===========================================================
+                       74 ARG   72 1148 1171    1    1
+                       74 LEU   73 1172 1190    0    1
+                       74 ARG   74 1191 1214    1    2
+                       74 GLY   75 1215 1221    0    2
+   74    2
+
+==== Residue   75 ===========================================================
+                       75 LEU   73 1172 1190    0    0
+                       75 ARG   74 1191 1214    1    1
+                       75 GLY   75 1215 1221    0    1
+                       75 GLY   76 1222 1231   -1    0
+   75    0
+
+==== Residue   76 ===========================================================
+                       76 GLY   75 1215 1221    0    0
+                       76 GLY   76 1222 1231   -1   -1
+   76   -1

@@ -185,8 +185,8 @@ SortByString( GENP PStart, int iElements, int iSize,
 typedef	BOOL	(*SIFTFUNCTION)();
 
 void
-Sift( GENP PData, int iElementSize, int iElements, SIFTFUNCTION bFCriteria, 
-	int *iPFirstFalse )
+Sift( GENP PData, int iElementSize, int iElements, 
+    SIFTFUNCTION bFCriteria( GENP ), int *iPFirstFalse )
 {
 GENP		PSwapBuffer, PCur, PTop;
 int		iTopTrue, iBottomFalse;

@@ -1,0 +1,280 @@
+SYM_ADDRESS		() : ;
+SYM_ALLOCATE		( SYM_ALLOCATE NULL right ) : ;
+SYM_AND			( SYM_AND left right ) : ;
+SYM_ASSERT		( SYM_ALLOCATE NULL right ) : ;
+SYM_ASSIGN		( SYM_ASSIGN left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_strcpy"
+					( SYM_LIST
+						( SYM_ADDRESS NULL left ) 
+						( SYM_LIST right NULL ) ) )
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptcpy"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			  left == T_MATRIX ?
+				( SYM_CALL "NAB_matcpy"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_ATOM		() : ;
+SYM_ATSIGN		( SYM_ATSIGN left right ) :
+				( SYM_CALL "NAB_ptdot"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_ATTRIBUTE		() : ;
+SYM_BOUNDS		() : ;
+SYM_BREAK		() : ;
+SYM_CALL		( SYM_CALL left right ) : ;
+SYM_COMMA		() : ;
+SYM_CONTINUE		() : ;
+SYM_DEALLOCATE		( SYM_DEALLOCATE NULL right ) : ;
+SYM_DEBUG		( SYM_DEBUG NULL right ) : ;
+SYM_DECL		() : ;
+SYM_DELETE		( SYM_DELETE NULL right ) : ;
+SYM_DONT_MATCH		( SYM_DONT_MATCH left right ) :
+			  left == T_ATOM ?
+				( SYM_NOT NULL
+					( SYM_CALL "NAB_aematch"
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			  default ?
+				( SYM_NOT NULL
+					( SYM_CALL "NAB_rematch"
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			;
+SYM_DYNAMIC		() : ;
+SYM_ELSE		() : ;
+SYM_EQUAL		( SYM_EQUAL left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_EQ"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			  left == T_POINT ?
+				( SYM_CALL "NAB_PTEQ"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			  left == T_MATRIX ?
+				( SYM_CALL "NAB_mateq"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_ERROR		() : ;
+SYM_FILE		() : ;
+SYM_FLOAT		() : ;
+SYM_FLOAT_LIT		() : ;
+SYM_FOR			() : ;
+SYM_FOREACH		( SYM_FOREACH left right ) : ;
+SYM_GREATER		( SYM_GREATER left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_GT"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_GREATER_EQUAL	( SYM_GREATER_EQUAL left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_GE"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_HASHED		() : ;
+SYM_IDENT		() : ;
+SYM_IF			() : ;
+SYM_IN			() : ;
+SYM_INDEX		( SYM_INDEX left right ) :
+			  left == K_ARRAY ? ()
+			  left == K_DARRAY ? ()
+			;
+SYM_INDIRECT		() : ;
+SYM_INT			() : ;
+SYM_INT_LIT		() : ;
+SYM_LBRACE		() : ;
+SYM_LBRACK		( SYM_LBRACK left right ) :
+			  left == K_HASHED ?
+				( SYM_CALL "Hash ref func!!"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_LESS		( SYM_LESS left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_LT"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_LESS_EQUAL		( SYM_LESS_EQUAL left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_LE"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_LIST		( SYM_LIST left right ) : ;
+SYM_LPAREN		( SYM_LPAREN NULL right ) : ;
+SYM_MATCH		( SYM_MATCH left right ) :
+			  left == T_ATOM ?
+				( SYM_CALL "NAB_aematch"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			  default ?
+				( SYM_CALL "NAB_rematch"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			;
+SYM_MATRIX		() : ;
+SYM_MINUS		( SYM_MINUS left right ) :
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptsub"
+					( SYM_LIST temp
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			;
+SYM_MINUS_ASSIGN	( SYM_MINUS_ASSIGN left right ) : ;
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptcpy"
+					( SYM_LIST left
+						( SYM_LIST
+							( SYM_CALL "NAB_ptsub"
+								( SYM_LIST temp
+									( SYM_LIST left
+										( SYM_LIST right NULL ) ) ) )
+								NULL ) ) )
+SYM_MINUS_MINUS		( SYM_MINUS_MINUS left right ) : ;
+SYM_MODULUS		( SYM_MODULUS left right ) : ;
+SYM_MODULUS_ASSIGN	( SYM_MODULUS_ASSIGN left right ) : ;
+SYM_MOLECULE		() : ;
+SYM_NEGATE		( SYM_NEGATE NULL right ) : ;
+SYM_NOT			( SYM_NOT NULL right ) :
+			  right == T_POINT ?
+				( SYM_CALL "NAB_PT_ISTRUE"
+					( SYM_LIST right NULL ) )
+			  right == T_MATRIX ?
+				( SYM_CALL "MAT_istrue"
+					( SYM_LIST right NULL ) )
+			;
+SYM_NOT_EQUAL		( SYM_NOT_EQUAL left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_NE"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			  left == T_POINT ?
+				( SYM_NOT NULL 
+					( SYM_CALL "NAB_PTEQ"
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			  left == T_MATRIX ?
+				( SYM_NOT NULL
+					( SYM_CALL "NAB_mateq"
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+SYM_OR			( SYM_OR left right ) : ;
+SYM_PARM		( SYM_PARM NULL right ) : ;
+SYM_PERIOD		( SYM_PERIOD left right ) : ;
+SYM_PLUS		( SYM_PLUS left right ) :
+			  left == T_STRING ?
+				( SYM_CALL "NAB_strcat"
+					( SYM_LIST left
+						( SYM_LIST right NULL ) ) )
+			  left == T_ POINT ?
+				( SYM_CALL "NAB_ptadd"
+					( SYM_LIST temp
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			;
+SYM_PLUS_ASSIGN		( SYM_PLUS_ASSIGN left right ) : ;
+			  left == T_STRING ?
+				( SYM_CALL "NAB_strcpy"
+					( SYM_LIST 
+						( SYM_ADDRESS NULL left )
+						( SYM_LIST 
+							( SYM_CALL "NAB_strcat"
+								( SYM_LIST left
+									( SYM_LIST right NULL ) ) )
+							NULL ) ) )
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptcpy"
+					( SYM_LIST left
+						( SYM_LIST
+							( SYM_CALL "NAB_ptadd"
+								( SYM_LIST temp
+									( SYM_LIST left
+										( SYM_LIST right NULL ) ) ) )
+							NULL ) ) )
+SYM_PLUS_PLUS		( SYM_PLUS_PLUS left right ) : ;
+SYM_POINT		() : ;
+SYM_RBRACE		() : ;
+SYM_RBRACK		() : ;
+SYM_RESIDUE		() : ;
+SYM_RETURN		() : ;
+SYM_RPAREN		() : ;
+SYM_SEMICOLON		() : ;
+SYM_SLASH		( SYM_SLASH left right ) :
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptrscl"
+					( SYM_LIST temp
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			;
+SYM_SLASH_ASSIGN	( SYM_SLASH_ASSIGN left right ) :
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptcpy"
+					( SYM_LIST left
+						( SYM_LIST
+							( SYM_CALL "NAB_ptrscl"
+								( SYM_LIST temp
+									( SYM_LIST left
+										( SYM_LIST right NULL ) ) ) )
+							NULL ) ) )
+			;
+SYM_STAR		( SYM_STAR left right ) :
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptscl"
+					( SYM_LIST temp
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) )
+			  right == T_POINT ?
+				( SYM_CALL "NAB_ptscl"
+					( SYM_LIST temp
+						( SYM_LIST right
+							( SYM_LIST left NULL ) ) ) )
+			;
+SYM_STAR_ASSIGN		( SYM_STAR_ASSIGN left right ) :
+			  left == T_POINT ?
+				( SYM_CALL "NAB_ptcpy"
+					( SYM_LIST left
+						( SYM_LIST
+							( SYM_CALL "NAB_ptscl"
+								( SYM_LIST temp
+									( SYM_LIST left
+										( SYM_LIST right NULL ) ) ) )
+							NULL ) ) )
+SYM_STMTLIST		() : ;
+SYM_STRING		() : ;
+SYM_STRING_LIT		() : ;
+SYM_TEST		( SYM_TEST NULL right ) :
+			  left == T_POINT ?
+				( SYM_CALL "NAB_PTISTRUE"
+					( SYM_LIST NULL right ) )
+			  left == T_MATRIX ?
+				( SYM_CALL "NAB_matistrue"
+					( SYM_LIST NULL right ) )
+			;
+SYM_TYPE		() : ;
+SYM_UPARROW		( SYM_UPARROW left right ) :
+				( SYM_CALL "NAB_ptcrs"
+					( SYM_LIST temp
+						( SYM_LIST left
+							( SYM_LIST right NULL ) ) ) ) 
+			;
+SYM_UPARROW_ASSIGN	( SYM_UPARROW_ASSIGN left right ) : ;
+				( SYM_CALL "NAB_ptcpy"
+					( SYM_LIST left
+						( SYM_LIST
+							( SYM_CALL "NAB_ptcrs"
+								( SYM_LIST temp
+									( SYM_LIST left
+										( SYM_LIST right NULL ) ) ) )
+						  	NULL ) ) ) 
+
+			;
+SYM_WHILE		() : ;

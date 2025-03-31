@@ -1,0 +1,120 @@
+#!/usr/bin/perl -n -i.bak
+#
+#   first, read in a pdb file line and unpack
+#
+$residuesperchain=519;
+
+if( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resnoi, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+$resnoin = $resnoi + 0;  # force to be an integer
+if( $resnoin != $resno_old ){
+   $aresno++;
+   $resno_old = $resnoin;
+}
+   $resno = $aresno % $residuesperchain + 218;
+   $resno = 737 if $resno == 218;
+
+#
+#  do modifications necessary here:
+#
+if    ($aresno <=    $residuesperchain ){ $chainId = "A"; }
+elsif ($aresno <=  2*$residuesperchain ){ $chainId = "B"; }
+elsif ($aresno <=  3*$residuesperchain ){ $chainId = "C"; }
+elsif ($aresno <=  4*$residuesperchain ){ $chainId = "D"; }
+elsif ($aresno <=  5*$residuesperchain ){ $chainId = "E"; }
+elsif ($aresno <=  6*$residuesperchain ){ $chainId = "F"; }
+elsif ($aresno <=  7*$residuesperchain ){ $chainId = "G"; }
+elsif ($aresno <=  8*$residuesperchain ){ $chainId = "H"; }
+elsif ($aresno <=  9*$residuesperchain ){ $chainId = "I"; }
+elsif ($aresno <= 10*$residuesperchain ){ $chainId = "J"; }
+elsif ($aresno <= 11*$residuesperchain ){ $chainId = "K"; }
+elsif ($aresno <= 12*$residuesperchain ){ $chainId = "L"; }
+elsif ($aresno <= 13*$residuesperchain ){ $chainId = "M"; }
+elsif ($aresno <= 14*$residuesperchain ){ $chainId = "N"; }
+elsif ($aresno <= 15*$residuesperchain ){ $chainId = "O"; }
+elsif ($aresno <= 16*$residuesperchain ){ $chainId = "P"; }
+elsif ($aresno <= 17*$residuesperchain ){ $chainId = "Q"; }
+elsif ($aresno <= 18*$residuesperchain ){ $chainId = "R"; }
+elsif ($aresno <= 19*$residuesperchain ){ $chainId = "S"; }
+elsif ($aresno <= 20*$residuesperchain ){ $chainId = "T"; }
+elsif ($aresno <= 21*$residuesperchain ){ $chainId = "U"; }
+elsif ($aresno <= 22*$residuesperchain ){ $chainId = "V"; }
+elsif ($aresno <= 23*$residuesperchain ){ $chainId = "W"; }
+elsif ($aresno <= 24*$residuesperchain ){ $chainId = "X"; }
+elsif ($aresno <= 25*$residuesperchain ){ $chainId = "Y"; }
+elsif ($aresno <= 26*$residuesperchain ){ $chainId = "Z"; }
+elsif ($aresno <= 27*$residuesperchain ){ $chainId = "a"; }
+elsif ($aresno <= 28*$residuesperchain ){ $chainId = "b"; }
+elsif ($aresno <= 29*$residuesperchain ){ $chainId = "c"; }
+elsif ($aresno <= 30*$residuesperchain ){ $chainId = "d"; }
+elsif ($aresno <= 31*$residuesperchain ){ $chainId = "e"; }
+elsif ($aresno <= 32*$residuesperchain ){ $chainId = "f"; }
+elsif ($aresno <= 33*$residuesperchain ){ $chainId = "g"; }
+elsif ($aresno <= 34*$residuesperchain ){ $chainId = "h"; }
+elsif ($aresno <= 35*$residuesperchain ){ $chainId = "i"; }
+elsif ($aresno <= 36*$residuesperchain ){ $chainId = "j"; }
+elsif ($aresno <= 37*$residuesperchain ){ $chainId = "k"; }
+elsif ($aresno <= 38*$residuesperchain ){ $chainId = "l"; }
+elsif ($aresno <= 39*$residuesperchain ){ $chainId = "m"; }
+elsif ($aresno <= 40*$residuesperchain ){ $chainId = "n"; }
+elsif ($aresno <= 41*$residuesperchain ){ $chainId = "o"; }
+elsif ($aresno <= 42*$residuesperchain ){ $chainId = "p"; }
+elsif ($aresno <= 43*$residuesperchain ){ $chainId = "q"; }
+elsif ($aresno <= 44*$residuesperchain ){ $chainId = "r"; }
+elsif ($aresno <= 45*$residuesperchain ){ $chainId = "s"; }
+elsif ($aresno <= 46*$residuesperchain ){ $chainId = "t"; }
+elsif ($aresno <= 47*$residuesperchain ){ $chainId = "u"; }
+elsif ($aresno <= 48*$residuesperchain ){ $chainId = "v"; }
+elsif ($aresno <= 49*$residuesperchain ){ $chainId = "w"; }
+elsif ($aresno <= 50*$residuesperchain ){ $chainId = "x"; }
+elsif ($aresno <= 51*$residuesperchain ){ $chainId = "y"; }
+elsif ($aresno <= 52*$residuesperchain ){ $chainId = "z"; }
+elsif ($aresno <= 53*$residuesperchain ){ $chainId = "0"; }
+elsif ($aresno <= 54*$residuesperchain ){ $chainId = "1"; }
+elsif ($aresno <= 55*$residuesperchain ){ $chainId = "2"; }
+elsif ($aresno <= 56*$residuesperchain ){ $chainId = "3"; }
+elsif ($aresno <= 57*$residuesperchain ){ $chainId = "4"; }
+elsif ($aresno <= 58*$residuesperchain ){ $chainId = "5"; }
+elsif ($aresno <= 59*$residuesperchain ){ $chainId = "6"; }
+elsif ($aresno <= 60*$residuesperchain ){ $chainId = "7"; }
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} elsif( $_ =~ /^ANISOU/){
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+    $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x a7 a7 a7 a7 a7 a7 x6 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s %7s%7s%7s%7s%7s%7s      %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $u11, $u22, $u33, $u12, $u13, $u23, $element, $charge;
+
+} else {
+   print;
+}

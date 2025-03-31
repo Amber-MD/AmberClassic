@@ -1,7 +1,7 @@
 /*
  *	Bill Ross, UCSF 1994
  *
- *  MPI function calls added by Russ Brown (russ.brown@sun.com).
+ *  MPI function calls added by Russ Brown (russ.brown@yahoo.com).
  *
  *  With MPI, input is accomplished by task zero, and the results
  *  are broadcast to the other tasks.  Output is accomplished by
@@ -583,9 +583,9 @@ int hcp_pfind(FILE *file, char *label, int type)
 
 PARMSTRUCT_T* rdparm( STRING_T* name )
 {
-   REAL_T *H;
-   REAL_T si_tmp;
-   int i, j, k, idum, res, ifpert, iat, kat, lat, newparm, ier;
+   REAL_T *H, *atype, sigmaw3, sigma_iw6, epsilon_iw;
+   REAL_T si_tmp, boxangle;
+   int i, j, k, idum, res, ifpert, iat, kat, lat, newparm, ier, iaci;
    int ismall, ibig;
    int *iptmp, *dihtmp;
    FILE *file;
@@ -1815,15 +1815,15 @@ PARMSTRUCT_T* rdparm( STRING_T* name )
 #define RHOW (0.33428)
 #define PI (3.141592650)
 
-   REAL_T *atype = (REAL_T *) get(sizeof(REAL_T) * prm->Ntypes);
-   REAL_T sigmaw3 = SIGMAW * SIGMAW * SIGMAW;
+   atype = (REAL_T *) get(sizeof(REAL_T) * prm->Ntypes);
+   sigmaw3 = SIGMAW * SIGMAW * SIGMAW;
    for (i = 0; i < prm->Ntypes; i++) {
-      int iaci = prm->Cno[prm->Ntypes * i + i] - 1;
+      iaci = prm->Cno[prm->Ntypes * i + i] - 1;
       if (prm->Cn1[iaci] == 0.0 || prm->Cn2[iaci] == 0.0) {
          atype[i] = 0.0;
       } else {
-         REAL_T sigma_iw6 = sigmaw3 * sqrt(prm->Cn1[iaci] / prm->Cn2[iaci]);
-         REAL_T epsilon_iw =
+         sigma_iw6 = sigmaw3 * sqrt(prm->Cn1[iaci] / prm->Cn2[iaci]);
+         epsilon_iw =
              0.5 * sqrt(EPSILONW / prm->Cn1[iaci]) * prm->Cn2[iaci];
          atype[i] = -16. * PI * RHOW * epsilon_iw * sigma_iw6 / 3.;
 #   if 0
@@ -2019,7 +2019,7 @@ INT_T wrparm( PARMSTRUCT_T* prm, STRING_T* name )
          FortranFormat(1, "%-80s");
          time(&tp);
          strftime(sVersionHeader, 81,
-                  "%%VERSION  VERSION_STAMP = V0001.000  DATE = %m/%d/%y  %H:%M:%S",
+                  "%%VERSION  VERSION_STAMP = V0001.000  DATE = %m/%d/%y  %H:%M:%S\0",
                   localtime(&tp));
          FortranWriteString(sVersionHeader);
          FortranWriteString("%FLAG TITLE");
@@ -2712,7 +2712,8 @@ PARMSTRUCT_T *copyparm(PARMSTRUCT_T * prm)
    newprm->Natcap = prm->Natcap;
    if ((AtomNamesbuf =
         (NAME_T *) malloc( prm->Natom * sizeof(NAME_T))) == NULL) {
-      fprintf( stderr, "Can't allocate memory for AtomNames\n" );
+      sprintf(e_msg, "copyparm AtomNames %s", prm->AtomNames);
+      fprintf( stderr, "Can't allocate memory for %s\n", e_msg );
       return (NULL);
    }
    newprm->AtomNames = AtomNamesbuf;
@@ -2722,7 +2723,8 @@ PARMSTRUCT_T *copyparm(PARMSTRUCT_T * prm)
    newprm->Iblo = prm->Iblo;
    newprm->Cno = prm->Cno;
    if ((ResNamesbuf = (NAME *) malloc( prm->Nres * sizeof(NAME_T))) == NULL) {
-      fprintf( stderr, "Can't allocate memory for ResNames\n" );
+      sprintf(e_msg, "copyparm ResNames %s", prm->ResNames);
+      fprintf( stderr, "Can't allocate memory for %s\n", e_msg );
       return (NULL);
    }
    newprm->ResNames = ResNamesbuf;
@@ -2775,12 +2777,14 @@ PARMSTRUCT_T *copyparm(PARMSTRUCT_T * prm)
    newprm->HB12 = prm->HB12;
    newprm->HB10 = prm->HB10;
    if ((AtomTypebuf = malloc( prm->Natom * sizeof(NAME_T))) == NULL) {
-      fprintf( stderr, "Can't allocate memory for AtomType\n" );
+      sprintf(e_msg, "copyparm AtomType %s", prm->AtomType);
+      fprintf( stderr, "Can't allocate memory for %s\n", e_msg );
       return (NULL);
    }
    newprm->AtomType = AtomTypebuf;
    if ((AtomTreebuf = malloc( prm->Natom * sizeof(NAME_T))) == NULL) {
-      fprintf( stderr, "Can't allocate memory for AtomTree\n" );
+      sprintf(e_msg, "copyparm AtomTree %s", prm->AtomTree);
+      fprintf( stderr, "Can't allocate memory for %s\n", e_msg );
       return (NULL);
    }
    newprm->AtomTree = AtomTreebuf;

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to do simple minimization"
+echo "(this tests the GB Neck implementation; gb==8)"
+echo ""
+../../bin/$NAB -o sff gb8trx.nab || error
+$DO_PARALLEL ./sff > gb8trx.out || error
+
+../dacdif gb8trx.out.check gb8trx.out
+
+rm -f sff gb8trx.c
+exit 0

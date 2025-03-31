@@ -1,0 +1,313 @@
+Reading parm file (ala.parm7)
+title:
+ACE                                                                             
+	mm_options:  cut=1.000000e+19
+	mm_options:  rism=1
+	mm_options:  ntpr_rism=1
+	mm_options:  xvvfile=../rism1d/spc-kh/spc.xvv.save
+	mm_options:  molReconstruct=0
+	mm_options:  volfmt=mrc
+	mm_options:  rst=ala.rst7
+	mm_options:  closure=kh
+	mm_options:  closureOrder=1
+	mm_options:  buffer=14
+	mm_options:  solvcut=-1
+	mm_options:  grdspcx=1
+	mm_options:  grdspcy=1
+	mm_options:  grdspcz=1
+	mm_options:  solvboxx=0
+	mm_options:  solvboxy=0
+	mm_options:  solvboxz=0
+	mm_options:  ngx=0
+	mm_options:  ngy=0
+	mm_options:  ngz=0
+	mm_options:  tolerance=1e-06
+	mm_options:  mdiis_del=0.7
+	mm_options:  mdiis_restart=10
+	mm_options:  mdiis_nvec=5
+	mm_options:  mdiis_method=2
+	mm_options:  maxstep=10000
+	mm_options:  npropagate=5
+	mm_options:  centering=1
+	mm_options:  zerofrc=1
+	mm_options:  apply_rism_force=0
+	mm_options:  polarDecomp=1
+	mm_options:  entropicDecomp=1
+	mm_options:  gfCorrection=1
+	mm_options:  pcplusCorrection=1
+	mm_options:  ntwrism=0
+	mm_options:  verbose=1
+	mm_options:  progress=0
+	mm_options:  asympCorr=1
+	mm_options:  selftest=0
+	mm_options:  saveprogress=0
+	mm_options:  uccoeff=-0.149818,-0.1136266,-0.00053163,0.0103954
+	mm_options:  treeDCF=0
+	mm_options:  treeTCF=0
+	mm_options:  treeCoulomb=0
+	mm_options:  treeDCFMAC=0.5
+	mm_options:  treeTCFMAC=6
+	mm_options:  treeCoulombMAC=0.1
+	mm_options:  treeDCFOrder=5
+	mm_options:  treeTCFOrder=9
+	mm_options:  treeCoulombOrder=2
+	mm_options:  treeDCFN0=500
+	mm_options:  treeTCFN0=500
+	mm_options:  treeCoulombN0=500
+	mm_options:  asympKSpaceTolerance=0
+	mm_options:  chargeSmear=1
+	mm_options:  ljTolerance=1e-06
+	mm_options:  biasPotential=0
+|solutePotentialEnergy                    [kcal/mol]                Total                   LJ              Coulomb                 Bond                Angle             Dihedral               H-Bond                LJ-14           Coulomb-14           Restraints              3D-RISM
+|rism_excessChemicalPotential             [kcal/mol]                Total         ExcChemPot_O        ExcChemPot_H1
+|rism_excessChemicalPotentialGF           [kcal/mol]                Total      ExcChemPot_GF_O     ExcChemPot_GF_H1
+|rism_excessChemicalPotentialPCPLUS       [kcal/mol]                Total
+|rism_excessChemicalPotentialUC           [kcal/mol]                Total
+|rism_solventPotentialEnergy              [kcal/mol]                Total       UV_potential_O      UV_potential_H1
+|rism_partialMolarVolume                  [A^3]                       PMV
+|rism_totalParticlesBox                   [#]                                       TotalNum_O          TotalNum_H1
+|rism_totalChargeBox                      [e]                       Total           TotalChg_O          TotalChg_H1
+|rism_excessParticlesBox                  [#]                                          ExNum_O             ExNum_H1
+|rism_excessChargeBox                     [e]                       Total              ExChg_O             ExChg_H1
+|rism_excessParticles                     [#]                                          ExNum_O             ExNum_H1
+|rism_excessCharge                        [e]                       Total              ExChg_O             ExChg_H1
+|rism_KirkwoodBuff                        [A^3]                                           KB_O                KB_H1
+|rism_DCFintegral                         [A^3]                                         DCFI_O              DCFI_H1
+|rism_-TS                                 [kcal/mol]                Total                -TS_O               -TS_H1
+|rism_-TS_GF                              [kcal/mol]                Total             -TS_GF_O            -TS_GF_H1
+|rism_-TS_PCPLUS                          [kcal/mol]                Total
+|rism_-TS_UC                              [kcal/mol]                Total
+|rism_solvationEnergy                     [kcal/mol]                Total            SolvEne_O           SolvEne_H1
+|rism_solvationEnergyGF                   [kcal/mol]                Total          SolEne_GF_O         SolEne_GF_H1
+|rism_solvationEnergyPCPLUS               [kcal/mol]                Total
+|rism_solvationEnergyUC                   [kcal/mol]                Total
+|rism_partialMolarVolume_dT               [A^3/K]                  PMV_dT
+|rism_excessParticles_dT                  [#/K]                                     ExNum_dT_O          ExNum_dT_H1
+|rism_excessCharge_dT                     [e/K]                     Total           ExChg_dT_O          ExChg_dT_H1
+|rism_KirkwoodBuff_dT                     [A^3/K]                                      KB_dT_O             KB_dT_H1
+|rism_DCFintegral_dT                      [A^3/K]                                    DCFI_dT_O           DCFI_dT_H1
+|rism_polarExcessChemicalPotential        [kcal/mol]                Total              polar_O             polar_H1
+|rism_apolarExcessChemicalPotential       [kcal/mol]                Total             apolar_O            apolar_H1
+|rism_polarExcessChemicalPotentialGF      [kcal/mol]                Total           polar_GF_O          polar_GF_H1
+|rism_apolarExcessChemicalPotentialGF     [kcal/mol]                Total          apolar_GF_O         apolar_GF_H1
+|rism_polarExcessChemicalPotentialPCPLUS  [kcal/mol]                Total
+|rism_apolarExcessChemicalPotentialPCPLUS [kcal/mol]                Total
+|rism_polarExcessChemicalPotentialUC      [kcal/mol]                Total
+|rism_apolarExcessChemicalPotentialUC     [kcal/mol]                Total
+|rism_polarSolventPotentialEnergy         [kcal/mol]                Total       polar_UV_pot_O      polar_UV_pot_H1
+|rism_apolarSolventPotentialEnergy        [kcal/mol]                Total      apolar_UV_pot_O     apolar_UV_pot_H1
+|rism_polarPartialMolarVolume             [A^3]                 polar_PMV
+|rism_apolarPartialMolarVolume            [A^3]                apolar_PMV
+|rism_polarExcessParticles                [#]                                    polar_ExNum_O       polar_ExNum_H1
+|rism_apolarExcessParticles               [#]                                   apolar_ExNum_O      apolar_ExNum_H1
+|rism_polarExcessCharge                   [e]                       Total        polar_ExChg_O       polar_ExChg_H1
+|rism_apolarExcessCharge                  [e]                       Total       apolar_ExChg_O      apolar_ExChg_H1
+|rism_polarKirkwoodBuff                   [A^3]                                     polar_KB_O          polar_KB_H1
+|rism_apolarKirkwoodBuff                  [A^3]                                    apolar_KB_O         apolar_KB_H1
+|rism_polarDCFintegral                    [A^3]                                   polar_DCFI_O        polar_DCFI_H1
+|rism_apolarDCFintegral                   [A^3]                                  apolar_DCFI_O       apolar_DCFI_H1
+|rism_polar-TS                            [kcal/mol]                Total          polar_-TS_O         polar_-TS_H1
+|rism_apolar-TS                           [kcal/mol]                Total         apolar_-TS_O        apolar_-TS_H1
+|rism_polar-TS_GF                         [kcal/mol]                Total       polar_-TS_GF_O      polar_-TS_GF_H1
+|rism_apolar-TS_GF                        [kcal/mol]                Total      apolar_-TS_GF_O     apolar_-TS_GF_H1
+|rism_polar-TS_PCPLUS                     [kcal/mol]                Total
+|rism_apolar-TS_PCPLUS                    [kcal/mol]                Total
+|rism_polar-TS_UC                         [kcal/mol]                Total
+|rism_apolar-TS_UC                        [kcal/mol]                Total
+|rism_polarSolvationEnergy                [kcal/mol]                Total     polar_solv_ene_O    polar_solv_ene_H1
+|rism_apolarSolvationEnergy               [kcal/mol]                Total    apolar_solv_ene_O   apolar_solv_ene_H1
+|rism_polarSolvationEnergyGF              [kcal/mol]                Total  polar_solv_ene_GF_O polar_solv_ene_GF_H1
+|rism_apolarSolvationEnergyGF             [kcal/mol]                Total apolar_solv_ene_GF_Oapolar_solv_ene_GF_H1
+|rism_polarSolvationEnergyPCPLUS          [kcal/mol]                Total
+|rism_apolarSolvationEnergyPCPLUS         [kcal/mol]                Total
+|rism_polarSolvationEnergyUC              [kcal/mol]                Total
+|rism_apolarSolvationEnergyUC             [kcal/mol]                Total
+|rism_polarSolventPotentialEnergy_dT      [kcal/mol]                Total    polar_UV_pot_dT_O   polar_UV_pot_dT_H1
+|rism_apolarSolventPotentialEnergy_dT     [kcal/mol]                Total   apolar_UV_pot_dT_O  apolar_UV_pot_dT_H1
+|rism_polarPartialMolarVolume_dT          [A^3]     polar_partialMolarVol
+|rism_apolarPartialMolarVolume_dT         [A^3]     apolar_partialMolarVo
+|rism_polarExcessParticles_dT             [#]                                 polar_ExNum_dT_O    polar_ExNum_dT_H1
+|rism_apolarExcessParticles_dT            [#]                                apolar_ExNum_dT_O   apolar_ExNum_dT_H1
+|rism_polarExcessCharge_dT                [e]                       Total     polar_ExChg_dT_O    polar_ExChg_dT_H1
+|rism_apolarExcessCharge_dT               [e]                       Total    apolar_ExChg_dT_O   apolar_ExChg_dT_H1
+|rism_polarKirkwoodBuff_dT                [A^3]                                  polar_KB_dT_O       polar_KB_dT_H1
+|rism_apolarKirkwoodBuff_dT               [A^3]                                 apolar_KB_dT_O      apolar_KB_dT_H1
+|rism_polarDCFintegral_dT                 [A^3]                                polar_DCFI_dT_O     polar_DCFI_dT_H1
+|rism_apolarDCFintegral_dT                [A^3]                               apolar_DCFI_dT_O    apolar_DCFI_dT_H1
+
+Processing restart file: ala.rst7
+no velocities were found
+
+Running MME
+|Using provided Lennard-Jones tolerance :    1.000E-06
+|Setting solvent box from buffer.
+||Setting solvation box to
+|grid size:         36 X         36 X         36
+|box size [A]:      36.000 X     36.000 X     36.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    15.094,      14.095,      15.997
+WARNING> LJ tolerance extends beyond the solvent box and the LJ 
+correction will not be used. For more accurate calculations,
+increase the tolerance, box dimensions, or use buffer=0
+|Switching to KH closure
+|RXRISM converged in   119 steps
+|RXRISMDT converged in   134
+|Using provided Lennard-Jones tolerance :    1.000E-06
+|Setting solvent box from buffer.
+||Setting solvation box to
+|grid size:         36 X         36 X         36
+|box size [A]:      36.000 X     36.000 X     36.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    15.094,      14.095,      15.997
+WARNING> LJ tolerance extends beyond the solvent box and the LJ 
+correction will not be used. For more accurate calculations,
+increase the tolerance, box dimensions, or use buffer=0
+|Switching to KH closure
+|RXRISM converged in   104 steps
+|RXRISMDT converged in   119
+solutePotentialEnergy                      7.1588322179321295E-001   2.8089140654000850E+000  -8.2401331382912716E+001   2.0292897995971691E-002   3.6688023725071539E-001   7.4921632691029636E+000   0.0000000000000000E+000   5.0157574998830263E+000   5.0228823055198312E+001   0.0000000000000000E+000   1.7184383579874861E+001
+rism_excessChemicalPotential               1.7184383579874876E+001   8.3821427285667554E+001  -6.6637043705792678E+001
+rism_excessChemicalPotentialGF             6.8714241224604535E+000   7.9308310461353017E+001  -7.2436886338892563E+001
+rism_excessChemicalPotentialPCPLUS        -1.3951082615743905E+001
+rism_excessChemicalPotentialUC            -1.1753447585711562E+001
+rism_solventPotentialEnergy               -4.2430293397228404E+001   1.9715226096861713E+001  -6.2145519494090117E+001
+rism_partialMolarVolume                    1.9239480279797098E+002
+rism_totalParticlesBox                                               1.5473032127832191E+003   3.0946065625154538E+003
+rism_totalChargeBox                        5.8038992886720841E-005  -1.3114942042872246E+003   1.3114942623262177E+003
+rism_excessParticlesBox                                             -6.3419183026867678E+000  -1.2683699656357927E+001
+rism_excessChargeBox                       5.8038992865116419E-005   5.3754099579977126E+000  -5.3753519190048475E+000
+rism_excessParticles                                                -6.3419183026867678E+000  -1.2683699656357927E+001
+rism_excessCharge                          5.8038992865116419E-005   5.3754099579977126E+000  -5.3753519190048475E+000
+rism_KirkwoodBuff                                                   -1.9044795649270645E+002  -1.9044590020161900E+002
+rism_DCFintegral                                                    -7.0752777421604278E+003   2.0699690599995406E+003
+rism_-TS                                   3.9898199273284149E+001   2.9256882932317609E+001   1.0641316340966540E+001
+rism_-TS_GF                                3.1794525210260161E+001   2.5509982353802272E+001   6.2845428564578896E+000
+rism_-TS_PCPLUS                            9.8789072037034895E+000
+rism_-TS_UC                                1.1294839909850310E+001
+rism_solvationEnergy                      -2.2713815693409273E+001   5.4564544353349945E+001  -7.7278360046759218E+001
+rism_solvationEnergyGF                    -2.4923101087799708E+001   5.3798328107550745E+001  -7.8721429195350453E+001
+rism_solvationEnergyPCPLUS                -2.3829989819447395E+001
+rism_solvationEnergyUC                    -2.3048287495561873E+001
+rism_partialMolarVolume_dT                 2.7346369478887009E-002
+rism_excessParticles_dT                                             -8.9258763338158494E-004  -1.7848748718789227E-003
+rism_excessCharge_dT                       1.2730735205383873E-007   7.5655727870734143E-004  -7.5642997135528763E-004
+rism_KirkwoodBuff_dT                                                -2.6804427722786441E-002  -2.6799917290050219E-002
+rism_DCFintegral_dT                                                  1.5216316778715480E+001  -7.4045479968160448E+000
+rism_polarExcessChemicalPotential         -1.4142280930088717E+001   4.1658134928689989E+001  -5.5800415858778706E+001
+rism_apolarExcessChemicalPotential         3.1326664509963592E+001   4.2163292356977564E+001  -1.0836627847013974E+001
+rism_polarExcessChemicalPotentialGF       -1.4490829802183576E+001   4.1632164902793058E+001  -5.6122994704976634E+001
+rism_apolarExcessChemicalPotentialGF       2.1362253924644033E+001   3.7676145558559959E+001  -1.6313891633915926E+001
+rism_polarExcessChemicalPotentialPCPLUS   -1.2998662008747782E+001
+rism_apolarExcessChemicalPotentialPCPLUS  -9.5242060699612241E-001
+rism_polarExcessChemicalPotentialUC       -1.3083555631848450E+001
+rism_apolarExcessChemicalPotentialUC       1.3301080461368877E+000
+rism_polarSolventPotentialEnergy          -2.6743634814323897E+001   3.2984718141589582E+001  -5.9728352955913479E+001
+rism_apolarSolventPotentialEnergy         -1.5686658582904506E+001  -1.3269492044727869E+001  -2.4171665381766374E+000
+rism_polarPartialMolarVolume              -7.0667429697384705E+000
+rism_apolarPartialMolarVolume              1.9946154576770945E+002
+rism_polarExcessParticles                                            2.3522968565969116E-001   4.7073902284750879E-001
+rism_apolarExcessParticles                                          -6.5771479883464590E+000  -1.3154438679205436E+001
+rism_polarExcessCharge                     1.1851631772234240E-004  -1.9938068173727275E-001   1.9949919805499508E-001
+rism_apolarExcessCharge                   -6.0477324857863615E-005   5.5747906397349851E+000  -5.5748511170598425E+000
+rism_polarKirkwoodBuff                                               7.0639530189675668E+000   7.0681519899665659E+000
+rism_apolarKirkwoodBuff                                             -1.9751190951167402E+002  -1.9751405219158556E+002
+rism_polarDCFintegral                                               -2.5523078114991376E+003   1.3306135501690719E+003
+rism_apolarDCFintegral                                              -4.5229699306612902E+003   7.3935550983046880E+002
+rism_polar-TS                              1.2023276022695413E+000  -5.8023341187827455E+000   7.0046617210522868E+000
+rism_apolar-TS                             3.8695871671014601E+001   3.5059217051100354E+001   3.6366546199142498E+000
+rism_polar-TS_GF                           1.3248400675991974E+000  -5.7207500652524885E+000   7.0455901328516859E+000
+rism_apolar-TS_GF                          3.0469685142660971E+001   3.1230732419054764E+001  -7.6104727639379099E-001
+rism_polar-TS_PCPLUS                       1.5306405372372183E+000
+rism_apolar-TS_PCPLUS                      8.3482666664662712E+000
+rism_polar-TS_UC                           1.6498961156906837E+000
+rism_apolar-TS_UC                          9.6449437941596265E+000
+rism_polarSolvationEnergy                 -1.5344608532358258E+001   4.7460469047472735E+001  -6.2805077579830993E+001
+rism_apolarSolvationEnergy                -7.3692071610510119E+000   7.1040753058772115E+000  -1.4473282466928223E+001
+rism_polarSolvationEnergyGF               -1.5815669869782774E+001   4.7352914968045546E+001  -6.3168584837828320E+001
+rism_apolarSolvationEnergyGF              -9.1074312180169379E+000   6.4454131395051961E+000  -1.5552844357522135E+001
+rism_polarSolvationEnergyPCPLUS           -1.4529302545985001E+001
+rism_apolarSolvationEnergyPCPLUS          -9.3006872734623940E+000
+rism_polarSolvationEnergyUC               -1.4733451747539133E+001
+rism_apolarSolvationEnergyUC              -8.3148357480227393E+000
+rism_polarPartialMolarVolume_dT            1.5051494492276019E-002
+rism_apolarPartialMolarVolume_dT           1.2294874986610990E-002
+rism_polarExcessParticles_dT                                        -5.0140654904009640E-004  -1.0021972701987738E-003
+rism_apolarExcessParticles_dT                                       -3.9118108434148859E-004  -7.8267760168014881E-004
+rism_polarExcessCharge_dT                  2.6098785637071717E-007   4.2499219133326695E-004  -4.2473120347689622E-004
+rism_apolarExcessCharge_dT                -1.3368050431673190E-007   3.3156508737407458E-004  -3.3169876787839131E-004
+rism_polarKirkwoodBuff_dT                                           -1.5057250516187040E-002  -1.5048003853271359E-002
+rism_apolarKirkwoodBuff_dT                                          -1.1747177206599400E-002  -1.1751913436778861E-002
+rism_polarDCFintegral_dT                                             9.7371059344130089E+000  -4.9997662741488575E+000
+rism_apolarDCFintegral_dT                                            5.4792108443024707E+000  -2.4047817226671873E+000
+
+Finished MME
+
+3D-RISM processing complete.
+
+|Timing summary:
+|              Initialize       0.107
+|             Molec. Dyn.       0.000
+|             Normal Mode       0.000
+|             Conj. Grad.       0.000
+|                  Newton       0.000
+|-------------------------
+|                   Total       0.107
+
+|1st derivative timing summary:
+|             constraints       0.000
+|                   bonds       0.000
+|                  angles       0.000
+|                torsions       0.000
+|                pairlist       0.000
+|                 nonbond       0.000
+|               gen. Born       0.000
+|       Poisson Boltzmann       0.000
+|                 3D-RISM       8.168
+|                   Other       0.000
+|-------------------------
+|                   Total       8.168
+
+|3D-RISM memory allocation summary
+|Type          Maximum
+|Integer       0.00018 GB
+|Real          0.03246 GB
+|Logical       0.00000 GB
+|Character     0.00000 GB
+|------------------------
+|Total         0.03255 GB
+
+|CPU Timer summary for 3D-RISM Total        
+|  3D-RISM initialization                           0.105   (  1.28%)
+|      Excess Chemical Potential                        0.009   ( 62.79%)
+|      Other                                            0.005   ( 37.21%)
+|    Thermodynamics                                   0.014   (  0.18%)
+|      Solvation box resize                             0.234   (  2.90%)
+|          FFT                                              1.847   ( 52.52%)
+|            Overlap                                          0.045   ( 30.02%)
+|            Restart                                          0.000   (  0.12%)
+|            Lapack                                           0.001   (  0.77%)
+|            Project                                          0.102   ( 68.01%)
+|            Other                                            0.002   (  1.07%)
+|          MDIIS Advance                                    0.150   (  4.28%)
+|          Other                                            1.520   ( 43.20%)
+|        R1RISM                                           3.517   ( 99.92%)
+|        Other                                            0.003   (  0.08%)
+|      RXRISM                                           3.520   ( 43.62%)
+|          FFT                                              2.108   ( 51.03%)
+|          Other                                            2.023   ( 48.97%)
+|        R1RISM                                           4.131   ( 99.88%)
+|        Other                                            0.005   (  0.12%)
+|      RXRISM_dT                                        4.136   ( 51.25%)
+|        Lennard-Jones                                    0.076   ( 42.52%)
+|        Coulomb                                          0.023   ( 12.60%)
+|          Asymptotics Dcf/TCF-K                            0.031   ( 38.29%)
+|          Asymptotics DCF-R                                0.049   ( 61.42%)
+|          Other                                            0.000   (  0.28%)
+|        Asymptotics                                      0.080   ( 44.58%)
+|        Other                                            0.001   (  0.31%)
+|      Potential                                        0.179   (  2.22%)
+|    Solve 3D-RISM                                    8.070   ( 99.81%)
+|    Other                                            0.001   (  0.01%)
+|  3D-RISM                                          8.086   ( 98.72%)
+|3D-RISM Total                                    8.191   (100.00%)
+

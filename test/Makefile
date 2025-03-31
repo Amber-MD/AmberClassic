@@ -1,22 +1,39 @@
-include ../config.h
+include ../config_testing.h
+
+# -------- Targets from ../Makefile ----------------------------------------
 
 test:  test.$(INSTALLTYPE)
 
 test.serial:
 	@./run_serial_tests.sh
 
+test.conda:
+	@./run_conda_tests.sh
+
 test.parallel:
-	@echo "parallel test suite is not yet ready!"
+	@./run_parallel_tests.sh
 
 test.cuda:
-	@echo "cuda test suite is not yet ready!"
+	@./run_cuda_tests.sh
 
 test.mpicuda:
-	@echo "mpicuda test suite is not yet ready!"
+	@./run_mpicuda_tests.sh
 
-test.allserial: test.general test.rism test.xray test.nmr \
+# -------- Targets for run_* scripts, making the logfiles --------------------
+
+test.allserial: test.general test.rism test.xray test.cryoem test.nmr \
+          test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
+          test.gbnsr6 test.nabc test.nab
+
+test.allparallel: test.general test.rism test.xray test.cryoem test.nmr 
+
+test.allcuda: test.xray
+
+test.allconda: test.general test.rism test.xray test.cryoem test.nmr \
           test.leap test.antechamber test.paramfit test.rism1d test.xtalutil \
           test.gbnsr6
+
+# -------- Lower-level test targets: ---------------------------------------
 
 test.general:
 	-(cd dhfr && ./Run.dhfr)
@@ -43,7 +60,7 @@ test.rism:
 test.nmr:
 	-(cd rdc && Run.nmr)
 	-(cd rdc && Run.dip)
-	-(cd rdc && Run.csa)
+	-(cd rdc && Run.csa_min)
 	-(cd rdc && Run.dip2)
 
 test.xray:
@@ -57,6 +74,8 @@ test.xray:
 	-(cd xray/2ol9 && ./Run.2ol9)
 	-(cd xray/2ol9 && ./Run.2ol9.min)
 #	-(cd xray/2msi && ./Run.2msi)
+
+test.cryoem:
 	-(cd cryoem/3j9d && ./Run.3j9d)
 	-(cd cryoem/emap && ./Run.emap)
 
@@ -72,7 +91,10 @@ test.antechamber:
 	-(cd antechamber/tp && Run.tp2)
 
 test.paramfit:
-	-(cd paramfit && make test)
+	-(cd paramfit/write_qminput_nma; ./run_test.x)
+	-(cd paramfit/simplex_perfect_fit_NMA; ./run_test.x)
+	-(cd paramfit/ga_perfect_fit_NMA; ./run_test.x)
+	-(cd paramfit/dihedral_least_squares_NMA; ./run_test.x)
 
 test.rism1d:
 	-(cd rism1d/spc-kh && ./Run.spc)
@@ -81,12 +103,18 @@ test.rism1d:
 
 test.xtalutil:
 	-(cd xtalutil/AddToBox && ./Run.AddToBox)
-	-(cd xtalutil/CheckMD && ./Run.CheckMD)
+#	-(cd xtalutil/CheckMD && ./Run.CheckMD)
 	-(cd xtalutil/PropPDB && ./Run.PropPDB)
 	-(cd xtalutil/UnitCell && ./Run.UnitCell)
 
 test.gbnsr6:
 	-(cd gbnsr6 && ./Run.gbnsr6.min)
+
+test.nabc:
+	-(cd nabc && $(MAKE) test)
+
+test.nab:
+	-(cd nab && $(MAKE) test)
 
 clean::
 	/bin/rm -f TEST_FAILURES.diff

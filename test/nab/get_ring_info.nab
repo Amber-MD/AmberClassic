@@ -1,0 +1,206 @@
+#define MAXRINGS 500
+#define MAXRINGPOS 5000
+int		pointplane();
+
+int		get_ring_info( molecule m, string ringname[MAXRINGS], 
+			int ringnum[MAXRINGS], float ringstr[MAXRINGS], 
+			int ringsize[MAXRINGS], point ringpos[MAXRINGPOS],
+			point rn[MAXRINGS], string ringskip[ hashed ],
+			string ringaname[ MAXRINGPOS ] )
+{
+
+//============================================================================
+//
+//   set up five arrays to hold ring information:
+//
+//      ringname[ ring ]    gives the residue name of each aromatic ring
+//      ringnum [ ring ]    gives the residue number of each aromatic ring
+//      ringstr [ ring ]    gives the intensity
+//      ringsize[ ring ]    gives the number of atoms in the ring
+//      ringpos [ atring ]  gives the position of each atom
+//
+//      index "ring" goes from 1 to the number of rings
+//      index "atring" goes from 1 to the total number of atoms in all rings
+//
+//============================================================================
+
+string		ringinfo[ hashed ];       // database of ring information
+string		ringatoms[ 26 ];          // temporary strorage for ring info
+int			i, abs_res, nrings, ring, atring;
+atom		a;
+residue		r;
+point		rc[ MAXRINGS ];
+point		r1, r2;                   // temporaries
+float		b;
+
+#ifdef VERSION2
+//
+//============================================================================
+//
+//   set up hashed variables to define aromatic rings:
+//     [this version has ring-current intensities from Osapay/Case JACS paper]
+//
+ringinfo["PHE"] = "CG CD1 CE1 CZ CE2 CD2 1.00";
+ringskip["PHE"] = "HA HB2 HB3 HD1 HD2 HE1 HE2 HZ";
+
+ringinfo["TYR"] = "CG CD1 CE1 CZ CE2 CD2 0.84";
+ringskip["TYR"] = "HA HB2 HB3 HD1 HD2 HE1 HE2 HH";
+
+ringinfo["HIS"] = "CG CD2 NE2 CE1 ND1 0.90";
+ringinfo["HIP"] = "CG CD2 NE2 CE1 ND1 0.90";
+ringinfo["HID"] = "CG CD2 NE2 CE1 ND1 0.90";
+ringinfo["HIE"] = "CG CD2 NE2 CE1 ND1 0.90";
+ringskip["HIS"] = "HA HB2 HB3 HD1 HD2 HE1 HE2";
+ringskip["HIP"] = "HA HB2 HB3 HD1 HD2 HE1 HE2";
+ringskip["HID"] = "HA HB2 HB3 HD1 HD2 HE1 HE2";
+ringskip["HIE"] = "HA HB2 HB3 HD1 HD2 HE1 HE2";
+
+ringinfo["TRP"] = "CG CD2 CE2 NE1 CD1 1.04";
+ringinfo["TRP6"] = "CD2 CE2 CZ2 CH2 CZ3 CE3 1.02";
+ringskip["TRP"] =  "HA HB2 HB3 HD1 HE1 HZ2 HH2 HZ3 HE3";
+ringskip["TRP6"] =  "HA HB2 HB3 HD1 HE1 HZ2 HH2 HZ3 HE3";
+
+#else
+//
+//============================================================================
+//
+//   set up hashed variables to define aromatic rings:
+//     [this version has ring-current intensities from Case JBNMR paper ]
+//
+ringinfo["PHE"] = "CG CD1 CE1 CZ CE2 CD2 1.46";
+ringskip["PHE"] = "HD1 HD2 HE1 HE2 HZ";
+
+ringinfo["TYR"] = "CG CD1 CE1 CZ CE2 CD2 1.24";
+ringskip["TYR"] = "HD1 HD2 HE1 HE2 HH";
+
+ringinfo["HIS"] = "CG CD2 NE2 CE1 ND1 1.35";
+ringinfo["HIP"] = "CG CD2 NE2 CE1 ND1 1.35";
+ringinfo["HID"] = "CG CD2 NE2 CE1 ND1 1.35";
+ringinfo["HIE"] = "CG CD2 NE2 CE1 ND1 1.35";
+ringskip["HIS"] = "HD1 HD2 HE1 HE2";
+ringskip["HIP"] = "HD1 HD2 HE1 HE2";
+ringskip["HID"] = "HD1 HD2 HE1 HE2";
+ringskip["HIE"] = "HD1 HD2 HE1 HE2";
+
+ringinfo["TRP"] = "CG CD2 CE2 NE1 CD1 1.32";
+ringinfo["TRP6"] = "CD2 CE2 CZ2 CH2 CZ3 CE3 1.24";
+ringskip["TRP"] =  "HD1 HE1 HZ2 HH2 HZ3 HE3";
+ringskip["TRP6"] =  "HD1 HE1 HZ2 HH2 HZ3 HE3";
+
+#  ifdef G_P
+ringinfo["THY"] = "N1 C2 N3 C4 C5 C6 0.11";
+ringskip["THY"] = "H6 H71 H72 H73 H3";
+
+ringinfo["URA"] = "N1 C2 N3 C4 C5 C6 0.11";
+ringskip["URA"] = "H6 H5 H3";
+
+ringinfo["CYT"] = "N1 C2 N3 C4 C5 C6 0.28";
+ringskip["CYT"] = "H5 H6 H41 H42";
+
+ringinfo["GUA"]  = "N9 C4 C5 N7 C8 0.64";
+ringinfo["GUA6"] = "C4 N3 C2 N1 C6 C5 0.30";
+ringskip["GUA"] = "H8 H1 H21 H22";
+ringskip["GUA6"] = "H8 H1 H21 H22";
+
+ringinfo["ADE"]  = "N9 C4 C5 N7 C8 0.66";
+ringinfo["ADE6"] = "C4 N3 C2 N1 C6 C5 0.90";
+ringskip["ADE"] = "H2 H8 H61 H62";
+ringskip["ADE6"] = "H2 H8 H61 H62";
+
+#  else
+
+ringinfo["THY"] = "N1 C2 N3 C4 C5 C6 0.35";
+ringskip["THY"] = "H6 H71 H72 H73 H3";
+
+ringinfo["URA"] = "N1 C2 N3 C4 C5 C6 0.30";
+ringskip["URA"] = "H6 H5 H3";
+
+ringinfo["CYT"] = "N1 C2 N3 C4 C5 C6 0.37";
+ringskip["CYT"] = "H5 H6 H41 H42";
+
+ringinfo["GUA"]  = "N9 C4 C5 N7 C8 1.00";
+ringinfo["GUA6"] = "C4 N3 C2 N1 C6 C5 0.51";
+ringskip["GUA"] = "H8 H1 H21 H22";
+ringskip["GUA6"] = "H8 H1 H21 H22";
+
+ringinfo["ADE"]  = "N9 C4 C5 N7 C8 1.14";
+ringinfo["ADE6"] = "C4 N3 C2 N1 C6 C5 0.90";
+ringskip["ADE"] = "H2 H8 H61 H62";
+ringskip["ADE6"] = "H2 H8 H61 H62";
+#  endif
+#endif
+
+
+abs_res = ring = atring = 0;
+for( r in m ) {
+	abs_res = abs_res + 1;   // "absolute" residue number
+
+	if( r.resname in ringinfo ){
+		if( ring > 0 ) atring = atring + ringsize[ ring ];
+		ring = ring + 1;
+		if( ring > MAXRINGS ){
+			fprintf( stderr, "Too many rings: %d %d\n", ring, MAXRINGS );
+			exit( 1 );
+		}
+		ringsize[ ring ] = split( ringinfo[r.resname], ringatoms, " " ) - 1;
+		ringname[ ring ] = r.resname;  ringnum[ ring ] = abs_res;
+		ringstr[ ring ] = atof( ringatoms[ ringsize[ring] + 1 ]);
+		for( a in r ){
+			for( i=1; i<=ringsize[ ring ]; i = i+1 ) {
+				if( a.atomname == ringatoms[ i ] ){
+					ringpos[ atring + i ] = a.pos;
+					ringaname[ atring + i ] = r.resname + ":" + 
+						sprintf( "%d", abs_res ) + ":" + a.atomname;
+				}
+			}
+		}
+	}
+	if( r.resname + "6" in ringinfo ){   // some residues have a second ring
+		if( ring > 0 ) atring = atring + ringsize[ ring ];
+		ring = ring + 1;
+		if( ring > MAXRINGS ){
+			fprintf( stderr, "Too many rings: %d %d\n", ring, MAXRINGS );
+			exit( 1 );
+		}
+		ringsize[ ring ] = split( ringinfo[r.resname+"6"], ringatoms, " " ) - 1;
+		ringname[ ring ] = r.resname+"6";  ringnum[ ring ] = abs_res;
+		ringstr[ ring ] = atof( ringatoms[ ringsize[ring] + 1 ]);
+		for( a in r ){
+			for( i=1; i<=ringsize[ ring ]; i = i+1 ) {
+				if( a.atomname == ringatoms[ i ] ){
+					ringpos[ atring + i ] = a.pos;
+					ringaname[ atring + i ] = r.resname + ":" + 
+						sprintf( "%d", abs_res ) + ":" + a.atomname;
+				}
+			}
+		}
+	}
+}
+
+nrings = ring;
+printf( "found %d rings\n", nrings );
+
+//                      get ring normals:
+atring = 0;
+for( ring=1; ring<=nrings; ring = ring+1 ){
+
+    pointplane( ringpos[atring+1], ringpos[atring+3], ringpos[atring+5],
+        rn[ ring ], rc[ ring ], b );
+
+	r1 = ringpos[ atring+1 ] - rc[ ring ];
+	r2 = ringpos[ atring+3 ] - rc[ ring ];
+//	if( rn[ring] @ (r1 ^ r2) > 0.0 ) {
+//		rn[ ring ] = -1.*rn[ ring ];
+//		fprintf( stderr, "neg:  %s %d\n", ringname[ring], ringnum[ring] );
+//	} else {
+//		fprintf( stderr, "pos:  %s %d\n", ringname[ring], ringnum[ring] );
+//	}
+	rn[ ring ] = -1.*rn[ ring ];
+	printf( "      %4s %2d  %8.3f\n", ringname[ring], ringnum[ring],
+		ringstr[ring] );
+	atring = atring + ringsize[ ring ];
+
+}
+
+return( nrings );
+};

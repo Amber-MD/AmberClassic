@@ -2,12 +2,10 @@
  * eff.c: implement energy subroutines for 3 or 4 cartesian coordinates.
  *
  * Parallelization via OpenMP, creation of pair lists using a kd tree, and
- * optional calculation in 4D were added by Russ Brown (russ.brown@sun.com)
+ * optional calculation in 4D were added by Russ Brown (russ.brown@yahoo.com)
  */
 
 #include "gbneck.h"
-
-extern void rism_writesolvdistc_( int* );
 
 /***********************************************************************
                             ECONS()
@@ -2445,11 +2443,11 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
 {
    REAL_T ebh, eba, eth, eta, eph, epa, enb, eel, enb14, eel14, ecn, edssp;
    REAL_T e_gb, esurf, evdwnp, frms, enbips, eelips;
-   REAL_T e_pb, e_rism;
    REAL_T ene[20];
    REAL_T tmme1, t1, t2, treduce1;
    int i, j, k, goff, threadnum, numthreads, maxthreads;
    int iteration, mask, consumer, producer, numcopies;
+   REAL_T erism = 0.0;
    int dummy = 0;
    size_t n;
 
@@ -2508,17 +2506,6 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
        egb(lpairs, upairs, pairlist, lpairs, upairs, pairlist,
            x, grad, prm->Fs, prm->Rborn, prm->Charges,
            &kappa, &epsext, &enb, &eel, &esurf, &evdwnp, 1);
-#ifdef PBSA
-     } else if (pbsa && mytaskid==0) {
-       t2 = seconds();
-       *tmmeOther += t2 - t1;
-       t1 = t2;
-       e_pb = epbsa(pbopt,prm,x,grad,&enb,&eel,&esurf,&evdwnp,*iter,1);
-       if (pbopt != NULL) free(pbopt);
-       t2 = seconds();
-       *tmmePB += t2 - t1;
-       t1 = t2;
-#endif
      } else {
        nbond(lpairs, upairs, pairlist, 0, x, grad, &enb, &eel, NULL, NULL, 1);
      }
@@ -2536,17 +2523,8 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
    /* If the iteration count equals 0, print the header for task 0 only. */
 
    if (*iter == 0 && mytaskid == 0) {
-#ifdef PBSA
-      if(pbsa){
-         fprintf(nabout, "      iter    Total       bad      vdW     elect"
-              "   nonpolar       EPB      frms\n");
-      } else { 
-#endif
          fprintf(nabout, "      iter    Total       bad      vdW     elect"
               "   nonpolar   genBorn      frms\n");
-#ifdef PBSA
-      }
-#endif
       fflush(nabout);
    }
 
@@ -2717,7 +2695,7 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
       else 
       {
 
-         if (gb == 9) { // what is this???
+         if (gb == 9) { // r6 gb:
             e_gb =
                egbr6(lpairs, upairs, pairlist, lpairs, upairs, pairlist,
                    x, grad, prm->Fs, prm->Rborn, prm->Charges, &kappa,
@@ -2746,65 +2724,6 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
       t2 = seconds();
       *tmmeBorn += t2 - t1;
       t1 = t2;
-#ifdef PBSA
-   } else if (pbsa && mytaskid==0) {
-     if ( pbopt == NULL ) {
-       pbopt=(PBOPTSTRUCT_T *) malloc(sizeof(PBOPTSTRUCT_T));
-       pboptinit(pbopt);
-       pbopt->ipb=pbsa;
-       if (npbverb   > -9998 ) pbopt->npbverb=npbverb;
-       if (inp       > -9998 ) pbopt->inp=inp;
-       if (accept    > -9998.) pbopt->accept=accept;
-       if (sprob     > -9998.) pbopt->sprob=sprob;
-       if (fillratio > -9998.) pbopt->fillratio=fillratio;
-       if (epsin     > -9998.) pbopt->epsin=epsin;
-       if (epsout    > -9998.) pbopt->epsout=epsout;
-       if (smoothopt > -9998 ) pbopt->smoothopt=smoothopt;
-       if (istrng    > -9998.) pbopt->istrng=istrng;
-       if (ivalence  > -9998.) pbopt->ivalence=ivalence;
-       if (radiopt   > -9998 ) pbopt->radiopt=radiopt;
-       if (dprob     > -9998.) pbopt->dprob=dprob;
-       if (iprob     > -9998.) pbopt->iprob=iprob;
-       if (npbopt    > -9998 ) pbopt->npbopt=npbopt;
-       if (solvopt   > -9998 ) pbopt->solvopt=solvopt;
-       if (maxitn    > -9998 ) pbopt->maxitn=maxitn;
-       if (space     > -9998.) pbopt->space=space;
-       if (nfocus    > -9998 ) pbopt->nfocus=nfocus;
-       if (fscale    > -9998 ) pbopt->fscale=fscale;
-       if (bcopt     > -9998 ) pbopt->bcopt=bcopt;
-       if (eneopt    > -9998 ) pbopt->eneopt=eneopt;
-       if (dbfopt    > -9998 ) pbopt->dbfopt=dbfopt;
-       if (frcopt    > -9998 ) pbopt->frcopt=frcopt;
-       if (cutnb     > -9998.) pbopt->cutnb=cutnb;
-       if (arcres    > -9998.) pbopt->arcres=arcres;
-       if (nsnba     > -9999 ) pbopt->nsnba=nsnba;
-       if (npbgrid   > -9999 ) pbopt->npbgrid=npbgrid;
-       if (cavity_surften > -9998.) pbopt->cavity_surften=cavity_surften;
-       if (cavity_offset  > -9998.) pbopt->cavity_offset=cavity_offset;
-       if (maxarcdot > -9999 ) pbopt->maxarcdot=maxarcdot;
-       if (e_debug      == 3 ) pbopt->pbprint=1;
-
-     }
-     
-     //printf("nsnb = %d\n",nsnb);
-     //printf("nsnp = %d\n",nsnp);
-     e_pb = epbsa(pbopt,prm,x,grad,&enb,&eel,&esurf,&evdwnp,*iter,0);
-     ene[1] = enb;
-     ene[2] = eel;
-     ene[10] = e_pb;
-     ene[11] = esurf;
-     ene[12] = evdwnp;
-     if (e_debug) {
-       EXPR("%9.3f", enb);
-       EXPR("%9.3f", eel);
-       EXPR("%9.3f", e_pb);
-       EXPR("%9.3f", esurf);
-       EXPR("%9.3f", evdwnp);
-     }
-     t2 = seconds();
-     *tmmePB += t2 - t1;
-     t1 = t2;
-#endif
    } else {
       enbips = eelips = 0.;
       if( prm->IfBox ){
@@ -2820,41 +2739,23 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
                q_hcp1, q_hcp2, q_hcp3, grad, &enb, &eel);
          } else {
             nbond(lpairs,upairs, pairlist, 0, x, grad, &enb, &eel, NULL, NULL, 0);
+            // if (gb == 3){ erism = rism(x, grad); }
          }
       }
       ene[1] = enb + enbips;
       ene[2] = eel + eelips;
-      ene[10] = 0.0;
+      ene[10] = erism;
       ene[11] = 0.0;
       ene[12] = 0.0;
       if (e_debug) {
          EXPR("%9.3f", enb);
          EXPR("%9.3f", eel);
+         EXPR("%9.3f", erism);
       }
 
       t2 = seconds();
       *tmmeNonb += t2 - t1;
       t1 = t2;
-#ifdef RISMSFF
-      if (rismData.rism) {
-        REAL_T* frc = (REAL_T *) calloc(3*prm->Natom, sizeof(REAL_T));
-	INT_T imin=0;
-        fflush(stderr); fflush(stdout);
-        rism_force_(x,frc,&e_rism, iter,&imin);
-        for (i=0;i<3*prm->Natom;i++){
-          grad[i]-=frc[i];          
-        }
-        free(frc);
-        
-        ene[10] = e_rism;
-        if (e_debug) {
-          EXPR("%9.3f", e_rism);
-        }
-      }
-      t2 = seconds();
-      *tmmeRism += t2 - t1;
-      t1 = t2;
-#endif /*RISMSFF*/
    }
 
    /*
@@ -3036,35 +2937,6 @@ REAL_T mme34(REAL_T * x, REAL_T * f, int *iter)
         fprintf(nabout, " ECAVITY = %13.4lf  EDISPER = %13.4lf", ene[11], ene[12]);
       }
    }
-#ifdef RISMSFF
-   t2 = seconds();
-   *tmmeOther += t2 - t1;
-   t1 = t2;
-   if(rismData.rism){
-     /* thermodynamics and distribution file output */
-     /* Since the user may want to output thermodynamic distributions,
-        such as entropy, the call to write distributions goes through
-        the thermodynamics calculation call. */
-     int f = 0;
-     int writeDist=0, printThermo=0;
-     
-     /* First determine if we need to output distributions.*/
-     if(rismData.ntwrism > 0 && *iter >=0 && *iter % rismData.ntwrism == 0)
-       writeDist=1;
-     /* Next determine if we need to print thermodynamics */
-     if ((ntpr_rism > 0 && *iter >=0 && *iter % ntpr_rism == 0) || *iter==-1)
-       printThermo=1;
-
-     if(writeDist || printThermo){
-       rism_solvdist_thermo_calc_(&writeDist,&*iter);
-       if(printThermo)
-         rism_thermo_print_(&f,(REAL_T *)&ene);
-     }
-   }
-   t2 = seconds();
-   *tmmeRism += t2 - t1;
-   t1=t2;
-#endif /*RISMSFF*/
 
    /* Update the mme time, which includes the reduction time. */
 

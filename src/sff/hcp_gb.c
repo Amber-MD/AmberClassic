@@ -1800,14 +1800,14 @@ REAL_T egb_hcp_nbond(
                 REAL_T * enb, REAL_T * eelt, REAL_T * esurf, REAL_T * enp)
 {
 
-        REAL_T *sumdeijda = NULL;
+        REAL_T *sumdeijda;
         int *iexw = NULL;
 
         int i, i34, j;
         int iaci;
         REAL_T epol, dielfac, qi, expmkf;
         REAL_T elec, evdw, sumda, daix, daiy, daiz, daiw;
-        REAL_T xi, yi, zi, wi; 
+        REAL_T xi, yi, zi, wi = 0.0; 
         REAL_T qi2h, qid2h; 
         REAL_T ri1i;
 
@@ -1823,12 +1823,8 @@ REAL_T egb_hcp_nbond(
         dist2_hcp1 = hcp_h1 * hcp_h1;
         dist2_hcp2 = hcp_h2 * hcp_h2;
         dist2_hcp3 = hcp_h3 * hcp_h3;
-
-
-        if (sumdeijda == NULL) {
-                sumdeijda = vector(0, prm->Natom);
-        }
-
+        
+        sumdeijda = vector(0, prm->Natom);
 
         /* Compute the GB, Coulomb and Lennard-Jones energies and derivatives. */
 
