@@ -8,22 +8,22 @@ in=$(printf "%03d" $1)
 let out=$in+1
 out=$(printf "%03d" $out)
 
-sander="$MSANDERHOME/bin/msander.cuda"
+sander="$AMBERCLASSICHOME/bin/msander.cuda"
 
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI
 fi
 
 cat > mdin <<eof
-   checking out 7etn_6uc
+   checking out 5sy4_3uc
  &cntrl
-    imin=0, maxcyc=250, ntpr=500,
+    imin=1, maxcyc=200, ntpr=10,
     ntx=1, irest=0,
     tempi=0.0, ntt=3, gamma_ln=10.0, dt=0.001, temp0=0.,
     isgld=1, tsgavg=0.2,sgft=1.0, nsgsize=2,
     ntc=2, ntf=2, tol=1.d-6, 
     nstlim=30000, ntwx=0, ntwr=0,
-    nmropt=1, 
+    nmropt=0, 
     ntr=0, restraint_wt=0.0, restraintmask='!@H=',
  /
  &lmod  xmin_verbosity=0, xmin_method='TNCG', /
