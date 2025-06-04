@@ -94,8 +94,8 @@ contains
     use xray_target_module, only: calc_partial_d_target_d_absFcalc
     use xray_non_bulk_module, only: calc_f_non_bulk, get_f_non_bulk
     use xray_bulk_model_module, only: add_bulk_contribution_and_rescale, get_f_scale
-    use xray_dpartial_module, only: calc_partial_d_target_d_frac, &
-         calc_partial_d_vls_d_frac
+    use xray_dpartial_module, only: calc_partial_d_target_d_frac
+    use xray_dpartial_impl_cpu_module, only: calc_partial_d_vls_d_frac
     use xray_target_module, only: target_function_id
     implicit none
     real(real_kind), intent(in) :: xyz(:, :)

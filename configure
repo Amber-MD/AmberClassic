@@ -51,8 +51,7 @@ arpack="libarpack"
 
 # --- linear algebra, netcdf, boost, fftw:
 boost="yes"
-# following for shared libraries:
-#  boostlib="-lboost_program_options -lboost_iostreams"
+# current default is to use locally-compiled boost subset:
 boostlib="\$(LIBDIR)/libboost_program_options.a \$(LIBDIR)/libboost_iostreams.a -lz -lbz2"
 netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
 netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
@@ -116,6 +115,9 @@ while [ $# -gt 0 ]; do
         --noboost)
             boost="no"
             moft="skip";;
+        --system-boost)
+            boostlib="-lboost_program_options -lboost_iostreams"
+            boost="system";;
         --openblas)
             openblas="yes";;
         --macAccelerate)
@@ -170,6 +172,7 @@ if [ "$requested_help" = "yes" ] ; then
     printf "\nLess-common options:\n\n"
     printf "    --openblas      use openBLAS routines from a system library\n"
     printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
+    printf "    --system-boost  use system boost rather than built-in subset\n"
     printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
@@ -449,14 +452,15 @@ fi
 #  Configure and build Boost subset:
 #--------------------------------------------------------------------------
 
-if [ "$boost" == "yes" ]; then
+if [ "$boost" == "yes" -o "$boost" == "system" ]; then
    if [ "$conda" == "yes" ]; then
- 
       boostlib="-L$CONDA_PREFIX/lib -lboost_program_options -lboost_iostreams"
       echo "using boost    libraries from conda-forge"
 
+   elif [ "$boost" == "system" ]; then
+      echo "using boost    libraries from system"
+    
    elif [ ! -s "lib/libboost_iostreams.a" ]; then 
-
       printf "\nInstalling boost subset: $boostlib\n"
       cd src/boost_1_86_0
       make install_boost

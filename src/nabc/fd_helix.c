@@ -16,8 +16,6 @@ main() program at the end) are a helix_type string (one of the above
 options), and a one-letter sequence (e.g. "CGCGAAUUGC").  A
 complementary Watson-Crick paired second strand will be constructed.
 
-To build:  "gcc -o fd_helix fd_helix.c -lm"
-
 References for the fiber-diffraction data:
 
 1.  Structures of synthetic polynucleotides in the A-RNA and A’-RNA
@@ -669,22 +667,23 @@ if ( !acid_type ){
 //   Set up complementary strand sequence; (might want to generalize)
 //---------------------------------------------------------------------------
 
-fullseq = malloc( nres + 1);
+fullseq = malloc( nres + 1 );
 for( i=0; i<nresh; i++ ){
-   seq[i] = toupper(seq[i]);
-   fullseq[i] = seq[i];
-   if( seq[i] == 'A'){
+   if( seq[i] == 'A' || seq[i] == 'a' ){
+      fullseq[i] = 'A';
       if( !strcmp(acid_type,"dna" ) ) fullseq[ nres -i -1 ] = 'T';
       if( !strcmp(acid_type,"rna" ) ) fullseq[ nres -i -1 ] = 'U';
-   } else if ( seq[i] == 'U' ) {
+   } else if ( seq[i] == 'U' || seq[i] == 'u'  ) {
+      fullseq[i] = 'U';
       fullseq[ nres -i -1 ] = 'A';
-      if( !strcmp( acid_type,"dna" ) ) seq[i] = 'T';
-   } else if ( seq[i] == 'T' ) {
+   } else if ( seq[i] == 'T' || seq[i] == 't'  ) {
+      fullseq[i] = 'T';
       fullseq[ nres -i -1 ] = 'A';
-      if( !strcmp( acid_type,"rna" ) ) seq[i] = 'U';
-   } else if ( seq[i] == 'G' ) {
+   } else if ( seq[i] == 'G' || seq[i] == 'g'  ) {
+      fullseq[i] = 'G';
       fullseq[ nres -i -1 ] = 'C';
-   } else if ( seq[i] == 'C' ) {
+   } else if ( seq[i] == 'C' || seq[i] == 'c'  ) {
+      fullseq[i] = 'C';
       fullseq[ nres -i -1 ] = 'G';
    }
 }
@@ -768,4 +767,3 @@ for( chain = 1; chain <= 2; chain++ ) {
 }
 
 }
-
