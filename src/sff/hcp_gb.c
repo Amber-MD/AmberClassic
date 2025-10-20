@@ -1379,8 +1379,9 @@ void egb_calc_energy_approx(int j, REAL_T * q_hcp, REAL_T * reff_hcp, int hcp, i
                         rj = reff_hcp[j * hcp + k];
                         rb2 = ri * rj;
                         efac = exp(-r2 / (4.0 * rb2));
-                        fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-                        fgbk = -(*kappa) * KSCALE / fgbi;
+                        temp1 = sqrt(r2 + rb2 * efac);
+                        fgbi = 1.0 / temp1;
+                        fgbk = -(*kappa) * KSCALE * temp1;
 
                         expmkf = exp(fgbk) / (*diel_ext);
                         dielfac = 1.0 - expmkf;
@@ -1475,8 +1476,9 @@ void egb_calc_energy_atom(int j, REAL_T * x, REAL_T * reff_hcp, int *iexw, int h
         rj = reff_hcp[j];
         rb2 = ri * rj;
         efac = exp(-r2 / (4.0 * rb2));
-        fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-        fgbk = -(*kappa) * KSCALE / fgbi;
+        temp1 = sqrt(r2 + rb2 * efac);
+        fgbi = 1.0 / temp1;
+        fgbk = -(*kappa) * KSCALE * temp1;
 
         expmkf = exp(fgbk) / (*diel_ext);
         dielfac = 1.0 - expmkf;

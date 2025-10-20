@@ -756,8 +756,9 @@
               int   oatom = __shfl_sync(0xffffffff, loadatm, crdSrcLane, 32);
               float rb2 = treff * oreff;
               float efac = exp(-r2 / ((float)4.0 * rb2));
-              float fgbi = (float)1.0 / sqrt(r2 + rb2 * efac);
-              float fgbk = -cGms.kappa * cGms.kscale / fgbi;
+              float temp1 = sqrt(r2 + rb2 * efac);
+              float fgbi = (float)1.0 / temp1;
+              float fgbk = -cGms.kappa * cGms.kscale * temp1;
               float expmkf = exp(fgbk) / cGms.dielectric;
               float dielfac = (float)1.0 - expmkf;
 #  ifdef COMPUTE_ENERGY
