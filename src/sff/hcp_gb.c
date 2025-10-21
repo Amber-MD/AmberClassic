@@ -1358,7 +1358,7 @@ void egb_calc_energy_approx(int j, REAL_T * q_hcp, REAL_T * reff_hcp, int hcp, i
 {
 
         int  j34, k;
-        REAL_T xij, yij, zij, r2, rinv, r2inv, qiqj, rj, rb2, efac, fgbi, fgbk, expmkf, dielfac, eel, temp4, temp5, temp6;
+        REAL_T xij, yij, zij, r2, rinv, r2inv, qiqj, rj, rb2, efac, fgbi, fgbk, expmkf, dielfac, eel, temp1, temp4, temp5, temp6;
         REAL_T de, dedx, dedy, dedz;
 
 
@@ -1453,7 +1453,7 @@ void egb_calc_energy_atom(int j, REAL_T * x, REAL_T * reff_hcp, int *iexw, int h
 
         int  j34, ic;
         REAL_T xij, yij, zij, r2, rinv, r2inv, r6inv, f6, f12, qiqj, rj, rb2, efac, fgbi, fgbk, expmkf, dielfac, eel;
-        REAL_T temp4, temp5, temp6, de, dedx, dedy, dedz;
+        REAL_T temp1, temp4, temp5, temp6, de, dedx, dedy, dedz;
 
 
         j34 = dim * j;
