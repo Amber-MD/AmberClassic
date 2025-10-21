@@ -2313,8 +2313,9 @@ static void GmsSlowStepEnergyAndForces(gpuMultiSim *gms, slmem sta,
             if (gms->igb != 6) {
               rb2 = atmrad * sta.reff[katm];
               efac = exp(-r2 / ((float)4.0 * rb2));
-              fgbi = (float)1.0 / sqrt(r2 + rb2 * efac);
-              fgbk = -gms->kappa * KSCALE / fgbi;
+              temp1 = sqrt(r2 + rb2 * efac);
+              fgbi = (float)1.0 / temp1;
+              fgbk = -gms->kappa * KSCALE * temp1;
               expmkf = exp(fgbk) / gms->dielectric;
               dielfac = (float)1.0 - expmkf;
               usolv += -qq * dielfac * fgbi;
