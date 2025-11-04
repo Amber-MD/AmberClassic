@@ -4,8 +4,9 @@ export XRAY_NUM_THREADS=1
 #export DO_PARALLEL='mpirun -np 8'
 export CUDA_VISIBLE_DEVICES=0
 
-in=$(printf "%03d" $1)
+in=$1
 let out=$in+1
+in=$(printf "%03d" $1)
 out=$(printf "%03d" $out)
 
 sander="$AMBERCLASSICHOME/bin/msander.cuda"
