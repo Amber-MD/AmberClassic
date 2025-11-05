@@ -20,7 +20,7 @@ cat > mdin <<eof
  &cntrl
     imin=0, maxcyc=500, ntpr=1000, nsnb=10000, drms=0.0001,
     ntx=1, irest=0,
-    tempi=0.0, ntt=3, gamma_ln=10.0, dt=0.001, temp0=0.,
+    tempi=0.0, ntt=3, gamma_ln=5.0, dt=0.001, temp0=0.,
     isgld=1, tsgavg=0.2,sgft=1.0, nsgsize=2,
     ntc=2, ntf=2, tol=1.d-6, cut=8.0,
     nstlim=30000, ntwx=0, ntwr=0,
