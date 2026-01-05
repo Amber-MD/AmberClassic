@@ -67,22 +67,22 @@
 
                 /* MOL2WRITEt is used to store data for writing Mol2 files */
 
-typedef struct  {
-        FILE    *fPdbFile;
-        int     iRecordNumber;
-        int     iResidueSeq;
-        STRING  sResidueName;
+typedef struct {
+    FILE *fPdbFile;
+    int iRecordNumber;
+    int iResidueSeq;
+    STRING sResidueName;
 } MOL2WRITEt;
 
-typedef struct  {
-        char    sName[10];
-        int     iTerminator;
-        int     iPdbSequence;
+typedef struct {
+    char sName[10];
+    int iTerminator;
+    int iPdbSequence;
 } RESIDUENAMEt;
 
-typedef struct  {
-        BOOL    bUsed;
-        MATRIX  mTransform;
+typedef struct {
+    BOOL bUsed;
+    MATRIX mTransform;
 } PDBMATRIXt;
 
 typedef struct {
@@ -118,18 +118,18 @@ typedef struct {
     ATOM aAtom;
 } SAVEATOMt;
 
-typedef struct  {
-        FILE            *fPdbFile;
-        VARARRAY        vaUnits;                
-        VARARRAY        vaResidues;
-        VARARRAY        vaResidueSeq;
-		VARARRAY        vaAtoms;
-	    VARARRAY        vaMatrices;
-		UNIT            uUnit;
-		RESIDUE         rRes;
-		int             iPdbSequence;
-        int             iNextUnit;
-        int             iMaxSerialNum;
+typedef struct {
+    FILE *fPdbFile;
+    VARARRAY vaUnits;
+    VARARRAY vaResidues;
+    VARARRAY vaResidueSeq;
+    VARARRAY vaAtoms;
+    VARARRAY vaMatrices;
+    UNIT uUnit;
+    RESIDUE rRes;
+    int iPdbSequence;
+    int iNextUnit;
+    int iMaxSerialNum;
 } PDBREADt;
 
 
@@ -147,49 +147,46 @@ typedef struct  {
 
 #define SEQUENCE_NUMBER_STEPS   10000
 
-extern int zUnitIOAmberOrderResidues( UNIT );
+extern int zUnitIOAmberOrderResidues(UNIT);
 
-static void
-zMol2FileBegin( MOL2WRITEt *pwPFile, FILE *fOut )
+static void zMol2FileBegin(MOL2WRITEt * pwPFile, FILE * fOut)
 {
     pwPFile->fPdbFile = fOut;
-    pwPFile->iRecordNumber= 1;
+    pwPFile->iRecordNumber = 1;
     pwPFile->iResidueSeq = 1;
 }
 
-void
-zMol2FileWriteAtomRecord( MOL2WRITEt *pwPFile, ATOM aAtom, int choice )
+void zMol2FileWriteAtomRecord(MOL2WRITEt * pwPFile, ATOM aAtom, int choice)
 {
-pdb_record      p;
+    pdb_record p;
 #ifdef DEBUG
-STRING          sElement;
-#endif 
-STRING          sName, sTemp, sTypeAt;
+    STRING sElement;
+#endif
+    STRING sName, sTemp, sTypeAt;
 
     p.pdb.atom.serial_num = pwPFile->iRecordNumber++;
-    strcpy( p.pdb.atom.residue.name, pwPFile->sResidueName );
+    strcpy(p.pdb.atom.residue.name, pwPFile->sResidueName);
 
-	strcpy( sName, sAtomType(aAtom) );
-	strcpy( sTemp, sContainerName((CONTAINER)aAtom) );
-	    
-    
-	if (choice == 0) {
-	  strcpy( sTypeAt, sTemp);
-	  sTypeAt[1] = '\0';
-	  strcpy( p.pdb.atom.type_at, sTypeAt );
-	  }
-	if (choice == 1) {
-	  strcpy( sTypeAt, sName);
-	  strcpy( p.pdb.atom.type_at, sTypeAt );
-      }	  
-	  
-    strcpy( p.pdb.atom.name, sTemp ); 
+    strcpy(sName, sAtomType(aAtom));
+    strcpy(sTemp, sContainerName((CONTAINER) aAtom));
 
-	MESSAGE(( "Element: |%s|   pdb_name=|%s|\n", sElement, sName ));
+    if (choice == 0) {
+        strcpy(sTypeAt, sTemp);
+        sTypeAt[1] = '\0';
+        strcpy(p.pdb.atom.type_at, sTypeAt);
+    }
+    if (choice == 1) {
+        strcpy(sTypeAt, sName);
+        strcpy(p.pdb.atom.type_at, sTypeAt);
+    }
+
+    strcpy(p.pdb.atom.name, sTemp);
+
+    MESSAGE(("Element: |%s|   pdb_name=|%s|\n", sElement, sName));
 
     p.pdb.atom.residue.chain_id = ' ';
     p.pdb.atom.residue.seq_num = pwPFile->iResidueSeq;
-    p.pdb.atom.residue.insert_code=' ';
+    p.pdb.atom.residue.insert_code = ' ';
 /*    p.pdb.atom.alt_loc = ' ' ; */
     p.pdb.atom.x = dVX(&vAtomPosition(aAtom));
     p.pdb.atom.y = dVY(&vAtomPosition(aAtom));
@@ -198,195 +195,196 @@ STRING          sName, sTemp, sTypeAt;
     p.pdb.atom.temp_factor = dAtomCharge(aAtom);
     p.pdb.atom.ftnote_num = 0;
     p.record_type = MOL2_ATOM;
-    pdb_write_record( pwPFile->fPdbFile, &p, NULL, 0 );
+    pdb_write_record(pwPFile->fPdbFile, &p, NULL, 0);
 
 }
 
 
-static void
-zMol2FileWriteContainer( MOL2WRITEt *pwPFile, CONTAINER cCont, int choice )
+static void zMol2FileWriteContainer(MOL2WRITEt * pwPFile, CONTAINER cCont,
+                                    int choice)
 {
 //const char      C_TERMINAL_PREFIX = 'C';
 //const char      N_TERMINAL_PREFIX = 'N';
-const int       RESIDUE_NAME_LENGTH = 4;
-LOOP            lContents;
-ATOM            aAtom;
-char            *cPTemp;
+    const int RESIDUE_NAME_LENGTH = 4;
+    LOOP lContents;
+    ATOM aAtom;
+    char *cPTemp;
 
-   cPTemp = sContainerName(cCont);
-        strncpy( pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH );
-      
-        pwPFile->sResidueName[ RESIDUE_NAME_LENGTH ] = '\0';
-       if ( strlen(cPTemp) > RESIDUE_NAME_LENGTH ) {
-            VP0(( " Truncating residue name for PDB format: %s -> %s\n", 
-                        sContainerName(cCont), pwPFile->sResidueName ));
-        } 
- /*   } 
-*/
-    if ( iObjectType(cCont) == ATOMid ) {
-        zMol2FileWriteAtomRecord( pwPFile, (ATOM)cCont, choice);
+    cPTemp = sContainerName(cCont);
+    strncpy(pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH);
+
+    pwPFile->sResidueName[RESIDUE_NAME_LENGTH] = '\0';
+    if (strlen(cPTemp) > RESIDUE_NAME_LENGTH) {
+        VP0((" Truncating residue name for PDB format: %s -> %s\n",
+             sContainerName(cCont), pwPFile->sResidueName));
+    }
+    /*   } 
+     */
+    if (iObjectType(cCont) == ATOMid) {
+        zMol2FileWriteAtomRecord(pwPFile, (ATOM) cCont, choice);
         pwPFile->iResidueSeq++;
-    } else if ( iObjectType(cCont) == RESIDUEid ) {
+    } else if (iObjectType(cCont) == RESIDUEid) {
         RESIDUE rRes = (RESIDUE) cCont;
         pwPFile->iResidueSeq = rRes->iTemp;
-        if ( pwPFile->iResidueSeq == 0 )
-                pwPFile->iResidueSeq = 1;
-        lContents = lLoop( (OBJEKT)cCont, DIRECTCONTENTSBYSEQNUM );
-        while ( (aAtom = (ATOM)oNext(&lContents)) ) {
-            zMol2FileWriteAtomRecord( pwPFile, aAtom, choice);
-			}
-    } else if ( iObjectType(cCont) == MOLECULEid ) {
-        lContents = lLoop( (OBJEKT)cCont, ATOMS );
-        while ( (aAtom = (ATOM)oNext(&lContents)) ) {
-            zMol2FileWriteAtomRecord( pwPFile, aAtom, choice );
+        if (pwPFile->iResidueSeq == 0)
+            pwPFile->iResidueSeq = 1;
+        lContents = lLoop((OBJEKT) cCont, DIRECTCONTENTSBYSEQNUM);
+        while ((aAtom = (ATOM) oNext(&lContents))) {
+            zMol2FileWriteAtomRecord(pwPFile, aAtom, choice);
+        }
+    } else if (iObjectType(cCont) == MOLECULEid) {
+        lContents = lLoop((OBJEKT) cCont, ATOMS);
+        while ((aAtom = (ATOM) oNext(&lContents))) {
+            zMol2FileWriteAtomRecord(pwPFile, aAtom, choice);
         }
         pwPFile->iResidueSeq++;
     }
 }
 
-static char *
-zMol2FileWriteResidueContainer( MOL2WRITEt *pwPFile, CONTAINER cCont )
+static char *zMol2FileWriteResidueContainer(MOL2WRITEt * pwPFile,
+                                            CONTAINER cCont)
 {
 //const char      C_TERMINAL_PREFIX = 'C';
 //const char      N_TERMINAL_PREFIX = 'N';
-const int       RESIDUE_NAME_LENGTH = 3;
+    const int RESIDUE_NAME_LENGTH = 3;
 //LOOP            lContents;
-char            *cPTemp;
-RESIDUE         rRes;
+    char *cPTemp;
 
-     cPTemp = sContainerName(cCont);
-     strncpy( pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH );
-        /* The intentional side effect is to truncate long names. */
-     pwPFile->sResidueName[ RESIDUE_NAME_LENGTH ] = '\0';
-     if ( strlen(cPTemp) > RESIDUE_NAME_LENGTH ) {
-        VP0(( " Truncating residue name for PDB format: %s -> %s\n", 
-                   sContainerName(cCont), pwPFile->sResidueName ));
-        } 
-     rRes = (RESIDUE) cCont;
+    cPTemp = sContainerName(cCont);
+    strncpy(pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH);
+    /* The intentional side effect is to truncate long names. */
+    pwPFile->sResidueName[RESIDUE_NAME_LENGTH] = '\0';
+    if (strlen(cPTemp) > RESIDUE_NAME_LENGTH) {
+        VP0((" Truncating residue name for PDB format: %s -> %s\n",
+             sContainerName(cCont), pwPFile->sResidueName));
+    }
 
-     return(sContainerName(cCont));	
+    return (sContainerName(cCont));
 }
 
 
-void
-Mol2Write( FILE *fOut, UNIT uUnit, int choice )
+void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
 {
 
 //      int             i, iResidueCount, iAtomCount = 0, iAtom, iBondCount, iCount;
-        int             i, iResidueCount, iAtomCount = 0, iBondCount, iCount;
-//`		int             j,k,l,m,n;
-		int             j,k;
-        LOOP            lContents,lTemp,lResidues;
-        SAVERESIDUEt    *srPResidue;
-		SAVECONNECTIVITYt *scPCon;
-		MOL2WRITEt      pwFile;
-		STRING     sTemp;
-		char     *sName; 
-		ATOM       aAtom1,aAtom2;
-		RESIDUE rRes1;
-        BOOL   bPert,bFailedGeneratingParameters;
-//		STRING sAtom1, sAtom2, sDesc;
+    int i, iResidueCount, iAtomCount = 0, iBondCount, iCount;
+//`             int             j,k,l,m,n;
+    int j, k;
+    LOOP lContents, lTemp, lResidues;
+    SAVERESIDUEt *srPResidue;
+    SAVECONNECTIVITYt *scPCon;
+    MOL2WRITEt pwFile;
+    STRING sTemp;
+    char *sName;
+    ATOM aAtom1, aAtom2;
+    RESIDUE rRes1;
+    BOOL bPert, bFailedGeneratingParameters;
+//              STRING sAtom1, sAtom2, sDesc;
 
-		
-zMol2FileBegin( &pwFile, fOut );
+
+    zMol2FileBegin(&pwFile, fOut);
 
 /* @<TRIPOS>MOLECULE Bloc */
-fprintf(fOut, "@<TRIPOS>MOLECULE\n") ;
-iResidueCount = zUnitIOAmberOrderResidues( uUnit );	
+    fprintf(fOut, "@<TRIPOS>MOLECULE\n");
+    iResidueCount = zUnitIOAmberOrderResidues(uUnit);
 
 
-strcpy( sTemp, sContainerName((CONTAINER) uUnit));
+    strcpy(sTemp, sContainerName((CONTAINER) uUnit));
 
-iCount = 0;
-bPert = FALSE;
-lTemp = lLoop((OBJEKT) uUnit, BONDS);
- while (oNext(&lTemp) != NULL)
+    iCount = 0;
+    bPert = FALSE;
+    lTemp = lLoop((OBJEKT) uUnit, BONDS);
+    while (oNext(&lTemp) != NULL)
         iCount++;
 
-iAtomCount = 0;
-        lTemp = lLoop((OBJEKT) uUnit, ATOMS);
-        while (oNext(&lTemp) != NULL)
-            iAtomCount++;		
-		
-iBondCount = iCount;
+    iAtomCount = 0;
+    lTemp = lLoop((OBJEKT) uUnit, ATOMS);
+    while (oNext(&lTemp) != NULL)
+        iAtomCount++;
 
-fprintf(fOut, "%s\n", sTemp) ;	
-fprintf(fOut, "%5d %5d %5d     0     1 \n", iAtomCount,iBondCount,iResidueCount) ;
-fprintf(fOut, "SMALL\n");
-fprintf(fOut, "USER_CHARGES\n");
+    iBondCount = iCount;
+
+    fprintf(fOut, "%s\n", sTemp);
+    fprintf(fOut, "%5d %5d %5d     0     1 \n", iAtomCount, iBondCount,
+            iResidueCount);
+    fprintf(fOut, "SMALL\n");
+    fprintf(fOut, "USER_CHARGES\n");
 
 
 
 /* @<TRIPOS>ATOM Bloc */
-fprintf(fOut, "@<TRIPOS>ATOM\n") ;	
+    fprintf(fOut, "@<TRIPOS>ATOM\n");
 
-srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
-        for (i = 0; i < iResidueCount; srPResidue++, i++) {
-                RESIDUE rRes = srPResidue->rResidue;
-				rRes->iTemp = i + 1;
-                zMol2FileWriteContainer( &pwFile, (CONTAINER) rRes, choice); 
-		}
-fprintf(fOut, "@<TRIPOS>BOND\n") ;	
+    srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
+    for (i = 0; i < iResidueCount; srPResidue++, i++) {
+        RESIDUE rRes = srPResidue->rResidue;
+        rRes->iTemp = i + 1;
+        zMol2FileWriteContainer(&pwFile, (CONTAINER) rRes, choice);
+    }
+    fprintf(fOut, "@<TRIPOS>BOND\n");
 
- /* Now generate the connectivity table */
- /* Inspired by zUnitIOBuildTables in unitio.c */
+    /* Now generate the connectivity table */
+    /* Inspired by zUnitIOBuildTables in unitio.c */
 
- /*zbUnitIOIndexBondParameters(plParameters, uUnit, bPert); */
- 
-        iAtomCount = 0;
-        lTemp = lLoop((OBJEKT) uUnit, ATOMS);
-        while (oNext(&lTemp) != NULL)
-            iAtomCount++;
+    /*zbUnitIOIndexBondParameters(plParameters, uUnit, bPert); */
 
-        if (iAtomCount) {
-            uUnit->vaAtoms = vaVarArrayCreate(sizeof(SAVEATOMt));
-            VarArraySetSize((uUnit->vaAtoms), iAtomCount);
-            i = 0;
-     
+    iAtomCount = 0;
+    lTemp = lLoop((OBJEKT) uUnit, ATOMS);
+    while (oNext(&lTemp) != NULL)
+        iAtomCount++;
 
-           lResidues = lLoop((OBJEKT) uUnit, DIRECTCONTENTSBYSEQNUM);
-            while ((rRes1 = (RESIDUE) oNext(&lResidues)) != NULL) {
-            zUnitDoAtoms(uUnit, NULL, rRes1, &i, &bFailedGeneratingParameters, bPert);
-            }
-         }  
-    
+    if (iAtomCount) {
+        uUnit->vaAtoms = vaVarArrayCreate(sizeof(SAVEATOMt));
+        VarArraySetSize((uUnit->vaAtoms), iAtomCount);
+        i = 0;
+
+
+        lResidues = lLoop((OBJEKT) uUnit, DIRECTCONTENTSBYSEQNUM);
+        while ((rRes1 = (RESIDUE) oNext(&lResidues)) != NULL) {
+            zUnitDoAtoms(uUnit, NULL, rRes1, &i, &bFailedGeneratingParameters,
+                         bPert);
+        }
+    }
+
     iCount = 0;
     lTemp = lLoop((OBJEKT) uUnit, BONDS);
     while (oNext(&lTemp) != NULL)
         iCount++;
     uUnit->vaConnectivity = vaVarArrayCreate(sizeof(SAVECONNECTIVITYt));
     VarArraySetSize((uUnit->vaConnectivity), iCount);
-  
-	if (iCount) {
+
+    if (iCount) {
         i = 0;
         lTemp = lLoop((OBJEKT) uUnit, BONDS);
         scPCon = PVAI(uUnit->vaConnectivity, SAVECONNECTIVITYt, 0);
         while (oNext(&lTemp) != NULL) {
             /*LoopGetBond(&lTemp, &aAtom1, &aAtom2); */
-			 (*(&aAtom1))=(ATOM)(&lTemp)->oaObj[0] ;
-			 (*(&aAtom2))=(ATOM)(&lTemp)->oaObj[1] ;
+            (*(&aAtom1)) = (ATOM) (&lTemp)->oaObj[0];
+            (*(&aAtom2)) = (ATOM) (&lTemp)->oaObj[1];
             i++;
             scPCon++;
-			fprintf(fOut, "%5d %5d %5d 1\n", i,(((CONTAINER)(aAtom1))->iTempInt),(((CONTAINER)(aAtom2))->iTempInt));
+            fprintf(fOut, "%5d %5d %5d %5d\n", i,
+                    (((CONTAINER) (aAtom1))->iTempInt),
+                    (((CONTAINER) (aAtom2))->iTempInt),
+                    fAtomFindBondFlags(aAtom1, aAtom2));
         }
     }
- 
 
-fprintf(fOut, "@<TRIPOS>SUBSTRUCTURE\n") ;	
-srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
-k=0;
-for (i = 0; i < iResidueCount; srPResidue++, i++) {
-				ATOM aAtom;
-                RESIDUE rRes = srPResidue->rResidue;
-                j=0;
-				sName = zMol2FileWriteResidueContainer( &pwFile, (CONTAINER) rRes); 
-                lContents = lLoop((OBJEKT)rRes, DIRECTCONTENTSBYSEQNUM );
-				while((aAtom = (ATOM)oNext(&lContents)) )
-				j=j+1 ;
-				k=k+j;
-				fprintf(fOut, "%7d %4s %14d ****               0 ****  **** \n", i+1, sName, k-j+1); 
-						
-		} 
+
+    fprintf(fOut, "@<TRIPOS>SUBSTRUCTURE\n");
+    srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
+    k = 0;
+    for (i = 0; i < iResidueCount; srPResidue++, i++) {
+        ATOM aAtom;
+        RESIDUE rRes = srPResidue->rResidue;
+        j = 0;
+        sName = zMol2FileWriteResidueContainer(&pwFile, (CONTAINER) rRes);
+        lContents = lLoop((OBJEKT) rRes, DIRECTCONTENTSBYSEQNUM);
+        while ((aAtom = (ATOM) oNext(&lContents)))
+            j = j + 1;
+        k = k + j;
+        fprintf(fOut, "%7d %4s %14d ****               0 ****  **** \n", i + 1,
+                sName, k - j + 1);
+
+    }
 }
- 
-

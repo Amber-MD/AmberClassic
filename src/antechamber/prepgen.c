@@ -26,7 +26,7 @@ char ofilename[MAXCHAR];
 char inf_filename[MAXCHAR] = "PREP.INF";
 char mc_filename[MAXCHAR];
 char pdbfilename[MAXCHAR] = "NEWPDB.PDB";
-char mcfilename[30] = "MAINCHAIN.DAT";
+char mcfilename[256] = "MAINCHAIN.DAT";
 FILE *fpin;
 FILE *fpout;
 FILE *fprep;

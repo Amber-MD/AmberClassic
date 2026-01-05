@@ -157,6 +157,7 @@ void default_cinfo(CONTROLINFO * cinfo)
     (*cinfo).max_path_length = -1;
     (*cinfo).verify_pdb_atomname = 1;
     (*cinfo).atseq = 1;
+    (*cinfo).sfac[0] = '\0';
 }
 
 

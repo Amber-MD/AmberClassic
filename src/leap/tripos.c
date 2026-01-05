@@ -57,7 +57,8 @@
  *  Read a single UNIT from the TRIPOS file.
  *  Return the UNIT, or NULL if nothing was read.
  */
-UNIT uTriposReadUnit(FILE *fIn)
+UNIT uTriposReadUnit(fIn)
+FILE *fIn;
 {
     STRING sLine;
     int iAtoms;
@@ -139,7 +140,8 @@ see below for usage examples.
     }
     if (!bGotIt) {
         VPFATAL(( "Invalid MOL2 format.\n"
-                "Cannot find record type indicator: %s\n", TRIPOS_MOLECULE ));
+                "Cannot find case sensitive record type indicator: %s\n",
+                TRIPOS_MOLECULE ));
         goto FAIL;
     }
 
@@ -169,7 +171,8 @@ see below for usage examples.
     }
     if (!bGotIt) {
         VPFATAL(( "Invalid MOL2 format.\n"
-                "Cannot find record type indicator: %s\n", TRIPOS_ATOM ));
+                "Cannot find case sensitive record type indicator: %s\n",
+                TRIPOS_ATOM ));
         goto FAIL;
     }
 
@@ -219,7 +222,8 @@ see below for usage examples.
     T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sCmd), goto READFAIL);
     if (strcmp(sCmd, TRIPOS_BOND) != 0) {
         VPFATAL(( "Invalid MOL2 format.\n"
-                "Cannot find record type indicator: %s\n", TRIPOS_BOND ));
+                "Cannot find case sensitive record type indicator: %s\n",
+                TRIPOS_BOND ));
         goto FAIL;
     }
 
@@ -265,7 +269,8 @@ see below for usage examples.
         T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sCmd), goto READFAIL);
         if (strcmp(sCmd, TRIPOS_SUBSTRUCTURE) != 0) {
             VPFATAL(( "Invalid MOL2 format.\n"
-                    "Cannot find record type indicator: %s\n", TRIPOS_SUBSTRUCTURE ));
+                    "Cannot find case sensitive record type indicator: %s\n",
+                    TRIPOS_SUBSTRUCTURE ));
             goto FAIL;
         }
 

@@ -108,12 +108,17 @@ the specified numbers of _ion1_ [_ion2_] are added [in alternating order].
 If _separation_ is specified, ions will be guaranteed to be more than that
 distance apart in Angstroms.
 
-
 Ions must be monoatomic. This procedure is much faster than addIons, as
 it does not calculate charges. Solvent must be present. It must be possible
 to position the requested number of ions with the given separation in the
 solvent.
 
+The randomness depends on the innvocation of the LEaP executable.
+In particular, if one creates three copies of a unit and performs
+in a single LEaP script addIonsRand on each copy then the three
+resulting solvated units will be identical.  However, if one invokes
+LEaP three times on a script that performs one addIonsRand on the unit
+and saves a pdb of that unit then three different pdb files will be created.
 
 @@endHelp
 
@@ -361,10 +366,10 @@ passed, a PARMSET will be created with that name.
 Currently it checks for the following possible problems:
 
 
-   - Long bonds.
+   - Long bonds.  A long bond is greater than 3.0 angstroms.
 
 
-   - Short bonds.
+   - Short bonds.  A short bond is less than 0.5 angstroms.
 
 
    - Non-integral total charge of the UNIT.
@@ -800,23 +805,26 @@ http://q4md-forcefieldtools.org/Tutorial/leap-mol3.php
 
 
 
-Load a Protein Databank format file with the file name _filename_.
-The sequence numbers of the RESIDUEs will be determined from the
-order of residues within the PDB file ATOM records.  For each
-residue in the PDB file, LEaP searches the variables currently
-defined for variable names that match the residue name.  If a
-match is found, then the contents of the variable are copied into
-the UNIT created for the PDB structure.  If no PDB `TER' card
-separates the current residue from the previous one, a bond is
-created between the connect1 ATOM of the previous residue and the
-connect0 atom of the new one.  As atoms are read from the ATOM
-records, their coordinates are written into the correspondingly
-named ATOMs within the residue being built.  If the entire residue
-is read and it is found that ATOM coordinates are missing, then
-external coordinates are built from the internal coordinates that
-were defined in the matching UNIT (residue) variable.  This allows
-LEaP to build coordinates for hydrogens and lone pairs which are not
-specified in PDB files.
+Load a Protein Data Bank format file with the file name _filename_.
+The sequence numbers of the RESIDUEs will be determined from the order
+of residues within the PDB file ATOM records.  For each residue in the
+PDB file, LEaP searches the variables currently defined for variable
+names that match the residue name.  If a match is found then the
+contents of the variable are copied into the UNIT created for the PDB
+structure.  If no PDB `TER' card separates the current residue from the
+previous one, a bond is created between the connect1 ATOM of the
+previous residue and the connect0 atom of the new one.  (A PDB TER
+record is also used to detect a new residue in the case of contiguous
+residues with identical residue sequence numbers.)  As atoms are read
+from the ATOM records, their coordinates are written into the
+correspondingly named ATOMs within the residue being built.  If the
+entire residue is read and it is found that ATOM coordinates are missing
+then external coordinates are built from the internal coordinates that
+were defined in the matching UNIT (residue) variable.  This allows LEaP
+to build coordinates for hydrogens and lone pairs which are not
+specified in PDB files.  Note that the standard leaprc files include
+commands to establish automatic N- and C-termination of amino acid
+sequences and 5' and 3' termination of nucleic acid sequences.
 
 
 
@@ -951,20 +959,20 @@ Quit LEaP.
 @@beginHelp:  remove
 
 
-    remove a b
+    remove container item
 
 
-      UNIT/RESIDUE/ATOM          _a_
+      UNIT/RESIDUE/ATOM          _container_
 
-      UNIT/RESIDUE/ATOM          _b_
+      UNIT/RESIDUE/ATOM          _item_
 
 
 
-Remove the object _b_ from the object _a_.   If _a_ is not contained
-by _b_ then an error message will be displayed.  This command is
-used to remove ATOMs from RESIDUEs, and RESIDUEs from UNITs.   If
-the object represented by _b_ is not referenced by some variable
-name then it will be destroyed.
+Remove the object _item_ from the object _container_.
+If _item_ is not contained by _container_ then an error message will be
+displayed.  This command is used to remove ATOMs from RESIDUEs, and
+RESIDUEs from UNITs.  If the object represented by _item_ is not
+referenced by some variable name then it will be destroyed.
 
 
 @@endHelp
@@ -2161,7 +2169,7 @@ Flips the chirality of the selected atoms within _obj_.
 @@endHelp
 @@beginHelp:  _cmd_options_
 
-The command-line options for starting tleap and xleap are:
+The command-line options for starting tleap and xleap are
 
 
     -h         List these options.
@@ -2175,7 +2183,7 @@ The tleap and xleap shell scripts automatically provide
 
         -I$AMBERHOME/dat -I$AMBERHOME/dat/leap/lib -I$AMBERHOME/dat/leap/cmd
 
-where $AMBERHOME/dat contains 'parm.dat' force field files,
+where $AMBERHOME/dat          contains 'parm.dat' force field files,
       $AMBERHOME/dat/leap/lib contains residue libraries and
       $AMBERHOME/dat/leap/cmd contains the default leaprc and other scripts.
 

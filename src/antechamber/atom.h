@@ -210,6 +210,7 @@ typedef struct {
     int max_path_length;        /*maximum path length to judge atom equilibration */
     int verify_pdb_atomname;    /*varify pdb atom names using the possible element field in a pdb file */
     int  atseq; 		/*atomic sequence changeable? 1 for yes or 0 for no */
+    char sfac[50];              /*reweighting factor for RESP charges obtained using QUICK*/
 } CONTROLINFO;
 
 typedef struct {

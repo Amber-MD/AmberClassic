@@ -43,7 +43,7 @@
 
 
 
-#include	"basics.h"
+#include        "basics.h"
 #include        "varArray.h"
 
 
@@ -60,13 +60,12 @@
  *
  *
  */
-int
-iVarArrayPointerToIndex( VARARRAY header, char *data)
+int iVarArrayPointerToIndex(VARARRAY header, char *data)
 {
-  if ( header == NULL || data == NULL){
-    DFATAL(( " iVarArrayPointerToIndex: VARARRAY or Data is NULL" ));
-  }
-  return( (data - header->data) / header->size );
+    if (header == NULL || data == NULL) {
+        DFATAL((" iVarArrayPointerToIndex: VARARRAY or Data is NULL"));
+    }
+    return ((data - header->data) / header->size);
 }
 
 /*-----------------------------------------------------
@@ -74,13 +73,12 @@ iVarArrayPointerToIndex( VARARRAY header, char *data)
  *
  *
  */
-int
-iVarArrayElementSize( VARARRAY header)
+int iVarArrayElementSize(VARARRAY header)
 {
-  if ( header == NULL){
-    DFATAL(( " iVarArrayElementSize: VARARRAY is NULL" ));
-  }
-  return( header->size );
+    if (header == NULL) {
+        DFATAL((" iVarArrayElementSize: VARARRAY is NULL"));
+    }
+    return (header->size);
 }
 
 /*------------------------------------------------------
@@ -88,24 +86,22 @@ iVarArrayElementSize( VARARRAY header)
  *
  *
  */
-int
-iVarArrayElementCount( VARARRAY header)
+int iVarArrayElementCount(VARARRAY header)
 {
-  if ( header == NULL)
-	return( 0 );
-  return( header->count );
+    if (header == NULL)
+        return (0);
+    return (header->count);
 }
 
 /*-----------------------------------------------------
  *               PVarArrayIndex
  */
-char *
-PVarArrayIndex( VARARRAY header, int pos)
+char *PVarArrayIndex(VARARRAY header, int pos)
 {
-  if ( header == NULL){
-    DFATAL(( " PVarArrayIndex: VARARRAY is NULL" ));
-  }
-  return( element( header,pos));
+    if (header == NULL) {
+        DFATAL((" PVarArrayIndex: VARARRAY is NULL"));
+    }
+    return (element(header, pos));
 
 }
 
@@ -118,26 +114,25 @@ PVarArrayIndex( VARARRAY header, int pos)
  *      of the VARARRAY when they create it.
  */
 
-VARARRAY 
-vaVarArrayCreate( int size )
+VARARRAY vaVarArrayCreate(int size)
 {
-  VARARRAY new;
+    VARARRAY new;
 
-  MALLOC(new, VARARRAY, sizeof(HeaderStruct));
-  
-  if (new == NULL) {
-    DFATAL(( "vaVarArrayCreate: not enough memory " ));
-  }
-  MALLOC(new->data, char *, size *PORTION );
+    MALLOC(new, VARARRAY, sizeof(HeaderStruct));
 
-  if (new->data == NULL) {
-    DFATAL(( "vaVarArrayCreate: not enough memory " ));
-  }
-  new->count = 0;
-  new->size  = size;
-  new->slot  = PORTION;
-  
-  return( new );
+    if (new == NULL) {
+        DFATAL(("vaVarArrayCreate: not enough memory "));
+    }
+    MALLOC(new->data, char *, size * PORTION);
+
+    if (new->data == NULL) {
+        DFATAL(("vaVarArrayCreate: not enough memory "));
+    }
+    new->count = 0;
+    new->size = size;
+    new->slot = PORTION;
+
+    return (new);
 }
 
 /*-----------------------------------------------------
@@ -148,17 +143,17 @@ vaVarArrayCreate( int size )
  */
 
 
-void
-VarArrayDestroy( VARARRAY *header )
+void VarArrayDestroy(VARARRAY *header)
 {
 
-  if ( *header == NULL){
-    DFATAL(( " VarArrayDestroy: VARARRAY is NULL" ));
-  }
-  if ( (*header)->data != NULL ) FREE( (*header)->data );
-  
-  FREE( *header );
-  *header = NULL;
+    if (*header == NULL) {
+        DFATAL((" VarArrayDestroy: VARARRAY is NULL"));
+    }
+    if ((*header)->data != NULL)
+        FREE((*header)->data);
+
+    FREE(*header);
+    *header = NULL;
 }
 
 
@@ -170,176 +165,179 @@ VarArrayDestroy( VARARRAY *header )
  *      This will require REALLOCing the array and probably changing
  *      its address.
  *
+ *      SSchott Code modified with Claude to improve memory allocations
+ *
  */
-void
-VarArrayAdd( VARARRAY header, GENP data )
+void VarArrayAdd(VARARRAY header, GENP data)
 {
-  if ( header == NULL) {
-    DFATAL(( " VarArrayAdd: VARARRAY is NULL" ));
-  }
-  if ( header->count == header->slot ) {
-    header->slot += PORTION;
-    REALLOC(header->data , char*, header->data, header->size * header->slot );
-  }
+    if (header == NULL) {
+        DFATAL((" VarArrayAdd: VARARRAY is NULL"));
+    }
+    if (header->count == header->slot) {
+        int new_slot;
+        if (header->slot < 1000) {
+            new_slot = header->slot + PORTION;
+        } else {
+            new_slot = header->slot + header->slot / 2;
+        }
+        REALLOC(header->data, char *, header->data,
+                header->size * new_slot);
+        header->slot = new_slot;
+    }
 
-  memcpy(element(header,header->count), (char*)data, header->size);
+    memcpy(element(header, header->count), (char *) data, header->size);
 
-  header->count++;
+    header->count++;
 }
 
 
 /*-----------------------------------------------------
  *      vaVarArrayCopy
- *	Copy the VARARRAY.
+ *        Copy the VARARRAY.
  *
  *
  */
-VARARRAY 
-vaVarArrayCopy( VARARRAY header )
+VARARRAY vaVarArrayCopy(VARARRAY header)
 {
-  VARARRAY	new;
+    VARARRAY new;
 
-  if ( header == NULL) {
-    DFATAL(( " VarArrayAdd: VARARRAY is NULL" ));
-  }
+    if (header == NULL) {
+        DFATAL((" VarArrayAdd: VARARRAY is NULL"));
+    }
 
-  MALLOC(new, VARARRAY, sizeof(HeaderStruct) );
+    MALLOC(new, VARARRAY, sizeof(HeaderStruct));
 
-  new->size  = header->size;
-  new->count = header->count;
-  new->slot  = header->slot;  
+    new->size = header->size;
+    new->count = header->count;
+    new->slot = header->slot;
 
-  MALLOC(new->data, char*, new->size * header->slot);
+    MALLOC(new->data, char *, new->size * header->slot);
 
-  memcpy(new->data, header->data, new->size * header->slot);
-  
-  return( new );
+    memcpy(new->data, header->data, new->size * header->slot);
+
+    return (new);
 }
 
 /*-----------------------------------------------------
  *      vaVarArrayCopy2
- *	Copy 2 VARARRAYs into one.
+ *        Copy 2 VARARRAYs into one.
  *
  *
  */
-VARARRAY
-vaVarArrayCopy2( VARARRAY header1, VARARRAY header2 )
+VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
 {
-  VARARRAY	new;
-  int	  copysize;
+    VARARRAY new;
+    int copysize;
 
-  if ( header1 == NULL  ||  header2 == NULL ) {
-    DFATAL(( " VarArrayCopy2: VARARRAY is NULL" ));
-  }
-  if ( header1->size != header2->size )
-    DFATAL(( " VarArrayCopy2: header sizes different\n" ));
+    if (header1 == NULL || header2 == NULL) {
+        DFATAL((" VarArrayCopy2: VARARRAY is NULL"));
+    }
+    if (header1->size != header2->size)
+        DFATAL((" VarArrayCopy2: header sizes different\n"));
 
-  MALLOC(new, VARARRAY, sizeof(HeaderStruct) );
+    MALLOC(new, VARARRAY, sizeof(HeaderStruct));
 
-  new->size  = header1->size;
-  new->count = header1->count + header2->count;
-  new->slot  = SLOT_FOR_COUNT(new->count);
+    new->size = header1->size;
+    new->count = header1->count + header2->count;
+    new->slot = SLOT_FOR_COUNT(new->count);
 
-  MALLOC(new->data, char*, new->size * new->slot);
+    MALLOC(new->data, char *, new->size * new->slot);
 
-  copysize = new->size * header1->count;
-  memcpy(new->data, header1->data, copysize);
-  memcpy(new->data+copysize, header2->data, new->size * header2->count);
-  
-  return( new );
+    copysize = new->size * header1->count;
+    memcpy(new->data, header1->data, copysize);
+    memcpy(new->data + copysize, header2->data, new->size * header2->count);
+
+    return (new);
 
 }
 
-  
-void
-VarArrayInsertBeforeMore( VARARRAY header, int pos, int num )
+
+void VarArrayInsertBeforeMore(VARARRAY header, int pos, int num)
 {
-	int	shift, nslot;
-	char	*h;
+    int shift, nslot;
+    char *h;
 
-  	if ( header == NULL)
-		DFATAL(( " VarArrayInsertBeforeMore: VARARRAY is NULL" ));
+    if (header == NULL)
+        DFATAL((" VarArrayInsertBeforeMore: VARARRAY is NULL"));
 
-	if ( (pos >= header->count) && (pos < 0 ) )
-		DFATAL(( " VarArrayInsertBeforeMore: position=%d",pos ));
+    if ((pos >= header->count) && (pos < 0))
+        DFATAL((" VarArrayInsertBeforeMore: position=%d", pos));
 
-	/*
-	 *  grow array if necc
-	 */
-	nslot = SLOT_FOR_COUNT(header->count + num);
-  
-	if ( header->slot != nslot ) {
-	    REALLOC(header->data , char*, header->data, header->size * nslot );
-	    header->slot = nslot;
-	}
+    /*
+     *  grow array if necc
+     */
+    nslot = SLOT_FOR_COUNT(header->count + num);
 
-	/*
-	 *  update item count
-	 */
-	header->count += num;
+    if (header->slot != nslot) {
+        REALLOC(header->data, char *, header->data, header->size * nslot);
+        header->slot = nslot;
+    }
 
-	/*
-	 *  open up insert space by shuffling remainder down
-	 */
-	shift = header->size * num;
-	h = element(header, pos);
- 	memmove( h+shift, h, (header->count - num - pos) * header->size );
+    /*
+     *  update item count
+     */
+    header->count += num;
+
+    /*
+     *  open up insert space by shuffling remainder down
+     */
+    shift = header->size * num;
+    h = element(header, pos);
+    memmove(h + shift, h, (header->count - num - pos) * header->size);
 }
 
 
 /*-----------------------------------------------------
  *      VarArrayInsertBefore
  *
- *	Add one element to the VARARRAY and move all of the data
- *	at index iPos and beyond up one element.
- *	Copy the data at data into the new element that
- *	has been opened up.
+ *        Add one element to the VARARRAY and move all of the data
+ *        at index iPos and beyond up one element.
+ *        Copy the data at data into the new element that
+ *        has been opened up.
  *
  */
-void 
-VarArrayInsertBefore( VARARRAY header, int pos, GENP data )
+void VarArrayInsertBefore(VARARRAY header, int pos, GENP data)
 {
-  VarArrayInsertBeforeMore(header, pos, 1);
-  memcpy(element(header,pos), (char*)data, header->size);
+    VarArrayInsertBeforeMore(header, pos, 1);
+    memcpy(element(header, pos), (char *) data, header->size);
 }
 
 
 
 /*-----------------------------------------------------
- *	VarArrayDelete
+ *        VarArrayDelete
  *
- *	Remove an element in a VARARRAY.
- *	Move the data below the one to be removed, up one
+ *        Remove an element in a VARARRAY.
+ *        Move the data below the one to be removed, up one
  *
+ *        SSchott Code modified with Claude to improve memory cleanup
  */
-void
-VarArrayDeleteMore( VARARRAY header, int pos, int num)
+void VarArrayDeleteMore(VARARRAY header, int pos, int num)
 {
-  int      shift, nslot;
-  register char* i, *h;
-  
-  if ( header == NULL) {
-    DFATAL(( " VarArrayDelete: VARARRAY is NULL" ));
-  }
-  if ( ((pos+num) > header->count) || (pos < 0 ) || (num < 1)){
-    DFATAL(( " VarArrayDelete: position=%-5d num=%-5d count=%-5d",
-	    pos,num,header->count ));
-  }
-  header->count -= num;
-  
-  shift = num * header->size;
+    int shift, nslot;
+    register char *i, *h;
 
-  for (i = element( header, pos), h = element( header, header->count);
-       i < h  ;
-       i++)
-    *i = *(i + shift);
+    if (header == NULL) {
+        DFATAL((" VarArrayDelete: VARARRAY is NULL"));
+    }
+    if (((pos + num) > header->count) || (pos < 0) || (num < 1)) {
+        DFATAL((" VarArrayDelete: position=%-5d num=%-5d count=%-5d", pos, num,
+                header->count));
+    }
+    header->count -= num;
 
-  nslot = SLOT_FOR_COUNT( header->count );
+    shift = num * header->size;
 
-  if ( header->slot != nslot ){
-    REALLOC(header->data , char*, header->data, header->size * nslot );
-    header->slot = nslot;
-  }
+    h = element(header, pos);
+
+    memmove(h, h + shift, (header->count - pos) * header->size);
+
+    nslot = SLOT_FOR_COUNT(header->count);
+
+    if (header->slot != nslot) {
+        REALLOC(header->data, char *, header->data, header->size * nslot);
+        header->slot = nslot;
+    }
 }
 
 
@@ -350,27 +348,27 @@ VarArrayDeleteMore( VARARRAY header, int pos, int num)
  *      The size of the array will be adjusted so that it
  *      can contain iElements elements.
  *      All previous contents of the VARARRAY are still there,
- *      unless the VARARRAY was made smaller, then the tail   is lost.
+ *      unless the VARARRAY was made smaller, then the tail is lost.
  */
-void
-VarArraySetSize( VARARRAY header, int ncount )
+void VarArraySetSize(VARARRAY header, int ncount)
 {
-  int nslot;
+    int nslot;
 
-  if ( header == NULL){
-    DFATAL(( " VarArraySetSize: VARARRAY is NULL" ));
-  }
-  
-  if ( ncount < 0  ) {
-    DFATAL(( " VarArraySetSize: elements=%5d",ncount ));
-  }
-  nslot = SLOT_FOR_COUNT(ncount);
-  header->count = ncount;
+    if (header == NULL) {
+        DFATAL((" VarArraySetSize: VARARRAY is NULL"));
+    }
 
-  if ( header->slot != nslot ) {
-    REALLOC(header->data , char*, header->data, header->size * nslot );
-    header->slot  = nslot;
-  }
+    if (ncount < 0) {
+        DFATAL((" VarArraySetSize: elements=%5d", ncount));
+    }
+    
+    nslot = ncount;
+    header->count = ncount;
+
+    if (nslot > header->slot) {
+        REALLOC(header->data, char *, header->data, header->size * nslot);
+        header->slot = nslot;
+    }
 }
 
 
@@ -382,21 +380,19 @@ VarArraySetSize( VARARRAY header, int ncount )
  *      is an out of bound access.
  */
 
-GENP
-PVarArrayDebugIndex( VARARRAY header, int pos, char *file, int line )
+GENP PVarArrayDebugIndex(VARARRAY header, int pos, char *file, int line)
 {
-  if ( header == NULL ) {
-    DFATAL(( "Attempting to access an invalid VARARRAY (%s line %d).",
-	file, line ));
-  }
-  if ( header->count == 0 ) {
-    DFATAL(( "Attempting to access a no-data VARARRAY (%s line %d).",
-	file, line ));
-  }
-  if ( pos < 0 || pos >= header->count ) {
-    DFATAL(( "Attempted to access element: %d in a VARARRAY of size: %d",
-	    pos, header->count ));
-  }
-  return( element( header, pos) );
+    if (header == NULL) {
+        DFATAL(("Attempting to access an invalid VARARRAY (%s line %d).", file,
+                line));
+    }
+    if (header->count == 0) {
+        DFATAL(("Attempting to access a no-data VARARRAY (%s line %d).", file,
+                line));
+    }
+    if (pos < 0 || pos >= header->count) {
+        DFATAL(("Attempted to access element: %d in a VARARRAY of size: %d",
+                pos, header->count));
+    }
+    return (element(header, pos));
 }
-

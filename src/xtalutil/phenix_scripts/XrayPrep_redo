@@ -7,7 +7,7 @@
 
 id=$1
 echo "XrayPrep log file for id $id" > $id-prep.log
-spacegroup=$1
+spacegroup=$2
 
 #============================================================================
 if [ "x$spacegroup" != "xP1" ]; then

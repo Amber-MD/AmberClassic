@@ -1096,7 +1096,7 @@ ContainerIAmBeingRemoved( CONTAINER cCont, CONTAINER cRemoved )
  *      This routine changes an attribute of the CONTAINER.
  */
 void    
-ContainerSetAttribute( CONTAINER cCont, STRING sAttribute, OBJEKT oValue )
+ContainerSetAttribute( CONTAINER cCont, STRINGref sAttribute, OBJEKT oValue )
 {
 
         /* If the CONTAINER being informed is NULL then we are */

@@ -51,7 +51,7 @@
 
 
 
-#include	"basics.h"
+#include        "basics.h"
 
 #include        "classes.h"
 
@@ -96,7 +96,7 @@ if ( iObjectType(Ov) == LISTid ) \
 /*
  *      bLoopAtomVisible
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Return TRUE if the atom flags satisfy the
  *      Visible/Invisible requirements of the loop.
@@ -134,7 +134,7 @@ FLAGS           fFlags;
 
 		/* Check if the ATOM is the one invisible ATOM for the loop */
 		/* Used to construct spanning trees that do not pass a */
-		/* certian ATOM, good for looping over side chains */
+		/* certain ATOM, good for looping over side chains */
 
     if ( lPLoop->aInvisibleAtom == (OBJEKT)aAtom ) return(FALSE);
 
@@ -147,7 +147,7 @@ FLAGS           fFlags;
 /*
  *      bSpanAtomVisible
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Return TRUE if the atom is visible to a SPANNINGTREE loop.
  *      This means that the atom has not been seen before ( Set
@@ -181,7 +181,7 @@ bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, BOOL *bPSeenBefore )
 /*
  *      bLoopSatisfiedBy
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Return TRUE if the loop is satisfied by the object.
  */
@@ -216,7 +216,7 @@ int             iGoal;
 /*
  *      InitLoop
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Initialize the loop counters.
  */
@@ -235,7 +235,7 @@ int             i;
 /*
  *      bNextObjectInAtom
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Return TRUE if there is another BOND, ANGLE, TORSION, IMPROPER
  *      connected to the atom, FALSE if there is not.
@@ -282,6 +282,25 @@ BOOL            bDone, bAllowDuplicates;
                     lPLoop->iIndex0++;
                 }
                 break;
+
+		/* New for C4Pairwise */
+	case C4Pairwise:
+                while ( lPLoop->iIndex0 < iAtomC4Pairwise(cCont) ) {
+                    if ( (iAtomId(cCont) <
+                iAtomId(aAtomC4Pairwise(cCont,lPLoop->iIndex0))) ||
+                          bAllowDuplicates ) {
+                        lPLoop->oaObj[0] = (OBJEKT)cCont;
+                        lPLoop->oaObj[1] = (OBJEKT)
+                                aAtomC4Pairwise(cCont,lPLoop->iIndex0);
+                        lPLoop->daC4Pairwise = 
+                                dAtomC4Pairwise(cCont, lPLoop->iIndex0); 
+                        lPLoop->iIndex0++;
+                        return(TRUE);
+                    }
+                    lPLoop->iIndex0++;
+                }
+                break;
+
 
 			/* When LOOPing over ANGLES, use iIndex0 and    */
                         /* iIndex1 as the bond angle indices.           */
@@ -406,7 +425,7 @@ TNONE:          break;
                         /*the LoopGetImproper routine                   */
                         /* The central atom is stored in oaObj[2], the  */
                         /* third atom in the list of four.  This is to  */
-                        /* maintain consistancy with the way impropers  */
+                        /* maintain consistency with the way impropers  */
                         /* are defined in PARM89A.DAT                   */
         case IMPROPERS:
                         /* Anticipate that the indexes all start at 0 */
@@ -450,7 +469,7 @@ TNONE:          break;
 /*
  *      iLoopContainerMatch
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Compare the two CONTAINERs pointed to
  *      and return -1, 0, 1 if the sequence number of cA,cB
@@ -473,7 +492,7 @@ iLoopContainerMatch( CONTAINER *cPA, CONTAINER *cPB )
 /*
  *	zLoopAddToMemory
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *	Add an OBJEKT to the LOOP memory.
  */
@@ -507,7 +526,7 @@ LOOPNODE	lnNew;
 /*
  *      lLoop
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Create an empty loop, over nothing.
  *      Further calls must be made to define what the loop is over
@@ -518,7 +537,7 @@ LOOPNODE	lnNew;
  *
  *      A LOOP over DIRECTCONTENTSBYSEQNUM returns only the OBJEKTS
  *      which are DIRECTLY contained within cOver, sorted by
- *      sequence number in accending order.
+ *      sequence number in ascending order.
  */
 LOOP
 lLoop( OBJEKT oOver, int iGoal )
@@ -617,7 +636,7 @@ CONTAINER	cTemp;
 /*
  *      oNext
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *      Return the next element in the LOOP that satisfies the goal.
  *
@@ -816,7 +835,7 @@ DONE:
 /*
  *	LoopDestroyMemory
  *
- *	Author:	Christian Schafmeister (1991)
+ *      Author: Christian Schafmeister (1991)
  *
  *	Destroy the LOOP memory.
  */

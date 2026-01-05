@@ -1,0 +1,12 @@
+#!/bin/bash
+
+refmac5 hklin 2vb1.mtz xyzin multiconformer_ensemble.pdb xyzout refmac2.pdb \
+    << EOF | tee refmac2.reflog
+LABIN FP=FOBS SIGFP=SIGFOBS FREE=R-free-flags
+MAKE NEWLigand Noexit
+NCYC 40
+REFI BREF
+DAMP 1 1 1
+MAKE HOUT
+EOF
+

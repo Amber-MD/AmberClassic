@@ -4,14 +4,14 @@ in=$1
 let out=$in+1
 out=$(printf "%03d" $out)
 
-# ./run_12uc $in
+# ./run_3uc $in
 
-perl -p -e 's/CYX/CYS/;s/HID/HIS/;s/HIE/HIS/;s/WAT/HOH/;' \
-   < alt4_$out.min1.pdb | grep -v EPW > tmp.pdb
+perl -p -e 's/HIE/HIS/;s/WAT/HOH/;' \
+   < alt1_$out.min1.pdb | grep -v EPW > tmp.pdb
 
-if false; then
+if true; then
 
-./phenix.cdl.sh tmp.pdb alt4-P1.mtz alt4 $out "ACT.cif AMM.cif" > phenix.log
+./run_phenix_refine tmp.pdb alt1-P1.mtz alt1 $out > phenix.log
 
 else
 
@@ -34,7 +34,7 @@ EOF
 
 fi
 
-phenix.molprobity alt4_$out.pdb > alt4_$out.molp
+phenix.molprobity alt1_$out.pdb > alt1_$out.molp
 
-/bin/rm -f molprobity* alt4_$out.eff tmp.pdb phenix.log
+/bin/rm -f molprobity* alt1_$out.eff tmp.pdb phenix.log
 
