@@ -66,6 +66,9 @@
 					 * 5000 characters max 
 					 */
 static char SsOutputBuffer[MAXCHARSPERPRINTF];
+extern void myPrintString();
+
+
 
 /*
  *      myPrintf

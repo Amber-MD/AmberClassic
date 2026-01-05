@@ -183,7 +183,7 @@ extern void             ContainerYouAreBeingRemoved( CONTAINER cCont ) ;
 extern void             ContainerIAmBeingRemoved( CONTAINER cCont, 
                                 CONTAINER cRemoved );
 extern void             ContainerSetAttribute( CONTAINER cCont, 
-                                STRING sAttribute, OBJEKT oValue );
+                                STRINGref sAttribute, OBJEKT oValue );
 extern void             ContainerTotalCharge( CONTAINER cCont, 
                                 double *dPCharge, double *dPPertCharge );
 extern void             ContainerDisplayerUpdate( CONTAINER cCont );

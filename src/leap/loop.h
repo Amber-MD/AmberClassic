@@ -85,6 +85,7 @@
 #define ANGLES                  0x00001002
 #define PROPERS			0x00001003      
 #define IMPROPERS               0x00001004
+#define C4Pairwise              0x00001005 //New
 
         /* LOOP ways */
 
@@ -123,6 +124,7 @@ typedef struct  LOOPSTRUCT{
 	BOOL            bLoopDone;
 	int             iGoal;
 	int             iIndex0, iIndex1, iIndex2, iIndex3;
+        double          daC4Pairwise;
 	OBJEKT          oaObj[MAXOBJ];
 	int             iCurSubLoop;
 	OBJEKT          oaSubLoopOver[MAXSUBLOOPS];
@@ -168,6 +170,10 @@ extern void		LoopDestroyMemory(LOOP *lPLoop);
 #define iLoopGoal( LPL )                ( (LPL)->iGoal )
 #define LoopGetBond( xl,aP1,aP2 )\
     ((*(aP1))=(ATOM)(xl)->oaObj[0],(*(aP2))=(ATOM)(xl)->oaObj[1] )
+
+#define LoopGetC4Pairwise( xl, aP1, aP2, dpC4Pairwise )\
+    ((*(aP1))=(ATOM)(xl)->oaObj[0],(*(aP2))=(ATOM)(xl)->oaObj[1], \
+    (*(dpC4Pairwise))= (xl)->daC4Pairwise )	//New
     
 #define LoopGetAngle( xl,aP1,aP2,aP3 )  \
     ((*(aP1))=(ATOM)(xl)->oaObj[0],(*(aP2))=(ATOM)(xl)->oaObj[1],\

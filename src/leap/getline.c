@@ -32,26 +32,31 @@ static int      gl_tab(char *buf, int offset, int *loc);
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-extern int      isatty(int);	
-// extern int      kill();	
+#ifdef WIN32
+#include <Windows.h>
+#include <stdio.h>
+#include <io.h>
+#endif
 
-/* This is magic; read the commit log.  srb  11-23-2014 */
-#define BUF_SIZE 8096
 
 /********************* exported interface ********************************/
 
-// char           *tl_getline(char *prompt);		/* read a line of input */
+char           *tl_getline();		/* read a line of input */
 void            gl_setwidth(int w);		/* specify width of screen */
 void            gl_histadd(char *buf);		/* adds entries to hist */
 
 void		gl_strwidth(size_t (*func)());		/* to bind gl_strlen */
 
-int 		(*gl_in_hook)(char[BUF_SIZE]) = 0;
-int 		(*gl_out_hook)(char[BUF_SIZE]) = 0;
+int 		(*gl_in_hook)() = 0;
+int 		(*gl_out_hook)() = 0;
 int 		(*gl_tab_hook)(char *, int, int *) = gl_tab;
 
 /******************** internal interface *********************************/
+
+/* This is magic; read the commit log.  srb  11-23-2014 */
+#define BUF_SIZE 8096
 
 static int      gl_init_done = -1;	/* terminal mode flag  */
 static int      gl_termw = 80;		/* actual terminal width */
@@ -73,7 +78,7 @@ static void     gl_init();		/* prepare to edit a line */
 static void     gl_cleanup();		/* to undo gl_init */
 static void     gl_char_init();		/* get ready for no echo input */
 static void     gl_char_cleanup();	/* undo gl_char_init */
-static size_t 	(*gl_strlen)(char *) = (size_t(*)())strlen; 
+static size_t 	(*gl_strlen)() = (size_t(*)())strlen; 
 					/* returns printable prompt width */
 
 static void     gl_addchar(int c);		/* install specified char */
@@ -103,15 +108,19 @@ static void     search_forw(int new_search);		/* look forw for current string */
 
 /************************ nonportable part *********************************/
 
-extern int      write(int, char *, int);
-// extern void     exit();
-
 #if (defined WIN32)
 #undef unix
 #endif
 
+#ifdef _IBMR2
+#define unix
+#endif
+
+#ifdef MSDOS
+#include <bios.h>
+#endif
+
 #ifdef unix
-extern int      read(int, char *, int);
 #   define POSIX
 
 #   ifdef POSIX		/* use POSIX interface */
@@ -120,6 +129,16 @@ extern int      read(int, char *, int);
 struct termios  new_termios, old_termios;
 #   else /* not POSIX */
 #      include <sys/ioctl.h>
+#      if (defined SYSV || defined __i386__)
+#          ifdef TIOCSETN
+#          undef TIOCSETN
+#          endif
+#      endif /* SYSV */
+#      ifdef M_XENIX	/* does not really use bsd terminal interface */
+#          ifdef TIOCSETN
+#          undef TIOCSETN
+#          endif
+#      endif /* M_XENIX */
 #      ifdef TIOCSETN		/* use BSD interface */
 #         include <sgtty.h>
 struct sgttyb   new_tty, old_tty;
@@ -179,8 +198,9 @@ gl_char_init()			/* turn off input echo */
     ioctl(0, TCSETA, &new_termio);
 #endif /* TIOCSETN */
 #endif /* POSIX */
+#elif defined(WIN32)
 
-#endif /* unix */
+#endif /* WIN32 */
 
 }
 
@@ -201,6 +221,25 @@ gl_char_cleanup()		/* undo effects of gl_char_init */
 
 }
 
+#if MSDOS || __EMX__
+static int 
+pc_keymap(int c)
+{
+    switch (c) {
+    case 72: c = 16;   /* up -> ^P */
+        break;
+    case 80: c = 14;   /* down -> ^N */
+        break;
+    case 75: c = 2;    /* left -> ^B */
+        break;
+    case 77: c = 6;    /* right -> ^F */
+        break;
+    default: c = 0;    /* make it garbage */
+    }
+    return c;
+}
+#endif /* MSDOS || __EMCX__ */
+
 static int
 gl_getc()
 /* get a character without echoing it to screen */
@@ -210,6 +249,32 @@ gl_getc()
 
 #ifdef unix
     c = (read(0, &ch, 1) > 0)? ch : -1;
+#endif
+#ifdef WIN32
+    int stdinFiledesc = _fileno(stdin);
+    c = (_read(stdinFiledesc, &ch, 1) > 0)? ch : -1;
+#endif
+#ifdef MSDOS
+    c = _bios_keybrd(_NKEYBRD_READ);
+    if ((c & 0377) == 224) {
+	c = pc_keymap((c >> 8) & 0377);
+    } else {
+	c &= 0377;
+    }
+#endif
+#ifdef __TURBOC__
+    while(!bioskey(1))
+	;
+    c = bioskey(0) & 0xff;
+#endif
+#ifdef __EMX__
+#define getch() _read_kbd(0, 1, 0)
+    c = getch();
+    if (c == 224 || c == 0) {
+        c = pc_keymap(getch());
+    } else {
+        c &= 0377;
+    }
 #endif
     return c;
 }
