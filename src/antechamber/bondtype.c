@@ -1109,6 +1109,7 @@ int main(int argc, char *argv[])
     int resno;
     int tvalence;
     int overflow_flag = 0;      /*if overflow_flag ==1, reallocate memory */
+    int fix_atomnames_flag = 1;
 
     amberhome = egetenv("AMBERCLASSICHOME");
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
@@ -1122,7 +1123,10 @@ int main(int argc, char *argv[])
                    "		         to known bond type information in the input file\n"
                    "[31m                -s[0m stop running if APS (atomic penalty score) is not available\n"
                    "[32m                   0 [0m- no, all the related bonds are frozen, the default\n"
-                   "[32m                   1 [0m- yes\n");
+                   "[32m                   1 [0m- yes\n"
+                   "[31m                -an[0m adjust atom names: yes(y) or no(n)\n"
+                   "[32m                   y [0m- fix atom names. Default.\n"
+                   "[32m                   n [0m- don't fix atom names.\n");
             exit(0);
         }
         if (argc != 7 && argc != 9 && argc != 11) {
@@ -1135,7 +1139,10 @@ int main(int argc, char *argv[])
                    "		         to known bond type information in the input file\n"
                    "[31m                -s[0m stop running if APS (atomic penalty score) is not available\n"
                    "[32m                   0 [0m- no, all the related bonds are frozen, the default\n"
-                   "[32m                   1 [0m- yes\n");
+                   "[32m                   1 [0m- yes\n"
+                   "[31m                -an[0m adjust atom names: yes(y) or no(n)\n"
+                   "[32m                   y [0m- fix atom names. Default.\n"
+                   "[32m                   n [0m- don't fix atom names.\n");
             exit(1);
         }
     } else {
@@ -1155,6 +1162,8 @@ int main(int argc, char *argv[])
                     ("                -s  stop running if APS (atomic penalty score) is not available\n");
                 printf
                     (" 	            0 - no, all the related bonds are frozen, the default; 1 - yes\n");
+                printf
+                    ("                -an adjust atom names: yes(y) or no(n), the default; yes\n");
                 exit(0);
             }
         if (argc != 7 && argc != 9) {
@@ -1171,6 +1180,8 @@ int main(int argc, char *argv[])
                 ("                -s  stop running if APS (atomic penalty score) is not available\n");
             printf
                 (" 	            0 - no, all the related bonds are frozen, the default; 1 - yes\n");
+            printf
+                ("                -an adjust atom names: yes(y) or no(n), the default; yes\n");
             exit(1);
         }
     }
@@ -1206,6 +1217,11 @@ int main(int argc, char *argv[])
                 break;
             }
             continue;
+        }
+        if (strcmp(argv[i], "-an") == 0) {
+            if (strcmp(argv[i+1], "no") == 0 || strcmp(argv[i+1], "n") == 0) {
+                fix_atomnames_flag = 0;
+            }
         }
     }
 
@@ -1251,7 +1267,9 @@ int main(int argc, char *argv[])
             rmol2(ifilename, &atomnum, atom, &bondnum, bond, &cinfo, &minfo, 0);
     }
     atomicnum(atomnum, atom);
-    adjustatomname(atomnum, atom, 1);
+    if (fix_atomnames_flag == 1) {
+        adjustatomname(atomnum, atom, 1);
+    }
     overflow_flag =
         ringdetect(atomnum, atom, bondnum, bond, &ringnum, ring, arom, cinfo.maxatom,
                    cinfo.maxring, minfo.inf_filename, 1);
