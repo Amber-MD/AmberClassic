@@ -76,16 +76,18 @@ XRAY_OBJS = \
 
 .PHONY: dummy
 
-msander$(SFX): $(BINDIR)/msander$(SFX)
+msander: $(BINDIR)/msander
 
-msander.LES$(SFX): $(BINDIR)/msander.LES$(SFX)
+msander.LES: $(BINDIR)/msander.LES
 
-msander.cuda$(SFX): $(BINDIR)/msander.cuda$(SFX)
+msander.cuda: $(BINDIR)/msander.cuda
+
+msander.LES.cuda: $(BINDIR)/msander.LES.cuda
 
 dummy:
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander$(SFX): libs $(MMOBJ) \
+$(BINDIR)/msander: libs $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) $(PLUMED_DEPENDENCIES) \
          dummy
 	@echo "[MSANDER]  FC $@"
@@ -94,7 +96,7 @@ $(BINDIR)/msander$(SFX): libs $(MMOBJ) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
+$(BINDIR)/msander.cuda: libs lib_cuda $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
@@ -105,13 +107,24 @@ $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
          -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
+$(BINDIR)/msander.LES: libs $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
 	$(VB)$(FC) $(FFLAGS) -o $@ $(LESOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+
+#---------------------------------------------------------------------------
+$(BINDIR)/msander.LES.cuda: libs lib_cuda $(LESOBJ) \
+         $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
+         $(PLUMED_DEPENDENCIES) dummy
+	@echo "[MSANDER]  FC $@"
+	$(VB)$(FC) $(FFLAGS) -o $@  $(LESOBJ) \
+	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
+         -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
+         -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
 
