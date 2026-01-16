@@ -2,15 +2,27 @@
 
 $resno_prev = 0;
 $chain_prev = "";
+$basename = "fixme";
+$numc = 2;            #for now, fixed number of LES copies; maybe base
+                      # numc on the occupation?
 
 #-----------------------------------------------------------------------
-# following is specfic to this particular system
-@repeats = ();
-$residuesperchain = 622;
+# following is specfic to this particular system: needed here??
+# @repeats = ();
+# $residuesperchain = 622;
 #-----------------------------------------------------------------------
+# for $i (@repeats){ $repeat[$i] = 1; }
 
-for $i (@repeats){ $repeat[$i] = 1; }
+#  header for addles.in:
 
+print <<EOF;
+file rprm name=($basename.parm7) read
+file rcbd name=($basename.rst7) read
+file wprm name=($basename.LES.parm7) wovr
+file wcrd name=($basename.LES.rst7) wovr
+action
+omas
+EOF
 
 open( PDB, "<", $ARGV[1] );
 
@@ -32,103 +44,26 @@ ATOM: while (<PDB>){
 
    $resno = int($resno1);
    $altocc{$resno . $alt} = $occ if $alt ne " ";
+   $presname[$resno] = $resname;
 
    }
 }
-seek PDB, 0, 0;  # rewind the input file
 $max_res = $resno;
 
 #-----------------------------------------------------------------------
 #  next, use the info above to write an addles.in file to stdout
 #-----------------------------------------------------------------------
 
+#  below, assume that any residue to be replicated has an "A" altloc:
+
 @res = (1..$max_res);
 for $res (@res) {
     if (defined $altocc{$res . "A"}) {
-       $sum_occ = $altocc{$res . "A"} +
-                  $altocc{$res . "B"} +
-                  $altocc{$res . "C"} +
-                  $altocc{$res . "D"} +
-                  $altocc{$res . "E"};
-       $altocc{$res . "A"} /= $sum_occ;
-       $altocc{$res . "B"} /= $sum_occ;
-       $altocc{$res . "C"} /= $sum_occ;
-       $altocc{$res . "D"} /= $sum_occ;
-       $altocc{$res . "E"} /= $sum_occ;
+        print "~ $presname[$res]  $res\n"
+        print "spac numc=$numc pick #mon $res $res done\n"; 
     }  
 }
 
-#-----------------------------------------------------------------------
-#  next, use the alternate info above to select the ensemble:
-#-----------------------------------------------------------------------
+#  signal end of addles.in input:
+print "*EOD\n";
 
-ATOM: while (<PDB>){
-
-#
-#   first, read in a pdb file line and unpack
-#
-
-if( $_ =~ /^ATOM|^HETATM/){
-
-    #  expand to 80+ characters (really hokey version):
-    chop($_);
-    $_ .= "                                                                    "; 
-    ( $label, $atno1, $atname, $alt, $resname, $chainId, $resno1, $iCode,
-          $x, $y, $z, $occ, $bfact, $element, $charge ) =
-        unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
-    $resno = int($resno1);
-    $atno = int($atno1);
-
-    #  determine the relative residue number: only needed for repeats
-    $relres = $resno % $residuesperchain;
-
-    if( $resno != $resno_prev ){ 
-       $rand = rand() unless defined $repeat[$relres];
-       $resno_prev = $resno;
-    }
-
-    # N.B.: following should not require conformers to be in alphabetical order
-
-    if( $alt eq "A" ){
-        next ATOM if $rand > $altocc{$resno."A"}; 
-    } elsif( $alt eq "B" ){
-        next ATOM if $rand < $altocc{$resno."A"}; 
-        next ATOM if $rand > $altocc{$resno."A"} + $altocc{$resno."B"}; 
-    } elsif( $alt eq "C" ){
-        next ATOM if $rand < $altocc{$resno."A"} + $altocc{$resno."B"}; 
-        next ATOM if $rand > $altocc{$resno."A"} + $altocc{$resno."B"} 
-                           + $altocc{$resno."C"};
-    } elsif( $alt eq "D" ){
-        next ATOM if $rand < $altocc{$resno."A"} + $altocc{$resno."B"} 
-                           + $altocc{$resno."C"};
-        next ATOM if $rand > $altocc{$resno."A"} + $altocc{$resno."B"} 
-                           + $altocc{$resno."C"} + $altocc{$resno."D"};
-    } elsif( $alt eq "E" ){
-        next ATOM if $rand < $altocc{$resno."A"} + $altocc{$resno."B"} 
-                           + $altocc{$resno."C"} + $altocc{$resno."D"};
-        next ATOM if $rand > $altocc{$resno."A"} + $altocc{$resno."B"} 
-                           + $altocc{$resno."C"} + $altocc{$resno."D"}
-                           + $altocc{$resno."E"};
-    } elsif( $alt eq "F" ){
-        print STDERR "Error: should never have an F conformer\n";
-        exit(1);
-    } elsif( $alt ne " " ){ 
-        print STDERR "Error: trouble processing altocc $altocc\n";
-        exit(1);
-    }
-                          
-    $occ = 1.0;
-
-    #
-    #  write back out
-    #
-    printf 
-    "%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
-          $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
-            $x,$y,$z, $occ, $bfact, $element, $charge;
-
-} else {
-    print;
-}
-
-}
