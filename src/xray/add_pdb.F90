@@ -41,6 +41,10 @@ program add_pdb
 !  by 2 characters to define the formal charge for ions. For example:
 !  ' H  ' is hydrogen, 'HE  ' is helium, and 'FE+2' is an iron ion.
 !
+!  %FLAG ATOM_ALTLOC
+!  %COMMENT Alternate location code; DIMENSION(NATOM)
+!  %FORMAT(80A1)
+!
 !-------------------------------------------------------------------------------
    implicit none
    integer, parameter :: real_kind=8, rk=real_kind
@@ -54,8 +58,6 @@ program add_pdb
          prmtop_outfile='', &
          pdb_infile='', &
          crd_infile=''
-
-
 
    integer, parameter :: num_elements = 111
    character(len=2), parameter :: element_name(num_elements) = (/ &
@@ -79,8 +81,10 @@ program add_pdb
    equivalence(natom,pointers(1))
    equivalence(nres,pointers(12))
    
-   character(len=4) :: name,resName,segID,element,prev_resName
-   character(len=1) :: altLoc,chainID,iCode,prev_chainID,prev_iCode
+   character(len=4) :: name,segID
+   character(len=3) :: resName,prev_resName
+   character(len=2) :: element
+   character(len=1) :: altLoc,chainID,iCode,prev_chainID,prev_iCode,prev_altLoc
    character(len=5) :: serial
    integer :: resSeq,prev_resSeq
    real :: xyz(3),occupancy,tempFactor
@@ -89,11 +93,13 @@ program add_pdb
    logical :: warned_missing_elements = .false.
    
    ! Existing PRMTOP data:
-   character(len=4), allocatable :: atom_name(:), residue_label(:)
+   character(len=4), allocatable :: atom_name(:)
+   character(len=4), allocatable :: residue_label(:)
    integer, allocatable :: residue_pointer(:)
    ! New PRMTOP data:
-   character(len=1), allocatable :: residue_chainid(:), residue_icode(:)
-   character(len=4), allocatable :: atom_element(:) ! atom_altloc(:)
+   character(len=1), allocatable :: residue_chainid(:), residue_icode(:), &
+                                    atom_altloc(:)
+   character(len=2), allocatable :: atom_element(:)
    character(len=5), allocatable :: atom_number(:)
    integer, allocatable :: residue_number(:)
    real, allocatable :: atom_bfactor(:), atom_occupancy(:)
@@ -166,7 +172,7 @@ program add_pdb
    allocate(atom_name(natom),residue_label(nres),residue_pointer(nres+1), &
          residue_chainid(nres), residue_icode(nres), residue_number(nres), &
          atom_element(natom),atom_bfactor(natom),atom_occupancy(natom), &
-         atom_number(natom) )
+         atom_number(natom),atom_altloc(natom) )
    
    call nxtsec(in_lun,STDOUT,0,'*','ATOM_NAME',fmt,ierr)
    read(in_lun,fmt) atom_name
@@ -185,6 +191,7 @@ program add_pdb
    atom_bfactor(:) = 15.0
    atom_occupancy(:) = 1.0
    atom_number(:) = '    1'
+   atom_altloc(:) = ' '
    
    prev_iCode='*'
    prev_resSeq=HUGE(prev_resSeq)
@@ -204,7 +211,7 @@ program add_pdb
          pdb_natom=pdb_natom+1
          ! If any of these properties change, a new residue has begun.
          if (prev_resSeq /= resSeq .or. prev_chainID /= chainID &
-               .or. prev_iCode /= iCode ) then
+               .or. prev_iCode /= iCode) then
             prev_resSeq = resSeq
             prev_iCode = iCode
             prev_chainID = chainID
@@ -214,17 +221,17 @@ program add_pdb
                write(*,*)'PDB file has too many residues!'
                exit
             end if
-            if (residue_label(pdb_nres) /= resName) then
+            if (residue_label(pdb_nres)(1:3) /= resName) then
                if (residue_label(pdb_nres) /= 'WAT') then
                   write(*,*) 'Warning: PDB resName "',resName, &
-                       '" /= PRMTOP label "',residue_label(pdb_nres),'"'
+                       '" /= PRMTOP label "',residue_label(pdb_nres)(1:3),'"'
                end if
             end if
             residue_chainid(pdb_nres) = chainID
             residue_icode(pdb_nres) = iCode
             residue_number(pdb_nres) = resSeq
          end if
-         i = find_atom(pdb_nres,adjustl(name))
+         i = find_atom(pdb_nres,adjustl(name),altLoc)
          if (i<0) then
             write(*,*) 'Atom not found: ',trim(buf)
             stop
@@ -263,11 +270,14 @@ program add_pdb
                end if
             end if
          end if
+#if 0
          if (atom_element(i) /= '????') then
             write(*,*) 'Duplicate atom: ',trim(buf)
             stop
          end if
+#endif
          atom_element(i) = element
+         atom_altloc(i) = altLoc
          atom_bfactor(i) = tempFactor
          atom_number(i) = serial
          atom_occupancy(i) = occupancy
@@ -329,9 +339,16 @@ program add_pdb
    fmt='(20A4)'
    write(out_lun,'(A)') &
          '%FLAG ATOM_ELEMENT', &
-         '%COMMENT Atom element and formal charge, as read from PDB file; DIMENSION(NATOM)', &
+         '%COMMENT Atom element and formal charge, read from PDB file; DIMENSION(NATOM)', &
          '%FORMAT'//fmt
    write(out_lun,fmt) atom_element
+   
+   fmt='(80A1)'
+   write(out_lun,'(A)') &
+         '%FLAG ATOM_ALTLOC', &
+         '%COMMENT Atom alternate location, read from PDB file; DIMENSION(NATOM)', &
+         '%FORMAT'//fmt
+   write(out_lun,fmt) atom_altloc
    
    fmt='(10F8.2)'
    write(out_lun,'(A)') &
@@ -387,24 +404,33 @@ contains
       stop
    end subroutine usage
 
-   function find_atom(res_index,name) result(atom_index)
+   function find_atom(res_index,name,altLoc) result(atom_index)
       
       implicit none
       
       integer :: atom_index
       integer, intent(in) :: res_index
       character(len=4), intent(in) :: name
+      character(len=1), intent(in) :: altLoc
       ! local
-      character(len=4) :: name1
       integer :: i
       ! begin
-      name1 = adjustl(name)
-      if (name1(1:1) >= '0' .and. name1(1:1) <= '9') then
-         name1 = trim(name1(2:))//name1(1:1)
-      end if
       do i = residue_pointer(res_index), residue_pointer(res_index+1)-1
-         if (atom_name(i)==name .or. atom_name(i)==name1) then
-            atom_index = i
+         if (atom_name(i)==name) then
+            if(altLoc==' ' .or. altLoc=='A') then
+               atom_index = i
+            elseif(altLoc=='B') then 
+               atom_index = i+1
+            elseif(altLoc=='C') then 
+               atom_index = i+2
+            elseif(altLoc=='D') then 
+               atom_index = i+3
+            elseif(altLoc=='E') then 
+               atom_index = i+4
+            else
+               write(6,*) 'Bad altLoc: ', res_index, name, altLoc
+               stop
+            end if
             return
          end if
       end do
