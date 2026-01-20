@@ -83,7 +83,7 @@ program add_pdb
    
    character(len=4) :: name,segID
    character(len=3) :: resName,prev_resName
-   character(len=2) :: element
+   character(len=4) :: element
    character(len=1) :: altLoc,chainID,iCode,prev_chainID,prev_iCode,prev_altLoc
    character(len=5) :: serial
    integer :: resSeq,prev_resSeq
@@ -99,7 +99,7 @@ program add_pdb
    ! New PRMTOP data:
    character(len=1), allocatable :: residue_chainid(:), residue_icode(:), &
                                     atom_altloc(:)
-   character(len=2), allocatable :: atom_element(:)
+   character(len=4), allocatable :: atom_element(:)
    character(len=5), allocatable :: atom_number(:)
    integer, allocatable :: residue_number(:)
    real, allocatable :: atom_bfactor(:), atom_occupancy(:)
@@ -249,7 +249,7 @@ program add_pdb
          if (element(1:1) == char(0)) stop 'BAD ELEMENT'
          ! This element determination requires that names are element-aligned
          ! unless file contains explicit element+charge data.
-         if (element == ' ') then
+         if (element == '    ') then
             if (guess_all) then
                element = guess_element(atom_name(i))
             else
@@ -264,13 +264,13 @@ program add_pdb
 
                end if
                if (name(1:1) >= '0' .and. name(1:1) <= '9') then
-                  element = ' '//name(2:2)
+                  element = ' '//name(2:2)//'  '
                else
-                  element = name(1:2)
+                  element = name(1:2)//'  '
                end if
             end if
          end if
-#if 0
+#if 1
          if (atom_element(i) /= '????') then
             write(*,*) 'Duplicate atom: ',trim(buf)
             stop
@@ -451,12 +451,12 @@ contains
 
       ! Leading non-alpha is a wrapped 5th character; insert a leading space.
       if (lname(1:1) < 'A' .or. lname(1:1) > 'Z') then
-         element = ' '//lname(2:2)
+         element = ' '//lname(2:2)//'  '
 
       ! If second character is lower case, it is a 2-letter element.
       ! (Not standard, but it would make things a lot easier if it was.)
       else if (lname(1:1) >= 'a' .and. lname(1:1) <= 'z') then
-         element = lname(1:2)
+         element = lname(1:2)//'  '
 
       ! If guessing, prefer the 1-letter element if it is valid.
       else if (index("BCFHIKNOPSUVWY",lname(1:1))>0) then
