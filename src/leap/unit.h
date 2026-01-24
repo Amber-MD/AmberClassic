@@ -133,6 +133,8 @@ typedef struct  {
         VARARRAY        vaConnect;
         VARARRAY        vaGroupNames;
         VARARRAY        vaGroupAtoms;
+        int             iMaxPdbSeq;      // Cached max PDB sequence number
+        BOOL            bSeqCacheValid;   // TRUE if cache is valid
 } UNITt;
 
 typedef UNITt   *UNIT;
