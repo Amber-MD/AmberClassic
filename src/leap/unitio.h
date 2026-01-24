@@ -47,7 +47,27 @@
  
 #ifndef UNITIO_H
 #define UNITIO_H
- 
+
+/*New
+typedef struct {
+    CONTAINERNAMEt sName;
+    CONTAINERNAMEt sPertName;
+    ATOMTYPEt sType;
+    ATOMTYPEt sPertType;
+    int iTypeIndex;
+    int iPertTypeIndex;
+    int iElement;
+    int iPertElement;
+    double dCharge;
+    double dPertCharge;
+    int iResidueIndex;
+    VECTOR vPos;
+    VECTOR vVelocity;
+    int iSequence;
+    FLAGS fFlags;
+    ATOM aAtom;
+} SAVEATOMt; 
+*/
 
 extern BOOL     zbUnitIOLoadTables(UNIT uUnit, DATABASE db);
 extern void     zUnitIOSaveTables(UNIT uUnit, DATABASE db);
@@ -57,13 +77,17 @@ extern void     zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 extern void     zUnitIOBuildFromTables(UNIT uUnit);
 extern void     zUnitIODestroyTables(UNIT uUnit);
 extern BOOL     zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert);
+
+extern BOOL     zbUNitIOIndexC4Pairwise(UNIT uUnit, double daC4Pairwise); //New
 extern void     zUnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos, BOOL * bPFailed, BOOL bPert);
 extern void     zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE *fOut,
-                        char *crdName, BOOL bPolar, BOOL bPert, BOOL bNetcdf);
+                        char *crdName, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ); //NewT
 extern void     zUnitIOSaveAmberParmFormat_old(UNIT uUnit, FILE *fOut,
-                        char *crdName, BOOL bPolar, BOOL bPert);
+                        char *crdName, BOOL bPolar, BOOL bPert, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ); //NewT
 extern void     zUnitIOSaveAmberNetcdf( UNIT uUnit, char *filename );
 
 extern void     UnitIOSaveAmberPrep( UNIT uUnit, FILE *fOut );
+
+//extern void     UnitIOSaveC4Type( UNIT uUnit, char *sA, char *sB, double daC4Type ); //NewT
 
 #endif  /* UNITIO_H */

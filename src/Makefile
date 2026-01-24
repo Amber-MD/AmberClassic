@@ -16,7 +16,6 @@ serial:
 	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
 	@cd xtalutil && $(MAKE) xtalutil
-	@cd reduce && $(MAKE) reduce
 	@cd paramfit && $(MAKE) paramfit
 	@cd moft && $(MAKE) $(MOFT)
 	@cd saxs && $(MAKE) saxs
@@ -51,7 +50,6 @@ conda:
 	@cd antechamber && $(MAKE) install_ac
 	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
-	@cd reduce && $(MAKE) reduce
 	@cd xtalutil && $(MAKE) xtalutil
 	@cd paramfit && $(MAKE) paramfit
 	@cd moft && $(MAKE) $(MOFT)
@@ -83,7 +81,6 @@ clean:
 	-(cd antechamber && $(MAKE) clean )
 	-(cd sqm && $(MAKE) clean )
 	-(cd nmr_aux && $(MAKE) clean )
-	-(cd reduce && $(MAKE) clean )
 	-(cd xtalutil && $(MAKE) clean )
 	-(cd paramfit && $(MAKE) clean )
 	-(cd moft && $(MAKE) clean )

@@ -175,7 +175,7 @@ SortByString( GENP PStart, int iElements, int iSize,
  *	Author:	Christian Schafmeister (1991)
  *
  *	Sift the array according to an arbitrary criteria.
- *	A sift seperates elements of an array into two groups
+ *	A sift separates elements of an array into two groups
  *	one where the criteria is true and the other where
  *	it is false.  The group where the criteria is true
  *	is placed before the group where the criteria is
@@ -185,8 +185,8 @@ SortByString( GENP PStart, int iElements, int iSize,
 typedef	BOOL	(*SIFTFUNCTION)();
 
 void
-Sift( GENP PData, int iElementSize, int iElements, 
-    SIFTFUNCTION bFCriteria( GENP ), int *iPFirstFalse )
+Sift( GENP PData, int iElementSize, int iElements, SIFTFUNCTION bFCriteria, 
+	int *iPFirstFalse )
 {
 GENP		PSwapBuffer, PCur, PTop;
 int		iTopTrue, iBottomFalse;

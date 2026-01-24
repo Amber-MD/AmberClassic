@@ -32,21 +32,22 @@
 #=============================================================================
 #  Input variables: edit these to match your problem:
 
-pdbprefix="/media/case/gamow1/PDBdata/rga"     # pdbfiles will be called
+pdbprefix="/media/case/gamow1/PDBdata/tag8"     # pdbfiles will be called
                                       # $pdbprefix.$frame.pdb
 save_hkl="/media/case/gamow1/save_hkl"  # folder for intermediate hkl files
-dprefix="RGA"                         # basename for final output files
+dprefix="TAG8"                         # basename for final output files
 numframes=2500                       # number of pdb-format snapshots
 
-cell="CRYST1  122.436  122.436  153.031  90.00  90.00 120.00 P 1\n"
+cell="CRYST1  200.282  200.282  200.282  80.85  80.85  80.85 P 1\n"
+cell2="200.282  200.282  200.282  80.85  80.85  80.85\n"
                                 # should take this from the first pdb file
-title="Diffuse/Bragg for RGA"  # for mtz and map files
+title="Diffuse/Bragg for TAG8"  # for mtz and map files
 vf000=""                              # cell volume and number of electrons
-grid=""                               # grid dimensions for final map
+grid="SAMPLE 4"                       # grid dimensions for final map
                                       # (see step 7 for vf000 and grid)
 
-resolution=2.19                   # high resolution limit for output
-resolutionm=2.10                  # give a slightly better resolution to
+resolution=2.05
+resolutionm=1.95                  # give a slightly better resolution to
                                   # sfall to esure that no hkl points get
                                   # omitted
 
@@ -61,17 +62,33 @@ if false; then
 cpptraj <<EOF
 #  sample cpptraj script to create pdb snapshots for diffuse scattering analysis
 # 
-parm ../rga2_uc.parm7
-reference ../rga2_uc.rst7
-trajin ../rga2_003.nc
-trajin ../rga2_004.nc
-trajin ../rga2_005.nc
-trajin ../rga2_006.nc
-trajin ../rga2_007.nc
-trajin ../rga2_008.nc
-trajin ../rga2_009.nc
-trajin ../rga2_010.nc
-trajin ../rga2_011.nc
+parm ../tagr.parm7
+reference ../tagr.rst7
+trajin ../tagr_007.nc
+trajin ../tagr_008.nc
+trajin ../tagr_009.nc
+trajin ../tagr_010.nc
+trajin ../tagr_011.nc
+trajin ../tagr_012.nc
+trajin ../tagr_013.nc
+trajin ../tagr_014.nc
+trajin ../tagr_015.nc
+trajin ../tagr_016.nc
+trajin ../tagr_017.nc
+trajin ../tagr_018.nc
+trajin ../tagr_019.nc
+trajin ../tagr_020.nc
+trajin ../tagr_021.nc
+trajin ../tagr_022.nc
+trajin ../tagr_023.nc
+trajin ../tagr_024.nc
+trajin ../tagr_025.nc
+trajin ../tagr_026.nc
+trajin ../tagr_027.nc
+trajin ../tagr_028.nc
+trajin ../tagr_029.nc
+trajin ../tagr_030.nc
+trajin ../tagr_031.nc
 rms reference bb '@C,CA,N' norotate out fit.dat time 0.4
 image byatom
 trajout $pdbprefix.pdb pdb multi pdbv3 keepext sg "P 1"
@@ -236,7 +253,6 @@ gcc -std=gnu99  -o mtz2fcphic mtz2fcphic.c
 
 #  Loop over input files:
 
-numframes=5
 for frame in $(eval echo "{1..$numframes}"); do
 
 #  set all b-factors to 15:
@@ -399,7 +415,7 @@ gcc -std=gnu99  -O3 -o diffuse1 diffuse1.c -lm
 fi
 
 #=============================================================================
-#  Step 5.  combine (if needed) several intermediate .ihkl files into a total:
+#  Step 5.  combine one or more intermediate .ihkl files into a total:
 
 if false; then
 
@@ -543,7 +559,7 @@ gcc -std=gnu99  -O -o diffuse2 diffuse2.c -lm
 #  frames.  Modify the following line if you created several ihklb files
 #  in the previous step.)
 
-./diffuse2 frame1.hkl $dprefix.1.ihklb > $dprefix.1.dhkl
+./diffuse2 frame1.hkl $dprefix.1.ihklb > $dprefix.dhkl
 
 /bin/rm -f diffuse2 diffuse2.c
 
@@ -554,7 +570,7 @@ fi
 if false; then
 
 f2mtz hklin $dprefix.dhkl hklout $dprefix.mtz <<EOF > makemap.log
-CELL  $cell
+CELL  $cell2
 SYMMETRY P1
 LABOUT H K L Q IDIFFUSE FC PHIC
 CTYPOUT H H H R J F P

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+in=$1
+let out=$in+1
+out=$(printf "%03d" $out)
+
+# ./run_3uc $in
+
+perl -p -e 's/HIE/HIS/;s/WAT/HOH/;' \
+   < alt1_$out.min1.pdb | grep -v EPW > tmp.pdb
+
+if true; then
+
+./run_phenix_refine tmp.pdb alt1-P1.mtz alt1 $out > phenix.log
+
+else
+
+# ========== run refmac with the md-derived solvent and
+#            disable the default flat bulk solvent
+
+./amber2refmac tmp.pdb
+
+refmac5 hklin refme.mtz xyzin tmp.pdb xyzout alt4_$out.pdb \
+    << EOF > alt4_$out.reflog
+LABIN FP=FP SIGFP=SIGFP FPART1=Fpart PHIP1=PHIpart FREE=FreeR_flag
+SOLVENT NO
+MAKE NEWLigand Noexit
+SCPART 1
+NCYC 40
+REFI BREF
+DAMP 0 1 1
+MAKE HOUT
+EOF
+
+fi
+
+phenix.molprobity alt1_$out.pdb > alt1_$out.molp
+
+/bin/rm -f molprobity* alt1_$out.eff tmp.pdb phenix.log
+

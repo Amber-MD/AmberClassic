@@ -33,7 +33,7 @@
  *
  *        Description:
  *                Input/output routines for UNITs
- *                this has been seperated out to make unit.c smaller
+ *                this has been separated out to make unit.c smaller
  *                and because there is ALOT of complex code here
  *                that doesn't have alot to do with the day to day operation
  *                of UNITs.
@@ -68,7 +68,14 @@
 *       Universite de Picardie - Jules Verne
 *       http://q4md-forcefieldtools.org
 *       zbUnitIOIndexBondParameters and zUnitDoAtoms are now "extern functions" 
-*/ 
+*/
+
+/*
+ *      Modifications added for atom-spedific C4 interactions. 
+ *      Using similar algorithm as adding a bond
+ *      Zhen Li (2020)
+ *      Michigan State University
+ */
 
 #include <time.h>
 
@@ -145,6 +152,16 @@ typedef struct {
     FLAGS fFlags;
 } SAVEBONDt;
 
+// This is the New function added to help implementing
+// atom-specific pariwise C4 interactions. 
+typedef struct {
+    int iAtom1;
+    int iAtom2;
+    int iParmIndex;
+    double daC4Pairwise;
+} SAVEC4Pairwiset;
+
+
 typedef struct {
     int iAtom1;
     int iAtom2;
@@ -218,6 +235,7 @@ typedef struct {
 typedef struct {
     double dA;
     double dC;
+    double d4; //NewT
     double dA14;
     double dC14;
 } NONBONDACt;
@@ -324,6 +342,7 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
     SAVEMOLECULEt *smPMolecule;
     SAVEHIERARCHYt *shPHierarchy;
     SAVEGROUPSt *sgPGroupAtom;
+    SAVEC4Pairwiset *scPC4Pairwise; // New2021
     int iBondCount, iRestraintCount, iSequence;
     BOOL bGotOne;
     SAVEBOXt sbBox;
@@ -599,6 +618,35 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
                     3, (char *) shPHierarchy->sBelowType, iSize,
                     0, NULL, 0, 0, NULL, 0, 0, NULL, 0);
     }
+
+    /* New Load C4Pairwise interactions */
+    uUnit->vaC4Pairwise = vaVarArrayCreate(sizeof(SAVEC4Pairwiset));
+    bDBGetType(db, "C4Pairwise", &iType, &iCount);
+    VarArraySetSize((uUnit->vaC4Pairwise), iCount);
+    if (iCount) {
+        scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, 0);
+        iSize = sizeof(SAVEC4Pairwiset);
+        bDBGetTable(db, "C4Pairwise", &iCount,
+                   1, (char *) &(scPC4Pairwise->iAtom1), iSize,
+                   2, (char *) &(scPC4Pairwise->iAtom2), iSize,
+                   3, (char *) &(scPC4Pairwise->iParmIndex), iSize,
+                   4, (char *) &(scPC4Pairwise->daC4Pairwise), iSize,
+                   0, NULL, 0, 
+                   0, NULL, 0, 
+                   0, NULL, 0, 
+                   0, NULL, 0, 
+                   0, NULL, 0,
+                   0, NULL, 0, 
+                   0, NULL, 0, 
+                   0, NULL, 0, 
+                   0, NULL, 0,
+                   0, NULL, 0,
+                   0, NULL, 0, 
+                   0, NULL, 0,
+                   0, NULL, 0);
+    }
+
+
     /* Load the atom groups */
 
     if (bDBGetType(db, "groupNames", &iType, &iCount)) {
@@ -654,6 +702,7 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
     int iSize, iCount, iSequence;
     SAVEATOMt *saPAtom;
     SAVEBONDt *sbPBond;
+    SAVEC4Pairwiset *scPC4Pairwise; //New
     SAVECONNECTIVITYt *scPConnectivity;
     SAVEANGLEt *saPAngle;
     SAVETORSIONt *stPTorsion;
@@ -952,6 +1001,24 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
                    NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
                    NULL, 0, 0, NULL, NULL, 0);
     }
+
+    // New save the C4 information  
+
+    if ((iCount = iVarArrayElementCount(uUnit->vaC4Pairwise))) {
+        scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, 0);
+        iSize = sizeof(SAVEC4Pairwiset);
+        DBPutTable(db, "C4Pairwise", iCount,
+                   1, "atom1x", (char *) &(scPC4Pairwise->iAtom1), iSize,
+                   2, "atom2x", (char *) &(scPC4Pairwise->iAtom2), iSize,
+                   3, "parmx", (char *) &(scPC4Pairwise->iParmIndex), iSize,
+                   4, "daC4Pairwise", (char *) &(scPC4Pairwise->daC4Pairwise), iSize, 
+                   0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
+                   NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
+                   NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
+                   NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
+                   NULL, 0, 0, NULL, NULL, 0);
+    }
+
 
     /* Save the angles information */
 
@@ -1267,10 +1334,9 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, BOOL * bPCalc14,
  *
  *        Author:        Christian Schafmeister (1991)
  *
- *        For all of the bonds, search for their parameters
- *        within the UNITs PARMSET.  If they are
- *        found then set the index to the entry, otherwise
- *        add the bond parameter to the PARMSET and set the index.
+ *        For all of the bonds, search for their parameters within the
+ *        UNITs PARMSET.  If they are found then set the index to the entry,
+ *        otherwise add the bond parameter to the PARMSET and set the index.
  *        If either of the ATOMs in the bond are to be perturbed then
  *        do the same with the perturbation parameter.
  *
@@ -1292,6 +1358,7 @@ zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
 #endif
 
 
+    VPTRACEENTER(( "zbUnitIOIndexBondParameters" ));
     bFailedGeneratingParameters = FALSE;
 
     if (uUnit->vaBonds != NULL) {
@@ -1320,21 +1387,32 @@ zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
             sbPBond->fFlags = 0;
             strcpy(sAtom1, sAtomType(aAtom1));
             strcpy(sAtom2, sAtomType(aAtom2));
+            VPTRACE(( "Searching for bond parameter for atom type %s with name %s,\n"
+                    "       atomic number %i, Id %i, and Index %i \n"
+                    "       at position %f, %f, %f \n",
+                    sAtom1, sContainerName( aAtom1), iAtomElement(aAtom1),
+                    iAtomId(aAtom1), iAtomIndex(aAtom1), vAtomPosition(aAtom1).dX,
+                    vAtomPosition(aAtom1).dY, vAtomPosition(aAtom1).dZ ));
             iIndex = iParmSetFindBond(uUnit->psParameters, sAtom1, sAtom2);
             if (iIndex == PARM_NOT_FOUND) {
                 PARMLIB_LOOP(plLib, psTemp,
-                             (iTemp = iParmSetFindBond(psTemp,
-                                                       sAtom1, sAtom2)));
+                        (iTemp = iParmSetFindBond(psTemp, sAtom1, sAtom2)));
                 if (iTemp != PARM_NOT_FOUND) {
-		  ParmSetBond(psTemp, iTemp, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
-                              &dKpress, &dRpress0, sDesc);
-                  iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2, dKb, dR0,
-                                           dKpull, dRpull0, dKpress, dRpress0, sDesc);
+                    ParmSetBond(psTemp, iTemp, sAtom1, sAtom2, &dKb, &dR0,
+                            &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
+                    iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2,
+                            dKb, dR0, dKpull, dRpull0, dKpress, dRpress0, sDesc);
                 } else {
                     bFailedGeneratingParameters = TRUE;
                     iIndex = 0;
-                    VPERROR(( "Could not find bond parameter for: %s - %s\n",
-                            sAtom1, sAtom2));
+                    VECTOR vPos1 = vAtomPosition(aAtom1);
+                    VECTOR vPos2 = vAtomPosition(aAtom2);
+                    VPERROR(( "Could not find bond parameter for atom types: %s - %s\n"
+                            "        for atom %s at position %f, %f, %f \n"
+                            "        and atom %s at position %f, %f, %f.\n",
+                            sAtom1, sAtom2, sContainerName( aAtom1), vPos1.dX,
+                            vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
+                            vPos2.dX, vPos2.dY, vPos2.dZ ));
                 }
             }
             sbPBond->iParmIndex = iIndex + 1;
@@ -1399,9 +1477,73 @@ zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
         }
     }
 
+    VPTRACEEXIT (( "zbUnitIOIndexBondParameters" ));
     return (bFailedGeneratingParameters);
 }
 
+/*
+ *        zUnitIndexC4Pairwise
+ *        
+ *        New feature (2021)
+ *
+ *        For all of the C4 interactions, search for their parameters
+ *        within the UNITs PARMSET.  If they are
+ *        found then set the index to the entry, otherwise
+ *        add the C4 parameter to the PARMSET and set the index.
+ *
+ *        Return TRUE if there was a problem generating parameters.
+ */
+
+BOOL
+zbUnitIOIndexC4Pairwise(UNIT uUnit)
+{
+    int iCount, iIndex;
+    LOOP lTemp;
+    SAVEC4Pairwiset *scPC4Pairwise;
+    ATOM aAtom1, aAtom2;
+    double daC4Pairwise; // New
+    BOOL bFailedGeneratingParameters;
+    STRING sAtom1, sAtom2, sDesc;
+#ifdef  DEBUG
+    STRING sTemp1, sTemp2;
+#endif
+    
+    daC4Pairwise = 0.0; // New    
+    bFailedGeneratingParameters = FALSE;
+
+    if (uUnit->vaC4Pairwise != NULL) {
+        // VP0(("Rebuilding C4 parameters.\n")); // C4PairwiseDebug
+        VarArrayDestroy(&(uUnit->vaC4Pairwise));
+    } 
+    // else
+        // VP0(("Building C4 parameters.\n")); // C4PairwiseDebug
+
+    uUnit->vaC4Pairwise = vaVarArrayCreate(sizeof(SAVEC4Pairwiset));
+    iCount = 0;
+    lTemp = lLoop((OBJEKT) uUnit, C4Pairwise); 
+    while (oNext(&lTemp) != NULL)
+        iCount++;
+    //VP0(("iCount is: %i\n", iCount));
+    VarArraySetSize((uUnit->vaC4Pairwise), iCount); 
+    if (iCount) {
+        lTemp = lLoop((OBJEKT) uUnit, C4Pairwise);
+        scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, 0);
+        if (scPC4Pairwise == NULL)
+            DFATAL((" ?? null\n"));
+        for (; oNext(&lTemp) != NULL; scPC4Pairwise++) {
+            LoopGetC4Pairwise(&lTemp, &aAtom1, &aAtom2, &daC4Pairwise); 
+            scPC4Pairwise->iAtom1 = iContainerTempInt(aAtom1);
+            scPC4Pairwise->iAtom2 = iContainerTempInt(aAtom2);
+            scPC4Pairwise->iParmIndex = 0;
+            scPC4Pairwise->daC4Pairwise = daC4Pairwise;
+            strcpy(sAtom1, sAtomType(aAtom1));
+            strcpy(sAtom2, sAtomType(aAtom2));
+            iIndex = iParmSetAddC4Pairwise(uUnit->psParameters, sAtom1, sAtom2, daC4Pairwise, sDesc);
+        }
+            scPC4Pairwise->iParmIndex = iIndex + 1;
+    }
+    return (bFailedGeneratingParameters);
+}
 
 /*
  *        zUnitIndexAngleParameters
@@ -1479,8 +1621,17 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
             } else {
                 bFailedGeneratingParameters = TRUE;
                 iIndex = 0;
-                VPERROR(( "Could not find angle parameter: %s - %s - %s\n",
-                        sAtom1, sAtom2, sAtom3));
+                VECTOR vPos1 = vAtomPosition(aAtom1);
+                VECTOR vPos2 = vAtomPosition(aAtom2);
+                VECTOR vPos3 = vAtomPosition(aAtom3);
+                VPERROR(( "Could not find angle parameter for atom types: %s - %s - %s\n"
+                        "        for atom %s at position %f, %f, %f,\n"
+                        "            atom %s at position %f, %f, %f,\n"
+                        "        and atom %s at position %f, %f, %f.\n",
+                        sAtom1, sAtom2, sAtom3, sContainerName( aAtom1),
+                        vPos1.dX, vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ, sContainerName( aAtom3),
+                        vPos3.dX, vPos3.dY, vPos3.dZ ));
             }
         }
         saAngle.iParmIndex = iIndex + 1;
@@ -1714,6 +1865,7 @@ static BOOL
 zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                BOOL bProper, BOOL bPert )
 {
+    VPTRACEENTER(( "zbUnitIOIndexTorsionParameters" ));
     LOOP lTemp;
     SAVETORSIONt stTorsion;
     ATOM aAtom1, aAtom2, aAtom3, aAtom4;
@@ -2097,8 +2249,26 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
             MESSAGE(("First non-perturbed multiplicity: %d\n", iN));
         } else {
             if (bProper) {
-                VPERROR(( " ** No torsion terms for  %-s-%-s-%-s-%-s\n",
-                        sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4));
+                VPTRACE(( "sOrigAtom vs sAtom: %s, %s, %s, %s;\n"
+                   "                           %s, %s, %s, %s.\n",
+                        sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4,
+                            sAtom1,     sAtom2,     sAtom3,     sAtom4 ));
+                /* My reading is that the parts of aAtom1, etc. used below */
+                /* cannot change, so i use sAtom1 instead of sOrigAtom1, etc. */
+                VECTOR vPos1 = vAtomPosition(aAtom1);
+                VECTOR vPos2 = vAtomPosition(aAtom2);
+                VECTOR vPos3 = vAtomPosition(aAtom3);
+                VECTOR vPos4 = vAtomPosition(aAtom4);
+                VPERROR(( " ** No torsion terms for atom types: %-s-%-s-%-s-%-s\n"
+                        "        for atom %s at position %f, %f, %f,\n"
+                        "            atom %s at position %f, %f, %f,\n"
+                        "            atom %s at position %f, %f, %f,\n"
+                        "        and atom %s at position %f, %f, %f.\n",
+                        sAtom1, sAtom2, sAtom3, sAtom4, sContainerName( aAtom1),
+                        vPos1.dX, vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ, sContainerName( aAtom3),
+                        vPos3.dX, vPos3.dY, vPos3.dZ, sContainerName( aAtom4),
+                        vPos4.dX, vPos4.dY, vPos4.dZ ));
                 bFailedGeneratingParameters = TRUE;
             } else if ( iAtomHybridization(aAtom3) == 2 ){
                 VP1((" ** Warning: No sp2 improper torsion term for  %-s-%-s-%-s-%-s\n",
@@ -2427,6 +2597,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     }
 
 
+    VPTRACEEXIT (( "zbUnitIOIndexTorsionParameters" ));
     return (bFailedGeneratingParameters);
 }
 
@@ -3057,6 +3228,9 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         bFailedGeneratingParameters |=
             zbUnitIOIndexBondParameters(plParameters, uUnit, bPert);
 
+	/* New now generate C4 table  */
+	bFailedGeneratingParameters |=
+            zbUnitIOIndexC4Pairwise(uUnit); 
 
         /* Now generate the ANGLE table */
 
@@ -3439,6 +3613,8 @@ void zUnitIODestroyTables(UNIT uUnit)
         VarArrayDestroy(&(uUnit->vaHierarchy));
     if (uUnit->vaBonds != NULL)
         VarArrayDestroy(&(uUnit->vaBonds));
+    if (uUnit->vaC4Pairwise != NULL)
+	    VarArrayDestroy(&(uUnit->vaC4Pairwise)); //New
     if (uUnit->vaAngles != NULL)
         VarArrayDestroy(&(uUnit->vaAngles));
     if (uUnit->vaTorsions != NULL)
@@ -3533,10 +3709,11 @@ CheckAgainstNBEdits(VARARRAY vaPNBEdits, typeStr tI, typeStr tJ,
 static void
 zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
                           VARARRAY * vaPNBParameters,
-                          VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds)
+                          VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds,
+                          char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ) //NewT
 {
     VARARRAY vaNBIndex, vaNonBonds, vaPNBEdits;
-    int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY;
+    int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY, iC4, jC4;
     int iIndex, iHBondIndex, iNBIndex, iElement, iHybridization;
     double dMass, dPolar, dE, dR, dE14, dR14, dA, dC, dEI, dRI, dEJ, dRJ;
     double dScreenF;
@@ -3677,6 +3854,8 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 				&dA, &dC);
             PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA = dA;
             PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dC = dC;
+            // Initialize all C4 to be zero NewT
+            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->d4 = 0.0;
             if (GDefaults.iCharmm) {
                 dEI = PVAI(vaNonBonds, NONBONDt, i)->dE14;
                 dRI = PVAI(vaNonBonds, NONBONDt, i)->dR14;
@@ -3690,6 +3869,34 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
                 PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA14 = dA;
                 PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dC14 = dC;
             }
+        }
+    }
+    // Only update C4 that matches both atom type names NewT
+    for (int jj = 0; jj < iC4count; jj ++)  
+    {   
+        iC4 = -1;
+        jC4 = -1;
+        for (int ii = 0; ii < iVarArrayElementCount(uUnit->vaAtoms); ii++) {
+            //VP0(("Atom type is: %s\n", sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom)));
+            //VP0(("Target is: %s\n", sA[jj]));
+            if (!strcmp(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom), sA[jj])) {
+                iC4 = PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->iTypeIndex;
+                if (iC4 > iVarArrayElementCount(vaNonBonds)) {
+                        iC4 = iC4 - iVarArrayElementCount(vaNonBonds);
+                }
+		//VP0(("iC4 matches!!! value is %i\n", iC4));
+            }
+            if (!strcmp(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom), sB[jj])) {
+                jC4 = PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->iTypeIndex;
+                if (jC4 > iVarArrayElementCount(vaNonBonds)) {
+                        jC4 = jC4 - iVarArrayElementCount(vaNonBonds);
+                }
+		//VP0(("jC4 matches!!! value is %i\n", jC4));
+            }
+        }
+        if (iC4 != -1 && jC4 != -1) {
+        VP0(("daC4Type value is %f\n", daC4Type[jj]));
+        PVAI(*vaPNBParameters, NONBONDACt, MAX(iC4,jC4)*(MAX(iC4,jC4)-1)/2+MIN(iC4,jC4)-1)->d4 = daC4Type[jj];
         }
     }
 
@@ -4241,7 +4448,8 @@ static void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     // CMAP parameters, Mengjuei Hsieh and Yong Duan
     //
     int i, j, k, l;
-    int mapid, mapcount, maptypes;
+    int mapid, maptypes;
+//    int mapcount;
     int *mapflag, *mapidx;
     int iNumDIH;
     int nprospect, ires;
@@ -4260,7 +4468,7 @@ static void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     if (mapnum <= 0)
         return;
 
-    mapcount = 0;
+//    mapcount = 0;
     mapflag = (int *) malloc(sizeof(int) * (mapnum + 1));
     mapidx = (int *) malloc(sizeof(int) * (mapnum + 1));
 
@@ -4285,7 +4493,7 @@ static void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
 
     stdpt0 = (SAVETORSIONtp *) malloc(sizeof(SAVETORSIONtp) * (iNumDIH));
     nprospect = 0;
-    mapcount = 0;
+//    mapcount = 0;
     // Loop over dihedral list
 // pre-filter removes the irrelevant torsions first ...
     for (i = 0; i < iNumDIH; i++, stPTorsion++) {
@@ -4838,6 +5046,30 @@ static int BondAugmentationFound(UNIT uUnit)
 }
 
 //---------------------------------------------------------------------------------------------
+//// C4PairwiseFound: test for the existence of adding C4 interaction.  Return 1 if they are
+////                        found, which will ordeer them to be printed.
+////
+//// Arguments:
+////   uUnit:    the tleap Unit to save
+////---------------------------------------------------------------------------------------------
+/*
+static int C4PairwiseFound(UNIT uUnit)
+{
+  int i, found;
+
+  found = 0;
+  for (i = 0; i < iVarArrayElementCount(uUnit->vaC4Pairwise); i++) {
+    if (PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, i)->daC4Pairwise > 0.1) {
+      found = 1;
+      break;
+    }
+  }
+
+  return found;
+}
+*/
+
+//---------------------------------------------------------------------------------------------
 // zUnitIOSaveAmberParmFormat: save an Amber-format topology.
 //
 // Arguments:
@@ -4849,7 +5081,7 @@ static int BondAugmentationFound(UNIT uUnit)
 //   bNetcdf:  flag to write a NetCDF coordinates file rather than the standard %12.7f format
 //---------------------------------------------------------------------------------------------
 void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
-                                BOOL bPolar, BOOL bPert, BOOL bNetcdf)
+                                BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ) //NewT
 {
   int i, iMax, iIndex;
   LOOP lTemp, lSpan;
@@ -4862,12 +5094,13 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
   VARARRAY vaExcludedAtoms, vaExcludedCount, vaNBIndexMatrix, vaNBParameters,
            vaNBIndex, vaNonBonds;
   SAVEBONDt *sbPBond;
+  SAVEC4Pairwiset *scPC4Pairwise; //New
   SAVEANGLEt *saPAngle;
   SAVEATOMt *saPAtom;
   SAVETORSIONt *stPTorsion;
   SAVERESTRAINTt *srPRestraint;
   double dMass, dPolar, dR, dKb, dR0, dKpull, dRpull0, dKpress, dRpress0, dKt, dT0, dTkub,
-         dRkub, dKp, dP0, dC, dD, dTemp, dScEE, dScNB, dScreenF, dSceeScaleFactor;
+         dRkub, dKp, dP0, dC, dD, dTemp, dScEE, dScNB, dScreenF, daC4Pairwise; //New dSceeScaleFactor not included
   STRING sAtom1, sAtom2, sAtom3, sAtom4, sType1, sType2;
   int iN, iAtoms, iMaxAtoms, iTemp, iAtom, iCalc14, iProper;
   int iElement, iHybridization, iStart, iFirstSolvent;
@@ -4908,6 +5141,7 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
   vaExcludedAtoms = vaVarArrayCreate(sizeof(int));
 
   iCountPerturbed = 0;
+  // VP0(("what iosaveparm returns %d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     aAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom;
     if (bAtomFlagsSet(aAtom, ATOMPERTURB)) {
@@ -5001,7 +5235,7 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
 
   // Build the NON-BOND arrays that AMBER needs
   zUnitIOBuildNonBondArrays(uUnit, &vaNBIndexMatrix, &vaNBParameters,
-                            &vaNBIndex, &vaNonBonds);
+                            &vaNBIndex, &vaNonBonds, sA, sB, daC4Type, iC4count ); //NewT
   FortranFile(fOut);
 
 #if 0
@@ -5279,7 +5513,17 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
     }
   }
   FortranWriteInt(iNumExtra);
+
+  //NCOPY but not sure why it is not here. PMEMDCUDA reads it though. Added for C4PairwiseCUDA
+  //FortranWriteInt(0);
+
+  // NUMC4Pairwise New2021
+  if (iVarArrayElementCount(uUnit->vaC4Pairwise) > 0) {
+    FortranWriteInt(0); // To make up the loss of NCOPY
+    FortranWriteInt(iVarArrayElementCount(uUnit->vaC4Pairwise));
+  }
   FortranEndLine();
+  
 
   // -3-  write out the names of the atoms
   FortranDebug("-3-");
@@ -6020,8 +6264,10 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
   FortranWriteString("%FLAG AMBER_ATOM_TYPE");
   FortranWriteString("%FORMAT(20a4)");
   FortranFormat(20, LBLFORMAT);
+  //FortranFormat(10, INTFORMAT);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     FortranWriteString(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom));
+    //FortranWriteInt(iAtomCoordination(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom)); //VeryNew
   }
   FortranEndLine();
 
@@ -7006,6 +7252,98 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
     }
   }
 
+  // NewT
+  // -37- Lennard jones r**4 term for all possible interactions
+  // CN1 array
+  // Only print when tleap has a "addC4Type" command enabled
+  if (iC4count) {
+    FortranDebug("-37-");
+    FortranFormat(1, "%-80s");
+    FortranWriteString("%FLAG LENNARD_JONES_CCOEF");
+    FortranWriteString("%FORMAT(5E16.8)");
+    FortranFormat(5, DBLFORMAT);
+    for (i = 0; i < iVarArrayElementCount(vaNBParameters); i++) {
+      FortranWriteDouble(PVAI(vaNBParameters, NONBONDACt, i)->d4);
+    }
+    FortranEndLine();
+  }
+
+  // Add C4 output here. 
+  // -38- Write atom-specific C4 pairwise interaction
+  // Write the two indices into the atom table, then the index
+  // into the interaction table
+  //VP0(("vaC4Pairwise count is: %i\n", iVarArrayElementCount(uUnit->vaC4Pairwise)));
+  if (iVarArrayElementCount(uUnit->vaC4Pairwise) > 0) {
+    FortranDebug("-38-");
+    MESSAGE(("Writing the atom-specific C4 pairwise indices\n"));
+    FortranFormat(1, "%-80s");
+    FortranWriteString("%FLAG LENNARD_JONES_DCOEF");
+    FortranWriteString("%FORMAT(3I8)"); 
+    FortranFormat(10, INTFORMAT);
+    //FortranWriteString("%FORMAT ATOM, ATOM, C4");
+    //FortranFormat(5, DBLFORMAT);
+    //VP0(("vaC4Pairwise count is: %i\n", iVarArrayElementCount(uUnit->vaC4Pairwise)));
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaC4Pairwise); i++) {
+      scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, i);
+      FortranFormat(10, INTFORMAT);
+      FortranWriteInt(AMBERINDEX(scPC4Pairwise->iAtom1));
+      FortranWriteInt(AMBERINDEX(scPC4Pairwise->iAtom2));
+      FortranWriteInt(i+1);
+      FortranEndLine();
+    }
+
+    FortranDebug("-39-");
+    MESSAGE(("Writing the atom-specific C4 pairwise values\n"));
+    FortranFormat(1, "%-80s");
+    FortranWriteString("%FLAG LENNARD_JONES_DVALUE");
+    FortranWriteString("%FORMAT(1E16.8)");
+    FortranFormat(5, DBLFORMAT);
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaC4Pairwise); i++) {
+      scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, i);
+      FortranWriteDouble(scPC4Pairwise->daC4Pairwise);
+      FortranEndLine();
+    }
+  }
+/*
+  FortranDebug("-37-");
+tring("%FORMAT(10I8)");
+  FortranFormat(1, "%-80s");
+  FortranWriteString("%FLAG LENNARD_JONES_DCOEF");
+  FortranWriteString("%FORMAT(5E16.8)");
+  //FortranFormat(20, LBLFORMAT);
+  //FortranFormat(10, INTFORMAT);
+  //FortranFormant(5, DBLFORMAT);
+  for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
+    //FortranWriteString(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom));
+    if (iAtomC4Pairwise(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom) != 0) {
+      saPAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i);
+      //FortranWriteInt(iAtomC4Pairwise(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom)); //VeryNew 
+      FortranFormat(10, INTFORMAT);
+      FortranWriteInt(saPAtom->iResidueIndex); //VeryNew
+      FortranWriteInt(saPAtom->iSequence); //VeryNew
+      FortranWriteInt(PVAI(uUnit->vaResidues, SAVERESIDUEt, saPAtom->iResidueIndex)->iAtomStartIndex + saPAtom->iSequence - 1);
+      //FortranWriteInt(i);
+      FortranFormat(20, LBLFORMAT);
+      FortranWriteString("  ");
+      FortranWriteString(sAtomName(saPAtom->aAtom));
+      FortranEndLine();
+      //TODO:Nested loop to print all related C4s if more than one, 
+      //then set self C4Coord to zero so it won't be re-visited by the other end.
+      for (int j = 0; j < iAtomC4Pairwise(saPAtom->aAtom); j++) {
+        FortranFormat(20, LBLFORMAT);
+        FortranWriteString(sAtomType(saPAtom->aAtom->aaC4Pairwise[j]));
+        FortranFormat(10, INTFORMAT);
+        FortranWriteInt(saPAtom->aAtom->aaC4Pairwise[j]->iIndex);
+        FortranFormat(5, DBLFORMAT);
+        FortranWriteDouble(saPAtom->aAtom->daC4Pairwise[j]);
+        FortranEndLine();
+      }
+      //FortranWriteInt(AMBERINDEX(uUnit->vaAtoms)); //VeryNew
+    }
+    //FortranWriteDouble(aAtomC4Pairwise(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom, 0)); //New
+  }
+*/
+
   //  Charmm-style parameters
   if (GDefaults.iCharmm) {
 
@@ -7157,7 +7495,7 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
 
 void
 zUnitIOSaveAmberParmFormat_old( UNIT uUnit, FILE *fOut, char *crdName, 
-        BOOL bPolar, BOOL bPert )
+        BOOL bPolar, BOOL bPert, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count) //NewT
 {
 int             i, iMax, iIndex;
 LOOP            lTemp, lSpan;
@@ -7303,7 +7641,7 @@ IX_DESC         iResIx;
                 /* Build the NON-BOND arrays that AMBER needs */
 
     zUnitIOBuildNonBondArrays( uUnit, &vaNBIndexMatrix, &vaNBParameters,
-                                        &vaNBIndex, &vaNonBonds );
+                                        &vaNBIndex, &vaNonBonds, sA, sB, daC4Type, iC4count ); //NewT
  
 
     FortranFile( fOut );
@@ -9139,3 +9477,187 @@ void UnitIOSaveAmberPrep(UNIT uUnit, FILE * fOut)
     fprintf(fOut, "STOP\n");
 
 }
+
+
+//void UnitIOSaveC4Type(UNIT uUnit, char *sA, char *sB, double daC4Type)
+//{
+//    VP0(("Yes we did it!!! %s %s %f %d\n", sA, sB, daC4Type, iVarArrayElementCount(uUnit->vaAtoms)));
+//
+//    
+//}
+
+/*
+ *      UnitIOSaveC4Type  //NewT2021
+ *      A possible way to add type-specific
+ *      C4 from tleap commands. 
+ */
+//static void
+//zUnitIOBuildNonBondArraysC4Type(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
+//                          VARARRAY * vaPNBParameters,
+//                          VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds
+//                          char *sA, char *sB, double daC4Type)
+//{
+//    VARARRAY vaNBIndex, vaNonBonds, vaPNBEdits;
+//    int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY;
+//    int iIndex, iHBondIndex, iNBIndex, iElement, iHybridization;
+//    double dMass, dPolar, dE, dR, dE14, dR14, dA, dC, dEI, dRI, dEJ, dRJ;
+//    double dScreenF;
+//    STRING sType, sTypeI, sTypeJ, sDesc;
+//    NONBONDt *nbPFirst, *nbPCur, *nbPTemp, *nbPLast;
+//
+//    /* Build the NON-BONDED arrays */
+//    /* First reduce the non-bond parameters to the absolute */
+//    /* minimum, by rolling up parameters with duplicate values */
+//    /* maintaining a many to one mapping into the */
+//    /* rolled up non-bond parameter array */
+//
+//
+//    vaNBIndex = vaVarArrayCreate(sizeof(int));
+//    vaNonBonds = vaVarArrayCreate(sizeof(NONBONDt));
+//    iNonBonds = iParmSetTotalAtomParms(uUnit->psParameters);
+//    iNBIndices = iNonBonds;
+//    VarArraySetSize(vaNonBonds, iNonBonds);
+//    VarArraySetSize(vaNBIndex, iNonBonds);
+//    vaPNBEdits = uUnit->psParameters->vaNBEdits;
+//    for (i = 0; i < iNonBonds; i++) {
+//        ParmSetAtom(uUnit->psParameters, i,
+//                    sType, &dMass, &dPolar, &dE, &dR, &dE14, &dR14,
+//                    &dScreenF, &iElement, &iHybridization, sDesc);
+//        PVAI(vaNonBonds, NONBONDt, i)->bCapableOfHBonding =
+//            bParmSetCapableOfHBonding(uUnit->psParameters, sType);
+//        PVAI(vaNonBonds, NONBONDt, i)->dE = dE;
+//        PVAI(vaNonBonds, NONBONDt, i)->dR = dR;
+//        PVAI(vaNonBonds, NONBONDt, i)->dE14 = dE14;
+//        PVAI(vaNonBonds, NONBONDt, i)->dR14 = dR14;
+//        strcpy(PVAI(vaNonBonds, NONBONDt, i)->sType, sType);
+//        *PVAI(vaNBIndex, int, i) = i;
+//    }
+//
+//    /* Now roll up the equivalent NON-BOND parameters */
+//
+//    if (!GDefaults.iCharmm) {
+//        nbPLast = PVAI(vaNonBonds, NONBONDt, iNonBonds - 1);
+//        for (iNBIndex = 0; iNBIndex < iVarArrayElementCount(vaNBIndex);
+//             iNBIndex++) {
+//            nbPFirst = PVAI(vaNonBonds, NONBONDt, 0);
+//            nbPCur =
+//                PVAI(vaNonBonds, NONBONDt, *PVAI(vaNBIndex, int, iNBIndex));
+//            if (!nbPCur->bCapableOfHBonding) {
+//                while (nbPFirst < nbPCur) {
+//                    if (nbPFirst->dE == nbPCur->dE &&
+//                        nbPFirst->dR == nbPCur->dR &&
+//                        nbPFirst->dE14 == nbPCur->dE14 &&
+//                        nbPFirst->dR14 == nbPCur->dR14 &&
+//                        CheckTypeNBEdit(nbPFirst->sType, vaPNBEdits) == 0 &&
+//                        CheckTypeNBEdit(nbPCur->sType, vaPNBEdits) == 0) {
+//                        for (nbPTemp = nbPCur; nbPTemp < nbPLast;
+//                             nbPTemp++) *nbPTemp = *(nbPTemp + 1);
+//                       iNonBonds--;
+//                        nbPLast--;
+//
+//                        /* Update the indices into the NON-BOND array */
+//                        /* Making sure that indices into parameters that */
+//                        /* follow the one at j will be moved back on */
+//
+//                        j = nbPFirst - PVAI(vaNonBonds, NONBONDt, 0);
+//                        *PVAI(vaNBIndex, int, iNBIndex) = j;
+//                        for (iTemp = iNBIndex + 1; iTemp < iNBIndices;
+//                             iTemp++) {
+//                            if (*PVAI(vaNBIndex, int, iTemp) > j)
+//                                 (*PVAI(vaNBIndex, int, iTemp))--;
+//                        }
+//                        break;
+//                    }
+//                    nbPFirst++;
+//                }
+//            }
+//        }
+//    }
+//    /* Now the first iNonBonds entries of the array vaNonBonds */
+//    /* contain unique NON-BOND parameters, and the array vaNBIndex */
+//    /* contains indices into the vaNonBonds array for every */
+//    /* NON-BOND type */
+//    /* Change the size of the vaNonBonds array to the number of */
+//    /* valid non-bond parameters */
+//    VarArraySetSize(vaNonBonds, iNonBonds);
+//
+//    /* Build the NxN integer index array */
+//
+//    *vaPNBIndexMatrix = vaVarArrayCreate(sizeof(int));
+//    VarArraySetSize((*vaPNBIndexMatrix), iNonBonds * iNonBonds);
+//    for (i = 0; i < iNBIndices; i++) {
+//        for (j = 0; j < iNBIndices; j++) {
+//
+//            /* Calculate the position of the parameters for the */
+//            /* non-bond interaction i-j within the vaPNBParameters */
+//            /* array */
+//
+//            iI = *PVAI(vaNBIndex, int, i);
+//            iJ = *PVAI(vaNBIndex, int, j);
+//            iX = MIN(iI, iJ);
+//            iY = MAX(iI, iJ);
+//            iIndex = iY * (iY + 1) / 2 + iX + 1;        /* +1 because they are FORTRAN */
+//            /* style arrays !!!!! */
+//
+//            /* Check if there is an H-Bond parameter for this */
+//            /* interaction, if there is, make iIndex = -iHBondIndex */
+//            /* -ve to signify that the index is into the HBOND tables */
+//
+//            ParmSetAtom(uUnit->psParameters, i, sTypeI, &dMass, &dPolar,
+//                        &dE, &dR, &dE14, &dR14, &dScreenF, &iElement,
+//                        &iHybridization, sDesc);
+//            ParmSetAtom(uUnit->psParameters, j, sTypeJ, &dMass, &dPolar,
+//                        &dE, &dR, &dE14, &dR14, &dScreenF, &iElement,
+//                        &iHybridization, sDesc);
+//            iHBondIndex =
+//                iParmSetFindHBond(uUnit->psParameters, sTypeI, sTypeJ);
+//            if (iHBondIndex != PARM_NOT_FOUND)
+//                iIndex = -(iHBondIndex + 1);
+//            *PVAI(*vaPNBIndexMatrix, int, iI * iNonBonds + iJ) = iIndex;
+//        }
+//    }
+//
+//    /* Now calculate the A,C parameters for all unique */
+//    /* NON-BOND interactions */
+//
+//    *vaPNBParameters = vaVarArrayCreate(sizeof(NONBONDACt));
+//    VarArraySetSize((*vaPNBParameters), iNonBonds * (iNonBonds + 1) / 2);
+//    for (j = 0; j < iNonBonds; j++) {
+//        for (i = 0; i <= j; i++) {
+//            iX = i;
+//            iY = j;
+//            iIndex = iY * (iY + 1) / 2 + iX;
+//            dEI = PVAI(vaNonBonds, NONBONDt, i)->dE;
+//            dRI = PVAI(vaNonBonds, NONBONDt, i)->dR;
+//            dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE;
+//            dRJ = PVAI(vaNonBonds, NONBONDt, j)->dR;
+//            MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dC);
+//            CheckAgainstNBEdits(vaPNBEdits,
+//                                PVAI(vaNonBonds, NONBONDt, i)->sType,
+//                                PVAI(vaNonBonds, NONBONDt, j)->sType,
+//                                &dA, &dC);
+//            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA = dA;
+//            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dC = dC;
+//            if (GDefaults.iCharmm) {
+//                dEI = PVAI(vaNonBonds, NONBONDt, i)->dE14;
+//                dRI = PVAI(vaNonBonds, NONBONDt, i)->dR14;
+//                dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE14;
+//                dRJ = PVAI(vaNonBonds, NONBONDt, j)->dR14;
+//                MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dC);
+//                CheckAgainstNBEdits(vaPNBEdits,
+//                                    PVAI(vaNonBonds, NONBONDt, i)->sType,
+//                                    PVAI(vaNonBonds, NONBONDt, j)->sType,
+//                                    &dA, &dC);
+//                PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA14 = dA;
+//                PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dC14 = dC;
+//            }
+//        }
+//    }
+//
+//    /* Return the arrays that refer to the atoms */
+//    *vaPNonBonds = vaNonBonds;
+//    *vaPNBIndex = vaNBIndex;
+//    /* The other two arrays, vaPNBIndexMatrix and vaPNBParameters, */
+//    /* have already been assigned their return values. */
+//
+//}

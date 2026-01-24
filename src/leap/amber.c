@@ -322,10 +322,8 @@ int             iRead,myiPOL;
 static void
 zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
 {
-    int    flag;
     STRING sLine,sLine0;
     STRING tmpchar1, tmpchar2;
-    int imap;
     int tmpint1;
     int i;
     CMNT *cmntt, *cmnt, *cmnt0;
@@ -350,8 +348,6 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
     cmnt=NULL;
     cmnt0=NULL;
     cmntt=NULL;
-    flag = 0;
-    imap = 0;
 //    mapnum = 0;
     cmnt0=(CMNT *)malloc(sizeof(CMNT));
     cmntt=cmnt0;
@@ -367,7 +363,6 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
         if ( sLine[0] == '%' ) {
             sscanf(sLine, "%s%s", tmpchar1, tmpchar2);
             if (strcmp("%FLAG", tmpchar1) == 0) {
-                flag=0;
                 if (strcmp("CMAP_COUNT", tmpchar2)==0){
                     sscanf(sLine, "%s%s%d", tmpchar1, tmpchar2, &tmpint1);
 
@@ -405,7 +400,7 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
                     cmap->residx[4]= 1;
 
 // In ff18SB,there's no CMAP that should be applied to termini residues.
-// This can be reactivated in the future when there're CMAPs trained for termini resiudes.
+// This can be reactivated in the future when there're CMAPs trained for termini residues.
                     //cmap->nresidx[0]= 0;
                     //cmap->nresidx[1]= 0;
                     //cmap->nresidx[2]= 0;
@@ -425,7 +420,7 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
                     strcpy(cmap->atmname[4],"N");
                      
 // In ff18SB,there's no CMAP that should be applied to termini residues.
-// This can be reactivated in the future when there're CMAPs trained for termini resiudes.
+// This can be reactivated in the future when there're CMAPs trained for termini residues.
                     //strcpy(cmap->natmname[0],"H1");
                     //strcpy(cmap->natmname[1],"N");
                     //strcpy(cmap->natmname[2],"CA");
@@ -2046,9 +2041,10 @@ PARMSET         psParms;
          *  frcmod
          */
         if ( bMass != bNonBonds ) {
-                VPERROR(( "Modified force field files must contain both MASS "
-                    "and NONB entries or neither.\n"
-                    "Could not load parameter set.\n" ));
+                VPERROR(( "Modified force field files must have both MASS "
+                    "and NONBOND entries or neither.\n"
+                    "Could not load parameter set from %s.\n",
+                    sFilename ));
                 fclose(fIn);
                 return(NULL);
         }

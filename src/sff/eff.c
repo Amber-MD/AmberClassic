@@ -1963,8 +1963,9 @@ REAL_T egb(INT_T * lpears, INT_T * upears, INT_T ** pearlist,
             rj = reff[j];
             rb2 = ri * rj;
             efac = exp(-r2 / (4.0 * rb2));
-            fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-            fgbk = -(*kappa) * KSCALE / fgbi;
+            temp1 = sqrt(r2 + rb2 * efac);
+            fgbi = 1.0 / temp1;
+            fgbk = -(*kappa) * KSCALE * temp1;
 
             expmkf = exp(fgbk) / (*diel_ext);
             dielfac = 1.0 - expmkf;

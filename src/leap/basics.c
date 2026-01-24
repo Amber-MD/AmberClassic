@@ -93,31 +93,37 @@ static  MEMHEADER	*SmPMallocList = NULL;
 
 #include "varArray.h"
 #define TSIZE	1000000
+/*
 static VARARRAY	vtest = NULL;
+ */
 
 void 
 IMem()
 {
+/*
 	int   i, *ip;
-	return;
 	vtest = vaVarArrayCreate( sizeof(int) );
 	VarArraySetSize( vtest, TSIZE );
 	ip = PVAI( vtest, int, 0);
 	for (i=0; i<TSIZE; i++) ip[i] = i;
+ */
+	return;
 }
 
 void 
 TMem()
 {
+/*
 	int	i, *ip;
 	char	*p = NULL;
-	return;
 	ip = PVAI( vtest, int, 0);
 	for (i=0; i<TSIZE; i++)
 	if (ip[i] != i) {
 		fprintf(stderr, "element %d=%d\n", i, ip[i]);
 		*p = ' ';
 	}
+ */
+	return;
 }
 
 
@@ -301,7 +307,7 @@ StringLower( char *sStr )
 /*
  *--------------------------------------------------------------------
  *
- *      Memory management with consistcncy checking
+ *      Memory management with consistency checking
  *
  */
 
@@ -332,14 +338,12 @@ DebugCheckMemoryBlock( MEMHEADER *mPMem )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Test the linked list of malloc'd memory blocks for
- *      consistancy.
- *      Display an error message and exit if the memory has been
- *      corrupted.
+ *      Test the linked list of malloc'd memory blocks for consistency.
+ *      Display an error message and exit if the memory has been corrupted.
  *	If bReport is TRUE then write the memory header for each
  *	block as it is checked to the LOG file.
  */
-static void
+void
 DebugMemoryTest( char *sFile, int iLine, BOOL bReport )
 {
 	MEMHEADER	*mPMem, *mPPreviousMem;
@@ -433,7 +437,7 @@ MEMHEADER	*mPMem;
 char		*sTrailer;
 char		*cPBlock;
 
-                /* Check for consistancy */
+                /* Check for consistency */
 
     MESSAGE(( "---MALLOC\n" ));
 
@@ -488,7 +492,7 @@ DebugRealloc( char *cPBlock, long lSize, char *sFile, int iLine )
 MEMHEADER	*mPMem, *mPPrevious, *mPCur;
 char		*sTrailer;
 
-                /* Check for consistancy */
+                /* Check for consistency */
 
     MESSAGE(( "---REALLOC\n" ));
     DebugMemoryTest( sFile, iLine, FALSE );
@@ -566,7 +570,7 @@ DebugFree( char *cPBlock, char *sFile, int iLine )
 {
 MEMHEADER	*mPMem, *mPCur, *mPPrevious;
 
-                /* Check for consistancy */
+                /* Check for consistency */
 
     MESSAGE(( "---FREE\n" ));
     DebugMemoryTest( sFile, iLine, FALSE );
@@ -728,7 +732,7 @@ MessageFileList()
  *	those files mentioned in the MESSAGEON environment variable.
  *
  *	The MESSAGEON variable contains a sequence of names
- *	seperated by spaces.
+ *	separated by spaces.
  */
 static void	
 MessageInitialize()
@@ -778,7 +782,7 @@ iExpandDir( char *sExpanded, char *sOriginal )
 #else
 char		user[100];
 int		i;
-struct passwd 	*pw, *getpwnam(const char *);
+struct passwd 	*pw, *getpwnam();
 
 /* 
 TODO: add string size protection
@@ -1209,7 +1213,7 @@ myPuts( char *sLine, GENP PData )
     printf( "%s", sLine );
 }
 
-void	(*GfPrintStringCallback)(char *, GENP) = myPuts;
+void	(*GfPrintStringCallback)() = myPuts;
 
 
 #define	MAXCHARSPERPRINTF	5000		/* 5000 characters max */

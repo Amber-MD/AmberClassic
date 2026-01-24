@@ -54,7 +54,7 @@ typedef struct  {
 	VARARRAY        vaAngles;
 	VARARRAY        vaTorsions;
     /* The following fields are used to monitor the minimizer */
-	BOOL		(*bFCallback)(GENP);
+	BOOL		(*bFCallback)();
 	GENP		PCallbackData;
 	double		dEnergy;
 	double		dRmsGradient;

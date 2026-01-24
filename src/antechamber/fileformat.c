@@ -112,6 +112,26 @@ void check_input_file_format(char *filename, char *format)
                    "         e.g. \"#HF/6-31G* SCF=tight Pop=MK iop(6/33=2) iop(6/42=6) opt\"\n");
         }
         printf("   Status: pass\n");
+    } else if (strcmp(format, "quick") == 0) {
+        printf("-- Check if QUICK has printed ESP on van der waals surface --\n");
+        ieps = 0;
+        for (;;) {
+            if (fgets(line, MAXCHAR, fpin) == NULL)
+                break;
+            sscanf(line, "%s%s%s%s", tmpchar, tmpchar1, tmpchar2, tmpchar3);
+            if (strcmp(tmpchar, "***") == 0 && strcmp(tmpchar1, "Printing") == 0
+                && strcmp(tmpchar2, "Electrostatic") == 0 && strcmp(tmpchar3, "Potential") == 0) {
+                ieps = 1;
+                break;
+            }
+        }
+        if (ieps == 0) {
+            // color on "[33m
+            eprintf("No ESP information produced by QUICK.\n"
+                   " This file cannot be used to generate RESP charges with QUICK\n"
+                   " Please check the keywords are correct and you are reading the coordinates correctly\n");
+        }
+        printf("   Status: pass\n");
     } else if (strcmp(format, "jcrt") == 0) {
 
     } else if (strcmp(format, "jzmat") == 0) {
@@ -433,6 +453,20 @@ void read_and_validate_input_file()
             cinfo.maxbond = bondnum + 10;
             memory(7, cinfo.maxatom, cinfo.maxbond, cinfo.maxring);
             overflow_flag = rgout(ifilename, &atomnum, atom, cinfo, &minfo);
+        }
+        atomname_flag = 1;
+        default_flag = 2;
+        connect_flag = 1;
+        bondtype_flag = 2;
+
+    } else if (strcmp("quick", cinfo.intype) == 0 || strcmp("32", cinfo.intype) == 0) {
+        check_input_file_format(ifilename, cinfo.intype);
+        overflow_flag = rqout(ifilename, &atomnum, atom, cinfo, &minfo);
+        if (overflow_flag) {
+            cinfo.maxatom = atomnum + 10;
+            cinfo.maxbond = bondnum + 10;
+            memory(7, cinfo.maxatom, cinfo.maxbond, cinfo.maxring);
+            overflow_flag = rqout(ifilename, &atomnum, atom, cinfo, &minfo);
         }
         atomname_flag = 1;
         default_flag = 2;

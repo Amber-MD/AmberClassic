@@ -55,6 +55,8 @@
 #define NAMELEN         10
                         /* maximum 8 bonds out of each atom */
 #define MAXBONDS        8
+                        // assume an atom can have mostly 8 C4
+#define MAXC4Pairwise   8
 
 
 /*
@@ -68,6 +70,7 @@
 
 
 #include        "elements.h"
+//#include        "unitio.h" //New
 
                 /* Hybridization type */
 
@@ -112,8 +115,11 @@ typedef struct  ATOMSTRUCT {
         VECTOR                  vVelocity;
         FLAGS                   fFlags;         /* Atom flags */
         int                     iCoordination;
+	int                     iC4Pairwise; // New
         struct ATOMSTRUCT       *aaBonds[MAXBONDS];
         FLAGS                   faBondFlags[MAXBONDS];
+	struct ATOMSTRUCT       *aaC4Pairwise[MAXC4Pairwise];  // New
+	double                  daC4Pairwise[MAXC4Pairwise]; // New
         double                  dTemp;
         GENP                    PTemp;
         SEGIDt                  siSegid;
@@ -186,6 +192,7 @@ typedef ATOMt   *ATOM;
 
 
 #define AtomDefineBondFlags(a,i,f)      (((ATOM)(a))->faBondFlags[i] = f,CDU(a) )
+#define AtomDefineC4Pairwise(a,i,f)        (((ATOM)(a))->daC4Pairwise[i] = f,CDU(a) ) // New
 #define AtomSetBondFlags(a,i,f)         (((ATOM)(a))->faBondFlags[i] |= f,CDU(a) )
 #define AtomResetBondFlags(a,i,f)       \
                 (((ATOM)(a))->faBondFlags[i] &= ~(f),CDU(a) )
@@ -195,6 +202,8 @@ typedef ATOMt   *ATOM;
 #define fAtomBondFlags(a,i)     (((ATOM)(a))->faBondFlags[i])
 #define bAtomBondFlagsSet(a,i,f)        ((((ATOM)(a))->faBondFlags & f)!=0)
 #define aAtomBondedNeighbor(a,i)        (((ATOM)(a))->aaBonds[i])
+#define aAtomC4Pairwise(a, i)           (((ATOM)(a))->aaC4Pairwise[i]) //New
+#define dAtomC4Pairwise(a, i)           (((ATOM)(a))->daC4Pairwise[i]) //New
 #define AtomSetTempPtr( a, p )  (((ATOM)(a))->PTemp = (GENP)(p))
 #define PAtomTempPtr(a)                 (((ATOM)(a))->PTemp)
 #define AtomSetElement( a, n )          (((ATOM)(a))->iAtomicNumber = n,CDU(a))
@@ -211,6 +220,7 @@ typedef ATOMt   *ATOM;
 #define AtomSetVelocity(a,vv)           (vAtomVelocity((ATOM)(a)) = vv, CDU(a))
 #define vAtomVelocity(a)                (((ATOM)(a))->vVelocity)
 #define iAtomCoordination(a)            (((ATOM)(a))->iCoordination)
+#define iAtomC4Pairwise(a)              (((ATOM)(a))->iC4Pairwise) //New
 #define iAtomId(a)                      (((ATOM)(a))->iUniqueId)
 #define AtomSetType( a, x )             (strcpy(((ATOM)(a))->sType,x),CDU(a))
 #define sAtomType( a )                  (((ATOM)(a))->sType )
@@ -278,6 +288,7 @@ extern void             AtomDescStr( ATOM aA, BOOL bResNum, char *cPDesc );
 extern BOOL             bAtomCoordinationSaturated( ATOM aAtom );
 extern BOOL             AtomTmpBondTo( ATOM aAtom1, ATOM aAtom2 );
 extern void             AtomBondToOrder( ATOM aAtom1, ATOM aAtom2, int iOrder );
+extern void             AtomAddC4Pairwise( ATOM aAtom1, ATOM aAtom2, double daC4Pairwise ); // New 
 extern void             AtomBondToFlags( ATOM aAtom1, ATOM aAtom2, 
                                 FLAGS fFlags );
 extern void             AtomRemoveBond( ATOM aAtom1, ATOM aAtom2 );

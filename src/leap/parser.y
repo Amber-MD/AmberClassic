@@ -196,12 +196,9 @@ typedef struct  {
 
 
 extern  OBJEKT oGetObject( char *sName );
-extern  int     yyparse();
-
-/*  avoid compiler warnings:  */
-int yylex();
-int yyerror( char * );
-
+static  int    yyerror( const char *sStr );
+static  int    yylex();
+static  int    yyparse();
 %}
 
 
@@ -421,9 +418,12 @@ static  char    ScUngetc;
  *      Respond to errors.
  */
 int
-yyerror( char *sStr )
+yyerror( const char *sStr )
 {
-    VPFATALEXIT(( "Error from the parser: %s\n", sStr ));
+    VPFATALEXIT(( "Error from the parser: \n       %s.\n       "
+            "Check for typos, misspellings, etc.\n       "
+            "Try help on the command name and desc on the command arguments.\n",
+            sStr ));
     return 1;
 }
 
@@ -642,9 +642,10 @@ char            c;
 STRING		sCmd;
 STRING		sPossibleCmd;
 
-                /* Skip over blanks, tabs, end of lines etc */
-
-    while ( (c=cGetChar())==' '  ||  c=='\t'  ||  c=='\n'  ||  c == ',' );
+    /*
+     * Skip whitespace: blanks, tabs, end of lines, carriage returns, and commas.
+     */
+    while ( (c=cGetChar())==' ' || c=='\t' || c=='\n' || c=='\r' || c == ',' );
 
     if ( c == '\0' ) 
 	return(LENDOFCOMMAND);
@@ -690,8 +691,16 @@ STRING		sPossibleCmd;
 	/*
 	 *  whitespace is a delimiter outside of quotes
 	 */
-	if ( c == ' '  ||  c == '\t'  ||  c == '\n'  ||  c == ',' ) {
+	if ( c == ' ' || c == '\t' || c == '\n' || c=='\r' || c == ',' ) {
 	    	sStr[j] = '\0';
+	    	if ( c=='\r' ) {
+	    	    VPNOTE(("A carriage return character has been read.\n"
+	    	            "This is an indicator of DOS line endings.\n"
+	    	            "Although LEaP treats it as whitespace, other"
+	    	            " programs may not.\n"
+	    	            "One can convert line endings from DOS to UNIX with"
+	    	            " various tools including:\n    dos2unix\n" ));
+	    	}
 	    	break;
 	}
 	/*
@@ -736,14 +745,13 @@ STRING		sPossibleCmd;
         	    return(LNUMBER);
 		case '.':
 		    if ( bGotDot ) {
-			VPWARN(( "(Multiple '.' in NUMBER-like thing (%s))\n", 
-								sStr ));
+			VPERROR(( "Multiple decimal points in NUMBER-like token"
+					" (%s).\n", sStr ));
 			goto notnum;
 		    }
 		    if ( bGotExp ) {
-			VPWARN(( 
-			 "('.' follows exponent in NUMBER-like thing (%s))\n",
-								sStr ));
+			VPERROR(( "Decimal point follows exponent in NUMBER-like"
+					" token (%s).\n", sStr ));
 			goto notnum;
 		    }
         	    bGotDot = TRUE;
@@ -751,8 +759,8 @@ STRING		sPossibleCmd;
 		case 'e':
 		case 'E':
             	    if ( bGotExp ) {
-			VPWARN(( "(Multiple 'e' in NUMBER-like thing (%s))\n", 
-								sStr ));
+			VPERROR(( "Multiple exponent indicators ('e') in "
+					"NUMBER-like token (%s).\n", sStr ));
 			goto notnum;
 		    }
                     bGotExp = TRUE;
@@ -1071,7 +1079,7 @@ extern	char	*optarg;
 		printf( " -f {file}  Source {file}.\n" );
 		exit(0);
 	    case 's':
-		printf( "-s: Ignoring startup file: %s\n", LEAPRC );
+		printf( "-s: Ignoring all %s startup files.\n", LEAPRC );
 		SbUseStartup = FALSE;
 		break;
 	    case 'I':

@@ -1,6 +1,10 @@
 module xray_dpartial_module
 
+#ifdef CUDA
+  use xray_dpartial_impl_gpu_module
+#else
   use xray_dpartial_impl_cpu_module
+#endif
 
   implicit none
   private

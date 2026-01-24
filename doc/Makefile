@@ -21,6 +21,7 @@ SHELL = /bin/sh
 	groff -p $< | ps2pdf - $@
 
 AmberClassic.pdf: AmberClassic.lyx amberclassic.bib
+	-echo -n `date` > today
 	-$(LYX) --export pdf2 AmberClassic.lyx
 
 clean::

@@ -2973,9 +2973,11 @@ REAL_T egb2(INT_T * lpears, INT_T * upears, INT_T ** pearlist,
     *
     *      efac = exp(Dij^2 / (4 * rb2))
     *
-    *      fgbi = 1 / sqrt(Dij^2 + rb2 * efac)
+    *      temp1 = sqrt(Dij^2 + rb2 * efac)
     *
-    *      fgbk = -kappa * KSCALE / fgbi
+    *      fgbi = 1 / temp1
+    *
+    *      fgbk = -kappa * KSCALE * temp1
     *
     *      expmkf = exp(fgbk) / DIELECTRIC_CONSTANT
     *
@@ -3805,8 +3807,9 @@ REAL_T egb2(INT_T * lpears, INT_T * upears, INT_T ** pearlist,
             rirjinv = riinv * rjinv;
             rb2 = ri * rj;
             efac = exp(-r2 / (4.0 * rb2));
-            fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-            fgbk = -(*kappa) * KSCALE / fgbi;
+            temp1 = sqrt(r2 + rb2 * efac);
+            fgbi = 1.0 / temp1;
+            fgbk = -(*kappa) * KSCALE * temp1;
 
             /*
              * Calculate the "non-diagonal" energy term, i.e., the term that is a
@@ -4383,8 +4386,9 @@ REAL_T egb2(INT_T * lpears, INT_T * upears, INT_T ** pearlist,
             rirjinv = riinv * rjinv;
             rb2 = ri * rj;
             efac = exp(-r2 / (4.0 * rb2));
-            fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-            fgbk = -(*kappa) * KSCALE / fgbi;
+            temp1 = sqrt(r2 + rb2 * efac);
+            fgbi = 1.0 / temp1;
+            fgbk = -(*kappa) * KSCALE * temp1;
 
             /*
              * Calculate the "non-diagonal" energy term, i.e., the term that is a
