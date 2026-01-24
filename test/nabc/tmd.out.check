@@ -1,0 +1,22 @@
+Reading parm file (xfin.parm7)
+title:
+                                                                                
+	mm_options:  cut=20.0
+	mm_options:  rgbmax=20.0
+	mm_options:  ntpr=500
+	mm_options:  nsnb=10
+	mm_options:  gb=1
+	mm_options:  diel=C
+	mm_options:  gamma_ln=5.0
+	mm_options:  temp0=300.0
+	mm_options:  ntpr_md=100
+	mm_options:  rattle=1
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0  -1272.79    292.22    -84.90   -822.49      0.00   -657.62  1.12e+01
+md:           1      0.001     143.12   -1277.01   -1133.89     173.54
+md:         100      0.100     194.84   -1214.66   -1019.82     236.26
+md:         200      0.200     200.66   -1204.85   -1004.19     243.32
+md:         300      0.300     233.97   -1198.29    -964.33     283.70
+md:         400      0.400     234.27   -1193.57    -959.30     284.07
+ff:   500  -1176.76    367.61    -65.82   -794.83      0.00   -683.72  1.28e+01
+md:         500      0.500     232.76   -1176.76    -944.01     282.24

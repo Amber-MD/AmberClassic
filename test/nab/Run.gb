@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to do simple minimization"
+echo "(this tests the generalized Born implementation)"
+echo ""
+../../bin/$NAB -o sff gbrna.nab || error
+$DO_PARALLEL ./sff > gbrna.out || error
+
+../dacdif gbrna.out.check gbrna.out
+
+rm -f sff gbrna.c
+exit 0

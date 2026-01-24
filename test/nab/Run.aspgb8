@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test for Grycuk (gbr6)"
+echo ""
+../../bin/$NAB -o aspgb8 aspgb8.nab || error
+$DO_PARALLEL ./aspgb8 > aspgb8.out || error
+
+echo "Note: Small differences are common and do not necessarily"
+echo "indicate a problem."
+../dacdif aspgb8.out.check aspgb8.out
+
+rm -f aspgb8 aspgb8.c
+exit 0

@@ -4,29 +4,30 @@ export XRAY_NUM_THREADS=1
 #export DO_PARALLEL='mpirun -np 8'
 export CUDA_VISIBLE_DEVICES=0
 
-in=$(printf "%03d" $1)
+in=$1
 let out=$in+1
+in=$(printf "%03d" $1)
 out=$(printf "%03d" $out)
 
-sander="$MSANDERHOME/bin/msander.cuda"
+sander="$AMBERCLASSICHOME/bin/msander.cuda"
 
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI
 fi
 
 cat > mdin <<eof
-   checking out 7etn_6uc
+   checking out 5sy4_3uc
  &cntrl
-    imin=0, maxcyc=250, ntpr=500,
+    imin=0, maxcyc=500, ntpr=1000, nsnb=10000, drms=0.0001,
     ntx=1, irest=0,
-    tempi=0.0, ntt=3, gamma_ln=10.0, dt=0.001, temp0=0.,
+    tempi=0.0, ntt=3, gamma_ln=5.0, dt=0.001, temp0=0.,
     isgld=1, tsgavg=0.2,sgft=1.0, nsgsize=2,
-    ntc=2, ntf=2, tol=1.d-6, 
+    ntc=2, ntf=2, tol=1.d-6, cut=8.0,
     nstlim=30000, ntwx=0, ntwr=0,
     nmropt=1, 
     ntr=0, restraint_wt=0.0, restraintmask='!@H=',
  /
- &lmod  xmin_verbosity=0, xmin_method='TNCG', /
+ &lmod  xmin_verbosity=0, xmin_method='PRCG', /
  &wt type='TEMP0', istep1=    0, istep2= 10000, value1=  0., value2=300. /
  &wt type='TEMP0', istep1=10001, istep2= 20000, value1=300., value2=300. /
  &wt type='TEMP0', istep1=20001, istep2= 28000, value1=300., value2= 30. /
@@ -36,9 +37,9 @@ cat > mdin <<eof
  &wt type='END' /
  &xray
    pdb_infile = 'alt1_$in.pdb',
-   pdb_read_coordinates = .true.,
+   pdb_read_coordinates = .false.,
    pdb_outfile = 'alt1_$out.min1.pdb', 
-   reflection_infile = 'alt1-P1-sf.dat',
+   reflection_infile = 'alt1-sf.dat',
    atom_selection_mask = ':*', 
    xray_weight =  0.8,
    bulk_solvent_model = 'afonine-2013',  target = 'ml', 
@@ -48,8 +49,8 @@ cat > mdin <<eof
  /
 eof
 
-$DO_PARALLEL $sander -O -i mdin -o alt1_$out.min1.o -r alt1_$out.min1.x \
-    -p alt1_uc.parm7 -c alt1_uc.rst7 -ref alt1_uc.rst7 \
+$sander -O -i mdin -o alt1_$out.min1.o -r alt1_$out.min1.x \
+    -p alt1_uc.parm7 -c alt1_$in.min1.x -ref alt1_uc.rst7 \
     < /dev/null || { echo "  $0:  Program error"; exit 1; }
 
 /bin/rm -f mdin mdinfo restrt

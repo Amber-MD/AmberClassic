@@ -48,6 +48,7 @@ int multiplicity=1;
 char line[MAXCHAR];
 char ifilename[MAXCHAR];
 char ofilename[MAXCHAR];
+char vdwfilename[MAXCHAR];
 
 int    iresname = 0;
 char   resname[MAXCHAR]="MOL";
@@ -558,6 +559,78 @@ void rgamessdat(void)
     printf("Success!");
 }
 
+void read_quickout(void) {
+  char tmpc[MAXCHAR];
+  int count;
+
+  count=0;
+  for (;;) {
+    if (fgets(line, MAXCHAR, fpin) == NULL)
+      break;
+    if (strlen(line) > 43 && line[17] == '.' && line[30] == '.' && line[43] == '.') {
+      sscanf(&line[1], "%s%lf%lf%lf", tmpc, &at[count].cord_x, &at[count].cord_y, &at[count].cord_z);
+      count++;
+    };
+  };
+  natom=count;
+};
+
+void rquickvdw(void)
+{
+
+    int j;
+    int line_count = 0;
+
+    fpin = efopen(vdwfilename, "r");
+
+    tmpint1 = 0;
+
+    for (;;) {
+      if (fgets(line, MAXCHAR, fpin) == NULL)
+        break;
+
+      line_count++;
+    };
+
+    if (line_count < 5){
+      fprintf(stderr, "Error: No ESP fitting centers and fitting values exist in the quick output (vdw) file.\n"
+                      "Please check the calculation finished normally.\n");
+      exit(1);
+    };
+
+    if (line_count > MAXESP) esp = (ESP *) erealloc(esp, line_count * sizeof(ESP));
+
+    rewind(fpin);
+    line_count = 0;
+    for (;;) {
+      if (fgets(line, MAXCHAR, fpin) == NULL)
+        break;
+      line_count++;
+      if ( line_count > 4 ) {
+        sscanf(&line[0], "%lf%lf%lf%lf", &esp[tmpint1].x, &esp[tmpint1].y, &esp[tmpint1].z, &esp[tmpint1].esp);
+        esp[tmpint1].x /= Bohr;
+        esp[tmpint1].y /= Bohr;
+        esp[tmpint1].z /= Bohr;
+        tmpint1++;
+      };
+    };
+    if (tmpint1 < 10)           // no ESP at all
+        fail = 1;
+    if (fail == 0) {
+        fprintf(fpout, "%7d%7d%7d\n",natom,line_count-4,0);
+        for (j = 0; j < natom; j++)
+          fprintf(fpout, "%32.7E%16.7E%16.7E\n", at[j].cord_x/Bohr, at[j].cord_y/Bohr,
+                    at[j].cord_z/Bohr);
+        for (j = 0; j < tmpint1; j++)
+          fprintf(fpout, "%16.7E%16.7E%16.7E%16.7E\n", esp[j].esp, esp[j].x, esp[j].y,
+                    esp[j].z);
+    };
+    // Dipole and quadrupole currently unimplemented in this parser
+    if (fail == 0 && method == 1)
+        eprintf("Dipole and quadrupole support unimplemented in QUICK parser.");
+
+};
+
 void rglog(void)
 {
     int i, j;
@@ -962,6 +1035,7 @@ int main(int argc, char *argv[])
                    "[34m                   1 [0m Gaussian log file(default)\n" 
                    "[34m                   2 [0m Gaussian ESP file\n" 
                    "[34m                   3 [0m Gamess ESP file\n" 
+                   "[34m                   4 [0m QUICK ESP file\n" 
                    "[31m              -p  [0m generate esp for pGM:\n"
                    "[34m                   0 [0m no, the default)\n" 
                    "[34m                   1 [0m yes \n" 
@@ -980,6 +1054,7 @@ int main(int argc, char *argv[])
                    "[34m                   1 [0m Gaussian log file(default)\n" 
                    "[34m                   2 [0m Gaussian ESP file\n" 
                    "[34m                   3 [0m Gamess ESP file\n" 
+                   "[34m                   4 [0m QUICK ESP file\n" 
                    "[31m              -p  [0m generate esp for pGM:\n"
                    "[34m                   0 [0m no, the default)\n" 
                    "[34m                   1 [0m yes \n" 
@@ -999,6 +1074,7 @@ int main(int argc, char *argv[])
                    "                   1  Gaussian log file(default)\n" 
                    "                   2  Gaussian ESP file\n" 
                    "                   3  Gamess ESP file\n" 
+                   "                   4  QUICK ESP file\n" 
                    "              -p   generate esp for pGM:\n"
                    "                   0  no, the default)\n" 
                    "                   1  yes \n" 
@@ -1017,6 +1093,7 @@ int main(int argc, char *argv[])
                    "                   1  Gaussian log file(default)\n" 
                    "                   2  Gaussian ESP file\n" 
                    "                   3  Gamess ESP file\n" 
+                   "                   4  QUICK ESP file\n" 
                    "              -p   generate esp for pGM:\n"
                    "                   0  no, the default)\n" 
                    "                   1  yes \n" 
@@ -1029,6 +1106,11 @@ int main(int argc, char *argv[])
         }
     }
 
+   /* for QUICK output the line_count will be used to efficiently
+    * reallocate esp array
+    */
+   int line_count = 0;
+
 /* allocate memory for *esp */
     maxesp = MAXESP;
     esp = (ESP *) ecalloc(maxesp, sizeof(ESP));
@@ -1039,6 +1121,8 @@ int main(int argc, char *argv[])
             strcpy(ifilename, argv[i + 1]);
         if (strcmp(argv[i], "-o") == 0)
             strcpy(ofilename, argv[i + 1]);
+        if (strcmp(argv[i], "-vdw") == 0)
+            strcpy(vdwfilename, argv[i + 1]);
         if (strcmp(argv[i], "-f") == 0)
 	    format=atoi(argv[i+1]);
         if (strcmp(argv[i], "-p") == 0)
@@ -1067,43 +1151,54 @@ int main(int argc, char *argv[])
     fpin = efopen(ifilename, "r");
     fpout = efopen(ofilename, "w");
     nset = 0;
-    for (;;) {
-        if (fgets(line, MAXCHAR, fpin) == NULL)
-            break;
-        strcpy(tmpchar1, "");
-        strcpy(tmpchar2, "");
-        strcpy(tmpchar3, "");
-        strcpy(tmpchar4, "");
-        strcpy(tmpchar5, "");
-        sscanf(&line[0], "%s%s%s%s%s", tmpchar1, tmpchar2, tmpchar3, tmpchar4, tmpchar5);
-
-        // First check if it is a GAMESS output file
-        if (strncmp(line, " $DATA", 6) == 0) {
-            format = 3;
-            break;
-        }
-
-/*	adding code to detect Gaussion version	*/
-/*      adding more code to deal with different Gaussiaon 09 subversions*/
-        if (strncmp(line, " ESP FILE -", 11) == 0) {
-            format = 2;
-            break;
-        }
-        if (strncmp(line, " Gaussian 09", 12) == 0)
-            g09_index = 1;
-        if (strcmp("--", tmpchar1) == 0 && strcmp("Stationary", tmpchar2) == 0
-            && strcmp("point", tmpchar3) == 0 && strcmp("found.", tmpchar4) == 0)
-            opt_index = 1;
-        if (strcmp("ESP", tmpchar1) == 0 && strcmp("Fit", tmpchar2) == 0
-            && strcmp("Center", tmpchar3) == 0)
-            esp_index = 1;
-        if (strcmp("Electrostatic", tmpchar1) == 0 && strcmp("Properties", tmpchar2) == 0
-            && strcmp("(Atomic", tmpchar3) == 0 && strcmp("Units)", tmpchar4) == 0)
-            nset++;
-        if (esp_index == 1 && espvalue_index == 0)
-            if (strcmp("Fit", tmpchar2) == 0 && tmpchar1[0] >= '0' && tmpchar1[0] <= '9'
-                && ((tmpchar3[0] >= '0' && tmpchar3[0] <= '9') || tmpchar3[0] == '-'))
-                espvalue_index = 1;
+    if (format == 4){
+        read_quickout();
+    }else{
+      for (;;) {
+          if (fgets(line, MAXCHAR, fpin) == NULL)
+              break;
+          strcpy(tmpchar1, "");
+          strcpy(tmpchar2, "");
+          strcpy(tmpchar3, "");
+          strcpy(tmpchar4, "");
+          strcpy(tmpchar5, "");
+          sscanf(&line[0], "%s%s%s%s%s", tmpchar1, tmpchar2, tmpchar3, tmpchar4, tmpchar5);
+  
+          // First check if it is a GAMESS output file
+          if (strncmp(line, " $DATA", 6) == 0) {
+              format = 3;
+              break;
+          }
+  
+  /*	adding code to detect Gaussion version	*/
+  /*      adding more code to deal with different Gaussiaon 09 subversions*/
+          if (strncmp(line, " ESP FILE -", 11) == 0) {
+              format = 2;
+              break;
+          }
+  
+          /*  The file is a quick output file containing ESP at van der waals grid points */
+          if (strcmp("ELECTROSTATIC", tmpchar1) == 0 && strcmp("POTENTIAL", tmpchar2) == 0 && strcmp("CALCULATION", tmpchar3) == 0
+             && strcmp("(ESP)", tmpchar4) == 0 && strcmp("with", tmpchar5) == 0) {
+             format = 4;
+          };
+  
+          if (strncmp(line, " Gaussian 09", 12) == 0)
+              g09_index = 1;
+          if (strcmp("--", tmpchar1) == 0 && strcmp("Stationary", tmpchar2) == 0
+              && strcmp("point", tmpchar3) == 0 && strcmp("found.", tmpchar4) == 0)
+              opt_index = 1;
+          if (strcmp("ESP", tmpchar1) == 0 && strcmp("Fit", tmpchar2) == 0
+              && strcmp("Center", tmpchar3) == 0)
+              esp_index = 1;
+          if (strcmp("Electrostatic", tmpchar1) == 0 && strcmp("Properties", tmpchar2) == 0
+              && strcmp("(Atomic", tmpchar3) == 0 && strcmp("Units)", tmpchar4) == 0)
+              nset++;
+          if (esp_index == 1 && espvalue_index == 0)
+              if (strcmp("Fit", tmpchar2) == 0 && tmpchar1[0] >= '0' && tmpchar1[0] <= '9'
+                  && ((tmpchar3[0] >= '0' && tmpchar3[0] <= '9') || tmpchar3[0] == '-'))
+                  espvalue_index = 1;
+      }
     }
 
     if (format == 1) {
@@ -1141,8 +1236,22 @@ int main(int argc, char *argv[])
         rgesp();
     if (format == 3)
         rgamessdat();
+/*    if (format == 4){
+        if (line_count < 5){
+          fprintf(stderr, "Error: No ESP fitting centers and fitting values exist in the quick output (vdw) file.\n"
+                                  "Please check the calculation finished normally.\n");
+          exit(1);
+        };
+        if (line_count > MAXESP) esp = (ESP *) erealloc(esp, line_count * sizeof(ESP));
+    };
+*/
 
     fclose(fpin);
+
+    if (format == 4) {
+      rquickvdw();
+    };
+
     fclose(fpout);
     if (fail == 1) {
 /*		strcat(tmpchar, ofilename);

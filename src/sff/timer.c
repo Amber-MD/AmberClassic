@@ -44,7 +44,6 @@ void init_timers(void)
   tmmeBorn = &(timearr[34]);
   tmmeOther = &(timearr[35]);
   tmmePB = &(timearr[36]);
-  tmmeRism = &(timearr[37]);
   tmme2 = &(timearr[38]);
   tmme2Cons = &(timearr[39]);
   tmme2Nonb = &(timearr[40]);
@@ -117,7 +116,6 @@ INT_T mme_timer(void)
    *tmmeBorn = reductarr[34];
    *tmmeOther = reductarr[35];
    *tmmePB = reductarr[36];
-   *tmmeRism = reductarr[37];
    *tmme2 = reductarr[38];
    *tmme2Cons = reductarr[39];
    *tmme2Nonb = reductarr[40];
@@ -234,7 +232,6 @@ INT_T mme_timer(void)
 	fprintf(nabout, "|    %*s  %10.3f\n", labelLen, "nonbond", *tmmeNonb);
 	fprintf(nabout, "|    %*s  %10.3f\n", labelLen, "gen. Born", *tmmeBorn);
 	fprintf(nabout, "|    %*s  %10.3f\n", labelLen, "Poisson Boltzmann", *tmmePB);
-	fprintf(nabout, "|    %*s  %10.3f\n", labelLen, "3D-RISM", *tmmeRism);
 #ifdef MPI
 	/* PBSA is serial only so wait time on idle nodes ends up in 
 	   tmmeOther.  As a simple work around we take the difference*/ 
@@ -244,8 +241,6 @@ INT_T mme_timer(void)
 #endif
 	fprintf(nabout, "|-------------------------\n");
 	fprintf(nabout, "|    %*s  %10.3f\n", labelLen, "Total", *tmme);
-	/* fprintf(nabout, "|    %*s  %10.3e\n", labelLen, "Relative Error",  */
-	/* 	(*tmme-*tmmeCons-*tmmeBond-*tmmeAngl-*tmmePhi-*tmmePair-*tmmeNonb-*tmmeBorn-*tmmeRism-*tmmeOther) / *tmme); */
       }
       
       /* mme2 */
@@ -285,12 +280,5 @@ INT_T mme_timer(void)
       }
       fflush(nabout);
    }
-   /* 3D-RISM */
-#ifdef RISMSFF   
-   if(*tmmeRism > 0 && rismData.rism){
-     /* use the built in timer report */
-     rism_printtimer_(); 
-   }
-#endif /*RISMSFF*/
    return (0);
 }

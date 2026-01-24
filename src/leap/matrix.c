@@ -68,15 +68,13 @@ MATRIX		mTranslate, mIntoXZ, mIntoX;
 MATRIX		mRotate;
 MATRIX		mTranslateInv, mIntoXZInv, mIntoXInv;
 VECTOR		vTemp;
-VECTOR		vXAxis, vYAxis, vZAxis;
+VECTOR		vXAxis;
 VECTOR		vDir;
 double		dAngle;
 MATRIX		mT, mU;
 
     vDir = vVectorSub( vPB, vPA );
     VectorDef( &vXAxis, 1.0, 0.0, 0.0 );
-    VectorDef( &vYAxis, 0.0, 1.0, 0.0 );
-    VectorDef( &vZAxis, 0.0, 0.0, 1.0 );
 
 	/* Build the MATRIX to place the axis on the origin */
 
@@ -131,14 +129,12 @@ MATRIX		mTranslate, mIntoXZ, mIntoX;
 MATRIX		mReflect;
 MATRIX		mTranslateInv, mIntoXZInv, mIntoXInv;
 VECTOR		vTemp;
-VECTOR		vXAxis, vYAxis, vZAxis;
+VECTOR		vXAxis;
 double		dAngle;
 MATRIX		mT, mU;
 
 
     VectorDef( &vXAxis, 1.0, 0.0, 0.0 );
-    VectorDef( &vYAxis, 0.0, 1.0, 0.0 );
-    VectorDef( &vZAxis, 0.0, 0.0, 1.0 );
 
 	/* Build the MATRIX to place the plane on the origin */
 

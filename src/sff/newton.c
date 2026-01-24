@@ -1,7 +1,7 @@
 /*
  * newton.c: Newton-Raphson minimizer.
  *
- * Provided by Russell A. Brown (russ.brown@sun.com)
+ * Provided by Russ Brown (russ.brown@yahoo.com)
  *
  * Line search added by David A. Case (case@scripps.edu)
  */
@@ -13,7 +13,6 @@
 
 #include "sff.h"
 #include "memutil.h"
-#include "timer.h"
 
 #if defined(MPI) || defined(SCALAPACK)
 #include "mpi.h"

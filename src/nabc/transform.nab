@@ -1,0 +1,89 @@
+//
+//	Transformation applier. Used as the sink in a symmetry server
+//	pipeline. 
+//
+//	Inputs:
+//		a stream of 4x4 matrices as text on stdin
+//		the name of file of points, or a molecule as PDB on the cmdline
+//
+//	Output:
+//		a new set of points (or PDB) on stdout, containing a
+//		transformed copy each matrix on the input stream. 
+//
+
+int		pdb;
+molecule	mol;
+#define		MAXPTS  100000
+point		pts[ dynamic ], xfm_pts[ dynamic ];
+int		p, npts;
+#define		MAXMATS	1000
+matrix		mats[ MAXMATS ];
+int		m, nmats;
+file		f;
+string		line;
+
+int		MAT_fscan() c;
+
+// 	Crack the command line:
+if( argc != 3 ){
+	fprintf( stderr, "usage: %s [ -pdb | -point ] file\n",
+		argv[ 1 ] );
+	exit( 1 );
+}else if( argv[ 2 ] == "-pdb" )
+	pdb = 1; 
+else if( argv[ 2 ] == "-point" )
+	pdb = 0;
+else if( substr( argv[ 2 ], 1, 1 ) == "-" ){
+	fprintf( stderr, "usage: %s [ -pdb | -point ] file\n",
+		argv[ 1 ] );
+	exit( 1 );
+}
+
+nmats = MAT_fscan( stdin, MAXMATS, mats );
+
+if( pdb ){
+	mol = getpdb( argv[ 3 ] );
+	npts = mol.natoms;
+	allocate pts[ npts ];
+	setxyz_from_mol( mol, NULL, pts );
+
+	for( m = 1; m <= nmats; m++ ){
+		setmol_from_xyz( mol, NULL, pts );
+		transformmol( mats[ m ], mol, NULL );
+		putpdb( "-", mol, "-nobocc" );
+	}
+
+
+	deallocate pts;
+}else{
+	if( ( f = fopen( argv[ 3 ], "r" ) ) == NULL ){
+		fprintf( stderr, "%s: can't read point file %s\n",
+			argv[ 1 ], argv[ 3 ] );
+		exit( 1 );
+	}
+	allocate pts[ MAXPTS ];
+	allocate xfm_pts[ MAXPTS ];
+	for( npts = 0; line = getline( f ); ){
+		if( substr( line, 1, 1 ) == "#" )
+			continue;
+		npts++;
+		assert( npts <= MAXPTS );
+#ifdef NAB_DOUBLE_PRECISION
+		sscanf( line, "%lf %lf %lf",
+#else
+		sscanf( line, "%f %f %f",
+#endif
+			pts[npts].x, pts[npts].y, pts[npts].z);
+	}
+	fclose( f );
+	for( m = 1; m <= nmats; m++ ){
+		for( p = 1; p <= npts; p++ )
+			xfm_pts[p] = pts[p];
+		transformpts( mats[ m ], xfm_pts, npts );
+		for( p = 1; p <= npts; p++ )
+			printf( "%f %f %f\n",
+				xfm_pts[p].x, xfm_pts[p].y, xfm_pts[p].z );
+	}
+	deallocate pts;
+	deallocate xfm_pts;
+}

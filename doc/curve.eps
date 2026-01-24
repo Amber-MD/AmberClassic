@@ -1,0 +1,141 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%BoundingBox: 9 11 461 94
+%%EndComments
+% EPSF created by ps2eps 1.54
+%%BeginProlog
+save
+countdictstack
+mark
+newpath
+/showpage {} def
+/setpagedevice {pop} def
+%%EndProlog
+%%Page 1 1
+/in { 72 mul } def
+/box { 
+	gsave
+	translate
+	rotate
+	newpath
+	0 0 moveto
+	dup 0 exch rlineto
+	exch 0 rlineto
+	neg 0 exch rlineto
+	closepath
+	1 setgray
+	fill
+	grestore
+} def
+/D_RAD .05 in def
+/dot {
+	gsave
+	translate
+	0 0 D_RAD 0 360 arc
+	fill
+	grestore
+} def
+/C_RAD .08 in def
+/circ {
+	gsave
+	translate
+	0 0 C_RAD 0 360 arc
+	stroke
+	grestore
+} def
+/AH_LEN .2 in def
+/AH_HT	.05 in def
+/arrowhead {
+	gsave
+	translate
+	rotate
+	newpath
+	0 0 moveto
+	0 AH_HT lineto
+	AH_LEN 0 lineto
+	0 AH_HT neg lineto
+	closepath
+	fill
+	grestore
+} def
+/ft { findfont exch scalefont setfont } def
+/pt {
+	gsave
+	translate
+	0 0 moveto
+	exch
+	18 /Times-Italic ft
+	show
+	14 /Times-Roman ft
+	0 -4 rmoveto show 
+	grestore
+} def
+/crv {
+	gsave
+	translate
+	/npts exch def
+	0 0 moveto
+	1 in 1 in 2 in 1.5 in  3 in .95 in rcurveto
+	.65 in -.5 in .5 in -1 in  0 in -1.5 in rcurveto
+	-.5 in -.5 in -1.5 in -.5 in -1.5 in 0 in rcurveto
+	0 in .5 in .15 in .6 in .3 in .8 in rcurveto
+	currentpoint /ypos exch def /xpos exch def
+	stroke
+	.1 in .1 in 10 3.2 in .65 in box
+	xpos ypos moveto
+	.3 in .3 in .8 in .5 in 1.6 in .45 in rcurveto
+	currentpoint /ypos exch def /xpos exch def
+	stroke
+	0 xpos ypos arrowhead
+	0 0 dot
+	(p)(1) 0 -14 pt
+	.87 in .73 in dot
+	(p)(2) .87 in .73 in -14 add pt
+	2.1 in 1.18 in dot
+	(p)(3) 2.1 in 1.18 in -14 add pt
+	3.15 in 0.81 in dot
+	3.28 in -.21 in dot
+	2.3 in -.90 in dot
+	1.51 in -.4 in dot
+	2.3 in .57 in dot
+	3.6 in .70 in dot
+	(p)(n) 3.6 in .7 in -14 add pt
+	0 0 circ
+	(np)(1) -.25 in 14 pt
+	npts 2 ge {
+		.7 in .61 in circ
+		(np)(2) .45 in .61 in 14 add pt
+	} if
+	npts 3 ge {
+		1.55 in 1.07 in circ
+		(np)(3) 1.30 in 1.07 in 14 add pt
+	} if
+	grestore
+} def
+ 
+gsave
+ 
+%6.5 in 1.5 in 0 0 0 box
+-.875 in -4.875 in translate
+gsave
+1.125 in 5.5 in translate
+.5 .5 scale
+1 0 0 crv
+grestore
+gsave
+3.25 in 5.5 in translate
+.5 .5 scale
+2 0 0 crv
+grestore
+gsave
+5.375 in 5.5 in translate
+.5 .5 scale
+3 0 0 crv
+grestore
+grestore
+showpage
+%%Trailer
+cleartomark
+countdictstack
+exch sub { end } repeat
+restore
+%%EOF

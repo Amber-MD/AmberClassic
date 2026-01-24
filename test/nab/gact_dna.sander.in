@@ -1,0 +1,7 @@
+ test sander vs. nab for bsc0
+  &cntrl
+  ntf    = 1,       ntb    = 0,  ntpr =1,
+  igb    = 1,       saltcon= 0.00,
+  cut    = 99.0,   rgbmax = 99.0,
+  imin   = 1,       maxcyc = 10, 
+ &end

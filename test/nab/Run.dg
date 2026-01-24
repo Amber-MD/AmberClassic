@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo "Running test of distance geometry:"
+echo ""
+../../bin/nab -o dgt dg_gyrate.nab || error
+./dgt > dg_gyrate.out || error
+
+cat dg_test.explain
+../dacdif dg_gyrate.out.check dg_gyrate.out
+
+rm -f dgt dg_gyrate.c
+exit 0

@@ -1,0 +1,4 @@
+molecule m;
+
+m = fd_helix( "arna", "cgcgcguuau", "rna" );
+putpdb( "fd.pdb", m, "-wwpdb");

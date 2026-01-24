@@ -19,8 +19,8 @@
 # include       "unit.h"
 
 /*
- *      for each pdb record type there is a format reading in the
- *      record values and for printing them out.
+ *      For each pdb record type, there is a format for reading the
+ *      record values and for printing them.
  *
  *      The actual format of a line written, is the print format
  *      followed by blank padding to 72 characters, followed by

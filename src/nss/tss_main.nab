@@ -1,0 +1,271 @@
+#define		MAXVARS	20
+real		vars[ dynamic ];
+int		nvars;
+
+#define		MAXMATS	1000
+matrix		mats[ dynamic ];
+int		nmats;
+
+#define		MAXPARTS 100
+string		pnames[ MAXPARTS ];
+molecule	parts[ dynamic ];
+int		nparts;
+int		tile;
+molecule	mcomp;
+string		str;
+point		pts[ dynamic ];
+int		npts, maxat;
+
+string		symfile; 
+string		rangefile;
+string		eval;
+
+string		tmpnam() c;
+string		cfname, efname;
+file		ef;
+string		cmd;
+string		line;
+int		p, v, m;
+
+int		err;
+
+int		tss_init() c;
+int		tss_next() c;
+
+int	readparms( string pfile, int nvars, int nmats, 
+	string symfile, string rangefile, string eval,
+	int tile, int nparts, string pnames[1] )
+{
+	file	pf;
+	string	line;
+	string	fields[ 10 ];
+	int	n_fields, p;
+	int	err;
+
+	if( ( pf = fopen( pfile, "r" ) ) == NULL ){
+		fprintf( stderr, "readparms: can't open parm-file %s\n",
+			pfile );
+		return( 1 );
+	}
+
+	for( err = 0; line = getline( pf ); ){
+		n_fields = split( line, fields, " \t" );
+		if( n_fields == 0 )
+			continue;
+		else if( fields[1] == "#" )
+			continue;
+		if( n_fields < 2 ){
+			fprintf( stderr,
+				"readparms: missing value: %s\n", line );
+			err = 1;
+			continue;
+		}
+		if( fields[1] == "nmats" ){
+			nmats = atoi( fields[2] );
+			if( nmats < 1 ){
+				fprintf( stderr,
+					"readparms: nmats must be > 0\n" );
+				err = 1;
+				continue;
+			}
+		}else if( fields[1] == "nvars" ){
+			nvars = atoi( fields[2] );
+			if( nvars < 1 ){
+				fprintf( stderr,
+					"readparms: nvars must be > 0\n" );
+				err = 1;
+				continue;
+			}
+		}else if( fields[1] == "symfile" )
+			symfile = fields[2];
+		else if( fields[1] == "rangefile" )
+			rangefile = fields[2];
+		else if( fields[1] == "eval" )
+			eval = fields[2];
+		else if( fields[1] == "tile" ){
+			if( fields[2] == "true" )
+				tile = 1;
+			else if( fields[2] == "false" )
+				tile = 0;
+			else{
+				fprintf( stderr,
+				"readparms: tile must be true or false\n" );
+				err = 1;
+			}
+		}else if( fields[1] == "nparts" ){
+			nparts = atoi( fields[2] );
+			if( nparts < 1 ){
+				fprintf( stderr,
+					"readparms: nparts must be > 0\n" );
+				err = 1;
+				continue;
+			}else{
+				for( p = 0; line = getline( pf ); ){
+					n_fields = split( line, fields, " \t" );
+					if( n_fields == 0 )
+						continue;
+					else if( fields[1] == "#" )
+						continue;
+					else if( n_fields > 1 ){ 
+						fprintf( stderr,
+			"readparms: part names can not include spaces" );
+						continue;
+					}
+					p++;
+					if( p > nparts ){
+						fprintf( stderr,
+						"readparms: too many parts\n" );
+						err = 1;
+						continue;
+					}else
+						pnames[p] = fields[1];
+				}
+			}
+			if( p < nparts ){
+				fprintf( stderr,
+				"readparms: missing parts: need %d got %d\n",
+					nparts, p );
+				err = 1;
+			}
+		}else{
+			fprintf( stderr, "readparms: unknown keyword %s\n",
+				fields[1] );
+			err = 1;
+			continue;
+		}
+	}
+
+	fclose( pf );
+
+	if( symfile == "" ){
+		fprintf( stderr, "readparms: symfile not set\n" );
+		err = 1;
+	}
+
+	if( rangefile == "" ){
+		fprintf( stderr, "readparms: rangefile not set\n" );
+		err = 1;
+	}
+
+	if( eval == "" ){
+		fprintf( stderr, "readparms: eval not set\n" );
+		err = 1;
+	}
+
+	if( nparts == 0 ){
+		fprintf( stderr, "readparms: nparts must be > 0\n" );
+		err = 1;
+	}
+
+// ---> DEBUG
+//
+fprintf( stderr, "nvars=     %d\n", nvars );
+fprintf( stderr, "nmats=     %d\n", nmats );
+fprintf( stderr, "symfile=   %s\n", symfile );
+fprintf( stderr, "rangefile= %s\n", rangefile );
+fprintf( stderr, "eval=      %s\n", eval );
+if( tile )
+	fprintf( stderr, "tile=      true\n" );
+else
+	fprintf( stderr, "tile=      false\n" );
+fprintf( stderr, "nparts=    %d\n", nparts );
+for( p = 1; p <= nparts; p++ )
+	fprintf( stderr, "           %s\n", pnames[p] );
+//
+// ---> END DEBUG
+
+	return( err );
+};
+
+if( argc != 2 ){
+	fprintf( stderr, "usage: %s parm-file\n", argv[1] );
+	exit( 1 );
+}
+
+nvars = MAXVARS;
+nmats = MAXMATS;
+symfile = "";
+rangefile = "";
+eval = "";
+tile = 1;
+nparts = 0;
+
+if( readparms( argv[2], nvars, nmats, symfile, rangefile, eval, tile,
+	nparts, pnames ) )
+	exit( 1 );
+
+allocate vars[ nvars ];
+allocate mats[ nmats ];
+
+allocate parts[ nparts ];
+maxat = 0;
+for( p = 1; p <= nparts; p++ ){
+	parts[p] = getpdb( pnames[p] );
+	if( parts[p].natoms > maxat )
+		maxat = parts[p].natoms;
+}
+
+allocate pts[ maxat ];
+
+cfname = tmpnam( NULL );
+efname = tmpnam( NULL );
+cmd = sprintf( "%s %s > %s", eval, cfname, efname );
+
+mcomp = newmolecule();
+p = 0;
+for( m = 1; m <= nmats; m++ ){
+	p++;
+	if( p > nparts ){
+		if( !tile )
+			break;
+		p = 1;
+	}
+	str = sprintf( "%d", m );
+	addstrand( mcomp, str );
+	mergestr( mcomp, str, "last", parts[p], "1", "first" );
+}
+
+// ---> DEBUG
+//
+fprintf( stderr, "coords=    %s\n", cfname );
+fprintf( stderr, "energy=    %s\n", efname );
+fprintf( stderr, "cmd=       %s\n", cmd );
+fprintf( stderr, "mcomp=     %d strands\n", mcomp.nstrands );
+fprintf( stderr, "maxat=     %d\n", maxat );
+//
+// ---> END DEBUG
+
+if( tss_init( symfile, rangefile ) )
+	exit( 1 );
+
+while( tss_next( err, nmats, nmats, mats, nvars, nvars, vars ) ){
+
+	p = 0;
+	for( m = 1; m < nmats; m++ ){
+		p++;
+		if( p > nparts ){
+			if( !tile )
+				break;
+			p = 1;
+		}
+		npts = setxyz_from_mol( parts[p], NULL, pts );
+		transformpts( mats[m], pts, npts );
+		setmol_from_xyz( mcomp, sprintf( "%d::", m ), pts );
+	}
+
+	putpdb( cfname, mcomp );
+
+	system( cmd );
+
+	ef = fopen( efname, "r" );
+	line = getline( ef );
+	fclose( ef );
+	fprintf( stderr, "%10.4f", atof( line ) );
+
+	for( v = 1; v <= nvars; v++ )
+		fprintf( stderr, " %8.3lf", vars[v] );
+	fprintf( stderr, "\n" );
+}
+
+unlink( cfname );
+unlink( efname );

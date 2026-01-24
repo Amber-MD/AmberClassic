@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test of the isotropic periodic sum technique"
+echo ""
+../../bin/$NAB -o sff dhfr_ips.nab || error
+$DO_PARALLEL ./sff > dhfr_ips.out || error
+
+../dacdif -r 1.e-8 dhfr_ips.out.check dhfr_ips.out
+
+rm -f sff dhfr_ips.c
+exit 0

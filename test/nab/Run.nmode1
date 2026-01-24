@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to compute GB normal modes using DSYEVD:"
+echo ""
+../../bin/$NAB -o asp_nm1 asp_nm1.nab || error
+$DO_PARALLEL ./asp_nm1 > asp_nm1.out.tmp || error
+cat asp_nm1.out.tmp | tail -67 > asp_nm1.out
+rm asp_nm1.out.tmp
+
+../dacdif asp_nm1.out.check asp_nm1.out
+
+rm -f asp_nm1 asp_nm1.c
+exit 0

@@ -1,15 +1,24 @@
+{% set version = "1.2" %}
+{% set mpi = "openmpi" %}
+
 package:
   name: amberclassic
-#  version 0.1   just trying to adapt recipe from amber_phenix
-#  version 0.2   try using more shared libs from conda-forge
-#  version 0.3   try using boost from conda-forge for metatwist
-  version: 0.3
+  version: {{ version }}
 
 source:
   path: ../
+# url:
+# sha256: 
   
+mpi:
+   - {{ mpi }}
+
 build:
   number: 0
+  skip: True # [win or ppc65le]
+
+mpi:
+   - {{ mpi }}
 
 requirements:
   build:
@@ -19,36 +28,67 @@ requirements:
    - {{ compiler('fortran') }}
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
-#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - openmpi-mpicc
+   - {{ compiler('nvcc') }} # [ linux and not aarch64 ]
+   - nvcc_linux-64=11.8 # [ linux ]
+   - coreutils
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas
+   - arpack
    - libnetcdf
    - netcdf-fortran
-   - fftw
-   - libboost-devel=1.85.0
+   - fftw=* mpi_{{ mpi }}*
+   - libboost-devel=1.86.0
 
   host:
-   - libboost-devel=1.85.0
+   - bzip2
+   - zlib
+   - libboost-devel=1.86.0
    - openblas
+   - arpack
    - libnetcdf
    - netcdf-fortran
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
-   - fftw
-#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - {{ mpi }}
+   - fftw=* mpi_{{ mpi }}*
 
   run:
-   - libboost-devel=1.85.0
+   - libboost-devel=1.86.0
    - llvm-openmp  # [osx]
    - libgomp      # [linux and not aarch64]
    - openblas
+   - arpack
    - libnetcdf
    - netcdf-fortran
-   - fftw
-#  - {{ mpi }} # [ mpi == "openmpi" ]
+   - {{ mpi }}
+   - fftw=* mpi_{{ mpi }}*
+   - pdb2pqr
+   - parmed
+   - propka
+
+test:
+  commands:
+   - antechamber -h
 
 about:
     home: https://github.com/Amber-MD/AmberClassic.git
-    license: GNU General Public License (GPL/LGPL)
-    summary: Subset of AmberTools, built around a "modern" version of sander; includes other useful tools
+    license: GPL-2.0-or-later AND BSD-3-Clause AND MIT
+    license_file: 
+       - LICENSE
+    summary: 'Subset of AmberTools, built around a "modern" version of sander; includes other useful tools'
+    description: |
+      This repository contains msander, a "modern" version of parts of the
+      Amber molecular dynamics program sander. Also included are various
+      NMR, X-ray and cryoEM-related code and utilities, as well as versions
+      of a number of the "classic" (and commonly-used) parts of AmberTools:
+      tleap, antechamber, sqm, sff, mdgx, metatwist, rism1d, saxs, gbnsr6,
+      xtalutil, protonate, packmol and paramfit. All of the force
+      field files from AmberTools are also included here. With these tools,
+      many systems can be set up for simulation in msander.
+
+extra:
+  recipe-maintainers:
+    - dacase
+

@@ -1,6 +1,33 @@
 /***************************************************************************/
-/*      LMOD: Written by Istvan Kolossvary     time stamp: 06/03/2016      */
+/*      LMOD: Written by Istvan Kolossvary     time stamp: 10/03/2019      */
 /***************************************************************************/
+
+/*
+   ! **********************************************************************
+   !  Copyright 2003-2020                                                 *
+   !                                                                      *
+   !   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS''                  *
+   !   AND ANY EXPRESS OR IMPLIED WARRANTIES,                             *
+   !   INCLUDING, BUT NOT LIMITED TO, THE IMPLIED                         *
+   !   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR                      *
+   !   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT                   *
+   !   SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,                         *
+   !   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR                       *
+   !   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                          *
+   !   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR                     *
+   !   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR                        *
+   !   BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON                       *
+   !   ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,                      *
+   !   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE                    *
+   !   OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE                    *
+   !   OF THIS SOFTWARE, EVEN IF ADVISED OF THE                           *
+   !   POSSIBILITY OF SUCH DAMAGE.                                        *
+   !                                                                      *
+   !  For license details, etc., contact:                                 *
+   !    Istvan Kolossvary <istvan@kolossvary.hu>                          *
+   !                                                                      *
+   ! **********************************************************************
+ */
 
 /*  Note: there are two "public" routines here:
  *  lmodC():  a fairly low-level interface (currently used by sander), which
@@ -44,6 +71,7 @@
 #define CALCBOTH_OLDNBL 4
 #define MINIMIZE        5
 #define RELAX           6
+#define LMOD_1ST_MINIM  7
 
 #define PARAMS_ERROR    -1
 #define ILLEGAL_STATUS  -2
@@ -91,6 +119,7 @@
 static int DEBUG_ARPACK = NO;
 static int PRINT_LMOD = NO;
 static int DEBUG_LMOD = NO;
+static int DEBUG_ZIGZAG = NO;
 
 
 static struct archive {
@@ -152,12 +181,12 @@ static void calc_rot_matrix(double alpha, double rotax_x, double rotax_y,
                             double rotax_z, double rotmat[3][3]);
 static void destroy_archive();
 static void diag(int n, double aa[3][3], double *d, double x[3][3], int *error_flag);
-/* static void hessdump(int *ndim, double *xyz, double *grad, int * *return_flag, int *label); */
+static void hessdump(int *ndim, double *xyz, double *grad, int *return_flag, int *label);
 static void load_archive(int *nconf, int ndim, double *xyz_array, int *error_flag);
 static void my_free(void *poi);
 static void *my_malloc(void *(*malloc_method) (size_t), const char *s,
                        size_t nmemb, size_t size, int *error_flag);
-/* static int read_archive(char *fname, int ndim, int *error_flag); */
+static int read_archive(char *fname, int ndim, int *error_flag);
 static int read_and_sort_archive(char *fname, int ndim, int *error_flag);
 static void restart_lmod(int ndim, int nmax, double *xyz);
 static double rmsfit(int ndim, double *ref, double *xyz, char *which, int *error_flag);
@@ -187,7 +216,7 @@ static void *my_malloc(void *(*malloc_method) (size_t), const char *s,
    }
    memset(poi, 0, nmemb * size);        /* clear memory */
  /*printf("\n Allocated %10d bytes at %p for %s\n",(int)(nmemb*size),poi,s+10);
-   fflush(stdout); */
+   fflush(stdout);*/
    return poi;
 }
 
@@ -196,8 +225,8 @@ static void my_free(void *poi)
 {
    if (poi != NULL)
       free(poi);
- /*printf("\n Deallocated                   %p\n",poi); */
-   fflush(stdout); 
+ /*printf("\n Deallocated                   %p\n",poi); 
+   fflush(stdout);*/
 }
 
 
@@ -425,7 +454,7 @@ static void destroy_archive()
    conflib_archive = NULL;      /* label archive as empty */
 }
 
-#if 0
+
 static int read_archive(char *fname, int ndim, int *error_flag)
 {
    int ndat;
@@ -495,7 +524,7 @@ static int read_archive(char *fname, int ndim, int *error_flag)
    fclose(file);
    return ndat;
 }
-#endif
+
 
 static int read_and_sort_archive(char *fname, int ndim, int *error_flag) /* ndim = ndim_ext = 3 * natm_ext */
 {
@@ -1393,7 +1422,7 @@ hessvec_(int *ndim, double *vec_in, double *vec_out, double *xyz,
 }
 #endif
 
-#if 0
+
 static void
 hessdump(int *ndim, double *xyz, double *grad, int *return_flag,
          int *label)
@@ -1485,7 +1514,7 @@ hessdump(int *ndim, double *xyz, double *grad, int *return_flag,
    my_free(unit_vector);
    my_free(hessian_row);
 }
-#endif
+
 
 static void
 separate_close_pairs(int do_all_pairs, int do_ligs_only, int ndim,
@@ -1672,7 +1701,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
 /* Local: */
    static int seed3;            /* see rand2.c */
    static int allocated, status_flag, error_flag;
-   static int lmod_iter, restart, zigzag_iter, max_zigzag_iter,
+   static int lmod_iter, zigzag_iter, max_zigzag_iter,
        i, j, k, kk, l, n, cnt;
    static int barrier_crossing_test_on, do_all, do_ligs;
    static int *index = NULL;
@@ -1689,6 +1718,8 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
    static clock_t lmod_time_stamp, extn_time_stamp;
    static int natm_local, ndim_local, ndim_ext, *atm_indx = NULL;
    static double *xyz_local = NULL, *grad_local = NULL;
+   static int offset;  /* used with DEBUG_ZIGZAG */
+   static int *plus_minus = NULL;  /* used with combining eigvecs into mixed mode */
 
 #ifdef SQM
    nabout = stdout;
@@ -1731,7 +1762,8 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          *label = PARAMS_ERROR;
          return(0.0);
       }
-      if (*rotran != 6 && *rotran != 3 && *rotran != 1 && *rotran != 0) {
+      if (*rotran < 0) {  /* "rotran" can be specified as any non-negative number to
+                                skip this many modes and concentrate on higher modes */
          fprintf(stderr,
          "\nERROR in lmod(): Wrong number of trans/rot modes.\n");
          fflush(stderr);
@@ -1923,22 +1955,32 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          DEBUG_ARPACK = NO;
          PRINT_LMOD = NO;
          DEBUG_LMOD = NO;
+         DEBUG_ZIGZAG = NO;
       } else if (*print_level == 1) {
          DEBUG_ARPACK = NO;
          PRINT_LMOD = YES;
          DEBUG_LMOD = NO;
+         DEBUG_ZIGZAG = NO;
       } else if (*print_level == 2) {
          DEBUG_ARPACK = NO;
          PRINT_LMOD = YES;
          DEBUG_LMOD = YES;
+         DEBUG_ZIGZAG = NO;
       } else if (*print_level == 3) {
          DEBUG_ARPACK = YES;
          PRINT_LMOD = YES;
          DEBUG_LMOD = YES;
+         DEBUG_ZIGZAG = NO;
       } else if (*print_level == 4) {
          DEBUG_ARPACK = YES;
          PRINT_LMOD = NO;
          DEBUG_LMOD = NO;
+         DEBUG_ZIGZAG = NO;
+      } else if (*print_level == 5) {
+         DEBUG_ARPACK = NO;
+         PRINT_LMOD = NO;
+         DEBUG_LMOD = NO;
+         DEBUG_ZIGZAG = YES;
       } else {
          fprintf(stderr, "\nERROR in lmod(): Print level out of range.\n");
          fflush(stderr);
@@ -1962,7 +2004,6 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
       allocated = NO;
       status_flag = 0;
       error_flag = FALSE;
-      restart = NO;
       if (*arpk_dim == 0)
          *arpk_dim = ndim_local;
       else {
@@ -2026,7 +2067,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          pboltz = (double *)
              my_malloc(malloc,
                        "\nERROR in lmod/my_malloc(double *pboltz)",
-                       2 * nof_requested_modes, sizeof(double),
+                       2 * (nof_requested_modes +1), sizeof(double),
                        &error_flag);
          if (error_flag) {
             *label = error_flag;
@@ -2043,7 +2084,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          lmod_move = (double *)
              my_malloc(malloc,
                        "\nERROR in lmod/my_malloc(double *lmod_move)",
-                       2 * nof_requested_modes * ndim_local, sizeof(double),
+                       2 * (nof_requested_modes + 1) * ndim_local, sizeof(double),
                        &error_flag);
          if (error_flag) {
             *label = error_flag;
@@ -2081,6 +2122,14 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
             *label = error_flag;
             goto error_cleanup;
          }
+         plus_minus = (int *)
+             my_malloc(malloc,
+                       "\nERROR in lmod/my_malloc(int *plus_minus)",
+                       nof_requested_modes, sizeof(int), &error_flag);
+         if (error_flag) {
+            *label = error_flag;
+            goto error_cleanup;
+         }
          allocated = YES;
       }
       for (i=j=0; i<(*natm_ext); i++) {  /* generate local -> ext mapping */
@@ -2093,15 +2142,22 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          xyz_local[3*i+1] = xyz_ext[3*j+1];
          xyz_local[3*i+2] = xyz_ext[3*j+2];
       }
-      /* Make sure that all MPI processes use the same seed */
+      /* Let the master MPI process define the random number seed. */
       if (get_mytaskid() == 0) {
          if (*seed > 0)
             seed3 = -(*seed);   /* see rand2.c */
          else
             seed3 = rseed();    /* see rand2.c */
       }
+      /* In the case of sander/sqm only the master MPI process calls lmodC. */
+      /* Therefore, there is no need to broadcast the seed. */
+      /* The non master MPI processes only participate in the force evaluation. */
+#ifndef SQM
 #if defined(MPI) || defined(SCALAPACK)
+      /* In the case of other programs all MPI processes may call lmodC. */
+      /* Thus, ensure that all MPI processes use the same seed. */
       MPI_Bcast(&seed3, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
 #endif
       setseed(&seed3);          /* see rand2.c */
       goto L00;
@@ -2201,8 +2257,19 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          *label = error_flag;
          goto error_cleanup;
       }
-   }
 
+      /* replace the xyz coordinates passed to lmodC()
+         with the global minimum found in conflib.dat: */
+      restart_lmod(ndim_ext, 1, xyz_ext);
+
+      for (i=0; i<natm_local; i++) {  /* update xyz_local[]
+                                         w/ restart coords */
+         j = atm_indx[i];
+         xyz_local[3*i  ] = xyz_ext[3*j  ];
+         xyz_local[3*i+1] = xyz_ext[3*j+1];
+         xyz_local[3*i+2] = xyz_ext[3*j+2];
+      }
+   }
 /*
     Minimize initial structure:
 */
@@ -2212,7 +2279,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
       xyz_ext[ 3*j+1] = xyz_local[ 3*i+1];
       xyz_ext[ 3*j+2] = xyz_local[ 3*i+2];
    }
-   *return_flag = MINIMIZE;
+   *return_flag = LMOD_1ST_MINIM;
    extn_time_stamp = clock();
    *lmod_time += (double) (extn_time_stamp - lmod_time_stamp);
    *label = 2;
@@ -2234,8 +2301,9 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
       *label = error_flag;
       goto error_cleanup;
    }
-   /* start recording LMOD trajectory: */
-   memcpy(trajectory, xyz_ext, ndim_ext * sizeof(double));
+   if ( !DEBUG_ZIGZAG ) {  /* start recording LMOD trajectory */
+      memcpy(trajectory, xyz_ext, ndim_ext * sizeof(double));
+   }
    if (get_mytaskid() == 0) {
       if (PRINT_LMOD) {
          fprintf( nabout, "__________________________________________________");
@@ -2279,9 +2347,8 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
 /*
         Calculate low-mode eigenvectors:
 */
-      if ((lmod_iter % (*arpk_recalc)) && !restart)
+      if (lmod_iter % (*arpk_recalc))
          goto SKIP_ARPK;
-      restart = NO;
       for (status_flag = 0;;) {
        L04:
          for (i=0; i<natm_local; i++) {  /* update grad_local[] w/ new grad
@@ -2319,14 +2386,14 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
                for(i=0; i<nof_computed_modes; i++)
                    fprintf(nabout, "%12.5g ",eigvals[i]);
                fprintf(nabout, "\n\nEigenvectors\n\n");
-               for(i=0; i<ndim; i++){
+               for(i=0; i<ndim_local; i++){
                    for(j=0; j<nof_computed_modes; j++)
-                       fprintf(nabout, "%12.5g ",eigvecs[j*ndim+i]);
+                       fprintf(nabout, "%12.5g ",eigvecs[j*ndim_local+i]);
                    fprintf(nabout, "\n");
                }
             }
 #endif
-            break;              /* arpack done     */
+            break;              /* arpack done - NOTE: xyz_local[] is restored to original via hessvec() */
          }
       }                         /* end arpack() */
       for (i = 0; i < nof_computed_modes; i++)
@@ -2359,20 +2426,48 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
 /*
         Cycle through vibrational modes:
 */
-      for (k = (*rotran), kk = 0, cnt = 0, min_energy = BIG;
-           k < nof_computed_modes; k++) {
+      for (i=0; i<nof_computed_modes; i++) {  /* set sign for eigvecs for 
+                                                 mixing, by flipping coin */
+         if (rand2() < 0.5)
+            plus_minus[i] =  1;
+         else
+            plus_minus[i] = -1;
+      }
+      for (k = (*rotran), kk = 0, cnt = 0, min_energy = BIG; k <= nof_computed_modes; k++) { 
          /* randomly select (*kmod) vib. modes to be varied: */
-         if (cnt == *kmod)
-            break;
+         if (cnt == *kmod) {
+            k = nof_computed_modes;  /* individual modes done,
+                                        explore a randomized mixed mode */
+         }
          if (*kmod < (nof_computed_modes - *rotran)
              && (*kmod - cnt) < (nof_computed_modes - k)
              && rand2() >=
              ((double) (*kmod) / (double) (nof_computed_modes - *rotran)))
             continue;
          cnt++;
-         for (i = 0; i < ndim_local; i++)
-            /* pull out eigvec: */
-            lmod_vec[i] = eigvecs[index[k] * ndim_local + i];
+         for (i = 0; i < ndim_local; i++) {
+            if( k < nof_computed_modes ) {
+               /* pull out eigvec: */
+               lmod_vec[i] = eigvecs[index[k] * ndim_local + i];
+            } else {
+               /* combine eigvecs: */
+               lmod_vec[i] = ZERO;
+               for( j=(*rotran); j<nof_computed_modes; j++ ) {
+                  lmod_vec[i] += plus_minus[index[j]] * eigvecs[index[j] * ndim_local + i];  /* add or subtract next eigvec */
+               }
+            }
+         }
+         if ( DEBUG_ZIGZAG ) {
+            offset = ndim_ext * (4*max_zigzag_iter+3) * (lmod_iter * (*kmod) + k-(*rotran));  /* trajectory[] array offset */
+            for (i=0; i<natm_local; i++) {  /* update xyz_ext for storing
+                                               centr struct in trajectory */
+               j = atm_indx[i];
+               xyz_ext[ 3*j  ] = xyz_cent[ 3*i  ];
+               xyz_ext[ 3*j+1] = xyz_cent[ 3*i+1];
+               xyz_ext[ 3*j+2] = xyz_cent[ 3*i+2];
+            }
+            memcpy(trajectory + offset, xyz_ext, ndim_ext * sizeof(double));
+         }
          for (l = 1; l <= 2; l++) {
 /*
    Climb energy barrier utilizing the LMOD ZIG-ZAG algorithm:
@@ -2395,10 +2490,12 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
             /* calculate maximum distance any single
                atom would move along lmod_vec[]: */
             for (i = 0, max_atmov = ZERO; i < natm_local; i++) {
-               for (j = 0, sum = ZERO; j < 3; j++)
+               for (j = 0, sum = ZERO; j < 3; j++) {
                   sum += SQR(lmod_vec[i * 3 + j]);
-               if (sum > max_atmov)
+               }
+               if (sum > max_atmov) {
                   max_atmov = sum;
+              }
             }
             max_atmov = sqrt(max_atmov);
             /* pick random distance between user-defined min/max values: */
@@ -2418,6 +2515,15 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
                   xyz_ext[ 3*j+1] = xyz_local[ 3*i+1];
                   xyz_ext[ 3*j+2] = xyz_local[ 3*i+2];
                }
+               #if 0
+               /* Record LINEAR displacement along LMOD move: */
+               if (DEBUG_ZIGZAG) {     /* xyz_ext up-to-date */
+                  memcpy(trajectory + offset + ndim_ext * ((l-1)*(2*max_zigzag_iter+1) + zigzag_iter+1), 
+                         xyz_ext, ndim_ext * sizeof(double));
+                  memcpy(trajectory + offset + ndim_ext * (2*max_zigzag_iter*(l) + (l-1) - zigzag_iter), 
+                         xyz_ext, ndim_ext * sizeof(double));
+               }
+               #endif
                do_all = TRUE;
                do_ligs = FALSE;
                separate_close_pairs(do_all, do_ligs, ndim_ext, xyz_ext,
@@ -2429,7 +2535,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
                   xyz_local[3*i+2] = xyz_ext[3*j+2];
                }
 /*
-                    Relax structure externally:
+               Relax structure externally:
 */
                for (i=0; i<natm_local; i++) {  /* update xyz_ext[]
                                                   it is up-to-date, but it
@@ -2451,6 +2557,13 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
                   xyz_local[3*i  ] = xyz_ext[3*j  ];
                   xyz_local[3*i+1] = xyz_ext[3*j+1];
                   xyz_local[3*i+2] = xyz_ext[3*j+2];
+               }
+               /* Record CURVILINEAR displacement along LMOD move: */
+               if (DEBUG_ZIGZAG) {          /* xyz_ext up-to-date */
+                  memcpy(trajectory + offset + ndim_ext * ((l-1)*(2*max_zigzag_iter+1) + zigzag_iter+1), 
+                         xyz_ext, ndim_ext * sizeof(double));
+                  memcpy(trajectory + offset + ndim_ext * (2*max_zigzag_iter*(l) + (l-1) - zigzag_iter), 
+                         xyz_ext, ndim_ext * sizeof(double));
                }
                if (barrier_crossing_test_on) {
                   memcpy(xyz_hold, xyz_local, ndim_local * sizeof(double));
@@ -2486,8 +2599,18 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
                   }
                }
             }                   /* end zigzag_iter */
+            if ( DEBUG_ZIGZAG ) {
+               for (i=0; i<natm_local; i++) {  /* update xyz_ext for storing
+                                                  centr struct in trajectory */
+                  j = atm_indx[i];
+                  xyz_ext[ 3*j  ] = xyz_cent[ 3*i  ];
+                  xyz_ext[ 3*j+1] = xyz_cent[ 3*i+1];
+                  xyz_ext[ 3*j+2] = xyz_cent[ 3*i+2];
+               }
+               memcpy(trajectory + offset + ndim_ext * (l)*(2*max_zigzag_iter+1), xyz_ext, ndim_ext * sizeof(double));
+            }
 /*
-                Minimize structure after LMOD move:
+            Minimize structure after LMOD move:
 */
             for (i=0; i<natm_local; i++) {  /* update xyz_ext[]
                                                it is up-to-date, but it
@@ -2551,7 +2674,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
                   }
                   fprintf( nabout,
            "%3d  /%2d %cE =%13.3f (%6.3f)  Rg = %8.3f  rmsd=%7.3f  p=%7.4f\n",
-           k - (*rotran) + 1, MIN(zigzag_iter + 1,
+           (k < nof_computed_modes) ? (k - (*rotran) + 1) : 0, MIN(zigzag_iter + 1,
                                   max_zigzag_iter),
            (grad_rms <= FULLY_MINIMIZED) ? ' ' : '!', energy,
            grad_rms, calc_rad(natm_local, xyz_local), rms,
@@ -2599,8 +2722,10 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          xyz_ext[ 3*j+1] = xyz_local[ 3*i+1];
          xyz_ext[ 3*j+2] = xyz_local[ 3*i+2];
       }
-      memcpy(trajectory + (lmod_iter + 1) * ndim_ext, xyz_ext,
-             ndim_ext * sizeof(double));  /* add structure to LMOD trajectory */
+      if ( !DEBUG_ZIGZAG ) {
+         memcpy(trajectory + (lmod_iter + 1) * ndim_ext, xyz_ext,
+                ndim_ext * sizeof(double));  /* add structure to LMOD trajectory */
+      }
 /*
         Update archive and restart simulation periodically:
 */
@@ -2647,7 +2772,6 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
          if (lmod_iter % (*lmod_restart) == (*lmod_restart) - 1) {
             /* restart simulation with a low-energy structure: */
             restart_lmod(ndim_ext, MIN(*topten, sizeof_archive), xyz_ext);
-            restart = YES;
             for (i=0; i<natm_local; i++) {  /* update xyz_local[]
                                                w/ restart coords */
                j = atm_indx[i];
@@ -2820,14 +2944,57 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
       }
    }
 /*
-    Load archive into conflib[] for use in parent program:
+    If we record normal mode movie (DEBUG_ZIGZAG is TRUE)
+    the frames are stored in trajectory[], and conflib[] is
+    irrelevant. We are going to use conflib[] though to pass
+    the eigenvectors back to the NAB parent program. The idea is
+    then to load the values in the conflib[] array as "B-factors"
+    at the NAB level, which will allow for nice visualization in
+    Pymol.
+    FIXME: frozen atoms???
 */
-   load_archive(nconf, ndim_ext, conflib, &error_flag);
-   if (error_flag) {
-      if (allocated)
-         allocated = NO;
-      *label = error_flag;
-      goto error_cleanup;
+   if( DEBUG_ZIGZAG ) {
+	  k = 0;
+      for(j=(*rotran); j<nof_computed_modes; j++) {
+         for(i=0; i<ndim_local; i++) {
+            conflib[k++] = 1e3*eigvecs[j*ndim_local+i];
+         }
+      }
+      /* handle the last mixed/combined mode differently: */
+      l = k;   /* remember where the combined mode starts */
+      for(i=0; i<ndim_local; i++) {
+         conflib[k++] = lmod_vec[i];  /* last lmod_vec[] 
+                                         contains mixed mode */
+      }
+      /* normalize the combined mode: */
+      sum = ZERO;
+      for(i=l; i<l +ndim_local; i++) sum += SQR(conflib[i]);
+      sum = sqrt(sum);
+      for(i=l; i<l +ndim_local; i++) conflib[i] /= (sum*1e-3);
+#if 0
+      l = k;   /* remember where the combined mode starts */
+      for(i=0; i<ndim_local; i++) {
+         sum = ZERO;
+         for(j=(*rotran); j<nof_computed_modes; j++) {
+            sum += eigvecs[j*ndim_local+i];
+         }
+         conflib[k++] = sum;
+      }
+      /* normalize the combined mode: */
+      sum = ZERO;
+      for(i=l; i<l +ndim_local; i++) sum += SQR(conflib[i]);
+      sum = sqrt(sum);
+      for(i=l; i<l +ndim_local; i++) conflib[i] /= (sum*1e-3);
+#endif
+   }
+   else {  /* Load archive into conflib[] for use in parent program: */
+      load_archive(nconf, ndim_ext, conflib, &error_flag);
+      if (error_flag) {
+         if (allocated)
+            allocated = NO;
+         *label = error_flag;
+         goto error_cleanup;
+      }
    }
    glob_min_energy = conflib_archive->energy;
    /* update outgoing xyz_ext[] w/ glob min coords: */
@@ -2848,6 +3015,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
       my_free(xyz_local);
       my_free(grad_local);
       my_free(atm_indx);
+      my_free(plus_minus);
       allocated = NO;
    }
    if (conflib_archive != NULL)
@@ -2872,6 +3040,7 @@ lmodC(int *nlmodit, int *nmod, int *kmod, int *rotran, int *natm_ext,
    my_free(xyz_local);
    my_free(grad_local);
    my_free(atm_indx);
+   my_free(plus_minus);
    if (conflib_archive != NULL)
       destroy_archive();
    return(0.0);
@@ -2920,8 +3089,7 @@ INT_T   lmod_opt_init( struct lmod_opt *lo, struct xmin_opt *xo )
 
         xo->mol_struct_opt      = 1;
         xo->maxiter             = 20000;
-/*      xo->grms_tol            = The default is handled within lmod() below
-                                 using lo.minim_grms and lo.lmod_relax_grms. */
+        xo->grms_tol            = 1e-8;  /* only used to minimize initial structure */
         xo->method              = 2;
         xo->numdiff             = 1;
         xo->m_lbfgs             = 3;
@@ -3269,6 +3437,16 @@ REAL_T lmod(INT_T *natm, REAL_T *xyz, REAL_T *grad, REAL_T *energy,
 		else if (return_flag == 6) {
 			if (status_flag >= 0) {
                 xo->grms_tol = lo->lmod_relax_grms;
+				*energy = xmin(&mme, natm, xyz, grad, energy,
+                                              &xmin_grms, xo );
+			} else
+				lo->error_flag = status_flag;
+		}
+
+//      Minimize initial xyz[] structure externally:
+		else if (return_flag == 7) {
+			if (status_flag >= 0) {
+    			/* xo->grms_tol = lo->minim_grms; */
 				*energy = xmin(&mme, natm, xyz, grad, energy,
                                               &xmin_grms, xo );
 			} else

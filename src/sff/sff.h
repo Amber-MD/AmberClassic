@@ -146,6 +146,7 @@ REAL_T		mme2( REAL_T*, REAL_T*, REAL_T*, REAL_T*,
 REAL_T		mme4( REAL_T*, REAL_T*, INT_T* );
 REAL_T		mme_rattle( REAL_T*, REAL_T*, INT_T* );
 INT_T		mme_init_sff( PARMSTRUCT_T*, INT_T*, INT_T*, REAL_T*, STRING_T* );
+INT_T       mme_timer( );
 INT_T		newton( REAL_T*, INT_T*, REAL_T*,
 			REAL_T ( *func1 )( REAL_T*, REAL_T*, INT_T* ),
 			REAL_T ( *func2 )( REAL_T*, REAL_T*, REAL_T*, REAL_T*,
@@ -163,6 +164,7 @@ INT_T		putxv( STRING_T*, STRING_T*, INT_T, REAL_T, REAL_T*, REAL_T* );
 INT_T           putxyz( STRING_T**, INT_T*, REAL_T* );
 REAL_T		rand2( void );
 INT_T		sasad( REAL_T*, REAL_T*, REAL_T*, INT_T, REAL_T );
+INT_T       setseed( INT_T* );
 INT_T   xmin_opt_init( struct xmin_opt* );
 REAL_T	xmin( REAL_T ( *func )( REAL_T*, REAL_T*, INT_T* ),
              INT_T*, REAL_T*, REAL_T*, REAL_T*, REAL_T*, struct xmin_opt* );
@@ -171,7 +173,6 @@ REAL_T          xminC(INT_T*, INT_T*, INT_T*, REAL_T*, INT_T*, INT_T*,
                       INT_T*, REAL_T*, INT_T*, INT_T*, INT_T*, INT_T*,
                       REAL_T*, REAL_T*, REAL_T*, REAL_T*,
                       REAL_T*, REAL_T*, INT_T*, INT_T*);
-INT_T            mme_rism_max_memory();
 
    /*  prmtop routine public interfaces: */
 INT_T    free_prm( PARMSTRUCT_T* prm );
@@ -204,83 +205,6 @@ typedef	struct	bounds_t	{
 	INT_T		b_nchiral;
 	CHIRAL_T	*b_chiral;
 } BOUNDS_T;
-
-  /*  rism routine interfaces: */
-  /* 3D RISM section  */
-  /*  N.B.: must match the rismprm_t struct in amber_rism_interface.F90 */
-  typedef struct {
-    REAL_T solvcut;
-    REAL_T buffer;
-    REAL_T grdspc[3];
-    REAL_T solvbox[3];
-    REAL_T mdiis_del;
-    REAL_T mdiis_restart;
-    REAL_T fcecut;
-    REAL_T fcenormsw;
-    REAL_T uccoeff[4];
-    REAL_T biasPotential;
-    INT_T closureOrder;
-    INT_T ng3[3];
-    INT_T rism;      /* non-zero if RISM is turned on */
-    INT_T asympCorr;
-    INT_T mdiis_nvec;
-    INT_T mdiis_method;
-    INT_T maxstep;
-    INT_T npropagate;
-    INT_T centering;
-    INT_T zerofrc;
-    INT_T apply_rism_force;
-    INT_T polarDecomp;
-    INT_T entropicDecomp;
-    INT_T gfCorrection;
-    INT_T pcplusCorrection;
-    INT_T rismnrespa;
-    INT_T fcestride;
-    INT_T fcenbasis;
-    INT_T fcenbase;
-    INT_T fcecrd;
-    INT_T fceweigh;
-    INT_T fcetrans;
-    INT_T fcesort;
-    INT_T fceifreq;
-    INT_T fcentfrcor;
-    INT_T fcewrite;
-    INT_T fceread;
-    INT_T saveprogress;
-    INT_T ntwrism;
-    INT_T verbose;
-    INT_T progress;
-    INT_T write_thermo; 
-    INT_T selftest;
-    /*This is an unused variable that aligns
-      the type on eight byte boundaries*/
-    INT_T padding;
-  } RismData;
-
-#ifdef RISMSFF
-  void rism_force_( REAL_T*, REAL_T*, REAL_T*, INT_T*, INT_T* );
-  void rism_setparam_( RismData*, INT_T*, REAL_T*,
-                       INT_T*, INT_T*, STRING_T[10][8] ,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,  INT_T*, STRING_T*,  INT_T*, STRING_T*,
-                       INT_T*, STRING_T*,
-                       INT_T*, INT_T*, INT_T*,
-                       REAL_T*, REAL_T*, REAL_T*, REAL_T*,
-                       INT_T*, INT_T*);
-  void rism_init_( INT_T*);
-  void rism_list_param_();
-  void rism_writesolvdist_(INT_T*);
-  void rism_solvdist_thermo_calc_(INT_T*,INT_T*);
-  void rism_thermo_print_(INT_T*,REAL_T*);
-  void rism_printtimer_();
-  void rism_max_memory_();
-#endif /*RISMSFF*/
 
 #ifdef __cplusplus
 }

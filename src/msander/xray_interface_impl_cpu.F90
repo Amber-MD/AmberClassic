@@ -136,8 +136,8 @@ contains
          num_residues = nres
 
          allocate(atom_bfactor(natom), atom_occupancy(natom), &
-               atom_selection(natom), residue_chainid(nres), residue_icode(nres), &
-               atom_element(natom), atom_altloc(natom), residue_number(nres))
+            atom_selection(natom), residue_chainid(nres), residue_icode(nres), &
+            atom_element(natom), atom_altloc(natom), residue_number(nres))
 
          call nxtsec_reset()
          call nxtsec(prmtop_lun,STDOUT,0,'(20I4)','RESIDUE_NUMBER',fmt,ierr)
@@ -152,6 +152,9 @@ contains
             residue_icode=' '
          end if
 
+         call nxtsec(prmtop_lun,STDOUT,0,'(20A4)','ATOM_ELEMENT',fmt,ierr)
+         read(prmtop_lun,fmt) atom_element
+
          call nxtsec(prmtop_lun,STDOUT,1,'*','ATOM_ALTLOC',fmt,ierr)
          if (ierr==0) then
             read(prmtop_lun,fmt) atom_altloc
@@ -159,8 +162,6 @@ contains
             atom_altloc=' '
          end if
 
-         call nxtsec(prmtop_lun,STDOUT,0,'(20A4)','ATOM_ELEMENT',fmt,ierr)
-         read(prmtop_lun,fmt) atom_element
       ! end if
 
       if (reflection_infile == '') return
@@ -200,7 +201,9 @@ contains
       implicit none
       character(len=*), intent(in) :: filename
       ! locals
-      character(len=4) :: name,resName,segID,element,altLoc,chainID,iCode
+      character(len=4) :: name,segID,element
+      character(len=3) :: resName
+      character(len=1) :: altLoc,chainID,iCode
       integer :: resSeq
       real(real_kind) :: xyz(3),occupancy,tempFactor
       character(len=80) :: line
@@ -220,7 +223,7 @@ contains
             read(line,'(12X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F6.2,6X,2A4)') &
                   name,altLoc,resName,chainID,resSeq,iCode, &
                   xyz,occupancy,tempFactor,segID,element
-            i = find_atom(name,resName,chainID,resSeq,iCode)
+            i = find_atom(name,resName,chainID,resSeq,iCode,altLoc)
             if (i<0) then
                write(stdout,'(A)') 'Atom not found:'
                write(stdout,'(A)') trim(line)
@@ -265,11 +268,13 @@ contains
       return
    end subroutine xray_read_pdb
 
-   function find_atom(name,resName,chainID,resSeq,iCode) result(atom_serial)
+   function find_atom(name,resName,chainID,resSeq,iCode,altLoc) result(atom_serial)
       use memory_module, only: residue_pointer,residue_label,atom_name
       implicit none
       integer :: atom_serial
-      character(len=4), intent(in) :: name, resName, chainID, iCode
+      character(len=4), intent(in) :: name
+      character(len=3), intent(in) :: resName
+      character(len=1), intent(in) :: chainID, iCode, altLoc
       integer, intent(in) :: resSeq
       ! locals
       character(len=4) :: lname
@@ -283,7 +288,7 @@ contains
                .and. iCode==residue_icode(ires)) then
             ! then find the matching atom name:
             do j = residue_pointer(ires),residue_pointer(ires+1)-1
-               if (lname==atom_name(j)) then
+               if (lname==atom_name(j) .and. altLoc==atom_altLoc(j)) then
                   atom_serial = j
                   return
                end if
@@ -360,7 +365,7 @@ contains
             ! don't overflow atom or residue numbers:
             iatom_p = mod( iatom, 100000 )
             ires_p = mod( residue_number(ires), 10000 )
-            write(unit,'(A6,I5,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F6.2,6X,2A4)')&
+            write(unit,'(A6,I5,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F6.2,10X,A2)')&
                   merge('ATOM  ', 'HETATM', isStandardRes), &
                   iatom_p,name,atom_altloc(iatom)(1:1), &
                   resName,residue_chainid(ires)(1:1), &
@@ -368,8 +373,7 @@ contains
                   coordinate(1:3,iatom), &
                   atom_occupancy(iatom), &
                   atom_bfactor(iatom), &
-                  merge(this_residue_chainid,'    ',pdb_use_segid), &
-                  atom_element(iatom)
+                  atom_element(iatom)(3:4)
          end do
       end do
       write(unit,'(A)') 'END'

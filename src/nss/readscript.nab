@@ -1,0 +1,291 @@
+int	readscript( string fname,
+	string sym, string name, int noid, string axestype,
+	point pts[ 4 ], float angs[ 3 ], float di, int cnt )
+{
+	file	f;
+	string	line;
+	string	fields[ 20 ];
+	int	nf, err;
+	int	p_sym, p_trans;
+	int	p_pc, p_ax1, p_ax2, p_ax3;
+	int	p_ang1, p_ang2, p_ang3;
+	int	poly, cyc, hlx, rot, dihed;
+
+	if( fname == "-" )
+		f = stdin;
+	else if( ( f = fopen( fname, "r" ) ) == NULL ){
+		fprintf( stderr, "readscript: can't open script file %s\n",
+			fname );
+		return( 1 );
+	}
+
+	name = "";
+	noid = 0;
+	axestype = "relative";
+	p_sym = p_trans = 0;
+	p_pc = p_ax1 = p_ax2 = p_ax3 = 0;
+	p_ang1 = p_ang2 = p_ang3 = 0;
+	angs[ 1 ] = angs[ 2 ] = angs[ 3 ] = 0.0;
+
+	for( err = 0; line = getline( f ); ){
+		nf = split( line, fields, " \t" ); 
+		if( nf == 0 || substr( fields[ 1 ], 1, 1 ) == "#" )
+			continue;
+		if( fields[ 1 ] == "symmetry" ){
+			p_sym = 1;
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: symmetry sym\n" );
+				fprintf( stderr, "  sym is one of:" );
+				fprintf( stderr, "     cyclic, helix,\n" );
+				fprintf( stderr,
+			"     dihedral, tetra, cube, octa, dodeca, ico\n"
+					);
+			}else
+				sym = fields[ 2 ];
+		}else if( fields[ 1 ] == "transform" ){
+			p_trans = 1;
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: transform xfn\n" );
+				fprintf( stderr, "  xfm is one of:" );
+				fprintf( stderr,
+					"     translate, rotate, orient\n" );
+			}else
+				sym = fields[ 2 ];
+		}else if( fields[ 1 ] == "name" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: name name\n" );
+			}else
+				name = fields[ 2 ];
+		}else if( fields[ 1 ] == "noid" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+				"readscript: usage: noid { true | false }\n" );
+			}else
+				noid = fields[ 2 ] == "true";
+		}else if( fields[ 1 ] == "center" ){
+			if( nf < 4 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: center x y z\n" );
+			}else{
+				p_pc = 1;
+				pts[ 1 ].x = atof( fields[ 2 ] );
+				pts[ 1 ].y = atof( fields[ 3 ] );
+				pts[ 1 ].z = atof( fields[ 4 ] );
+			}
+		}else if( fields[ 1 ] == "axestype" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+			"readscript: usage: axestype [ relative | absolute ]\n"
+					);
+			}else if( fields[ 2 ] != "relative" &&
+				fields[ 2 ] != "absolute" ){
+				err = 1;
+				fprintf( stderr,
+			"readscript: usage: axestype [ relative | absolute ]\n"
+					);
+			}else
+				axestype = fields[ 2 ];
+		}else if( fields[ 1 ] == "axis" || fields[ 1 ] == "axis1" ){
+			if( nf < 4 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: axis1 x y z\n" );
+			}else{
+				p_ax1 = 1;
+				pts[ 2 ].x = atof( fields[ 2 ] );
+				pts[ 2 ].y = atof( fields[ 3 ] );
+				pts[ 2 ].z = atof( fields[ 4 ] );
+			}
+		}else if( fields[ 1 ] == "axis2" ){
+			if( nf < 4 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: axis2 x y z\n" );
+			}else{
+				p_ax2 = 1;
+				pts[ 3 ].x = atof( fields[ 2 ] );
+				pts[ 3 ].y = atof( fields[ 3 ] );
+				pts[ 3 ].z = atof( fields[ 4 ] );
+			}
+		}else if( fields[ 1 ] == "axis3" ){
+			if( nf < 4 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: axis2 x y z\n" );
+			}else{
+				p_ax3 = 1;
+				pts[ 4 ].x = atof( fields[ 2 ] );
+				pts[ 4 ].y = atof( fields[ 3 ] );
+				pts[ 4 ].z = atof( fields[ 4 ] );
+			}
+		}else if( fields[ 1 ] == "angle" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: angle a\n" );
+			}else
+				angs[ 1 ] = atof( fields[ 2 ] );
+		}else if( fields[ 1 ] == "angle1" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: angle1 a\n" );
+			}else{
+				p_ang1 = 1;
+				angs[ 1 ] = atof( fields[ 2 ] );
+			}
+		}else if( fields[ 1 ] == "angle2" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: angle2 a\n" );
+			}else{
+				p_ang2 = 1;
+				angs[ 2 ] = atof( fields[ 2 ] );
+			}
+		}else if( fields[ 1 ] == "angle3" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: angle3 a\n" );
+			}else{
+				p_ang3 = 1;
+				angs[ 3 ] = atof( fields[ 2 ] );
+			}
+		}else if( fields[ 1 ] == "dist" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: dist p\n" );
+			}else
+				di = atof( fields[ 2 ] );
+		}else if( fields[ 1 ] == "count" ){
+			if( nf < 2 ){
+				err = 1;
+				fprintf( stderr,
+					"readscript: usage: count c\n" );
+			}else
+				cnt = atoi( fields[ 2 ] );
+		}else{
+			err = 1;
+			fprintf( stderr, "readscript: unknown keyword %s\n",
+				fields[ 1 ] );
+		}
+	}
+
+	if( f != stdin )
+		fclose( f );
+
+	// symmetry (or transform), center, axis1 required for all symmetries:
+
+	if( p_sym && p_trans ){
+		err = 1;
+		fprintf( stderr,
+		"readscript: Only one of symmetry or transform allowed\n" );
+	}else if( !p_sym && !p_trans ){
+		err = 1;
+		fprintf( stderr,
+		"readscript: Either symmetry or transform is required\n" );
+	}
+	
+	if( !p_pc ){
+		err = 1;
+		fprintf( stderr, "readscript: center not specified\n" );
+	}
+	if( !p_ax1 ){
+		err = 1;
+		fprintf( stderr, "readscript: axis1 not specified\n" );
+	}
+
+	poly = rot = hlx = dihed = 0;
+	if( sym == "tetra" || sym == "cube" ||
+		sym == "octa" || sym == "dodeca" || sym == "ico" ){
+		poly = 1;
+		if( !p_ax2 ){
+			err = 1;
+			fprintf( stderr,
+				"readscript: %s symmetry requires axis2\n",
+				sym );
+		}
+	}else if( sym == "dihedral" ){
+		dihed = 1;
+		if( cnt < 1 ){
+			err = 1;
+			fprintf( stderr,
+			"readscript: dihedral symmetry requires cnt > 0\n"
+				);
+		}
+	}else if( sym == "helix" ){
+		hlx = 1;
+		if( cnt < 1 ){
+			err = 1;
+			fprintf( stderr,
+		"readscript: helix symmetry requires at least count > 0\n" );
+		}
+	}else if( sym == "cyclic" ){
+		rot = 1;
+		if( cnt < 0 ){
+			err = 1;
+			fprintf( stderr,
+			"readscript: cyclic symmetry requires count > 0\n" );
+		}else if( angs[ 1 ] == 0.0 )
+			angs[ 1 ] = 360.0 / cnt;
+		else if( cnt == 0 )
+			cnt = 360.0 / angs[ 1 ];
+	}else if( sym == "orient" ){
+		if( !p_ax2 || !p_ax3 ){
+			err = 1;
+			fprintf( stderr,
+		"readscript: orient operation requires axis2 and axis3\n" );
+		}else if( !p_ang1 || !p_ang2 || !p_ang3 ){
+			err = 1;
+			fprintf( stderr,
+	"readscript: orient operation requires angle1, angle2 and angle3\n" );
+		}
+	}else if( sym != "rotate" && sym != "translate" ){
+		err = 1;
+		fprintf( stderr,
+			"readscript: unknown symmetry: \"%s\"\n",
+			sym );
+	}
+
+//	fprintf( stderr, "# sym     %s\n", sym );
+//	fprintf( stderr, "# center  %8.3f %8.3f %8.3f\n",
+//		pts[ 1 ].x, pts[ 1 ].y, pts[ 1 ].z );
+//	fprintf( stderr, "# axis1   %8.3f %8.3f %8.3f\n",
+//		pts[ 2 ].x, pts[ 2 ].y, pts[ 2 ].z );
+//	if( poly )
+//		fprintf( stderr, "# axis2   %8.3f %8.3f %8.3f\n",
+//			pts[ 1 ].x, pts[ 1 ].y, pts[ 1 ].z );
+//	else if( hlx ){
+//		fprintf( stderr, "# angle   %8.3f\n", angs[ 1 ] );
+//		fprintf( stderr, "# dist    %8.3f\n", di );
+//		fprintf( stderr, "# count   %4d\n", cnt );
+//	}else if( rot ){
+//		fprintf( stderr, "# angle   %8.3f\n", angs[ 1 ] );
+//		fprintf( stderr, "# count   %4d\n", cnt );
+//	}else if( dihed ){
+//		fprintf( stderr, "# axis2   %8.3f %8.3f %8.3f\n",
+//			pts[ 3 ].x, pts[ 3 ].y, pts[ 3 ].z );
+//		fprintf( stderr, "# count   %4d\n", cnt );
+//	}else if( sym == "orient" ){
+//		fprintf( stderr, "# axis2   %8.3f %8.3f %8.3f\n",
+//			pts[ 3 ].x, pts[ 3 ].y, pts[ 3 ].z );
+//		fprintf( stderr, "# axis3   %8.3f %8.3f %8.3f\n",
+//			pts[ 4 ].x, pts[ 4 ].y, pts[ 4 ].z );
+//		fprintf( stderr, "# angle1  %8.3f\n", angs[ 1 ] );
+//		fprintf( stderr, "# angle2  %8.3f\n", angs[ 2 ] );
+//		fprintf( stderr, "# angle3  %8.3f\n", angs[ 3 ] );
+//	}
+
+	return( err );
+};

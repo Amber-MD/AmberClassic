@@ -192,7 +192,7 @@ double		dHalfEdge = PdHalfEdges[iDepth-1];
 
 	/* 
 	 *  Differentiate the non-0-corner children by giving them
-	 *	seperate corners of the octant. The order is, do
+	 *	separate corners of the octant. The order is, do
 	 *	Z-stacks along the Y-axis, forming slices on the X-axis.
 	 *	(This corresponds to the traversal with inner loop of Z,
 	 *	middle loop of Y, and outer loop of X). This order is
@@ -474,7 +474,7 @@ OCTNODEt	*PonChildren;
 		    case OCT_PARTIAL:
 			break;
 		    default: 
-			assert( ("bad type\n", 0) );
+			assert( (VP0(( "bad type\n" )), 0) );
 		}
 	}
 
@@ -637,7 +637,7 @@ OCTNODEt	*PonChildren;
 			iExcluded++;
 			break;
 		  default: 
-			assert( ("bad type\n", 0) );
+			assert( (VP0(( "bad type\n" )), 0) );
 		}
 	}
 
@@ -742,7 +742,7 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 		}
 		break;
 	    default:
-		assert( ("Octree type not implemented\n", 0) );
+		assert( (VP0(( "Octree type not implemented\n" )), 0) );
 	}
 
 	/*
@@ -837,7 +837,7 @@ return(octTree);
 		vMaxCorner.dZ += dMaxRadius;
 		break;
 	    default:
-		assert( ("Octree type not implemented\n", 0) );
+		assert( (VP0(( "Octree type not implemented\n" )), 0) );
 	}
 	VP1(( "Total solute charge:  %5.2f  Max atom radius:  %5.2f\n", 
 					dCharge, dMaxRadius ));
@@ -917,7 +917,7 @@ return(octTree);
 	octTree->onHead.vCorner = vMinCorner;
 	/* 
 	 *  The master atom list is part of a vararray under the OCTREE
-	 *	so, unlike the seperately allocated atom lists in the
+	 *	so, unlike the separately allocated atom lists in the
 	 *	lower nodes on the tree, the master list is not freed:
 	 *	rather, its vararray is destroyed. Reset the ATOM* ptr.
 	 */
@@ -941,7 +941,7 @@ return(octTree);
 		iBuildInteriorOctant( &octTree->onHead, iAtoms, PaAtoms );
 		break;
 	  default:
-		assert( ("bad switch\n", 0) );
+		assert( (VP0(( "bad switch\n" )), 0) );
 	}
 	octTree->iTreePoints = iTreeGridPoints;	/* global */
 
@@ -1106,10 +1106,10 @@ int	i;
 ATOM	*PaAtom;
 
 	if ( octTree->iType != OCT_SHELL ) {
-		assert( ("InitCharges: wrong tree type\n", 0) );
+		assert( (VP0(( "InitCharges: wrong tree type\n" )), 0) );
 	}
 	if ( !octTree->iTreePoints ) {
-		assert( ("InitCharges: no grid (?)\n", 0) );
+		assert( (VP0(( "InitCharges: no grid (?)\n" )), 0) );
 	}
 	VP0(( "Calculating grid charges\n" ));
         time_start = time((time_t *) 0);
@@ -1494,7 +1494,7 @@ VECTOR		vCenter;
 		    case OCT_PARTIAL:
 			break;
 		    default: 
-			assert( ("bad type\n", 0) );
+			assert( (VP0(( "bad type\n" )), 0) );
 		}
 	}
 	if ( iExcluded == 8 ) {
@@ -1643,10 +1643,10 @@ ATOM	*PaAtom;
 int	i;
 
 	if ( octTree->iType != OCT_SHELL ) {
-		assert( ("UpdateCharge: wrong tree type\n", 0) );
+		assert( (VP0(( "UpdateCharge: wrong tree type\n" )), 0) );
 	}
 	if ( !octTree->PfCharges ) {
-		assert( ("UpdateCharge: charges not initted\n", 0) );
+		assert( (VP0(( "UpdateCharge: charges not initted\n" )), 0) );
 	}
 
 	/*
@@ -1779,7 +1779,7 @@ rOctTreeCheckSolvent( OCTREE octTree, VECTOR *PvPoint )
 {
 ATOM	*PaAtom;
 	if ( octTree->iType != OCT_INTERIOR_SOLVENT ) {
-		assert( ("CheckSolvent: wrong octree type\n", 0) );
+		assert( (VP0(( "CheckSolvent: wrong octree type\n" )), 0) );
 	}
 	/*
 	 *  Set up globals for octree.

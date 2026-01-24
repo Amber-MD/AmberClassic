@@ -148,95 +148,103 @@ subroutine GenerateRotationMatrix(xij, matrix, hasDOrbital)
 !     S-S                                                               
       matrix(1,1)   = ONE 
 !     P-S                                                               
-      DO 10 K=1,3 
-      KL        = INDX(K+1)+1 
-      matrix(1,KL)  = P(K,1) 
-      matrix(2,KL)  = P(K,2) 
-   10 matrix(3,KL)  = P(K,3) 
+      DO K=1,3 
+         KL        = INDX(K+1)+1 
+         matrix(1,KL)  = P(K,1) 
+         matrix(2,KL)  = P(K,2) 
+         matrix(3,KL)  = P(K,3) 
+      end do
 !     P-P                                                               
-      DO 20 K=1,3 
-      KL        = INDX(K+1)+K+1 
-      matrix(1,KL)  = P(K,1)*P(K,1) 
-      matrix(2,KL)  = P(K,1)*P(K,2)  
-      matrix(3,KL)  = P(K,2)*P(K,2) 
-      matrix(4,KL)  = P(K,1)*P(K,3) 
-      matrix(5,KL)  = P(K,2)*P(K,3) 
-   20 matrix(6,KL)  = P(K,3)*P(K,3) 
-      DO 30 K=2,3 
-      DO 30 L=1,K-1 
-      KL        = INDX(K+1)+L+1 
-      matrix(1,KL)  = P(K,1)*P(L,1)*two 
-      matrix(2,KL)  = P(K,1)*P(L,2)+P(K,2)*P(L,1) 
-      matrix(3,KL)  = P(K,2)*P(L,2)*two 
-      matrix(4,KL)  = P(K,1)*P(L,3)+P(K,3)*P(L,1) 
-      matrix(5,KL)  = P(K,2)*P(L,3)+P(K,3)*P(L,2) 
-   30 matrix(6,KL)  = P(K,3)*P(L,3)*two 
-   
+      DO K=1,3 
+         KL        = INDX(K+1)+K+1 
+         matrix(1,KL)  = P(K,1)*P(K,1) 
+         matrix(2,KL)  = P(K,1)*P(K,2)  
+         matrix(3,KL)  = P(K,2)*P(K,2) 
+         matrix(4,KL)  = P(K,1)*P(K,3) 
+         matrix(5,KL)  = P(K,2)*P(K,3) 
+         matrix(6,KL)  = P(K,3)*P(K,3) 
+      end do
+      DO K=2,3 
+         DO L=1,K-1 
+            KL        = INDX(K+1)+L+1 
+            matrix(1,KL)  = P(K,1)*P(L,1)*two 
+            matrix(2,KL)  = P(K,1)*P(L,2)+P(K,2)*P(L,1) 
+            matrix(3,KL)  = P(K,2)*P(L,2)*two 
+            matrix(4,KL)  = P(K,1)*P(L,3)+P(K,3)*P(L,1) 
+            matrix(5,KL)  = P(K,2)*P(L,3)+P(K,3)*P(L,2) 
+            matrix(6,KL)  = P(K,3)*P(L,3)*two 
+         end do
+      end do
       IF(hasDOrbital) then 
 !     D-S                                                               
-      DO 40 K=1,5 
-      KL        = INDX(K+4)+1 
-      matrix(1,KL)  = D(K,1) 
-      matrix(2,KL)  = D(K,2) 
-      matrix(3,KL)  = D(K,3) 
-      matrix(4,KL)  = D(K,4) 
-   40 matrix(5,KL)  = D(K,5) 
+      DO K=1,5 
+         KL        = INDX(K+4)+1 
+         matrix(1,KL)  = D(K,1) 
+         matrix(2,KL)  = D(K,2) 
+         matrix(3,KL)  = D(K,3) 
+         matrix(4,KL)  = D(K,4) 
+         matrix(5,KL)  = D(K,5) 
+      end do
 !     D-P                                                               
-      DO 50 K=1,5 
-      DO 50 L=1,3 
-      KL        = INDX(K+4)+L+1 
-      matrix(1,KL)  = D(K,1)*P(L,1) 
-      matrix(2,KL)  = D(K,1)*P(L,2) 
-      matrix(3,KL)  = D(K,1)*P(L,3) 
-      matrix(4,KL)  = D(K,2)*P(L,1) 
-      matrix(5,KL)  = D(K,2)*P(L,2) 
-      matrix(6,KL)  = D(K,2)*P(L,3) 
-      matrix(7,KL)  = D(K,3)*P(L,1) 
-      matrix(8,KL)  = D(K,3)*P(L,2) 
-      matrix(9,KL)  = D(K,3)*P(L,3) 
-      matrix(10,KL) = D(K,4)*P(L,1) 
-      matrix(11,KL) = D(K,4)*P(L,2) 
-      matrix(12,KL) = D(K,4)*P(L,3) 
-      matrix(13,KL) = D(K,5)*P(L,1) 
-      matrix(14,KL) = D(K,5)*P(L,2) 
-   50 matrix(15,KL) = D(K,5)*P(L,3) 
+      DO K=1,5 
+         DO L=1,3 
+            KL        = INDX(K+4)+L+1 
+            matrix(1,KL)  = D(K,1)*P(L,1) 
+            matrix(2,KL)  = D(K,1)*P(L,2) 
+            matrix(3,KL)  = D(K,1)*P(L,3) 
+            matrix(4,KL)  = D(K,2)*P(L,1) 
+            matrix(5,KL)  = D(K,2)*P(L,2) 
+            matrix(6,KL)  = D(K,2)*P(L,3) 
+            matrix(7,KL)  = D(K,3)*P(L,1) 
+            matrix(8,KL)  = D(K,3)*P(L,2) 
+            matrix(9,KL)  = D(K,3)*P(L,3) 
+            matrix(10,KL) = D(K,4)*P(L,1) 
+            matrix(11,KL) = D(K,4)*P(L,2) 
+            matrix(12,KL) = D(K,4)*P(L,3) 
+            matrix(13,KL) = D(K,5)*P(L,1) 
+            matrix(14,KL) = D(K,5)*P(L,2) 
+            matrix(15,KL) = D(K,5)*P(L,3) 
+         end do
+      end do
 !     D-D                                                               
-      DO 60 K=1,5 
-      KL        = INDX(K+4)+K+4 
-      matrix(1,KL)  = D(K,1)*D(K,1) 
-      matrix(2,KL)  = D(K,1)*D(K,2) 
-      matrix(3,KL)  = D(K,2)*D(K,2) 
-      matrix(4,KL)  = D(K,1)*D(K,3) 
-      matrix(5,KL)  = D(K,2)*D(K,3) 
-      matrix(6,KL)  = D(K,3)*D(K,3) 
-      matrix(7,KL)  = D(K,1)*D(K,4) 
-      matrix(8,KL)  = D(K,2)*D(K,4) 
-      matrix(9,KL)  = D(K,3)*D(K,4) 
-      matrix(10,KL) = D(K,4)*D(K,4) 
-      matrix(11,KL) = D(K,1)*D(K,5) 
-      matrix(12,KL) = D(K,2)*D(K,5) 
-      matrix(13,KL) = D(K,3)*D(K,5) 
-      matrix(14,KL) = D(K,4)*D(K,5) 
-   60 matrix(15,KL) = D(K,5)*D(K,5) 
-      DO 70 K=2,5 
-      DO 70 L=1,K-1 
-      KL        = INDX(K+4)+L+4 
-      matrix(1,KL)  = D(K,1)*D(L,1)*two 
-      matrix(2,KL)  = D(K,1)*D(L,2)+D(K,2)*D(L,1) 
-      matrix(3,KL)  = D(K,2)*D(L,2)*two
-      matrix(4,KL)  = D(K,1)*D(L,3)+D(K,3)*D(L,1) 
-      matrix(5,KL)  = D(K,2)*D(L,3)+D(K,3)*D(L,2) 
-      matrix(6,KL)  = D(K,3)*D(L,3)*two 
-      matrix(7,KL)  = D(K,1)*D(L,4)+D(K,4)*D(L,1) 
-      matrix(8,KL)  = D(K,2)*D(L,4)+D(K,4)*D(L,2) 
-      matrix(9,KL)  = D(K,3)*D(L,4)+D(K,4)*D(L,3) 
-      matrix(10,KL) = D(K,4)*D(L,4)*two 
-      matrix(11,KL) = D(K,1)*D(L,5)+D(K,5)*D(L,1) 
-      matrix(12,KL) = D(K,2)*D(L,5)+D(K,5)*D(L,2) 
-      matrix(13,KL) = D(K,3)*D(L,5)+D(K,5)*D(L,3) 
-      matrix(14,KL) = D(K,4)*D(L,5)+D(K,5)*D(L,4) 
-   70 matrix(15,KL) = D(K,5)*D(L,5)*two 
-   
+      DO K=1,5 
+         KL        = INDX(K+4)+K+4 
+         matrix(1,KL)  = D(K,1)*D(K,1) 
+         matrix(2,KL)  = D(K,1)*D(K,2) 
+         matrix(3,KL)  = D(K,2)*D(K,2) 
+         matrix(4,KL)  = D(K,1)*D(K,3) 
+         matrix(5,KL)  = D(K,2)*D(K,3) 
+         matrix(6,KL)  = D(K,3)*D(K,3) 
+         matrix(7,KL)  = D(K,1)*D(K,4) 
+         matrix(8,KL)  = D(K,2)*D(K,4) 
+         matrix(9,KL)  = D(K,3)*D(K,4) 
+         matrix(10,KL) = D(K,4)*D(K,4) 
+         matrix(11,KL) = D(K,1)*D(K,5) 
+         matrix(12,KL) = D(K,2)*D(K,5) 
+         matrix(13,KL) = D(K,3)*D(K,5) 
+         matrix(14,KL) = D(K,4)*D(K,5) 
+         matrix(15,KL) = D(K,5)*D(K,5) 
+      end do
+      DO K=2,5 
+         DO L=1,K-1 
+            KL        = INDX(K+4)+L+4 
+            matrix(1,KL)  = D(K,1)*D(L,1)*two 
+            matrix(2,KL)  = D(K,1)*D(L,2)+D(K,2)*D(L,1) 
+            matrix(3,KL)  = D(K,2)*D(L,2)*two
+            matrix(4,KL)  = D(K,1)*D(L,3)+D(K,3)*D(L,1) 
+            matrix(5,KL)  = D(K,2)*D(L,3)+D(K,3)*D(L,2) 
+            matrix(6,KL)  = D(K,3)*D(L,3)*two 
+            matrix(7,KL)  = D(K,1)*D(L,4)+D(K,4)*D(L,1) 
+            matrix(8,KL)  = D(K,2)*D(L,4)+D(K,4)*D(L,2) 
+            matrix(9,KL)  = D(K,3)*D(L,4)+D(K,4)*D(L,3) 
+            matrix(10,KL) = D(K,4)*D(L,4)*two 
+            matrix(11,KL) = D(K,1)*D(L,5)+D(K,5)*D(L,1) 
+            matrix(12,KL) = D(K,2)*D(L,5)+D(K,5)*D(L,2) 
+            matrix(13,KL) = D(K,3)*D(L,5)+D(K,5)*D(L,3) 
+            matrix(14,KL) = D(K,4)*D(L,5)+D(K,5)*D(L,4) 
+            matrix(15,KL) = D(K,5)*D(L,5)*two 
+         end do
+      end do
       end if ! hasDOribtal
    
       if (keepOld) matrix_saved=matrix
@@ -306,9 +314,11 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
 !     *                 
 
       call Is2CenterIntegralZero(r2cent)
-      DO 10 IJ=1,LIMIJ 
-      DO 10 KL=1,LImkl 
-   10 V(KL,IJ) = ZERO 
+      DO IJ=1,LIMIJ 
+         DO KL=1,LImkl 
+            V(KL,IJ) = ZERO 
+         end do
+      end do
       IROTD    = IROTV 
       IF(IROTD.EQ.2) GO TO 300 
       IF(IROTD.GT.2) GO TO 500 
@@ -508,41 +518,45 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
 ! *** FIRST STEP - TRANSFORMATION FOR INDICES KL IN (KL,IJ).            
   300 CONTINUE 
 !     LOOP OVER OUTER TWO INDICES IJ (NOT TRANSFORMED).                 
-      DO 330 IJ=1,LIMIJ 
-!     LOOP OVER INNER TWO INDICES KL (TRANSFORMED).                     
-      DO 320 KL=1,LImkl 
-      IF(R2CENT(KL,IJ)) THEN 
-         WREPP  = W(KL,IJ) 
-         mkl    = MET(KL) 
-         KLA    = META(mkl) 
-         KLB    = METB(mkl) 
-         DO 310 KLV=KLA,KLB 
-  310    V(KLV,IJ) = V(KLV,IJ) + rotationMatrix(KLV-KLA+1,KL)*WREPP 
-      ENDIF 
-  320 END DO 
-  330 END DO 
+      DO IJ=1,LIMIJ 
+!        LOOP OVER INNER TWO INDICES KL (TRANSFORMED).                     
+         DO KL=1,LImkl 
+            IF(R2CENT(KL,IJ)) THEN 
+               WREPP  = W(KL,IJ) 
+               mkl    = MET(KL) 
+               KLA    = META(mkl) 
+               KLB    = METB(mkl) 
+               DO  KLV=KLA,KLB 
+                  V(KLV,IJ) = V(KLV,IJ) + rotationMatrix(KLV-KLA+1,KL)*WREPP 
+               end do
+            ENDIF 
+         END DO 
+      END DO 
 ! *** SECOND STEP - TRANSFORMATION FOR OUTER TWO INDICES.               
 !     LOOP OVER INNER TWO INDICES KL (NOT TRANSFORMED).                 
-      DO 450 KLV=1,LImkl 
-      KL     = IKLV(KLV) 
-!     INITIALIZE BUFFER.                                                
-      DO 410 IJ=1,LIMIJ 
-  410 WKL(IJ)= ZERO 
-!     LOOP OVER OUTER TWO INDICES IJ (TRANSFORMED).                     
-      DO 430 IJ=1,LIMIJ 
-      IF(ABS(V(KLV,IJ)).GT.VSMALL) THEN 
-         MIJ    = MET(IJ) 
-         MIJA   = META(MIJ) 
-         MIJB   = METB(MIJ) 
-         WREPP  = V(KLV,IJ) 
-         DO 420 M=MIJA,MIJB 
-  420    WKL(M) = WKL(M) + rotationMatrix(M-MIJA+1,IJ)*WREPP 
-      ENDIF 
-  430 END DO 
+      DO KLV=1,LImkl 
+         KL     = IKLV(KLV) 
+!        INITIALIZE BUFFER.                                                
+         DO IJ=1,LIMIJ 
+            WKL(IJ)= ZERO 
+         end do
+!        LOOP OVER OUTER TWO INDICES IJ (TRANSFORMED).                     
+         DO IJ=1,LIMIJ 
+            IF(ABS(V(KLV,IJ)).GT.VSMALL) THEN 
+               MIJ    = MET(IJ) 
+               MIJA   = META(MIJ) 
+               MIJB   = METB(MIJ) 
+               WREPP  = V(KLV,IJ) 
+               DO M=MIJA,MIJB 
+                  WKL(M) = WKL(M) + rotationMatrix(M-MIJA+1,IJ)*WREPP 
+               end do
+            ENDIF 
+         end do
+      END DO 
 !     TRANSFER RESULTS FROM BUFFER TO W(KL,IJ).                         
-      DO 440 IJ=1,LIMIJ 
-  440 W(KL,IKLV(IJ)) = WKL(IJ) 
-  450 END DO 
+      DO IJ=1,LIMIJ 
+         W(KL,IKLV(IJ)) = WKL(IJ) 
+      END DO 
       RETURN 
 !     *                                                                 
 ! *** THIRD SECTION. STRAIGHT MATRIX MANIPULATIONS.                     
@@ -562,16 +576,19 @@ SUBROUTINE Rotate2Center2Electron(W,LIMIJ,LImkl,rotationMatrix)
   500 CONTINUE 
 ! *** INITIALIZATION.                                                   
       LIMYM  = MAX(LIMIJ,LImkl) 
-      DO 510 IJ=1,LIMYM 
-      DO 510 KL=1,LIMYM 
-  510 YM(KL,IJ) = ZERO 
+      DO IJ=1,LIMYM 
+         DO KL=1,LIMYM 
+            YM(KL,IJ) = ZERO 
+         end do
+      end do
       YM( 1, 1) = ONE 
-      DO 530 KL=2,LIMYM 
-      mkl    = MET(KL) 
-      NKL    = METB(mkl)-META(mkl)+1 
-      DO 520 I=1,NKL 
-  520 YM(METI(I,mkl),KL) = rotationMatrix(I,KL) 
-  530 END DO 
+      DO KL=2,LIMYM 
+         mkl    = MET(KL) 
+         NKL    = METB(mkl)-META(mkl)+1 
+         DO I=1,NKL 
+            YM(METI(I,mkl),KL) = rotationMatrix(I,KL) 
+         end do
+      END DO 
 ! *** FIRST IMPLEMENTATION OF THE TWO-STEP TRANSFORMATION.              
 !     V(INTERMEDIATE)  = YM * W(LOC,TRANSPOSE)                          
 !     W(MOL,TRANSPOSE) = V(INTERMEDIATE) * YM(TRANSPOSE).               
@@ -662,10 +679,10 @@ SUBROUTINE Rotate1Elec(IA,JA,IORBS,JORBS,T,matrix,norbs, H, matsize)
 ! *** SECTION INVOLVING D ORBITALS.                                     
 !     D(I)-S(J)                                                         
       IF(IORBS.GE.9) THEN 
-         DO 10 I=1,5 
-         M      = INDX(IA+3+I)+JA 
-         H(M)   = T(6)*matrix(I,11) 
-   10    CONTINUE 
+         DO I=1,5 
+            M      = INDX(IA+3+I)+JA 
+            H(M)   = T(6)*matrix(I,11) 
+         end do
 !     D(I)-P(J)                                                         
          IF(JORBS.GE.4) THEN 
             IJ     = 0 

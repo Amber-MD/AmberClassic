@@ -1488,7 +1488,7 @@ subroutine sa_arc( verbose,pbprint,natom,atmfirst,atmlast )
    if ( verbose .and. pbprint ) then
       write(6,'(a,i6)') 'Number of SA arcs generated', narc
 !     write(6,*) 'Number of trimer points', ntri
-      write(6,'(A,I12,A,E11.6)') &
+      write(6,'(A,I12,A,E14.6)') &
              ' Number of SA arc points exposed', narcdot, &
              '  with resolution (A) = ', arcres
    end if

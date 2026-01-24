@@ -1,10 +1,17 @@
-#!/bin/sh
+#!/bin/bash
+
+if [ -n "$DO_PARALLEL" -o -n "$DO_CUDA" ]; then
+   echo "Both DO_CUDA and DO_PARALLEL unset to run serial tests"
+   exit 1
+fi
+
+source ../AmberClassic.sh 
 
 date_string=`date +%Y-%m-%d_%H-%M-%S`
 logdir="$AMBERCLASSICHOME/logs"
 logprefix="${logdir}/${date_string}"
-logfile="${logprefix}.log"
-difffile="${logprefix}.diff"
+logfile="${logprefix}.serial.log"
+difffile="${logprefix}.serial.diff"
 
 mkdir -p ${logdir}
 

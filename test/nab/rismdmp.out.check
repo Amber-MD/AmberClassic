@@ -1,0 +1,124 @@
+Reading parm file (pbdmp.prmtop)
+title:
+                                                                                
+	mm_options:  ntpr=1
+	mm_options:  rism=1
+	mm_options:  closure=kh
+	mm_options:  cut=99.0
+	mm_options:  xvvfile=../rism1d/spc-kh/spc.xvv.save
+	mm_options:  verbose=1
+	mm_options:  tolerance=1e-7
+	mm_options:  buffer=13
+	mm_options:  centering=2
+	mm_options:  ljTolerance=0
+	mm_options:  asympKSpaceTolerance=0
+	mm_options:  treeDCF=0
+	mm_options:  treeTCF=0
+	mm_options:  treeCoulomb=0
+	mm_options:  verbose=1
+	mm_options:  tolerance=1e-7
+	mm_options:  centering=2
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box from buffer.
+||Setting solvation box to
+|grid size:         64 X         60 X         60
+|box size [A]:      32.000 X     30.000 X     30.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:    13.349,      13.106,      13.964
+|Switching to KH closure
+|RXRISM converged in   154 steps
+ff:     0    624.14    730.88      0.69    -37.39      0.00    -70.04  2.42e+02
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box from buffer.
+||Setting solvation box to
+|grid size:         64 X         60 X         60
+|box size [A]:      32.000 X     30.000 X     30.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:    13.349,      13.105,      13.964
+|RXRISM converged in    50 steps
+ff:     1    614.20    720.96      0.69    -37.39      0.00    -70.06  2.39e+02
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box from buffer.
+||Setting solvation box to
+|grid size:         64 X         60 X         60
+|box size [A]:      32.000 X     30.000 X     30.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:    13.347,      13.105,      13.964
+|RXRISM converged in    64 steps
+ff:     2    529.65    636.57      0.65    -37.37      0.00    -70.21  2.15e+02
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box from buffer.
+||Setting solvation box to
+|grid size:         64 X         60 X         60
+|box size [A]:      32.000 X     30.000 X     30.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:    13.322,      13.098,      13.967
+|RXRISM converged in   157 steps
+ff:     3    143.36    251.74      0.45    -37.24      0.00    -71.60  6.72e+01
+conjgrad returns -3 0.003900
+
+|Timing summary:
+|              Initialize       0.060
+|             Molec. Dyn.       0.000
+|             Normal Mode       0.000
+|             Conj. Grad.       0.000
+|                  Newton       0.000
+|-------------------------
+|                   Total       0.060
+
+|1st derivative timing summary:
+|             constraints       0.000
+|                   bonds       0.000
+|                  angles       0.000
+|                torsions       0.000
+|                pairlist       0.000
+|                 nonbond       0.000
+|               gen. Born       0.000
+|       Poisson Boltzmann       0.000
+|                 3D-RISM      12.592
+|                   Other       0.000
+|-------------------------
+|                   Total      12.592
+
+|CPU Timer summary for 3D-RISM Total        
+|  3D-RISM initialization                           0.059   (  0.47%)
+|      Force                                            0.975   ( 99.09%)
+|      Excess Chemical Potential                        0.009   (  0.91%)
+|    Thermodynamics                                   0.984   (  7.81%)
+|      Solvation box resize                             1.088   (  9.37%)
+|      Cuv propagation                                  0.009   (  0.08%)
+|          FFT                                              4.741   ( 47.00%)
+|            Overlap                                          0.587   ( 27.64%)
+|            Restart                                          0.002   (  0.09%)
+|            Lapack                                           0.004   (  0.19%)
+|            Project                                          1.531   ( 72.08%)
+|          MDIIS Advance                                    2.124   ( 21.05%)
+|          Other                                            3.223   ( 31.95%)
+|        R1RISM                                          10.088   ( 99.91%)
+|        Other                                            0.009   (  0.09%)
+|      RXRISM                                          10.097   ( 86.98%)
+|        Lennard-Jones                                    0.056   ( 13.53%)
+|        Coulomb                                          0.063   ( 15.22%)
+|          Asymptotics Dcf/TCF-K                            0.090   ( 30.82%)
+|          Asymptotics DCF-R                                0.199   ( 68.15%)
+|          Other                                            0.003   (  1.03%)
+|        Asymptotics                                      0.292   ( 70.53%)
+|        Other                                            0.003   (  0.72%)
+|      Potential                                        0.414   (  3.57%)
+|    Solve 3D-RISM                                   11.609   ( 92.19%)
+|  3D-RISM                                         12.593   ( 99.53%)
+|3D-RISM Total                                   12.652   (100.00%)
+

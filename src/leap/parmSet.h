@@ -64,6 +64,7 @@ typedef struct {
         STRING                sFname;
         VARARRAY        vaAtoms;
         VARARRAY        vaBonds;
+	VARARRAY        vaC4Pairwise; //New
         VARARRAY        vaAngles;
         VARARRAY        vaTorsions;
         VARARRAY        vaImpropers;
@@ -155,6 +156,7 @@ extern int iParmSetAddAtom(PARMSET psLib, char *sType, double dMass, double dPol
 extern int iParmSetAddBond(PARMSET psLib, char *sType1, char *sType2, double dKb, double dR0,
                            double dKpull, double dRpull0, double dKpress, double dRpress0,
                            char *sDesc);
+extern int iParmSetAddC4Pairwise(PARMSET psLib, char *sType1, char *sType2, double daC4Pairwise, char *sDesc); //New
 extern int iParmSetAddAngle(PARMSET psLib, char *sType1, char *sType2, char *sType3,
                             double dKt, double dT0, double dTkub, double dRkub, char *sDesc);
 extern int iParmSetAddProperTerm(PARMSET psLib, char *sType1, char *sType2, char *sType3,
@@ -184,6 +186,7 @@ extern int iParmSetAddNBEdit(PARMSET psLib, char *sType1, char *sType2, double d
  
 extern int        iParmSetFindAtom(PARMSET psLib, char *sType);
 extern int        iParmSetFindBond(PARMSET psLib, char *sType1, char *sType2);
+extern int        iParmSetFindC4Pairwise(PARMSET psLib, char *sType1, char *sType2); //New
 extern int        iParmSetFindAngle(PARMSET psLib, 
                         char *sType1, char *sType2, char *sType3);
 extern int        iParmSetFindProperTerms(PARMSET psLib, TORSION tTorsion, 
@@ -245,6 +248,8 @@ extern BOOL        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
                         iVarArrayElementCount( (psParmSet)->vaAtoms )
 #define iParmSetTotalBondParms( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaBonds )
+#define iParmSetTotalC4Pairwise( psParmSet ) \
+	                iVarArrayElementCount( (psParmSet)->vaC4Pairwise) //New 
 #define iParmSetTotalAngleParms( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaAngles )
 #define iParmSetTotalTorsionParms( psParmSet ) \
@@ -270,6 +275,7 @@ extern void ParmSetAtom(PARMSET psLib, int i, char *sType, double *dPMass,
 extern void ParmSetBond(PARMSET psLib, int i, char *sType1, char *sType2,
                         double *dPKb, double *dPR0, double *dKpull, double *dRpull0,
                         double *dKpress, double *dRpress0, char *sDesc);
+extern void ParmSetC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double *daC4Pairwise, char *sDesc); //New
 extern void ParmSetAngle(PARMSET psLib, int i, 
                          char *sType1, char *sType2, char *sType3,
                          double *dPKt, double *dPT0, double *dPTkub, double *dPRkub,
@@ -297,6 +303,7 @@ extern void ParmSetUpdateAtom(PARMSET psLib, int i, char *sType, double *dPMass,
 extern void ParmSetUpdateBond(PARMSET psLib, int i, char *sType1, char *sType2,
                               double *dPKb, double *dPR0, double *dKpull, double *dRpull0,
                               double *dKpress, double *dRpress0, char *sDescription);
+extern void ParmSetUpdateC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double *daC4Pairwise, char *sDescription); //New
 extern void ParmSetUpdateAngle(PARMSET psLib, int i, char *sType1, char *sType2, char *sType3,
                                double *dPKt, double *dPT0, char *sDescription);
 extern void ParmSetUpdateTorsion(PARMSET psLib, int i, char *sType1, char *sType2,
@@ -312,6 +319,7 @@ extern void ParmSetUpdateHBond(PARMSET psLib, int i, char *sType1, char *sType2,
 
 extern void ParmSetNewAtoms(PARMSET psParmSet, int iCount);
 extern void ParmSetNewBonds(PARMSET psParmSet, int iCount);
+extern void ParmSetNewC4Pairwise(PARMSET psParmset, int iCount); //New
 extern void ParmSetNewAngles(PARMSET psParmSet, int iCount);
 extern void ParmSetNewTorsions(PARMSET psParmSet, int iCount);
 extern void ParmSetNewImpropers(PARMSET psParmSet, int iCount);

@@ -1,0 +1,84 @@
+int	i;
+float	f;
+string	s;
+point	p, q;
+
+for( i = 0; i < 10; i++ )
+	printf( "i = %d\n", i );
+for( i = 0; i < 10; ++i )
+	printf( "i = %d\n", i );
+
+for( i = 10; i > 0; i-- )
+	printf( "i = %d\n", i );
+
+for( i = 10; i > 0; --i )
+	printf( "i = %d\n", i );
+
+i = 1;
+i = 1;
+i += 3;
+
+printf( "%d\n", i );
+
+i -= 3;
+
+printf( "%d\n", i );
+
+i *= 3;
+
+printf( "%d\n", i );
+
+i /= 3;
+
+printf( "%d\n", i );
+
+i = 3;
+i %= 2;
+
+printf( "%d\n", i );
+
+f = 1.;
+f += 3.;
+
+printf( "%f\n", f );
+
+f -= 3.;
+
+printf( "%f\n", f );
+
+f *= 3.;
+
+printf( "%f\n", f );
+
+f /= 3.;
+
+printf( "%f\n", f );
+
+s = "hi";
+s += " mom!";
+
+printf( "%s\n", s );
+
+p.x = 1.0; p.y = 1.0; p.z = 1.0;
+q.x = 3.0; q.y = 3.0; q.z = 3.0;
+p += q;
+
+printf( "%8.3f %8.3f %8.3f\n", p.x, p.y, p.z );
+
+p -= q;
+
+printf( "%8.3f %8.3f %8.3f\n", p.x, p.y, p.z );
+
+p *= 3.;
+
+printf( "%8.3f %8.3f %8.3f\n", p.x, p.y, p.z );
+
+p /= 3.;
+
+printf( "%8.3f %8.3f %8.3f\n", p.x, p.y, p.z );
+
+p.x = 1.0; p.y = 0.0; p.z = 0.0;
+q.x = 0.0; q.y = 1.0; q.z = 0.0;
+p ^= q;
+
+printf( "%8.3f %8.3f %8.3f\n", p.x, p.y, p.z );

@@ -40,6 +40,7 @@ subroutine report_min_results( nstep, gradient_rms, coordinates, &
    integer          :: atom_number_of_gmax
    _REAL_           :: gradient_max
    _REAL_ emtmd
+   integer :: iscrth(natom)
 
    if (master) then
       write(6, '(/ /20x,a,/)' ) 'FINAL RESULTS'
@@ -53,7 +54,7 @@ subroutine report_min_results( nstep, gradient_rms, coordinates, &
          call nmrptx(6)
          call nmrptx(MDINFO_UNIT)
          call ndvptx(coordinates,forces,ih(m04),ih(m02),ix(i02),nres, &
-               xx(l95),natom,xx(lwinv),xx(lnmr01),ix(inmr02),6)
+               iscrth,natom,xx(lwinv),xx(lnmr01),ix(inmr02),6)
       end if
       if (itgtmd == 2) then
         emtmd = 0.0d0

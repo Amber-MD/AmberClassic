@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test on netcdf files"
+echo ""
+../../bin/$NAB -o tnetcdf tnetcdf.nab || error
+$DO_PARALLEL ./tnetcdf > tnetcdf.out || error
+
+../dacdif tnetcdf.out.check tnetcdf.out
+
+rm -f tnetcdf tnetcdf.c trpcageTest.nc
+exit 0

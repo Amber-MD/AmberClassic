@@ -83,7 +83,8 @@
 #include        <stdlib.h>
 #include        <float.h>
 #include        <string.h>
-  
+
+//#include        "atom.h" // New
 #include        "basics.h"
 #include        "vector.h"
 #include        "matrix.h"
@@ -111,6 +112,9 @@
 #include        "model.h"
 
 int     iMemDebug = 0;
+int     iC4count = 0; //NewT
+double  daC4Type[8]; //NewT
+char    sA[4][8], sB[4][8]; //NewT
 
 extern DICTIONARY       GdVariables;
 extern BOOL             bCmdDeleteObj;
@@ -249,7 +253,7 @@ char    *sTemp;
  *      Return TRUE if iArgCount equals iNeeded, otherwise return
  *      FALSE and print an error message.
  *      Also check the types of the arguments against the type string
- *      A string of characters seperated by spaces.
+ *      A string of characters separated by spaces.
  *      The characters corresponding to:
  *
  *      *       - Matches all types.
@@ -309,7 +313,10 @@ int             iNeedCount;
         if ( iObjectType(oObj) == ASSOCid ) 
                 oObj = oAssocObject(oObj);
         if ( !bCmdMatchTypes( oObj, &sTypes, sNeed, &iNeedCount ) ) {
-            VPFATAL(( "%s: Argument #%d is type %s must be of type: [%s]\n", 
+            VPFATAL(( "%s: Argument #%d is of type %s must be of type: [%s]\n"
+                      "    Here are some suggestions for correcting this error:\n"
+                      "    Verify the type of an argument with the desc command.\n"
+                      "    Check for alternate argument names with the list command.\n",
                 sCmd, i+1, sObjectType(oObj), sNeed ));
             return(FALSE);
         }
@@ -440,7 +447,7 @@ OBJEKT
 oCmd_debugOff( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "debugOff", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  debugOff\n" ));
+        VPFATALDELAYEDEXIT(( "usage:  debugOff <filename>\n" ));
         return(NULL);
     }
 
@@ -1282,8 +1289,8 @@ char            *sCmd = "bond";
             iOrder = BONDAROMATIC;
             break;
         default:
-            VP0(( "%s: Unknown bond order, no bond made.\n Valid bond orders are: S, D, T, A.\n", sCmd ));
-            goto DONE;
+            VPFATALEXIT(( "%s: Unknown bond order (%c), no bond made.\n"
+                    "Valid bond orders are: S, D, T, A.\n", sCmd, cOrder ));
     }
     AtomBondToOrder( aA, aB, iOrder );
 DONE:
@@ -1293,7 +1300,81 @@ DONE:
 
 
 
+/*
+ *      oCmd_addC4Pairwise
+ *
+ *      Newly Added Commands for Pairwise C4 (2020)
+ *
+ *      Create a pairwise C4 interaction between two atoms.
+ *
+ *      Arguments:
+ *              [1]     - ATOM aA
+ *              [2]     - ATOM aB
+ *      option  [3]     - float C4 parameter between atoms.
+ * *
+ *
+ *
+*/
 
+OBJEKT
+oCmd_addC4Pairwise( int iArgCount, ASSOC aaArgs[] )
+{
+  ATOM            aA, aB;
+  double          daC4Pairwise;
+  char            *sCmd = "addC4Pairwise";
+
+  aA = (ATOM)oAssocObject(aaArgs[0]);
+  aB = (ATOM)oAssocObject(aaArgs[1]);
+  daC4Pairwise = dODouble( oAssocObject(aaArgs[2]) ) ;
+
+  // Find the command that adds 12-6
+  // Probably from atom.c, need to modify atom class
+  // add something similar to aaBond to atom class
+  AtomAddC4Pairwise( aA, aB, daC4Pairwise );
+  return(NULL);
+}
+
+
+/*      NewT
+ *
+ *      oCmd_addC4Type
+ *
+ *      Newly Added Commands for Atom-type-speific C4 (2021)
+ *
+ *      Create C4 interactions between two atom types.
+ *
+ *      Arguments:
+                [1]     - UNIT uUnit
+ *              [2]     - char *sA
+ *              [3]     - char *sB
+ *      option  [4]     - float C4 parameter between two types.
+ * *
+ *
+ *
+*/
+
+OBJEKT
+oCmd_addC4Type( int iArgCount, ASSOC aaArgs[] )
+{
+  UNIT            uUnit;
+  char            *sCmd = "addC4Type";
+  if (iObjectType( oAssocObject( aaArgs[0] )) == UNITid) 
+  {
+    uUnit = (UNIT)oAssocObject(aaArgs[0]); // This should be the final one
+    //sA[iC4count] = sOString( oAssocObject(aaArgs[1]) ); 
+    strcpy(sA[iC4count], sOString(oAssocObject(aaArgs[1])) );
+    //sB[iC4count] = sOString( oAssocObject(aaArgs[2]) );
+    strcpy(sB[iC4count], sOString(oAssocObject(aaArgs[2])) );
+    daC4Type[iC4count] = dODouble( oAssocObject(aaArgs[3]) ) ;
+    iC4count++;
+    // VP0(("sA first is %s\n", sA[0])); // C4TypeDebug
+    // Need to think about how this function will work
+    //VP0(("%s %s %f\n", sA, sB, daC4Type)); // just for testing
+    //UnitSaveC4Type( uUnit, sA, sB, daC4Type ); // Define this in unit
+    //UnitIOSaveC4Type( uUnit, sA, sB, daC4Type );
+    return(NULL);
+  }
+}
 
 /*
  *      oCmd_deleteBond
@@ -1634,9 +1715,25 @@ static          char parm15[] = "parm15";
             return(NULL);
         }
     }
-    if( strstr( sFile, parm99 ) ) parm99_loaded += 1;
-    if( strstr( sFile, parm15 ) ) parm15_loaded += 1;
+    if( strstr( sFile, parm99 ) ) {
+        parm99_loaded += 1;
+        if( parm99_loaded > 1 ){
+            VPNOTE(( "Skipping %s: already loaded\n", sFile ));
+            parm99_loaded -= 1;
+            return(NULL);
+        }
+    }
+    if( strstr( sFile, parm15 ) ) {
+        parm15_loaded += 1;
+        if( parm15_loaded > 1 ){
+            VPNOTE(( "Skipping %s: already loaded\n", sFile ));
+            parm15_loaded -= 1;
+            return(NULL);
+        }
+    }
 
+    //if( strstr( sFile, parm99 ) ) parm99_loaded += 1;
+    //if( strstr( sFile, parm15 ) ) parm15_loaded += 1;
     fIn = FOPENCOMPLAIN( sFile, "r" );
     if ( fIn == NULL ) 
         return(NULL);
@@ -1874,7 +1971,7 @@ char            *sUsage =
          */
         if ( iListSize(oAssocObject(aaArgs[2])) != 3 ) {
             VPFATALEXIT(( "%s: Argument #3 must have three values: "
-                    	"{ x y z } or one.\n%s", sCmd, sUsage ));
+                    "{ x y z } or one.\n%s", sCmd, sUsage ));
             return(NULL);
         }
         llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
@@ -2423,7 +2520,7 @@ FILE            *fLog;
  *      Author: Christian Schafmeister (1991)
  *
  *      Combine the contents of several UNITs.
- *      Return a UNIT the combined contents.
+ *      Return a UNIT that is the combined contents.
  *
  *      Arguments:
  *              [0]     A LIST of units.
@@ -2588,6 +2685,7 @@ char            *sCmd = "check";
     if ( iObjectType( oAssocObject( aaArgs[0] )) == UNITid ) {
         VP0(( "Checking parameters for unit '%s'.\n", sAssocName( aaArgs[0] ))); 
         uUnit = (UNIT)oAssocObject( aaArgs[0] );
+        //UnitSaveC4Type( uUnit, "sA", "sB", 0.1 ); //NewTdebug
         if ( iArgCount == 2 ) {
             if ( iObjectType(oAssocObject( aaArgs[1] )) == OSTRINGid ) {
                 VP0(( "Creating empty parmset %s\n", sAssocName( aaArgs[1] ) ));
@@ -3319,8 +3417,9 @@ char    *sCmd = "saveAmberParm";
         return(NULL);
     }
     TurnOffDisplayerUpdates();
+    // VP0(("sA first is %s\n", sA[0])); // C4TypeDebug
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, FALSE, FALSE, FALSE );
+                GplAllParameters, FALSE, FALSE, FALSE, sA, sB, daC4Type, iC4count );   //NewT
     TurnOnDisplayerUpdates();
     
     fclose( fOut );
@@ -3366,7 +3465,7 @@ char    *sCmd = "saveAmberParmNetCDF";
     }
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, FALSE, FALSE, TRUE );
+                GplAllParameters, FALSE, FALSE, TRUE, sA, sB, daC4Type, iC4count); //NewT
     // UnitSaveAmberNetcdf( uUnit, sOString(oAssocObject(aaArgs[2])) );
     TurnOnDisplayerUpdates();
 
@@ -3413,7 +3512,7 @@ char    *sCmd = "saveAmberParmPol";
     
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, TRUE, FALSE, FALSE );
+                GplAllParameters, TRUE, FALSE, FALSE, sA, sB, daC4Type, iC4count);  //NewT
     TurnOnDisplayerUpdates();
     
     fclose( fOut );
@@ -3461,7 +3560,7 @@ char    *sCmd = "saveAmberParmPert";
     
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[1])),
-                GplAllParameters, FALSE, TRUE, FALSE );
+                GplAllParameters, FALSE, TRUE, FALSE, sA, sB, daC4Type, iC4count); //NewT
     TurnOnDisplayerUpdates();
     
     fclose( fOut );
@@ -3507,7 +3606,7 @@ char    *sCmd = "saveAmberParmPert";
     
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, TRUE, TRUE, FALSE );
+                GplAllParameters, TRUE, TRUE, FALSE, sA, sB, daC4Type, iC4count); //NewT
     TurnOnDisplayerUpdates();
     
     fclose( fOut );
@@ -7117,6 +7216,8 @@ COMMANDt        cCommands[] = {
 
         { "add",                oCmd_add },
         { "addH",               oCmd_addH },
+	{ "addC4Pairwise",	oCmd_addC4Pairwise }, //New
+        { "addC4Type",          oCmd_addC4Type }, //NewT
         { "addIons",            oCmd_addIons },
         { "addIons2",           oCmd_addIons2 },
         { "addIonSolv",         oCmd_addIonSolv },

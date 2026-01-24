@@ -1,0 +1,36 @@
+//   test the random number generator:
+
+//   first, see if setting to a "random" value based on time() will work:
+
+float  x, t;
+int	   seed, seed2;
+
+seed2 = rseed();   // randomize the seed
+printf( "randomized seed = %d\n", seed2 );
+
+x = rand2();
+printf( "x = %20.10f\n", x );
+x = rand2();
+printf( "x = %20.10f\n", x );
+x = rand2();
+printf( "x = %20.10f\n\n", x );
+
+printf( "reusing previous randomized seed\n" );
+setseed( seed2 );  // re-use the saved (randomized) seed
+x = rand2();
+printf( "x = %20.10f\n", x );
+x = rand2();
+printf( "x = %20.10f\n", x );
+x = rand2();
+printf( "x = %20.10f\n\n", x );
+
+seed2 = rseed(); // re-randomize the seed; no change if less than 1 sec
+                 // since the last call
+printf( "randomized seed = %d\n", seed2 );
+x = rand2();
+printf( "x = %20.10f\n", x );
+x = rand2();
+printf( "x = %20.10f\n", x );
+x = rand2();
+printf( "x = %20.10f\n", x );
+

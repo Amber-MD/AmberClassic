@@ -1,5 +1,5 @@
 #ifdef NDEBUG
-#  define EXPR(t,q) (q)
+#  define EXPR(t,q) 
 #else
 #  define EXPR(t,q) \
 		(fprintf( nabout, "%20s(%4i) %s --> " t "\n", \

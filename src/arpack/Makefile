@@ -11,6 +11,9 @@ include ../../config.h
 	@echo "[ARPACK]  CC $<"
 	$(VB)$(CC) -c $(COPTFLAGS) $(CFLAGS) -o $@ $<
 
+skip::
+	@echo "skipping arpack"
+
 libarpack: $(LIBDIR)/libarpack.a
 
 ARPACKLIB= ivout.o dvout.o dgetv0.o dlaqrb.o dnaitr.o dnapps.o \
@@ -37,7 +40,4 @@ clean:
 
 uninstall:
 	-rm -f $(LIBDIR)/libarpack.a
-
-skip:
-	echo "Skipping arpack"
 

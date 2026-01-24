@@ -42,7 +42,7 @@
  *              It has all of the same properties as normal C strings
  *              but must be accessed as an OBJEKT.  OSTRINGs are 
  *              not supposed to replace C strings, they are only provided
- *              to maintain consistancy in the command line interface.
+ *              to maintain consistency in the command line interface.
  *              Since the command line interpreter will be dealing with
  *              MOLECULEs, UNITs, RESIDUEs, ATOMs, LISTs, and also
  *              integers, doubles, and strings there should be

@@ -18,7 +18,8 @@ HEADERS= \
    utilities/transrot.hpp        \
    utilities/utilities.hpp      
 
-# BOOSTLIB=-lboost_program_options -lboost_iostreams -lboost_regex -lboost_system -lboost_timer -lboost_chrono -lboost_filesystem -lboost_graph
+skip:
+	@echo "Skipping build of metatwist"
 
 moft: $(BINDIR)/metatwist
 

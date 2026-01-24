@@ -172,7 +172,7 @@ void charge(void)
 	bcc=bccparm(i,j,k);
 	
         if (debug > 0) {
-            printf("%4d %4s %4s  %8.4lf %8.4lf   %8.4lf (%02s-%02s-%02d)   %8.4lf %8.4lf\n",
+            printf("%4d %4s %4s  %8.4lf %8.4lf   %8.4lf (%2s-%2s-%02d)   %8.4lf %8.4lf\n",
                    l, atom[i].name, atom[j].name, atom[i].charge, atom[j].charge,
                    bcc, atom[i].ambername, atom[j].ambername, k, atom[i].charge + bcc, atom[j].charge - bcc);
 

@@ -44,6 +44,7 @@ char *amberhome;
 # include "jout.c"
 # include "gesp.c"
 # include "charge.c"
+# include "esp_quick.c"
 
 int ao_flag = 0;
 /*For addtional file 
@@ -170,6 +171,7 @@ void usage()
                "[31m                         [0m set this parameter to 10 to 30 if your molecule is big (# atoms >= 100)\n"
                "[31m                   -seq  [0m atomic sequence order changable: yes(y)[default] or no(n)\n"
                "[31m                   -dr   [0m acdoctor mode: yes(y)[default] or no(n)\n"
+               "^[[31m                   -f    ^[[0m The reweighting factor used to scale RESP charges obtained using QUICK, default is 17.00\n"
                "[31m                   -i -o -fi and -fo must appear; others are optional[0m\n"
                "[32m                   Use 'antechamber -L' to list the supported file formats and charge methods[0m\n");
     } else {
@@ -237,6 +239,7 @@ void usage()
                "                          set this parameter to 10 to 30 if your molecule is big (# atoms >= 100)\n"
                "                   -seq   atomic sequence order changable: yes(y)[default] or no(n)\n"
                "                   -dr    acdoctor mode: yes(y)[default] or no(n)\n"
+               "                   -f     The reweighting factor used to scale RESP charges obtained using QUICK, default is 17.00\n"
                "                   -i -o -fi and -fo must appear; others are optional[0m\n"
                "                   Use 'antechamber -L' to list the supported file formats and charge methods[0m\n");
     }
@@ -296,7 +299,7 @@ void list()
              "\n		Charmm             charmm  25  | Gaussian ESP       gesp   26 "
              "\n		geostd cif         ccif    27  | GAMESS dat         gamess 28 "
              "\n		Orca input         orcinp  29  | Orca output        orcout 30 "
-             "\n		pdbqt              pdbqt   31  |"
+             "\n		pdbqt              pdbqt   31  | QUICK output       quick  32 "
              "\n		--------------------------------------------------------------\n"
                "                AMBER restart file can only be read in as additional file.\n"
              "\n	         	     List of the Charge Methods \n"
@@ -314,7 +317,7 @@ void list()
 
 
 void judgebondtype(int atomnum, ATOM * atom, int bondnum, BOND * bond, CONTROLINFO cinfo,
-                   MOLINFO minfo, int bondtype_flag)
+                   MOLINFO minfo, int bondtype_flag, int adjustatomname_flag)
 {
     size_t copied_size;
     char *options;
@@ -328,7 +331,10 @@ void judgebondtype(int atomnum, ATOM * atom, int bondnum, BOND * bond, CONTROLIN
     else
         options =
             " -j full -i ANTECHAMBER_BOND_TYPE.AC0" " -o ANTECHAMBER_BOND_TYPE.AC -f ac";
+
     strncat(tmpchar, options, MAXCHAR - copied_size);
+    if (adjustatomname_flag == 0)
+        strncat(tmpchar, " -an no", 7);
 
     if (cinfo.intstatus == 2)
         fprintf(stdout, "Running: %s\n", tmpchar);
@@ -422,6 +428,7 @@ int main(int argc, char *argv[])
     double tmpf;
     int overflow_flag = 0;      /* if overflow_flag ==1, reallocate memory */
     char *atomtype_args;
+    char ftype[3];
 
     if( cinfo.intstatus) 
     fprintf(stdout, "\nWelcome to antechamber %s: molecular input file processor.\n\n",
@@ -507,6 +514,9 @@ int main(int argc, char *argv[])
             continue;
         } else if (strcmp(argv[i], "-s") == 0) {
             cinfo.intstatus = atoi(argv[i + 1]);
+            continue;
+        } else if (strcmp(argv[i], "-f") == 0) {
+            strcpy(cinfo.sfac, argv[i + 1]);
             continue;
         } else if (strcmp(argv[i], "-ra") == 0) {
             strcpy(at_filename, argv[i + 1]);
@@ -723,6 +733,30 @@ int main(int argc, char *argv[])
 /*      allocate memory using default parameters MAXATOM and MAXBOND */
     memory(0, MAXATOM, MAXBOND, MAXRING);
 
+    if ( strcmp("quick", cinfo.outtype) == 0 ) {
+
+      // quick  input file has to be a .in file
+      strcpy(ftype,ofilename+strlen(ofilename)-3);
+      if(strcmp(ftype,".in") != 0) eprintf("output file needs to be in .in format\n");
+
+      if ( strcmp("pdb", cinfo.intype) == 0 ) {
+
+        atom_tmp = (ATOM *) emalloc(sizeof(ATOM) * cinfo.maxatom);
+        pdb_to_quick_input(ifilename, ofilename, atom_tmp, &minfo);
+
+        return(0);
+
+      }else if ( strcmp("xyz", cinfo.intype) == 0 ) {
+
+        atom_tmp = (ATOM *) emalloc(sizeof(ATOM) * cinfo.maxatom);
+        xyz_to_quick_input(ifilename, ofilename, atom_tmp, &minfo);
+
+        return(0);
+
+      };
+
+    };
+
     if (checkformat) {
         printf("Info: acdoctor mode is on: check and diagnose problems in the input file.\n");
     }
@@ -856,6 +890,14 @@ int main(int argc, char *argv[])
 
         if (strcmp("gout", cinfo.atype) == 0 || strcmp("11", cinfo.atype) == 0) {
             overflow_flag = rgout(afilename, &atomnum_tmp, atom_tmp, cinfo, &minfo);
+            if (overflow_flag) {
+                fprintf(stderr, "Overflow happens for additional files, exit");
+                exit(1);
+            }
+        }
+
+        if (strcmp("quick", cinfo.atype) == 0 || strcmp("32", cinfo.atype) == 0) {
+            overflow_flag = rqout(afilename, &atomnum_tmp, atom_tmp, cinfo, &minfo);
             if (overflow_flag) {
                 fprintf(stderr, "Overflow happens for additional files, exit");
                 exit(1);
@@ -1185,7 +1227,7 @@ int main(int argc, char *argv[])
     }
 
     if (bondtype_flag && bondnum > 0) {
-        judgebondtype(atomnum, atom, bondnum, bond, cinfo, minfo, bondtype_flag);
+        judgebondtype(atomnum, atom, bondnum, bond, cinfo, minfo, bondtype_flag, adjustatomname_flag);
         if (cinfo.prediction_index == 2 || cinfo.prediction_index == 3) {
             cinfo.prediction_index = 0;
             atomtype_flag = 0;
@@ -1205,7 +1247,8 @@ int main(int argc, char *argv[])
         strncat(tmpchar, atomtype_args, MAXCHAR - copied_size);
         strncat(tmpchar, minfo.atom_type_def,
                 MAXCHAR - copied_size - strlen(atomtype_args));
-
+        if (adjustatomname_flag == 0)
+            strncat(tmpchar, " -an no", 7);
         if (cinfo.intstatus == 2)
             fprintf(stdout, "\nRunning: %s\n", tmpchar);
         esystem(tmpchar);

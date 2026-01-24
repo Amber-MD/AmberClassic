@@ -147,7 +147,7 @@ int		iScanned, iFunction;
  *	Author:	Christian Schafmeister (1991)
  *
  *	Return a MESS that can be passed to MessNext
- *	to return subsiquent MESSs.
+ *	to return subsequent MESSs.
  */
 MESS
 mMessLoop()

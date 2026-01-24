@@ -1,0 +1,14 @@
+nab generated structure
+ -- amber db.file -- 
+
+DU
+    0    0    0    0    0
+  Strand   1: sense
+D   0    0    1    3    0
+DG  2DC  2DG  2DT  2DT  2DA  2DA  2DC  2DG  2DC  2
+
+  Strand   2: anti
+D   0    0    1    3    0
+DG  2DC  2DG  2DT  2DT  2DA  2DA  2DC  2DG  2DC  2
+
+QUIT

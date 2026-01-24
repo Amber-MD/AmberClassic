@@ -1,0 +1,25 @@
+molecule m;
+float 	x[4000], v[4000];
+float 	fret;
+int 	i, natom, ier; 
+
+m = getpdb("crambin.pdb");
+readparm( m, "crambin.top" );
+for( i=1; i<=4000; i++ ) v[i] = 0.0;
+
+mm_options( "cut=999., ntpr=50, nsnb=99999, diel=C, gb=1" );
+mme_init( m, NULL, "::Z", x, NULL);
+
+getxv( "crambin.x", m.natoms, fret, x, v );
+ier = conjgrad(x, 3*m.natoms, fret, mme, 0.00001, 0.5, 100 );
+if(mytaskid==0)
+  printf( "conjgrad returns %d\n", ier );
+
+// get the normal modes:
+
+ier = nmode( x, 3*m.natoms, mme2, 0.0,0.0,0);
+if(mytaskid==0)
+  printf("nmode returns %d\n", ier );
+
+mme_timer();
+

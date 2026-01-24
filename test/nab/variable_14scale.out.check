@@ -1,0 +1,33 @@
+Reading parm file (NMA_scee+scnb.prmtop)
+title:
+ACE 
+	mm_options:  ntpr=1
+	mm_options:  gb=1
+	mm_options:  cut=99.0
+	mm_options:  diel=C
+	mm_options:  e_debug=0
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0    -28.68      2.47      2.42    -23.96      0.00     -9.61  4.56e+00
+
+|Timing summary:
+|              Initialize       0.001
+|             Molec. Dyn.       0.000
+|             Normal Mode       0.000
+|             Conj. Grad.       0.000
+|                  Newton       0.000
+|-------------------------
+|                   Total       0.001
+
+|1st derivative timing summary:
+|             constraints       0.000
+|                   bonds       0.000
+|                  angles       0.000
+|                torsions       0.000
+|                pairlist       0.000
+|                 nonbond       0.000
+|               gen. Born       0.000
+|       Poisson Boltzmann       0.000
+|                 3D-RISM       0.000
+|                   Other       0.000
+|-------------------------
+|                   Total       0.000

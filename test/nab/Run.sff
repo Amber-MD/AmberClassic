@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to do simple minimization"
+echo "(this tests the molecular mechanics interface)"
+echo ""
+../../bin/$NAB -o sff ltest.nab || error
+$DO_PARALLEL ./sff > ltest.out || error
+
+../dacdif ltest.out.check ltest.out
+
+rm -f sff ltest.c
+exit 0

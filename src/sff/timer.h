@@ -22,7 +22,7 @@ REAL_T *tnewton, *tnewtonLevel, *tnewtonCholesky, *tnewtonMME,
 
 /* mme timers */
 REAL_T *tmme, *tmmeCons, *tmmeNonb, *tmmePair, *tmmeBond, *tmmeAngl,
-  *tmmePhi, *tmmeBorn, *tmmePB, *tmmeRism, *tmmeOther;
+  *tmmePhi, *tmmeBorn, *tmmePB, *tmmeOther;
 /* mme2 timers */
 REAL_T *tmme2Cons, *tmme2Nonb, *tmme2Pair, *tmme2Bond, *tmme2Angl,
   *tmme2Phi, *tmme2Born, *tmme2, *tmme2Other;

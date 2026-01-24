@@ -11,7 +11,7 @@ SRC=\
 	egb.F90 ene.F90 locmem.F90 myopen.F90 rdparm.F90 \
 	decomp.F90 rgroup.F90 rfree.F90 debug.F90 \
         svdcmp.F90 svbksb.F90 pythag.F90  memory_module.F90 \
-        gen_dx_file.F90 parms.F90 nxtsec.F90
+        gen_dx_file.F90 parms.F90
 
 OBJ=\
 	gbnsr6.o pb_read.o  gb_read.o  pb_write.o getcoor.o \
@@ -33,6 +33,10 @@ $(BINDIR)/gbnsr6: $(OBJ)
 .F90.o:   $<
 	@echo "[GBNSR6]  FC $<"
 	$(VB)$(FC) -c $(FOPTFLAGS) $(FFLAGS) -o $@ $<
+
+nxtsec.o:  ../msander/nxtsec.F90
+	@echo "[XRAY]  FC $<"
+	$(VB)$(FC) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ $<
 
 depend::
 	./makedepend > depend

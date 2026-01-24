@@ -508,6 +508,7 @@ void resp(char *filename, int atomnum, ATOM * atom, int bondnum, BOND * bond,
     size_t copied_size;
     int flag;
     int use_max_path_len = 0;
+    char vdwfile[MAXCHAR]="";
 
     flag = 0;
     if (strcmp(cinfo.intype, "gout") == 0 || strcmp(cinfo.intype, "11") == 0)
@@ -516,13 +517,20 @@ void resp(char *filename, int atomnum, ATOM * atom, int bondnum, BOND * bond,
         flag = 2;
     if (strcmp(cinfo.intype, "gamess") == 0 || strcmp(cinfo.intype, "27") == 0)
         flag = 3;
+    if (strcmp(cinfo.intype, "quick") == 0 || strcmp(cinfo.intype, "32") == 0) {
+        strncpy(vdwfile,filename,strlen(filename)-3);
+        strcat(vdwfile,"vdw");
+//        strncpy(filename,tmpfile,strlen(tmpfile));
+        flag = 4;
+    };
 
     if (flag == 0) {
         eprintf ("Cannot generate RESP charges.\n"
                   "Invalid input selections: The RESP charge method requires\n"
                   "a Gaussian output file, i.e. -fi gout -gv 0\n"
                   "or a Gaussian ESP file, i.e. -fi gesp -gv 1\n"
-                  "or a GAMESS dat file, i.e. -fi gamess.\n");
+                  "or a GAMESS dat file, i.e. -fi gamess.\n"
+                  "or a QUICK output file, i.e. -fi quick.\n");
         return;
     }
     wac("ANTECHAMBER_RESP.AC", atomnum, atom, bondnum, bond, cinfo, minfo);
@@ -535,6 +543,11 @@ void resp(char *filename, int atomnum, ATOM * atom, int bondnum, BOND * bond,
     copied_size = build_exe_path(tmpchar1, "espgen", sizeof tmpchar1, 1);
     strncat(tmpchar1, " -o ANTECHAMBER.ESP -i ", sizeof tmpchar1 - copied_size);
     strncat(tmpchar1, filename, sizeof(tmpchar1) - strlen(tmpchar1) - 1);
+    /* if quick output file is use flag is set to 4 */
+    if(flag == 4) {
+      strncat(tmpchar1, " -f 4 -vdw ", 11);
+      strncat(tmpchar1, vdwfile, sizeof(tmpchar1) - strlen(tmpchar1) - 1);
+    }
 
     copied_size = build_exe_path(tmpchar2, "respgen", sizeof tmpchar2, 1);
     strncat(tmpchar2, " -i ANTECHAMBER_RESP.AC -o ANTECHAMBER_RESP1.IN" " -f resp1 -e ",
@@ -574,15 +587,37 @@ void resp(char *filename, int atomnum, ATOM * atom, int bondnum, BOND * bond,
     esystem(tmpchar3);
 
     /* run first stage of resp:  */
-    strcat(tmpchar4,
+    if(flag == 4) {
+        if(cinfo.sfac[0] == '\0'){
+            strcat(tmpchar4,
+               " -C -O -i ANTECHAMBER_RESP1.IN -o ANTECHAMBER_RESP1.OUT -e ANTECHAMBER.ESP -t qout");
+        }else{
+            strcat(tmpchar4,
+               " -C -O -i ANTECHAMBER_RESP1.IN -o ANTECHAMBER_RESP1.OUT -e ANTECHAMBER.ESP -t qout -f ");
+            strcat(tmpchar4,cinfo.sfac);
+        }
+    }else{
+        strcat(tmpchar4,
            " -O -i ANTECHAMBER_RESP1.IN -o ANTECHAMBER_RESP1.OUT -e ANTECHAMBER.ESP -t qout");
+    }
     if (cinfo.intstatus == 2)
         fprintf(stdout, "\nRunning: %s\n\n", tmpchar4);
     esystem(tmpchar4);
 
     /* run second stage of resp:  */
-    strcat(tmpchar5,
+    if(flag == 4) {
+        if(cinfo.sfac[0] == '\0'){
+            strcat(tmpchar5,
+               " -C -O -i ANTECHAMBER_RESP2.IN -o ANTECHAMBER_RESP2.OUT -e ANTECHAMBER.ESP -q qout -t QOUT");
+        }else {
+            strcat(tmpchar5,
+               " -C -O -i ANTECHAMBER_RESP2.IN -o ANTECHAMBER_RESP2.OUT -e ANTECHAMBER.ESP -q qout -t QOUT -f ");
+            strcat(tmpchar5,cinfo.sfac);
+        }
+    }else{
+        strcat(tmpchar5,
            " -O -i ANTECHAMBER_RESP2.IN -o ANTECHAMBER_RESP2.OUT -e ANTECHAMBER.ESP -q qout -t QOUT");
+    }
     if (cinfo.intstatus == 2)
         fprintf(stdout, "\nRunning: %s\n\n", tmpchar5);
     esystem(tmpchar5);

@@ -222,7 +222,7 @@ STRING		sTemp, sA, sB;
     if ( iOverlap < 2 ) return(FALSE);
 
 	/* Now find the two atoms that define the boundary where the */
-	/* larger ring seperates from the smaller ring */
+	/* larger ring separates from the smaller ring */
 
     roPFirst  = PVAI(vaAtoms,RINGOVERLAPt,0);
     roPLast   = roPFirst + iVarArrayElementCount(vaAtoms);
@@ -417,7 +417,7 @@ LIST		lGroup1, lGroup2, lLarger, lSmaller;
  *	of the ATOM CONTAINERs that form them.
  *
  *	The rings are found by building a spanning tree from an arbitrary
- *	ATOMs within the seperate molecules of the UNIT.
+ *	ATOMs within the separate molecules of the UNIT.
  *	The molecules are found by building spanning trees.
  *	The rings are found by building a spanning tree and then looking
  *	for bonds that are not part of the spanning tree.  These bonds
@@ -431,7 +431,7 @@ LIST		lGroup1, lGroup2, lLarger, lSmaller;
  *	which contain smaller rings.  These rings must then be teased
  *	apart.  The seperation of the rings is done by finding all
  *	of the ring groups.  Groups of rings that are fused together.
- *	The fused rings are then seperated by finding the shortest 
+ *	The fused rings are then separated by finding the shortest 
  *	path between the two atoms that define the junction between the
  *	two fused rings and taking the ATOMs that the two rings have in
  *	common out of the larger ring and putting the shortest path between
@@ -541,7 +541,7 @@ INTERNAL	inRingBig, inRingSmall;
 	/* to search from the first atom of the broken bond to its */
 	/* old neighbor */
 	/* The path between them will contain atoms that are parts */
-	/* of rings, but are not minimal rings, the have to be seperated */
+	/* of rings, but are not minimal rings, the have to be separated */
 	/* from each other */
 
     MESSAGE(( "There are %d broken bonds\n", 

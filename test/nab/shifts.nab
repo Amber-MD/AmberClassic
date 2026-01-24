@@ -1,0 +1,521 @@
+//
+//============================================================================
+//
+//   Compute proton chemical shifts, using a pdb-file to get the
+//      molecular geometry, and empirical formulas to do the calculations.
+//
+//   Usage:  shifts  molecule-name
+//          reads name.pdb, and optionally name.obs (observed shift file)
+//          writes to stdout, and name.rdb
+//
+//    $Id: shifts.nab,v 10.0 2008/04/15 23:31:57 case Exp $
+//
+//============================================================================
+//
+
+int		write_rdb_header( file rdbf, string pdbfile, string obsfile ){
+	fprintf( rdbf, "#  shifts output, pdbfile = %s\n", pdbfile );
+	fprintf( rdbf, "#                 obsfile = %s\n", obsfile );
+#ifdef RING_STATS
+	fprintf( rdbf,
+"molname\tatomname\tresname\tresnum\thm\tel\tanis\tconst\ttotal\tobs\tA\tA6\tG\tG6\tC\tT\n" );
+	fprintf( rdbf,
+"8\t8\t3\t3N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\n" );
+#else
+#  ifdef SEP_BASE_CONST
+	fprintf( rdbf,
+"molname\tatomname\tresname\tresnum\thm\tel\tanis\tcH2\tcH5\tcH6\tcH7\tcH8\ttotal\tobs\n" );
+	fprintf( rdbf, "8\t8\t3\t3N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\t8N\n" );
+#  else
+	fprintf( rdbf, "molname\tatomname\tresname\tresnum\thm\tel\tanis\tconst\ttotal\tobs\n" );
+	fprintf( rdbf, "8\t8\t3\t3N\t8N\t8N\t8N\t8N\t8N\t8N\n" );
+#  endif
+#endif
+return( 0 );
+};
+
+int		write_header(){
+
+printf( "=============================================================================\n");
+printf( "          SHIFTS, version 3.0.   [D.A. Case, Sep. 1995]\n" );
+printf( "   $Id: shifts.nab,v 10.0 2008/04/15 23:31:57 case Exp $\n" );
+printf( "=============================================================================\n");
+
+printf( "=============================================================================\n");
+printf( 
+"                     RingCurr   Elect.    Anis.    Const.    Total      Obs.\n" );
+printf( "=============================================================================\n");
+
+return( 0 );
+};
+
+#include "shifts.h"
+//
+//============================================================================
+//
+//    process command-line arguments:
+
+if( argc != 2 ) {
+	fprintf( stderr, "Usage: shifts <molecule-name>\n" );
+	exit( 1 );
+}
+pdbfile = argv[ 2 ] + ".pdb";
+obsfile = argv[ 2 ] + ".obs";
+rdbfile = argv[ 2 ] + ".rdb"; 
+sanderfile = argv[ 2 ] + ".shf";
+
+//
+//============================================================================
+//
+//    constants:
+
+hFlygare = 13.09;   // susceptibility anisotropy for peptides groups 
+                    //  units are Ang.**3
+//helst    = -14.93;    //  Buckingham A value for HM fit to nucelic acid
+                      //    rings, from Table 3 of JBNMR paper
+helst = 1.2 * (-4.803);  // value from JACS paper; units are 10**-12 esu**-1
+rlb = "";
+
+//
+//============================================================================
+//
+//    Read in the observed shifts and subtract random-coil shifts:
+
+obs_found = read_obs_shifts( obsfile, observed );
+if( obs_found ){
+#ifdef COIL
+// dont call remove-coil routine
+#else
+	sbcoil( observed, no_coil );
+#endif
+	rdbf = fopen( rdbfile, "w" );
+	write_rdb_header( rdbf, pdbfile, obsfile );
+}
+
+
+//
+//============================================================================
+//
+//   set up molecule with correct sequence, but arbitary orientation:
+
+printf( "\nGetting coordinates from %s\n\n", pdbfile );
+if( getseq_from_pdb( pdbfile, numstrand, seq, strandname, moltype)) {
+	fprintf( stderr, "failed to interpret pdb sequence from file %s:\n%s\n",
+		pdbfile, seq[1] );  exit( 1 );
+}
+printf( "found sequence: %s\n", seq[1] );
+
+i = index( seq[1], "|" );
+if( moltype[1] == "dna" &&  i > 0 ) 
+	seq[1] = substr( seq[1], 1, i-1 );  // truncate seq to first strand
+
+if( moltype[1] == "protein" ) m = linkprot( "", seq[1], rlb );
+if( moltype[1] == "dna" ) m = bdna( seq[1] );
+if( moltype[1] == "rna" ) { 
+	fprintf( stderr, "moltype = rna not supported yet!\n" ); exit( 1 );
+}
+
+//   now read in the coords from the pdb file:
+
+n_matched = getxyz_from_pdb( pdbfile, m, notmatched, 1 );
+if( notmatched != "" ) {
+	fprintf( stderr, "atoms not found:%s\n", notmatched );
+	exit( 1 );
+}
+n_matched = getresid_from_pdb( pdbfile, rid );
+
+//
+//============================================================================
+//
+//   set up five arrays to hold ring information:
+//
+//      ringname[ ring ]    gives the residue name of each aromatic ring
+//      ringnum [ ring ]    gives the residue number of each aromatic ring
+//      ringstr [ ring ]    gives the intensity
+//      ringsize[ ring ]    gives the number of atoms in the ring
+//      ringpos [ atring ]  gives the position of each atom
+//      ringaname[atring ]  gives an atom idenfier for each atom in a ring
+//
+//      index "ring" goes from 1 to the number of rings
+//      index "atring" goes from 1 to the total number of atoms in all rings
+//
+//   also get rn[ ring ], an array of ring normals, and ringskip, a
+//       hashed array of which protons to skip for each ring.
+
+nrings = get_ring_info( m, ringname, ringnum, ringstr, ringsize, ringpos,
+			rn, ringskip, ringaname );
+
+if( obs_found) write_sander_inp( pdbfile, observed, sanderfile,
+					nrings, ringnum, ringstr, ringname, ringsize, ringaname );
+
+//
+//============================================================================
+//
+//   set up arrays with info on peptide groups or dna sugars:
+//
+
+if( moltype[1] == "protein" )
+	npep = get_pep_info( m, pn, pc, pb, pepres );
+else if( moltype[1] == "dna" )
+	get_sugar_info( m, h1p, h2p1, h2p2, h3p, h4p );  
+
+#ifdef VERSION2
+//   set up charges like in old shifts program:
+
+for( a in m ) {
+
+	a.charge = 0.0;
+	if( a.atomname == "C") a.charge =  0.55;
+	if( a.atomname == "O") a.charge = -0.55;
+	if( a.atomname == "H") a.charge =  0.25;
+	if( a.atomname == "CA") a.charge =  0.10;
+	if( a.atomname == "N") {
+		if( a.resname == "PRO") a.charge = -0.20;
+		else                    a.charge = -0.35;
+	}
+
+}
+#endif
+	
+//
+//============================================================================
+//
+//   loop over all protons:
+
+abs_res = nprot = 0; shhm_t = shp_t = she_t = 0.0;
+for (r in m ) { abs_res = abs_res + 1; for( a in r ){
+
+
+    if( substr(a.atomname,1,1) != "H" ) continue;
+//	idp = a.resname + ":" + sprintf( "%d", abs_res ) + ":" + a.atomname;
+// Fixing to keep residue numbers consistent between shifts and obsfile
+	id_res = a.resname + ":" + sprintf( "%d", abs_res );
+        if( a.resname == "HID" ) id_res = "HIS:" + sprintf( "%d", abs_res );
+        if( id_res in rid ) {
+                idp = a.resname + ":" 
+		 	+ sprintf( "%d", atoi(substr(rid[ id_res ],2,4))) 
+			+ ":" + a.atomname;
+                if( a.resname == "HID" ) idp = "HIS:" 
+			+ sprintf( "%d", atoi(substr(rid[ id_res ],2,4)))
+			+ ":" + a.atomname;
+        }
+        else printf( "Can't find resid for atom %s\n", a.fullname );
+#ifdef PRINT_RC
+	printf( "atom %s:\n", idp );
+#endif
+		
+//
+//============================================================================
+//
+//  get Haigh-Mallion ring-current contribution:
+
+    shhm = 0.;  atring = 0;
+#ifdef RING_STATS
+	hm["ADE"] = hm["ADE6"] = hm["GUA"] = hm["GUA6"] = hm["CYT"] = hm["THY"] = 0.0;
+#endif
+    for( ring=1; ring<=nrings; ring = ring + 1 ){
+
+    //  skip contributions to protons belonging to this ring:
+
+        if( abs_res == ringnum[ ring ] ){
+            nskip = split( ringskip[ringname[ring]], atskip, " " );
+            skip = 0;
+            for( i=1; i<=nskip; i = i+1 ){
+                if( a.atomname == atskip[i] ) skip = 1;
+            }
+            if( skip ) { atring = atring + ringsize[ring]; continue;}
+        }
+
+    //  loop over pairs of bonded atoms in the ring:
+
+        shhm_r = 0.;
+        for( k=1; k<=ringsize[ring]; k=k+1 ){
+
+            kp1 = k+1; if( k == ringsize[ring] ) kp1 = 1;
+            r1 = ringpos[ atring+k ] - a.pos;
+            r2 = ringpos[ atring+kp1 ] - a.pos;
+            s12 = r1 @ ( r2 ^ rn[ring] );
+            r1sq = r1 @ r1;  d1 = sqrt( r1sq );
+            r2sq = r2 @ r2;  d2 = sqrt( r2sq );
+            shhm_r = shhm_r + 0.5*s12* (1./(r1sq*d1) + 1./(r2sq*d2));
+//			printf( "    %d::%8.3f %8.3f %8.3f %8.3f\n",
+//				k, s12, d1, d2, shhm_r );
+        }
+        shhm_r = shhm_r*5.4548*ringstr[ ring ];
+        shhm = shhm + shhm_r;
+#ifdef RING_STATS
+		hm[ringname[ring]] = hm[ringname[ring]] + shhm_r;
+#endif
+
+#ifdef PRINT_RC
+		printf( "        %4s %3d   %8.3f\n", 
+			ringname[ring], ringnum[ ring ], shhm_r );
+#endif
+
+		 atring = atring + ringsize[ring];
+    }
+//
+//============================================================================
+//
+//   Electrostatics contribution:
+
+	nbonds = bonded_atoms( a, neighbors );
+	if( nbonds != 1 ){
+		fprintf( stderr, "wrong number of bonds: %s\n", a.fullname );
+		exit( 1 );
+	}
+	ch = a.pos - neighbors[ 1 ].pos;    //  vector from C to H
+	rch = sqrt( ch@ch );
+
+	she = 0.; e_res = 0;
+	for( re in m ){ e_res = e_res + 1; for( ae in re ){
+		if( moltype[1] == "protein" ){
+			if( a.atomname == "H" && a.resname == "NME"){
+				if( e_res == abs_res ) continue;
+				if( e_res == abs_res - 1 ) continue;
+			} else if (a.atomname == "H" ){
+				if( e_res == abs_res - 1 ){
+					if( ae.atomname == "C" || ae.atomname == "O" ) continue;
+				} else if( e_res == abs_res ){
+					if ( ae.atomname == "H" || ae.atomname == "N" ||
+				     	ae.atomname == "CA" ) continue;
+				}
+			} else {
+				if( abs_res == e_res &&
+					ae.atomname != "H" && ae.atomname != "N" &&
+					ae.atomname != "C" && ae.atomname != "O" ) continue;
+			}
+		} else if ( moltype[1] == "dna" ){
+			if( e_res == abs_res ){
+				if( ae.atomname =~ "'" && a.atomname =~ "'" ) continue; 
+				if( ae.atomname !~ "'" && a.atomname !~ "'" ) continue; 
+			}
+			if( ae.atomname =~ "P" ) continue;
+		}
+		if( ae.charge == 0.0 ) continue;
+
+		hx = ae.pos - a.pos;
+		rhx2 = hx@hx;    rhx = sqrt( rhx2 );
+#ifdef PRINT_EL
+		dum =  ae.charge * 2.0*(ch@hx) /( rhx2*rch*rhx2 );
+		fprintf( stderr, "%s -> %s: %8.3f  %8.3f  %8.3f %8.3f\n",
+			a.fullname, ae.fullname, rhx, rch, ae.charge, dum );
+#endif
+//	const epsilon: 	
+		she = she + ae.charge * (ch@hx) /( rhx2*rch*rhx );
+//  eps ~ r:
+//		she = she + ae.charge * 2.0*(ch@hx) /( rhx2*rch*rhx2 );
+	} }
+	she = she*helst;
+//
+//============================================================================
+//
+//   Peptide anisotropy contibution:
+
+	if( moltype[1] == "protein" ){
+    	shp = 0.0;
+    	for( ipep=1; ipep<=npep; ipep = ipep+1 ){
+
+			if( a.atomname == "H" && pepres[ ipep ] == abs_res ) continue;
+        	delta = pb[ipep] - (pn[ipep] @ a.pos);
+        	rpep2 = (a.pos - pc[ipep]) @ (a.pos - pc[ipep]);
+        	rpep = sqrt( rpep2 );
+        	shp_r = hFlygare*(1./3. - delta*delta/rpep2)/(rpep*rpep2);
+        	shp = shp + shp_r;
+
+#			ifdef PRINT_ANIS
+			printf( "                                       %8.3f %3d\n", 
+				shp_r, ipep );
+#			endif
+    	}
+	} else if ( moltype[1] == "dna" ){
+
+//   put sugar pucker contribution into shp:
+
+		if( a.atomname == "H1'" )  shp = h1p[ abs_res ];
+		else if( a.atomname == "H2'1" ) shp = h2p1[ abs_res ];
+		else if( a.atomname == "H2'2" ) shp = h2p2[ abs_res ];
+		else if( a.atomname == "H3'" )  shp = h3p[ abs_res ];
+		else if( a.atomname == "H4'" )  shp = h4p[ abs_res ];
+		else shp = 0.0;
+	
+	}
+
+// 
+//============================================================================
+//
+//   Now we are ready to print the totals; first see if this proton is
+//    part of an equivalent set that needs to be averaged.
+
+	nprot = nprot + 1; 
+	shhm_t = shhm_t + shhm;
+	she_t = she_t + she;
+	shp_t = shp_t + shp;
+
+//  average methyls:
+	if( a.resname == "ALA" && a.atomname =~ "HB[12]" || 
+	    a.atomname =~ "HD[12][12]" ||
+	    a.resname == "THR" && a.atomname =~ "HG[12]" ||
+	    a.resname == "MET" && a.atomname =~ "HE[12]" ||
+	    a.resname == "THY" && a.atomname =~ "H7[12]" ||
+	    a.resname == "VAL" && a.atomname =~ "HG1[12]" ||
+	    a.atomname =~ "HG2[12]" ||
+	    a.atomname =~ "HH3[12]"
+	) continue;
+
+	shhm_t = shhm_t/nprot;
+	she_t = she_t/nprot;
+	shp_t = shp_t/nprot;
+
+//  average aromatics in TYR and PHE:
+	if( a.resname == "PHE" && a.atomname == "HD2" ||
+	    a.resname == "TYR" && a.atomname == "HD2" ){
+		shhm_t = 0.5* (shhm + shhm_save_D);
+		she_t = 0.5* (she + she_save_D);
+		shp_t = 0.5* (shp + shp_save_D);
+	}
+	if( a.resname == "PHE" && a.atomname == "HE2" ||
+	    a.resname == "TYR" && a.atomname == "HE2" ){
+		shhm_t = 0.5* (shhm + shhm_save_E);
+		she_t = 0.5* (she + she_save_E);
+		shp_t = 0.5* (shp + shp_save_E);
+	}
+
+// 
+//============================================================================
+//
+//  Get a constant contribution to the shift, based on its location:
+
+	if( moltype[1] == "protein" ){
+		sconst = -0.041;
+		if( a.atomname == "HA") {
+			sconst = -0.754;
+			if( a.resname == "GLY" || a.resname == "PRO") sconst = -0.510;
+		}
+		if( a.atomname == "H") sconst = -0.550;
+
+	}else if (moltype[1] == "dna" ){
+
+#		ifdef SEP_BASE_CONST
+		cH2[ idp ] = cH5[ idp ] = cH6[ idp ] = cH7[ idp ] = cH8[ idp ] = 0.0;
+		if( a.atomname == "H2" ) cH2[ idp ] = 1.0;
+		if( a.atomname == "H5" ) cH5[ idp ] = 1.0;
+		if( a.atomname == "H6" ) cH6[ idp ] = 1.0;
+		if( a.atomname == "H73" ) cH7[ idp ] = 1.0;
+		if( a.atomname == "H8" ) cH8[ idp ] = 1.0;
+		sconst = cH2[ idp ] + cH5[ idp ] + cH6[ idp ] + cH7[ idp ] + cH8[ idp ];
+#		else
+		sconst = 0.0;
+		if( a.atomname == "H1'" && (a.resname == "THY" ||
+			a.resname == "CYT" ) ) sconst = 0.52;
+//		if( a.atomname == "H1'") sconst = 0.32;
+//		else if ( a.atomname == "H2" ) sconst = 0.57;
+//		else if ( a.atomname == "H6" ) sconst = -0.34;
+#		endif
+		
+	}
+	calculated[ idp ] = shhm_t+she_t+shp_t+sconst;
+
+	if( ! obs_found ) {
+
+		if( a.resname == "PHE" && a.atomname =~ "H[DE]1" ||
+	    	a.resname == "TYR" && a.atomname =~ "H[DE]1" ) continue;
+    	printf( "T:%-15s  %8.3f  %8.3f  %8.3f  %8.3f  %8.3f\n",
+            idp, shhm_t, she_t, shp_t, sconst, calculated[ idp ] );
+
+	} else {                            // save for later printing:
+		shhm_p[ idp ] = shhm_t;
+#		ifdef RING_STATS
+		hm_pA[ idp ] = hm["ADE"];
+		hm_pA6[ idp ] = hm["ADE6"];
+		hm_pG[ idp ] = hm["GUA"];
+		hm_pG6[ idp ] = hm["GUA6"];
+		hm_pC[ idp ] = hm["CYT"];
+		hm_pT[ idp ] = hm["THY"];
+#		endif
+		she_p[ idp ] = she_t;
+		shp_p[ idp ] = shp_t;
+		sconst_p[ idp ] = sconst;
+	}
+
+
+//  average aromatics in TYR and PHE:
+	if( a.resname == "PHE" && a.atomname == "HD1" ||
+	    a.resname == "TYR" && a.atomname == "HD1" ){
+		shhm_save_D = shhm; she_save_D = she; shp_save_D = shp;
+	}
+	if( a.resname == "PHE" && a.atomname == "HE1" ||
+	    a.resname == "TYR" && a.atomname == "HE1" ){
+		shhm_save_E = shhm; she_save_E = she; shp_save_E = shp;
+	}
+
+	nprot = 0; shhm_t = shp_t = she_t = 0.0;
+} }
+
+if( ! obs_found ) exit( 0 );
+
+//  Swap pro-chiral pairs of shifts:
+
+nswap = swap_shifts( observed, calculated );
+printf( "%d pairs of pro-chiral shifts were swapped\n", nswap );
+
+//  Print out the total shifts:
+
+write_header();
+abs_res = 0;
+for (r in m ) { abs_res = abs_res + 1; for( a in r ){
+
+    if( substr(a.atomname,1,1) != "H" ) continue;
+	                                    // construct a string to match that
+                                        // described above for observed string:
+//	idp = a.resname + ":" + sprintf( "%d", abs_res ) + ":" + a.atomname;
+        id_res = a.resname + ":" + sprintf( "%d", abs_res );
+        if( a.resname == "HID" ) id_res = "HIS:" + sprintf( "%d", abs_res );
+        if( id_res in rid ) {
+
+        	idp = a.resname + ":" 
+			+ sprintf( "%d", atoi(substr(rid[ id_res ],2,4)))
+			+ ":" + a.atomname;
+        	if( a.resname == "HID" ) idp = "HIS:" 
+			+ sprintf( "%d", atoi(substr(rid[ id_res ],2,4)))
+			+ ":" + a.atomname;
+        }
+        else printf( "Can't find resid for atom %s\n", a.fullname );
+
+
+	if( ( idp in observed ) && !( idp in no_coil ) ){
+
+		split( idp, fields_p, ":" );
+    	printf( "T:%-15s  %8.3f  %8.3f  %8.3f  %8.3f  %8.3f  %8.3f\n",
+            idp,
+			shhm_p[idp], she_p[idp], shp_p[idp], sconst_p[idp],
+			calculated[ idp ], observed[ idp ] );
+#ifdef RING_STATS
+    	fprintf( rdbf, 
+			"%s\t%s\t%s\t%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n",
+            argv[ 2 ], fields_p[3], fields_p[1], fields_p[2],
+			shhm_p[idp], she_p[idp], shp_p[idp], sconst_p[idp],
+			calculated[ idp ], observed[ idp ],
+			hm_pA[ idp ], hm_pA6[ idp ], hm_pG[ idp ], hm_pG6[ idp ],
+			hm_pC[ idp ],hm_pT[ idp ] );
+#else
+#  ifdef SEP_BASE_CONST
+    	fprintf( rdbf, 
+			"%s\t%s\t%s\t%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n",
+            argv[ 2 ], fields_p[3], fields_p[1], fields_p[2],
+			shhm_p[idp], she_p[idp], shp_p[idp], 
+			cH2[ idp ], cH5[ idp ], cH6[ idp ], cH7[ idp ], cH8[ idp ],
+			calculated[ idp ], observed[ idp ] );
+#  else
+    	fprintf( rdbf, 
+			"%s\t%s\t%s\t%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n",
+            argv[ 2 ], fields_p[3], fields_p[1], fields_p[2],
+			shhm_p[idp], she_p[idp], shp_p[idp], 
+			sconst_p[ idp ],
+			calculated[ idp ], observed[ idp ] );
+#  endif
+#endif
+	}
+
+} }
+

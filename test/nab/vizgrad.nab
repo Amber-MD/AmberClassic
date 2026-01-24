@@ -1,0 +1,53 @@
+// Visual inspection test for checking potential and gradient.
+// Setting: three Na+ ions and one CL- ion
+// The Cl- ion is moved in a given direction and mme() is evaluated at each position.
+// -delta(E)/delta(s) should then be equal to the projection of the force
+// acting on the Cl- ion on the direction of movement.
+// Intended usage (e.g.):
+// ./vizgrad | awk '$1 == "XX" {print $2,$3,$4}' | xmgrace -pipe -nxy -
+// Then the numerical derivative of the first curve should
+// coincide with the second curve - otherwise potential and gradient don't match.
+// Inside xmgrace: Data -> Transformations -> Differences: Method: Centered difference.
+// With cut>20, there should be no discontinuity or cusp
+
+molecule m;
+float 	m_xyz[12],f_xyz[12];
+int ier;
+float nrg,nrg0;
+float dx,dy,dz,norm,lam,dotp;
+
+//unit vector in the direction of movement.
+// dx != dy != dz just to be sure.
+dx = -1.0;
+dy = -2.0;
+dz = 3.0;
+norm = sqrt(dx*dx + dy*dy + dz*dz);
+dx=dx/norm;
+dy=dy/norm;
+dz=dz/norm;
+
+
+
+m = getpdb("vizgrad.pdb");
+readparm(m, "vizgrad.prm");
+mm_options( "cut=99.5, ntpr=1000, nsnb=10, diel=C,gb=1,rgbmax=10.");
+setxyz_from_mol( m, NULL, m_xyz );
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+ier=1;
+nrg0 = mme(m_xyz,f_xyz,ier);
+for (lam=0.0 ; lam < 20.0; lam +=0.05)
+{
+	nrg = mme(m_xyz,f_xyz,ier);
+	dotp = f_xyz[10]*dx + f_xyz[11]*dy + f_xyz[12]*dz;
+	if(mytaskid==0)
+	  printf("XX %f %g %g \n", lam*sqrt(dx*dx+dy*dy+dz*dz),nrg-nrg0,dotp);
+	m_xyz[10] += dx * .05;
+	m_xyz[11] += dy * .05;
+	m_xyz[12] += dz * .05;
+}
+	
+	
+
+
+

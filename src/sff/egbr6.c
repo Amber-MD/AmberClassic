@@ -447,12 +447,14 @@ REAL_T egbr6(INT_T * lpears, INT_T * upears, INT_T ** pearlist,
             rj = reff[j];
             rb2 = ri * rj;
 #ifdef GRYCUK_FGB
-            fgbi = 1.0 / sqrt(r2 + rb2);
+            temp1 = sqrt(r2 + rb2);
+            fgbi = 1.0 / temp1;
 #else
             efac = exp(-r2 / (4.0 * rb2));
-            fgbi = 1.0 / sqrt(r2 + rb2 * efac);
+            temp1 = sqrt(r2 + rb2 * efac);
+            fgbi = 1.0 / temp1;
 #endif
-            fgbk = -(*kappa) * KSCALE / fgbi;
+            fgbk = -(*kappa) * KSCALE * temp1;
 
             expmkf = exp(fgbk) / (*diel_ext);
             dielfac = 1.0 - expmkf;

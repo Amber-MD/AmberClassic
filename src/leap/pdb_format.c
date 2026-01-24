@@ -13,12 +13,9 @@
 
 # include       "pdb_int.h"
 /*
- *      for each pdb record type there is a format reading in the
- *      record values and for printing them out.
+ *      For each pdb record type, there is a format for reading the
+ *      record values and for printing them.
  *
- *      The actual format of a line written, is the print format
- *      followed by blank padding to 72 characters, followed by
- *      8 characters of file and line information.
  */
 
 struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
@@ -32,7 +29,7 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "%6 %5d %4s%c%3s %c%4d%c   %8f%8f%8f%6f%6f %3d",
                 "ATOM  %5d %-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
         },
-{                                       /* 3 PDB_AUTHOR, COMPND, JRNL, SOURCE */
+        {                                       /* 3 PDB_AUTHOR, COMPND, JRNL, SOURCE */
                 "%9 %c%60s", "AUTHOR   %C%-60s" },
         {                                       /* 4 PDB_COMPND */
                 "%9 %c%60s", "COMPND   %C%-60s" },
@@ -87,8 +84,8 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
         "SEQRES%4d %C %4d  %-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-3s"
         ,},
         {                                       /* 23 PDB_SHEET */
-"%6 %4d %3s%2d %3s %c%4d%c %3s %c%4d%c%2d %4s%3s %c%4d%c %4s%3s %c%4d%c",
-"SHEET %4D %3s%2d %-3s %C%4d%C %-3s %C%4d%C%2d %-4s%-3s %C%4D%C %-4s%-3s %C%4D%C"
+        "%6 %4d %3s%2d %3s %c%4d%c %3s %c%4d%c%2d %4s%3s %c%4d%c %4s%3s %c%4d%c",
+        "SHEET %4D %3s%2d %-3s %C%4d%C %-3s %C%4d%C%2d %-4s%-3s %C%4D%C %-4s%-3s %C%4D%C"
         },
         {                                       /* 24 PDB_SIGATM */
                 "%6 %5d %4s%c%3s %c%4d%c   %8f%8f%8f%6f%6f %3d",

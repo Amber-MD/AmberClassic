@@ -1,0 +1,219 @@
+Reading parm file (ala.parm7)
+title:
+ACE                                                                             
+	mm_options:  ntpr=1
+	mm_options:  gbsa=1
+	mm_options:  gb=1
+	mm_options:  kappa=0.10395
+	mm_options:  rgbmax=99.
+	mm_options:  cut=99.0
+	mm_options:  diel=C
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0    -28.97      7.88      7.82    -32.17      1.52    -14.02  6.00e+00
+ff:     1    -13.16     30.69      3.89    -33.87      1.52    -15.39  3.94e+01
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0    -13.16     30.69      3.89    -33.87      1.52    -15.39  3.94e+01
+	mm_options:  gbsa=0
+	mm_options:  gb=0
+	mm_options:  ntpr=1
+	mm_options:  rism=1
+	mm_options:  closure=1
+	mm_options:  cut=9999.0
+	mm_options:  xvvfile=../rism1d/spc-kh/spc.xvv.save
+	mm_options:  verbose=1
+	mm_options:  ljTolerance=0
+	mm_options:  asympKSpaceTolerance=0
+	mm_options:  treeDCF=0
+	mm_options:  treeTCF=0
+	mm_options:  treeCoulomb=0
+	mm_options:  buffer=-1
+	mm_options:  ng=30,30,30
+	mm_options:  solvbox=15,15,15
+	mm_options:  tolerance=1e-11
+	mm_options:  apply_rism_force=1
+	mm_options:  centering=2
+	mm_options:  ntpr_rism=1
+	mm_options:  ntwrism=0
+	mm_options:  uccoeff=-0.149818,-0.1136266,-0.00053163,0.0103954
+|solutePotentialEnergy                    [kcal/mol]                Total                   LJ              Coulomb                 Bond                Angle             Dihedral               H-Bond                LJ-14           Coulomb-14           Restraints              3D-RISM
+|rism_excessChemicalPotential             [kcal/mol]                Total         ExcChemPot_O        ExcChemPot_H1
+|rism_excessChemicalPotentialUC           [kcal/mol]                Total
+|rism_solventPotentialEnergy              [kcal/mol]                Total       UV_potential_O      UV_potential_H1
+|rism_partialMolarVolume                  [A^3]                       PMV
+|rism_totalParticlesBox                   [#]                                       TotalNum_O          TotalNum_H1
+|rism_totalChargeBox                      [e]                       Total           TotalChg_O          TotalChg_H1
+|rism_excessParticlesBox                  [#]                                          ExNum_O             ExNum_H1
+|rism_excessChargeBox                     [e]                       Total              ExChg_O             ExChg_H1
+|rism_excessParticles                     [#]                                          ExNum_O             ExNum_H1
+|rism_excessCharge                        [e]                       Total              ExChg_O             ExChg_H1
+|rism_KirkwoodBuff                        [A^3]                                           KB_O                KB_H1
+|rism_DCFintegral                         [A^3]                                         DCFI_O              DCFI_H1
+
+RUNNING 3D-RISM w/ XMIN
+
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box to fixed size.
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.493,       3.654,       5.583
+|Switching to KH closure
+|RXRISM converged in   251 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.520,       3.606,       5.534
+|RXRISM converged in   252 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.493,       3.659,       5.581
+|RXRISM converged in   256 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.443,       3.467,       5.494
+|RXRISM converged in   294 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.492,       3.658,       5.579
+|RXRISM converged in   289 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.340,       3.165,       5.439
+|RXRISM converged in   286 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.490,       3.658,       5.578
+|RXRISM converged in   302 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.321,       3.159,       5.532
+|RXRISM converged in   304 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.484,       3.640,       5.576
+|RXRISM converged in   287 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.339,       3.140,       5.520
+|RXRISM converged in   278 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.478,       3.620,       5.574
+|RXRISM converged in   275 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.478,       3.620,       5.574
+|RXRISM converged in   269 steps
+	mm_options:  guvfile=g.xmin
+	mm_options:  apply_rism_force=0
+	mm_options:  ntwrism=1
+        mm_options:  volfmt=dx
+|solutePotentialEnergy                    [kcal/mol]                Total                   LJ              Coulomb                 Bond                Angle             Dihedral               H-Bond                LJ-14           Coulomb-14           Restraints              3D-RISM
+|rism_excessChemicalPotential             [kcal/mol]                Total         ExcChemPot_O        ExcChemPot_H1
+|rism_excessChemicalPotentialUC           [kcal/mol]                Total
+|rism_solventPotentialEnergy              [kcal/mol]                Total       UV_potential_O      UV_potential_H1
+|rism_partialMolarVolume                  [A^3]                       PMV
+|rism_totalParticlesBox                   [#]                                       TotalNum_O          TotalNum_H1
+|rism_totalChargeBox                      [e]                       Total           TotalChg_O          TotalChg_H1
+|rism_excessParticlesBox                  [#]                                          ExNum_O             ExNum_H1
+|rism_excessChargeBox                     [e]                       Total              ExChg_O             ExChg_H1
+|rism_excessParticles                     [#]                                          ExNum_O             ExNum_H1
+|rism_excessCharge                        [e]                       Total              ExChg_O             ExChg_H1
+|rism_KirkwoodBuff                        [A^3]                                           KB_O                KB_H1
+|rism_DCFintegral                         [A^3]                                         DCFI_O              DCFI_H1
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box to fixed size.
+||Setting solvation box to
+|grid size:         30 X         30 X         30
+|box size [A]:      15.000 X     15.000 X     15.000
+|grid spacing [A]:      0.500 X      0.500 X      0.500
+|effective buffer [A]:     4.478,       3.620,       5.574
+|Switching to KH closure
+|RXRISM converged in   267 steps
+ff:     0     -2.67      9.08      3.78    -33.04      0.00     17.51  3.10e+00
+solutePotentialEnergy                     -2.6702309744722221E+000   1.6709979437304967E-001  -8.0665352387515796E+001   3.9556835763884812E-001   1.0882095221058488E+000   7.5969397118397310E+000   0.0000000000000000E+000   3.6127787256562223E+000   4.7622644097926027E+001   0.0000000000000000E+000   1.7511881203503844E+001
+rism_excessChemicalPotential               1.7511881203503840E+001   7.3641060808497954E+001  -5.6129179604994114E+001
+rism_excessChemicalPotentialUC            -1.2583028095659204E+001
+rism_solventPotentialEnergy               -4.4153510858618773E+001   8.1842473838661256E+000  -5.2337758242484902E+001
+rism_partialMolarVolume                    2.0011802786823372E+002
+rism_totalParticlesBox                                               1.0578847061157587E+002   2.1157694118562995E+002
+rism_totalChargeBox                       -1.5901736184072814E-008  -8.9666307767777582E+001   8.9666307751875834E+001
+rism_excessParticlesBox                                             -6.5990533385041141E+000  -1.3198106714530033E+001
+rism_excessChargeBox                      -1.5901740985054940E-008   5.5933576145446420E+000  -5.5933576304463823E+000
+rism_excessParticles                                                -6.5990533385041141E+000  -1.3198106714530033E+001
+rism_excessCharge                         -1.5901740985054940E-008   5.5933576145446420E+000  -5.5933576304463823E+000
+rism_KirkwoodBuff                                                   -1.9816972769454389E+002  -1.9816972825793425E+002
+rism_DCFintegral                                                    -6.6306889224358392E+003   1.7881558459442213E+003

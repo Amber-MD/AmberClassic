@@ -3,16 +3,9 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#ifndef CYGWIN
-#  ifdef USE_AMBER_C9XCOMPLEX
-#    include "complex.h"
-#  else
-#    include <complex.h>
-#  endif
-#endif
+#include <complex.h>
 #include "sff.h"
 #include "memutil.h"
-#include "timer.h"
 
 #ifdef SCALAPACK
 #include "mpi.h"
@@ -127,143 +120,6 @@ FILE  *safe_fopen( char *filename, char *mode )
     }
     return( f );
 }
-
-#ifdef CYGWIN
-/*********************************************************************** 
- * Internal complex number math routines, for use with CYGWIN.
- * Daniel R. Roe - 2010-03-02
- **********************************************************************/
-#define ONEOVERROOTTWO 0.707106781
-typedef struct _complextype {
-  double r;
-  double i;
-} complextype;
-/*
- * complex_sqrt()
- * Calculate the square root of a complex number.
- *
- * Given a complex number c, there exists a complex number z such that:
- *   c = z^2
- * Every complex number except 0 will have two roots, positive and negative.
- * If 
- *   c = a + bI (a and b are both real)
- * and 
- *   z = p + qI
- * then
- *   a + bI = (p + qI)^2
- * The right hand side becomes: 
- *   p^2 + pqI + pqI +qI^2 --> p^2 - q^2 + 2pqI
- * Equating the real and imaginary parts to a + bI yields:
- *   a = p^2 - q^2 [eq 1]
- *   b = 2pq       [eq 2]
- * Solving the second eq. for q yields:
- *   q = b / 2p    [eq 3]
- * Which when substituted back into the first eq yields:
- *   a = p^2 - (b / 2p)^2, a = p^2 - b^2 / 4p^2
- * Multiple both sides by 4p^2:
- *   4ap^2 = 4p^4 - b^2
- * Which can be converted to quadratic form for p^2:
- *   4p^4 - 4ap^2 - b^2 = 0
- * p^2 can be solved by using the quadratic formula:
- *   p^2 = (a + (a^2 + b^2)^0.5) / 2
- *   p = 2^-0.5 (a + (a^2 + b^2)^0.5)^0.5 [eq 4]
- * The fourth equation can then be substituted back into the third:
- *   q = b / 2 (2^-0.5 (a + (a^2 + b^2)^0.5)^0.5)
- * which can then be rearranged to:
- *   q = (b / abs(b)) (2^-0.5) (( (a^2 + b^2)^0.5 ) - a)^0.5
- */
-complextype complex_sqrt(complextype C) {
-  double a2, b2, sq_a2b2, a_sq_a2b2, p, q, bsign;
-  complextype answer;
-
-  //fprintf(stderr,"Computing complex sqrt for %lf + %lf I)\n",C.r,C.i);
-
-  a2=C.r * C.r;
-  b2=C.i * C.i;
-  if (b2>0)
-    bsign=1.0;
-  else
-    bsign=-1.0;
-
-  sq_a2b2 = sqrt(a2 + b2);
-
-  a_sq_a2b2 = C.r + sq_a2b2;
-     
-  p = ONEOVERROOTTWO * sqrt(a_sq_a2b2);
-
-  a_sq_a2b2 = sq_a2b2 - C.r;
-
-  q = ONEOVERROOTTWO * bsign * sqrt(a_sq_a2b2);
-
-  //fprintf(stderr,"Real: %lf   Imag: %lf\n",p,q);
-
-  answer.r=p;
-  answer.i=q;
-
-  return answer;
-}
-
-/*
- * complex_div()
- * Perform division of two complex numbers
- */
-complextype complex_div(complextype N, complextype D) {
-  double a,b,c,d;
-  double c2d2;
-  complextype answer;
-
-  //fprintf(stderr, "Computing complex div for %lf + %lf I / %lf + %lf I\n",
-  //        N.r,N.i,D.r,D.i);
-
-  a=N.r;
-  b=N.i;
-  c=D.r;
-  d=D.i;
-  answer.r=0.0;
-  answer.i=0.0;
-
-  if (c==0.0 && d==0.0) {
-    fprintf(stderr,"Error: nmode.c: complex_div: Denominator is 0.0, answer is undefined.\n");
-    return answer;
-  }
-
-  c2d2 = (c * c) + (d * d);
-  
-  answer.r = ((a * c) + (b * d)) / c2d2;
-
-  answer.i = ((b * c) - (a * d)) / c2d2;
-
-  //fprintf(stderr,"Real: %lf   Imag: %lf\n",answer.r, answer.i);
-
-  return answer;
-}
-
-/*
- * complex_add()
- * Perform addition of two complex numbers
- */
-complextype complex_add(complextype C1, complextype C2) {
-  complextype answer;
-
-  answer.r = C1.r + C2.r;
-  answer.i = C1.i + C2.i;
-
-  return answer;
-}
-
-/*
- * complex_mult()
- * Perform multiplication of two complex numbers
- */
-complextype complex_mult(complextype C1, complextype C2) {
-  complextype answer;
-
-  answer.r = (C1.r * C2.r) - (C1.i * C2.i);
-  answer.i = (C1.i * C2.r) + (C1.r * C2.i);
-
-  return answer;
-}
-#endif //CYGWIN
 
 /***********************************************************************
                             SYMNUM()
@@ -394,7 +250,7 @@ static int thermo(int natoms, int n, int ilevel, REAL_T * c,
    /* Local variables */
    REAL_T e;
    int i;
-   REAL_T p, pi, sn, rt, em1;
+   REAL_T p, s, pi, cv, sn, rt, em1;
    int iff;
    REAL_T arg, gas;
    int iat;
@@ -405,7 +261,7 @@ static int thermo(int natoms, int n, int ilevel, REAL_T * c,
        econt, etran, scont, stran, tomet, rtemp, boltz, etovt, rtemp1,
        rtemp2, rtemp3, planck;
    int linear;
-   REAL_T tokcal, weight;
+   REAL_T tokcal, hartre, weight;
    int nimag;
    int mytaskid;
 
@@ -457,6 +313,7 @@ static int thermo(int natoms, int n, int ilevel, REAL_T * c,
 /*     avog:    avogadro constant, in mol**(-1). */
 /*     jpcal:   joules per calorie. */
 /*     tomet:   metres per Angstrom. */
+/*     hartre:  joules per hartree. */
 
    tokg = 1.660531e-27;
    boltz = 1.380622e-23;
@@ -464,6 +321,7 @@ static int thermo(int natoms, int n, int ilevel, REAL_T * c,
    avog = 6.022169e23;
    jpcal = 4.18674;
    tomet = 1e-10;
+   hartre = 4.35981e-18;
 
 /*     compute the gas constant, pi, pi**2, and e. */
 /*     compute the conversion factors cal per joule and kcal per joule. */
@@ -524,7 +382,9 @@ static int thermo(int natoms, int n, int ilevel, REAL_T * c,
 /*     for monatomics print and return. */
 
    if (natoms <= 1) {
+      s = stran * tocal;
       e = etran * tokcal;
+      cv = ctran * tocal;
       /* need print statement here */
       free_vector(vtemp, 1, n);
       free_vector(evibn, 1, n);
@@ -677,11 +537,6 @@ static int thermo(int natoms, int n, int ilevel, REAL_T * c,
 /*         c-- joules/mol-kelvin */
 /*         s-- joules/mol-kelvin */
 
-   etot = etran + erot + evib;
-   ctot = ctran + crot + cvib;
-   stot = stran + srot + svib;
-
-
 /*     convert to the following and print */
 /*         e-- kcal/mol */
 /*         c-- cal/mol-kelvin */
@@ -828,6 +683,7 @@ static void remtranrot(INT_T natom, INT_T nreal, REAL_T * x, REAL_T * z,
        dt;
    REAL_T *d = NULL, *a = NULL, *dbl = NULL;
    INT_T i, j, k, ip, it, iat, nr6, nr3, ik;
+   REAL_T sum3, sum6;
    int mytaskid;
    mytaskid = get_mytaskid();
 
@@ -904,9 +760,9 @@ static void remtranrot(INT_T natom, INT_T nreal, REAL_T * x, REAL_T * z,
       dnorm[ik] = 0.0;
 
 #if 0
-      REAL_T sum3 = 0.0;
+      sum3 = 0.0;
       for( i=0; i<nr3; i++ ) sum3 += z[i + ik*nr6]*z[i + ik*nr6];
-      REAL_T sum6 = sum3;
+      sum6 = sum3;
       for( i=nr6; i<nr6; i++ ) sum6 += z[i + ik*nr6]*z[i + ik*nr6];
       printf( "mode norm: %5d  %12.5f  %12.5f\n", k+1, sum3, sum6 );
 #endif
@@ -991,9 +847,9 @@ void setgam(INT_T natom, REAL_T * gamma, REAL_T * m, REAL_T eta,
 
    REAL_T *expos = NULL;
    REAL_T factor, largest, sxpita, etpita, ont, tat, delx, dely, delz, 
-       r, r2, cons, xi, yi, zi;
+       r, r2, cons, xi, yi, zi, det, rcond;
    INT_T i, j, iat, jat, iat3, jat3, index1, index2, nr3, nr6, test, po,
-       ix,iy,iz, jx,jy,jz, ntdim, ij, ia, ja;
+       ix,iy,iz, jx,jy,jz, ntdim, job, ij, ia, ja;
    
    char atom[5], cexp[5];
    char str[5];
@@ -1182,14 +1038,13 @@ void setgam(INT_T natom, REAL_T * gamma, REAL_T * m, REAL_T eta,
    }
    
 #if 0
-   int job = 1;
-   REAL_T det, rcond;
+   job = 1;
    dgeco_ (a, nr6, ntdim, a[nr6*(nr3+1)], rcond, a[1+nr6*nr3]);
 /*   equivalent LAPACK are said to be: 
          DLANGE    LU factorization and condition
          DGETRF    estimation of a general matrix
          DGECON
-*/
+/*
    dgedi_ (a, nr6, ntdim, a[nr6*(nr3+1)], det, a[1+nr6*nr3], job);
 /*
     equivalent LAPACK are said to be: 
@@ -1356,170 +1211,6 @@ INT_T leigensort(REAL_T * wr, REAL_T * wi, INT_T * indexsort, INT_T natom)
                             lnorm()
 ************************************************************************/
 
-#ifdef CYGWIN
-void lnorm(INT_T * indexsort, REAL_T * wr, REAL_T * wi, REAL_T * zo,
-           REAL_T * gamma, INT_T * iclass, INT_T natom)
-{
-   int ik, nr6, i, j, k, l, po, indkl;
-   complextype lambda, sum, cons;
-   complextype piki, pili, elki, temp;
-
-   nr6 = 6 * natom;
-   ik = 0;
-   po = 0;
-   while (ik < nr6) {
-
-      i = indexsort[ik];
-      lambda.r = wr[i];
-      lambda.i = wi[i];
-      //lambda = wr[i] + wi[i] * I;
-
-      /* lambda is a complex pair */
-
-      if (wi[i] > 0.0000001) {
-
-         sum.r=0.0;
-         sum.i=0.0;
-         //sum = 0.0;
-         for (k = 0; k < (nr6 / 2); k++) {
-
-            piki.r = zo[i * (nr6) + k];
-            piki.i = zo[(i + 1) * (nr6) + k];
-            //piki = zo[i * (nr6) + k] + zo[(i + 1) * (nr6) + k] * I;
-            for (l = 0; l < (nr6 / 2); l++) {
-               pili.r = zo[i * (nr6) + l];
-               pili.i = zo[(i + 1) * (nr6) + l];
-               //pili = zo[i * (nr6) + l] + zo[(i + 1) * (nr6) + l] * I;
-               indkl = indexkl(k, l);
-               // NOTE: Does order of ops matter between piki and pili?
-               temp.r = piki.r * gamma[indkl];
-               temp.i = piki.i * gamma[indkl];
-               temp = complex_mult(temp,pili);
-               sum = complex_add(sum,temp);
-               //sum = sum + piki * (gamma[indkl]) * pili;
-            }
-            temp=complex_mult(piki,piki);
-            temp=complex_mult(lambda,temp);
-            temp.r+=2.00;
-            sum = (complex_add(sum,temp));
-            //sum = sum + 2.00 * (lambda * piki * piki);
-         }
-         if (sum.r==0.0 && sum.i==0.0) {
-           cons.r=1.0;
-           cons.i=0.0;
-         } else {
-           temp = complex_div(lambda,sum);
-           cons = complex_sqrt(temp);
-         }
-         /*if (sum == 0.0) {
-            cons = 1.0;
-         } else {
-            cons = csqrt(lambda / sum);
-         }*/
-
-         for (k = 0; k < (nr6 / 2); k++) {
-            piki.r = zo[i * (nr6) + k];
-            piki.i = zo[(i + 1) * (nr6) + k];
-            //piki = zo[i * (nr6) + k] + zo[(i + 1) * (nr6) + k] * I;
-            elki = complex_mult(piki,cons);
-            //elki = piki * cons;
-            zo[i * (nr6) + k] = elki.r;
-            //zo[i * (nr6) + k] = creal(elki);
-            // NOTE: Is this equivalent to -I * ?
-            zo[(i + 1) * (nr6) + k] = -elki.r;
-            //zo[(i + 1) * (nr6) + k] = creal(-I * elki);
-         }
-
-         iclass[ik] = 1;
-         iclass[ik + 1] = 1;
-         ik += 2;
-      }
-
-      /* lambda is positive real */
-
-      else if (wr[i] > 0.0) {
-
-         sum.r=0.0;
-         sum.i=0.0;
-         //sum = 0.0;
-
-         for (k = 0; k < (nr6 / 2); k++) {
-            for (l = 0; l < (nr6 / 2); l++) {
-
-               indkl = indexkl(k, l);
-               sum.r+=(zo[i * (nr6) + k] * gamma[indkl] * zo[i * (nr6) + l]);
-               //sum = sum + zo[i * (nr6) + k] * gamma[indkl] * zo[i * (nr6) + l];
-            }
-
-            sum.r+=(2.00 * (wr[i] * zo[i * (nr6) + k] * zo[i * (nr6) + k]));
-            //sum = sum + 2.00 * (wr[i] * zo[i * (nr6) + k] * zo[i * (nr6) + k]);
-
-         }
-
-         temp = complex_div(lambda,sum);
-         cons = complex_sqrt(temp);
-         //cons = csqrt(lambda / sum);
-
-         for (k = 0; k < (nr6 / 2); k++) {
-
-            // NOTE: Discarding the imaginary part?
-            zo[i * (nr6) + k] = cons.r * zo[i * (nr6) + k];
-            //temp.i = cons.i * zo[i * (nr6) + k];
-            //zo[i * (nr6) + k] = zo[i * (nr6) + k] * cons;
-         }
-         iclass[ik] = 2;
-         ik += 1;
-      }
-
-      /* lambda is negative real */
-
-      else if (wr[i] < 0.0) {
-
-         sum.r=0.0;
-         sum.i=0.0;
-         //sum = 0.0;
-         for (k = 0; k < (nr6 / 2); k++) {
-            for (l = 0; l < (nr6 / 2); l++) {
-               indkl = indexkl(k, l);
-               sum.r+=(zo[i * (nr6) + k] * gamma[indkl] * zo[i * (nr6) + l]); 
-               //sum = sum + zo[i * (nr6) + k] * gamma[indkl] * zo[i * (nr6) + l];
-            }
-            sum.r+=(2.00 * (wr[i] * zo[i * (nr6) + k] * zo[i * (nr6) + k]));
-            //sum += 2.00 * (wr[i] * zo[i * (nr6) + k] * zo[i * (nr6) + k]);
-         }
-
-         if (sum.r > 0.0) {
-           temp.r=-lambda.r;
-           temp.i=-lambda.i;
-           temp = complex_div(temp,sum);
-           cons = complex_sqrt(temp);
-           iclass[ik] = 3;
-         } else if (sum.r < 0.0) {
-           temp=complex_div(lambda,sum);
-           cons=complex_sqrt(temp);
-           iclass[ik] = 4;
-         }
-         /*if (creal(sum) > 0.0) {
-            cons = csqrt(-lambda / sum);
-            iclass[ik] = 3;
-         } else if (creal(sum) < 0.0) {
-            cons = csqrt(lambda / sum);
-            iclass[ik] = 4;
-         }*/
-
-         for (k = 0; k < (nr6 / 2); k++) {
-            zo[i * (nr6) + k] = zo[i * (nr6) + k] * cons.r;
-            //zo[i * (nr6) + k] = zo[i * (nr6) + k] * cons;
-         }
-         ik += 1;
-      } else {
-         iclass[ik] = 5;
-         ik += 1;
-      }
-   }
-}
-
-#else //CYGWIN
 void lnorm(INT_T * indexsort, REAL_T * wr, REAL_T * wi, REAL_T * zo,
            REAL_T * gamma, INT_T * iclass, INT_T natom)
 {
@@ -1613,7 +1304,6 @@ void lnorm(INT_T * indexsort, REAL_T * wr, REAL_T * wi, REAL_T * zo,
       }
    }
 }
-#endif //CYGWIN
 /***********************************************************************
                            diagonchol()
 ************************************************************************/
@@ -1658,17 +1348,15 @@ void diagonchol(REAL_T * d, REAL_T * v, REAL_T * h, INT_T nr3, INT_T nev)
 
    dpotrf_(&uplo, &nr3, h, &nr3, &info);
 
+#if 0
    t2 = seconds();
-
    *tnmodeFact = t2 - t1;
-
    t1 = seconds();
+#endif
 
    if (info != 0) {
       printf
           ("There was a problem during the factorization of the Hessian. You probably need a more minimized structure \n");
-   }
-   if (info != 0) {
       printf("The flag number is %d. Refer to the dpotrf documentation \n",
              info);
    }
@@ -1737,12 +1425,10 @@ void diagonchol(REAL_T * d, REAL_T * v, REAL_T * h, INT_T nr3, INT_T nev)
 
    }
 
+#if 0
    t2 = seconds();
-
    *tnmodeInvdiag = t2 - t1;
-
-
-
+#endif
 
    rvec = 1;
    ei[0] = 'A';
@@ -1764,9 +1450,9 @@ void diagonchol(REAL_T * d, REAL_T * v, REAL_T * h, INT_T nr3, INT_T nev)
            info);
    }
 
+#if 0
    *tnmodeEigenvec = t2 - t1;
-
-
+#endif
 
    if(mytaskid == 0){
      printf("Convergence achieved after  %d iterations \n", iter);
@@ -1870,8 +1556,10 @@ void diagondir(INT_T natom, REAL_T * h)
 
    }
 
+#if 0
    t2 = seconds();
    *tnmodeInvdiag = t2 - t1;
+#endif
 
    if(mytaskid == 0){
      for (i = 0; i < nev; i++) {
@@ -1924,7 +1612,7 @@ int nmode(REAL_T * x, int n,
    /* my additions */
    int po, nr3, nr6, ldu;
    int nreal;
-   int sizegamma;
+   int index1, sizegamma;
    REAL_T eta;
    REAL_T *a = NULL, *gamma = NULL, *wr = NULL, *wi = NULL,
        *zo = NULL, *du = NULL, *xcom = NULL, *dnorm = NULL;
@@ -1941,7 +1629,7 @@ int nmode(REAL_T * x, int n,
 
    /* end of my additions */
 
-   int mytaskid, gridim;
+   int mytaskid, numtasks, gridim;
    int context_PxQ = -1, context_1x1 = -1, context_Nx1 = -1;
    int descH_PxQ[DLEN_], descG_PxQ[DLEN_], descG_1x1[DLEN_];
    FILE *vfp;
@@ -1983,7 +1671,7 @@ int nmode(REAL_T * x, int n,
    mytaskid = get_mytaskid();
 
 #ifdef SCALAPACK
-   int numtasks = get_numtasks();
+   numtasks = get_numtasks();
 #endif
 
    /* Allocate some dynamic vectors and matrices. */
@@ -2198,9 +1886,11 @@ int nmode(REAL_T * x, int n,
 
    /* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
 
+#if 0
    t2 = seconds();
    *tnmodeHessian += t2 - t1;
    t1 = t2;
+#endif
 
    /*
     * Some ScaLAPACK functions appear to quit unexpectedly
@@ -2260,9 +1950,11 @@ int nmode(REAL_T * x, int n,
 
          if (ntrun == 3) {
 
+#if 0
             t2 = seconds();
             *tnmodeOther += t2 - t1;
             t1 = t2;
+#endif
             nr3 = 3 * natom;
             nr6 = 6 * natom;
 
@@ -2305,9 +1997,11 @@ int nmode(REAL_T * x, int n,
                }
              */
 
+#if 0
             t2 = seconds();
             *tnmodeAmat = t2 - t1;
             t1 = t2;
+#endif
             /*
              * Allocate work array, call dgeev_, and deallocate work array.
              */
@@ -2325,28 +2019,36 @@ int nmode(REAL_T * x, int n,
             lwork = 4 * nr6;
             work = vector(0, lwork);
 
+#if 0
             t2 = seconds();
             *tnmodeOther += t2 - t1;
             t1 = t2;
+#endif
             dgeev_(&jobz, &uplo, &nr6, a, &nr6, wr, wi, du, &ldu, zo, &nr6,
                    work, &lwork, &info);
+#if 0
             t2 = seconds();
             *tnmodeDiagA += t2 - t1;
             t1 = t2;
+#endif
 
             free_vector(work, 0, lwork);
             free_vector(a, 0, nr6 * nr6);
 
             indexsort = ivector(0, nr6);
+#if 0
             t2 = seconds();
             *tnmodeOther += t2 - t1;
             t1 = t2;
+#endif
 
             nreal = leigensort(wr, wi, indexsort, natom);
 
+#if 0
             t2 = seconds();
             *tnmodeSort += t2 - t1;
             t1 = t2;
+#endif
 
             /* Compute the normalized Langevin modes. */
             iclass = ivector(0, nr6);
@@ -2371,10 +2073,12 @@ int nmode(REAL_T * x, int n,
                po += nr3;
             }
 
+#if 0
             t2 = seconds();
             *tnmodeNorm = t2 - t1;
             *tnmodeLan = t2 - t0;
             t1 = t2;
+#endif
 
             if(mytaskid == 0){
               printf
@@ -2498,12 +2202,15 @@ int nmode(REAL_T * x, int n,
             k = 0;
             v = vector(1, ncopy);
 
+#if 0
             t2 = seconds();
             *tnmodeOther += t2 - t1;
             t1 = t2;
+#endif
 
             dsyev_(&jobz, &uplo, &n, h, &n, &v[1], work, &lwork, &info);
 
+#if 0
             t2 = seconds();
             *tnmodeDSYEV += t2 - t1;
             if(mytaskid == 0){
@@ -2511,6 +2218,7 @@ int nmode(REAL_T * x, int n,
               fflush(nabout);
             }
             t1 = t2;
+#endif
 
             free_vector(work, 0, lwork);
 
@@ -2703,14 +2411,18 @@ int nmode(REAL_T * x, int n,
       k = 0;
       v = vector(1, ncopy);
 
+#if 0
       t2 = seconds();
       *tnmodeOther += t2 - t1;
       t1 = t2;
+#endif
       dsyevd_(&jobz, &uplo, &n, h, &n, &v[1], work, &lwork, iwork, &liwork,
               &info);
+#if 0
       t2 = seconds();
       *tnmodeDSYEVD += t2 - t1;
       t1 = t2;
+#endif
 
       /* un-mass-weight the eigenvectors:  */
 
@@ -2873,13 +2585,16 @@ int nmode(REAL_T * x, int n,
          v = vector(1, ncopy);
 
          uplo = 'U';
+#if 0
          t2 = seconds();
          *tnmodeOther += t2 - t1;
          t1 = t2;
+#endif
          pdsyev_(&jobz, &uplo, n,
                  h, &one, &one, descH_PxQ, &v[1],
                  h, &one, &one, descH_PxQ, work, &lwork, &info);
 
+#if 0
          t2 = seconds();
          *tnmodeOther += t2 - t1;
 #ifdef PRINT_NR_TIMES
@@ -2889,6 +2604,7 @@ int nmode(REAL_T * x, int n,
          }
 #endif
          t1 = t2;
+#endif
 
          free_vector(work, 0, lwork);
 
@@ -3056,8 +2772,10 @@ int nmode(REAL_T * x, int n,
 
    free(name);
    ret_val = 0;
+#if 0
    t2 = seconds();
    *tnmodeOther += t2 - t1;
    *tnmode = t2 - tnmode1;
+#endif
    return ret_val;
 }

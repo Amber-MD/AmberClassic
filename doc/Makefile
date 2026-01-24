@@ -20,7 +20,8 @@ SHELL = /bin/sh
 .pic.pdf: $<
 	groff -p $< | ps2pdf - $@
 
-AmberClassic.pdf: AmberClassic.lyx amber.bib
+AmberClassic.pdf: AmberClassic.lyx amberclassic.bib
+	-echo -n `date` > today
 	-$(LYX) --export pdf2 AmberClassic.lyx
 
 clean::

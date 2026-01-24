@@ -1623,8 +1623,10 @@ int                     iPairs;
 			       strcmp( sAtomName( bsPAtom2->aAtom ), "EPW" ) == 0 ) {
 			    /* Lone pair, ignore it  */
 			  } else {
-                            VPWARN(( "Close contact of %lf angstroms between %s and %s\n",
-                                sqrt( dDist ),
+                            VPWARN(( "Close contact of %.3lf angstroms between "
+                                "nonbonded atoms %s and %s\n-------  %s and %s\n",
+                                sqrt( dDist ), sAtomName( bsPAtom1->aAtom ),
+                                sAtomName( bsPAtom2->aAtom ),
                                 sContainerFullDescriptor( (CONTAINER)bsPAtom1->aAtom, sTemp1 ),
                                 sContainerFullDescriptor( (CONTAINER)bsPAtom2->aAtom, sTemp2 ) ));
 			  }

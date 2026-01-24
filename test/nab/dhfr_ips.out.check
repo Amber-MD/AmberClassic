@@ -1,0 +1,33 @@
+Reading parm file (dhfr.top)
+title:
+                                                                                
+     Parameter topology includes 10-12 terms:
+     These are assumed to be zero here (e.g. from TIP3P water)
+	mm_options:  nsnb=100
+	mm_options:  ntpr=1
+	mm_options:  ntpr_md=1
+	mm_options:  cut=12.0
+	mm_options:  ips=2
+	mm_options:  diel=C
+	mm_options:  rattle=0
+ IPS Radius:  12.00
+ IPS parameters for electrostatic energy:
+  aipse,bipse0,bipse1,bipse2,bipse3:
+  2.737821 -2.737821  1.109466  0.070800  0.007917
+ eipssnb, eipssel=           0.0000000           0.0000000
+  IPS region volume=        7238.2294739
+
+  nblist_box, number of atoms= 22930
+  nblist_box, number of pairs= 8190272
+     bond:    452.168967612
+    angle:   1277.033431840
+ dihedral:    968.354208295
+    enb14:    545.944036679
+    eel14:   6666.392004434
+      enb:   8309.557495185
+      eel:  -89881.028092054
+      egb:      0.000000000
+    econs:      0.000000000
+    esurf:      0.000000000
+    Total:  -71661.577948009
+     frms:     14.365951944

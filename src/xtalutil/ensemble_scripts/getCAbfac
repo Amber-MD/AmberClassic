@@ -1,0 +1,26 @@
+#!/usr/bin/perl -n
+
+#  line-by-line modification of PDB files; acts as a filter
+#    (see add_chainId for more complex manipulations)
+
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+
+if($atname eq " CA ") {printf "%3d %8.2f\n", $resno, $bfact;}
+
+}

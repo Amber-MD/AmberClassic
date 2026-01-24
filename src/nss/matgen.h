@@ -1,0 +1,13 @@
+int	MAT_translate();
+int	MAT_rotate();
+int	MAT_orient();
+int	MAT_cyclic();
+int	MAT_helix();
+int	MAT_dihedral();
+int	MAT_tetra();
+int	MAT_cube();
+int	MAT_octa();
+int	MAT_ico();
+REF_MATRIX_T	MAT_concat();
+int	NAB_matcpy();
+POINT_T	*NAB_ptadd();

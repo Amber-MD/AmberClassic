@@ -1,0 +1,22 @@
+molecule m;
+float 	x[75000], v[75000], f[75000];
+float 	dgrad, fret;
+int 	i,ier; 
+
+m = getpdb("dhfr.pdb");
+readparm(m, "dhfr.top");
+mm_options( "nsnb=100, ntpr=1, ntpr_md=1, cut=12.0, ips=2, diel=C, rattle=0");
+mme_init( m, NULL, "::Z", x, NULL);
+getxv( "dhfr.x", m.natoms, fret, x, v );
+
+fret = mme( x, f, -1 );
+#if 0
+if(mytaskid==0)
+	for( i=1; i<=m.natoms; i++){
+		printf( "%5d%12.5f%12.5f%12.5f\n", i, -f[i*3-2], -f[i*3-1], -f[i*3] );
+	}
+#endif
+
+// ier = md( 3*m.natoms, 10, x, f, v, mme );
+
+mme_timer();

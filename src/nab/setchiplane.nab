@@ -1,0 +1,54 @@
+int	setchiplane(bounds b, molecule m, string aex)
+{
+	atom 	ai, aj, ak, al;
+	int	pass1, pass2, pass3, pass4, numset;
+
+	pass1 = 0; pass2 = 0; pass3 = 0; pass4 = 0; numset = 0;
+
+	for (ai in m) {
+	  if ( ai =~ aex) {
+	    for (aj in m) {
+	      if ((!pass1) && (aj !~ ai.fullname))
+	        continue;
+	      else {
+		pass1 = 1;
+		if (	(aj =~ aex) && 
+			(aj.fullname !~ ai.fullname) ) {
+	 	  for (ak in m) {
+	      	    if ((!pass2) && (ak !~ aj.fullname))
+         	      continue;
+		    else {
+		      pass2 = 1;
+		      if ( 	(ak =~ aex) && 
+				(ak.fullname !~ ai.fullname) && 
+				(ak.fullname !~ aj.fullname) ) {
+		        for (al in m) {
+	      	      	  if ((!pass3) && (al !~ ak.fullname))
+         	    	    continue;
+			  else {
+		    	    pass3 = 1;
+			    if ( 	(al =~ aex) &&
+			    		(al.fullname !~ ai.fullname) &&
+					(al.fullname !~ aj.fullname) &&
+					(al.fullname !~ ak.fullname) ) {
+			      setchivol(b, m, 	ai.fullname,
+			           		aj.fullname,
+					  	ak.fullname,
+					  	al.fullname, 0.0 );	
+			      numset = numset + 1;	
+			    }
+		          }
+	                }
+			pass3 = 0;
+	              }
+	            }
+	          }
+		  pass2 = 0;
+		}
+	      }
+	    }
+	    pass1 = 0;
+          }
+        }
+	return( numset );
+};

@@ -1,0 +1,45 @@
+Reading parm file (prmtop.gb2)
+title:
+ test case for alexey gbao
+	mm_options:  ntpr=1
+	mm_options:  gb=8
+	mm_options:  rgbmax=15.0
+	mm_options:  cut=99.0
+	mm_options:  diel=C
+	mm_options:  e_debug=0
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0  -2236.10   2096.79   -419.52  -1893.99      0.00  -2019.38  2.21e+01
+ff:     1  -2246.06   2086.94   -419.65  -1894.04      0.00  -2019.32  2.20e+01
+ff:     2  -2332.20   2001.83   -420.75  -1894.53      0.00  -2018.75  2.04e+01
+ff:     3  -2845.71   1496.98   -429.74  -1899.28      0.00  -2013.69  9.32e+00
+ff:     4  -2876.51   1468.33   -431.80  -1900.72      0.00  -2012.32  1.02e+01
+ff:     5  -3067.92   1287.76   -440.79  -1901.38      0.00  -2013.52  6.83e+00
+ff:     6  -3105.96   1256.32   -445.86  -1901.83      0.00  -2014.59  9.15e+00
+ff:     7  -3303.87   1075.28   -458.48  -1909.87      0.00  -2010.80  6.57e+00
+ff:     8  -3304.88   1075.34   -459.17  -1910.49      0.00  -2010.56  7.04e+00
+ff:     9  -3404.16    986.85   -467.87  -1909.91      0.00  -2013.23  6.55e+00
+ff:    10  -3406.67    983.10   -466.96  -1909.99      0.00  -2012.81  5.58e+00
+conjgrad returns -3
+
+|Timing summary:
+|              Initialize       0.001
+|             Molec. Dyn.       0.000
+|             Normal Mode       0.000
+|             Conj. Grad.       0.000
+|                  Newton       0.000
+|-------------------------
+|                   Total       0.001
+
+|1st derivative timing summary:
+|             constraints       0.000
+|                   bonds       0.002
+|                  angles       0.007
+|                torsions       0.015
+|                pairlist       1.176
+|                 nonbond       0.006
+|               gen. Born       6.480
+|       Poisson Boltzmann       0.000
+|                 3D-RISM       0.000
+|                   Other       0.001
+|-------------------------
+|                   Total       7.686

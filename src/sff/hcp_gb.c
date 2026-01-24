@@ -1358,7 +1358,7 @@ void egb_calc_energy_approx(int j, REAL_T * q_hcp, REAL_T * reff_hcp, int hcp, i
 {
 
         int  j34, k;
-        REAL_T xij, yij, zij, r2, rinv, r2inv, qiqj, rj, rb2, efac, fgbi, fgbk, expmkf, dielfac, eel, temp4, temp5, temp6;
+        REAL_T xij, yij, zij, r2, rinv, r2inv, qiqj, rj, rb2, efac, fgbi, fgbk, expmkf, dielfac, eel, temp1, temp4, temp5, temp6;
         REAL_T de, dedx, dedy, dedz;
 
 
@@ -1379,8 +1379,9 @@ void egb_calc_energy_approx(int j, REAL_T * q_hcp, REAL_T * reff_hcp, int hcp, i
                         rj = reff_hcp[j * hcp + k];
                         rb2 = ri * rj;
                         efac = exp(-r2 / (4.0 * rb2));
-                        fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-                        fgbk = -(*kappa) * KSCALE / fgbi;
+                        temp1 = sqrt(r2 + rb2 * efac);
+                        fgbi = 1.0 / temp1;
+                        fgbk = -(*kappa) * KSCALE * temp1;
 
                         expmkf = exp(fgbk) / (*diel_ext);
                         dielfac = 1.0 - expmkf;
@@ -1452,7 +1453,7 @@ void egb_calc_energy_atom(int j, REAL_T * x, REAL_T * reff_hcp, int *iexw, int h
 
         int  j34, ic;
         REAL_T xij, yij, zij, r2, rinv, r2inv, r6inv, f6, f12, qiqj, rj, rb2, efac, fgbi, fgbk, expmkf, dielfac, eel;
-        REAL_T temp4, temp5, temp6, de, dedx, dedy, dedz;
+        REAL_T temp1, temp4, temp5, temp6, de, dedx, dedy, dedz;
 
 
         j34 = dim * j;
@@ -1475,8 +1476,9 @@ void egb_calc_energy_atom(int j, REAL_T * x, REAL_T * reff_hcp, int *iexw, int h
         rj = reff_hcp[j];
         rb2 = ri * rj;
         efac = exp(-r2 / (4.0 * rb2));
-        fgbi = 1.0 / sqrt(r2 + rb2 * efac);
-        fgbk = -(*kappa) * KSCALE / fgbi;
+        temp1 = sqrt(r2 + rb2 * efac);
+        fgbi = 1.0 / temp1;
+        fgbk = -(*kappa) * KSCALE * temp1;
 
         expmkf = exp(fgbk) / (*diel_ext);
         dielfac = 1.0 - expmkf;
@@ -1800,14 +1802,14 @@ REAL_T egb_hcp_nbond(
                 REAL_T * enb, REAL_T * eelt, REAL_T * esurf, REAL_T * enp)
 {
 
-        REAL_T *sumdeijda = NULL;
+        REAL_T *sumdeijda;
         int *iexw = NULL;
 
         int i, i34, j;
         int iaci;
         REAL_T epol, dielfac, qi, expmkf;
         REAL_T elec, evdw, sumda, daix, daiy, daiz, daiw;
-        REAL_T xi, yi, zi, wi; 
+        REAL_T xi, yi, zi, wi = 0.0; 
         REAL_T qi2h, qid2h; 
         REAL_T ri1i;
 
@@ -1823,12 +1825,8 @@ REAL_T egb_hcp_nbond(
         dist2_hcp1 = hcp_h1 * hcp_h1;
         dist2_hcp2 = hcp_h2 * hcp_h2;
         dist2_hcp3 = hcp_h3 * hcp_h3;
-
-
-        if (sumdeijda == NULL) {
-                sumdeijda = vector(0, prm->Natom);
-        }
-
+        
+        sumdeijda = vector(0, prm->Natom);
 
         /* Compute the GB, Coulomb and Lennard-Jones energies and derivatives. */
 

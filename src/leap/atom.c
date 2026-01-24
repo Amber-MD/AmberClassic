@@ -51,7 +51,7 @@
  *
  */
  
-
+//#include        "atom.h" // New
 #include        "basics.h"
 #include        "defaults.h"
 #include        "classes.h"
@@ -155,6 +155,11 @@ int     i;
     a->iCoordination = 0;
     for ( i=0; i<MAXBONDS; i++ ) 
         a->aaBonds[i] = NULL;
+    a->iC4Pairwise = 0; //New
+    for (i=0; i<MAXC4Pairwise; i++) { //New
+        a->aaC4Pairwise[i] = NULL;
+        a->daC4Pairwise[i] = 0.0;
+    }
     strcpy( a->sType, "" );
     strcpy( a->sPertType, "" );
     strcpy( a->sPertName, "" );
@@ -179,8 +184,6 @@ int     i;
 
     return(a);
 }
-
-
 
 
 
@@ -401,17 +404,17 @@ int     problem = 0;
 STRING  sTemp;
 
     if ( bAtomCoordinationSaturated( aAtom1 ) ) {
-        VP0(( "Bond: maximum coordination exceeded on %s\n",
+        VPNOTE(( "Bond: maximum coordination exceeded on %s\n",
                 sContainerFullDescriptor( (CONTAINER)aAtom1, sTemp )) );
         problem = 1;
     }
     if ( bAtomCoordinationSaturated( aAtom2 ) ) {
-        VP0(( "Bond: Maximum coordination exceeded on %s\n",
+        VPNOTE(( "Bond: Maximum coordination exceeded on %s\n",
                 sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp )) );
         problem = 1;
     }
     if ( problem ) {
-        VP0(( "      -- setting atoms pert=true overrides default limits\n" ));
+        VPNOTE(( "      -- setting atoms pert=true overrides default limits\n" ));
         return( TRUE );
     }
     return( FALSE );
@@ -575,7 +578,32 @@ AtomBondToOrder( ATOM aAtom1, ATOM aAtom2, int iOrder )
     CDU(aAtom2);
 }
 
+/*
+ *      Atom
+ *
+ *      Create a pairwise C4 interaction between two atoms
+ *      with the specified daC4Pairwise value as C4 value
+ *
+ *
+ */
+void
+AtomAddC4Pairwise( ATOM aAtom1, ATOM aAtom2, double daC4Pairwise )
+{
 
+    VERIFYOBJEKT( aAtom1, ATOMid );
+    VERIFYOBJEKT( aAtom2, ATOMid );
+
+    aAtom1->aaC4Pairwise[iAtomC4Pairwise(aAtom1)] = aAtom2;
+    AtomDefineC4Pairwise( aAtom1, iAtomC4Pairwise(aAtom1), daC4Pairwise );
+    //aAtom1->daC4Pairwise[0] = daC4Pairwise;
+    aAtom1->iC4Pairwise++;
+    aAtom2->aaC4Pairwise[iAtomC4Pairwise(aAtom2)] = aAtom1;
+    AtomDefineC4Pairwise( aAtom2, iAtomC4Pairwise(aAtom2), daC4Pairwise );
+    //aAtom2->daC4Pairwise[0] = daC4Pairwise;
+    aAtom2->iC4Pairwise++;
+    CDU(aAtom1);
+    CDU(aAtom2);
+}
 
 
 /*

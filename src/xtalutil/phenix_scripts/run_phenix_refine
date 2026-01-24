@@ -1,7 +1,5 @@
 #!/bin/bash
 
-prefix=$1
-serial=$2
 pdb=$1
 mtz=$2
 prefix=$3
@@ -19,19 +17,19 @@ refinement {
     export_final_f_model = False
   }
   refine {
-    strategy = individual_sites individual_sites_real_space rigid_body \
+    strategy = *individual_sites individual_sites_real_space rigid_body \
                *individual_adp group_adp tls occupancies group_anomalous
     sites {
     }
-    adp { 
-      individual {
-         anisotropic = none
-      }
-    }
+#   adp { 
+#     individual {
+#        anisotropic = not H
+#     }
+#   }
   }
   main {
     nqh_flips = True
-    number_of_macro_cycles = 5
+    number_of_macro_cycles = 10
     target = auto *ml mlhl ml_sad ls mli
     use_experimental_phases = False
     scattering_table = wk1995 *it1992 n_gaussian electron neutron
