@@ -76,18 +76,18 @@ XRAY_OBJS = \
 
 .PHONY: dummy
 
-msander: $(BINDIR)/msander
+msander$(SFX): $(BINDIR)/msander$(SFX)
 
-msander.LES: $(BINDIR)/msander.LES
+msander.LES$(SFX): $(BINDIR)/msander.LES$(SFX)
 
-msander.cuda: $(BINDIR)/msander.cuda
+msander.cuda$(SFX): $(BINDIR)/msander.cuda$(SFX)
 
-msander.LES.cuda: $(BINDIR)/msander.LES.cuda
+msander.LES.cuda$(SFX): $(BINDIR)/msander.LES.cuda$(SFX)
 
 dummy:
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander: libs $(MMOBJ) \
+$(BINDIR)/msander$(SFX): libs $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) $(PLUMED_DEPENDENCIES) \
          dummy
 	@echo "[MSANDER]  FC $@"
@@ -96,7 +96,7 @@ $(BINDIR)/msander: libs $(MMOBJ) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.cuda: libs lib_cuda $(MMOBJ) \
+$(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
@@ -107,7 +107,7 @@ $(BINDIR)/msander.cuda: libs lib_cuda $(MMOBJ) \
          -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.LES: libs $(LESOBJ) \
+$(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
@@ -116,7 +116,7 @@ $(BINDIR)/msander.LES: libs $(LESOBJ) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.LES.cuda: libs lib_cuda $(LESOBJ) \
+$(BINDIR)/msander.LES.cuda$(SFX): libs lib_cuda $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
