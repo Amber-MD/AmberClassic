@@ -1,0 +1,8 @@
+checkexpr.c
+lex.dg_options.c
+lex.mm_options.c
+lex.yy.c
+nab
+nab2c
+y.tab.c
+y.tab.h

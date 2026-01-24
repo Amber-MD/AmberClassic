@@ -1,0 +1,77 @@
+#!/bin/bash
+
+aa="undecan_2_one"
+output=$aa.alpb.out
+cat > mdin <<EOF
+ test, compute solvation energy with gbnsr6 
+ &cntrl 
+   inp=0
+ /
+EOF
+
+../../bin/gbnsr6 -O -i mdin -p $aa.prmtop -c $aa.inpcrd -o $output \
+   < /dev/null || { echo "  $0:  Program error"; exit 1; }
+../dacdif -a 1.e4 $aa.alpb.out.save $output
+/bin/rm -f restrt mdinfo mdcrd
+
+
+aa="undecan_2_one"
+output=$aa.radii.out
+cat > mdin <<EOF
+ test, compute solvation energy with gbnsr6 
+ &cntrl 
+   inp=1
+ /
+ &gb
+   epsin=1.0, epsout=78.5, istrng=0, dprob=1.4, space=0.4, 
+   arcres=0.2, B=0, alpb=1, rbornstat=1, cavity_surften=0.005
+ /
+EOF
+../../bin/gbnsr6 -O -i mdin -p $aa.prmtop -c $aa.inpcrd -o $output \
+      < /dev/null || { echo "  $0:  Program error"; exit 1; }
+
+../dacdif -a 1.e4 $aa.radii.out.save $output
+/bin/rm -f restrt mdinfo mdcrd
+
+
+
+aa="undecan_2_one"
+output=$aa.chagb.out
+cat > mdin <<EOF
+ test, compute solvation energy with gbnsr6 
+ &cntrl 
+   inp=1
+ /
+ &gb
+   epsin=1.0, epsout=78.5, istrng=0, dprob=1.4, space=0.4, 
+   arcres=0.2, B=0, alpb=1, rbornstat=1, cavity_surften=0.005,
+   chagb=1
+ /
+EOF
+../../bin/gbnsr6 -O -i mdin -p $aa.prmtop -c $aa.inpcrd -o $output \
+   < /dev/null || { echo "  $0:  Program error"; exit 1; }
+
+../dacdif -a 1.e4 $aa.chagb.out.save $output
+/bin/rm -f restrt mdinfo mdcrd
+
+
+
+
+aa="alpb"
+output=$aa.out
+cat > mdin <<EOF
+ test, compute solvation energy with gbnsr6 
+ &cntrl 
+   inp=1
+ /
+ &gb
+   epsin=10.0, epsout=78.5, istrng=0, dprob=1.4, space=0.4, 
+   arcres=0.2, B=0, alpb=1, rbornstat=1, cavity_surften=0.005
+ /
+EOF
+../../bin/gbnsr6 -O -i mdin -p $aa.prmtop -c $aa.inpcrd -o $output \
+      < /dev/null || { echo "  $0:  Program error"; exit 1; }
+
+../dacdif -a 1.e4 $aa.out.save $output
+/bin/rm -f restrt mdinfo mdcrd mdin
+

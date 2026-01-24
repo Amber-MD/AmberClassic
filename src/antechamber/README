@@ -1,0 +1,93 @@
+Introduction
+============
+
+This directory tree contains antechamber which is a part of various
+softwares of larger scope including notably AmberTools and Amber.
+All contents are protected by Copyright and Licensing provisions.
+
+Developers should read the tail of this file.
+
+------------------------------------------------------------------------------
+Citation
+========
+
+The Antechamber suite was mainly written by Junmei Wang, and is designed to be
+used in conjunction with the general AMBER force fields (GAFFs).  Please cite:
+
+@Article{Wang04,
+  author = {Wang, J. and Wolf, R.M. and Caldwell, J.W. and Kollamn, P.A.
+            and Case, D.A.},
+  title = {{Development and testing of a general Amber force field}},
+  journal = {J. Comput. Chem.},
+  volume = {25},
+  pages = {1157-1174},
+  year = {2004}
+}
+
+------------------------------------------------------------------------------
+Installation and Other Documentation
+====================================
+
+antechamber is usually installed as part of Amber.
+
+All of the documentation is in the "doc" subdirectory, in the Amber21.pdf
+file.  See Chapter 2 in doc/Amber21.pdf for complete installation
+instructions.  For the impatient, installation starts by typing
+"./configure_cmake.py -h" in the build subdirectory
+(or for the still supported but not advocated legacy build:
+"./configure --help" in the top level directory).
+
+For more information, including tutorials, bug fixes, etc., please consult
+the Amber Web page:
+
+               http://ambermd.org
+
+------------------------------------------------------------------------------
+License
+=======
+
+The files in the "AmberTools" subdirectory are covered by a separate, open
+source, license; see ./AmberTools/LICENSE for more information.
+This applies to antechamber.
+
+------------------------------------------------------------------------------
+Developers
+==========
+
+Developers should employ Scott's golden rule of style, namely, follow the
+existing style.
+
+Developers should use the error reporting facilities and wrappers in eprint.h.
+
+Developers should increment the minor number of
+ANTECHAMBER_VERSION in define.h.
+
+------------------------------------------------------------------------------
+Release Notes and Version Log
+=============================
+
+For the version see ANTECHAMBER_VERSION in ./define.h.
+
+18.0 AmberTools 18.0 (released)
+18.1 RESP charge derivation with GAMESS, Robin Betz.
+18.2 Misc. cleanup and error handling improvements, Scott Brozell, Dave Case.
+19.0 AmberTools 19.0 (released)
+19.1 Misc. cleanup, Valerii Zapodovnikov.
+19.2 Error handling improvements and reference to metalpdb2mol2.py, Scott Brozell.
+19.3 Incorporate parmchk2_new and residuegen_new, Junmei Wang, Dave Case.
+20.0 AmberTools 20.0 (released)
+20.1 Orca support, Stephan Schott-Verdugo.
+20.2 More error handling and workaround for 202008/0140.html, Scott Brozell.
+20.3 Fix mol2 blank line handling for 202102/0040.html, Junmei Wang, Dave Case.
+20.4 More verbosity for 202012/0032.html, Scott Brozell.
+20.5 Better mol2 file checking for 202103/0313.html, Scott Brozell.
+21.0 AmberTools 21.0 (released)
+21.1 Changed messaging and CCD CIF type LINKING error handling, Scott Brozell.
+21.2 Re added handling of spaces in AMBERCLASSICHOME for dev-archive/202107/0017.html.
+22.0 Amber 22.0 (released)
+     Major updates from Junmei Wang.
+23.0 AmberTools 23.0 (released)
+     Changed ccif to use geostd cif files, Dave Case.
+24.0 Amber 24.0 (released)
+     Added ABCG2 charges and the pdbqt format, Junmei Wang.
+

@@ -1,0 +1,22 @@
+Reading parm file (gbrna.prmtop)
+title:
+PDB 5DNB, Dickerson decamer                                                     
+old prmtop format => using old algorithm for GB parms
+	mm_options:  ntpr=1
+	mm_options:  gb=1
+	mm_options:  kappa=0.10395
+	mm_options:  rgbmax=99.
+	mm_options:  cut=99.0
+	mm_options:  diel=C
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+ff:     0  -4107.50    906.22   -192.79   -137.96      0.00  -4682.97  1.93e+01
+Starting TNCG minimisation
+ MIN: Iter =    0  NFunc =     1  E =   -4107.49809  RMSG = 1.9289288e+01
+ MIN: Iter =    1  NFunc =     7  E =   -4474.10305  RMSG = 4.3879592e+00
+ MIN: Iter =    2  NFunc =    16  E =   -4529.67227  RMSG = 1.9523426e+00
+ MIN: Iter =    3  NFunc =    49  E =   -4535.04724  RMSG = 2.3723465e+00
+ MIN: Iter =    4  NFunc =    77  E =   -4554.68150  RMSG = 1.9188371e+00
+ MIN: Iter =    5  NFunc =    91  E =   -4568.07173  RMSG = 1.4752420e+00
+----------------------------------------------------------------
+ END:          :-)  E =   -4568.07173  RMSG =   1.4752420
+

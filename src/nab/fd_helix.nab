@@ -1,0 +1,755 @@
+// put_tmp is a helper function to simplify the code somewhat -
+// all it does is output the proper elements to a temporary
+// pdb file.
+
+int put_tmp( float x, float y, float z, int count, int rescount,
+string atomname, string resname, file outfile, int nres ) {
+
+// check if 5' end
+
+if( rescount == 1 || rescount == ( nres / 2 ) + 1 ) 
+	if( atomname =~ "P" )
+			return 1;
+
+if( atomname == "O1'" )
+	atomname = "O4'";
+
+// I have no idea why this is necessary.. would be just as easy
+// to change O1' to O4' in all data files, but they must have had
+// some reason for naming it O1' in the data.
+
+fprintf(outfile, "ATOM  %5d %-4s %3s%6d    %8.3lf%8.3lf%8.3lf\n",
+	count, atomname, resname, rescount, x, y, z );
+
+return 1;
+
+};
+
+// fd_helix is a function designed to build helices of varying types
+// from fiber diffraction data.  The current available types are:
+
+// arna		Right Handed A-RNA (Arnott)
+// aprna		Right Handed A-PRIME RNA (Arnott)
+// lbdna		Right Handed B-DNA (Langridge)
+// abdna		Right Handed B-DNA (Arnott)
+// sbdna		Left  Handed B-DNA (Sasisekharan)
+// adna		Right Handed A-DNA (Arnott)
+
+// fd_helix will create a temporary file in your working directory
+// called nab_tmp.pdb.  This file contains the helix _before_ the
+// addition of hydrogens.  This is ordinarily deleted, but could be
+// examined if things go wrong.
+
+
+molecule fd_helix( string helix_type, string seq, string acid_type )
+{
+
+// ------------------------------------------------------------------ //
+
+//	Data Segment
+
+molecule m;
+
+// These arrays are used to store the r, phi, zz values of the
+// various atom types within each residue:
+
+float A_r[ hashed ];
+float A_phi[ hashed ];
+float A_zz[ hashed ];
+
+float G_r[ hashed ];
+float G_phi[ hashed ];
+float G_zz[ hashed ];
+
+float T_r[ hashed ];
+float T_phi[ hashed ];
+float T_zz[ hashed ];
+
+float U_r[ hashed ];
+float U_phi[ hashed ];
+float U_zz[ hashed ];
+
+float C_r[ hashed ];
+float C_phi[ hashed ];
+float C_zz[ hashed ];
+
+// These are simply temp variables used to aid in filling the arrays.
+
+float temp_r, temp_phi, temp_zz;
+
+// These are used to calculate and output coordinates to the temporary pdb file.
+
+float x, y, z, yyr, xrad;
+
+// height values are angstroms, rotation; values are degrees.
+
+float current_height, current_rotation;
+float height_increment, rotation_increment;
+
+float hxht[ hashed ];
+float hxrep[ hashed ];
+
+string tempname, cseq, fullseq, buffer, restype;
+string temp, amberhome;
+string resout;
+
+int nres, nresh, i, hxmul, count, chain, begin, end;
+
+file outfile;
+
+// -----------------------------------------------------------
+
+// 	Code Segment
+hxht[ "arna" ] = 2.81; hxht[ "aprna" ] = 3.00; hxht[ "lbdna" ] = 3.38;
+hxht[ "abdna" ] = 3.38; hxht[ "sbdna" ] = -3.38; hxht[ "adna" ] = 2.56;
+
+hxrep["arna"] = 32.7; hxrep["aprna"] = 30.0; hxrep["lbdna"] = 36.0;
+hxrep["abdna"] = 36.0; hxrep["sbdna"] = 36.0; hxrep["adna"] = 32.7;
+
+temp = wc_complement( seq, "", acid_type );
+cseq = "";
+for( i = length( temp ); i >= 1; i-- ) {
+	cseq += substr( temp, i, 1) ;
+}
+fullseq = seq + cseq;
+
+nresh = length( seq );
+
+nres = length( fullseq );
+
+outfile = fopen( "nab_tmp.pdb", "w" );
+
+// Read lines from data file and store r, phi, zz values as appropriate
+// residue type.
+
+if( helix_type == "arna" ){
+A_r["P"] = 8.71; A_phi["P"] = 70.5; A_zz["P"] = -3.7500;
+A_r["OP1"] = 9.59; A_phi["OP1"] = 71.2; A_zz["OP1"] = -4.9400;
+A_r["OP2"] = 7.50; A_phi["OP2"] = 76.6; A_zz["OP2"] = -3.8000;
+A_r["O3'"] = 9.54; A_phi["O3'"] = 40.1; A_zz["O3'"] = -5.2500;
+A_r["O5'"] = 8.49; A_phi["O5'"] = 60.1; A_zz["O5'"] = -3.4800;
+A_r["C1'"] = 8.55; A_phi["C1'"] = 36.9; A_zz["C1'"] = -1.77;
+A_r["C2'"] = 8.82; A_phi["C2'"] = 33.2; A_zz["C2'"] = -3.17;
+A_r["C3'"] = 8.86; A_phi["C3'"] = 41.4; A_zz["C3'"] = -4.02;
+A_r["C4'"] = 9.68; A_phi["C4'"] = 46.9; A_zz["C4'"] = -3.10;
+A_r["C5'"] = 9.75; A_phi["C5'"] = 55.8; A_zz["C5'"] = -3.3500;
+A_r["O1'"] = 9.15; A_phi["O1'"] = 45.3; A_zz["O1'"] = -1.77;
+A_r["O2'"] = 10.15; A_phi["O2'"] = 30.2; A_zz["O2'"] = -3.14;
+A_r["N6"] = 3.08; A_phi["N6"] = 15.6; A_zz["N6"] = -0.05;
+A_r["C6"] = 4.39; A_phi["C6"] = 17.4; A_zz["C6"] = -0.34;
+A_r["C5"] = 5.14; A_phi["C5"] = 30.9; A_zz["C5"] = -0.75;
+A_r["N7"] = 5.15; A_phi["N7"] = 46.2; A_zz["N7"] = -0.95;
+A_r["C8"] = 6.39; A_phi["C8"] = 47.0; A_zz["C8"] = -1.33;
+A_r["N9"] = 7.12; A_phi["N9"] = 37.2; A_zz["N9"] = -1.39;
+A_r["C4"] = 6.44; A_phi["C4"] = 27.6; A_zz["C4"] = -1.01;
+A_r["N3"] = 7.15; A_phi["N3"] = 18.0; A_zz["N3"] = -0.93;
+A_r["C2"] = 6.54; A_phi["C2"] = 8.7; A_zz["C2"] = -0.54;
+A_r["N1"] = 5.28; A_phi["N1"] = 5.5; A_zz["N1"] = -0.24;
+G_r["P"] = 8.71; G_phi["P"] = 70.5; G_zz["P"] = -3.7500;
+G_r["OP1"] = 9.59; G_phi["OP1"] = 71.2; G_zz["OP1"] = -4.9400;
+G_r["OP2"] = 7.50; G_phi["OP2"] = 76.6; G_zz["OP2"] = -3.8000;
+G_r["O3'"] = 9.54; G_phi["O3'"] = 40.1; G_zz["O3'"] = -5.2500;
+G_r["O5'"] = 8.49; G_phi["O5'"] = 60.1; G_zz["O5'"] = -3.4800;
+G_r["C1'"] = 8.55; G_phi["C1'"] = 36.9; G_zz["C1'"] = -1.77;
+G_r["C2'"] = 8.82; G_phi["C2'"] = 33.2; G_zz["C2'"] = -3.17;
+G_r["C3'"] = 8.86; G_phi["C3'"] = 41.4; G_zz["C3'"] = -4.02;
+G_r["C4'"] = 9.68; G_phi["C4'"] = 46.9; G_zz["C4'"] = -3.10;
+G_r["C5'"] = 9.75; G_phi["C5'"] = 55.8; G_zz["C5'"] = -3.3500;
+G_r["O1'"] = 9.15; G_phi["O1'"] = 45.3; G_zz["O1'"] = -1.77;
+G_r["O2'"] = 10.15; G_phi["O2'"] = 30.2; G_zz["O2'"] = -3.14;
+G_r["N2"] = 7.58; G_phi["N2"] = 0.7; G_zz["N2"] = -0.42;
+G_r["O6"] = 3.16; G_phi["O6"] = 13.9; G_zz["O6"] = -0.04;
+G_r["C6"] = 4.34; G_phi["C6"] = 17.1; G_zz["C6"] = -0.33;
+G_r["C5"] = 5.13; G_phi["C5"] = 30.5; G_zz["C5"] = -0.74;
+G_r["N7"] = 5.11; G_phi["N7"] = 46.0; G_zz["N7"] = -0.94;
+G_r["C8"] = 6.36; G_phi["C8"] = 47.0; G_zz["C8"] = -1.32;
+G_r["N9"] = 7.12; G_phi["N9"] = 37.2; G_zz["N9"] = -1.39;
+G_r["C4"] = 6.44; G_phi["C4"] = 27.5; G_zz["C4"] = -1.01;
+G_r["N3"] = 7.20; G_phi["N3"] = 18.0; G_zz["N3"] = -0.94;
+G_r["C2"] = 6.67; G_phi["C2"] = 8.5; G_zz["C2"] = -0.55;
+G_r["N1"] = 5.35; G_phi["N1"] = 5.5; G_zz["N1"] = -0.26;
+C_r["P"] = 8.71; C_phi["P"] = 70.5; C_zz["P"] = -3.7500;
+C_r["OP1"] = 9.59; C_phi["OP1"] = 71.2; C_zz["OP1"] = -4.9400;
+C_r["OP2"] = 7.50; C_phi["OP2"] = 76.6; C_zz["OP2"] = -3.8000;
+C_r["O3'"] = 9.54; C_phi["O3'"] = 40.1; C_zz["O3'"] = -5.2500;
+C_r["O5'"] = 8.49; C_phi["O5'"] = 60.1; C_zz["O5'"] = -3.4800;
+C_r["C1'"] = 8.55; C_phi["C1'"] = 36.9; C_zz["C1'"] = -1.77;
+C_r["C2'"] = 8.82; C_phi["C2'"] = 33.2; C_zz["C2'"] = -3.17;
+C_r["C3'"] = 8.86; C_phi["C3'"] = 41.4; C_zz["C3'"] = -4.02;
+C_r["C4'"] = 9.68; C_phi["C4'"] = 46.9; C_zz["C4'"] = -3.10;
+C_r["C5'"] = 9.75; C_phi["C5'"] = 55.8; C_zz["C5'"] = -3.3500;
+C_r["O1'"] = 9.15; C_phi["O1'"] = 45.3; C_zz["O1'"] = -1.77;
+C_r["O2'"] = 10.15; C_phi["O2'"] = 30.2; C_zz["O2'"] = -3.14;
+C_r["N4"] = 3.23; C_phi["N4"] = 36.1; C_zz["N4"] = -0.31;
+C_r["C4"] = 4.50; C_phi["C4"] = 36.8; C_zz["C4"] = -0.67;
+C_r["N3"] = 5.32; C_phi["N3"] = 24.4; C_zz["N3"] = -0.68;
+C_r["C2"] = 6.61; C_phi["C2"] = 26.8; C_zz["C2"] = -1.04;
+C_r["O2"] = 7.51; C_phi["O2"] = 19.9; C_zz["O2"] = -1.06;
+C_r["N1"] = 7.12; C_phi["N1"] = 37.2; C_zz["N1"] = -1.39;
+C_r["C6"] = 6.53; C_phi["C6"] = 47.6; C_zz["C6"] = -1.38;
+C_r["C5"] = 5.26; C_phi["C5"] = 50.6; C_zz["C5"] = -1.03;
+U_r["P"] = 8.71; U_phi["P"] = 70.5; U_zz["P"] = -3.7500;
+U_r["OP1"] = 9.59; U_phi["OP1"] = 71.2; U_zz["OP1"] = -4.9400;
+U_r["OP2"] = 7.50; U_phi["OP2"] = 76.6; U_zz["OP2"] = -3.8000;
+U_r["O3'"] = 9.54; U_phi["O3'"] = 40.1; U_zz["O3'"] = -5.2500;
+U_r["O5'"] = 8.49; U_phi["O5'"] = 60.1; U_zz["O5'"] = -3.4800;
+U_r["C1'"] = 8.55; U_phi["C1'"] = 36.9; U_zz["C1'"] = -1.77;
+U_r["C2'"] = 8.82; U_phi["C2'"] = 33.2; U_zz["C2'"] = -3.17;
+U_r["C3'"] = 8.86; U_phi["C3'"] = 41.4; U_zz["C3'"] = -4.02;
+U_r["C4'"] = 9.68; U_phi["C4'"] = 46.9; U_zz["C4'"] = -3.10;
+U_r["C5'"] = 9.75; U_phi["C5'"] = 55.8; U_zz["C5'"] = -3.3500;
+U_r["O1'"] = 9.15; U_phi["O1'"] = 45.3; U_zz["O1'"] = -1.77;
+U_r["O2'"] = 10.15; U_phi["O2'"] = 30.2; U_zz["O2'"] = -3.14;
+U_r["O4"] = 3.24; U_phi["O4"] = 37.1; U_zz["O4"] = -0.32;
+U_r["C4"] = 4.42; U_phi["C4"] = 37.8; U_zz["C4"] = -0.66;
+U_r["N3"] = 5.31; U_phi["N3"] = 25.2; U_zz["N3"] = -0.69;
+U_r["C2"] = 6.63; U_phi["C2"] = 26.9; U_zz["C2"] = -1.04;
+U_r["O2"] = 7.46; U_phi["O2"] = 19.6; U_zz["O2"] = -1.04;
+U_r["N1"] = 7.12; U_phi["N1"] = 37.2; U_zz["N1"] = -1.39;
+U_r["C6"] = 6.54; U_phi["C6"] = 47.7; U_zz["C6"] = -1.38;
+U_r["C5"] = 5.28; U_phi["C5"] = 50.8; U_zz["C5"] = -1.04;
+} else if( helix_type == "sbdna" ){
+A_r["P"] = 8.95; A_phi["P"] = 89.6; A_zz["P"] = -2.9000;
+A_r["OP1"] = 10.18; A_phi["OP1"] = 93.3; A_zz["OP1"] = -2.41;
+A_r["OP2"] = 9.18; A_phi["OP2"] = 86.7; A_zz["OP2"] = -4.26;
+A_r["O3'"] = 7.69; A_phi["O3'"] = 60.4; A_zz["O3'"] = 0.66;
+A_r["O5'"] = 8.68; A_phi["O5'"] = 81.4; A_zz["O5'"] = -1.95;
+A_r["C1'"] = 5.62; A_phi["C1'"] = 77.2; A_zz["C1'"] = 0.45;
+A_r["C2'"] = 6.05; A_phi["C2'"] = 69.1; A_zz["C2'"] = -0.75;
+A_r["C3'"] = 7.52; A_phi["C3'"] = 67.7; A_zz["C3'"] = -0.35;
+A_r["C4'"] = 7.97; A_phi["C4'"] = 77.4; A_zz["C4'"] = 0.27;
+A_r["C5'"] = 9.03; A_phi["C5'"] = 81.9; A_zz["C5'"] = -0.56;
+A_r["O1'"] = 6.84; A_phi["O1'"] = 84.0; A_zz["O1'"] = 0.60;
+A_r["N6"] = 2.82; A_phi["N6"] = 162.2; A_zz["N6"] = 0.04;
+A_r["C6"] = 1.99; A_phi["C6"] = 135.7; A_zz["C6"] = 0.07;
+A_r["C5"] = 3.05; A_phi["C5"] = 112.9; A_zz["C5"] = 0.15;
+A_r["N7"] = 4.37; A_phi["N7"] = 118.0; A_zz["N7"] = 0.22;
+A_r["C8"] = 5.06; A_phi["C8"] = 104.2; A_zz["C8"] = 0.28;
+A_r["N9"] = 4.57; A_phi["N9"] = 88.6; A_zz["N9"] = 0.25;
+A_r["C4"] = 3.19; A_phi["C4"] = 87.8; A_zz["C4"] = 0.17;
+A_r["N3"] = 2.72; A_phi["N3"] = 63.3; A_zz["N3"] = 0.12;
+A_r["C2"] = 1.42; A_phi["C2"] = 52.8; A_zz["C2"] = 0.05;
+A_r["N1"] = 0.70; A_phi["N1"] = 121.7; A_zz["N1"] = 0.01;
+G_r["P"] = 8.95; G_phi["P"] = 89.6; G_zz["P"] = -2.9000;
+G_r["OP1"] = 10.18; G_phi["OP1"] = 93.3; G_zz["OP1"] = -2.41;
+G_r["OP2"] = 9.18; G_phi["OP2"] = 86.7; G_zz["OP2"] = -4.26;
+G_r["O3'"] = 7.69; G_phi["O3'"] = 60.4; G_zz["O3'"] = 0.66;
+G_r["O5'"] = 8.68; G_phi["O5'"] = 81.4; G_zz["O5'"] = -1.95;
+G_r["C1'"] = 5.62; G_phi["C1'"] = 77.2; G_zz["C1'"] = 0.45;
+G_r["C2'"] = 6.05; G_phi["C2'"] = 69.1; G_zz["C2'"] = -0.75;
+G_r["C3'"] = 7.52; G_phi["C3'"] = 67.7; G_zz["C3'"] = -0.35;
+G_r["C4'"] = 7.97; G_phi["C4'"] = 77.4; G_zz["C4'"] = 0.27;
+G_r["C5'"] = 9.03; G_phi["C5'"] = 81.9; G_zz["C5'"] = -0.56;
+G_r["O1'"] = 6.84; G_phi["O1'"] = 84.0; G_zz["O1'"] = 0.60;
+G_r["N2"] = 1.90; G_phi["N2"] = 5.65; G_zz["N2"] = -0.0300;
+G_r["O6"] = 2.82; G_phi["O6"] = 160.9; G_zz["O6"] = 0.04;
+G_r["C6"] = 2.08; G_phi["C6"] = 137.8; G_zz["C6"] = 0.06;
+G_r["C5"] = 3.06; G_phi["C5"] = 113.4; G_zz["C5"] = 0.15;
+G_r["N7"] = 4.43; G_phi["N7"] = 117.8; G_zz["N7"] = 0.22;
+G_r["C8"] = 5.07; G_phi["C8"] = 103.9; G_zz["C8"] = 0.28;
+G_r["N9"] = 4.57; G_phi["N9"] = 88.6; G_zz["N9"] = 0.25;
+G_r["C4"] = 3.29; G_phi["C4"] = 86.9; G_zz["C4"] = 0.17;
+G_r["N3"] = 2.69; G_phi["N3"] = 63.5; G_zz["N3"] = 0.11;
+G_r["C2"] = 1.41; G_phi["C2"] = 49.9; G_zz["C2"] = 0.03;
+G_r["N1"] = 0.73; G_phi["N1"] = 122.3; G_zz["N1"] = 0.01;
+T_r["P"] = 8.95; T_phi["P"] = 89.6; T_zz["P"] = -2.9000;
+T_r["OP1"] = 10.18; T_phi["OP1"] = 93.3; T_zz["OP1"] = -2.41;
+T_r["OP2"] = 9.18; T_phi["OP2"] = 86.7; T_zz["OP2"] = -4.26;
+T_r["O3'"] = 7.69; T_phi["O3'"] = 60.4; T_zz["O3'"] = 0.66;
+T_r["O5'"] = 8.68; T_phi["O5'"] = 81.4; T_zz["O5'"] = -1.95;
+T_r["C1'"] = 5.62; T_phi["C1'"] = 77.2; T_zz["C1'"] = 0.45;
+T_r["C2'"] = 6.05; T_phi["C2'"] = 69.1; T_zz["C2'"] = -0.75;
+T_r["C3'"] = 7.52; T_phi["C3'"] = 67.7; T_zz["C3'"] = -0.35;
+T_r["C4'"] = 7.97; T_phi["C4'"] = 77.4; T_zz["C4'"] = 0.27;
+T_r["C5'"] = 9.03; T_phi["C5'"] = 81.9; T_zz["C5'"] = -0.56;
+T_r["O1'"] = 6.84; T_phi["O1'"] = 84.0; T_zz["O1'"] = 0.60;
+T_r["O4"] = 3.37; T_phi["O4"] = 146.7000; T_zz["O4"] = 0.1000;
+T_r["C4"] = 3.36; T_phi["C4"] = 125.5000; T_zz["C4"] = 0.1500;
+T_r["N3"] = 2.46; T_phi["N3"] = 104.0; T_zz["N3"] = 0.12;
+T_r["C2"] = 3.31; T_phi["C2"] = 82.3; T_zz["C2"] = 0.17;
+T_r["O2"] = 3.31; T_phi["O2"] = 61.2; T_zz["O2"] = 0.15;
+T_r["N1"] = 4.57; T_phi["N1"] = 88.6; T_zz["N1"] = 0.25;
+T_r["C6"] = 5.11; T_phi["C6"] = 103.6; T_zz["C6"] = 0.28;
+T_r["C5"] = 4.70; T_phi["C5"] = 118.7; T_zz["C5"] = 0.23;
+T_r["C7"] = 5.95; T_phi["C7"] = 128.5; T_zz["C7"] = 0.27;
+C_r["P"] = 8.95; C_phi["P"] = 89.6; C_zz["P"] = -2.9000;
+C_r["OP1"] = 10.18; C_phi["OP1"] = 93.3; C_zz["OP1"] = -2.41;
+C_r["OP2"] = 9.18; C_phi["OP2"] = 86.7; C_zz["OP2"] = -4.26;
+C_r["O3'"] = 7.69; C_phi["O3'"] = 60.4; C_zz["O3'"] = 0.66;
+C_r["O5'"] = 8.68; C_phi["O5'"] = 81.4; C_zz["O5'"] = -1.95;
+C_r["C1'"] = 5.62; C_phi["C1'"] = 77.2; C_zz["C1'"] = 0.45;
+C_r["C2'"] = 6.05; C_phi["C2'"] = 69.1; C_zz["C2'"] = -0.75;
+C_r["C3'"] = 7.52; C_phi["C3'"] = 67.7; C_zz["C3'"] = -0.35;
+C_r["C4'"] = 7.97; C_phi["C4'"] = 77.4; C_zz["C4'"] = 0.27;
+C_r["C5'"] = 9.03; C_phi["C5'"] = 81.9; C_zz["C5'"] = -0.56;
+C_r["O1'"] = 6.84; C_phi["O1'"] = 84.0; C_zz["O1'"] = 0.60;
+C_r["N4"] = 3.51; C_phi["N4"] = 147.3000; C_zz["N4"] = 0.1000;
+C_r["C4"] = 3.36; C_phi["C4"] = 125.2; C_zz["C4"] = 0.15;
+C_r["N3"] = 2.43; C_phi["N3"] = 106.4; C_zz["N3"] = 0.12;
+C_r["C2"] = 3.20; C_phi["C2"] = 83.7; C_zz["C2"] = 0.17;
+C_r["O2"] = 3.18; C_phi["O2"] = 61.3; C_zz["O2"] = 0.14;
+C_r["N1"] = 4.57; C_phi["N1"] = 88.6; C_zz["N1"] = 0.25;
+C_r["C6"] = 5.14; C_phi["C6"] = 103.4; C_zz["C6"] = 0.28;
+C_r["C5"] = 4.72; C_phi["C5"] = 118.2; C_zz["C5"] = 0.23;
+} else if( helix_type == "lbdna" ){
+A_r["P"] = 9.0500; A_phi["P"] = 94.8000; A_zz["P"] = 2.0000;
+A_r["OP1"] = 10.3300; A_phi["OP1"] = 90.2000; A_zz["OP1"] = 2.1900;
+A_r["OP2"] = 9.1400; A_phi["OP2"] = 101.3000; A_zz["OP2"] = 0.9100;
+A_r["O3'"] = 8.8800; A_phi["O3'"] = 62.9000; A_zz["O3'"] = 0.0400;
+A_r["O5'"] = 7.8500; A_phi["O5'"] = 88.3000; A_zz["O5'"] = 1.9300;
+A_r["C1'"] = 5.7200; A_phi["C1'"] = 71.5000; A_zz["C1'"] = 0.3100;
+A_r["C2'"] = 6.9500; A_phi["C2'"] = 74.1000; A_zz["C2'"] = -0.5600;
+A_r["C3'"] = 8.1300; A_phi["C3'"] = 71.1000; A_zz["C3'"] = 0.3500;
+A_r["C4'"] = 7.5800; A_phi["C4'"] = 70.4000; A_zz["C4'"] = 1.8000;
+A_r["C5'"] = 8.0800; A_phi["C5'"] = 79.1000; A_zz["C5'"] = 2.6300;
+A_r["O1'"] = 6.1300; A_phi["O1'"] = 70.0000; A_zz["O1'"] = 1.7000;
+A_r["N6"] = 2.4000; A_phi["N6"] = 155.0000; A_zz["N6"] = -0.1400;
+A_r["C6"] = 1.7000; A_phi["C6"] = 124.0000; A_zz["C6"] = -0.0300;
+A_r["C5"] = 2.9000; A_phi["C5"] = 104.0000; A_zz["C5"] = 0.0200;
+A_r["N7"] = 4.2000; A_phi["N7"] = 112.0000; A_zz["N7"] = 0.0000;
+A_r["C8"] = 4.9500; A_phi["C8"] = 98.0000; A_zz["C8"] = 0.1000;
+A_r["N9"] = 4.6300; A_phi["N9"] = 82.5000; A_zz["N9"] = 0.1900;
+A_r["C4"] = 3.3000; A_phi["C4"] = 79.0000; A_zz["C4"] = 0.1600;
+A_r["N3"] = 2.9000; A_phi["N3"] = 56.0000; A_zz["N3"] = 0.2000;
+A_r["C2"] = 1.7000; A_phi["C2"] = 40.0000; A_zz["C2"] = 0.1400;
+A_r["N1"] = 0.6000; A_phi["N1"] = 83.0000; A_zz["N1"] = 0.0200;
+G_r["P"] = 9.0500; G_phi["P"] = 94.8000; G_zz["P"] = 2.0000;
+G_r["OP1"] = 10.3300; G_phi["OP1"] = 90.2000; G_zz["OP1"] = 2.1900;
+G_r["OP2"] = 9.1400; G_phi["OP2"] = 101.3000; G_zz["OP2"] = 0.9100;
+G_r["O3'"] = 8.8800; G_phi["O3'"] = 62.9000; G_zz["O3'"] = 0.0400;
+G_r["O5'"] = 7.8500; G_phi["O5'"] = 88.3000; G_zz["O5'"] = 1.9300;
+G_r["C1'"] = 5.7200; G_phi["C1'"] = 71.5000; G_zz["C1'"] = 0.3100;
+G_r["C2'"] = 6.9500; G_phi["C2'"] = 74.1000; G_zz["C2'"] = -0.5600;
+G_r["C3'"] = 8.1300; G_phi["C3'"] = 71.1000; G_zz["C3'"] = 0.3500;
+G_r["C4'"] = 7.5800; G_phi["C4'"] = 70.4000; G_zz["C4'"] = 1.8000;
+G_r["C5'"] = 8.0800; G_phi["C5'"] = 79.1000; G_zz["C5'"] = 2.6300;
+G_r["O1'"] = 6.1300; G_phi["O1'"] = 70.0000; G_zz["O1'"] = 1.7000;
+G_r["N2"] = 2.2500; G_phi["N2"] = 0.8000; G_zz["N2"] = 0.2000;
+G_r["O6"] = 2.4000; G_phi["O6"] = 155.0000; G_zz["O6"] = -0.1400;
+G_r["C6"] = 1.7000; G_phi["C6"] = 124.0000; G_zz["C6"] = -0.0300;
+G_r["C5"] = 2.9000; G_phi["C5"] = 104.0000; G_zz["C5"] = 0.0200;
+G_r["N7"] = 4.2000; G_phi["N7"] = 112.0000; G_zz["N7"] = 0.0000;
+G_r["C8"] = 4.9500; G_phi["C8"] = 98.0000; G_zz["C8"] = 0.1000;
+G_r["N9"] = 4.6300; G_phi["N9"] = 82.5000; G_zz["N9"] = 0.1900;
+G_r["C4"] = 3.3000; G_phi["C4"] = 79.0000; G_zz["C4"] = 0.1600;
+G_r["N3"] = 2.9000; G_phi["N3"] = 56.0000; G_zz["N3"] = 0.2000;
+G_r["C2"] = 1.7000; G_phi["C2"] = 40.0000; G_zz["C2"] = 0.1400;
+G_r["N1"] = 0.6000; G_phi["N1"] = 83.0000; G_zz["N1"] = 0.0200;
+T_r["P"] = 9.0500; T_phi["P"] = 94.8000; T_zz["P"] = 2.0000;
+T_r["OP1"] = 10.3300; T_phi["OP1"] = 90.2000; T_zz["OP1"] = 2.1900;
+T_r["OP2"] = 9.1400; T_phi["OP2"] = 101.3000; T_zz["OP2"] = 0.9100;
+T_r["O3'"] = 8.8800; T_phi["O3'"] = 62.9000; T_zz["O3'"] = 0.0400;
+T_r["O5'"] = 7.8500; T_phi["O5'"] = 88.3000; T_zz["O5'"] = 1.9300;
+T_r["C1'"] = 5.7200; T_phi["C1'"] = 71.5000; T_zz["C1'"] = 0.3100;
+T_r["C2'"] = 6.9500; T_phi["C2'"] = 74.1000; T_zz["C2'"] = -0.5600;
+T_r["C3'"] = 8.1300; T_phi["C3'"] = 71.1000; T_zz["C3'"] = 0.3500;
+T_r["C4'"] = 7.5800; T_phi["C4'"] = 70.4000; T_zz["C4'"] = 1.8000;
+T_r["C5'"] = 8.0800; T_phi["C5'"] = 79.1000; T_zz["C5'"] = 2.6300;
+T_r["O1'"] = 6.1300; T_phi["O1'"] = 70.0000; T_zz["O1'"] = 1.7000;
+T_r["O4"] = 3.2000; T_phi["O4"] = 140.0000; T_zz["O4"] = -0.1400;
+T_r["C4"] = 3.2000; T_phi["C4"] = 117.0000; T_zz["C4"] = -0.0300;
+T_r["N3"] = 2.4000; T_phi["N3"] = 96.0000; T_zz["N3"] = 0.0500;
+T_r["C2"] = 3.3400; T_phi["C2"] = 76.0000; T_zz["C2"] = 0.1600;
+T_r["O2"] = 3.4000; T_phi["O2"] = 55.0000; T_zz["O2"] = 0.2300;
+T_r["N1"] = 4.6300; T_phi["N1"] = 82.5000; T_zz["N1"] = 0.1900;
+T_r["C6"] = 5.1700; T_phi["C6"] = 97.0000; T_zz["C6"] = 0.1000;
+T_r["C5"] = 4.6000; T_phi["C5"] = 112.0000; T_zz["C5"] = 0.0000;
+T_r["C7"] = 5.3300; T_phi["C7"] = 121.0000; T_zz["C7"] = -0.0900;
+C_r["P"] = 9.0500; C_phi["P"] = 94.8000; C_zz["P"] = 2.0000;
+C_r["OP1"] = 10.3300; C_phi["OP1"] = 90.2000; C_zz["OP1"] = 2.1900;
+C_r["OP2"] = 9.1400; C_phi["OP2"] = 101.3000; C_zz["OP2"] = 0.9100;
+C_r["O3'"] = 8.8800; C_phi["O3'"] = 62.9000; C_zz["O3'"] = 0.0400;
+C_r["O5'"] = 7.8500; C_phi["O5'"] = 88.3000; C_zz["O5'"] = 1.9300;
+C_r["C1'"] = 5.7200; C_phi["C1'"] = 71.5000; C_zz["C1'"] = 0.3100;
+C_r["C2'"] = 6.9500; C_phi["C2'"] = 74.1000; C_zz["C2'"] = -0.5600;
+C_r["C3'"] = 8.1300; C_phi["C3'"] = 71.1000; C_zz["C3'"] = 0.3500;
+C_r["C4'"] = 7.5800; C_phi["C4'"] = 70.4000; C_zz["C4'"] = 1.8000;
+C_r["C5'"] = 8.0800; C_phi["C5'"] = 79.1000; C_zz["C5'"] = 2.6300;
+C_r["O1'"] = 6.1300; C_phi["O1'"] = 70.0000; C_zz["O1'"] = 1.7000;
+C_r["N4"] = 3.2000; C_phi["N4"] = 140.0000; C_zz["N4"] = -0.1400;
+C_r["C4"] = 3.2000; C_phi["C4"] = 117.0000; C_zz["C4"] = -0.0300;
+C_r["N3"] = 2.4000; C_phi["N3"] = 96.0000; C_zz["N3"] = 0.0500;
+C_r["C2"] = 3.3400; C_phi["C2"] = 76.0000; C_zz["C2"] = 0.1600;
+C_r["O2"] = 3.4000; C_phi["O2"] = 55.0000; C_zz["O2"] = 0.2300;
+C_r["N1"] = 4.6300; C_phi["N1"] = 82.5000; C_zz["N1"] = 0.1900;
+C_r["C6"] = 5.1700; C_phi["C6"] = 97.0000; C_zz["C6"] = 0.1000;
+C_r["C5"] = 4.6000; C_phi["C5"] = 112.0000; C_zz["C5"] = 0.0000;
+} else if( helix_type == "aprna" ){
+A_r["P"] = 9.26; A_phi["P"] = 70.7; A_zz["P"] = -2.88;
+A_r["OP1"] = 10.27; A_phi["OP1"] = 70.5; A_zz["OP1"] = -3.97;
+A_r["OP2"] = 8.1; A_phi["OP2"] = 76.6; A_zz["OP2"] = -3.14;
+A_r["O3'"] = 9.97; A_phi["O3'"] = 43.5; A_zz["O3'"] = -4.53;
+A_r["O5'"] = 8.94; A_phi["O5'"] = 61.1; A_zz["O5'"] = -2.50;
+A_r["C1'"] = 8.73; A_phi["C1'"] = 37.3; A_zz["C1'"] = -1.25;
+A_r["C2'"] = 9.05; A_phi["C2'"] = 35.1; A_zz["C2'"] = -2.70;
+A_r["C3'"] = 9.21; A_phi["C3'"] = 43.8; A_zz["C3'"] = -3.33;
+A_r["C4'"] = 9.99; A_phi["C4'"] = 48.0; A_zz["C4'"] = -2.21;
+A_r["C5'"] = 10.14; A_phi["C5'"] = 56.6; A_zz["C5'"] = -2.2300;
+A_r["O1'"] = 9.35; A_phi["O1'"] = 45.3; A_zz["O1'"] = -0.99;
+A_r["O2'"] = 10.35; A_phi["O2'"] = 31.8; A_zz["O2'"] = -2.71;
+A_r["N6"] = 3.19; A_phi["N6"] = 15.1; A_zz["N6"] = 0.06;
+A_r["C6"] = 4.50; A_phi["C6"] = 17.4; A_zz["C6"] = -0.20;
+A_r["C5"] = 5.27; A_phi["C5"] = 30.9; A_zz["C5"] = -0.47;
+A_r["N7"] = 5.28; A_phi["N7"] = 46.0; A_zz["N7"] = -0.55;
+A_r["C8"] = 6.54; A_phi["C8"] = 47.0; A_zz["C8"] = -0.83;
+A_r["N9"] = 7.27; A_phi["N9"] = 37.5; A_zz["N9"] = -0.94;
+A_r["C4"] = 6.57; A_phi["C4"] = 27.9; A_zz["C4"] = -0.71;
+A_r["N3"] = 7.27; A_phi["N3"] = 18.3; A_zz["N3"] = -0.72;
+A_r["C2"] = 6.65; A_phi["C2"] = 9.0; A_zz["C2"] = -0.45;
+A_r["N1"] = 5.39; A_phi["N1"] = 5.6; A_zz["N1"] = -0.20;
+G_r["P"] = 9.26; G_phi["P"] = 70.7; G_zz["P"] = -2.88;
+G_r["OP1"] = 10.27; G_phi["OP1"] = 70.5; G_zz["OP1"] = -3.97;
+G_r["OP2"] = 8.1; G_phi["OP2"] = 76.6; G_zz["OP2"] = -3.14;
+G_r["O3'"] = 9.97; G_phi["O3'"] = 43.5; G_zz["O3'"] = -4.53;
+G_r["O5'"] = 8.94; G_phi["O5'"] = 61.1; G_zz["O5'"] = -2.50;
+G_r["C1'"] = 8.73; G_phi["C1'"] = 37.3; G_zz["C1'"] = -1.25;
+G_r["C2'"] = 9.05; G_phi["C2'"] = 35.1; G_zz["C2'"] = -2.70;
+G_r["C3'"] = 9.21; G_phi["C3'"] = 43.8; G_zz["C3'"] = -3.33;
+G_r["C4'"] = 9.99; G_phi["C4'"] = 48.0; G_zz["C4'"] = -2.21;
+G_r["C5'"] = 10.14; G_phi["C5'"] = 56.6; G_zz["C5'"] = -2.2300;
+G_r["O1'"] = 9.35; G_phi["O1'"] = 45.3; G_zz["O1'"] = -0.99;
+G_r["O2'"] = 10.35; G_phi["O2'"] = 31.8; G_zz["O2'"] = -2.71;
+G_r["N2"] = 7.69; G_phi["N2"] = 1.0; G_zz["N2"] = -0.44;
+G_r["O6"] = 3.27; G_phi["O6"] = 13.5; G_zz["O6"] = 0.05;
+G_r["C6"] = 4.45; G_phi["C6"] = 17.0; G_zz["C6"] = -0.19;
+G_r["C5"] = 5.25; G_phi["C5"] = 30.5; G_zz["C5"] = -0.46;
+G_r["N7"] = 5.24; G_phi["N7"] = 45.8; G_zz["N7"] = -0.54;
+G_r["C8"] = 6.52; G_phi["C8"] = 47.0; G_zz["C8"] = -0.82;
+G_r["N9"] = 7.27; G_phi["N9"] = 37.5; G_zz["N9"] = -0.94;
+G_r["C4"] = 6.58; G_phi["C4"] = 27.8; G_zz["C4"] = -0.71;
+G_r["N3"] = 7.32; G_phi["N3"] = 18.4; G_zz["N3"] = -0.73;
+G_r["C2"] = 6.78; G_phi["C2"] = 8.7; G_zz["C2"] = -0.47;
+G_r["N1"] = 5.46; G_phi["N1"] = 5.7; G_zz["N1"] = -0.21;
+C_r["P"] = 9.26; C_phi["P"] = 70.7; C_zz["P"] = -2.88;
+C_r["OP1"] = 10.27; C_phi["OP1"] = 70.5; C_zz["OP1"] = -3.97;
+C_r["OP2"] = 8.1; C_phi["OP2"] = 76.6; C_zz["OP2"] = -3.14;
+C_r["O3'"] = 9.97; C_phi["O3'"] = 43.5; C_zz["O3'"] = -4.53;
+C_r["O5'"] = 8.94; C_phi["O5'"] = 61.1; C_zz["O5'"] = -2.50;
+C_r["C1'"] = 8.73; C_phi["C1'"] = 37.3; C_zz["C1'"] = -1.25;
+C_r["C2'"] = 9.05; C_phi["C2'"] = 35.1; C_zz["C2'"] = -2.70;
+C_r["C3'"] = 9.21; C_phi["C3'"] = 43.8; C_zz["C3'"] = -3.33;
+C_r["C4'"] = 9.99; C_phi["C4'"] = 48.0; C_zz["C4'"] = -2.21;
+C_r["C5'"] = 10.14; C_phi["C5'"] = 56.6; C_zz["C5'"] = -2.2300;
+C_r["O1'"] = 9.35; C_phi["O1'"] = 45.3; C_zz["O1'"] = -0.99;
+C_r["O2'"] = 10.35; C_phi["O2'"] = 31.8; C_zz["O2'"] = -2.71;
+C_r["N4"] = 3.33; C_phi["N4"] = 35.3; C_zz["N4"] = -0.09;
+C_r["C4"] = 4.63; C_phi["C4"] = 36.6; C_zz["C4"] = -0.37;
+C_r["N3"] = 5.45; C_phi["N3"] = 24.5; C_zz["N3"] = -0.45;
+C_r["C2"] = 6.75; C_phi["C2"] = 27.1; C_zz["C2"] = -0.73;
+C_r["O2"] = 7.64; C_phi["O2"] = 20.3; C_zz["O2"] = -0.82;
+C_r["N1"] = 7.27; C_phi["N1"] = 37.5; C_zz["N1"] = -0.94;
+C_r["C6"] = 6.69; C_phi["C6"] = 47.6; C_zz["C6"] = -0.86;
+C_r["C5"] = 5.40; C_phi["C5"] = 50.3; C_zz["C5"] = -0.58;
+U_r["P"] = 9.26; U_phi["P"] = 70.7; U_zz["P"] = -2.88;
+U_r["OP1"] = 10.27; U_phi["OP1"] = 70.5; U_zz["OP1"] = -3.97;
+U_r["OP2"] = 8.1; U_phi["OP2"] = 76.6; U_zz["OP2"] = -3.14;
+U_r["O3'"] = 9.97; U_phi["O3'"] = 43.5; U_zz["O3'"] = -4.53;
+U_r["O5'"] = 8.94; U_phi["O5'"] = 61.1; U_zz["O5'"] = -2.50;
+U_r["C1'"] = 8.73; U_phi["C1'"] = 37.3; U_zz["C1'"] = -1.25;
+U_r["C2'"] = 9.05; U_phi["C2'"] = 35.1; U_zz["C2'"] = -2.70;
+U_r["C3'"] = 9.21; U_phi["C3'"] = 43.8; U_zz["C3'"] = -3.33;
+U_r["C4'"] = 9.99; U_phi["C4'"] = 48.0; U_zz["C4'"] = -2.21;
+U_r["C5'"] = 10.14; U_phi["C5'"] = 56.6; U_zz["C5'"] = -2.2300;
+U_r["O1'"] = 9.35; U_phi["O1'"] = 45.3; U_zz["O1'"] = -0.99;
+U_r["O2'"] = 10.35; U_phi["O2'"] = 31.8; U_zz["O2'"] = -2.71;
+U_r["O4"] = 3.34; U_phi["O4"] = 36.3; U_zz["O4"] = -0.09;
+U_r["C4"] = 4.54; U_phi["C4"] = 37.5; U_zz["C4"] = -0.36;
+U_r["N3"] = 5.43; U_phi["N3"] = 25.3; U_zz["N3"] = -0.45;
+U_r["C2"] = 6.76; U_phi["C2"] = 27.2; U_zz["C2"] = -0.74;
+U_r["O2"] = 7.59; U_phi["O2"] = 20.0; U_zz["O2"] = -0.80;
+U_r["N1"] = 7.27; U_phi["N1"] = 37.5; U_zz["N1"] = -0.94;
+U_r["C6"] = 6.70; U_phi["C6"] = 47.7; U_zz["C6"] = -0.86;
+U_r["C5"] = 5.42; U_phi["C5"] = 50.5; U_zz["C5"] = -0.58;
+} else if( helix_type == "adna" ){
+A_r["P"] = 8.92; A_phi["P"] = 69.20; A_zz["P"] = -4.0600;
+A_r["OP1"] = 9.96; A_phi["OP1"] = 67.90; A_zz["OP1"] = -5.1000;
+A_r["OP2"] = 7.69; A_phi["OP2"] = 73.90; A_zz["OP2"] = -4.5300;
+A_r["O3'"] = 9.58; A_phi["O3'"] = 41.43; A_zz["O3'"] = -5.4300;
+A_r["O5'"] = 8.70; A_phi["O5'"] = 60.10; A_zz["O5'"] = -3.3300;
+A_r["C1'"] = 8.59; A_phi["C1'"] = 35.9; A_zz["C1'"] = -2.04;
+A_r["C2'"] = 8.81; A_phi["C2'"] = 33.4; A_zz["C2'"] = -3.50;
+A_r["C3'"] = 8.91; A_phi["C3'"] = 42.2; A_zz["C3'"] = -4.17;
+A_r["C4'"] = 9.77; A_phi["C4'"] = 46.6; A_zz["C4'"] = -3.13;
+A_r["C5'"] = 9.91; A_phi["C5'"] = 55.4; A_zz["C5'"] = -3.1900;
+A_r["O1'"] = 9.2200; A_phi["O1'"] = 44.00; A_zz["O1'"] = -1.8600;
+A_r["N6"] = 3.19; A_phi["N6"] = 14.8; A_zz["N6"] = -0.13;
+A_r["C6"] = 4.49; A_phi["C6"] = 16.7; A_zz["C6"] = -0.43;
+A_r["C5"] = 5.22; A_phi["C5"] = 29.8; A_zz["C5"] = -0.91;
+A_r["N7"] = 5.18; A_phi["N7"] = 44.8; A_zz["N7"] = -1.19;
+A_r["C8"] = 6.40; A_phi["C8"] = 45.7; A_zz["C8"] = -1.61;
+A_r["N9"] = 7.16; A_phi["N9"] = 36.1; A_zz["N9"] = -1.62;
+A_r["C4"] = 6.52; A_phi["C4"] = 26.7; A_zz["C4"] = -1.17;
+A_r["N3"] = 7.25; A_phi["N3"] = 17.3; A_zz["N3"] = -1.02;
+A_r["C2"] = 6.65; A_phi["C2"] = 8.4; A_zz["C2"] = -0.56;
+A_r["N1"] = 5.40; A_phi["N1"] = 5.3; A_zz["N1"] = -0.26;
+G_r["P"] = 8.92; G_phi["P"] = 69.20; G_zz["P"] = -4.0600;
+G_r["OP1"] = 9.96; G_phi["OP1"] = 67.90; G_zz["OP1"] = -5.1000;
+G_r["OP2"] = 7.69; G_phi["OP2"] = 73.90; G_zz["OP2"] = -4.5300;
+G_r["O3'"] = 9.58; G_phi["O3'"] = 41.43; G_zz["O3'"] = -5.4300;
+G_r["O5'"] = 8.70; G_phi["O5'"] = 60.10; G_zz["O5'"] = -3.3300;
+G_r["C1'"] = 8.59; G_phi["C1'"] = 35.9; G_zz["C1'"] = -2.04;
+G_r["C2'"] = 8.81; G_phi["C2'"] = 33.4; G_zz["C2'"] = -3.50;
+G_r["C3'"] = 8.91; G_phi["C3'"] = 42.2; G_zz["C3'"] = -4.17;
+G_r["C4'"] = 9.77; G_phi["C4'"] = 46.6; G_zz["C4'"] = -3.13;
+G_r["C5'"] = 9.91; G_phi["C5'"] = 55.4; G_zz["C5'"] = -3.1900;
+G_r["O1'"] = 9.2200; G_phi["O1'"] = 44.00; G_zz["O1'"] = -1.8600;
+G_r["N2"] = 7.71; G_phi["N2"] = 0.7; G_zz["N2"] = -0.37;
+G_r["O6"] = 3.27; G_phi["O6"] = 13.2; G_zz["O6"] = -0.11;
+G_r["C6"] = 4.44; G_phi["C6"] = 16.4; G_zz["C6"] = -0.41;
+G_r["C5"] = 5.20; G_phi["C5"] = 29.4; G_zz["C5"] = -0.90;
+G_r["N7"] = 5.14; G_phi["N7"] = 44.6; G_zz["N7"] = -1.17;
+G_r["C8"] = 6.38; G_phi["C8"] = 45.7; G_zz["C8"] = -1.60;
+G_r["N9"] = 7.16; G_phi["N9"] = 36.1; G_zz["N9"] = -1.62;
+G_r["C4"] = 6.52; G_phi["C4"] = 26.6; G_zz["C4"] = -1.17;
+G_r["N3"] = 7.30; G_phi["N3"] = 17.4; G_zz["N3"] = -1.03;
+G_r["C2"] = 6.78; G_phi["C2"] = 8.1; G_zz["C2"] = -0.57;
+G_r["N1"] = 5.46; G_phi["N1"] = 5.3; G_zz["N1"] = -0.27;
+T_r["P"] = 8.92; T_phi["P"] = 69.20; T_zz["P"] = -4.0600;
+T_r["OP1"] = 9.96; T_phi["OP1"] = 67.90; T_zz["OP1"] = -5.1000;
+T_r["OP2"] = 7.69; T_phi["OP2"] = 73.90; T_zz["OP2"] = -4.5300;
+T_r["O3'"] = 9.58; T_phi["O3'"] = 41.43; T_zz["O3'"] = -5.4300;
+T_r["O5'"] = 8.70; T_phi["O5'"] = 60.10; T_zz["O5'"] = -3.3300;
+T_r["C1'"] = 8.59; T_phi["C1'"] = 35.9; T_zz["C1'"] = -2.04;
+T_r["C2'"] = 8.81; T_phi["C2'"] = 33.4; T_zz["C2'"] = -3.50;
+T_r["C3'"] = 8.91; T_phi["C3'"] = 42.2; T_zz["C3'"] = -4.17;
+T_r["C4'"] = 9.77; T_phi["C4'"] = 46.6; T_zz["C4'"] = -3.13;
+T_r["C5'"] = 9.91; T_phi["C5'"] = 55.4; T_zz["C5'"] = -3.1900;
+T_r["O1'"] = 9.2200; T_phi["O1'"] = 44.00; T_zz["O1'"] = -1.8600;
+T_r["O4"] = 3.30; T_phi["O4"] = 35.5; T_zz["O4"] = -0.47;
+T_r["C4"] = 4.48; T_phi["C4"] = 36.4; T_zz["C4"] = -0.83;
+T_r["N3"] = 5.39; T_phi["N3"] = 24.3; T_zz["N3"] = -0.82;
+T_r["C2"] = 6.71; T_phi["C2"] = 26.0; T_zz["C2"] = -1.20;
+T_r["O2"] = 7.56; T_phi["O2"] = 19.0; T_zz["O2"] = -1.15;
+T_r["N1"] = 7.16; T_phi["N1"] = 36.1; T_zz["N1"] = -1.62;
+T_r["C6"] = 6.55; T_phi["C6"] = 46.4; T_zz["C6"] = -1.67;
+T_r["C5"] = 5.30; T_phi["C5"] = 49.3; T_zz["C5"] = -1.30;
+T_r["C7"] = 4.98; T_phi["C7"] = 65.7; T_zz["C7"] = -1.33;
+C_r["P"] = 8.92; C_phi["P"] = 69.20; C_zz["P"] = -4.0600;
+C_r["OP1"] = 9.96; C_phi["OP1"] = 67.90; C_zz["OP1"] = -5.1000;
+C_r["OP2"] = 7.69; C_phi["OP2"] = 73.90; C_zz["OP2"] = -4.5300;
+C_r["O3'"] = 9.58; C_phi["O3'"] = 41.43; C_zz["O3'"] = -5.4300;
+C_r["O5'"] = 8.70; C_phi["O5'"] = 60.10; C_zz["O5'"] = -3.3300;
+C_r["C1'"] = 8.59; C_phi["C1'"] = 35.9; C_zz["C1'"] = -2.04;
+C_r["C2'"] = 8.81; C_phi["C2'"] = 33.4; C_zz["C2'"] = -3.50;
+C_r["C3'"] = 8.91; C_phi["C3'"] = 42.2; C_zz["C3'"] = -4.17;
+C_r["C4'"] = 9.77; C_phi["C4'"] = 46.6; C_zz["C4'"] = -3.13;
+C_r["C5'"] = 9.91; C_phi["C5'"] = 55.4; C_zz["C5'"] = -3.1900;
+C_r["O1'"] = 9.2200; C_phi["O1'"] = 44.00; C_zz["O1'"] = -1.8600;
+C_r["N4"] = 3.30; C_phi["N4"] = 34.5; C_zz["N4"] = -0.46;
+C_r["C4"] = 4.57; C_phi["C4"] = 35.5; C_zz["C4"] = -0.84;
+C_r["N3"] = 5.41; C_phi["N3"] = 23.4; C_zz["N3"] = -0.80;
+C_r["C2"] = 6.69; C_phi["C2"] = 25.9; C_zz["C2"] = -1.19;
+C_r["O2"] = 7.61; C_phi["O2"] = 19.2; C_zz["O2"] = -1.17;
+C_r["N1"] = 7.16; C_phi["N1"] = 36.1; C_zz["N1"] = -1.62;
+C_r["C6"] = 6.55; C_phi["C6"] = 46.3; C_zz["C6"] = -1.66;
+C_r["C5"] = 5.28; C_phi["C5"] = 49.1; C_zz["C5"] = -1.29;
+} else if( helix_type == "abdna" ){
+A_r["P"] = 8.973; A_phi["P"] = 94.20; A_zz["P"] = 2.141;
+A_r["OP1"] = 10.292; A_phi["OP1"] = 90.28; A_zz["OP1"] = 2.000;
+A_r["OP2"] = 8.919; A_phi["OP2"] = 102.25; A_zz["OP2"] = 1.359;
+A_r["O3'"] = 8.696; A_phi["O3'"] = 60.18; A_zz["O3'"] = 0.307;
+A_r["O5'"] = 7.838; A_phi["O5'"] = 86.88; A_zz["O5'"] = 1.788;
+A_r["C1'"] = 5.811; A_phi["C1'"] = 66.60; A_zz["C1'"] = 0.452;
+A_r["C2'"] = 7.016; A_phi["C2'"] = 72.17; A_zz["C2'"] = -0.247;
+A_r["C3'"] = 8.159; A_phi["C3'"] = 68.80; A_zz["C3'"] = 0.665;
+A_r["C4'"] = 7.519; A_phi["C4'"] = 69.00; A_zz["C4'"] = 2.053;
+A_r["C5'"] = 7.647; A_phi["C5'"] = 79.12; A_zz["C5'"] = 2.756;
+A_r["O1'"] = 6.151; A_phi["O1'"] = 66.25; A_zz["O1'"] = 1.823;
+A_r["N6"] = 1.910; A_phi["N6"] = 154.18; A_zz["N6"] = 0.051;
+A_r["C6"] = 1.430; A_phi["C6"] = 109.71; A_zz["C6"] = 0.105;
+A_r["C5"] = 2.730; A_phi["C5"] = 94.61; A_zz["C5"] = 0.217;
+A_r["N7"] = 3.971; A_phi["N7"] = 105.33; A_zz["N7"] = 0.296;
+A_r["C8"] = 4.836; A_phi["C8"] = 92.72; A_zz["C8"] = 0.385;
+A_r["N9"] = 4.601; A_phi["N9"] = 76.19; A_zz["N9"] = 0.370;
+A_r["C4"] = 3.288; A_phi["C4"] = 70.63; A_zz["C4"] = 0.262;
+A_r["N3"] = 3.155; A_phi["N3"] = 46.59; A_zz["N3"] = 0.209;
+A_r["C2"] = 2.077; A_phi["C2"] = 29.84; A_zz["C2"] = 0.105;
+A_r["N1"] = 0.773; A_phi["N1"] = 41.89; A_zz["N1"] = 0.051;
+G_r["P"] = 8.973; G_phi["P"] = 94.20; G_zz["P"] = 2.141;
+G_r["OP1"] = 10.292; G_phi["OP1"] = 90.28; G_zz["OP1"] = 2.000;
+G_r["OP2"] = 8.919; G_phi["OP2"] = 102.25; G_zz["OP2"] = 1.359;
+G_r["O3'"] = 8.696; G_phi["O3'"] = 60.18; G_zz["O3'"] = 0.307;
+G_r["O5'"] = 7.838; G_phi["O5'"] = 86.88; G_zz["O5'"] = 1.788;
+G_r["C1'"] = 5.811; G_phi["C1'"] = 66.60; G_zz["C1'"] = 0.452;
+G_r["C2'"] = 7.016; G_phi["C2'"] = 72.17; G_zz["C2'"] = -0.247;
+G_r["C3'"] = 8.159; G_phi["C3'"] = 68.80; G_zz["C3'"] = 0.665;
+G_r["C4'"] = 7.519; G_phi["C4'"] = 69.00; G_zz["C4'"] = 2.053;
+G_r["C5'"] = 7.647; G_phi["C5'"] = 79.12; G_zz["C5'"] = 2.756;
+G_r["O1'"] = 6.151; G_phi["O1'"] = 66.25; G_zz["O1'"] = 1.823;
+G_r["N2"] = 2.893; G_phi["N2"] = 2.14; G_zz["N2"] = 0.043;
+G_r["O6"] = 1.816; G_phi["O6"] = 154.21; G_zz["O6"] = 0.047;
+G_r["C6"] = 1.429; G_phi["C6"] = 111.85; G_zz["C6"] = 0.103;
+G_r["C5"] = 2.714; G_phi["C5"] = 94.60; G_zz["C5"] = 0.216;
+G_r["N7"] = 3.958; G_phi["N7"] = 105.52; G_zz["N7"] = 0.295;
+G_r["C8"] = 4.833; G_phi["C8"] = 92.75; G_zz["C8"] = 0.384;
+G_r["N9"] = 4.601; G_phi["N9"] = 76.19; G_zz["N9"] = 0.370;
+G_r["C4"] = 3.284; G_phi["C4"] = 70.42; G_zz["C4"] = 0.261;
+G_r["N3"] = 3.205; G_phi["N3"] = 46.30; G_zz["N3"] = 0.212;
+G_r["C2"] = 2.176; G_phi["C2"] = 28.04; G_zz["C2"] = 0.106;
+G_r["N1"] = 0.828; G_phi["N1"] = 40.69; G_zz["N1"] = 0.053;
+T_r["P"] = 8.973; T_phi["P"] = 94.20; T_zz["P"] = 2.141;
+T_r["OP1"] = 10.292; T_phi["OP1"] = 90.28; T_zz["OP1"] = 2.000;
+T_r["OP2"] = 8.919; T_phi["OP2"] = 102.25; T_zz["OP2"] = 1.359;
+T_r["O3'"] = 8.696; T_phi["O3'"] = 60.18; T_zz["O3'"] = 0.307;
+T_r["O5'"] = 7.838; T_phi["O5'"] = 86.88; T_zz["O5'"] = 1.788;
+T_r["C1'"] = 5.811; T_phi["C1'"] = 66.60; T_zz["C1'"] = 0.452;
+T_r["C2'"] = 7.016; T_phi["C2'"] = 72.17; T_zz["C2'"] = -0.247;
+T_r["C3'"] = 8.159; T_phi["C3'"] = 68.80; T_zz["C3'"] = 0.665;
+T_r["C4'"] = 7.519; T_phi["C4'"] = 69.00; T_zz["C4'"] = 2.053;
+T_r["C5'"] = 7.647; T_phi["C5'"] = 79.12; T_zz["C5'"] = 2.756;
+T_r["O1'"] = 6.151; T_phi["O1'"] = 66.25; T_zz["O1'"] = 1.823;
+T_r["O4"] = 2.903; T_phi["O4"] = 135.96; T_zz["O4"] = 0.141;
+T_r["C4"] = 3.029; T_phi["C4"] = 112.13; T_zz["C4"] = 0.214;
+T_r["N3"] = 2.349; T_phi["N3"] = 86.11; T_zz["N3"] = 0.191;
+T_r["C2"] = 3.375; T_phi["C2"] = 67.28; T_zz["C2"] = 0.265;
+T_r["O2"] = 3.557; T_phi["O2"] = 47.25; T_zz["O2"] = 0.237;
+T_r["N1"] = 4.601; T_phi["N1"] = 76.19; T_zz["N1"] = 0.370;
+T_r["C6"] = 5.015; T_phi["C6"] = 91.81; T_zz["C6"] = 0.400;
+T_r["C5"] = 4.422; T_phi["C5"] = 106.49; T_zz["C5"] = 0.327;
+T_r["C7"] = 5.499; T_phi["C7"] = 118.64; T_zz["C7"] = 0.358;
+C_r["P"] = 8.973; C_phi["P"] = 94.20; C_zz["P"] = 2.141;
+C_r["OP1"] = 10.292; C_phi["OP1"] = 90.28; C_zz["OP1"] = 2.000;
+C_r["OP2"] = 8.919; C_phi["OP2"] = 102.25; C_zz["OP2"] = 1.359;
+C_r["O3'"] = 8.696; C_phi["O3'"] = 60.18; C_zz["O3'"] = 0.307;
+C_r["O5'"] = 7.838; C_phi["O5'"] = 86.88; C_zz["O5'"] = 1.788;
+C_r["C1'"] = 5.811; C_phi["C1'"] = 66.60; C_zz["C1'"] = 0.452;
+C_r["C2'"] = 7.016; C_phi["C2'"] = 72.17; C_zz["C2'"] = -0.247;
+C_r["C3'"] = 8.159; C_phi["C3'"] = 68.80; C_zz["C3'"] = 0.665;
+C_r["C4'"] = 7.519; C_phi["C4'"] = 69.00; C_zz["C4'"] = 2.053;
+C_r["C5'"] = 7.647; C_phi["C5'"] = 79.12; C_zz["C5'"] = 2.756;
+C_r["O1'"] = 6.151; C_phi["O1'"] = 66.25; C_zz["O1'"] = 1.823;
+C_r["N4"] = 2.859; C_phi["N4"] = 136.26; C_zz["N4"] = 0.138;
+C_r["C4"] = 2.990; C_phi["C4"] = 110.26; C_zz["C4"] = 0.215;
+C_r["N3"] = 2.296; C_phi["N3"] = 85.02; C_zz["N3"] = 0.187;
+C_r["C2"] = 3.351; C_phi["C2"] = 67.37; C_zz["C2"] = 0.263;
+C_r["O2"] = 3.606; C_phi["O2"] = 47.32; C_zz["O2"] = 0.241;
+C_r["N1"] = 4.601; C_phi["N1"] = 76.19; C_zz["N1"] = 0.370;
+C_r["C6"] = 5.007; C_phi["C6"] = 91.73; C_zz["C6"] = 0.399;
+C_r["C5"] = 4.399; C_phi["C5"] = 106.56; C_zz["C5"] = 0.325;
+}
+
+height_increment = hxht[ helix_type ]; 
+rotation_increment = hxrep[ helix_type ]; 
+current_height = 0;
+current_rotation = 0;
+count = 0;
+
+// 	Here we build the actual molecule - it is output to a temporary
+//	pdb file in order to allow the addition of hydrogens as a final
+// 	stage.
+
+for( chain = 1; chain <= 2; chain++ ) {
+	
+	if(chain == 1) {
+		begin = 1;
+		end = nresh;
+		hxmul = -1;
+	}
+
+	else if( chain == 2) {
+		begin = nresh + 1;
+		end = nres;
+		hxmul = 1;
+	}
+	for( i = begin; i <= end; i++ ) {
+		restype = substr( fullseq, i, 1 );
+		if( restype == "A" || restype == "a" ) {
+			resout = "DA"; if( acid_type == "rna" ) resout = "A";
+			for( tempname in A_r ) {
+				count++;
+				yyr = (hxmul * A_phi[ tempname ] + current_rotation);
+				xrad = A_r[ tempname ];
+				x = xrad * cos(yyr);
+				y = xrad * sin(yyr);
+				z = hxmul * A_zz[ tempname ] + current_height;
+				put_tmp( x, y, z, count, i, tempname, resout, outfile, nres);
+			}	
+		}
+
+		else if( restype == "G" || restype == "g" ) {
+			resout = "DG"; if( acid_type == "rna" ) resout = "G";
+			for( tempname in G_r ) {	
+				count++;
+				yyr = (hxmul * G_phi[ tempname ] + current_rotation);
+				xrad = G_r[ tempname ];
+				x = xrad * cos(yyr);
+				y = xrad * sin(yyr);
+				z = hxmul * G_zz[ tempname ] + current_height;
+				put_tmp( x, y, z, count, i, tempname, resout, outfile, nres);
+			}	
+		
+		}
+
+		else if( restype == "T" || restype == "t" ) {
+			resout = "DT";
+			for( tempname in T_r ) {	
+				count++;
+				yyr = (hxmul * T_phi[ tempname ] + current_rotation);
+				xrad = T_r[ tempname ];
+				x = xrad * cos(yyr);
+				y = xrad * sin(yyr);
+				z = hxmul * T_zz[ tempname ] + current_height;
+				put_tmp( x, y, z, count, i, tempname, resout, outfile, nres);
+			}	
+		
+		}
+
+		else if( restype == "U" || restype == "u" ) {
+			resout = "U";
+			for( tempname in U_r ) {	
+				count++;
+				yyr = (hxmul * U_phi[ tempname ] + current_rotation);
+				xrad = U_r[ tempname ];
+				x = xrad * cos(yyr);
+				y = xrad * sin(yyr);
+				z = hxmul * U_zz[ tempname ] + current_height;
+				put_tmp( x, y, z, count, i, tempname, resout, outfile, nres);
+			}	
+			
+		}
+
+		else if( restype == "C" || restype == "c" ) {
+			resout = "DC"; if( acid_type == "rna" ) resout = "C"; 
+			for( tempname in C_r ) {	
+				count++;
+				yyr = (hxmul * C_phi[ tempname ] + current_rotation);
+				xrad = C_r[ tempname ];
+				x = xrad * cos(yyr);
+				y = xrad * sin(yyr);
+				z = hxmul * C_zz[ tempname ] + current_height; 
+				put_tmp( x, y, z, count, i, tempname, resout, outfile, nres);
+			}	
+		
+		}
+		
+		// Increase unit twist and height
+
+		current_height += height_increment;
+		current_rotation += rotation_increment;
+	}
+
+
+height_increment = -height_increment;
+rotation_increment = -rotation_increment;
+
+current_rotation += rotation_increment;
+current_height += height_increment;
+
+if(chain == 1)
+	fprintf( outfile, "TER\n" );	// Need TER card for getpdb_prm to
+					// function properly
+
+}
+
+// Close outfile in order to flush output stream.
+// Otherwise nab_tmp.pdb would be incomplete when
+// read by getpdb_prm
+
+fclose( outfile );
+
+m = getpdb_prm( "nab_tmp.pdb", "oldff/leaprc.ff14SB", "", 0 );
+unlink( "nab_tmp.pdb" );
+
+return m;
+
+};

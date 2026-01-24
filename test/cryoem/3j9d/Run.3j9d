@@ -3,6 +3,12 @@
 export XRAY_NUM_THREADS=8
 
 sander=../../../bin/msander
+
+if [ ! -z "$DO_CUDA" ]; then
+   echo "This test does not use the GPU"
+   exit 0
+fi
+
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI
 fi

@@ -1,0 +1,41 @@
+#!/usr/bin/perl -n
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( $_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop($_);
+$_ .= "                                                                    ";
+
+( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
+      $x, $y, $z, $occ, $bfact, $element, $charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
+
+#
+#  do modifications necessary here:
+#
+
+if ($resno ne $resnop && $alt ne " "){
+   print "\n$resno:  ";
+   $resnop = $resno;
+}
+if ($alt ne " "){
+   print  "$occ  " unless exists( $altoc{$resno . $alt});
+   $altoc{$resno . $alt} = $occ;
+}
+
+next;
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
+        $x,$y,$z, $occ, $bfact, $element, $charge;
+
+} else {
+   # print;
+}

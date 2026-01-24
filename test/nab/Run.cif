@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo "Running test to create a simple mmCIF file "
+echo ""
+../../bin/nab -o cif cif.nab || error
+./cif || error
+
+../dacdif gbrna.cif.check gbrna.cif
+../dacdif gbrna.pdb gbrna2.pdb
+../dacdif component.00D.pdb.check component.00D.pdb
+../dacdif 1BNA2.pdb.check 1BNA2.pdb
+
+rm -f cif cif.c
+exit 0

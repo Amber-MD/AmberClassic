@@ -1,0 +1,542 @@
+//   dg_helix() - create Watson/Crick duplex and rebuild backbone
+//		  using distance constraints
+
+//   In this variation of wc_helix(), a 3-basepair template is used to
+//	rebuild the backbone of a wc_helix() generated nucleic acid.
+//	The coordinates of the distance geometry structure ( from
+//	m4 - m8 ) are used to replace the coordinates in the wc_helix
+//	structure ( m1 - m3 ).
+//   If sreblib is empty, use dna.amber94 libraries by default;
+//     (same for aresib; sreslib and areslib should both be either
+//     empty or non-empty).
+
+string	wc_complement();
+molecule wc_basepair();
+molecule copymolecule();
+int	dg_options() c;
+
+//  wrapper for getresidue(), but intercepts call to convert upper/lower
+//     one-letter residue names to Brookhaven standard
+
+molecule dg_helix(
+	string seq, string sreslib, string snatype,
+	string aseq, string areslib, string anatype,
+	float xoff, float incl, float twist, float rise,
+	string opts )
+{
+	molecule m1, m2, m3, m4, m5, m6, m7, m8;
+	bounds b;
+	float xyz[ dynamic ];
+	matrix xomat, inmat, mat;
+	string arname, srname, sreslib_use, areslib_use;
+	residue sres, ares;
+	int	has_s, has_a;
+	int i, slen;
+	float	ttwist, trise, fret;
+
+        has_s = 1; has_a = 1;
+        if( sreslib == "" ) sreslib_use = "nab.lib";
+                else sreslib_use = sreslib;
+        if( areslib == "" ) areslib_use = "nab.lib";
+                else areslib_use = areslib;
+ 
+        if( seq == NULL && aseq == NULL ){
+                fprintf( stderr, "dg_helix: no sequence\n" );
+                return( NULL );
+        }else if( seq == NULL ){
+                seq = wc_complement( aseq, areslib_use, snatype );
+                has_s = 0;
+        }else if( aseq == NULL ){
+                aseq = wc_complement( seq, sreslib_use, anatype );
+                has_a = 0;
+        }
+
+        slen = length( seq );
+
+        srname = substr( seq, 1, 1 ); 
+        setreslibkind( sreslib_use, snatype );
+        if ( substr( sreslib_use, length(sreslib_use)-2,
+                length(sreslib_use ) ) == "lib" ){
+                if( opts =~ "s5" )
+                        sres = getresidue( srname + "5", sreslib_use );
+                else if( opts =~ "s3" && slen == 1 )
+                        sres = getresidue( srname + "3", sreslib_use );
+                else sres = getresidue( srname, sreslib_use );
+        }else{  
+                fprintf(stderr, "dg_helix : unknown sense residue library : %s\n",
+                        sreslib_use );
+                exit( 1 );
+        }
+ 
+        arname = substr( aseq, 1, 1 ); 
+        setreslibkind( areslib_use, anatype );
+        if ( substr( areslib_use, length(areslib_use)-2,
+                length(areslib_use ) ) == "lib" ){
+                if( opts =~ "a3" )
+                        ares = getresidue( arname + "3", areslib_use );
+                else if( opts =~ "a5" && slen == 1 )
+                        ares = getresidue( arname + "5", areslib_use );
+                else ares = getresidue( arname, areslib_use );
+        }else{  
+                fprintf(stderr, "dg_helix : unknown anti residue library : %s\n",
+                        areslib_use );
+                exit( 1 );
+        }
+	m1 = wc_basepair( sres, ares );
+
+	xomat = newtransform(xoff, 0., 0., 0., 0., 0. );
+	transformmol( xomat, m1, NULL );
+	inmat = newtransform( 0., 0., 0., incl, 0., 0.);
+	transformmol( inmat, m1, NULL );
+
+	trise = rise; ttwist = twist;
+
+	if ( slen == 2 ){	// treat special case of 2 character strand 
+                srname = substr( seq, 2, 1 );
+		setreslibkind( sreslib_use, snatype );
+                if ( substr( sreslib_use, length(sreslib_use)-2,
+                        length(sreslib_use ) ) == "lib" ){
+                        if( opts =~ "s3"  )
+                                sres = getresidue( srname + "3", sreslib_use );
+                        else
+                                sres = getresidue( srname, sreslib_use );
+                }else{
+                        fprintf(stderr, "dg_helix : unknown sense residue library : %s\n",
+                                sreslib_use );
+                        exit( 1 );
+                }
+                arname = substr( aseq, 2, 1 );
+		setreslibkind( areslib_use, anatype );
+                if ( substr( areslib_use, length(areslib_use)-2,
+                        length(areslib_use ) ) == "rlb" ){
+                        if( opts =~ "a5" )
+                                ares = getresidue( arname, substr( areslib_use, 1,
+                                        length(areslib_use)-3 ) + "5.rlb");
+                        else
+                                ares = getresidue( arname, areslib_use );
+                }else if ( substr( areslib_use, length(areslib_use)-2,
+                        length(areslib_use ) ) == "lib" ){
+                        if( opts =~ "a5" )
+                                ares = getresidue( arname + "5", areslib_use );
+                        else
+                                ares = getresidue( arname, areslib_use );
+                }else{
+                        fprintf(stderr, "dg_helix : unknown anti residue library : %s\n",
+                                areslib_use );
+                        exit( 1 );
+                }
+                m2 = wc_basepair( sres, ares );
+                transformmol( xomat, m2, NULL );
+                transformmol( inmat, m2, NULL );
+                mat = newtransform( 0., 0., trise,
+                        0., 0., ttwist );
+                transformmol( mat, m2, NULL );
+ 
+                mergestr( m1, "sense", "last",
+                        m2, "sense", "first" );
+                connectres( m1, "sense",
+                        1, "O3'", 2, "P" );
+                mergestr( m1, "anti", "first",
+                        m2, "anti", "last" );
+                connectres( m1, "anti",
+                        1, "O3'", 2, "P" );
+ 
+                ttwist = ttwist + twist;
+                b = newbounds(m1, "");		// get all 1-2, 1-3, 1-4s
+                allocate xyz[ 4*m1.natoms ];
+ 
+                usemodeldist(b, m1, "::??,H?[^'T]",  // constrain base atoms
+                                "::??,H?[^'T]" );
+
+		// set bounds between stacked residues as if they were
+		// in a stacked bdna conformation of rise 3.38 Angstroms 
+                setbounds(b, m1, "1:1:O3'", "1:2:P",   1.595, 1.595 );
+                setbounds(b, m1, "1:1:O3'", "1:2:O5'", 2.469, 2.469 );
+                setbounds(b, m1, "1:1:C3'", "1:2:P",   2.609, 2.609 );
+                setbounds(b, m1, "1:1:O3'", "1:2:O1P", 2.513, 2.513 );
+                setbounds(b, m1, "1:1:O3'", "1:2:O2P", 2.515, 2.515 );
+                setbounds(b, m1, "1:1:C4'", "1:2:P",   3.550, 4.107 );
+                setbounds(b, m1, "1:1:C2'", "1:2:P",   3.550, 4.071 );
+                setbounds(b, m1, "1:1:C3'", "1:2:O1P", 3.050, 3.935 );
+                setbounds(b, m1, "1:1:C3'", "1:2:O2P", 3.050, 4.004 );
+                setbounds(b, m1, "1:1:C3'", "1:2:O5'", 3.050, 3.859 );
+                setbounds(b, m1, "1:1:O3'", "1:2:C5'", 3.050, 3.943 );
+ 
+                setbounds(b, m1, "2:2:P",   "2:1:O3'", 1.595, 1.595 );
+                setbounds(b, m1, "2:2:O5'", "2:1:O3'", 2.469, 2.469 );
+                setbounds(b, m1, "2:2:P",   "2:1:C3'", 2.609, 2.609 );
+                setbounds(b, m1, "2:2:O1P", "2:1:O3'", 2.513, 2.513 );
+                setbounds(b, m1, "2:2:O2P", "2:1:O3'", 2.515, 2.515 );
+                setbounds(b, m1, "2:2:P",   "2:1:C4'", 3.550, 4.107 );
+                setbounds(b, m1, "2:2:P",   "2:1:C2'", 3.550, 4.071 );
+                setbounds(b, m1, "2:2:O1P", "2:1:C3'", 3.050, 3.935 );
+                setbounds(b, m1, "2:2:O2P", "2:1:C3'", 3.050, 4.004 );
+                setbounds(b, m1, "2:2:O5'", "2:1:C3'", 3.050, 3.859 );
+                setbounds(b, m1, "2:2:C5'", "2:1:O3'", 3.050, 3.943 );
+ 
+                dg_options(b, "seed=33333, gdist=0, ntpr=0, k4d=4.0");
+                setxyzw_from_mol( m1, NULL, xyz );
+
+		// refine using initial coordinates with distance function 
+                conjgrad( xyz, 4*m1.natoms, fret, db_viol, 0.1, 10., 100 );
+                setmol_from_xyzw( m1, NULL, xyz );    // get new atoms coordinates
+        }
+	else if (slen > 1) {	// all other strands greater than 1
+		srname = substr( seq, 2, 1 );
+		setreslibkind( sreslib_use, snatype );
+                if( sreslib == "" )
+                        sres = getresidue( srname, "dna.amber94.rlb" );
+                else
+                        sres = getresidue( srname, sreslib );
+                arname = substr( aseq, 2, 1 );
+		setreslibkind( areslib_use, anatype );
+                if( areslib == "" )
+                        ares = getresidue( arname, "dna.amber94.rlb" );
+                else
+                        ares = getresidue( arname, areslib );
+                m2 = wc_basepair( sres, ares );
+                transformmol( xomat, m2, NULL );
+                transformmol( inmat, m2, NULL );
+                mat = newtransform( 0., 0., trise,
+                        0., 0., ttwist );
+                transformmol( mat, m2, NULL );
+		m6 = copymolecule( m2 );  // make a copy of 2nd basepair
+
+		mergestr( m1, "sense", "last",
+			m2, "sense", "first" );
+		connectres( m1, "sense",
+			1, "O3'", 2, "P" );
+		mergestr( m1, "anti", "first",
+			m2, "anti", "last" );
+		connectres( m1, "anti",
+			1, "O3'", 2, "P" );
+
+		trise = trise + rise;
+		ttwist = ttwist + twist;
+	}
+
+	m4 = copymolecule( m1 );	// make copy of 1st basepair 
+
+	for( i = 3; i <= slen-1; i = i + 1 ){
+		srname = substr( seq, i, 1 );
+		setreslibkind( sreslib_use, snatype );
+		if( sreslib == "" )
+			sres = getresidue( srname, "dna.amber94.rlb" );
+		else
+			sres = getresidue( srname, sreslib );
+		arname = substr( aseq, i, 1 );
+		setreslibkind( areslib_use, anatype );
+		if( areslib == "" )
+			ares = getresidue( arname, "dna.amber94.rlb" );
+		else
+			ares = getresidue( arname, areslib );
+		m2 = wc_basepair( sres, ares );
+		transformmol( xomat, m2, NULL );
+		transformmol( inmat, m2, NULL );
+		mat = newtransform( 0., 0., trise,
+			0., 0., ttwist );
+		transformmol( mat, m2, NULL );	// get into standard ref frame
+
+		if (i > 3){
+			freemolecule( m5 );	// deallocate m5
+			freemolecule( m7 );	// deallocate m7
+			freemolecule( m8 );	// deallocate m8
+		}
+			
+		m5 = copymolecule( m2 );	// make copy of next basepair 
+		m7 = copymolecule( m2 );	// make copy of next basepair 
+		m8 = copymolecule( m2 );	// make copy of next basepair 
+
+		mergestr( m1, "sense", "last",	// connect original rigid mol
+			m2, "sense", "first" );
+		connectres( m1, "sense",
+			i-1, "O3'", i, "P" );
+		mergestr( m1, "anti", "first",
+			m2, "anti", "last" );
+		connectres( m1, "anti",
+			1, "O3'", 2, "P" );
+
+		mergestr( m4, "sense", "last",  // connect 1-2-3 basepairs 
+			m5, "sense", "first" ); 
+		connectres( m4, "sense",
+			2, "O3'", 3, "P" );
+		mergestr( m4, "anti", "first",
+			m5, "anti", "last" );
+		connectres( m4, "anti",
+			1, "O3'", 2, "P" );
+
+		mergestr( m6, "sense", "last",  // next 2 basepairs
+			m7, "sense", "first" ); 
+		connectres( m6, "sense",
+			1, "O3'", 2, "P" );
+		mergestr( m6, "anti", "first",
+			m7, "anti", "last" );
+		connectres( m6, "anti",
+			1, "O3'", 2, "P" );
+
+		trise = trise + rise;
+		ttwist = ttwist + twist;
+
+		b = newbounds(m4, "");		// set up bounds matrix
+		allocate xyz[ 4*m4.natoms ];	// with 1-2, 1-3, 1-4s
+
+		usemodeldist(b, m4, "::??,H?[^'T]",  // constrain base atoms  
+				"::??,H?[^'T]" );  
+		if ( i > 3 ) {
+			usemodeldist(b, m4, "1:1:|2:3:", "1:1:|2:3:");
+			usemodeldist(b, m4, "1:1:|2:3:", "::??,H?[^'T]");
+		}	// Treat the first basepair in the 3-basepair
+			// template as a rigid body ( because it was
+			// refined in the previous iteration ), and
+			// get the coordinates of the middle basepair
+
+		// set bounds between stacked residues as if they were
+		// in a stacked bdna conformation of rise 3.38 Angstroms 
+		setbounds(b, m4, "1:1:O3'", "1:2:P",   1.595, 1.595 );
+		setbounds(b, m4, "1:1:O3'", "1:2:O5'", 2.469, 2.469 );
+		setbounds(b, m4, "1:1:C3'", "1:2:P",   2.609, 2.609 );
+		setbounds(b, m4, "1:1:O3'", "1:2:O1P", 2.513, 2.513 );
+		setbounds(b, m4, "1:1:O3'", "1:2:O2P", 2.515, 2.515 );
+		setbounds(b, m4, "1:1:C4'", "1:2:P",   3.550, 4.107 );
+		setbounds(b, m4, "1:1:C2'", "1:2:P",   3.550, 4.071 );
+		setbounds(b, m4, "1:1:C3'", "1:2:O1P", 3.050, 3.935 );
+		setbounds(b, m4, "1:1:C3'", "1:2:O2P", 3.050, 4.004 );
+		setbounds(b, m4, "1:1:C3'", "1:2:O5'", 3.050, 3.859 );
+		setbounds(b, m4, "1:1:O3'", "1:2:C5'", 3.050, 3.943 );
+
+		setbounds(b, m4, "1:2:O3'", "1:3:P",   1.595, 1.595 );
+		setbounds(b, m4, "1:2:O3'", "1:3:O5'", 2.469, 2.469 );
+		setbounds(b, m4, "1:2:C3'", "1:3:P",   2.609, 2.609 );
+		setbounds(b, m4, "1:2:O3'", "1:3:O1P", 2.513, 2.513 );
+		setbounds(b, m4, "1:2:O3'", "1:3:O2P", 2.515, 2.515 );
+		setbounds(b, m4, "1:2:C4'", "1:3:P",   3.550, 4.107 );
+		setbounds(b, m4, "1:2:C2'", "1:3:P",   3.550, 4.071 );
+		setbounds(b, m4, "1:2:C3'", "1:3:O1P", 3.050, 3.935 );
+		setbounds(b, m4, "1:2:C3'", "1:3:O2P", 3.050, 4.004 );
+		setbounds(b, m4, "1:2:C3'", "1:3:O5'", 3.050, 3.859 );
+		setbounds(b, m4, "1:2:O3'", "1:3:C5'", 3.050, 3.943 );
+
+		setbounds(b, m4, "2:3:P",   "2:2:O3'", 1.595, 1.595 );
+		setbounds(b, m4, "2:3:O5'", "2:2:O3'", 2.469, 2.469 );
+		setbounds(b, m4, "2:3:P",   "2:2:C3'", 2.609, 2.609 );
+		setbounds(b, m4, "2:3:O1P", "2:2:O3'", 2.513, 2.513 );
+		setbounds(b, m4, "2:3:O2P", "2:2:O3'", 2.515, 2.515 );
+		setbounds(b, m4, "2:3:P",   "2:2:C4'", 3.550, 4.107 );
+		setbounds(b, m4, "2:3:P",   "2:2:C2'", 3.550, 4.071 );
+		setbounds(b, m4, "2:3:O1P", "2:2:C3'", 3.050, 3.935 );
+		setbounds(b, m4, "2:3:O2P", "2:2:C3'", 3.050, 4.004 );
+		setbounds(b, m4, "2:3:O5'", "2:2:C3'", 3.050, 3.859 );
+		setbounds(b, m4, "2:3:C5'", "2:2:O3'", 3.050, 3.943 );
+
+		setbounds(b, m4, "2:2:P",   "2:1:O3'", 1.595, 1.595 );
+		setbounds(b, m4, "2:2:O5'", "2:1:O3'", 2.469, 2.469 );
+		setbounds(b, m4, "2:2:P",   "2:1:C3'", 2.609, 2.609 );
+		setbounds(b, m4, "2:2:O1P", "2:1:O3'", 2.513, 2.513 );
+		setbounds(b, m4, "2:2:O2P", "2:1:O3'", 2.515, 2.515 );
+		setbounds(b, m4, "2:2:P",   "2:1:C4'", 3.550, 4.107 );
+		setbounds(b, m4, "2:2:P",   "2:1:C2'", 3.550, 4.071 );
+		setbounds(b, m4, "2:2:O1P", "2:1:C3'", 3.050, 3.935 );
+		setbounds(b, m4, "2:2:O2P", "2:1:C3'", 3.050, 4.004 );
+		setbounds(b, m4, "2:2:O5'", "2:1:C3'", 3.050, 3.859 );
+		setbounds(b, m4, "2:2:C5'", "2:1:O3'", 3.050, 3.943 );
+
+		dg_options(b, "seed=33333, gdist=0, ntpr=0, k4d=4.0");
+		setxyzw_from_mol( m4, NULL, xyz );   // get raw template Coords
+
+		// refine using initial coordinates with distance function 
+		conjgrad( xyz, 4*m4.natoms, fret, db_viol, 0.1, 10., 100 );
+		setmol_from_xyzw( m4, NULL, xyz );	// get new template coordinates 
+		// overlay new template coordinates on wc_helix coordinates
+		superimpose( m4, "1:1,2,3:??,H?[^'T]|2:1,2,3:??,H?[^'T]", m1,
+			sprintf("1:%d,%d,%d:??,H?[^'T]|2:1,2,3:??,H?[^'T]", i-2, i-1, i ) );
+		// get dg backbone
+		if (i == 3) {			// replace basepair 1
+			setxyzw_from_mol( m4, "1:1:P,O??,C??|2:3:P,O??,C??", xyz ); 
+			setmol_from_xyzw( m1, "1:1:P,O??,C??|2:3:P,O??,C??", xyz );
+		}
+		// overlay 2 basepair template on refined 3-basepair template	
+		superimpose( m6, "1:1,2:??,H?[^'T]|2:1,2:??,H?[^'T]", m4,
+			sprintf("1:%d,%d:??,H?[^'T]|2:1,2:??,H?[^'T]", 2, 3 ) );
+
+		setxyzw_from_mol( m4, "1:2:P,O??,C??|2:2:P,O??,C??", xyz ); 
+		// replace basepair 2
+		setmol_from_xyzw( m1, sprintf("1:%d:P,O??,C??|2:2:P,O??,C??", i-1 ), xyz );
+		// get refined bp1 coordinates for new m4
+		setmol_from_xyzw( m6, "1:1:P,O??,C??|2:2:P,O??,C??", xyz );
+
+		// replace coords	
+		freemolecule( m4 );		// deallocate m4
+		m4 = copymolecule( m6 ); 	// m4 is bp's 2 and 3 of template
+		freemolecule( m6 );		// deallocate m4
+		m6 = copymolecule( m8 ); 	// m6 is last residue added 
+	}
+
+	i = slen;         			// add in final residue pair
+	if( ( i > 1 ) && ( i != 2 )){
+                srname = substr( seq, i, 1 );
+		setreslibkind( sreslib_use, snatype );
+                if ( substr( sreslib_use, length(sreslib_use)-2,
+                        length(sreslib_use ) ) == "rlb" ){
+                        if( opts =~ "s3" )
+                                sres = getresidue( srname, substr( sreslib_use, 1,
+                                        length(sreslib_use)-3 ) + "3.rlb");
+                        else
+                                sres = getresidue( srname, sreslib_use );
+                }else if ( substr( sreslib_use, length(sreslib_use)-2,
+                        length(sreslib_use ) ) == "lib" ){
+                        if( opts =~ "s3"  )
+                                sres = getresidue( srname + "3", sreslib_use );
+                        else
+                                sres = getresidue( srname, sreslib_use );
+                }else{
+                        fprintf(stderr, "dg_helix : unknown sense residue library : %s\n",
+                                sreslib_use );
+                        exit( 1 );
+                }
+                arname = substr( aseq, i, 1 );
+		setreslibkind( areslib_use, anatype );
+                if ( substr( areslib_use, length(areslib_use)-2,
+                        length(areslib_use ) ) == "rlb" ){
+                        if( opts =~ "a5" )
+                                ares = getresidue( arname, substr( areslib_use, 1,
+                                        length(areslib_use)-3 ) + "5.rlb");
+                        else
+                                ares = getresidue( arname, areslib_use );
+                }else if ( substr( areslib_use, length(areslib_use)-2,
+                        length(areslib_use ) ) == "lib" ){
+                        if( opts =~ "a5" )
+                                ares = getresidue( arname + "5", areslib_use );
+                        else
+                                ares = getresidue( arname, areslib_use );
+                }else{
+                        fprintf(stderr, "dg_helix : unknown anti residue library : %s\n",
+                                areslib_use );
+                        exit( 1 );
+                }
+		m2 = wc_basepair( sres, ares );
+		transformmol( xomat, m2, NULL );
+		transformmol( inmat, m2, NULL );
+		mat = newtransform( 0., 0., trise,
+			0., 0., ttwist );
+		transformmol( mat, m2, NULL );
+	
+		m5 = copymolecule( m2 );	// make copy of next basepair 
+
+		mergestr( m1, "sense", "last",	// connect original rigid mol
+			m2, "sense", "first" );
+		connectres( m1, "sense",
+			i-1, "O3'", i, "P" );
+		mergestr( m1, "anti", "first",
+			m2, "anti", "last" );
+		connectres( m1, "anti",
+			1, "O3'", 2, "P" );
+
+		mergestr( m4, "sense", "last",  // connect 1-2 basepairs 
+			m5, "sense", "first" );
+		connectres( m4, "sense",
+			1, "O3'", 2, "P" );
+		mergestr( m4, "anti", "first",
+			m5, "anti", "last" );
+		connectres( m4, "anti",
+			1, "O3'", 2, "P" );
+
+		trise = trise + rise;
+		ttwist = ttwist + twist;
+                b = newbounds(m4, "");
+                allocate xyz[ 4*m4.natoms ];
+ 
+                usemodeldist(b, m4, "::??,H?[^'T]",  // constrain base atoms
+                                "::??,H?[^'T]" );
+
+		if ( slen != 3 ) {
+	               	usemodeldist(b, m4, "1:1:|2:3:", "::??,H?[^'T]");
+		}	// Treat the first basepair in the 3-basepair
+                        // template as a rigid body ( because it was
+                        // refined in the previous iteration ), and
+                        // get the coordinates of the middle basepair
+
+                // set bounds between stacked residues as if they were
+                // in a stacked bdna conformation of rise 3.38 Angstroms
+                setbounds(b, m4, "1:1:O3'", "1:2:P",   1.595, 1.595 );
+                setbounds(b, m4, "1:1:O3'", "1:2:O5'", 2.469, 2.469 );
+                setbounds(b, m4, "1:1:C3'", "1:2:P",   2.609, 2.609 );
+                setbounds(b, m4, "1:1:O3'", "1:2:O1P", 2.513, 2.513 );
+                setbounds(b, m4, "1:1:O3'", "1:2:O2P", 2.515, 2.515 );
+                setbounds(b, m4, "1:1:C4'", "1:2:P",   3.550, 4.107 );
+                setbounds(b, m4, "1:1:C2'", "1:2:P",   3.550, 4.071 );
+                setbounds(b, m4, "1:1:C3'", "1:2:O1P", 3.050, 3.935 );
+                setbounds(b, m4, "1:1:C3'", "1:2:O2P", 3.050, 4.004 );
+                setbounds(b, m4, "1:1:C3'", "1:2:O5'", 3.050, 3.859 );
+                setbounds(b, m4, "1:1:O3'", "1:2:C5'", 3.050, 3.943 );
+ 
+                setbounds(b, m4, "1:2:O3'", "1:3:P",   1.595, 1.595 );
+                setbounds(b, m4, "1:2:O3'", "1:3:O5'", 2.469, 2.469 );
+                setbounds(b, m4, "1:2:C3'", "1:3:P",   2.609, 2.609 );
+                setbounds(b, m4, "1:2:O3'", "1:3:O1P", 2.513, 2.513 );
+                setbounds(b, m4, "1:2:O3'", "1:3:O2P", 2.515, 2.515 );
+                setbounds(b, m4, "1:2:C4'", "1:3:P",   3.550, 4.107 );
+                setbounds(b, m4, "1:2:C2'", "1:3:P",   3.550, 4.071 );
+                setbounds(b, m4, "1:2:C3'", "1:3:O1P", 3.050, 3.935 );
+                setbounds(b, m4, "1:2:C3'", "1:3:O2P", 3.050, 4.004 );
+                setbounds(b, m4, "1:2:C3'", "1:3:O5'", 3.050, 3.859 );
+                setbounds(b, m4, "1:2:O3'", "1:3:C5'", 3.050, 3.943 );
+ 
+                setbounds(b, m4, "2:3:P",   "2:2:O3'", 1.595, 1.595 );
+                setbounds(b, m4, "2:3:O5'", "2:2:O3'", 2.469, 2.469 );
+                setbounds(b, m4, "2:3:P",   "2:2:C3'", 2.609, 2.609 );
+                setbounds(b, m4, "2:3:O1P", "2:2:O3'", 2.513, 2.513 );
+                setbounds(b, m4, "2:3:O2P", "2:2:O3'", 2.515, 2.515 );
+                setbounds(b, m4, "2:3:P",   "2:2:C4'", 3.550, 4.107 );
+                setbounds(b, m4, "2:3:P",   "2:2:C2'", 3.550, 4.071 );
+                setbounds(b, m4, "2:3:O1P", "2:2:C3'", 3.050, 3.935 );
+                setbounds(b, m4, "2:3:O2P", "2:2:C3'", 3.050, 4.004 );
+                setbounds(b, m4, "2:3:O5'", "2:2:C3'", 3.050, 3.859 );
+                setbounds(b, m4, "2:3:C5'", "2:2:O3'", 3.050, 3.943 );
+ 
+                setbounds(b, m4, "2:2:P",   "2:1:O3'", 1.595, 1.595 );
+                setbounds(b, m4, "2:2:O5'", "2:1:O3'", 2.469, 2.469 );
+                setbounds(b, m4, "2:2:P",   "2:1:C3'", 2.609, 2.609 );
+                setbounds(b, m4, "2:2:O1P", "2:1:O3'", 2.513, 2.513 );
+                setbounds(b, m4, "2:2:O2P", "2:1:O3'", 2.515, 2.515 );
+                setbounds(b, m4, "2:2:P",   "2:1:C4'", 3.550, 4.107 );
+                setbounds(b, m4, "2:2:P",   "2:1:C2'", 3.550, 4.071 );
+                setbounds(b, m4, "2:2:O1P", "2:1:C3'", 3.050, 3.935 );
+                setbounds(b, m4, "2:2:O2P", "2:1:C3'", 3.050, 4.004 );
+                setbounds(b, m4, "2:2:O5'", "2:1:C3'", 3.050, 3.859 );
+                setbounds(b, m4, "2:2:C5'", "2:1:O3'", 3.050, 3.943 );
+ 
+                dg_options(b, "seed=33333, gdist=0, ntpr=0, k4d=4.0");
+                setxyzw_from_mol( m4, NULL, xyz );
+
+		// refine using initial coordinates with distance function 
+                conjgrad( xyz, 4*m4.natoms, fret, db_viol, 0.1, 10., 100 );
+                setmol_from_xyzw( m4, NULL, xyz );    // get new atoms coordinates
+                // overlay new template coordinates on wc_helix coordinates
+                superimpose( m4, "1:1,2,3:??,H?[^'T]|2:1,2,3:??,H?[^'T]", m1,
+                        sprintf("1:%d,%d,%d:??,H?[^'T]|2:1,2,3:??,H?[^'T]", 
+							i-2, i-1, i ) );
+                // get dg backbone
+                setxyzw_from_mol( m4, "1:2,3:P,O??,C??|2:1,2:P,O??,C??", xyz );
+                // replace coords
+                setmol_from_xyzw( m1, 
+					sprintf("1:%d,%d:P,O??,C??|2:1,2:P,O??,C??", i-1, i ), xyz )
+;
+		if ( slen == 3 ){	// use refined structure (m4) as m1
+			setxyzw_from_mol( m4, NULL, xyz );
+			setmol_from_xyzw( m1, NULL, xyz );
+		}
+ 
+	}
+
+	m3 = newmolecule();
+	addstrand( m3, "sense" );
+	addstrand( m3, "anti" );
+	if( has_s )
+		mergestr( m3, "sense", "last",
+			m1, "sense", "first" );
+	if( has_a )
+		mergestr( m3, "anti", "last",
+			m1, "anti", "first" );
+
+	return( m3 );
+};

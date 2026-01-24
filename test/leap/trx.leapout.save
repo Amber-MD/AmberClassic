@@ -1,0 +1,132 @@
+-I: Adding /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/prep to search path.
+-I: Adding /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib to search path.
+-I: Adding /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm to search path.
+-I: Adding /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd to search path.
+-s: Ignoring all leaprc startup files.
+-f: Source leap.in.
+
+Welcome to LEaP!
+Sourcing: ./leap.in
+----- Source: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd/oldff/leaprc.ff10
+----- Source of /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd/oldff/leaprc.ff10 done
+Log file: ./leap.log
+Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/parm10.dat
+Reading title:
+PARM99 + frcmod.ff99SB + frcmod.parmbsc0 + OL3 for RNA
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/amino10.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/aminoct10.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/aminont10.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/oldff/phosphoaa10.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/nucleic10.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/atomic_ions.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/solvents.lib
+----- Source: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd/leaprc.water.tip3p
+----- Source of /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd/leaprc.water.tip3p done
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/atomic_ions.lib
+Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/solvents.lib
+Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+This is the additional/replacement parameter set for TIP3P water
+Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ions1lm_126_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Li/Merz ion parameters of monovalent ions for TIP3P water model (12-6 normal usage set)
+Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ionsjc_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Monovalent ion parameters for Ewald and TIP3P water from Joung & Cheatham JPCB (2008)
+Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ions234lm_126_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Li/Merz ion parameters of divalent to tetravalent ions for TIP3P water model (12-6 normal usage set)
+Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ionsjc_tip3p
+Reading force field modification type file (frcmod)
+Reading title:
+Monovalent ion parameters for Ewald and TIP3P water from Joung & Cheatham JPCB (2008)
+Using H(N)-modified Bondi radii
+Loading PDB file: ./trx.pdb
+  total atoms in file: 1654
+Checking Unit.
+
+/mnt/raidc2/kbelfon/amber2020/amber/bin/teLeap: Warning!
+The unperturbed charge of the unit (-4.000000) is not zero.
+
+/mnt/raidc2/kbelfon/amber2020/amber/bin/teLeap: Note.
+Ignoring the warning from Unit Checking.
+
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 307 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CALA	1
+	NSER	1
+  )
+ (no restraints)
+Scaling up box by a factor of 1.227697 to meet diagonal cut criterion
+  Solute vdw bounding box:              37.126 42.056 40.334
+  Total bounding box for atom centers:  66.610 66.610 66.610
+      (box expansion for 'iso' is  10.9%)
+  Solvent unit box:                     18.774 18.774 18.774
+  Volume: 154525.920 A^3 (oct)
+  Total mass 79031.260 amu,  Density 0.849 g/cc
+  Added 3739 residues.
+4 NA ions required to neutralize.
+Adding 4 counter ions to "prot" using 1A grid
+Grid extends from solute vdw + 1.37  to  7.37
+Resolution:      1.00 Angstrom.
+Solvent present: replacing closest with ion
+	 when steric overlaps occur
+Calculating grid charges
+(Replacing solvent molecule)
+Placed NA in prot at (-12.02, -4.49, -1.88).
+(Replacing solvent molecule)
+Placed NA in prot at (-18.59, 0.13, 8.58).
+(Replacing solvent molecule)
+Placed NA in prot at (-11.68, -9.48, -5.66).
+(Replacing solvent molecule)
+Placed NA in prot at (-5.94, 19.16, 5.21).
+
+Done adding ions.
+
+/mnt/raidc2/kbelfon/amber2020/amber/bin/teLeap: Warning!
+addIons: 1st Ion & target unit have charges of the same sign:
+     unit charge = -2.4869e-14; ion1 charge = -1;
+     can't neutralize.
+Checking Unit.
+Building topology.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 307 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CALA	1
+	NSER	1
+	WAT	3735
+  )
+ (no restraints)
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 2; Notes = 1.

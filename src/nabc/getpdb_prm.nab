@@ -1,0 +1,55 @@
+//
+//   Routine to read in a pdb-file and set up an NAB molecule using tleap
+//      to form a force field description.
+//  
+//   The path of teLeap is AMBERHOME/bin
+//   The leap data files used are in AMBERHOME/dat/leap.
+//
+//  
+//   Usage:   getpdb_prm( pdbfile, leaprc, leap_cmds, savefile )
+//
+
+molecule	getpdb_prm( string pdbfile, string leaprc, string leap_cmds, 
+					int savefile )
+{
+
+	molecule m;
+	atom a;
+	string	lcmd, lcfile, amberhome;
+	file	fp;
+	int		i, ier;
+
+	lcfile = "leap.in";
+	fp = fopen( lcfile, "w" );
+
+	fprintf( fp, "source %s\n", leaprc );
+	fprintf( fp, "X = loadPdb %s\n", pdbfile );
+	if( length(leap_cmds) ) fprintf( fp, "%s\n", leap_cmds );
+	fprintf( fp, "savePdb X %s.lpdb\n", pdbfile );
+	fprintf( fp, "saveAmberParm X tprmtop tprmcrd\n" );
+	fprintf( fp, "quit\n" );
+	fclose( fp );
+
+    if( !( amberhome = getenv( "AMBERHOME" ) ) ){
+         fprintf( stderr, "AMBERHOME not defined.\n" );
+         exit( 1 );
+    }
+	lcmd = sprintf( "%s/bin/teLeap -s -f %s -I%s/dat/leap/cmd -I%s/dat/leap/parm -I%s/dat/leap/prep -I%s/dat/leap/lib > tleap.out", 
+        amberhome, lcfile, amberhome, amberhome, amberhome, amberhome );
+	printf( "\nRunning: %s\n", lcmd );
+
+	system( lcmd ); 
+	unlink( lcfile );
+
+	m = getpdb( pdbfile + ".lpdb" );
+	readparm( m, "tprmtop" );
+
+	if( !savefile ){
+		unlink( pdbfile + ".lpdb" );
+		unlink( "./tprmtop" );
+		unlink( "./tprmcrd" );
+		unlink( "./leap.log" );
+	}
+
+	return( m );
+};

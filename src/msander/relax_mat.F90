@@ -1196,8 +1196,8 @@ subroutine indexn(ix,ih,iin)
       inatom(i) = 0
    end do
    call rgroup(natomx,natc,nres,ngrp,ix(i02),ih(m02),ih(m04),ih(m06), &
-               ih(m08),ihyd,idummy,idummy,idummy,idummy,dummy, &
-               .false.,.false.,.false.,0,iin,.true.)
+               ih(m08),ihyd,idummy,dummy, &
+               .false.,.false.,.false.,iin,.true.)
    do i=1,natomx
       if (ihyd(i) /= 1 .or. resat(i)(1:1) /= 'H') ihyd(i) = 0
       if ((id2o == 1) .and. &

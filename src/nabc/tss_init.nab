@@ -1,0 +1,23 @@
+file	wfp;
+
+int	tss_init() c;
+int	tss_write() c;
+
+if( argc != 4 ){
+	fprintf( stderr, "usage: %s mat-file range-file work-file\n",
+		argv[ 1 ] );
+	exit( 1 );
+}
+
+if( ( wfp = fopen( argv[ 4 ], "w" ) ) == NULL ){
+	fprintf( stderr, "%s: can't write work-file '%s'\n",
+		argv[ 1 ], argv[ 4 ] );
+	exit( 1 );
+}
+
+if( tss_init( argv[ 2 ], argv[ 3 ] ) )
+	exit( 1 );
+
+tss_write( wfp );
+
+fclose( wfp );

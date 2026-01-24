@@ -1,0 +1,101 @@
+
+          -------------------------------------------------------
+          GBNSR6 2015                       
+          -------------------------------------------------------
+
+| Run on 03/23/2018 at 20:42:33
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: mdin                                                                  
+| MDOUT: alpb.out                                                              
+|INPCRD: alpb.inpcrd                                                           
+|  PARM: alpb.prmtop                                                           
+|
+
+ Here is the input file:
+
+ test, compute solvation energy with gbnsr6                                    
+ &cntrl                                                                        
+   inp=1                                                                       
+ /                                                                             
+ &gb                                                                           
+   epsin=10.0, epsout=78.5, istrng=0, dprob=1.4, space=0.4,                    
+   arcres=0.2, B=0, alpb=1, rbornstat=1, cavity_surften=0.005                  
+ /                                                                             
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+| New format PARM file being parsed.
+| Version =    1.000 Date = 03/12/18 Time = 15:33:06
+ NATOM  =       3 NTYPES =       2 NBONH =       0 MBONA  =       0
+ NTHETH =       0 MTHETA =       0 NPHIH =       0 MPHIA  =       0
+ NHPARM =       0 NPARM  =       0 NNB   =       3 NRES   =       3
+ NBONA  =       0 NTHETA =       0 NPHIA =       0 NUMBND =       0
+ NUMANG =       0 NPTRA  =       0 NATYP =       2 NPHB   =       0
+ IFBOX  =       0 NMXRS  =       1 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+
+|     Memory Use     Allocated
+|     Real                 143
+|     Hollerith             23
+|     Integer            18034
+|     Max Pairs              1
+|     Max Rstack             1
+|     Max Istack             1
+|       Total               71 kbytes
+
+| Note: 1-4 EEL scale factors are being read from the topology file.
+
+--------------------------------------------------------------------------------
+   2.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+ begin time read from input coords =     0.000 ps
+
+ Number of triangulated 3-point waters found:        0
+
+--------------------------------------------------------------------------------
+   3.  RESULTS
+--------------------------------------------------------------------------------
+
+Print:    Atom number      Inverse Effective Born Radii
+rinv           1            0.10666644
+rinv           2            0.09999968
+rinv           3            0.10666658
+
+ Cavity solvation energy      8.1656
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =    -69083.9197  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =         0.0000  VDWAALS    =         0.0000
+ EELEC  =    -66410.4435  EGB     =     -2681.6419  RESTRAINT  =         0.0000
+ ESURF  =         8.1656
+ ------------------------------------------------------------------------------
+
+
+
+  Maximum number of minimization cycles reached.
+
+
+                    FINAL RESULTS
+
+
+ NSTEP =        1   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
+ Etot   =    -69083.9197  EKtot   =         0.0000  EPtot      =         0.0000
+ BOND   =         0.0000  ANGLE   =         0.0000  DIHED      =         0.0000
+ 1-4 NB =         0.0000  1-4 EEL =         0.0000  VDWAALS    =         0.0000
+ EELEC  =    -66410.4435  EGB     =     -2681.6419  RESTRAINT  =         0.0000
+ ESURF  =         8.1656
+ ------------------------------------------------------------------------------
+
+|           Job began  at 20:42:33.379  on 03/23/2018
+|           Setup done at 20:42:33.381  on 03/23/2018
+|           Run   done at 20:42:33.436  on 03/23/2018
+|     wallclock() was called      72 times

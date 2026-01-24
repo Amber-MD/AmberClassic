@@ -1,0 +1,43 @@
+#define MAXRES 1000
+int			pointplane();
+
+int		get_pep_info( molecule m, point pn[MAXRES], point pc[MAXRES], 
+		float pb[MAXRES], int pepres[MAXRES] )
+{
+
+	int			npep, ipep, abs_res;
+	atom		a;
+	residue		r;
+	point		Cpos[ MAXRES ], Opos[ MAXRES ], Npos[ MAXRES ];
+	string		l_resname;
+
+	abs_res = npep = 0;
+	for( r in m ){ 
+		abs_res = abs_res + 1; l_resname = r.resname;
+		for( a in r ){
+
+//   find peptide groups:  assumes that molecules with atoms named
+//        "N", "C", "O" are peptides/proteins;  also assumes that
+//        atom order in the loop will be N before C before O
+
+			if( a.atomname == "N" && npep > 0 ) { 
+				Npos[ npep ] = a.pos; pepres[ npep ] = abs_res;
+			}
+			if( a.atomname == "C" ) { npep = npep + 1; Cpos[ npep ] = a.pos; }
+			if( a.atomname == "O" ) Opos[ npep ] = a.pos;
+		}
+	}
+	if( npep > 0 && l_resname != "NME" ) 
+		npep = npep - 1; //final CO group won't have a corresponding 
+                         //    next-residue N to match
+	printf( "\nfound %d peptides\n", npep );
+
+	for( ipep=1; ipep<= npep; ipep = ipep+1 ){
+
+    	pointplane( Cpos[ipep], Opos[ipep], Npos[ipep], pn[ipep],
+        	pc[ipep], pb[ipep] );
+    	pc[ipep] = 0.5586*Npos[ipep] + 0.5955*Opos[ipep] - 0.1542*Cpos[ipep];
+
+	}
+	return( npep );
+};

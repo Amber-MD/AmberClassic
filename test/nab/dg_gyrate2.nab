@@ -1,0 +1,62 @@
+#define NTRIAL 20
+
+molecule	m;
+bounds		b;
+float		nxyz[ dynamic ];
+int			i,itrial,ier;
+string		opt, cpos, opos, npos, hpos, capos, ca1pos;
+float		fret,xc,yc,zc,rg;
+
+
+m = linkprot( "", "AAAAAAAAAAAAAAAAAAAA", "protein.opls.rlb" );
+
+allocate nxyz[ 4*m.natoms ];
+
+b = newbounds(m, "" );
+//  add trans peptide chirality volumes:
+for( i=1; i<m.nresidues; i=i+1 ){
+	capos = sprintf( ":%d:CA",  i );
+	cpos = sprintf( ":%d:C",  i );
+	opos = sprintf( ":%d:O",  i );
+	npos = sprintf( ":%d:N",  i+1 );
+	hpos = sprintf( ":%d:H",  i+1 );
+	ca1pos = sprintf( ":%d:CA",  i+1 );
+	setchivol( b, m, capos, cpos, opos, npos, 0.0 );
+	setchivol( b, m, cpos, opos, npos, hpos, 0.0 );
+	setchivol( b, m, cpos, npos, hpos, ca1pos, 0.0 );
+}
+
+tsmooth( b, 0.0005 );
+
+opt = "k4d=2.0, kchi=5.0, sqviol=1, pembed=1, rbox=50.0, riter=10000, shuffle=1 ";
+dg_options( b, opt );
+
+for( itrial=1; itrial<=NTRIAL; itrial++ ){
+
+	dg_options( b, "ntpr=10000" );
+	embed( b, nxyz );
+	dg_options( b, "ntpr=50" );
+	ier = conjgrad( nxyz, 4*m.natoms, fret, db_viol, 0.001, 10., 200 );
+
+	// compute radius of gyration:
+
+	rg = xc = yc = zc = 0.0;
+	for( i=0; i<m.natoms; i=i+1 ){
+		xc = xc + nxyz[  4*i + 1 ];
+		yc = yc + nxyz[  4*i + 2 ];
+		zc = xc + nxyz[  4*i + 3 ];
+	}
+	xc = xc/m.natoms;
+	yc = yc/m.natoms;
+	zc = zc/m.natoms;
+
+	for( i=0; i<m.natoms; i=i+1 ){
+		rg = rg + (nxyz[4*i+1] - xc)*(nxyz[4*i+1] - xc) +
+				(nxyz[4*i+2] - yc)*(nxyz[4*i+2] - yc) +
+				(nxyz[4*i+3] - zc)*(nxyz[4*i+3] - zc);
+	}
+	rg = sqrt( rg/m.natoms );
+	printf( "radius of gyration: %8.3f\n", rg );
+	printf( "--------------------------------------------------------\n" );
+
+}

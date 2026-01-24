@@ -96,8 +96,8 @@ contains
           calc_xray_energy
     use xray_non_bulk_module, only: calc_f_non_bulk, get_f_non_bulk
     use xray_bulk_model_module, only: add_bulk_contribution_and_rescale, get_f_scale
-    use xray_dpartial_module, only: calc_partial_d_target_d_frac, &
-         calc_partial_d_vls_d_frac
+    use xray_dpartial_module, only: calc_partial_d_target_d_frac
+    use xray_dpartial_impl_cpu_module, only: calc_partial_d_vls_d_frac
     use xray_target_module, only: target_function_id
     implicit none
     real(real_kind), intent(in) :: xyz(:, :)
@@ -150,13 +150,8 @@ contains
 
     call timer_start(TIME_DHKL)
     if( target_function_id == 1 ) then
-#ifdef CUDA
-       write(6,*) 'VLS target not supported with cuda'
-       call mexit(6,1)
-#else
        grad_xyz = xray_weight * unit_cell%to_orth_derivative( &
           calc_partial_d_vls_d_frac( frac, get_f_scale(size(abs_Fobs)) ) )
-#endif
     else
        grad_xyz = xray_weight * unit_cell%to_orth_derivative( &
           calc_partial_d_target_d_frac(frac, get_f_scale(size(abs_Fobs)), &

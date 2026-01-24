@@ -1,0 +1,24 @@
+#!/usr/bin/perl -w
+#
+#  Convert a CHARMM pdb file to PDB version 3; after this, run through
+#   protonate -k
+#
+open TMP, ">abzzf.pdb";
+
+while (<>){
+	s/ CD  ILE/ CD1 ILE/;
+	s/ HD1 ILE/HD11 ILE/;
+	s/ HD2 ILE/HD12 ILE/;
+	s/ HD3 ILE/HD13 ILE/;
+	s/ HSD / HID /;
+	s/ HSE / HIE /;
+	s/ HT1 / H1  /;
+	s/ HT2 / H2  /;
+	s/ HT3 / H3  /;
+	s/ OT1 / O   /;
+	s/ OT2 / OXT /;
+	print TMP;
+}
+close TMP;
+system( "protonate -k < abzzf.pdb" );
+unlink "abzzf.pdb";

@@ -8,10 +8,6 @@ if [ ! -z "$DO_CUDA" ]; then
    sander=$sander.cuda
 fi
 
-if [ ! -z "$USE_CUDA" ]; then
-   sander=$sander.cuda
-fi
-
 if [ ! -z "$DO_PARALLEL" ]; then
    sander=$sander.MPI
 fi

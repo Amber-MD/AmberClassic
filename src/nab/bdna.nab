@@ -1,0 +1,11 @@
+// bdna() - create average B-form duplex
+molecule bdna( string seq )
+{
+	molecule m;
+	string cseq;
+
+	cseq = wc_complement( seq, "", "dna" );
+	m = wc_helix( seq, "", "dna", cseq, "", "dna",
+		2.25, -4.96, 36.0, 3.38, "s5a5s3a3");
+	return( m );
+};

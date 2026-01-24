@@ -1,0 +1,71 @@
+-I: Adding /tmp/amber/dat/leap/prep to search path.
+-I: Adding /tmp/amber/dat/leap/lib to search path.
+-I: Adding /tmp/amber/dat/leap/parm to search path.
+-I: Adding /tmp/amber/dat/leap/cmd to search path.
+-f: Source loadpdb.in.
+
+Welcome to LEaP!
+Sourcing leaprc: ./leaprc
+Sourcing: ./loadpdb.in
+----- Source: /tmp/amber/dat/leap/cmd/leaprc.water.spce
+----- Source of /tmp/amber/dat/leap/cmd/leaprc.water.spce done
+Loading library: /tmp/amber/dat/leap/lib/atomic_ions.lib
+Loading library: /tmp/amber/dat/leap/lib/solvents.lib
+Loading parameters: /tmp/amber/dat/leap/parm/frcmod.spce
+Reading force field modification type file (frcmod)
+Reading title:
+This is the additional/replacement parameter set for SPC/E water
+Loading parameters: /tmp/amber/dat/leap/parm/frcmod.ionsjc_spce
+Reading force field modification type file (frcmod)
+Reading title:
+Monovalent ion parameters for Ewald and SPC/E water from Joung & Cheatham JPCB (2008)
+Loading parameters: /tmp/amber/dat/leap/parm/frcmod.ions234lm_126_spce
+Reading force field modification type file (frcmod)
+Reading title:
+Li/Merz ion parameters of divalent to tetravalent ions for SPC/E water model (12-6 normal usage set)
+Loading PDB file: ./wat3.pdb
+  total atoms in file: 9
+Checking 'x'....
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.000 angstroms between nonbonded atoms H2 and H2
+-------  .R<WAT 5>.A<H2 3> and .R<WAT 6>.A<H2 3>
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.957 angstroms between nonbonded atoms H2 and O
+-------  .R<WAT 5>.A<H2 3> and .R<WAT 6>.A<O 1>
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.000 angstroms between nonbonded atoms H1 and H1
+-------  .R<WAT 5>.A<H1 2> and .R<WAT 6>.A<H1 2>
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.957 angstroms between nonbonded atoms H1 and O
+-------  .R<WAT 5>.A<H1 2> and .R<WAT 6>.A<O 1>
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.957 angstroms between nonbonded atoms O and H2
+-------  .R<WAT 5>.A<O 1> and .R<WAT 6>.A<H2 3>
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.957 angstroms between nonbonded atoms O and H1
+-------  .R<WAT 5>.A<O 1> and .R<WAT 6>.A<H1 2>
+
+/tmp/amber/bin/teLeap: Warning!
+Close contact of 0.000 angstroms between nonbonded atoms O and O
+-------  .R<WAT 5>.A<O 1> and .R<WAT 6>.A<O 1>
+Checking parameters for unit 'x'.
+Checking for bond parameters.
+Checking for angle parameters.
+check:  Warnings: 7
+Unit is OK.
+UNIT name: default_name
+Head atom: null
+Tail atom: null
+Contents: 
+R<WAT 5>
+R<WAT 6>
+R<WAT 7>
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 7; Notes = 0.

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to compute crambin GB normal modes:"
+echo ""
+../../bin/$NAB -o crambin crambin.nab || error
+$DO_PARALLEL ./crambin > crambin.out || error
+
+../dacdif crambin.out.check crambin.out
+
+rm -f crambin crambin.c
+exit 0

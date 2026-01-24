@@ -1,0 +1,158 @@
+int   getseq_from_pdb( string filename, int numstrand, 
+		string seq[1], string strandname[1], string type[1] )
+{
+
+//      Read pdb file from filename, extract the sequence of
+//      each strand, put this into a one-letter code, and insert into
+//      the "seq" array; also set the type of each strand in the "type"
+//      array, and set numstrand to the number of strands found.
+//      The value returned in getseq_from_pdb is the number of residues 
+//      that could not be identified (=0 if everthing worked).
+
+//      returned types are "protein", "dna", "dnac", "rna", or "rnac",
+//		where the "c" indicates "capped", i.e. with terminating hydgrogens
+//		at the 5' and 3' ends
+
+	atom		a;
+	molecule	m1;
+	int			i, res, nomatch, capped[ 50 ];
+	string map3to1[ hashed ];
+
+//  standard protein residues:
+	map3to1["ALA"] = "A";
+	map3to1["CYS"] = "C";
+	map3to1["ASP"] = "D";
+	map3to1["GLU"] = "E";
+	map3to1["PHE"] = "F";
+	map3to1["GLY"] = "G";
+	map3to1["HIS"] = "H";
+	map3to1["HID"] = "H";
+	map3to1["HIE"] = "h";
+	map3to1["ILE"] = "I";
+	map3to1["LYS"] = "K";
+	map3to1["LEU"] = "L";
+	map3to1["MET"] = "M";
+	map3to1["ASN"] = "N";
+	map3to1["PRO"] = "P";
+	map3to1["GLN"] = "Q";
+	map3to1["ARG"] = "R";
+	map3to1["SER"] = "S";
+	map3to1["THR"] = "T";
+	map3to1["VAL"] = "V";
+	map3to1["TRP"] = "W";
+	map3to1["CYX"] = "X";
+	map3to1["TYR"] = "Y";
+	map3to1["ACE"] = "n";
+	map3to1["NME"] = "c";
+	map3to1["HIP"] = "3";
+
+//  three-letter nucleic acid codes:
+	map3to1["ADE"] = "A";
+	map3to1["GUA"] = "G";
+	map3to1["CYT"] = "C";
+	map3to1["THY"] = "T";
+	map3to1["URA"] = "U";
+
+//  one-letter nucleic acid codes:
+	map3to1["A"] = "A";
+	map3to1["G"] = "G";
+	map3to1["C"] = "C";
+	map3to1["T"] = "T";
+	map3to1["U"] = "U";
+
+//  Amber-style names for rna:
+	map3to1["RA"] = "A";
+	map3to1["RG"] = "G";
+	map3to1["RC"] = "C";
+	map3to1["RU"] = "U";
+
+	map3to1["RA5"] = "A";
+	map3to1["RG5"] = "G";
+	map3to1["RC5"] = "C";
+	map3to1["RU5"] = "U";
+
+	map3to1["RA3"] = "A";
+	map3to1["RG3"] = "G";
+	map3to1["RC3"] = "C";
+	map3to1["RU3"] = "U";
+
+//  one-letter nucleic acid codes with end designation:
+	map3to1["A5"] = "A";
+	map3to1["G5"] = "G";
+	map3to1["C5"] = "C";
+	map3to1["T5"] = "T";
+	map3to1["U5"] = "U";
+
+	map3to1["A3"] = "A";
+	map3to1["G3"] = "G";
+	map3to1["C3"] = "C";
+	map3to1["T3"] = "T";
+	map3to1["U3"] = "U";
+
+//  miscellaneous
+	map3to1["WAT"] = "w";
+	map3to1["HOH"] = "w";
+	map3to1["NH2"] = "a";
+	map3to1["MTH"] = "m";
+
+	nomatch = 0;
+	m1 = getpdb( filename ); if( m1 == NULL ) exit( 1 );
+
+	res = numstrand = 0;
+	for( a in m1 ){
+
+		if( a.resnum != res || a.strandnum != numstrand) {
+			// starting a new residue
+			if( a.strandnum != numstrand ) {     
+				// starting a new strand
+				numstrand = a.strandnum;
+				assert( numstrand <= 50 );
+				capped[ numstrand ] = 0;
+				seq[ numstrand ] = "";
+				type[ numstrand ] = "protein";
+				strandname[ numstrand ] = substr( a.resid, 1, 1 );
+				if( strandname[ numstrand ] == " " )
+					strandname[ numstrand ] = sprintf( "%d", numstrand );
+			}
+			if( a.resname in map3to1 ) {
+				seq[ numstrand ] = seq[ numstrand ] + map3to1[ a.resname ];
+			} else {
+				if( a.resnum == 1 ){  // single unidentified resiude is hetatm:
+					seq[ numstrand ] = a.resname;
+					type[ numstrand ] = "hetatm";
+				} else {
+					seq[ numstrand ] = seq[ numstrand ]+ "?";
+				}
+				nomatch = nomatch + 1;
+			}
+
+			// try to figure out molecular type from the sequence:
+
+			if( (a.resname == "GUA" || a.resname == "ADE" || 
+				a.resname == "APU" ||
+				a.resname == "THY" || a.resname == "CYT" ||
+			    a.resname == "G" || a.resname == "A" || 
+				a.resname == "T" || a.resname == "C" ) &&
+				type[ numstrand ] !~ "rna" ) type[ numstrand ] = "dna";
+
+			if( a.resname == "RG" || a.resname == "RA" || 
+				a.resname == "RU" || a.resname == "RC" ) 
+				type[ numstrand ] = "rna";
+
+			if( a.resname =~ "^U" ) type[ numstrand ] = "rna";
+
+			if( a.resname =~ "5" || a.resname =~ "3" )
+				capped[ numstrand ] = 1;
+
+            if( a.resname == "HOH" || a.resname == "WAT" ) 
+                type[numstrand] = "hetatm";
+		}
+		res = a.resnum;
+	}
+
+	for( i=1; i<=numstrand; i++ ){
+		if( capped[ i ] ) type[ numstrand ] += "c";
+	}
+
+	return( nomatch );
+};

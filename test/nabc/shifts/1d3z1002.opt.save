@@ -1,0 +1,52 @@
+basis 6-31gs
+coordinates 1d3z1002.xyz
+pointcharges 1d3z1002.pos
+scrdir 1d3z1002
+method pbe
+maxit 250
+levelshift yes
+levelshiftvala 0.2
+min_coordinates hdlc
+run minimize
+nstep 10
+charge    1
+end
+$constraints
+  atom   18
+  atom   19
+  atom   20
+  atom   21
+  atom   22
+  atom   23
+  atom   24
+  atom   25
+  atom   26
+  atom   27
+  atom   28
+  atom   29
+  atom   30
+  atom   31
+  atom   32
+  atom   33
+  atom   34
+  atom   35
+  atom   36
+  atom   37
+  atom   38
+  atom   39
+  atom   40
+  atom   41
+  atom   42
+  atom   43
+  atom   44
+  atom   45
+  atom   46
+  atom   47
+  atom   48
+  atom   49
+  atom   50
+  atom   51
+  atom   52
+  atom   53
+  atom   54
+$end

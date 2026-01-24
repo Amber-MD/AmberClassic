@@ -1,0 +1,9 @@
+#!/bin/sh
+echo 'Caution! Works only with parm7 and newer prmtop files!'
+input=$1
+output=$2
+
+if [ ! "$input" ] || [ ! "$output" ]; then echo 'Usage: lmodprmtop input_prmtop output_prmtop'; exit; fi
+
+/bin/sed -e '/%FLAG LENNARD_JONES_ACOEF/,/%FLAG LENNARD_JONES_BCOEF/ {s/0.00000000E+00/1.00000000E+03/g}' $input >$output 
+

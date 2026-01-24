@@ -1,0 +1,5 @@
+#!/bin/sh
+
+../../../bin/PropPDB -p ../UnitCell/2igd.pdb -o Prp2igd.pdb -ix 2 -iy 2 -iz 1
+
+../../dacdif Prp2igd.pdb.save Prp2igd.pdb

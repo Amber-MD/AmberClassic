@@ -1,0 +1,106 @@
+#
+#
+# metaTwist (compiled on Apr  1 2019 @ 10:31:32)
+#
+#
+# Reading from input: 
+# metatwist --dx ../0_crown-ether-3drism/g.K+.1.dx.bz2 --ldx convolution-lp-K+.dx --map blobsper --thresh 0.1 --bulkdens 0.2 --species K+ K+ 
+#
+#
+# Reading from ../0_crown-ether-3drism/g.K+.1.dx.bz2 file .
+#
+#
+# Volumetric data initiated.
+# name        : ../0_crown-ether-3drism/g.K+.1
+# file        : ../0_crown-ether-3drism/g.K+.1.dx.bz2
+#
+#
+#
+#
+#
+# Volumetric data details.
+# name        : ../0_crown-ether-3drism/g.K+.1
+# species     : K+ 
+# residue     : K+ 
+# bulk dens(particle * A^-3): 1.205E-04 
+# bulk conc(M):    0.200 
+# 
+# origin [A]  :  -37.074  -35.916  -43.974
+# skew        :    0.500    0.000    0.000
+# skew        :    0.000    0.500    0.000
+# skew        :    0.000    0.000    0.500
+# max value   : 2089.800 
+# min value   :    0.000 
+# grid size   : 192 x 192 x 192 
+# 
+# a  [A]      :  96.0000   0.0000   0.0000
+# b  [A]      :   0.0000  96.0000   0.0000
+# c  [A]      :   0.0000   0.0000  96.0000
+# a* [A^-1]   :   0.0104   0.0000   0.0000
+# b* [A^-1]   :   0.0000   0.0104   0.0000
+# c* [A^-1]   :   0.0000   0.0000   0.0104
+# 
+# Volume [A^3]:   884736.000 
+# Vvoxel [A^3]:        0.125 
+#
+#
+# Volumetric data initiated.
+# name        : convolution-lp-K+
+# file        : convolution-lp-K+.dx
+#
+#
+#
+#
+#
+# Volumetric data details.
+# name        : convolution-lp-K+
+# species     : K+ 
+# residue     : K+ 
+# bulk dens(particle * A^-3): 1.205E-04 
+# bulk conc(M):    0.200 
+# 
+# origin [A]  :  -37.074  -35.916  -43.974
+# skew        :    0.500    0.000    0.000
+# skew        :    0.000    0.500    0.000
+# skew        :    0.000    0.000    0.500
+# max value   :   61.705 
+# min value   : -1058.100 
+# grid size   : 192 x 192 x 192 
+# 
+# a  [A]      :  96.0000   0.0000   0.0000
+# b  [A]      :   0.0000  96.0000   0.0000
+# c  [A]      :   0.0000   0.0000  96.0000
+# a* [A^-1]   :   0.0104   0.0000   0.0000
+# b* [A^-1]   :   0.0000   0.0104   0.0000
+# c* [A^-1]   :   0.0000   0.0000   0.0104
+# 
+# Volume [A^3]:   884736.000 
+# Vvoxel [A^3]:        0.125 
+#
+# Drop analysis for a periodic system.
+# Volumetric data (rho): ../0_crown-ether-3drism/g.K+.1
+# Laplacian L[rho]: convolution-lp-K+
+# Considering zones with L[rho] < 0.1 * min(L[rho]) i.e. -1058.1.
+# Considering zones with L[rho] < -105.81 [rho unit]/A^3
+#
+#
+#
+# Blob - index
+# Max[x,y,z] - coordinates of the point where density is maximum within the blob.
+# Occ[#] - integrated occupancy of the blob. 
+# V[A^3] - volume occupied by the blob.
+# M[x,y,z] - average position (first moment) of the blob.
+# Var[A^2] - average variance (second moment) of the blob.
+# rave/max - ration between density at the average position and maximum value of density.
+ Blob Max[x,y,z]                     Occ[#]   V[A^3] M[x,y,z]                     Var[A^2] rave/max[%]
+    0 (  10.926   12.084    4.026)    0.096   13.750 (  10.946   12.156    4.020)    1.174    0.887
+# Found 1 blobs and 2 tightly bound modes.
+#
+#
+# Centroid coordinates in pdb format:
+# 	../0_crown-ether-3drism/g.K+.1-convolution-lp-K+-blobs-centroid.pdb
+# Average coordinates of each drop in pdb format:
+# 	../0_crown-ether-3drism/g.K+.1-convolution-lp-K+-blobs-meanposition.pdb
+# Tabulated detailed data for each drop:
+# 	../0_crown-ether-3drism/g.K+.1-convolution-lp-K+-blobs-data.dat
+# metatwist completed succesfully!

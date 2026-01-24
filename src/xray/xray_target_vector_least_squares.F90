@@ -1,10 +1,10 @@
 module xray_target_vector_least_squares_module
 
-#ifdef CUDA
-    use xray_target_vector_least_squares_impl_gpu_module
-#else
+!   #ifdef CUDA
+!     use xray_target_vector_least_squares_impl_gpu_module
+!   #else
     use xray_target_vector_least_squares_impl_cpu_module
-#endif
+!   #endif
 
     ! Public module interface
     public :: init

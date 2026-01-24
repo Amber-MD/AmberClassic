@@ -1,0 +1,212 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%BoundingBox: 6 3 435 186
+%%EndComments
+% EPSF created by ps2eps 1.54
+%%BeginProlog
+save
+countdictstack
+mark
+newpath
+/showpage {} def
+/setpagedevice {pop} def
+%%EndProlog
+%%Page 1 1
+/in { 72 mul } def
+/cs { moveto dup stringwidth pop -.5 mul 0 rmoveto show } def
+/D_RAD .3 in def
+/D_LEN 4.5 in def
+/D_ANG -4.1 def
+/D_SPC D_ANG neg sin D_LEN mul def
+/BOX {
+	gsave
+	translate
+	0 0 moveto
+	dup 0 exch rlineto
+	exch 0 rlineto
+	0 exch neg rlineto
+	closepath
+	{
+		gsave
+		.95 setgray
+		fill
+		grestore
+	} if
+	0 setgray
+	1 setlinewidth
+	stroke
+	grestore
+} def
+/arrow {
+	gsave
+	translate
+	/a_ht exch def
+	/a_wd exch def
+	newpath
+	0 0 moveto
+	0 a_ht lineto
+	a_wd 0 lineto
+	0 a_ht neg lineto
+	closepath
+	0 setgray
+	fill
+	grestore
+} def
+/enter	{
+	gsave
+	translate
+	rotate
+	newpath
+	-.8 D_LEN mul D_RAD moveto
+	-1 D_LEN mul D_RAD lineto
+	-1 D_LEN mul 0 D_RAD 90 -90 arc
+	-.8 D_LEN mul D_RAD neg lineto
+	gsave
+	.8 setgray
+	fill
+	grestore
+	stroke
+	-.75 D_LEN mul 0 moveto
+	-1 D_LEN mul 0 lineto
+	3 setlinewidth
+	stroke
+	grestore
+} def
+/middle	{
+	gsave
+	translate
+	rotate
+	newpath
+	-1 D_LEN mul D_RAD neg moveto
+	0 D_RAD neg lineto
+	0 0 D_RAD -90 90 arc
+	-1 D_LEN mul D_RAD lineto
+	-1 D_LEN mul 0 D_RAD 90 -90 arc
+	closepath
+	gsave
+	.8 setgray
+	fill
+	grestore
+	stroke
+	0 0 moveto
+	-1 D_LEN mul 0 lineto
+	3 setlinewidth
+	stroke
+	grestore
+} def
+/leave	{
+	gsave
+	translate
+	rotate
+	newpath
+	-.2 D_LEN mul D_RAD neg moveto
+	0 D_RAD neg lineto
+	0 0 D_RAD -90 90 arc
+	-.2 D_LEN mul D_RAD lineto
+	gsave
+	.8 setgray
+	fill
+	grestore
+	stroke
+	0 0 moveto
+	-.25 D_LEN mul 0 lineto
+	3 setlinewidth
+	stroke
+	-.3 in .05 in -.25 D_LEN mul 0 arrow
+	grestore
+} def
+/histone {
+	gsave
+	translate
+	grestore
+}def
+/nuc {
+gsave
+translate
+% draw strands behind the histones
+D_ANG neg 0 0 2 D_SPC mul add middle
+D_ANG neg 0 0 4 D_SPC mul add middle
+% draw a box that represents the histones
+true D_LEN D_ANG cos mul D_RAD 2 mul sub
+	6.0 D_SPC mul
+	D_LEN D_ANG cos mul D_RAD sub neg
+	-.50 D_SPC mul BOX
+% draw the strands in front of the histones
+D_ANG 0 0 enter
+D_ANG 0 0 2 D_SPC mul add middle
+D_ANG 0 0 4 D_SPC mul add leave
+% draw theta
+newpath
+11.221 in -.161 in 14.0 in 180 175.9 arcn
+currentpoint /ypos exch def /xpos exch def
+stroke
+gsave
+xpos ypos translate
+90 D_ANG add rotate
+.4 in .05 in -.4 in 0 arrow
+grestore
+-2.7 in 0.1 in moveto
+/Symbol findfont 18 scalefont setfont
+(q \273 5\260) show
+% draw the vertical dimensions
+/Times-Roman findfont 18 scalefont setfont
+(60 A) D_RAD 3 mul D_SPC 3 mul 18 sub cs
+% down arrow
+newpath
+D_RAD 2.6 mul D_SPC -.5 mul moveto
+D_RAD .8 mul 0 rlineto
+stroke
+D_RAD 3 mul D_SPC 1.75 mul moveto
+D_RAD 3 mul D_SPC -.3 mul lineto
+stroke
+gsave
+D_RAD 3 mul D_SPC .45 mul translate
+-90 rotate
+D_RAD D_RAD .2 mul  0 0 arrow
+grestore
+% up arrow
+D_RAD 2.6 mul D_SPC 5.5 mul moveto
+D_RAD .8 mul 0 rlineto
+% up arrow
+D_RAD 3 mul D_SPC 3.25 mul moveto
+D_RAD 3 mul D_SPC 5.1 mul lineto
+stroke
+gsave
+D_RAD 3 mul D_SPC 4.61 mul translate
+90 rotate
+D_RAD D_RAD .2 mul  0 0 arrow
+grestore
+% draw the horiz. dimensions
+/Times-Roman findfont 18 scalefont setfont
+(110 A) D_LEN -.5 mul D_SPC 7 mul 6 sub cs
+D_LEN -1 mul D_RAD sub D_SPC 6.6 mul moveto
+D_LEN -1 mul D_RAD sub D_SPC 7.4 mul lineto
+stroke
+D_LEN -.6 mul  D_SPC 7 mul moveto
+D_LEN -1 mul D_RAD sub D_SPC 7 mul lineto
+stroke
+gsave
+D_LEN -1 mul D_SPC 7 mul translate
+-180 rotate
+D_RAD D_RAD .2 mul 0 0 arrow
+stroke
+grestore
+D_RAD D_SPC 6.6 mul moveto
+D_RAD D_SPC 7.4 mul lineto
+stroke
+D_LEN -.4 mul  D_SPC 7 mul moveto
+D_RAD .9 mul D_SPC 7 mul lineto
+stroke
+gsave
+0 D_SPC 7 mul translate
+D_RAD D_RAD .2 mul 0 0 arrow
+grestore
+grestore
+} def
+4.9 in .2 in nuc
+showpage
+%%Trailer
+cleartomark
+countdictstack
+exch sub { end } repeat
+restore
+%%EOF

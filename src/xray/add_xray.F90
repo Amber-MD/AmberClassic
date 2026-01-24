@@ -64,23 +64,6 @@ program add_xray
 
    ! begin
 
-   call get_environment_variable( 'MSANDERHOME', ambhome, amblength )
-   if( amblength > 0 ) then
-     symmop_filename = ambhome(1:amblength) // '/dat/xray/symop.lib'
-   else
-     symmop_filename = ' '
-   endif
-   if( amblength > 0 ) then
-      if (electronsf) then
-         scatter_filename = ambhome(1:amblength) // &
-            '/dat/xray/atomsf_electron.lib'
-      else
-         scatter_filename = ambhome(1:amblength) // '/dat/xray/atomsf.lib'
-      endif
-   else
-      scatter_filename = ' '
-   endif
-
    argc = command_argument_count()
    if (argc==0) call usage()
    iarg = 0
@@ -106,9 +89,9 @@ program add_xray
       end select
    end do
    
-   call get_environment_variable( 'MSANDERHOME', ambhome, amblength )
+   call get_environment_variable( 'AMBERCLASSICHOME', ambhome, amblength )
    if( amblength .le. 0 ) then
-      write(0,*) 'Error: MSANDERHOME is not set!'
+      write(0,*) 'Error: AMBERCLASSICHOME is not set!'
       stop
    endif
 

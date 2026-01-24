@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo "Running test of randomized embedding"
+echo ""
+../../bin/nab -o rembedt rembed.nab || error
+./rembedt > rembed.out.tmp || error
+cat rembed.out.tmp | grep gyration > rembed.out
+rm rembed.out.tmp
+
+../dacdif -r 0.1 rembed.out.check rembed.out
+
+rm -f rembedt rembed.c
+exit 0

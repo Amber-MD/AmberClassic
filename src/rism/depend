@@ -42,6 +42,15 @@ bspline.o:   bspline.F90
 	$(VB)$(FC) -c \
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ bspline.F90
 
+constants.o: \
+                    ../include/dprec.fh
+
+
+constants.o:   constants.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ constants.F90
+
 constants_rism.o: \
                     ../include/dprec.fh
 
@@ -113,6 +122,192 @@ mdiis_orig_c.o:   mdiis_orig_c.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ mdiis_orig_c.F90
+
+pubfft.o: \
+                    ../include/dprec.fh\
+                    constants.o
+
+
+pubfft.o:   pubfft.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ pubfft.F90
+
+quaternion.o: \
+                    ../include/dprec.fh
+
+
+quaternion.o:   quaternion.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ quaternion.F90
+
+rism1d_c.o: \
+                    ../include/dprec.fh\
+                    safemem.o\
+                    rism1d_potential_c.o\
+                    rism1d_closure_c.o\
+                    rism_report_c.o\
+                    rism_timer_c.o\
+                    mdiis_c.o\
+                    constants.o\
+                    rism_util.o\
+                    solvmdl_c.o\
+                    ../xblas/f77/blas_namedconstants.fh
+
+
+rism1d_c.o:   rism1d_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_c.F90
+
+rism1d_closure_c.o: \
+                    ../include/dprec.fh\
+                    rism1d_kh_c.o\
+                    rism1d_hnc_c.o\
+                    rism1d_py_c.o\
+                    rism1d_mv0_c.o\
+                    rism1d_psen_c.o\
+                    rism1d_nub_c.o\
+                    rism1d_polyt_c.o\
+                    rism1d_devb_c.o\
+                    rism1d_potential_c.o\
+                    safemem.o\
+                    constants.o\
+                    rism_util.o\
+                    ../xblas/f77/blas_namedconstants.fh
+
+
+rism1d_closure_c.o:   rism1d_closure_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_closure_c.F90
+
+rism1d_devb_c.o: \
+                    ../include/dprec.fh\
+                    rism_report_c.o\
+                    safemem.o\
+                    constants.o
+
+
+rism1d_devb_c.o:   rism1d_devb_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_devb_c.F90
+
+rism1d_driver.o: \
+                    ../include/dprec.fh\
+                    rism1d_c.o\
+                    rism_report_c.o\
+                    rism_timer_c.o\
+                    rism_util.o\
+                    array_util.o\
+                    constants.o\
+                    solvmdl_c.o\
+                    rism1d_nub_c.o\
+                    ../xblas/f77/blas_namedconstants.fh
+
+
+rism1d_driver.o:   rism1d_driver.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_driver.F90
+
+rism1d_hnc_c.o: \
+                    ../include/dprec.fh\
+                    safemem.o\
+                    constants.o
+
+
+rism1d_hnc_c.o:   rism1d_hnc_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_hnc_c.F90
+
+rism1d_kh_c.o: \
+                    ../include/dprec.fh\
+                    safemem.o\
+                    constants.o
+
+
+rism1d_kh_c.o:   rism1d_kh_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_kh_c.F90
+
+rism1d_mv0_c.o: \
+                    ../include/dprec.fh\
+                    safemem.o\
+                    constants.o
+
+
+rism1d_mv0_c.o:   rism1d_mv0_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_mv0_c.F90
+
+rism1d_nub_c.o: \
+                    ../include/dprec.fh\
+                    rism_report_c.o\
+                    rism1d_potential_c.o\
+                    safemem.o\
+                    rism_util.o\
+                    constants.o
+
+
+rism1d_nub_c.o:   rism1d_nub_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_nub_c.F90
+
+rism1d_polyt_c.o: \
+                    ../include/dprec.fh\
+                    rism_report_c.o\
+                    safemem.o
+
+
+rism1d_polyt_c.o:   rism1d_polyt_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_polyt_c.F90
+
+rism1d_potential_c.o: \
+                    ../include/dprec.fh\
+                    safemem.o\
+                    constants.o\
+                    rism_util.o\
+                    solvmdl_c.o\
+                    ../xblas/f77/blas_namedconstants.fh\
+                    quaternion.o
+
+
+rism1d_potential_c.o:   rism1d_potential_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_potential_c.F90
+
+rism1d_psen_c.o: \
+                    ../include/dprec.fh\
+                    rism_report_c.o\
+                    safemem.o\
+                    constants.o
+
+
+rism1d_psen_c.o:   rism1d_psen_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_psen_c.F90
+
+rism1d_py_c.o: \
+                    ../include/dprec.fh\
+                    safemem.o\
+                    constants.o
+
+
+rism1d_py_c.o:   rism1d_py_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism1d_py_c.F90
 
 rism3d_c.o: \
                     ../include/dprec.fh\
@@ -361,9 +556,21 @@ rism_report_c.o:   rism_report_c.F90
 	$(VB)$(FC) -c \
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_report_c.F90
 
-rism_util.o: \
+rism_timer_c.o: \
                     ../include/dprec.fh\
                     rism_report_c.o
+
+
+rism_timer_c.o:   rism_timer_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ rism_timer_c.F90
+
+rism_util.o: \
+                    ../include/dprec.fh\
+                    rism_report_c.o\
+                    constants.o\
+                    quaternion.o
 
 
 rism_util.o:   rism_util.F90
@@ -381,6 +588,20 @@ safemem.o:   safemem.F90
 	@echo [RISM]  FC $<
 	$(VB)$(FC) -c \
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ safemem.F90
+
+solvmdl_c.o: \
+                    ../include/dprec.fh\
+                    rism_report_c.o\
+                    rism_util.o\
+                    rism_parm.o\
+                    constants.o\
+                    safemem.o
+
+
+solvmdl_c.o:   solvmdl_c.F90
+	@echo [RISM]  FC $<
+	$(VB)$(FC) -c \
+		$(FNOOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ solvmdl_c.F90
 
 binrestart.o: 
 	@(test -e $@ || touch $@)

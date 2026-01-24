@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+
+. ../program_error.sh
+
+echo "Running test to computed 3DNA deformation energies:"
+echo ""
+../../bin/nab -o deform deform.nab || error
+./deform > deform.out || error
+
+../dacdif deform.out.check deform.out
+
+rm -f deform deform.c
+exit 0

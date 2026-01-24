@@ -1,6 +1,6 @@
 #!/bin/bash
 
-printf "configure script for msander\n\n"
+printf "configure script for AmberClassic\n\n"
 
 # Store the command
 command=`echo "$0 $*"`
@@ -8,41 +8,60 @@ command=`echo "$0 $*"`
 #------------------------------------------------------------------------------
 #  Set up defaults:
 #------------------------------------------------------------------------------
-msanderhome=`pwd`
+
+# --- General:
+AmberClassicHome=`pwd`
 verbose="@"
-enablempi=
 requested_help="no"
-clangf=""
 openblas="no"
 sfx=""
-gcc10f=""
-gcc10c=""
-longlines="-ffree-line-length-none"
 debug="-DNDEBUG"
 fpic="-fPIC"
+conda="no"
+conda_incflags=""
+installtype="serial"
+xblasflag="-DCONFIG_FC_UNDERSCORE"
 
+# --- C compiler:
 compiler="gnu"
-cc="gcc -Wno-unused-result"
+cc="gcc"
+cxx="g++"
 mpicc="mpicc"
-iccflags=""
+gccflags="-Wno-unused-result"
+clangflags=""
+clangf=""
+gcc10c="-fcommon"
+ldflags=""
 
+# --- Fortran compiler:
 fc="gfortran"
 flibs_arch="-lgfortran -w"
 flibs_la=""
-flibs_fftw="-lfftw3"
+flibs_fftw="-lfftw3_omp -lfftw3"
 mpif90="mpif90"
 gccsys=""
 optflags="-g -O3"
-
-openmp='no'
+gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
+longlines="-ffree-line-length-none"
+inc="-I$AmberClassicHome/include"
+openmp='yes'
 ompflag=""
-ldflags=""
+ompcflag=""
+arpack="libarpack"
+
+# --- linear algebra, netcdf, boost, fftw:
+boost="yes"
+# current default is to use locally-compiled boost subset:
+boostlib="\$(LIBDIR)/libboost_program_options.a \$(LIBDIR)/libboost_iostreams.a -lz -lbz2"
+netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
+netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
+netcdflibf=$netcdflibf_static
+lapack="skip"
+blas="skip"
+macAccelerate="no"
 fftw_flags=""
-mkl="no"    
-installtype="serial"
 
-plumed="no"
-
+#  --- cuda:
 cuda="no"
 cudaflags=''
 cudafflags=''
@@ -51,16 +70,11 @@ cuda_arch_flags=''
 uspec_arch='false'
 cuda_prec='SPFP'
 
-lapack="skip"
-blas="skip"
-
-inc="-I$msanderhome/include"
-netcdflibf_static="$msanderhome/lib/libnetcdff.a $msanderhome/lib/libnetcdf.a"
-netcdflibf_shared="-L$msanderhome/lib -lnetcdff -lnetcdf"
-netcdflibf=$netcdflibf_static
-
+#  --- other:
 #short_ene=short_ene_omp.o
 short_ene=short_ene.o   # short_ene_omp may slow things down or even crash
+moft="moft"
+plumed="no"
 
 #------------------------------------------------------------------------------
 #  Process command-line flags:
@@ -74,53 +88,66 @@ while [ $# -gt 0 ]; do
             verbose="";;
         --debug)
             debug="";;
-        --openmp)
-            ompflag='-fopenmp -DOPENMP';
-            flibs_fftw="-lfftw3_omp $flibs_fftw"
-            openmp="yes";;
+        --noopenmp)
+            flibs_fftw="-lfftw3"
+            openmp="no";;
         --cuda)
             cuda="yes"
             installtype="cuda"
             cudafflags="-DCUDA"
             fpic="";;
-        --prec)          shift; cuda_prec="$1";;
-        --arch)          shift; cuda_arch="$cuda_arch $1"; uspec_arch='true';;
-        --gcc10)
-            gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
-            gcc10c="-fcommon";;
-        --mkl)
-            mkl="yes";;
+        --cudaprec)      shift; cuda_prec="$1";;
+        --cudaarch)      shift; cuda_arch="$cuda_arch $1"; uspec_arch='true';;
+        --nogcc10)
+            gcc10f=""
+            gcc10c="";;
+        --conda)
+            conda_incflags="-I$CONDA_PREFIX/include"
+            clangf="-DCLANG"
+            clangflags="-Wno-parentheses"
+            installtype="conda"
+            cc=$CC
+            cxx=$CXX
+            fc=$FC
+            ldflags=$LDFLAGS
+            arpack="skip"
+            conda="yes";;
+        --noboost)
+            boost="no"
+            moft="skip";;
+        --system-boost)
+            boostlib="-lboost_program_options -lboost_iostreams"
+            boost="system";;
         --openblas)
             openblas="yes";;
+        --macAccelerate)
+            macAccelerate="yes";;
         --static)
-            ldflags="-static";;
+            ldflags="-static $ldflags";;
         --plumed)
             plumed="yes";;
-        --intel)
-            compiler="intel"
-            cc="icx"
-            fc="ifx"
-            longlines=""
-            mpicc="mpiicc -cc=icx"
-            mpif90="mpiifort -fc=ifx"
-            optflags="-g -O3"
-            flibs_arch="-lifport -lifcore -lsvml";;
         --clang)
             compiler="clang"
             clangf="-DCLANG"
+            clangflags="-Wno-parentheses"
             cc="clang"
+            cxx="clang++"
             fc="gfortran"
+            gccflags=""
+            # following assumes this is OSX:
+            for x in `gfortran -print-search-dirs | grep libraries | \
+                  sed -e "s/libraries: =//g" -e "s/:/ /g"`; do
+                test -f $x/libgfortran.dylib && break
+            done
+            flibs_arch="-L$x -lgfortran -w -Wl,-rpath $x"
             optflags="-g -O3";;
         --mpi)
             mpi="yes"
-            fftw_flags="--enable-mpi=yes $fftw_flags"
+            fftw_flags="--enable-mpi=yes"
             mpiflag="-DMPI"
-            flibs_fftw="-lfftw3_mpi $flibs_fftw -lmpi"
             short_ene=short_ene.o
             installtype="parallel"
             sfx=".MPI";;
-        --full)
-            installtype="full";;
         *)
             echo "Option $1 not recognized"
             exit 1
@@ -129,21 +156,24 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$requested_help" = "yes" ] ; then
-	printf " --intel        use Intel compilers; default is gnu\n"
-	printf " --clang        use clang/gfortran as compilers\n"
-	printf " --gcc10        add flags for gcc10 and above\n"
-    printf "\n"
-	printf " --mpi          prepare for mpi build\n"
-	printf " --openmp       prepare for OMP build\n"
-	printf " --cuda         prepare for cuda build\n"
-    printf " --prec         [SPFP|DPFP], cuda precision, default is SPFP\n"
-    printf " --arch          <kepler|maxwell|pascal|volta|turing|ampere|ada>"
-    printf "\n"
-	printf " --mkl          use MKL routines from \$MKLROOT environment variable\n"
-	printf " --openblas     use BLAS routines from \$GOTO environment variable\n"
-	printf " --verbose      give build details, otherwise be more silent\n"
-	printf " --static       use static linking (experiental)\n"
-    printf " --full         install everything with a serial install\n"
+    printf "Usage:  ./configure [OPTIONS]\n"
+    printf "\nCompilers:\n"
+    printf "    --clang         use clang/gfortran; gcc/gfortran is default\n"
+    printf "                      (implies OSX; no openmp support for now)\n"
+    printf "    --verbose       give build details, otherwise be more silent\n"
+    printf "    --nogcc10       use flags for gcc9 and below\n"
+    printf "\nPerformance options:\n"
+    printf "    --noopenmp      don't use of OPENMP in msander and libsff\n"
+    printf "    --mpi           build only msander.MPI and mdgx.MPI; uses mpi stack in PATH\n"
+    printf "    --cuda          build only msander.cuda\n"
+    printf "                      [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
+    printf "    --cudaprec      [SPFP|DPFP], cuda precision, default is SPFP\n"
+    printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
+    printf "\nLess-common options:\n\n"
+    printf "    --openblas      use openBLAS routines from a system library\n"
+    printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
+    printf "    --system-boost  use system boost rather than built-in subset\n"
+    printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
 fi
@@ -151,15 +181,18 @@ fi
 #  extra logic related to command-line arguments: generally, things
 #      that need to be decided only after all arguments have been processed
 
-if [ "$compiler" == "intel" -a "$openmp" == "yes" ]; then
-  ompflag="-qopenmp -DOPENMP"
-fi
-if [ "$compiler" == "intel" -a "$mpi" == "yes" ]; then
-  optflags="-g -O3"
+if [ "$openmp" == "yes" ]; then
+  if [ "$compiler" == "clang" ]; then
+     ompcflag="-Xclang -fopenmp -DOPENMP"
+  else
+     ompcflag="-fopenmp -DOPENMP"
+  fi
+  ompflag="-fopenmp -DOPENMP"
 fi
 if [ "$mpi" == "yes" ]; then
   fc="$mpif90"
   cc="$mpicc"
+  flibs_fftw="-lfftw3_mpi $flibs_fftw -lmpi"
 fi
 if [ "$mpi" == "yes" -a "$cuda" == "yes" ]; then
   installtype="mpicuda"
@@ -168,46 +201,21 @@ fi
 #------------------------------------------------------------------------------
 #  Make some needed directories:
 #------------------------------------------------------------------------------
-if [ ! -d bin ]; then
-    mkdir bin
-fi
-if [ ! -d lib ]; then
-    mkdir lib
-fi
-if [ ! -d include ]; then
-    mkdir include
-fi
+mkdir -p bin
+mkdir -p bin/wrapped_progs
+mkdir -p lib
+mkdir -p include
 cp src/msander/sander.h include
 
 #------------------------------------------------------------------------------
 #  Initialize variables that are architecture specific:
 #------------------------------------------------------------------------------
-processor=`uname -m`
-if [ "$processor" = "em64t" -o "$processor" = "x86_64" ] ; then
-    x86_64='yes'
-else
-    x86_64='no'
-fi
-
-# Determine linker type. Currently only matters for MKL
-ld_version=`ld -v 2>&1 | awk '{print $1}'`
-case "$ld_version" in
-    *GNU*)
-        gnuld='yes';;
-    *)
-        gnuld='no' ;;
-esac
-
 OS=`uname -s`
 if [ "$OS" = "Darwin" ]; then
    is_mac='yes'
    shared_suffix=.dylib
    make_shared=-dynamiclib
    lm=
-   if [ "$compiler" = 'intel' ] ; then
-      optflags="-g -O3"
-      iccflags="-std=c99"
-   fi
 else
    is_mac='no'
    shared_suffix=.so
@@ -227,7 +235,8 @@ int main()
 }
 EOF
 
-printf "Testing $cc ..."
+cc_version=`$cc --version 2>&1 | head -1`
+printf "Testing $cc_version ..."
 $cc -o testp testp.c
 ./testp | grep "testing a C program" > /dev/null
 status=$?
@@ -251,7 +260,8 @@ cat <<EOF >testp.f
       end program testf
 EOF
 
-printf "Testing $fc ..."
+fc_version=`$fc --version 2>&1 | head -1`
+printf "Testing $fc_version ..."
 $fc -o testp testp.f
 ./testp | grep "testing a Fortran program" > /dev/null
 status=$?
@@ -266,132 +276,72 @@ fi
 /bin/rm -f testp.f testp.o testp
 
 #--------------------------------------------------------------------------
-#  Configure the MKL or GOTO etc libraries for BLAS/LAPACK.
+#  Test if bison is available and works
 #--------------------------------------------------------------------------
 
-# Determine MKL home directory
-mklroot=''
-if [ ! -z "$MKLROOT" ] ; then
-    mklroot=$MKLROOT
-elif [ ! -z "$MKL_HOME" ] ; then
-    mklroot=$MKL_HOME
+  printf "Testing bison ..."
+  cat <<EOF >testp.y
+%{
+static int curItemNo, curValueNo, itemIndex;
+%}
+%token NUMBER
+%%
+term: NUMBER  { curItemNo = 1; }
+
+%%
+EOF
+
+bison -y testp.y
+status=$?
+
+if [ $status -gt 0 ]; then
+    echo ""
+    echo "Error: Unable to run bison."
+    echo "       Please check your PATH, or install the program."
+    echo ""
+    exit 1
+else
+    printf "OK\n\n"
 fi
 
-if [ -z "$mklroot" -o "$mkl" == "no" ] ; then
+/bin/rm -f testp.y y.tab.c
 
-   if [ ! -z "$GOTO" -a "$openblas" == "yes" ]; then
-      echo "using OpenBLAS libraries in $GOTO"
-      flibs_la="$GOTO -lpthread"
-   else
-      # use the compiled versions;
-      flibs_la="-llapack -lblas"
-      lapack=liblapack
-      blas=libblas
-   fi
+#--------------------------------------------------------------------------
+#  Configure the linear algebra libraries:
+#--------------------------------------------------------------------------
 
+if [ "$openblas" == "yes" ]; then
+   echo "using OpenBLAS libraries from system"
+   flibs_la="-larpack -lopenblas -lpthread"
+elif [ "$conda" == "yes" ]; then
+   echo "using OpenBLAS libraries from conda-forge"
+   echo "using arpack   libraries from conda-forge"
+   flibs_la="-L$CONDA_PREFIX/lib -lopenblas -larpack -lpthread"
+elif [ "$macAccelerate" == "yes" ]; then
+   echo "using macAccelerate frameworks"
+   flibs_la="-larpack -framework Accelerate"
 else
-
-  if [ "$mpi" == "yes" ]; then
-     echo "Using MKL for BLAS/LAPACK in $mklroot"
-     inc="-I$mklroot/include $inc"
-     lapack=skip
-     blas=skip
-  else
-     echo "Using MKL for BLAS/LAPACK/FFTW in $mklroot"
-     inc="-I$mklroot/include -I$mklroot/include/fftw $inc"
-     lapack=skip
-     blas=skip
-     flibs_fftw=""
-  fi
-
-  # Determine how we are linking MKL
-  if  [ "$compiler" = 'gnu' -o "$is_mac" = 'yes' ] ; then
-    link_type='line'
-  else
-    link_type='mkl'   #assuming Intel
-  fi
-
-  # We generally link to the sequential version of MKL since typically
-  # one runs an MPI thread for each core.  However, if openmp is
-  # specified, for example to turn on SMP diagonalizers for QMMM,
-  # then we link to the threaded version of MKL and inside the code
-  # the number of threads for vector functions etc will be set to 1.
-
-  # Always link static version of MKL - just easier from an end
-  # user perspective.
-
-  if [ "$link_type" = 'line' ] ; then
-
-    # ----- Link line advisor style. ------
-
-    mkll="$mklroot/lib/32"
-    mklinterfacelayer='libmkl_intel.a'
-    if [ "$is_mac" = 'yes' ] ; then
-      mkll="$mklroot/lib"
-      if [ "$x86_64" = 'yes' ]; then
-        mklinterfacelayer='libmkl_intel_lp64.a'
-      fi
-    elif [ "$x86_64" = 'yes' ]; then
-      if [ -d "$mklroot/lib/em64t" ]; then
-        mkll="$mklroot/lib/em64t"
-        mkl_procstring="em64t"
-      else
-        mkll="$mklroot/lib/intel64"
-        mkl_procstring="intel64"
-      fi
-      # lp64 is 32 bit integers on 64 bit platforms
-      mklinterfacelayer='libmkl_intel_lp64.a'
-    fi
-
-    # Determing threading interface if necessary
-    mklthread="$mkll/libmkl_sequential.a"
-    mklomp=''
-    if [ "$openmp" = 'yes' ] ; then
-      if [ "$compiler" = 'intel' ] ; then
-        mklthread="$mkll/libmkl_intel_thread.a"
-        mklomp='-liomp5'
-      elif [ "$compiler" = 'pgi' ] ; then
-        mklthread="$mkll/libmkl_pgi_thread.a"
-        mklomp='-pgf90libs -mp'
-      else
-        mklthread="$mkll/libmkl_gnu_thread.a"
-        mklomp='-lgomp'
-      fi
-      if [ "$is_mac" = 'yes' -a "$compiler" != 'intel' ] ; then
-        echo "Warning: OpenMP MKL not supported on OSX without Intel compilers. Using sequential."
-        mklthread="$mkll/libmkl_sequential.a"
-        mklomp=''
-      fi
-    fi
-
-    # Set link flags
-    if [ "$gnuld" = 'yes' ]; then
-      echo "GNU linker assumed."
-      flibs_la="-Wl,--start-group $mkll/$mklinterfacelayer $mklthread $mkll/libmkl_core.a -Wl,--end-group $mklomp -lpthread"
-    else
-      echo "Non-GNU linker assumed."
-      flibs_la="-L$mkll $mkll/$mklinterfacelayer $mklthread $mkll/libmkl_core.a $mklomp -lpthread"
-    fi
-    # GNU compilers with MKL requires -ldl
-    if [ "$compiler" = 'gnu' -o "$compiler" = 'clang' ]; then
-      flibs_la="$flibs_la -ldl"
-    fi
-
-  else
-    # ----- Use simple flag for Intel compilers on Linux ------------
-    flibs_la='-qmkl'
-  fi
+   # use the compiled versions;
+   flibs_la="-larpack -llapack -lblas"
+   lapack=liblapack
+   blas=libblas
 fi
 
 #--------------------------------------------------------------------------
 #  Configure and build netcdf:
 #--------------------------------------------------------------------------
-if [ ! -s "lib/libnetcdf.a" ]; then
+
+if [ "$conda" == "yes" ]; then
+
+   netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
+   echo "using netcdf   libraries from conda-forge"
+
+elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
    printf "Configuring the NetCDF C interface..."
    make clean > /dev/null 2>&1
    ./configure CC="$cc" CFLAGS="-fPIC" LDFLAGS="" \
-      --prefix=$msanderhome --disable-netcdf-4 --disable-dap \
+      --prefix=$AmberClassicHome --disable-netcdf-4 --disable-dap \
       --disable-shared --disable-doxygen > ../netcdf_c.config.log 2>&1
    ncerror=$?
    if [ $ncerror -gt 0 ]; then
@@ -413,15 +363,15 @@ if [ ! -s "lib/libnetcdf.a" ]; then
    # NetCDF Fortran configure/build
    cd ../netcdf-fortran-4.5.2
    # The NetCDF Fortran config script will need access to the C library.
-   export LD_LIBRARY_PATH="$msanderhome/lib:$LD_LIBRARY_PATH"
+   export LD_LIBRARY_PATH="$AmberClassicHome/lib:$LD_LIBRARY_PATH"
    printf "Configuring the NetCDF Fortran interface..."
    make clean > /dev/null 2>&1
    ./configure  CC="$cc" CFLAGS="-fPIC" \
-                  LDFLAGS="-L$msanderhome/lib $ldflags" \
-                  CPPFLAGS="-I$msanderhome/include" \
+                  LDFLAGS="-L$AmberClassicHome/lib $ldflags" \
+                  CPPFLAGS="-I$AmberClassicHome/include" \
                   FC="$fc" FCFLAGS="" \
                   F77="$fc" FFLAGS="-fPIC" --disable-shared  --disable-doxygen \
-                  --prefix=$msanderhome >> ../netcdf_f.config.log 2>&1
+                  --prefix=$AmberClassicHome >> ../netcdf_f.config.log 2>&1
    ncerror=$?
    if [ $ncerror -gt 0 ]; then
        echo "Error: NetCDF configure failed!  Check netcdf_f.config.log"
@@ -446,13 +396,19 @@ fi
 #--------------------------------------------------------------------------
 #  Configure and build FFTW3:
 #--------------------------------------------------------------------------
-if [ "$flibs_fftw" != "" ]; then
+
+if [ "$conda" == "yes" ]; then
+
+   flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
+   echo "using fftw     libraries from conda-forge"
+
+else
 
    if [ ! -s "lib/libfftw3.a" ] || \
        [ "$mpi" == "yes" -a ! -s "lib/libfftw3_mpi.a" ] || \
-       [ "$openmp" == "yes" -a ! -s "lib/libfftw3_omp.a" ]; then
+       [ "$cc" != "clang" -a "$openmp" == "yes" -a ! -s "lib/libfftw3_omp.a" ]; then
 
-       if [ "$openmp" == "no" ]; then
+       if [ "$openmp" == "no" -o "$cc" == "clang" ]; then
           enableomp=""
        else
           enableomp="--enable-openmp"
@@ -461,12 +417,10 @@ if [ "$flibs_fftw" != "" ]; then
        # enable_sse="--enable-sse=no --enable-sse2=no --enable-avx=no"
        enable_sse="--enable-sse2=yes --enable-avx=yes"
 
-       # DAC note, 12/18/19: adding -gcc-sys to CFLAGS below seems to
-       #   be required for Intel compilers.
        printf "\nConfiguring fftw-3.3 with $cc and $fc..."
        cd src/fftw-3.3 && \
-           ./configure --disable-doc --prefix=$msanderhome \
-           --libdir=$msanderhome/lib $enableomp $fftw_flags \
+           ./configure --disable-doc --prefix=$AmberClassicHome \
+           --libdir=$AmberClassicHome/lib $enableomp $fftw_flags \
            --enable-static $enable_sse MPICC="$mpicc" \
            CC="$cc" CFLAGS="$gccsys $optflags -fPIC"  \
            F77="$fc" FFLAGS="$optflags -fPIC" \
@@ -491,6 +445,29 @@ if [ "$flibs_fftw" != "" ]; then
       cd ../..
    else
       echo "Using the existing fftw3  libraries"
+   fi
+fi
+
+#--------------------------------------------------------------------------
+#  Configure and build Boost subset:
+#--------------------------------------------------------------------------
+
+if [ "$boost" == "yes" -o "$boost" == "system" ]; then
+   if [ "$conda" == "yes" ]; then
+      boostlib="-L$CONDA_PREFIX/lib -lboost_program_options -lboost_iostreams"
+      echo "using boost    libraries from conda-forge"
+
+   elif [ "$boost" == "system" ]; then
+      echo "using boost    libraries from system"
+    
+   elif [ ! -s "lib/libboost_iostreams.a" ]; then 
+      printf "\nInstalling boost subset: $boostlib\n"
+      cd src/boost_1_86_0
+      make install_boost
+      cd ../..
+
+   else
+      echo "Using the existing boost  libraries"
    fi
 fi
 
@@ -562,8 +539,8 @@ if [ "$cuda" = 'yes' ]; then
     sm60flags='-gencode arch=compute_60,code=sm_60'
     #SM5.0 = M40
     sm50flags='-gencode arch=compute_50,code=sm_50'
-    #SM3.0 = K80, K40, K20
-    sm30flags='-gencode arch=compute_30,code=sm_30'
+    #SM3.5 = Kepler (late)
+    sm35flags='-gencode arch=compute_35,code=sm_35'
 
     cudaversion=`$nvcc --version | awk '/release/{print substr($5,1,4)}'`
 
@@ -572,8 +549,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM5.0, SM6.0, SM7.0, SM7.5"
-        cuda_arch_flags="$sm50flags $sm60flags $sm70flags $sm75flags"
+        echo "Configuring for SM5.0,6.0,7.0,7.5,8.0,8.6,8.9"
+        cuda_arch_flags="$sm50flags $sm60flags $sm70flags $sm75flags $sm80flags $sm86flags $sm89flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:2}" = "11" ]; then
@@ -581,8 +558,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM5.0, SM6.0, SM7.0, SM7.5, SM8.0"
-        cuda_arch_flags="$sm50flags $sm60flags $sm70flags $sm75flags $sm80flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0,7.5,8.0"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags $sm75flags $sm80flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:2}" = "10" ]; then
@@ -590,8 +567,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM3.0, SM5.0, SM6.0, SM7.0 and SM7.5"
-        cuda_arch_flags="$sm30flags $sm50flags $sm60flags $sm70flags $sm75flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0,7.5"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags $sm75flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:1}" = "9" ]; then
@@ -599,8 +576,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM3.0, SM5.0, SM6.0 and SM7.0"
-        cuda_arch_flags="$sm30flags $sm50flags $sm60flags $sm70flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     elif [ "${cudaversion:0:1}" = "8" ]; then
@@ -608,8 +585,8 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM3.0, SM5.0, SM6.0"
-        cuda_arch_flags="$sm30flags $sm50flags $sm60flags"
+        echo "Configuring for SM3.5,5.0,6.0,7.0"
+        cuda_arch_flags="$sm35flags $sm50flags $sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
     else
@@ -634,15 +611,18 @@ fi
 
 cat <<EOF > config.h
 
-#  msander configuration file.
+#  AmberClasic configuration file.
 #  Created on `date` via $command
+#
+#  Compilers:
+#      $cc : $cc_version
+#      $fc : $fc_version
 
 ###############################################################################
 
 # (1)  Location of the installation
 
-AMBERTOOLS=msander
-BASEDIR=$msanderhome
+BASEDIR=$AmberClassicHome
 BINDIR=\$(BASEDIR)/bin
 LIBDIR=\$(BASEDIR)/lib
 INCDIR=\$(BASEDIR)/include
@@ -659,30 +639,32 @@ LM=$lm
 
 ###############################################################################
 
-#  (3) allow for the use of netcdf
+#  (3) specify some library options:
 
 NETCDFLIBF=$netcdflibf
-
+BOOSTLIB=$boostlib
 LAPACK=$lapack
 BLAS=$blas
 
 ###############################################################################
 
-#  (4)  C compiler
+#  (4)  C compilers:
 
 CC=$cc
-CFLAGS=$clangf $inc $gcc10c $iccflags $fpic $debug
-NVCC_CFLAGS=$clangf $inc $iccflags $fpic $debug
+CXX=$cxx
+CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
+# (FLIBS is for C/NAB codes)
+FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
 
 ###############################################################################
 
-#  (5)  Fortran compiler
+#  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
-FLIBSF=-lrism -lxray -larpack $flibs_fftw $flibs_la $plumed_load
+FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
+FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
 SHORT_ENE=$short_ene
@@ -691,7 +673,7 @@ SHORT_ENE=$short_ene
 
 #  (6)  other flags:
 
-LDFLAGS=$ldflags
+LDFLAGS=$ldflags $lm
 AR=    ar rv
 RANLIB=ranlib
 MV=mv
@@ -700,16 +682,33 @@ MAKE=make --no-print-directory
 SFX=$sfx
 VB=$verbose
 INSTALLTYPE=$installtype
+FLEX=flex
+BISON=bison
+MOFT=$moft
+ARPACK=$arpack
+MDGXLIBS=$flibs_fftw $flibs_la $netcdflib
 
 # CUDA:
-CUDAFLAGS=$prec_model $cuda_arch_flags $cuda_dc_flags
+CUDAFLAGS=$cudafflags $prec_model $cuda_arch_flags $cuda_dc_flags
 CUDAFFLAGS=$cudafflags
+NVCC_CFLAGS=-Wno-deprecated-gpu-targets $clangf $inc $fpic $debug $conda_incflags
 
 # PLUMED related variables:
 PLUMED_INCLUDE_FILE=
 PLUMED_LOAD=Plumed.o
 PLUMED_DEPENDENCIES=Plumed.o
 
+EOF
+
+#--------------------------------------------------------------------------
+#  create the config_testing.h file:
+#--------------------------------------------------------------------------
+
+cat <<EOF > config_testing.h
+
+#  AmberClasic configuration file for testing.
+
+INSTALLTYPE=$installtype
 EOF
 
 printf "\nThe next step is to type 'make clean && make install'\n\n"

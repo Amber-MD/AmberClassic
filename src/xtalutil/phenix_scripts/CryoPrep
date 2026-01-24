@@ -1,0 +1,53 @@
+#!/bin/bash
+
+#  prepare structure factor files needed for CryoEM refinements
+#
+#  First input is the pdb-identifier: code assumes that $1.pdb is present
+#  Second argument is the electron density map
+#  Third and fourth arguments are resolution to be used in converting 
+#     the map to structure factors
+
+id=$1
+emdmap=$2
+resolution_high=$3
+resolution_low=$4
+
+echo "CryoPrep log file for id $id" > $id-prep.log
+
+#============================================================================
+echo "Making input mtz file"
+
+phenix.map_box $id.pdb $emdmap keep_map_size=True resolution=$resolution_high \
+     keep_origin=False >> $id-prep.log
+
+# trucate really low resolution coefficients
+sftools <<EOF  >sftools.log || { echo "  sftools:  Program error"; exit 1; }
+read ${id}_box.mtz
+select resolu < $resolution_low
+purge
+y
+write ${id}_box2.mtz
+quit
+EOF
+
+/bin/mv ${id}_box2.mtz ${id}_box.mtz
+
+
+#============================================================================
+echo "Making the -sf.dat file"
+
+#  convert to formatted file:
+phenix.mtz.dump -c -f s ${id}_box.mtz  | tr ',' '\t' > ${id}_box.fmtz \
+     || { echo "  phenix.mtz.dump:  Program error"; exit 1; }
+
+#  make the -sf.dat file needed by xray3:
+awk '{printf("%d\t%d\t%d\t%s\t%s\t1\n", \
+      $1,$2,$3,$4,$5)}'  ${id}_box.fmtz | tail +2 > tmp.dat \
+     || { echo "  awk:  Program error"; exit 1; }
+
+nrefl=`wc -l tmp.dat | awk '{print $1}'`
+echo "$nrefl 0" > $id-sf.dat
+cat tmp.dat >> $id-sf.dat
+
+/bin/rm tmp.* ${id}_box.fmtz
+

@@ -1,37 +1,24 @@
-# Overview
+# Overview of AmberClassic
 
-This directory tree contains `msander`, a "modern" version of parts of
-sander.  Also included are various X-ray and cryoEM-related code and utilities.
-The documentation is in the *doc/msander.pdf* file.
+* This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and commonly-used) parts of AmberTools: `tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d, saxs, gbnsr6, xtalutil` and `paramfit`.  All of the force field files from AmberTools are also included here. With these tools, many systems can be set up for simulation in `msander`.
+
+* The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
+
+* This code is probably most useful to those who are already familiar with `AmberTools` (https://ambermd.org).  Many of the basic tutorials there will also work with AmberClassic -- see the *doc/AmberClassic.pdf* for details.
+
+* This package may also be of interest to those who want just the subset included here of the far-more-complex `AmberTools` package.  Some other popular parts of `AmberTools` are not included here, but are available separately: `cpptraj` and `pytraj` (both at https://github.com/Amber-MD), and `parmed` (at https://github.com/ParmEd).
 
 # Warning
 
-This is a work in progress, and may not always be in a stable state
-(although that is my goal for the main branch).  I may not be able to
-respond to requests for support.
-
-This code is probably only useful to those who are already familiar with
-AmberTools, and access to AmberTools (https://ambermd.org) is a practical
-requirement for using msander.  You can look in the test directory for
-examples of input files, or send email to dacase1@gmail.com if you want to
-participate in development.
+* This is a work in progress, essentially creating a (modified) subset of `AmberTools`.  Please create a github issue if you have comments or suggestions.  (As an alternative, send email to dacase1@gmail.com.) Volunteers to help improve or extend the package are welcome.
 
 # Design goals
 
-* This project began as a fork of the `sander` code in `AmberTools`.  
-It tries to (greatly) simplify the code base, choosing the best and 
-most useful parts of the code, and to serve as a test bed for how 
-modern Fortran coding techniques can be used.  Key application areas 
-are expected to be in structure refinements using NMR, cryoEM or 
-Xray diffraction information.  This version has a fair amount of OpenMP
-support, especially for Xray and 3D-RISM calculations.  Parts of the Xray
-code uses GPU acceleration.
+* This project began as a fork of the `sander` code in `AmberTools`.  It tries to (greatly) simplify the code base, choosing the best and most useful parts of the code, and to serve as a test bed for how modern Fortran coding techniques can be used.  Key application areas are expected to be in structure refinements using NMR, cryoEM or Xray diffraction information.  This version has a fair amount of OpenMP support, especially for Xray and 3D-RISM calculations.  Parts of the Xray code use GPU acceleration.
 
-* Since this code is based on sander, tons of people have been involved in its
-creation over the years.  See https://ambermd.org/contributors.html for more
-information, although even that gets out of date.  The Xray codes have
-significant contributions from Juno Krahn, Oleg Mikhailovsii, Sergei Izmailov
-and Nikolai Skrynnikov.
+* One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and a conda package is available (see below.)
+
+* This project incorporates and supercedes two previous packages (msander and nabc) that were available at github.com/dacase.
 
 # Key differences in functionality versus sander
 
@@ -44,7 +31,7 @@ current practice: Path-integral methods, thermostats that don't follow
 the "middle" scheme, Berendsen barostat
 
   * Things that might be useful, but really complicate the code: evb
-potentials, some parts of adaptive QM/MM, nudged elastic band, constant pH
+potentials, QM/MM, nudged elastic band, constant pH
 and constant redox potential simulations.  The API interface has also been
 removed.
 
@@ -60,8 +47,6 @@ instead.)
 
   * 3D-RISM in periodic boundary conditions
 
-  * QM/MM, including hooks to external codes
-
   * NMR, cryoEM and Xray restraints (including quite a bit of new code; Xray
     restraints include NVIDIA GPU-enabled capabilities)
 
@@ -76,24 +61,33 @@ instead.)
 
 # Execution speed
 
-Force field evaluation is still slow compared to many other codes.  This
-project thus focusses on systems where other parts of the simulation, such
-as QM, RISM, or Xray/Cryoem restraints, are the bottleneck, so that force
-field speed is not the limiting component.
+Force field evaluation is still slow compared to many other codes.  This project thus focusses on systems where other parts of the simulation (such as RISM or Xray/Cryoem restraints) are the bottleneck, so that force field speed is not the limiting component.
 
 # Building the code
 
-* MacOSX, Linux, probably WSL:
+* Compiling, on MacOSX, Linux, probably WSL:
 ```
-   ./configure --help   #  then choose the options you want
+   ./configure --help   #  then re-run configure with the options (if any) you want
    make install
+   source AmberClassic.sh
    make test
 ```
+See the *doc/AmberClassic.pdf* file for more details.
+
+* Installing pre-built executables via conda
+```
+   conda create --name AmberClassic   # you can choose the env name
+   conda activate AmberClassic
+   conda install dacase::amberclassic  # only linux-64 and osx-64 for now
+   cd $CONDA_PREFIX
+   conda install -c conda-forge parmed # optional: brings in ParmEd
+   source AmberClassic.sh
+   .... # go to some work directory and have fun!
+   conda deactivate  # to exit the conda environment when done
+```
+Again, see the *doc/AmberClassic.pdf* file for more details.
 
 # License
 
-This project is licensed under the GNU General Public License, 
-version 2, or (at your option) any later version.   Some components use 
-different, but compatible, open source licenses.  See the LICENSE file 
-for more information.
+This project is licensed under the GNU General Public License, version 2, or (at your option) any later version.   Some components use different, but compatible, open source licenses.  See the LICENSE file for more information.
 

@@ -1,11 +1,11 @@
 
 include ../../config.h
 
+# Add search paths for .mod files
+LOCALFLAGS = -I../rism -I../xray
+
 SHELL=/bin/sh
 VPATH=
-
-# Add search paths for .mod files
-LOCALFLAGS = $(CUDAFFLAGS) -I../rism -I../xray 
 
 NFE_OBJECTS = \
     nfe-abmd-hooks.o nfe-bbmd-ctxt.o nfe-bbmd-hooks.o  \
@@ -68,7 +68,7 @@ LESOBJ= \
     sander.LES.o  sander_lib.o set.LES.o sglds.o \
     shake.o short_ene.LES.o softcore.o \
     stack.o state.o thermo_int.o trajene.o wallclock.o \
-    xminC.o veclib.o dsarpack.o nxtsec.o
+    xminC.o veclib.o dsarpack.o nxtsec.o sinr_t.o
 
 XRAY_OBJS = \
    xray_globals.o xray_interface.o xray_interface_impl_cpu.o \
@@ -81,6 +81,8 @@ msander$(SFX): $(BINDIR)/msander$(SFX)
 msander.LES$(SFX): $(BINDIR)/msander.LES$(SFX)
 
 msander.cuda$(SFX): $(BINDIR)/msander.cuda$(SFX)
+
+msander.LES.cuda$(SFX): $(BINDIR)/msander.LES.cuda$(SFX)
 
 dummy:
 
@@ -98,7 +100,7 @@ $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
-	$(VB)$(FC) -o $@  $(MMOBJ) \
+	$(VB)$(FC) $(FFLAGS) -o $@  $(MMOBJ) \
 	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
          -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
@@ -110,8 +112,19 @@ $(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
 	$(VB)$(FC) $(FFLAGS) -o $@ $(LESOBJ) \
-	     $(XRAY_OBJS) $(NFE_OBJECTS) -L$(LIBDIR) $(NETCDFLIBF) \
-	     $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+	     $(NFE_OBJECTS) $(XRAY_OBJS) \
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
+
+#---------------------------------------------------------------------------
+$(BINDIR)/msander.LES.cuda$(SFX): libs lib_cuda $(LESOBJ) \
+         $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
+         $(PLUMED_DEPENDENCIES) dummy
+	@echo "[MSANDER]  FC $@"
+	$(VB)$(FC) $(FFLAGS) -o $@  $(LESOBJ) \
+	     $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o  \
+	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD) \
+         -lxray_cuda -L$(CUDA_HOME)/lib64 -L$(CUDA_HOME)/lib \
+         -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
 
@@ -124,7 +137,7 @@ libs:
 	$(VB)cd ../lapack && $(MAKE) $(LAPACK)
 	$(VB)cd ../arpack && $(MAKE) $(ARPACK)
 	$(VB)$(MAKE) binrestart.o    # needed by rism_io 
-	$(VB)cd ../rism && $(MAKE) $(RISM)
+	$(VB)cd ../rism && $(MAKE) librism
 	$(VB)cd ../xray && $(MAKE) libxray
     
 lib_cuda:
@@ -144,18 +157,6 @@ lmodC.o:  lmodC.c
 	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
 
 xminC.o:  xminC.c
-	@echo "[MSANDER]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
-
-ArrayList.o:  ArrayList.c
-	@echo "[MSANDER]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
-
-KFReader.o:  KFReader.c
-	@echo "[MSANDER]  CC $<"
-	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
-
-qm2_read_adf_results.o:  qm2_read_adf_results.c
 	@echo "[MSANDER]  CC $<"
 	$(VB)$(CC) -c -DSQM $(COPTFLAGS) $(CFLAGS) -o $@ $<
 

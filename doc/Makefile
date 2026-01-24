@@ -5,26 +5,24 @@ LYX=lyx
 SHELL = /bin/sh
 .SUFFIXES: .txt .ps .html .lyx .pdf .tex .pic
 
-.lyx.pdf:  $< amber.bib
+.lyx.pdf:
 	$(LYX) --export pdf2 $<
 		
-.lyx.tex:  $< amber.bib
+.lyx.tex:
 	$(LYX) --export pdflatex $<
 		
-.lyx.txt:  $< amber.bib
+.lyx.txt:
 	$(LYX) --export text $<
 		
-.lyx.ps:  $< amber.bib
+.lyx.ps:
 	$(LYX) --export ps $<
 
-.lyx.html: $< amber.bib
-	elyxer.py --css=amber.css --title "$@" $<  $@
-		
 .pic.pdf: $<
 	groff -p $< | ps2pdf - $@
 
-msander.pdf: msander.lyx amber.bib
-	-$(LYX) --export pdf2 msander.lyx
+AmberClassic.pdf: AmberClassic.lyx amberclassic.bib
+	-echo -n `date` > today
+	-$(LYX) --export pdf2 AmberClassic.lyx
 
 clean::
-	/bin/rm -f msander.pdf
+	/bin/rm -f AmberClassic.pdf

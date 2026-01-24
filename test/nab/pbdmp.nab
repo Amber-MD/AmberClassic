@@ -1,0 +1,24 @@
+molecule m;
+float 	m_xyz[ dynamic ];
+float 	dgrad, fret;
+int 	ier; 
+
+m = getpdb("pbdmp.pdb");
+readparm(m, "pbdmp.prmtop");
+allocate m_xyz[ 3*m.natoms ];
+mm_options( "ntpr=1, ipb=1, cut=99.0, inp=2");
+mm_options( "epsin=1.0, epsout=80.0, istrng=0, ivalence=1.0");
+mm_options( "cutnb=0.0, fillratio=4.0, space=0.5");
+mm_options( "smoothopt=0, npbopt=0, solvopt=1, eneopt=2");
+mm_options( "radiopt=1, dprob=1.6, sprob=1.6, iprob=2.0");
+mm_options( "nfocus=2, fscale=8, bcopt=5, accept=0.000001, maxitn=100");
+mm_options( "npbgrid=100" );
+mme_init( m, NULL, "::Z", m_xyz, NULL);
+
+dgrad = 3*m.natoms*0.0001;
+setxyz_from_mol( m, NULL, m_xyz );
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 10.0, 10 );
+if(mytaskid==0)
+  printf( "conjgrad returns %d\n", ier );
+
+mme_timer();

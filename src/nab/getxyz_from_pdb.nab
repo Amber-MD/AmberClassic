@@ -1,0 +1,186 @@
+#define  MAXRES  9999
+int		bonded_atoms() c;
+int		unlink() c;
+
+int		getxyz_from_pdb( string filename, molecule m, 
+			string naexp, int add_protons )
+{
+
+//      Read pdb file from filename, extract the coordinates, and put
+//      them into the corresponding positions in molecule m.  Order
+//      in the pdb file does not need to match that in the molecule.
+//      Also returns naexp, an atom-expression identifyng atoms in the
+//      molecule for which no matching coordinates were found in the
+//      pdb file.
+//
+//      If add_protons is not 0, then build in missing protons if possible;
+//			also, build in missing OXT terminal oxygen if necessary
+
+//      One use of this routine is as follows:
+//        1.  construct a molecule from its sequence and the residue library
+//        2.  use getxyz_from_pdb  to read in (some of) the coordinates,
+//            and build hydrogens if desired;
+//        3.  (optional) create a bounds matrix with newbounds, then call
+//             usemodeldist with all atoms except for those in
+//             the atom expression returned from this
+//             routine, then embed.  This should result in the construction
+//             of the missing atoms that were not in the pdb file.
+
+
+	atom		a;
+	molecule	m1, m2;
+	residue		r;
+	int			n_matched, n_notmatched, notres, ires;
+	point		p1[ hashed ];
+	point		p[ hashed ];
+	string		s, prim_scaffold;
+	string		resid[ MAXRES ];
+	string		strandname[ MAXRES ];
+	int			nscaffold, nb1, nb2, nb3, ib2, ib3;
+	string		ascaffold;
+	atom		n1[ 8 ], n2[ 8 ], n3[ 8 ];
+	point		pnew, ps2;
+	float		rms;
+
+//    make copy of input molecule m for later use in fixing hydrogens:
+
+	putpdb( "temp___pdb", m );
+	m2 = getpdb( "temp___pdb" );
+	unlink( "temp___pdb" );
+
+//    read in the "good" but possibly incomplete coords:
+
+	m1 = getpdb( filename ); if( m1 == NULL ) exit( 1 );
+
+//    get hashed array of atom postions in input file:
+
+	for( a in m1 ){
+		p1[ a.fullname ] = a.pos;
+	}
+
+//    put these points in appropriate place in molecule m:
+
+	n_matched = n_notmatched = notres = 0; naexp = "";
+	for( a in m ) {
+		p[ a.fullname ] = a.pos;
+		if( a.fullname in p1 ){
+			a.pos = p1[ a.fullname ];
+			n_matched = n_matched + 1;
+		}
+	}
+
+//     get arrays of the resid's and strandnames in the input pdb file,
+//     and put them into the appropriate places in molecule m:
+
+	for( r in m1 ){ 
+		resid[ r.tresnum ] = r.resid; 
+		strandname[ r.tresnum ] = r.strandname; 
+	}
+	ires = 0;
+	for( r in m  ){ 
+		ires = ires + 1;
+		r.resid = resid[ ires ];
+		r.strandname = strandname[ ires ];
+	}
+
+//     loop over molecule again, keeping track of what was matched, and
+//       what was not, also fixing protons if possible:
+
+	for( a in m ) {
+		s = a.fullname;
+		if( s in p1 ) continue;
+		if ( add_protons && ( substr(a.atomname,1,1) == "H" ||
+				a.atomname == "OXT" ) ){
+
+			nscaffold = 0; 
+			nb1 = bonded_atoms( a, n1 );
+    		if( nb1 != 1 ){
+        		fprintf( stderr, "wrong number of bonds: %s\n", a.fullname );
+        		exit( 1 );
+    		}
+			if( n1[ 1 ].fullname in p1 ){  //this "scaffold atom has a known coordinate
+
+				ascaffold = n1[ 1 ].fullname;
+				prim_scaffold = ascaffold;
+				nscaffold = nscaffold + 1;
+
+				nb2 = bonded_atoms( n1[ 1 ], n2 );
+				for( ib2=1; nscaffold <=3 && ib2<=nb2; ib2=ib2+1 ){
+					if( substr(n2[ib2].atomname,1,1) == "H" 
+						|| ! (n2[ ib2 ].fullname in p1) ) continue;
+					ascaffold = ascaffold + "|" + n2[ ib2 ].fullname;
+					nscaffold = nscaffold + 1;
+				}
+				if( nscaffold <= 2 ){  // need to try further to build scaffold
+					for( ib2=1; ib2<=nb2; ib2=ib2+1 ){
+						if( substr(n2[ib2].atomname,1,1) == "H" 
+							|| ! (n2[ ib2 ].fullname in p1) ) continue;
+						nb3 = bonded_atoms( n2[ ib2 ], n3 );
+						for( ib3=1; ib3<=nb3; ib3=ib3+1 ){
+							if( substr(n3[ib3].atomname,1,1) == "H" 
+								|| n3[ ib3 ] =~ ascaffold
+								|| ! (n3[ ib3 ].fullname in p1) ) continue;
+							ascaffold = ascaffold + "|" + n3[ ib3 ].fullname;
+							nscaffold = nscaffold + 1;
+						}
+					}
+					
+				}
+			}
+			if( nscaffold > 2 ){    // OK to build hydrogen:
+				superimpose( m2, ascaffold, m, ascaffold );
+				rmsd( m2, ascaffold, m, ascaffold, rms );
+				setxyz_from_mol( m2, a.fullname, pnew );
+
+				// adjust pnew so that the "primary scaffold" atom
+				// in molecule m2 exactly matches that in molecule m 
+				// (This helps partially fix up bad superpositions....):
+				setxyz_from_mol( m2, prim_scaffold, ps2 );
+				pnew += n1[ 1 ].pos - ps2;
+
+//				printf( "Building %-10s from scaffold %-30s:\n",
+//					a.fullname, ascaffold );
+//				printf( "     (x,y,z)= %8.3f%8.3f%8.3f    rms= %8.3f\n",
+//					pnew.x, pnew.y, pnew.z, rms );
+
+				if( rms > 0.2 ) 
+					printf( "Large rms of %8.3f in building %-10s\n", 
+						rms, a.fullname );
+				a.pos = pnew;
+				n_matched = n_matched + 1;
+			} else {                // still not matched:
+				if( n_notmatched == 0 ) {
+					naexp = s;
+				} else {
+					if( a.resnum == notres )
+						naexp = naexp + "," + a.atomname;
+					else
+						naexp = naexp + "|" + s;
+				}
+				n_notmatched = n_notmatched + 1;
+				notres = a.resnum;
+			}
+		} else {
+			if( n_notmatched == 0 ) {
+				naexp = s;
+			} else {
+				if( a.resnum == notres )
+					naexp = naexp + "," + a.atomname;
+				else
+					naexp = naexp + "|" + s;
+			}
+			n_notmatched = n_notmatched + 1;
+			notres = a.resnum;
+		}
+	}
+//   find "mystery" atoms in input file:
+
+	for( a in m1 ) {
+		s = a.fullname;
+		if( ! (s in p ))
+			fprintf( stderr, "unmatched atom in file %s: %s\n",
+				filename, s );
+	}
+
+	return( n_matched );
+};

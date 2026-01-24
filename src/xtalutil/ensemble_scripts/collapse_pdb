@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#  take a supercell ensemble model and collapse everything into a single
+#  ASU, with altloc's identifying the original chains
+
+# copy this file, plus collapse1 and collapse2, to the working directory;
+#    edit things that need changing  [this example is for 2vb1]
+
+#  output pdb file, ready for REFMAC, goes to stdout
+
+#----------------------------------------------------------------------
+
+#  use xtalsymm to collapse everything into a single ASU
+
+cpptraj <<EOF > cpptraj.log
+parm ../alt3/alt3_023.pdb
+reference ../alt3/alt3_uc.rst7
+trajin ../alt3/alt3_023.pdb
+xtalsymm :1-312 group "P1" reference na 3 nb 2 nc 2 collect centroid
+trajout tmp.xsymm.pdb
+go
+EOF
+
+collapse1 < tmp.xsymm.pdb | sort -k6n | collapse2 > tmp.pdb
+
+cat <<EOF > cryst1.pdb
+CRYST1   27.070   31.250   33.760  87.98 108.00 112.11 P 1           1          
+EOF
+
+cat cryst1.pdb tmp.pdb 
+
+/bin/rm tmp.xsymm.pdb cryst1.pdb tmp.pdb cpptraj.log
+
+

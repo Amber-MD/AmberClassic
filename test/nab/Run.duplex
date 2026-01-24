@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    exit 0
+fi
+. ../program_error.sh
+
+echo "Running test to make dna duplex:"
+echo ""
+../../bin/nab -o duplex duplex.nab || error
+$DO_PARALLEL ./duplex < duplex.in || error
+
+../dacdif d01.pdb.check d01.pdb
+
+rm -f duplex d01.lin duplex.c
+exit 0

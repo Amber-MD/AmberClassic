@@ -1,0 +1,19 @@
+#!/bin/sh
+
+id=$1
+resolution=$2
+
+
+#  run SFALL to get structure factors:
+sfall xyzin $id.pdb hklout $id.mtz \
+     memsize 10000000 <<EOF > $id.sfall.log
+mode sfcalc xyzin
+symm P1
+RESOLUTION $resolution
+NOSCALE
+end
+EOF
+
+phenix.mtz.dump -f s -c $id.mtz | tr ',' '\t' > $id.ftmz
+
+/bin/rm $id.mtz $id.sfall.log

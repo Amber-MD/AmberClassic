@@ -494,21 +494,14 @@ contains
     ier = fftw_init_threads()
     if( ier == 0 ) then
        write(0,*) 'failure in fftw_plan_with_nthreads'
-       call mexit(6,1)
-#ifndef API
+       stop 1
     else
        write(6,'(a,i2,a)') '| calling fftw_plan_with_nthreads(', &
           omp_num_threads,')'
-#endif
     end if
     call fftw_plan_with_nthreads(omp_num_threads)
 #endif
 
-#ifdef API
-    xvvfile = 'xvvfile'
-    crdFile = 'inpcrd'
-    outunit = 0
-#endif
     call rism3d_solvent_new(solvent, xvvfile)    
     call rism3d_solute_new_sander(solute, numAtoms, numTypes, atomTypeIndex, &
          nonbondedParmIndex, charge, ljA, ljB, mass, solvent%temperature)

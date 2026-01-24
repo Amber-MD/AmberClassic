@@ -44,10 +44,10 @@ contains
 #else
    subroutine sinr_init(natom,nkija,dt,boltz,temp0,gamma_ln,tau,sd)
 #endif
-    implicit none
 #ifdef MPI
-    include "mpif.h"
+    use mpi
 #endif
+    implicit none
      type(sinr), intent(inout) :: sd
 
      integer :: natom,nkija
@@ -139,10 +139,10 @@ contains
 
    subroutine init_sinr_vels(v,m,sd)
      use random
-     implicit none
 #ifdef MPI
-     include "mpif.h"
+     use mpi
 #endif
+     implicit none
      type(sinr), intent(inout) :: sd
 
      integer :: ind,i,j,k
@@ -196,8 +196,8 @@ contains
 
 #ifdef MPI
    subroutine sinr_mpi_init(v,ntask,sd)
+     use mpi
      implicit none
-     include "mpif.h"
 
      type(sinr), intent(inout) :: sd
 
@@ -357,10 +357,10 @@ contains
    end subroutine iLudt
 
    subroutine sinr_temp(v,m,istart,iend,sd)
-     implicit none
 #ifdef MPI
-     include 'mpif.h'
+     use mpi
 #endif
+     implicit none
      type(sinr), intent(in) :: sd
 
      integer :: istart,iend,ind,i,j,k
@@ -447,10 +447,10 @@ contains
    end subroutine sinr_temp
 
    subroutine sinr_write_vels(v,nsteps,istart,iend,tau,sd)
-     implicit none
 #ifdef MPI
-     include 'mpif.h'
+     use mpi
 #endif
+     implicit none
      type(sinr), intent(in) :: sd
      integer :: ind,i,k,istart,iend,nsteps
      double precision :: tau,v(3*sd%natom)

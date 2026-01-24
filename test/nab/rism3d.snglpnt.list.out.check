@@ -1,0 +1,358 @@
+Reading parm file (ala.parm7)
+title:
+ACE                                                                             
+	mm_options:  cut=1.000000e+19
+	mm_options:  rism=1
+	mm_options:  ntpr_rism=1
+	mm_options:  xvvfile=../rism1d/spc-kh/spc.xvv.save
+        mm_options:  molReconstruct=0
+	mm_options:  volfmt=mrc
+	mm_options:  rst=(null)
+	mm_options:  closure=kh,pse2,pse3,hnc
+	mm_options:  closureOrder=1
+	mm_options:  buffer=-1
+	mm_options:  solvcut=-1
+	mm_options:  grdspcx=0.5
+	mm_options:  grdspcy=0.5
+	mm_options:  grdspcz=0.5
+	mm_options:  solvboxx=32
+	mm_options:  solvboxy=32
+	mm_options:  solvboxz=32
+	mm_options:  ngx=32
+	mm_options:  ngy=32
+	mm_options:  ngz=32
+	mm_options:  tolerance=0.1,1e-06
+	mm_options:  mdiis_del=0.7
+	mm_options:  mdiis_restart=10
+	mm_options:  mdiis_nvec=5
+	mm_options:  mdiis_method=2
+	mm_options:  maxstep=10000
+	mm_options:  npropagate=5
+	mm_options:  centering=1
+	mm_options:  zerofrc=1
+	mm_options:  apply_rism_force=0
+	mm_options:  polarDecomp=1
+	mm_options:  entropicDecomp=0
+	mm_options:  gfCorrection=1
+	mm_options:  pcplusCorrection=1
+	mm_options:  ntwrism=0
+	mm_options:  verbose=1
+	mm_options:  progress=0
+	mm_options:  asympCorr=1
+	mm_options:  selftest=0
+	mm_options:  saveprogress=0
+	mm_options:  uccoeff=-0.149818,-0.1136266,-0.00053163,0.0103954
+	mm_options:  treeDCF=0
+	mm_options:  treeTCF=0
+	mm_options:  treeCoulomb=0
+	mm_options:  treeDCFMAC=0.1
+	mm_options:  treeTCFMAC=0.1
+	mm_options:  treeCoulombMAC=0.1
+	mm_options:  treeDCFOrder=2
+	mm_options:  treeTCFOrder=2
+	mm_options:  treeCoulombOrder=2
+	mm_options:  treeDCFN0=500
+	mm_options:  treeTCFN0=500
+	mm_options:  treeCoulombN0=500
+	mm_options:  asympKSpaceTolerance=0
+	mm_options:  chargeSmear=1
+	mm_options:  ljTolerance=0
+	mm_options:  biasPotential=0
+|solutePotentialEnergy                    [kcal/mol]                Total                   LJ              Coulomb                 Bond                Angle             Dihedral               H-Bond                LJ-14           Coulomb-14           Restraints              3D-RISM
+|rism_excessChemicalPotential             [kcal/mol]                Total         ExcChemPot_O        ExcChemPot_H1
+|rism_excessChemicalPotentialGF           [kcal/mol]                Total      ExcChemPot_GF_O     ExcChemPot_GF_H1
+|rism_excessChemicalPotentialPCPLUS       [kcal/mol]                Total
+|rism_excessChemicalPotentialUC           [kcal/mol]                Total
+|rism_solventPotentialEnergy              [kcal/mol]                Total       UV_potential_O      UV_potential_H1
+|rism_partialMolarVolume                  [A^3]                       PMV
+|rism_totalParticlesBox                   [#]                                       TotalNum_O          TotalNum_H1
+|rism_totalChargeBox                      [e]                       Total           TotalChg_O          TotalChg_H1
+|rism_excessParticlesBox                  [#]                                          ExNum_O             ExNum_H1
+|rism_excessChargeBox                     [e]                       Total              ExChg_O             ExChg_H1
+|rism_excessParticles                     [#]                                          ExNum_O             ExNum_H1
+|rism_excessCharge                        [e]                       Total              ExChg_O             ExChg_H1
+|rism_KirkwoodBuff                        [A^3]                                           KB_O                KB_H1
+|rism_DCFintegral                         [A^3]                                         DCFI_O              DCFI_H1
+|rism_polarExcessChemicalPotential        [kcal/mol]                Total              polar_O             polar_H1
+|rism_apolarExcessChemicalPotential       [kcal/mol]                Total             apolar_O            apolar_H1
+|rism_polarExcessChemicalPotentialGF      [kcal/mol]                Total           polar_GF_O          polar_GF_H1
+|rism_apolarExcessChemicalPotentialGF     [kcal/mol]                Total          apolar_GF_O         apolar_GF_H1
+|rism_polarExcessChemicalPotentialPCPLUS  [kcal/mol]                Total
+|rism_apolarExcessChemicalPotentialPCPLUS [kcal/mol]                Total
+|rism_polarExcessChemicalPotentialUC      [kcal/mol]                Total
+|rism_apolarExcessChemicalPotentialUC     [kcal/mol]                Total
+|rism_polarSolventPotentialEnergy         [kcal/mol]                Total       polar_UV_pot_O      polar_UV_pot_H1
+|rism_apolarSolventPotentialEnergy        [kcal/mol]                Total      apolar_UV_pot_O     apolar_UV_pot_H1
+|rism_polarPartialMolarVolume             [A^3]                 polar_PMV
+|rism_apolarPartialMolarVolume            [A^3]                apolar_PMV
+|rism_polarExcessParticles                [#]                                    polar_ExNum_O       polar_ExNum_H1
+|rism_apolarExcessParticles               [#]                                   apolar_ExNum_O      apolar_ExNum_H1
+|rism_polarExcessCharge                   [e]                       Total        polar_ExChg_O       polar_ExChg_H1
+|rism_apolarExcessCharge                  [e]                       Total       apolar_ExChg_O      apolar_ExChg_H1
+|rism_polarKirkwoodBuff                   [A^3]                                     polar_KB_O          polar_KB_H1
+|rism_apolarKirkwoodBuff                  [A^3]                                    apolar_KB_O         apolar_KB_H1
+|rism_polarDCFintegral                    [A^3]                                   polar_DCFI_O        polar_DCFI_H1
+|rism_apolarDCFintegral                   [A^3]                                  apolar_DCFI_O       apolar_DCFI_H1
+
+Processing NetCDF trajectory: ala.nc
+
+Frame: 1 of 3
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box to fixed size.
+||Setting solvation box to
+|grid size:         32 X         32 X         32
+|box size [A]:      32.000 X     32.000 X     32.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    13.094,      12.094,      13.997
+|Switching to KH closure
+|Using KH closure
+|RXRISM converged in     4 steps
+|Switching to PSE2 closure
+|Using PSE2 closure
+|RXRISM converged in     1 steps
+|Switching to PSE3 closure
+|Using PSE3 closure
+|RXRISM converged in     2 steps
+|Switching to HNC closure
+|Using HNC closure
+|RXRISM converged in   137 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+|Setting solvent box to fixed size.
+||Setting solvation box to
+|grid size:         32 X         32 X         32
+|box size [A]:      32.000 X     32.000 X     32.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    13.094,      12.094,      13.997
+|Switching to KH closure
+|Using KH closure
+|RXRISM converged in     2 steps
+|Switching to PSE2 closure
+|Using PSE2 closure
+|RXRISM converged in     1 steps
+|Switching to PSE3 closure
+|Using PSE3 closure
+|RXRISM converged in     1 steps
+|Switching to HNC closure
+|Using HNC closure
+|RXRISM converged in   135 steps
+solutePotentialEnergy                     -1.6752340451862118E+000   2.7454544932055263E+000  -8.2387846355864937E+001   1.9362471719280475E-002   3.6258583149244605E-001   7.4917028435555073E+000   0.0000000000000000E+000   5.0042297046820696E+000   5.0206387555530917E+001   0.0000000000000000E+000   1.4882889410492975E+001
+rism_excessChemicalPotential               1.4882889410492965E+001   8.3147215421818430E+001  -6.8264326011325466E+001
+rism_excessChemicalPotentialGF            -8.4543048975062618E+000   6.9225371392392006E+001  -7.7679676289898268E+001
+rism_excessChemicalPotentialPCPLUS        -1.0949163635942496E+001
+rism_excessChemicalPotentialUC            -9.1452139049483616E+000
+rism_solventPotentialEnergy               -4.5430662311606852E+001   1.9813519885855431E+001  -6.5244182197462280E+001
+rism_partialMolarVolume                    1.5962352130879691E+002
+rism_totalParticlesBox                                               1.0859240619732414E+003   2.1718480775780308E+003
+rism_totalChargeBox                       -1.9650950026309015E-005  -9.2042923572309451E+002   9.2042921607214464E+002
+rism_excessParticlesBox                                             -5.2505705589725160E+000  -1.0501187486396780E+001
+rism_excessChargeBox                      -1.9650949867876604E-005   4.4503836096269689E+000  -4.4504032605768371E+000
+rism_excessParticles                                                -5.2505705589725160E+000  -1.0501187486396780E+001
+rism_excessCharge                         -1.9650949867876604E-005   4.4503836096269689E+000  -4.4504032605768371E+000
+rism_KirkwoodBuff                                                   -1.5767475795981915E+002  -1.5767545418266999E+002
+rism_DCFintegral                                                    -6.7151526960972078E+003   2.1424574426276426E+003
+rism_polarExcessChemicalPotential         -1.4634761233940992E+001   4.2188533082145334E+001  -5.6823294316086326E+001
+rism_apolarExcessChemicalPotential         2.9517650644433957E+001   4.0958682339673096E+001  -1.1441031695239138E+001
+rism_polarExcessChemicalPotentialGF       -1.7299628067032302E+001   4.1049000922288329E+001  -5.8348628989320630E+001
+rism_apolarExcessChemicalPotentialGF       8.8453231695260328E+000   2.8176370470103674E+001  -1.9331047300577641E+001
+rism_polarExcessChemicalPotentialPCPLUS   -1.3142046742630418E+001
+rism_apolarExcessChemicalPotentialPCPLUS   2.1928831066879222E+000
+rism_polarExcessChemicalPotentialUC       -1.3252854581725655E+001
+rism_apolarExcessChemicalPotentialUC       4.1076406767772937E+000
+rism_polarSolventPotentialEnergy          -2.8326446200549896E+001   3.4322599305999120E+001  -6.2649045506549015E+001
+rism_apolarSolventPotentialEnergy         -1.7104216111056953E+001  -1.4509079420143685E+001  -2.5951366909132672E+000
+rism_polarPartialMolarVolume              -9.2239026833580056E+000
+rism_apolarPartialMolarVolume              1.6884742399215492E+002
+rism_polarExcessParticles                                            3.0716542226456678E-001   6.1429766499738747E-001
+rism_apolarExcessParticles                                          -5.5577359812370828E+000  -1.1115485151394168E+001
+rism_polarExcessCharge                    -1.4061485566124980E-005  -2.6035341213620100E-001   2.6033935065063490E-001
+rism_apolarExcessCharge                   -5.5894643021267025E-006   4.7107370217631699E+000  -4.7107426112274720E+000
+rism_polarKirkwoodBuff                                               9.2241848890930669E+000   9.2236866980318837E+000
+rism_apolarKirkwoodBuff                                             -1.6689894284891221E+002  -1.6689914088070188E+002
+rism_polarDCFintegral                                               -2.5113500246199101E+003   1.3267587438743935E+003
+rism_apolarDCFintegral                                              -4.2038026714772977E+003   8.1569869875324900E+002
+
+Frame: 2 of 3
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         32 X         32 X         32
+|box size [A]:      32.000 X     32.000 X     32.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    13.094,      12.090,      13.997
+|Using HNC closure
+|RXRISM converged in    49 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         32 X         32 X         32
+|box size [A]:      32.000 X     32.000 X     32.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    13.094,      12.090,      13.997
+|Using HNC closure
+|RXRISM converged in    31 steps
+solutePotentialEnergy                     -1.9446225000213531E+000   2.5685461499868838E+000  -8.2347612906585681E+001   3.3871746595471992E-002   3.5973561525106723E-001   7.4904801242451500E+000   0.0000000000000000E+000   4.9704429034947317E+000   5.0139131780094097E+001   0.0000000000000000E+000   1.4840782086896930E+001
+rism_excessChemicalPotential               1.4840782086896922E+001   8.3160205709431054E+001  -6.8319423622534131E+001
+rism_excessChemicalPotentialGF            -8.5037579616834336E+000   6.9232159322962801E+001  -7.7735917284646234E+001
+rism_excessChemicalPotentialPCPLUS        -1.0978967139344764E+001
+rism_excessChemicalPotentialUC            -9.1759307509464385E+000
+rism_solventPotentialEnergy               -4.5493642006075760E+001   1.9808679262106054E+001  -6.5302321268181814E+001
+rism_partialMolarVolume                    1.5954749254324156E+002
+rism_totalParticlesBox                                               1.0859265081652297E+003   2.1718532250824182E+003
+rism_totalChargeBox                        8.8469080176425946E-005  -9.2043130911542562E+002   9.2043139758450593E+002
+rism_excessParticlesBox                                             -5.2481243669840447E+000  -1.0496039982009369E+001
+rism_excessChargeBox                       8.8469080181827049E-005   4.4483102172957505E+000  -4.4482217482155688E+000
+rism_excessParticles                                                -5.2481243669840447E+000  -1.0496039982009369E+001
+rism_excessCharge                          8.8469080181827049E-005   4.4483102172957505E+000  -4.4482217482155688E+000
+rism_KirkwoodBuff                                                   -1.5760129875660050E+002  -1.5759816434347385E+002
+rism_DCFintegral                                                    -6.7166220231170746E+003   2.1437780195570294E+003
+rism_polarExcessChemicalPotential         -1.4664333532601731E+001   4.2212881070991514E+001  -5.6877214603593245E+001
+rism_apolarExcessChemicalPotential         2.9505115619498657E+001   4.0947324638439540E+001  -1.1442209018940883E+001
+rism_polarExcessChemicalPotentialGF       -1.7331625291332635E+001   4.1071610314501491E+001  -5.8403235605834126E+001
+rism_apolarExcessChemicalPotentialGF       8.8278673296491981E+000   2.8160549008461309E+001  -1.9332681678812111E+001
+rism_polarExcessChemicalPotentialPCPLUS   -1.3168945866130830E+001
+rism_apolarExcessChemicalPotentialPCPLUS   2.1899787267860651E+000
+rism_polarExcessChemicalPotentialUC       -1.3279952141541095E+001
+rism_apolarExcessChemicalPotentialUC       4.1040213905946556E+000
+rism_polarSolventPotentialEnergy          -2.8382814650162047E+001   3.4323760690520530E+001  -6.2706575340682576E+001
+rism_apolarSolventPotentialEnergy         -1.7110827355913710E+001  -1.4515081428414472E+001  -2.5957459274992360E+000
+rism_polarPartialMolarVolume              -9.2404209845321077E+000
+rism_apolarPartialMolarVolume              1.6878791352777367E+002
+rism_polarExcessParticles                                            3.0761071416543206E-001   6.1549874764873458E-001
+rism_apolarExcessParticles                                          -5.5557350811494768E+000  -1.1111538729658104E+001
+rism_polarExcessCharge                     1.1752792701494982E-004  -2.6073084155170023E-001   2.6084836947871520E-001
+rism_apolarExcessCharge                   -2.9058846832785205E-005   4.7090410588474514E+000  -4.7090701176942842E+000
+rism_polarKirkwoodBuff                                               9.2375570153985223E+000   9.2417209682329542E+000
+rism_apolarKirkwoodBuff                                             -1.6683885577199902E+002  -1.6683988531170681E+002
+rism_polarDCFintegral                                               -2.5136825882569410E+003   1.3280523234893917E+003
+rism_apolarDCFintegral                                              -4.2029394348601336E+003   8.1572569606763784E+002
+
+Frame: 3 of 3
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         32 X         32 X         32
+|box size [A]:      32.000 X     32.000 X     32.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    13.095,      12.083,      13.997
+|Using HNC closure
+|RXRISM converged in    51 steps
+|No Lennard-Jones cutoff
+WARNING> No LJ tolerance or cutoff correction used. For more 
+accurate calculations, increase the tolerance, box 
+dimensions, or use buffer=0
+||Setting solvation box to
+|grid size:         32 X         32 X         32
+|box size [A]:      32.000 X     32.000 X     32.000
+|grid spacing [A]:      1.000 X      1.000 X      1.000
+|effective buffer [A]:    13.095,      12.083,      13.997
+|Using HNC closure
+|RXRISM converged in    29 steps
+solutePotentialEnergy                     -2.2776482071468500E+000   2.3124359327683170E+000  -8.2281268535490383E+001   9.0898018868712946E-002   3.8428651018758297E-001   7.4889404100441439E+000   0.0000000000000000E+000   4.9166832991548484E+000   5.0027422373657977E+001   0.0000000000000000E+000   1.4782953783661934E+001
+rism_excessChemicalPotential               1.4782953783661938E+001   8.3207697816863629E+001  -6.8424744033201691E+001
+rism_excessChemicalPotentialGF            -8.5732589340193783E+000   6.9270163702704011E+001  -7.7843422636723389E+001
+rism_excessChemicalPotentialPCPLUS        -1.1022481919313233E+001
+rism_excessChemicalPotentialUC            -9.2205080586737189E+000
+rism_solventPotentialEnergy               -4.5583971236558256E+001   1.9814554357893069E+001  -6.5398525594451328E+001
+rism_partialMolarVolume                    1.5945904525714968E+002
+rism_totalParticlesBox                                               1.0859294811557766E+003   2.1718590833483017E+003
+rism_totalChargeBox                        5.1295374075881161E-005  -9.2043382902221538E+002   9.2043388031758946E+002
+rism_excessParticlesBox                                             -5.2451513764371063E+000  -1.0490181716125679E+001
+rism_excessChargeBox                       5.1295374072280424E-005   4.4457903105059904E+000  -4.4457390151319176E+000
+rism_excessParticles                                                -5.2451513764371063E+000  -1.0490181716125679E+001
+rism_excessCharge                          5.1295374072280424E-005   4.4457903105059904E+000  -4.4457390151319176E+000
+rism_KirkwoodBuff                                                   -1.5751201978022252E+002  -1.5751020241201323E+002
+rism_DCFintegral                                                    -6.7210796470402820E+003   2.1466884478970778E+003
+rism_polarExcessChemicalPotential         -1.4707427216225661E+001   4.2273895707271031E+001  -5.6981322923496691E+001
+rism_apolarExcessChemicalPotential         2.9490380999887599E+001   4.0933802109592598E+001  -1.1443421109705001E+001
+rism_polarExcessChemicalPotentialGF       -1.7377318474297525E+001   4.1130987624819056E+001  -5.8508306099116581E+001
+rism_apolarExcessChemicalPotentialGF       8.8040595402781427E+000   2.8139176077884951E+001  -1.9335116537606808E+001
+rism_polarExcessChemicalPotentialPCPLUS   -1.3209453146043963E+001
+rism_apolarExcessChemicalPotentialPCPLUS   2.1869712267307295E+000
+rism_polarExcessChemicalPotentialUC       -1.3320651416512817E+001
+rism_apolarExcessChemicalPotentialUC       4.1001433578390971E+000
+rism_polarSolventPotentialEnergy          -2.8463812495948901E+001   3.4338139891415835E+001  -6.2801952387364736E+001
+rism_apolarSolventPotentialEnergy         -1.7120158740609362E+001  -1.4523585533522768E+001  -2.5965732070865943E+000
+rism_polarPartialMolarVolume              -9.2564031005142624E+000
+rism_apolarPartialMolarVolume              1.6871544835766394E+002
+rism_polarExcessParticles                                            3.0817344867646046E-001   6.1653161423063452E-001
+rism_apolarExcessParticles                                          -5.5533248251135667E+000  -1.1106713330356314E+001
+rism_polarExcessCharge                     7.8283012842611126E-005  -2.6120781532365966E-001   2.6128609833650229E-001
+rism_apolarExcessCharge                   -2.6987638769993125E-005   4.7069981258296503E+000  -4.7070251134684202E+000
+rism_polarKirkwoodBuff                                               9.2544559460624498E+000   9.2572294721638002E+000
+rism_apolarKirkwoodBuff                                             -1.6676647572628497E+002  -1.6676743188417703E+002
+rism_polarDCFintegral                                               -2.5191831883728883E+003   1.3309257892486207E+003
+rism_apolarDCFintegral                                              -4.2018964586673937E+003   8.1576265864845720E+002
+
+|3D-RISM memory allocation summary
+|Type          Maximum
+|Integer       0.00013 GB
+|Real          0.01447 GB
+|Logical       0.00000 GB
+|Character     0.00000 GB
+|------------------------
+|Total         0.01454 GB
+
+3D-RISM processing complete.
+
+|Timing summary:
+|              Initialize       0.056
+|             Molec. Dyn.       0.000
+|             Normal Mode       0.000
+|             Conj. Grad.       0.000
+|                  Newton       0.000
+|-------------------------
+|                   Total       0.056
+
+|1st derivative timing summary:
+|             constraints       0.000
+|                   bonds       0.000
+|                  angles       0.000
+|                torsions       0.000
+|                pairlist       0.000
+|                 nonbond       0.000
+|               gen. Born       0.000
+|       Poisson Boltzmann       0.000
+|                 3D-RISM       1.483
+|                   Other       0.000
+|-------------------------
+|                   Total       1.483
+
+|CPU Timer summary for 3D-RISM Total        
+|  3D-RISM initialization                           0.057   (  3.71%)
+|      Excess Chemical Potential                        0.001   ( 20.00%)
+|      Other                                            0.004   ( 80.00%)
+|    Thermodynamics                                   0.005   (  0.34%)
+|      Solvation box resize                             0.262   ( 17.76%)
+|      Cuv propagation                                  0.001   (  0.07%)
+|          FFT                                              0.611   ( 54.21%)
+|            Overlap                                          0.089   ( 49.72%)
+|            Project                                          0.088   ( 49.16%)
+|            Other                                            0.002   (  1.12%)
+|          MDIIS Advance                                    0.179   ( 15.88%)
+|          Other                                            0.337   ( 29.90%)
+|        R1RISM                                           1.127   ( 99.65%)
+|        Other                                            0.004   (  0.35%)
+|      RXRISM                                           1.131   ( 76.68%)
+|        Lennard-Jones                                    0.020   ( 25.00%)
+|        Coulomb                                          0.011   ( 13.75%)
+|          Asymptotics Dcf/TCF-K                            0.015   ( 30.61%)
+|          Asymptotics DCF-R                                0.034   ( 69.39%)
+|        Asymptotics                                      0.049   ( 61.25%)
+|      Potential                                        0.080   (  5.42%)
+|      Other                                            0.001   (  0.07%)
+|    Solve 3D-RISM                                    1.475   ( 99.66%)
+|  3D-RISM                                          1.480   ( 96.29%)
+|3D-RISM Total                                    1.537   (100.00%)
+

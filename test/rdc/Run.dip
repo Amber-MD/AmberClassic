@@ -1,29 +1,10 @@
-#!/bin/csh -f
-#TEST-PROGRAM sander
-#TEST-DESCRIP TO_BE_DEtermined
-#TEST-PURPOSE regression, basic
-#TEST-STATE   undocumented
+#!/bin/bash
 
-set sander = "../../bin/msander"
-if( $?TESTsander ) then
-   set sander = $TESTsander
-endif
+sander="../../bin/msander"
 
-if( ! $?DO_PARALLEL ) then
-        setenv DO_PARALLEL " "
-else
-  set numprocs=`echo $DO_PARALLEL | awk -f ../numprocs.awk `
-  if ( "$numprocs" > 19 ) then
-      echo " DO_PARALLEL set to $DO_PARALLEL"
-      goto toomany
-  else if ( $?MP_PROCS)then
-      if ($MP_PROCS > 19)then
-#               --- For IBM AIX ---
-          echo "    MP_PROCS set to "$MP_PROCS
-          goto toomany
-      endif
-  endif
-endif
+if [ -n "$DO_PARALLEL" ]; then
+   sander=$sander.MPI
+fi
 
 cat <<EOF > mdin
   test of distance, angle, rdc and chemical shifts restraints for a DNA duplex
@@ -44,17 +25,8 @@ SHIFTS=gcg10.shf
 END                                                                            
 EOF
 
-$DO_PARALLEL $sander -O -i mdin -c gcg.old.x -o gcg.dip.o < /dev/null || goto error
+$DO_PARALLEL $sander -O -i mdin -c gcg.old.x -o gcg.dip.o < /dev/null \
+    || { echo "  $0:  Program error"; exit 1; }
 
 ../dacdif gcg.dip.o.save gcg.dip.o
 /bin/rm -f mdin restrt mdinfo
-exit(0)
-
-error:
-echo "  ${0}:  Program error"
-exit(1)
-
-toomany:
-    echo " too many processors for this test, exiting (Max = 19)"
-    echo "============================================================"
-    exit(0)

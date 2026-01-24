@@ -1,0 +1,23 @@
+int   getresid_from_pdb( string filename, string rid[ hashed ] )
+{
+
+//      Read pdb file from filename, extract the resid's
+//	and pass back to main shifts pgm.
+
+	residue		r;
+	molecule	m;
+	int		abs_res;
+	string		idp;
+
+
+	m = getpdb( filename ); if( m == NULL ) exit( 1 );
+
+	abs_res = 0;
+	for( r in m ){
+		abs_res = abs_res + 1;
+		idp = r.resname + ":" + sprintf( "%d", abs_res );
+		rid[ idp ] = r.resid;
+	}
+
+	return( 1 );
+};

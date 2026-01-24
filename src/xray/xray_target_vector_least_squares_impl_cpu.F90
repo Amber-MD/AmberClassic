@@ -34,15 +34,15 @@ contains
     ! restraint on the vector (complex) difference between Fcalc and
     ! Fobs
 
-    ! deriv is treated as a complex variable, but this is not really
-    ! complex analysis!  Rather, deriv%re is the derivative of the target
-    ! with respect to Fcalc%re, and deriv%im is the derivative of the 
+    ! derivc is treated as a complex variable, but this is not really
+    ! complex analysis!  Rather, derivc%re is the derivative of the target
+    ! with respect to Fcalc%re, and derivc%im is the derivative of the 
     ! target with respect to Fcalc%im.
 
-    subroutine calc_partial_d_target_d_Fcalc(Fcalc, deriv, xray_energy)
+    subroutine calc_partial_d_target_d_Fcalc(Fcalc, derivc, xray_energy)
         implicit none
         complex(real_kind), intent(in) :: Fcalc(:)
-        complex(real_kind), intent(out) :: deriv(:)
+        complex(real_kind), intent(out) :: derivc(:)
         real(real_kind), intent(out) :: xray_energy
         complex(real_kind) :: vecdif(size(Fcalc))
 
@@ -51,8 +51,8 @@ contains
         vecdif(:) = Fobs(:) - Fcalc(:)
         xray_energy = norm_scale * sum(vecdif(:n_work) * conjg(vecdif(:n_work)))
 
-        deriv(:n_work) = - norm_scale * 2 * vecdif(:n_work)
-        deriv(n_work + 1:) = 0 ! no force for things unselected here
+        derivc(:n_work) = - norm_scale * 2 * vecdif(:n_work)
+        derivc(n_work + 1:) = 0 ! no force for things unselected here
 
 
     end subroutine calc_partial_d_target_d_Fcalc

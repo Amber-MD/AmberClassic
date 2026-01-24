@@ -1,0 +1,9 @@
+//
+//	nab program that reads in a 3DNA output and computes deformation energies
+
+
+float		edef;
+
+	edef = step_ener( "dna_1kx5.3dna.out", 1 );
+	printf( "Energy returned to nab: %8.3f\n", edef );
+

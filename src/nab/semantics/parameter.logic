@@ -1,0 +1,159 @@
+cc == nab : {
+
+	kind == array, hash : ;
+
+	kind == scalar : {
+
+		class == func : ;
+
+		class == lit, expr, define : {
+			// create temporary
+		}
+
+		class == var : {
+			type == point : ;
+
+			id == parm : ;
+
+			id != parm : {
+				// take address
+			}
+		}
+	}
+}
+
+cc == fortran : {
+
+	kind == array, hash : ;
+
+	kind == scalar : {
+
+		class == func : ;
+
+		class == lit, expr, define : {
+			// create temporary
+		}
+
+		class == var : {
+			type == point : ;
+
+			id == parm : ;
+
+			id != parm : {
+				// take address
+			}
+		}
+	}
+}
+
+cc == c : {
+
+	kind == array, hash : ;
+
+	kind == scalar : {
+
+		class == func : ;
+
+		class == lit, expr, define : ;
+
+		class == var : {
+			type == point : ;
+
+			id == parm : {
+				// add indirect
+			}
+
+			id != parm : ;
+		}
+	}
+}
+
+cc == io : {
+
+	call == fscanf, fprintf : {
+		parm == 1 : {
+			kind == scalar, class == var, type == file : {
+				id == parm : {
+					// add indirect 
+				}
+				id != parm : ;
+			}
+			!( kind == scalar, class == var, type == file ) : {
+				// error 1st parm must be file
+			}
+		}
+	}
+
+	call == sscanf, sprintf : {
+		parm == 1 : {
+			kind == scalar, class == var, type == string : {
+				id == parm : {
+					// add indirect 
+				}
+				id != parm : ;
+			}
+			!( kind == scalar, class == var, type == string ) : {
+				// error 1st parm must be string
+			}
+		}
+	}
+
+	kind == array, hash : {
+		// error, only scalars allowed
+	}
+
+	kind == scalar : {
+
+		type != int, float, string : {
+			// error , I/O only for int,float,string
+		}
+
+		class == func : {
+			// error can't do I/O on func
+		}
+
+		class == lit, expr, define : {
+			parm == fmt : ;
+			call == fscanf, scanf, sscanf : {
+				// error input requires var
+			}
+			call == fprintf, printf, sprintf : ;
+		}
+
+		class == var : {
+			type == int, float : {
+				id == parm : {
+					call == scanf, fscanf, sscanf : ;
+					call == printf, fprintf, sprintf : {
+						// add indirect
+					}
+				}
+				id != parm : {
+					call == scanf, fscanf, sscanf : {
+						// take address
+					}
+					call == printf, fprintf, sprintf : ;
+				}
+			}
+			type == string : {
+				id == parm : {
+					call == scanf, fscanf, sscanf : {
+						// add NAB_readstring()
+					}
+					call == printf, fprintf, sprintf : {
+						// add indirect
+					}
+				}
+				id != parm : {
+					call == scanf, fscanf, sscanf : {
+						// take address,
+						// add NAB_readstring()
+					}
+					call == printf, fprintf, sprintf : {
+						// add indirect
+					}
+				}
+			}
+		}
+	}
+}

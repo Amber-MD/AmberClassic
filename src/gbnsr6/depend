@@ -1,0 +1,271 @@
+#
+#   Please do not edit the "depend" file directly, since it is created by the
+#   "makedepend" script.  If changes are needed, edit "makedepend" itself.
+#
+debug.o: \
+                    copyright.h\
+                    flocntrl.h\
+                    debug.h\
+                    md.h\
+                    memory_module.o\
+                    extra.h
+
+decomp.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    memory_module.o
+
+egb.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    timer.h\
+                    pb_constants.h\
+                    sa_driver.o\
+                    variable_module.o\
+                    decomp.o\
+                    timer.o\
+                    pb_md.h\
+                    md.h\
+                    box.h\
+                    extra.h\
+                    files.h\
+                    flocntrl.h\
+                    parallel.h\
+                    ar6_constants.h
+
+ene.o: \
+                    ../include/dprec.fh\
+                    variable_module.o\
+                    parms.h
+
+force.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    egb.o\
+                    np_force.o\
+                    timer.o\
+                    pb_constants.h\
+                    timer.h\
+                    md.h\
+                    box.h\
+                    memory.h\
+                    parms.h\
+                    files.h\
+                    flocntrl.h\
+                    pb_md.h
+
+gb_read.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    egb.o\
+                    variable_module.o\
+                    sa_driver.o\
+                    np_force.o\
+                    pb_def.h\
+                    md.h\
+                    pb_md.h
+
+gbnsr6.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    files.h\
+                    extra.h\
+                    memory_module.o\
+                    timer.o\
+                    decomp.o\
+                    bc_memory.h\
+                    box.h\
+                    md.h\
+                    parms.h\
+                    timer.h
+
+gen_dx_file.o: \
+                    ../include/dprec.fh\
+                    variable_module.o
+
+getcoor.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    files.h
+
+locmem.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    memory_module.o\
+                    box.h\
+                    md.h\
+                    dynph.h
+
+memory_module.o: \
+                    memory.h
+
+myopen.o: \
+                    copyright.h
+
+np_force.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    timer.h\
+                    variable_module.o\
+                    sa_driver.o\
+                    timer.o\
+                    pb_md.h\
+                    md.h\
+                    box.h\
+                    pb_constants.h\
+                    flocntrl.h
+
+NSR6routines.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    timer.h\
+                    sa_driver.o\
+                    egb.o\
+                    pb_constants.h\
+                    md.h
+
+parms.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    memory_module.o
+
+pb_exmol.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    timer.h\
+                    variable_module.o\
+                    timer.o\
+                    sa_driver.o\
+                    pb_constants.h\
+                    md.h
+
+pb_init.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    variable_module.o\
+                    sa_driver.o\
+                    md.h\
+                    box.h\
+                    egb.o\
+                    np_force.o\
+                    parms.h\
+                    pb_md.h
+
+pb_list.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    variable_module.o\
+                    sa_driver.o\
+                    pb_constants.h\
+                    extra.h
+
+pb_read.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    memory_module.o\
+                    pb_constants.h\
+                    files.h\
+                    box.h\
+                    md.h\
+                    parms.h\
+                    decomp.o\
+                    memory.h\
+                    variable_module.o\
+                    np_force.o\
+                    sa_driver.o\
+                    pb_def.h\
+                    pb_md.h
+
+pb_write.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    files.h\
+                    md.h\
+                    decomp.o\
+                    extra.h\
+                    variable_module.o\
+                    sa_driver.o\
+                    pb_def.h\
+                    pb_md.h
+
+pythag.o: \
+                    ../include/dprec.fh\
+                    pb_constants.h
+
+random.o: \
+                    random.h
+
+rdparm.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    md.h\
+                    memory.h\
+                    parms.h\
+                    files.h\
+                    box.h
+
+rfree.o: \
+                    copyright.h\
+                    ../include/dprec.fh
+
+rgroup.o: \
+                    copyright.h\
+                    ../include/dprec.fh
+
+runmd.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    memory_module.o\
+                    files.h\
+                    md.h\
+                    box.h\
+                    extra.h\
+                    timer.h\
+                    pb_constants.h\
+                    pb_md.h
+
+runmin.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    memory_module.o\
+                    pb_constants.h\
+                    md.h\
+                    box.h\
+                    files.h\
+                    pb_md.h\
+                    extra.h
+
+sa_driver.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    timer.h\
+                    pb_constants.h\
+                    timer.o
+
+svbksb.o: \
+                    ../include/dprec.fh\
+                    pb_constants.h
+
+svdcmp.o: \
+                    ../include/dprec.fh\
+                    pb_constants.h
+
+timer.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    timer.h
+
+variable_module.o: \
+                    copyright.h\
+                    ../include/dprec.fh\
+                    pb_def.h\
+                    timer.h\
+                    pb_constants.h
+

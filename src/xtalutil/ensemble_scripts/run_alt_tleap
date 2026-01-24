@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# alternative to using XrayPrep to make the parm7/rst7 files:
+
+id=$1
+
+cat <<EOF > tleap.in
+set default nocenter on
+set default reorder_residues off
+source leaprc.protein.ff19SB
+source leaprc.water.spce
+source leaprc.gaff2
+EOH = loadMol2 EOH.mol2
+loadAmberParams EOH.frcmod
+x = loadPdb $id.pdb
+source sslinks
+set x box { 68.175   37.534   41.059 }
+saveAmberParm x $id.parm7 foo.rst7
+quit
+EOF
+
+tleap -f tleap.in > tleap.out
+/bin/rm tleap.in
+
+ChBox -c foo.rst7 -o ${id}_uc.rst7 -al 90.00 -bt 90.55 -gm 90.00 -X 68.175 -Y 37.534 -Z 41.059
+
+$AMBERCLASSICHOME/bin/add_pdb -i $id.parm7 -p ${id}.pdb -o foo.parm7 
+$AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}_uc.parm7
+
+$AMBERCLASSICHOME/bin/ambpdb -p ${id}_uc.parm7 -ext < ${id}_uc.rst7 > ${id}_000.pdb
+
+/bin/rm -f foo.parm7 foo.rst7 $id.parm7

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../program_error.sh
+
+if [ "$DO_PARALLEL" != "" ];  then
+    NAB="mpinab"
+else
+    NAB="nab"
+fi
+
+echo "Running test to do simple lmod optimization"
+echo ""
+../../bin/$NAB -o tlmod tlmod.nab || error
+$DO_PARALLEL ./tlmod | tail -1 > tlmod.out || error
+
+../dacdif -r 0.15 tlmod.out.check tlmod.out
+
+rm -f tlmod tlmod.c conflib.dat
+exit 0
