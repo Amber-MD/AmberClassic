@@ -75,8 +75,9 @@ module xray_globals_module
    integer, allocatable, save :: atom_selection(:)
 
    ! Residue and atom data that may become SANDER globals:
-   character(len=4), allocatable, save :: residue_chainid(:), residue_icode(:)
-   character(len=4), allocatable, save :: atom_element(:), atom_altloc(:)
+   character(len=1), allocatable, save :: residue_chainid(:), &
+                                          residue_icode(:), atom_altloc(:)
+   character(len=4), allocatable, save :: atom_element(:)
    integer, allocatable, save :: residue_number(:)
 
    !----------------------------------------------------------------------------

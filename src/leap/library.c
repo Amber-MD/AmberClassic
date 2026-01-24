@@ -274,7 +274,7 @@ STRING		sPrefix, sEntry;
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Initialize the UNITLIBRARY so that subsiquent calls to
+ *      Initialize the UNITLIBRARY so that subsequent calls to
  *      sULNext will return UNIT names.
  */
 void

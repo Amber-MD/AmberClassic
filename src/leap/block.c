@@ -35,7 +35,7 @@
  *		A BLOCK is an object that maintains an arbitrarily
  *		large string that contains a single command for the 
  *		parser.  The string is \0 terminated and
- *		can contains several lines seperated by \n.
+ *		can contain several lines separated by \n.
  *		The purpose of breaking up the command over several
  *		lines is so that when the command is written to the journal
  *		they are not more than 80 characters.

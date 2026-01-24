@@ -1,0 +1,88 @@
+#!/bin/bash 
+
+#=============================================================================
+#  Using RISM and metatwist to place waters around a solute.
+#    (copy this script to your working directory, and edit it as needed.
+#
+#    (This example uses a KH closure and pure water as a solvent, just
+#    to illustrate the ideas. There is next to no error checking.)
+#=============================================================================
+
+thresh=0.5  # threshold for including explicit waters at the centers
+            # of negative Laplacian regions.  These will be in order
+            # with the most probable ones first, so you can edit the
+            # output pdb file to inclcude as many as you think you want.
+            # Setting a smaller threshhold will give you more waters,
+            # but with increasingly less connection to the rism density.
+
+            # Current thinking: use a thresh value of about 0.5, then
+            # use add_to_box to randomly pack in any remaining waters,
+            # which don't have any particular justification in the RISM
+            # density.
+
+#  main output: $id.wat.pdb = $id.pdb + placed waters (occ=1, B=0)
+#               wats.pdb: just oxygen positions, with estimated
+#                         occupations and B-factors
+
+id=$1
+
+if false; then    # <-- use false if you've already done the 3D-RISM
+                  #     calculation, true otherwise.
+
+#---------------------------------------------------------------------------
+# 1.  Run a single-point of 3D-RISM, here using the sander interface;
+#       (could also be with rism3d.snglpnt):
+#---------------------------------------------------------------------------
+
+cat > mdin.rism <<EOF
+  single-point 3D-RISM calculation using the sander interface
+ &cntrl
+    ntx=1, nstlim=0, irism=1, ntb=0,
+ /
+ &rism
+    ! periodic='pme',
+    closure='kh','pse2', tolerance=1.e-3,1e-6,
+    grdspc=0.5,0.5,0.5,
+    mdiis_del=0.5, mdiis_nvec=10, maxstep=5000, mdiis_restart=10,
+    solvcut=9.0,
+    verbose=2, npropagate=0,
+    apply_rism_force=0,
+    volfmt='mrc', ntwrism=1,
+ /
+EOF
+
+# export OMP_NUM_THREADS=20
+mpirun -np 16 sander.MPI -O -i mdin.rism -o $id.r3d \
+    -p 9cbu.parm7 -c 9cbu.rst7 -xvv $id.xvv -guv $id < /dev/null
+
+/bin/rm -f mdin.rism restrt mdinfo $id.H1.0.mrc
+
+fi
+
+if true; then
+
+#---------------------------------------------------------------------------
+# 2.  Run metatwist to to a Lapacian analysis on the MG distribution:
+#---------------------------------------------------------------------------
+
+/home/case/AmberClassic/bin/metatwist --dx $id.MG.0.mrc --species MG  \
+     --convolve 4 --sigma 1.0 --odx $id.MG.mrc > $id.lp
+
+#---------------------------------------------------------------------------
+# 3.  Place MG molecules at the centers of the negative Laplacians:
+#---------------------------------------------------------------------------
+
+/home/case/AmberClassic/bin/metatwist --dx $id.MG.0.mrc \
+      --ldx $id.MG.mrc --map blobsper \
+      --species MG MG --bulk 0.010 --threshold $thresh  > $id.blobs 
+
+sort -k10nr $id.MG.0-$id.MG-blobs-centroid.pdb > $id.MG.pdb
+
+# sed 's/^END/TER/' $id.pdb > $id.MG.pdb
+# cat mgs.pdb >> $id.MG.pdb
+
+
+/bin/rm -f $id.MG.0-convolut* convolu* \
+   $id.MG.0-$id.MG-blobs-centroid.pdb $id.MG.0-$id.MG-blobs-mean.pdb
+
+fi

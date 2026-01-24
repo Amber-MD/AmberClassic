@@ -196,6 +196,8 @@ typedef unsigned char   BOOL;
 // functions
 // ---------------------------------------------------------------------
 
+extern	double	strtod();
+
 #ifndef tolower
 # define        tolower(c)      ( c - 'A' + 'a' )
 #endif
@@ -231,6 +233,7 @@ typedef unsigned char   BOOL;
 /* The first four-digit quasiall-even-digits non-quasi-repdigit emirp ! */
 
 typedef char            STRING[MAXSTRINGLENGTH];
+typedef char *          STRINGref;
 
 /*
  *
@@ -740,7 +743,7 @@ extern STRING   GsBasicsFullName;
  */
 
 /*
- *      MEMORY_DEBUG can be 0, 1, 2, 3, 5
+ *      MEMORY_DEBUG can be 0, 1, 2, 3, 4
  *
  *              0 -     Dont do any MEMORY debugging.
  *              1 -     Use my memory usage tracking.

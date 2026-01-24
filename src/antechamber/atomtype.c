@@ -2029,6 +2029,7 @@ int main(int argc, char *argv[])
     int index1, index2;
     int i;
     int overflow_flag = 0;      /*if overflow_flag ==1, reallocate memory */
+    int fix_atomnames_flag = 1;
     char *fname;
 
     amberhome = egetenv("AMBERCLASSICHOME");
@@ -2047,7 +2048,10 @@ int main(int argc, char *argv[])
                    "[34m                   sybyl :[0m for atom types used in sybyl\n"
                    "[31m                -d[0m atom type defination file, optional\n"
                    "[31m                -a[0m do post atom type adjustment (it is or sybyl applied with \"-d\" option)\n"
-                   "                   1: yes, 0: no (the default)\n");
+                   "                   1: yes, 0: no (the default)\n"
+                   "[31m                -an[0m adjust atom names: yes(y) or no(n)\n"
+                   "[32m                   y [0m- fix atom names. Default.\n"
+                   "[32m                   n [0m- don't fix atom names.\n");
             exit(0);
         }
         if (argc != 15 && argc != 13 && argc != 11 && argc != 9 && argc != 7 && argc != 5
@@ -2065,7 +2069,10 @@ int main(int argc, char *argv[])
                    "[34m                   sybyl :[0m for atom types used in sybyl\n"
                    "[31m                -d[0m atom type defination file, optional\n"
                    "[31m                -a[0m do post atom type adjustment (it is applied with \"-d\" option)\n"
-                   "                   1: yes, 0: no (the default)\n");
+                   "                   1: yes, 0: no (the default)\n"
+                   "[31m                -an[0m adjust atom names: yes(y) or no(n)\n"
+                   "[32m                   y [0m- fix atom names. Default.\n"
+                   "[32m                   n [0m- don't fix atom names.\n");
             exit(1);
         }
     } else {
@@ -2084,7 +2091,8 @@ int main(int argc, char *argv[])
                        "                   sybyl : for atom types used in sybyl\n"
                        "                -d atom type defination file, optional\n"
                        "                -a do post atom type adjustment (it is applied with \"-d\" option)\n"
-                       "                   1: yes, 0: no (the default)\n");
+                       "                   1: yes, 0: no (the default)\n"
+                       "                -an adjust atom names: yes(y) or no(n), the default; yes\n");
                 /*
                    printf("\n Usage atomtype -i   inputfile ");   
                    printf("\n              -bcc yes_or_no, optional "); 
@@ -2109,7 +2117,8 @@ int main(int argc, char *argv[])
                    "                   sybyl : for atom types used in sybyl\n"
                    "                -d atom type defination file, optional\n"
                    "                -a do post atom type adjustment (it is applied with \"-d\" option)\n"
-                   "                   1: yes, 0: no (the default)\n");
+                   "                   1: yes, 0: no (the default)\n"
+                   "                -an adjust atom names: yes(y) or no(n), the default; yes\n");
             exit(1);
         }
     }
@@ -2150,8 +2159,13 @@ int main(int argc, char *argv[])
             if (strcmp("abcg2", argv[i + 1]) == 0 || strcmp("ABCG2", argv[i + 1]) == 0)
                 pindex = 6;
         }
-
         if (strcmp(argv[i], "-an") == 0) {
+            if (strcmp(argv[i+1], "no") == 0 || strcmp(argv[i+1], "n") == 0) {
+                fix_atomnames_flag = 0;
+            }
+        }
+        // `change name`, undocumented option
+        if (strcmp(argv[i], "-cn") == 0) {
             if (strcmp("orig", argv[i + 1]) == 0 || strcmp("ORIG", argv[i + 1]) == 0)
                 anindex = 0;
             if (strcmp("elem", argv[i + 1]) == 0 || strcmp("ELEM", argv[i + 1]) == 0)
@@ -2253,7 +2267,9 @@ int main(int argc, char *argv[])
     }
 
     atomicnum(atomnum, atom);
-    adjustatomname(atomnum, atom, 1);
+    if (fix_atomnames_flag == 1) {
+        adjustatomname(atomnum, atom, 1);
+    }
 
     selectchain = (int *) emalloc(sizeof(int) * (atomnum + 10));
     selectindex = (int *) emalloc(sizeof(int) * (atomnum + 10));

@@ -82,9 +82,8 @@
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      For all of the bonds, search for their parameters
- *      within the passed PARMLIB.  If they are
- *      found then continue, otherwise
+ *      For all of the bonds, search for their parameters within the
+ *      passed PARMLIB.  If they are found then continue, otherwise
  *      add the bond parameter to the PARMSET.
  *      If either of the ATOMs in the bond are to be perturbed then
  *      do the same with the perturbation parameter.
@@ -100,7 +99,8 @@ BOOL            bFailedGeneratingParameters;
 STRING          sAtom1, sAtom2;
 PARMSET         psTemp;
 int             iIndex;
-
+    
+    VPTRACEENTER(( "zbUnitCheckBondParameters" ));
     bFailedGeneratingParameters = FALSE;
     
     VP0(( "Checking for bond parameters.\n" ));
@@ -114,8 +114,14 @@ int             iIndex;
                 ( iIndex = iParmSetFindBond( psTemp, sAtom1, sAtom2 )));
         if ( iIndex == PARM_NOT_FOUND ) {
                 bFailedGeneratingParameters = TRUE;
-                VPERROR(( "Could not find bond parameter for: %s - %s\n", 
-                        sAtom1, sAtom2 ));
+                VECTOR vPos1 = vAtomPosition(aAtom1);
+                VECTOR vPos2 = vAtomPosition(aAtom2);
+                VPERROR(( "Could not find bond parameter for atom types: %s - %s\n"
+                        "        for atom %s at position %f, %f, %f \n"
+                        "        and atom %s at position %f, %f, %f.\n",
+                        sAtom1, sAtom2, sContainerName( aAtom1), vPos1.dX,
+                        vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ ));
         }
 
         if ( bAtomFlagsSet( aAtom1, ATOMPERTURB ) ||
@@ -137,8 +143,47 @@ int             iIndex;
         }
     }
 
+    VPTRACEEXIT (( "zbUnitCheckBondParameters" ));
     return(bFailedGeneratingParameters);
 }
+
+/*
+ * zbUnitCheckC4Pairwise
+ * New2021
+ *
+
+
+static BOOL
+zbUnitCheckC4Pairwise(UNIT uUnit)
+{
+LOOP            lTemp;
+ATOM            aAtom1, aAtom2;
+double          daC4Pairwise; // New
+BOOL            bFailedGeneratingParameters;
+STRING          sAtom1, sAtom2;
+PARMSET         psTemp;
+int             iIndex;
+
+    daC4Pairwise = 0.0; // New
+
+    bFailedGeneratingParameters = FALSE;
+
+    VP0(( "Checking for bond parameters.\n" ));
+
+    lTemp = lLoop( (OBJEKT)uUnit, C4Pairwise );
+    while ( oNext(&lTemp) != NULL ) { 
+        LoopGetC4Pairwise( &lTemp, &aAtom1, &aAtom2, &daC4Pairwise );
+        strcpy( sAtom1, sAtomType(aAtom1) );
+        strcpy( sAtom2, sAtomType(aAtom2) );
+        if ( iIndex == PARM_NOT_FOUND ) {
+                bFailedGeneratingParameters = TRUE;
+                VPERROR(( "Could not find C4 parameter for: %s - %s\n",
+                        sAtom1, sAtom2 ));
+        }
+    }
+
+    return(bFailedGeneratingParameters);
+}*/
 
 
 /*
@@ -188,8 +233,17 @@ int             iTemp = PARM_NOT_FOUND;
                                                 sAtom2, sAtom3 ) ) );
         if ( iTemp == PARM_NOT_FOUND ) {
                 bFailedGeneratingParameters = TRUE;
-                VPERROR(( "Could not find angle parameter: %s - %s - %s\n", 
-                        sAtom1, sAtom2, sAtom3 ));
+                VECTOR vPos1 = vAtomPosition(aAtom1);
+                VECTOR vPos2 = vAtomPosition(aAtom2);
+                VECTOR vPos3 = vAtomPosition(aAtom3);
+                VPERROR(( "Could not find angle parameter for atom types: %s - %s - %s\n"
+                        "        for atom %s at position %f, %f, %f,\n"
+                        "            atom %s at position %f, %f, %f,\n"
+                        "        and atom %s at position %f, %f, %f.\n",
+                        sAtom1, sAtom2, sAtom3, sContainerName( aAtom1),
+                        vPos1.dX, vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ, sContainerName( aAtom3),
+                        vPos3.dX, vPos3.dY, vPos3.dZ ));
         }
 
 IGNORE1:
@@ -453,6 +507,7 @@ UNIT    m;
     m->psParameters = NULL;
     m->vaAtoms = NULL;
     m->vaBonds = NULL;
+    m->vaC4Pairwise = NULL; //New
     m->vaAngles = NULL;
     m->vaTorsions = NULL;
     m->vaConnectivity = NULL;
@@ -474,6 +529,10 @@ UNIT    m;
     UnitSetSolventCap( m, 0.0, 0.0, 0.0, 0.0 );
     UnitSetUseSolventCap( m, FALSE );
     m->dAtomGroups = dDictionaryCreate();
+
+    m->iMaxPdbSeq = 0;
+    m->bSeqCacheValid = TRUE;
+    
     return(m);
 }
 
@@ -527,6 +586,8 @@ DICTLOOP        dlGroups;
         VarArrayDestroy( &(*uPUnit)->vaAtoms );
     if ( (*uPUnit)->vaBonds )
         VarArrayDestroy( &(*uPUnit)->vaBonds );
+    if ( (*uPUnit)->vaC4Pairwise )
+	VarArrayDestroy( &(*uPUnit)->vaC4Pairwise ); //New
     if ( (*uPUnit)->vaAngles )
         VarArrayDestroy( &(*uPUnit)->vaAngles );
     if ( (*uPUnit)->vaTorsions )
@@ -807,6 +868,63 @@ OBJEKT  cCont;
 }
 #endif
 
+/*      SSchott: Inclusion of Claude suggested functions to Hash maximum PDB
+ *      seq number and speed up big system parametrization
+ *
+ *      iUnitGetMaxPdbSeq
+ *
+ *      Get the maximum PDB sequence number in the unit.
+ *      Uses cached value if valid, otherwise recomputes and caches.
+ *
+ *      This optimization eliminates O(n) scans on every UnitJoin,
+ *      reducing UnitJoin complexity from O(n²) to O(n).
+ */
+static int
+iUnitGetMaxPdbSeq( UNIT uUnit )
+{
+LOOP        lContents;
+RESIDUE     rRes;
+int         iMaxSeq;
+    
+    /* Return cached value if still valid */
+    if ( uUnit->bSeqCacheValid ) {
+        return uUnit->iMaxPdbSeq;
+    }
+    
+    /* Recompute max sequence number */
+    iMaxSeq = 0;
+    lContents = lLoop( (OBJEKT)uUnit, RESIDUES );
+    while ( (rRes = (RESIDUE)oNext(&lContents)) ) {
+        if ( iMaxSeq < iResiduePdbSequence(rRes) )
+            iMaxSeq = iResiduePdbSequence(rRes);
+    }
+    
+    /* Cache the result */
+    uUnit->iMaxPdbSeq = iMaxSeq;
+    uUnit->bSeqCacheValid = TRUE;
+    
+    return iMaxSeq;
+}
+
+/*
+ *      UnitUpdateMaxPdbSeq
+ *
+ *      Update the cached max PDB sequence if we know we just added
+ *      a residue with a specific sequence number.
+ *      This avoids invalidating the cache unnecessarily.
+ */
+static void
+UnitUpdateMaxPdbSeq( UNIT uUnit, int iNewSeq )
+{
+    if ( !uUnit->bSeqCacheValid ) {
+        /* Cache invalid, will be recomputed when needed */
+        return;
+    }
+    
+    if ( iNewSeq > uUnit->iMaxPdbSeq ) {
+        uUnit->iMaxPdbSeq = iNewSeq;
+    }
+}
 
 
 /*
@@ -844,14 +962,8 @@ int             iPdbSeq;
     if ( !bUnitTailUsed(uB) ) aNext = NULL;
     else aNext = aUnitTail(uB);
 
-                /* Get the highest PDB sequence number */
-    iPdbSeq = 0;
-    lContents = lLoop( (OBJEKT)uA, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lContents)) ) {
-        if ( iPdbSeq < iResiduePdbSequence(rRes) ) {
-            iPdbSeq = iResiduePdbSequence(rRes);
-        }
-    }
+    /* OPTIMIZATION: Use cached max sequence instead of O(n) scan */
+    iPdbSeq = iUnitGetMaxPdbSeq( uA );
                 /* Remove all of the objects from uB and put them in uA */
                 /* This COMPLETELY empties the second UNIT, making it */
                 /* have NULL connect atoms */
@@ -867,6 +979,10 @@ int             iPdbSeq;
         if ( iObjectType(oObj) == RESIDUEid ) {
             iPdbSeq++;
             ResidueSetPdbSequence( oObj, iPdbSeq );
+
+            /* OPTIMIZATION: Update cache instead of invalidating */
+            UnitUpdateMaxPdbSeq( uA, iPdbSeq );
+
         }
         ContainerAdd( (CONTAINER) uA, oObj );
         DEREF( oObj );  /* ContainerAdd() does a REF */
@@ -905,14 +1021,11 @@ ATOM            aB;
 RESIDUE         rRes;
 int             iPdbSeq;
 
-        /* find max res seq of 1st unit */
+    /* find max res seq of 1st unit */
 
-    iPdbSeq = 0;
-    lContents = lLoop( (OBJEKT)uA, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lContents)) ) {
-        if ( iPdbSeq < iResiduePdbSequence(rRes) )
-            iPdbSeq = iResiduePdbSequence(rRes);
-    }
+    /* OPTIMIZATION: Use cached max sequence instead of O(n) scan */
+    /* This changes UnitJoin from O(n²) to O(n) for sequential joins */
+    iPdbSeq = iUnitGetMaxPdbSeq( uA );
 
     aB = aUnitTail(uB);
 
@@ -929,6 +1042,10 @@ int             iPdbSeq;
         if ( iObjectType(oObj) == RESIDUEid ) {
             iPdbSeq++;
             ResidueSetPdbSequence( oObj, iPdbSeq );
+            
+            /* OPTIMIZATION: Update cache instead of invalidating */
+            UnitUpdateMaxPdbSeq( uA, iPdbSeq );
+
         }
         ContainerAdd( (CONTAINER) uA, oObj );
         DEREF( oObj );  /* ContainerAdd() does a REF */
@@ -1056,18 +1173,19 @@ DONE:
  */
 void
 UnitSaveAmberParmFile( UNIT uUnit, FILE *fOut, char *crdName, 
-        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf )
+        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ) //NewT
 {
         BOOL            bGeneratedParameters;
-
+        // VP0(("what saveparm returns before buildtable%d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
         zUnitIOBuildTables( uUnit, plParms, &bGeneratedParameters, bPert, TRUE );
+        // VP0(("what saveparm returns after buildtable %d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
         if ( bGeneratedParameters == TRUE ) {
                 if( GDefaults.iOldPrmtopFormat ) 
                         zUnitIOSaveAmberParmFormat_old( uUnit, fOut, crdName, 
-                                                                bPolar, bPert );
+                                                                bPolar, bPert, sA, sB, daC4Type, iC4count ); //NewT 
                 else
                         zUnitIOSaveAmberParmFormat( uUnit, fOut, crdName, 
-                                                       bPolar, bPert, bNetcdf );
+                                                                bPolar, bPert, bNetcdf, sA, sB, daC4Type, iC4count ); //NewT 
         } else {
                 VPWARN(( "Parameter file was not saved.\n" ));
         }
@@ -1800,7 +1918,7 @@ BOOL            bPert;
     if ( dFrac > 0.01 ) {
         VPWARN(( "The unperturbed charge of the unit (%lf) is not integral.\n",
                 dCharge ));
-        (*iPErrors)++;
+        (*iPWarnings)++;
     }
     if ( fabs(dCharge) > 0.01 ) {
         VPWARN(( "The unperturbed charge of the unit (%lf) is not zero.\n",
@@ -1813,7 +1931,7 @@ BOOL            bPert;
         if ( dFrac > 0.01 ) {
             VPWARN(( "The perturbed charge (%lf) is not integral.\n",
                     (dCharge+dPertCharge) ));
-            (*iPErrors)++;
+            (*iPWarnings)++;
         }
 
         if ( fabs(dCharge+dPertCharge) > 0.01 ) {
@@ -1846,7 +1964,7 @@ BOOL            bPert;
 void
 UnitCheckForParms( UNIT uUnit, PARMLIB plParms, PARMSET psParmSet )
 {
-
+    // VP0(("what check returns %d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
     if ( zbUnitParmsMissing( uUnit, plParms) == TRUE ) {
     
         VPWARN(( "There are missing parameters.\n" ));
@@ -1909,4 +2027,19 @@ double  dXMax, dYMax, dZMax;
 
 }
 
-
+// NewT
+/*
+void UnitSaveC4Type(UNIT uUnit, char *sA, char *sB, double daC4Type)
+{
+    VP0(("what unit passed %s %s %f %d\n", sA, sB, daC4Type, iVarArrayElementCount(uUnit->vaAtoms)));
+     
+    for (int i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++)
+    {
+        VP0(("Atom type found!!!\n"));
+        if (! strcmp( sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom), sA ))
+        {
+            VP0(("Atom type found!!!\n"));
+        }
+    }
+    
+}*/

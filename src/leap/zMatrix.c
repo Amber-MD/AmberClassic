@@ -175,7 +175,7 @@ zvZMatrixCalculatePositionFromAngles( double dAngleA, double dAngleB,
 {
 int             iCount;
 double		dCosA, dSinA;
-double		dCosB, dSinB;
+double		dCosB;
 double		dCosC, dSinC;
 double		dCosX, dSinX;
 double		dX, dXNew;
@@ -185,7 +185,6 @@ VECTOR		vNew;
     dCosA = cos(dAngleA);
     dSinA = sin(dAngleA);
     dCosB = cos(dAngleB);
-    dSinB = sin(dAngleB);
     dCosC = cos(dAngleC);
     dSinC = sin(dAngleC);
 

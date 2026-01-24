@@ -237,7 +237,7 @@ ConstructDataHeader( char *sLine, char *sName, int iType )
 static void
 AddColumnType( char *sLine, int iType, char *sName )
 {
-        /* Add an extra space to seperate columns */
+        /* Add an extra space to separate columns */
 
     strcat( sLine, " " );
     switch ( iType ) {
