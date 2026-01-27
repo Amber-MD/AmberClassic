@@ -373,7 +373,7 @@ contains
                   coordinate(1:3,iatom), &
                   atom_occupancy(iatom), &
                   atom_bfactor(iatom), &
-                  atom_element(iatom)(3:4)
+                  atom_element(iatom)(1:2)
          end do
       end do
       write(unit,'(A)') 'END'
