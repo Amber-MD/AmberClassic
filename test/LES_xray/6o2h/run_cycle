@@ -1,0 +1,14 @@
+#!/bin/bash
+
+in=$1
+let out=$in+1
+out=$(printf "%03d" $out)
+
+# ./run_1ucLES $in
+
+perl -p -e 's/CYX/CYS/;s/HIP/HIS/;s/WAT/HOH/;s/GLH/GLU/;s/ASH/ASP/;' < les1_$out.min1.pdb > tmp.pdb
+./run_phenix_refine tmp.pdb ../XrayPrep/6o2h.mtz les1 $out > /dev/null
+
+phenix.molprobity les1_$out.pdb > les1_$out.molp
+/bin/rm -f molprobity* tmp.pdb les1_$out.eff
+
