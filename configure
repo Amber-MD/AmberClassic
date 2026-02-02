@@ -14,6 +14,7 @@ AmberClassicHome=`pwd`
 verbose="@"
 requested_help="no"
 openblas="no"
+mkl="no"
 sfx=""
 debug="-DNDEBUG"
 fpic="-fPIC"
@@ -38,6 +39,7 @@ fc="gfortran"
 flibs_arch="-lgfortran -w"
 flibs_la=""
 flibs_fftw="-lfftw3_omp -lfftw3"
+flibs_mkl=""
 mpif90="mpif90"
 gccsys=""
 optflags="-g -O3"
@@ -60,6 +62,7 @@ lapack="skip"
 blas="skip"
 macAccelerate="no"
 fftw_flags=""
+gnuld="yes"
 
 #  --- cuda:
 cuda="no"
@@ -120,6 +123,9 @@ while [ $# -gt 0 ]; do
             boost="system";;
         --openblas)
             openblas="yes";;
+        --mkl)
+            mkl="yes"
+            flibs_fftw="";;
         --macAccelerate)
             macAccelerate="yes";;
         --static)
@@ -171,6 +177,7 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
     printf "\nLess-common options:\n\n"
     printf "    --openblas      use openBLAS routines from a system library\n"
+    printf "    --mkl           use MKL for LAPACK/BLAS/FFTW\n"
     printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
     printf "    --system-boost  use system boost rather than built-in subset\n"
     printf "    --static        use static linking (experimental)\n"
@@ -308,6 +315,7 @@ fi
 
 #--------------------------------------------------------------------------
 #  Configure the linear algebra libraries:
+#    N.B. if --mkl is set, flibs_la is set in the MKL section below
 #--------------------------------------------------------------------------
 
 if [ "$openblas" == "yes" ]; then
@@ -401,6 +409,64 @@ if [ "$conda" == "yes" ]; then
 
    flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
    echo "using fftw     libraries from conda-forge"
+
+elif [ "$mkl" == "yes" ]; then
+
+  lapack=skip
+  blas=skip
+  # Determine MKL home directory
+  mklroot=''
+  if [ ! -z "$MKLROOT" ] ; then
+    mklroot=$MKLROOT
+  elif [ ! -z "$MKL_HOME" ] ; then
+    mklroot=$MKL_HOME
+  fi
+  echo ""
+  if [ ! -z "$mklroot" ] ; then
+    echo "Using MKL for BLAS/LAPACK/FFTW in $mklroot"
+  else
+    echo "Using MKL for BLAS/LAPACK/FFTW"
+  fi
+  # Determine how we are linking MKL: hard-wire to 'line' for now
+  link_type='line'
+  # Always link static version of MKL - just easier from an end
+  # user perspective.
+  if [ "$link_type" = 'line' ] ; then
+    # ----- Link line advisor style. Requires MKLROOT ------
+    if [ -z "$mklroot" ] ; then
+      echo "Error: MKLROOT/MKL_HOME not set." > /dev/stderr
+      exit 1
+    fi
+    mkll="$mklroot/lib"
+    mklinterfacelayer='libmkl_intel_lp64.a'
+    # Determing threading interface if necessary
+    mklthread="$mkll/libmkl_sequential.a"
+    mklomp=''
+    if [ "$openmp" = 'yes' ] ; then
+      mklthread="$mkll/libmkl_gnu_thread.a"
+      mklomp='-lgomp'
+    fi
+    # Set link flags
+    if [ "$gnuld" = 'yes' ]; then
+      echo "GNU linker assumed."
+      flibs_mkl="-Wl,--start-group $mkll/$mklinterfacelayer $mklthread $mkll/libmkl_core.a -Wl,--end-group $mklomp -lpthread"
+    else
+      echo "Non-GNU linker assumed."
+      flibs_mkl="-L$mkll $mkll/$mklinterfacelayer $mklthread $mkll/libmkl_core.a -lpthread"
+    fi
+    # GNU compilers with MKL requires -ldl
+    if [ "$compiler" = 'gnu' ]; then
+      flibs_mkl="$flibs_mkl -ldl"
+    fi
+  else
+    # ----- Use simple flag for Intel compilers ------------
+    if [ "$openmp" = 'yes' ]; then
+      flibs_mkl='-mkl'
+    else
+      flibs_mkl='-qmkl=sequential'
+    fi
+  fi
+  flibs_la="-larpack $flibs_mkl"
 
 else
 
