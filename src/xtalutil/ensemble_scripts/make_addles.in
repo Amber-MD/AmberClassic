@@ -1,69 +1,35 @@
 #!/usr/bin/perl
 
-$resno_prev = 0;
-$chain_prev = "";
-$basename = "fixme";
-$numc = 2;            #for now, fixed number of LES copies; maybe base
-                      # numc on the occupation?
-
 #-----------------------------------------------------------------------
-# following is specfic to this particular system: needed here??
-# @repeats = ();
-# $residuesperchain = 622;
+#  find the alternates and create addles.in commands
+#     stdin can be piped in from 'find_alts <pdb-file>'
 #-----------------------------------------------------------------------
-# for $i (@repeats){ $repeat[$i] = 1; }
 
-#  header for addles.in:
+$id = $ARGV[0];
 
+# print header:
 print <<EOF;
-file rprm name=($basename.parm7) read
-file rcbd name=($basename.rst7) read
-file wprm name=($basename.LES.parm7) wovr
-file wcrd name=($basename.LES.rst7) wovr
+file rprm name=($id.parm7) read
+file rcbd name=($id.rst7) read
+file wprm name=($id.LES.parm7) wovr
+file wcrd name=($id.LES.rst7) wovr
 action
 omas
 EOF
 
-open( PDB, "<", $ARGV[1] );
+<STDIN>;  # skip the blank first line
 
-#-----------------------------------------------------------------------
-#  first: find all the alternates that are in the input file:
-#-----------------------------------------------------------------------
+while (<STDIN>){
 
-ATOM: while (<PDB>){
+   @f = split(' ', $_);
+   $resno = $f[0];
+   $alts = @f - 1;
 
-   if( $_ =~ /^ATOM|^HETATM/){
+   next if $alts == 1;  # can't handle partially occupied single conformers
+   print "spac numc=$alts pick #mon $resno $resno done\n";
 
-   #  expand to 80+ characters (really hokey version):
-   chop($_);
-   $_ .= "                                                                    ";
-
-   ( $label, $atno, $atname, $alt, $resname, $chainId, $resno1, $iCode,
-         $x, $y, $z, $occ, $bfact, $element, $charge ) =
-       unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
-
-   $resno = int($resno1);
-   $altocc{$resno . $alt} = $occ if $alt ne " ";
-   $presname[$resno] = $resname;
-
-   }
-}
-$max_res = $resno;
-
-#-----------------------------------------------------------------------
-#  next, use the info above to write an addles.in file to stdout
-#-----------------------------------------------------------------------
-
-#  below, assume that any residue to be replicated has an "A" altloc:
-
-@res = (1..$max_res);
-for $res (@res) {
-    if (defined $altocc{$res . "A"}) {
-        print "~ $presname[$res]  $res\n"
-        print "spac numc=$numc pick #mon $res $res done\n"; 
-    }  
 }
 
-#  signal end of addles.in input:
+#print trailer:
 print "*EOD\n";
 
