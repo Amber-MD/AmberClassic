@@ -22,12 +22,12 @@ program ambpdb
    double precision :: hbene
 
    integer, dimension(:), allocatable :: ix, residue_number
-   character(len=4), dimension(:), allocatable :: residue_chainid, &
+   character(len=1), dimension(:), allocatable :: residue_chainid, &
       atom_altloc, residue_icode
+   character(len=4), dimension(:), allocatable :: atom_element
 
    integer, dimension(:), allocatable :: ipres,lastat,ib,jb,fhybrid, &
-                                         fhbdon,fhbh,fhbacc,fhbunit,itf,jtf, &
-                                         atomic_number
+                                         fhbdon,fhbh,fhbacc,fhbunit,itf,jtf
 
    ! ------ check argument options
 
@@ -133,7 +133,7 @@ program ambpdb
             radius(natomlen), &
             residue_number(nreslen), &
             residue_chainid(nreslen), atom_altloc(natomlen), &
-            atomic_number(natomlen), residue_icode(nreslen), &
+            atom_element(natomlen), residue_icode(nreslen), &
             isymbl(natomlen), atom_occupancy(natomlen), &
             atom_bfactor(natomlen), stat = ier)
   
@@ -145,7 +145,7 @@ program ambpdb
    call getnam(natom,nres,igraph,ipres,lbres,ititl,10, &
                coords,ix,ib,jb,nbond,chg,radius,lastat,ter,hasradii, &
                residue_number, residue_chainid, atom_altloc, &
-               atomic_number, residue_icode, ext_pdb_data, isymbl, &
+               atom_element, residue_icode, ext_pdb_data, isymbl, &
                atom_occupancy, atom_bfactor)
    close(unit=10)
 
@@ -185,7 +185,7 @@ program ambpdb
                   alttit,title,center,chg,aatm,bres,ioffset,lastat, &
                   ftype,radius,hasradii,remediate, &
                   residue_number, residue_chainid, atom_altloc, &
-                  atomic_number, residue_icode, ext_pdb_data, &
+                  atom_element, residue_icode, ext_pdb_data, &
                   atom_occupancy, atom_bfactor)
       if (arg1 .eq. '-first') then
           call writebond(6,nbond,ib,jb)
@@ -265,7 +265,7 @@ end subroutine getnam0
 subroutine getnam(natom,nres,igraph,ipres,lbres,ititl,nf, &
                   coords,ix,ib,jb,nbond,chg,radius,lastat,ter,hasradii, &
                   residue_number,residue_chainid,atom_altloc, &
-                  atomic_number,residue_icode,ext_pdb_data,isymbl, &
+                  atom_element,residue_icode,ext_pdb_data,isymbl, &
                   atom_occupancy, atom_bfactor)
 
    implicit none
@@ -282,10 +282,9 @@ subroutine getnam(natom,nres,igraph,ipres,lbres,ititl,nf, &
    real, intent(out)             :: radius(*)
    double precision, intent(out) :: coords(*)
    character(len=4), intent(out) :: igraph(*), lbres(*), &
-                                    residue_chainid(nres), &
-                                    residue_icode(nres), &
-                                    atom_altloc(natom), isymbl(*)
-   integer, intent(out) :: atomic_number(natom)
+                                    atom_element(natom), isymbl(*)
+   character(len=1), intent(out) :: residue_chainid(nres), atom_altloc(natom), &
+                                    residue_icode(nres)
    real, intent(out) :: atom_occupancy(natom), atom_bfactor(natom)
    
    ! Local variables
@@ -414,23 +413,13 @@ subroutine getnam(natom,nres,igraph,ipres,lbres,ititl,nf, &
       call nxtsec(nf,  6,  0,fmtin,  type,  fmt,  iok)
       read(nf,fmt) (isymbl(i), i=1,natom)
 
-      fmtin = ifmt
-      type = 'ATOMIC_NUMBER'
-      call nxtsec(nf,  6,  1,fmtin,  type,  fmt,  iok)
-      if (iok .eq. -2) then
-        write (0,*) 'WARNING: ATOMIC_NUMBER NOT FOUND IN NEW PRMTOP'
-        write (0,*) '         Atomic element col.78 left blank in pdb.'
-        write (0,*) '         You can use Parmed to add atomic_number.'  
-      else  
-        read(nf,fmt) (atomic_number(i), i=1,natom)
-      endif
-
       !  defaults, if not using extended pdb data:
       residue_chainid = ' '
       residue_icode = ' '
       atom_altloc = ' '
       atom_occupancy = 1.0
       atom_bfactor = 0.0
+      atom_element = '    '
       
       if (ext_pdb_data) then
 
@@ -446,6 +435,8 @@ subroutine getnam(natom,nres,igraph,ipres,lbres,ititl,nf, &
 
          call nxtsec(nf,6,0,'*','RESIDUE_CHAINID',fmt,iok)
          if (iok == 0 ) read(nf,fmt) residue_chainid
+         call nxtsec(nf,6,0,'*','ATOM_ELEMENT',fmt,iok)
+         if (iok == 0 ) read(nf,fmt) atom_element
 
          call nxtsec(nf,6,1,'*','RESIDUE_ICODE',fmt,iok)
          if (iok == 0) read(nf,fmt) residue_icode
@@ -548,7 +539,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
                   alttit,title,center,chg,aatm,bres,ioffset,lastat, &
                   ftype,radius,hasradii,remediate, &
                   residue_number, residue_chainid, atom_altloc, &
-                  atomic_number, residue_icode, ext_pdb_data, &
+                  atom_element, residue_icode, ext_pdb_data, &
                   atom_occupancy, atom_bfactor)
    
    implicit none
@@ -562,15 +553,13 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
    double precision, intent(in) :: chg(*)
    double precision, intent(inout) :: coords(*)
    character(len=1), intent(in) :: ftype(*)
-   character(len=4), intent(in) :: igraph(*),  &
-                                   residue_chainid(nres), &
-                                   atom_altloc(natom), &
+   character(len=4), intent(in) :: igraph(*), atom_element(natom)
+   character(len=1), intent(in) :: residue_chainid(nres), atom_altloc(natom), &
                                    residue_icode(nres)
    character(len=4), intent(inout) :: lbres(*)
    character(len=6), intent(in) :: arg1
    character(len=40),intent(in) :: title
    character(len=80),intent(in) :: ititl
-   integer, intent(in) :: atomic_number(natom)
    real, intent(in) :: atom_occupancy(natom), atom_bfactor(natom)
 
    ! Local variables   
@@ -766,7 +755,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
          k_print = mod(k,100000)
          if (aatm) then
             write(atnam,'(a4)') igraph(k)
-         else if (remediate) then
+         else
             
             ! ---convert atom names to closely resemble those used by the
             ! wwPDB in its version 3 (aka "remdiated") files:
@@ -800,91 +789,6 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
                atnam(3:3) = atnam(4:4)
                atnam(4:4) = ' '
             end if
-         else
-            
-            ! ---convert atom names to closely resemble those used by Brookhaven
-            ! *before* the "remediation" that changed hydrogen names
-            
-            ! ---First, assume that there are no two-character element names
-            ! (like Fe or Ca or Na).  Then, according to Brookhaven rules,
-            ! column 13 will be blank, and the name will be left-justified
-            ! starting in column 14.  UNLESS, the name is four characters
-            ! long!  In that case, wrap around the final character into
-            ! column 13.
-            
-            atnam = '    '
-            resnam = lbres(j)(1:3)
-            write(tmpnam,'(a4)') igraph(k)
-            atnam(2:4) = tmpnam(1:3)
-            
-            if (tmpnam(4:4) .ne. ' ') atnam(1:1) = tmpnam(4:4) 
-            !write(6,*) 'converting ', tmpnam, '->', atnam
-            
-            ! --- here are some more Brookhaven wraparounds:
-            ! This gives files that look very much like Brookhaven, EXCEPT
-            ! that Brookhaven uses "1" and "2" for beta-protons (for example)
-            ! whereas the standard Amber database (along with many in
-            ! the NMR field) use "2" and "3", i.e. we have 2HB and 3HB,
-            ! whereas Brookhaven files use 1HB and 2HB.
-            
-            if (atnam(1:2) .eq. ' H' .and. &
-                (atnam(4:4) .eq. '1' .or. atnam(4:4).eq.'2' .or. &
-                 atnam(4:4) .eq. '3')) then
-               if (atnam(2:3) .eq. 'HB' .or. atnam(2:3) .eq. 'H7' .or. &
-                   atnam(2:3) .eq. 'H6' ) then
-                  atnam(1:1) = atnam(4:4)
-                  atnam(4:4) = ' '
-               end if
-               if (atnam(2:3) .eq. 'HG' .and. resnam.ne.'THR') then
-                  atnam(1:1) = atnam(4:4)
-                  atnam(4:4) = ' '
-               end if
-               if (atnam(2:3) .eq. 'HD' .and. (resnam .ne. 'PHE' &
-                   .and. resnam .ne. 'TYR' .and. resnam .ne. 'TRP' &
-                   .and. resnam(1:2) .ne. 'HI')) then
-                  atnam(1:1) = atnam(4:4)
-                  atnam(4:4) = ' '
-               end if
-               if (atnam(2:3) .eq. 'HE' .and. (resnam .ne. 'PHE' &
-                   .and. resnam .ne. 'TYR' .and. resnam .ne. 'TRP' &
-                   .and. resnam(1:2) .ne. 'HI')) then
-                  atnam(1:1) = atnam(4:4)
-                  atnam(4:4) = ' '
-               end if
-            end if
-            
-            if (atnam .eq. ' H1 ') atnam = '1H  '
-            if (atnam .eq. ' H2 ') then
-               if (resnam .ne. 'ADE' .and. resnam(1:2) .ne. 'DA' .and. &
-                   resnam(1:2) .ne. 'RA' ) atnam = '2H  '
-            end if
-            if (atnam .eq. ' H3 ') then
-               if (resnam .ne. 'THY' .and. resnam(1:2) .ne. 'DT' .and. &
-                   resnam(1:2) .ne. 'RU' .and. resnam .ne. 'URA' )  &
-                   atnam = '3H  '
-            end if
-            
-            ! --- Convert nucleic acid primed names into asterisk: these
-            ! are always in the fourth column of the atom name:
-            
-            if (atnam(4:4) .eq. '''') atnam(4:4) = '*'
-            
-            ! --- Now, special case out the two-character element names:
-            
-            if (atnam(1:4) .eq. ' Na+' .or. atnam(1:4) .eq. ' NA+' .or. &
-                atnam(1:3) .eq. ' Fe'  .or. atnam(1:3) .eq. ' FE'  .or. &
-                atnam(1:3) .eq. ' Cl'  .or. atnam(1:3) .eq. ' CL'  .or. &
-                atnam(1:3) .eq. ' Zn'  .or. atnam(1:3) .eq. ' ZN'  .or. &
-                atnam(1:4) .eq. ' Li+' .or. atnam(1:4) .eq. ' LI+' .or. &
-                atnam(1:4) .eq. ' Ca+' .or. atnam(1:4) .eq. ' CA+' .or. &
-                atnam(1:4) .eq. ' Mg+' .or. atnam(1:4) .eq. ' MG+' .or. &
-                atnam(1:4) .eq. ' Br-' .or. atnam(1:4) .eq. ' BR-' ) then
-               atnam(1:1) = atnam(2:2)
-               atnam(2:2) = atnam(3:3)
-               atnam(3:3) = atnam(4:4)
-               atnam(4:4) = ' '
-            end if
-
          end if
 
          kc = 3*k-3
@@ -896,17 +800,16 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
          if (arg1 .eq. '-pdb') then
             if (ext_pdb_data) then
                write(nf, &
-                  '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F6.2,10X,A2)')  &
-                  'ATOM',k_print,atnam,atom_altloc(j)(1:1),lbres(j), &
-                  residue_chainid(j)(1:1),residue_number(j), &
+                  '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F6.2,10X,A4)')  &
+                  'ATOM',k_print,atnam,atom_altloc(j),lbres(j), &
+                  residue_chainid(j),residue_number(j), &
                   residue_icode(j)(1:1),coords(kc+1:kc+3), &
-                  atom_occupancy(k), atom_bfactor(k), &
-                  element(atomic_number(k))
+                  atom_occupancy(k), atom_bfactor(k), atom_element(k)
             else
                write(nf, &
-                  '(A4,I7,1X,A4,1X,A3,2X,I4,4X,3F8.3,2F6.2,10X,A2)') 'ATOM', &
+                  '(A4,I7,1X,A4,1X,A3,2X,I4,4X,3F8.3,2F6.2,10X)') 'ATOM', &
                   k_print,atnam,lbres(j),j_print,(coords(kc+m),m=1,3), &
-                  1.0,0.0,element(atomic_number(k))
+                  1.0,0.0
             end if
          else if (arg1 .eq. '-atm' .or. arg1 .eq. '-pqr'  &
                                    .or. arg1 .eq. '-sas') then
@@ -939,33 +842,30 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
                   if (ext_pdb_data) then
                      write(nf, &
                   '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F8.4,6X,A2)')  &
-                        'ATOM',k_print,atnam,atom_altloc(j)(1:1),lbres(j), &
-                        residue_chainid(j)(1:1),residue_number(j), &
-                        residue_icode(j)(1:1),coords(kc+1:kc+3),chg(k), &
-                        radius(k),element(atomic_number(k))
+                        'ATOM',k_print,atnam,atom_altloc(j),lbres(j), &
+                        residue_chainid(j),residue_number(j), &
+                        residue_icode(j),coords(kc+1:kc+3),chg(k), &
+                        radius(k),atom_element(k)
                   else
                      write(nf,81) k_print,atnam,lbres(j),j_print, &
-                       (coords(kc+m),m=1,3),chg(k),radius(k), &
-                       element(atomic_number(k))
+                       (coords(kc+m),m=1,3),chg(k),radius(k)
                   endif
                else
                   if (ext_pdb_data) then
                      write(nf, &
                   '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F8.4,6X,A2)')  &
-                        'ATOM',k_print,atnam,atom_altloc(j)(1:1),lbres(j), &
-                        residue_chainid(j)(1:1),residue_number(j), &
-                        residue_icode(j)(1:1),coords(kc+1:kc+3),chg(k), &
-                        radius(k),element(atomic_number(k))
+                        'ATOM',k_print,atnam,atom_altloc(j),lbres(j), &
+                        residue_chainid(j),residue_number(j), &
+                        residue_icode(j),coords(kc+1:kc+3),chg(k), &
+                        radius(k),atom_element(k)
                   else
                      write(nf,81) k_print,atnam,lbres(j),j_print, &
-                       (coords(kc+m),m=1,3),chg(k),elrad(itype), &
-                       element(atomic_number(k))
+                       (coords(kc+m),m=1,3),chg(k),elrad(itype)
                   endif
                end if
             else if (arg1.eq.'-sas') then
                write(nf,81) k_print,atnam,lbres(j),j_print, &
-                    (coords(kc+m),m=1,3),chg(k),elrad(itype)+1.4, &
-                    element(atomic_number(k))
+                    (coords(kc+m),m=1,3),chg(k),elrad(itype)+1.4
             end if
          else if (arg1 .eq. '-first') then
             if (atnam .eq. ' X' .and. lbres(j) .eq. 'BMH') then
@@ -994,7 +894,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
     61 format('ATOM',2X,I5,1X,A4,1X,A4,1X, I4,4X,3F8.3)
     65 format('ATOM',2X,I5,1X,A4,1X,A4,1X, I4,4X,3F8.3,2F6.2,I5,1X,A1)
     67 format('HETATM', I5,1X,A4,1X,A4,'G',I4,4X,3F8.3,2F6.2,I5,1X,A1)
-    81 format('ATOM',2X,I5,1X,A4,1X,A4,1X, I4,4X,3F8.3,f8.4,f8.3,5X,A3)
+    81 format('ATOM',2X,I5,1X,A4,1X,A4,1X, I4,4X,3F8.3,f8.4,f8.3)
     90 format('REMARK  ',15a4)
    100 format('REMARK  ',a40)
    120 format('TER   ')
