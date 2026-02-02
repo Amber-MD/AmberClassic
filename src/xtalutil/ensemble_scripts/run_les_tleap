@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# make the non_LES parm7/rst7 files, using just a single altloc:
+
+id=$1
+
+cat <<EOF > tleap.in
+set default nocenter on
+set default reorder_residues off
+source leaprc.protein.ff19SB 
+source leaprc.water.spce
+source leaprc.gaff2
+NO3 = loadMol2 NO3.mol2
+loadAmberParams NO3.frcmod
+x = loadPdb $id.pdb
+source sslinks
+set x box { 82.272   64.268   69.026 }
+saveAmberParm x $id.parm7 foo.rst7
+quit
+EOF
+
+tleap -f tleap.in > tleap.out \
+       || { echo "  tleap:  Program error"; exit 1; }
+/bin/rm tleap.in
+
+ChBox -c foo.rst7 -o ${id}.rst7 -al 88.66 -bt 108.46 -gm 111.88 -X 82.272 -Y 64.268 -Z 69.026 \
+       || { echo "  ChBox:  Program error"; exit 1; }
+
+/bin/rm -f foo.rst7
+
+#  create the LES versions of parm7/rst7:
+
+find_alts $id.pdb | make_addles.in $id | addles > addles.out \
+       || { echo " make_addles.in:   Program error"; exit 1; }
+
+$AMBERCLASSICHOME/bin/add_pdb -i $id.LES.parm7 -p $id.pdb -o foo.parm7 \
+       || { echo "  add_pdb:  Program error"; exit 1; }
+mv foo.parm7 $id.LES.parm7
+
+$AMBERCLASSICHOME/bin/ambpdb -p $id.LES.parm7 -ext < $id.LES.rst7 > $id.LES.pdb \
+       || { echo "  ambpdb:  Program error"; exit 1; }
