@@ -270,7 +270,7 @@ program add_pdb
                end if
             end if
          end if
-#if 1
+#if 0
          if (atom_element(i) /= '????') then
             write(*,*) 'Duplicate atom: ',trim(buf)
             stop
