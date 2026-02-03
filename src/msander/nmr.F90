@@ -2215,7 +2215,11 @@ subroutine modwt(wtnrg,iwtstp,iwttyp,ichgwt,ishrtb,nstep,temp0, &
    
    ! TYPE = SOFTR
    
+#ifdef LES
+   if (itype == 16 .or. itype == 32) then
+#else
    if (itype == 16 .or. itype == 31) then
+#endif
       wxray = wt
       ichang(15) = 1
    end if
@@ -2264,10 +2268,12 @@ subroutine modwt(wtnrg,iwtstp,iwttyp,ichgwt,ishrtb,nstep,temp0, &
    
    ! TYPE = TEMP0LES
    
+#ifdef LES
    if (itype == 31) then
       temp0les = wt
       ichang(24) = 1
    end if
+#endif
    
    ! End of implied loop over ICHGWT instructions:
    
