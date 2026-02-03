@@ -801,7 +801,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
             if (ext_pdb_data) then
                write(nf, &
                   '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F6.2,10X,A4)')  &
-                  'ATOM',k_print,atnam,atom_altloc(j),lbres(j), &
+                  'ATOM',k_print,atnam,atom_altloc(k),lbres(j), &
                   residue_chainid(j),residue_number(j), &
                   residue_icode(j)(1:1),coords(kc+1:kc+3), &
                   atom_occupancy(k), atom_bfactor(k), atom_element(k)
@@ -842,7 +842,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
                   if (ext_pdb_data) then
                      write(nf, &
                   '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F8.4,6X,A2)')  &
-                        'ATOM',k_print,atnam,atom_altloc(j),lbres(j), &
+                        'ATOM',k_print,atnam,atom_altloc(k),lbres(j), &
                         residue_chainid(j),residue_number(j), &
                         residue_icode(j),coords(kc+1:kc+3),chg(k), &
                         radius(k),atom_element(k)
@@ -854,7 +854,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
                   if (ext_pdb_data) then
                      write(nf, &
                   '(A4,I7,1X,A4,A1,A3,1X,A1,I4,A1,3X,3F8.3,2F8.4,6X,A2)')  &
-                        'ATOM',k_print,atnam,atom_altloc(j),lbres(j), &
+                        'ATOM',k_print,atnam,atom_altloc(k),lbres(j), &
                         residue_chainid(j),residue_number(j), &
                         residue_icode(j),coords(kc+1:kc+3),chg(k), &
                         radius(k),atom_element(k)
