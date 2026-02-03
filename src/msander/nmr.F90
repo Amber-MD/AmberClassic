@@ -2213,13 +2213,9 @@ subroutine modwt(wtnrg,iwtstp,iwttyp,ichgwt,ishrtb,nstep,temp0, &
       if (abs(wt) < small .or. fixed) ichold(13) = 2
    end if
    
-   ! TYPE = SOFTR
+   ! TYPE = SOFTR or XRAY
    
-#ifdef LES
    if (itype == 16 .or. itype == 32) then
-#else
-   if (itype == 16 .or. itype == 31) then
-#endif
       wxray = wt
       ichang(15) = 1
    end if
@@ -2268,12 +2264,10 @@ subroutine modwt(wtnrg,iwtstp,iwttyp,ichgwt,ishrtb,nstep,temp0, &
    
    ! TYPE = TEMP0LES
    
-#ifdef LES
    if (itype == 31) then
       temp0les = wt
       ichang(24) = 1
    end if
-#endif
    
    ! End of implied loop over ICHGWT instructions:
    
@@ -4276,11 +4270,7 @@ subroutine nmrred(x,name,ipres,rimass,r1nmr,r2nmr,r3nmr,r4nmr, &
    ! ... IFLAG is the number of "TYPE" flags recognized (make sure "END" is last)
    
    integer iflag
-#ifdef LES
    parameter (iflag = 33)
-#else
-   parameter (iflag = 32)
-#endif
    ! ... ZERNER is a value near zero used for weights set to 0.
    _REAL_ zerner
    parameter (zerner = 1.0d-7)
@@ -4449,11 +4439,7 @@ subroutine nmrred(x,name,ipres,rimass,r1nmr,r2nmr,r3nmr,r4nmr, &
          'CUT     ' , 'SHORT   ' , 'RESTS   ' , 'RESTL   ', &
          'NOESY   ' , 'SHIFTS  ' , 'TAUTP   ' , 'DISAVE  ', &
          'ANGAVE  ' , 'TORAVE  ' , 'TGTRMSD ' , 'PLPTAVE ', &
-         'PLNAVE  ' , 'GDISAVE ' , &
-#ifdef LES
-         'TEMP0LES' , &
-#endif
-         'XRAY    ' , 'END     '/
+         'PLNAVE  ' , 'GDISAVE ' , 'TEMP0LES' , 'XRAY    ' , 'END     '/
 
    data redirc/'LISTIN    ' , 'LISTOUT   ' , 'DISANG    ', &
          'NOESY     ' , 'SHIFTS    ' , 'DUMPAVE   ', &
