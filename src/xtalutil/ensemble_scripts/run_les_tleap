@@ -35,7 +35,9 @@ find_alts $id.pdb | make_addles.in $id | addles > addles.out \
 
 $AMBERCLASSICHOME/bin/add_pdb -i $id.LES.parm7 -p $id.pdb -o foo.parm7 \
        || { echo "  add_pdb:  Program error"; exit 1; }
-mv foo.parm7 $id.LES.parm7
+$AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}.LES.parm7 \
+       || { echo "  add_xray:  Program error"; exit 1; }
+/bin/rm -f foo.parm7
 
 $AMBERCLASSICHOME/bin/ambpdb -p $id.LES.parm7 -ext < $id.LES.rst7 > $id.LES.pdb \
        || { echo "  ambpdb:  Program error"; exit 1; }
