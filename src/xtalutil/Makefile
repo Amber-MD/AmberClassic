@@ -18,8 +18,8 @@ AOBJ=   ambpdb.o forFIRSTtype.o forFIRSTbond.o forFIRSThbond.o \
 
 xtalutil: $(BINDIR)/ChBox $(BINDIR)/UnitCell $(BINDIR)/CheckMD \
      $(BINDIR)/AddToBox $(BINDIR)/PropPDB $(BINDIR)/ambpdb
-	cp ensemble_scripts/{find_alts,make_addles.in} $(BINDIR)
-	cp phenix_scripts/{XrayPrep,XrayPrep_redo} $(BINDIR)
+	cp ensemble_scripts/find_alts ensemble_scripts/make_addles.in $(BINDIR)
+	cp phenix_scripts/XrayPrep phenix_scripts/XrayPrep_redo $(BINDIR)
 
 $(BINDIR)/ambpdb: $(AOBJ)
 	@echo "[XTALUTIL]  FC $@"
