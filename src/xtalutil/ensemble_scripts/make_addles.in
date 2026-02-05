@@ -23,10 +23,20 @@ while (<STDIN>){
 
    @f = split(' ', $_);
    $resno = $f[0];
-   $alts = @f - 1;
+   $firstat = $f[1];
+   $alts = @f - 2;
 
    next if $alts == 1;  # can't handle partially occupied single conformers
-   print "spac numc=$alts pick #mon $resno $resno done\n";
+
+   if( $firstat eq "CA" ){
+      print "spac numc=$alts pick #nbb $resno $resno done\n";
+   elsif( $firstat eq "CB" ){
+      print "spac numc=$alts pick #sid $resno $resno done\n";
+   elsif( $firstat eq "CG" ){
+      print "spac numc=$alts pick #sig $resno $resno done\n";
+   } elsif ( $firstat eq "N" ){
+      print "spac numc=$alts pick #mon $resno $resno done\n";
+   }
 
 }
 

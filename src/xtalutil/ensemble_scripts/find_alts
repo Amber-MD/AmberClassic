@@ -1,7 +1,9 @@
-#!/usr/bin/perl -n
+#!/usr/bin/perl
 #
 #   first, read in a pdb file line and unpack
 #
+
+while(<>){
 
 if( $_ =~ /^ATOM|^HETATM/){
 
@@ -17,11 +19,11 @@ $_ .= "                                                                    ";
 #  do modifications necessary here:
 #
 
-if ($resno ne $resnop && $alt ne " "){
-   print "\n$resno:  ";
-   $resnop = $resno;
-}
 if ($alt ne " "){
+   print "\n$resno  " unless exists( $seen{$resno} );
+   $seen{$resno} = "seen";
+   print  "$atname  " unless exists( $atname{$resno . "A"});
+   $atname{$resno . "A"} = $atname;
    print  "$occ  " unless exists( $altoc{$resno . $alt});
    $altoc{$resno . $alt} = $occ;
 }
@@ -36,6 +38,8 @@ printf
       $label, $atno,$atname,$alt, $resname,$chainId, $resno, $iCode,
         $x,$y,$z, $occ, $bfact, $element, $charge;
 
-} else {
-   # print;
 }
+
+}
+
+print "\n";
