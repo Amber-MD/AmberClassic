@@ -460,6 +460,10 @@ Vinícius Wilian D.
 \begin_inset Newline newline
 \end_inset
 
+Juno Krahn (NIEHS)
+\begin_inset Newline newline
+\end_inset
+
 Nikolai R.
  Skrynnikov (Purdue,
  SPbU)
@@ -72272,6 +72276,22 @@ nolink "false"
 \end_layout
 
 \begin_layout Standard
+The crystallographic capabilities are (loosely) based on early work by Juno Krahn,
+ which have been significantly modified (and adapted for GPU computation) by David Case,
+ Oleg Mikhailovskii,
+ Sergei Izmailov,
+ Yi Xue and Nikolai Skrynnikov.
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Mikhailovskii22,Liu23,Mikhailovskii24"
+literal "false"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 Although it is not a part of Amber,
  it is worth noting that the 
 \emph on
@@ -82911,7 +82931,7 @@ The HCP threshold distance.
 
 
 \begin_inset Graphics
-	filename /home/case/nabc/doc/illust_hcp.eps
+	filename illust_hcp.eps
 	width 12cm
 
 \end_inset
@@ -83802,16 +83822,6 @@ nab
 \family default
  has its own 3-D/4-D molecular mechanics package that implements several AMBER force fields and reads AMBER parameter and topology files.
  Solvation effects can also be modelled with generalized Born continuum models.
- Details are given in Chap.
- 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "cha:NABmm"
-nolink "false"
-
-\end_inset
-
-.
 \end_layout
 
 \begin_layout Standard
@@ -84904,7 +84914,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/ADE.THY.eps
+	filename ADE.THY.eps
 	lyxscale 60
 	width 80text%
 
@@ -87034,7 +87044,7 @@ cutoff
 
 \begin_layout Standard
 \begin_inset ERT
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -88264,16 +88274,6 @@ nolink "false"
  The methods discussed next are more general,
  and can be extended to more complicated problems,
  but they are also much harder to follow and understand.
- The construction of "unusual" nucleic acids was the original focus of NAB;
- if you are using NAB for some other purpose (such as running Amber force field calculations) you should probably skip to Chapter 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "cha:NABmm"
-nolink "false"
-
-\end_inset
-
- at this point.
 \end_layout
 
 \begin_layout Subsection
@@ -102614,22 +102614,6 @@ opts
  if this string contains a "3" the O3' atom will be capped.
 \end_layout
 
-\begin_layout Standard
-The newer (and generally recommended) way to generate biomolecules uses the 
-\shape italic
-getpdb_prm()
-\shape default
- function described in Chapter 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "cha:NABmm"
-nolink "false"
-
-\end_inset
-
-.
-\end_layout
-
 \begin_layout Section
 
 \series bold
@@ -112258,12 +112242,12 @@ placement document
 alignment document
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/ppa.eps
+	filename ppa.eps
 	width 100text%
 
 \end_inset
@@ -112305,12 +112289,12 @@ placement document
 alignment document
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/ppb.eps
+	filename ppb.eps
 	width 100text%
 
 \end_inset
@@ -114113,7 +114097,7 @@ On line 43,
 
 \begin_layout Standard
 \begin_inset ERT
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -114604,12 +114588,12 @@ placement document
 alignment document
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/pknot.eps
+	filename pknot.eps
 	width 80text%
 
 \end_inset
@@ -115192,7 +115176,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/rnaknot.png
+	filename rnaknot.png
 	lyxscale 80
 	width 60text%
 	clip
@@ -116332,7 +116316,7 @@ rad
 \begin_layout Standard
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/dna.circle.eps
+	filename dna.circle.eps
 	width 50text%
 
 \end_inset
@@ -117137,7 +117121,7 @@ The nucleosome core fragment is composed of duplex DNA wound in a left handed he
 \begin_layout Standard
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/nuc.model.eps
+	filename nuc.model.eps
 	width 70text%
 
 \end_inset
@@ -118057,7 +118041,7 @@ RISE
 
 \begin_layout Standard
 \begin_inset ERT
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -118611,7 +118595,7 @@ npts
 \begin_layout Standard
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/curve.eps
+	filename curve.eps
 	width 80text%
 
 \end_inset
@@ -118957,7 +118941,7 @@ dna.path.bnd
 
 \begin_layout Standard
 \begin_inset ERT
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -119276,7 +119260,7 @@ putdna()
 
 \begin_layout Standard
 \begin_inset ERT
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
