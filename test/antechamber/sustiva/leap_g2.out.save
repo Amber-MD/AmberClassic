@@ -2,7 +2,7 @@
 -I: Adding /home/case/AmberClassic/dat/leap/lib to search path.
 -I: Adding /home/case/AmberClassic/dat/leap/parm to search path.
 -I: Adding /home/case/AmberClassic/dat/leap/cmd to search path.
--s: Ignoring startup file: leaprc
+-s: Ignoring all leaprc startup files.
 -f: Source leap_g2.in.
 
 Welcome to LEaP!
@@ -12,7 +12,7 @@ Sourcing: ./leap_g2.in
 Log file: ./leap.log
 Loading parameters: /home/case/AmberClassic/dat/leap/parm/gaff2.dat
 Reading title:
-AMBER General Force Field for organic molecules (Version 2.2.20, March 2021)
+AMBER General Force Field for organic molecules (Version 2.2.30, Oct 2025)
 Loading parameters: ./frcmod_g2
 Reading force field modification type file (frcmod)
 Reading title:
