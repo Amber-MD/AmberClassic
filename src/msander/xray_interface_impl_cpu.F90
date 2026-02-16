@@ -283,10 +283,21 @@ contains
       lname = adjustl(name)
       ! first find the matching residue; no need to match resname:
       do i=1,num_residues
+#if 0
+         write(0,*) 'findres:', i, ires
+         write(0,'(a3,2i6)') '   ',resSeq, residue_number(ires)
+         write(0,'(a3,a1,1x,a1)') '   ',chainID, residue_chainid(ires)
+         write(0,'(a3,a1,1x,a1)') '   ',iCode, residue_icode(ires)
+#endif
          if (        resSeq==mod(residue_number(ires),10000)  &
                .and. chainID==residue_chainid(ires) &
                .and. iCode==residue_icode(ires)) then
             ! then find the matching atom name:
+#if 0
+            write(0,*) 'findatom'
+            write(0,*) '  ', lname, atom_name(j)
+            write(0,*) '  ', altLoc, atom_altLoc(j)
+#endif
             do j = residue_pointer(ires),residue_pointer(ires+1)-1
                if (lname==atom_name(j) .and. altLoc==atom_altLoc(j)) then
                   atom_serial = j
