@@ -569,7 +569,7 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
    real :: elrad(15)   
    double precision :: xs, ys, zs
    character(len=1) :: type
-   character(len=2) :: element(0:94), resnam
+   character(len=2) :: element(0:94)
    character(len=4) :: code, atnam, tmpnam
    character(len=23) :: occb
    
@@ -766,7 +766,6 @@ subroutine genpdb(natom,nres,coords,igraph,ipres,lbres,ititl,nf,arg1, &
             ! starting in column 14.  UNLESS, the name is four characters
             ! long!  In that case, don't use the first blank.
             
-            resnam = lbres(j)(1:3)
             write(tmpnam,'(a4)') igraph(k)
             if (tmpnam(4:4) .eq. ' ') then 
                atnam(1:1) = ' '
