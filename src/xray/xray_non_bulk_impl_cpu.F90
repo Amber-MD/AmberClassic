@@ -17,6 +17,7 @@ module xray_non_bulk_impl_cpu_module
   public :: get_f_non_bulk
 
   real(real_kind), parameter :: m_twopi = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
+  real(real_kind), parameter :: m_pi = 3.1415926535897932384626433832795d0 ! FIXME: use constants module
 
 contains
   
@@ -79,7 +80,8 @@ contains
     real(real_kind), intent(in) :: frac(:, :)
     ! locals
     integer :: ihkl, hkls(3)
-    complex(real_kind) :: fcalcs
+    complex(real_kind) :: fcalcs, fhkl
+    real(real_kind) :: delta_phi
     double precision :: time0, time1
 
     call wallclock( time0 )
@@ -125,6 +127,7 @@ contains
       angle(:) = matmul(M_TWOPI * hkl(1:3, ihkl), frac(1:3, :))
       F_non_bulk(ihkl) = cmplx(sum(f(:) * cos(angle(:))), &
           sum(f(:) * sin(angle(:))), real_kind)
+      fhkl = F_non_bulk(ihkl)  ! to simplify adding in symmetrizations
 
    if( spacegroup_number .eq. 19 ) then
 
@@ -160,26 +163,15 @@ contains
 
    else if ( spacegroup_number .eq. 4 ) then
 
-      ! set #2:   h,-k,l
-      write(6,'(3i4,2f10.4)') hkl(1:3, ihkl), F_non_bulk(ihkl)
-
-      hkls(1) =  hkl(1,ihkl)
-      hkls(2) = -hkl(2,ihkl)
-      hkls(3) =  hkl(3,ihkl)
-      angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
-      fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
-          sum(f(:) * sin(angle(:))), real_kind)
-      write(6,'(3i4,2f10.4)') hkls(1:3), fcalcs
-
-      if( hkls(2) .eq. 0 ) then
-         fcalcs = conjg(fcalcs)
-      else
-         fcalcs = cmplx(-sum(f(:) * sin(angle(:))), &
-             sum(f(:) * cos(angle(:))), real_kind)
-      end if
- 
+      ! set #2:  -h,k,-l
+      hkls(1) = -hkl(1,ihkl)
+      hkls(2) =  hkl(2,ihkl)
+      hkls(3) = -hkl(3,ihkl)
+      delta_phi = M_PI * hkls(2)
+      fcalcs = fhkl * cmplx(cos(delta_phi), sin(delta_phi), real_kind)
 
       F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+      write(6,'(3i4,4f10.4)') hkl(1:3),  fhkl,   F_non_bulk(ihkl)
       write(6,'(3i4,4f10.4)') hkls(1:3), fcalcs, F_non_bulk(ihkl)
 
    end if
