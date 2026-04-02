@@ -61,68 +61,67 @@ contains
         end if
         
         ! hkl-vector by 2pi
-        hkl_v = hkl(:, ihkl) * 2 * PI
+        hkl_v(:) = hkl(:, ihkl) * 2 * PI
         
         !  fa should be the same for all symmetry mates
         fa = atomic_scatter_factor(ihkl, atom_scatter_type(i)) &
             * exp(mSS4(ihkl) * atom_b_factor(i)) * atom_occupancy(i) &
             * f_scale(ihkl) * d_target_d_abs_Fcalc(ihkl) / abs_Fcalc(ihkl)
         
-        ! original hkl for P212121:
-        phase = sum(hkl_v * frac(:, i))
+        ! original hkl for symmetrization:
+        phase = sum(hkl_v(:) * frac(:, i))
         f = fa * cmplx(cos(phase), sin(phase), real_kind)
-        fhkl = f  ! fhkl will be the original f for unrotated indices
         d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
             * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-     if( spacegroup_number .eq. 19 ) then
+        if( spacegroup_number .eq. 19 ) then
 
-        ! set #2:  -h,-k,l
-        hkls(1) = -hkl(1,ihkl)
-        hkls(2) = -hkl(2,ihkl)
-        hkls(3) =  hkl(3,ihkl)
-        hkl_v = hkls * 2 * PI
-        phase = sum(hkl_v * frac(:, i))
-        f = fa * cmplx(cos(phase), sin(phase), real_kind)
-        if( mod(hkls(1)/ixp + hkls(3)/izp, 2) .ne. 0 ) f = -f
-        d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
-            * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+           ! set #2:  -h,-k,l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) = -hkl(2,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * 2 * PI
+           phase = sum(hkl_v(:) * frac(:, i))
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(1)/ixp + hkls(3)/izp, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        ! set #3:  -h,k,-l
-        hkls(1) = -hkl(1,ihkl)
-        hkls(2) =  hkl(2,ihkl)
-        hkls(3) = -hkl(3,ihkl)
-        hkl_v = hkls * 2 * PI
-        phase = sum(hkl_v * frac(:, i))
-        f = fa * cmplx(cos(phase), sin(phase), real_kind)
-        if( mod(hkls(2)/iyp + hkls(3)/izp, 2) .ne. 0 ) f = -f
-        d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
-            * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+           ! set #3:  -h,k,-l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) =  hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * 2 * PI
+           phase = sum(hkl_v(:) * frac(:, i))
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(2)/iyp + hkls(3)/izp, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        ! set #4:   h,-k,-l
-        hkls(1) =  hkl(1,ihkl)
-        hkls(2) = -hkl(2,ihkl)
-        hkls(3) = -hkl(3,ihkl)
-        hkl_v = hkls * 2 * PI
-        phase = sum(hkl_v * frac(:, i))
-        f = fa * cmplx(cos(phase), sin(phase), real_kind)
-        if( mod(hkls(1)/ixp + hkls(2)/iyp, 2) .ne. 0 ) f = -f
-        d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
-            * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+           ! set #4:   h,-k,-l
+           hkls(1) =  hkl(1,ihkl)
+           hkls(2) = -hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * 2 * PI
+           phase = sum(hkl_v(:) * frac(:, i))
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(1)/ixp + hkls(2)/iyp, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-     else if( spacegroup_number .eq. 4 ) then
-        ! set #2:   -h,k,-l
-        hkls(1) = -hkl(1,ihkl)
-        hkls(2) =  hkl(2,ihkl)
-        hkls(3) = -hkl(3,ihkl)
-        hkl_v = hkls * 2 * PI  ! or, should we use the original hkl_v?
-        delta_phi = PI * hkls(2)
-        f = fhkl * cmplx(cos(delta_phi), sin(delta_phi), real_kind)
-        ! N.B.: very unsure about the next line:
-        d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
-            * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+        else if( spacegroup_number .eq. 4 ) then
+           ! set #2:   -h,k,-l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) =  hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * 2 * PI
+           phase = sum(hkl_v(:) * frac(:, i))
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(2)/iyp, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-     end if
+        end if
 
       end do
     end do
