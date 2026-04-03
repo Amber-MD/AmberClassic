@@ -111,6 +111,8 @@ namespace {
           __syncthreads();
         }
 
+        // Computing f with manual cache is here:
+
         for (unsigned hkl_cached_idx = warp_idx;
              hkl_cached_idx < min(n_hkl - hkl_offset, WARP_SIZE); hkl_cached_idx += n_wraps) {
           FloatType f_real = 0;
@@ -191,6 +193,8 @@ namespace {
     const int i_hkl = blockIdx.x;
     __shared__ thrust::complex<FloatType> term[BLOCK_SIZE];
     term[tid] = {};
+
+    // Basic code to compute f is here; (is it really what is used?)
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
