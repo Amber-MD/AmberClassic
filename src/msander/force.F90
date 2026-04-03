@@ -501,7 +501,7 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
     end if
     ! End CHARMM impropers computation
 
-    if (cmap_active) then
+    if (cmap_active .and. do_cmap .ne. 0) then
       call calc_cmap(x,pot%cmap,f)
     end if
   end if
