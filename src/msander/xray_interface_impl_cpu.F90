@@ -39,7 +39,7 @@ module xray_cpu_module
          ntwsf, &
          sf_outfile, &
          atom_selection_mask, &
-         k_sol, b_sol, ls_r3, ls_r4, ixp, iyp, izp, &
+         k_sol, b_sol, ls_r3, ls_r4, na, nb, nc, &
          mask_update_period, scale_update_period, &
          ml_update_period, bulk_solvent_model
    
@@ -579,7 +579,7 @@ contains
          & mask_update_period, scale_update_period, &
          & ml_update_period, k_sol, b_sol, &
          & solvent_mask_adjustment, solvent_mask_probe_radius, ls_r3, ls_r4, &
-         & spacegroup_number, ixp, iyp, izp )
+         & spacegroup_number, na, nb, nc )
       
       ! should be able to do some deallocations here:
       deallocate(hkl_index,Fobs,sigFobs, &
