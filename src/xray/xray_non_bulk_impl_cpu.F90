@@ -136,7 +136,7 @@ contains
          angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
-         if( mod(hkls(1)/ixp + hkls(3)/izp, 2) .ne. 0 ) fcalcs = -fcalcs
+         if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
          ! set #3:  -h,k,-l
@@ -146,7 +146,7 @@ contains
          angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
-         if( mod(hkls(2)/iyp + hkls(3)/izp, 2) .ne. 0 ) fcalcs = -fcalcs
+         if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
     
          ! set #4:  h,-k,-l
@@ -156,7 +156,7 @@ contains
          angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
-         if( mod(hkls(1)/ixp + hkls(2)/iyp, 2) .ne. 0 ) fcalcs = -fcalcs
+         if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
       else if ( spacegroup_number .eq. 4 ) then
@@ -168,7 +168,7 @@ contains
          angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
-         if( mod(hkls(2)/iyp, 2) .ne. 0 ) fcalcs = -fcalcs
+         if( mod(hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
       end if

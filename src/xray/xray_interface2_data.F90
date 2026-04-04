@@ -5,7 +5,7 @@ module xray_interface2_data_module
   use xray_contracts_module
   use xray_unit_cell_module
   use xray_pure_utils, only : real_kind
-  use xray_non_bulk_data_module, only : ixp, iyp, izp
+  use xray_non_bulk_data_module, only : na, nb, nc
   implicit none
   
   public
@@ -142,9 +142,9 @@ contains
     ls_r3 = r3
     ls_r4 = r4
     spacegroup_number = input_spacegroup_number
-    ixp = iix
-    iyp = iiy
-    izp = iiz
+    na = iix
+    nb = iiy
+    nc = iiz
     
   end subroutine init
   

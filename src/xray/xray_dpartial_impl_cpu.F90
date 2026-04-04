@@ -7,7 +7,7 @@ module xray_dpartial_impl_cpu_module
   use xray_pure_utils, only : real_kind
   use constants_xray, only : xray_num_threads
   use xray_interface2_data_module, only : spacegroup_number
-  use xray_non_bulk_data_module, only : ixp, iyp, izp
+  use xray_non_bulk_data_module, only : na, nb, nc
   
   implicit none
   private
@@ -83,7 +83,7 @@ contains
            hkl_v(:) = hkls(:) * 2 * PI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
-           if( mod(hkls(1)/ixp + hkls(3)/izp, 2) .ne. 0 ) f = -f
+           if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
@@ -94,7 +94,7 @@ contains
            hkl_v(:) = hkls(:) * 2 * PI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
-           if( mod(hkls(2)/iyp + hkls(3)/izp, 2) .ne. 0 ) f = -f
+           if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
@@ -105,7 +105,7 @@ contains
            hkl_v(:) = hkls(:) * 2 * PI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
-           if( mod(hkls(1)/ixp + hkls(2)/iyp, 2) .ne. 0 ) f = -f
+           if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
@@ -117,7 +117,7 @@ contains
            hkl_v(:) = hkls(:) * 2 * PI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
-           if( mod(hkls(2)/iyp, 2) .ne. 0 ) f = -f
+           if( mod(hkls(2)/nb, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
