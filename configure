@@ -42,7 +42,7 @@ flibs_fftw="-lfftw3_omp -lfftw3"
 flibs_mkl=""
 mpif90="mpif90"
 gccsys=""
-optflags="-g -O3"
+optflags="-g -O3 -mtune=native"
 gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
 longlines="-ffree-line-length-none"
 inc="-I$AmberClassicHome/include"
@@ -147,6 +147,17 @@ while [ $# -gt 0 ]; do
             done
             flibs_arch="-L$x -lgfortran -w -Wl,-rpath $x"
             optflags="-g -O3";;
+        --oneapi)
+            compiler="oneapi"
+            cc="icx-cc"
+            cxx="icx"
+            fc="ifx"
+            gccflags=""
+            flibs_arch=""
+            longlines=""
+            gcc10f=""
+            gcc10c=""
+            optflags="-g -O3 -mtune=native";;
         --mpi)
             mpi="yes"
             fftw_flags="--enable-mpi=yes"
@@ -166,6 +177,7 @@ if [ "$requested_help" = "yes" ] ; then
     printf "\nCompilers:\n"
     printf "    --clang         use clang/gfortran; gcc/gfortran is default\n"
     printf "                      (implies OSX; no openmp support for now)\n"
+    printf "    --oneapi        Use Intel oneapi compilers\n"
     printf "    --verbose       give build details, otherwise be more silent\n"
     printf "    --nogcc10       use flags for gcc9 and below\n"
     printf "\nPerformance options:\n"
@@ -192,7 +204,7 @@ if [ "$openmp" == "yes" ]; then
   if [ "$compiler" == "clang" ]; then
      ompcflag="-Xclang -fopenmp -DOPENMP"
   else
-     ompcflag="-fopenmp -DOPENMP"
+     ompcflag="-qopenmp -DOPENMP"
   fi
   ompflag="-fopenmp -DOPENMP"
 fi
