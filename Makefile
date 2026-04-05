@@ -14,5 +14,3 @@ clean::
 uninstall::
 	cd src && $(MAKE) uninstall
 
-distclean::
-	cd src && $(MAKE) distclean

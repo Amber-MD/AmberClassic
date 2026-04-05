@@ -1,6 +1,7 @@
 #   top-level Makefile for AmberClassic
 
 include ../config.h
+MAKE = make
 
 install: $(INSTALLTYPE)
 
@@ -99,16 +100,18 @@ clean:
 	-(cd mdgx && $(MAKE) clean)
 
 uninstall: clean
-	-(cd $(BINDIR) && /bin/rm -rf *)
-	-(cd $(LIBDIR) && /bin/rm -f liblapack.a libblas.a libxray.a pdb++.a \
-        libarpack.a librism.a libsff.a libnab.c libnabc.a libxblas-amb.a \
-        toolclasses.a )
-	/bin/rm -f $(INCDIR)/sander.h ../config.h ../config_testing.h
+	-(cd ../bin && /bin/rm -f *)
+	-(cd ../bin/wrapped_progs && /bin/rm -f *)
+	-(cd ../lib && /bin/rm -f liblapack.a libblas.a libxray.a libxray_cuda.a \
+        libarpack.a librism.a libsff.a libnab.c libnabc.a libxblas-amb.a )
+	-(cd ../include && /bin/rm -f sander.h nab*.h sff.h xmin_opt.h )
+	-/bin/rm -f ../config.h ../config_testing.h
 
-distclean: uninstall
+distclean:
 	-(/bin/rm -f netcdf*.log )
 	-(cd netcdf-c-4.7.2 && make uninstall)
 	-(cd netcdf-fortran-4.5.2 && make uninstall)
 	-(cd fftw-3.3 && make uninstall)
-	-(cd .. && /bin/rm -rf bin lib inc share logs config.h)
+	-(cd ../lib && /bin/rm -f lib*)
+#	-(cd .. && /bin/rm -rf bin lib inc share logs config.h)
 
