@@ -152,7 +152,7 @@ while [ $# -gt 0 ]; do
         --oneapi)
             compiler="oneapi"
             cc="icx-cc"
-            cxx="icx"
+            cxx="icpx"
             fc="ifx"
             gccflags=""
             flibs_arch=""
