@@ -43,6 +43,7 @@ flibs_mkl=""
 mpif90="mpif90"
 gccsys=""
 optflags="-g -O3 -mtune=native"
+optmkl=""
 gcc10f="-fno-strict-aliasing -Wno-argument-mismatch -fallow-argument-mismatch -fno-inline-arg-packing"
 longlines="-ffree-line-length-none"
 inc="-I$AmberClassicHome/include"
@@ -125,6 +126,7 @@ while [ $# -gt 0 ]; do
             openblas="yes";;
         --mkl)
             mkl="yes"
+            optmkl="-DMKL"
             flibs_fftw="";;
         --macAccelerate)
             macAccelerate="yes";;
@@ -203,8 +205,10 @@ fi
 if [ "$openmp" == "yes" ]; then
   if [ "$compiler" == "clang" ]; then
      ompcflag="-Xclang -fopenmp -DOPENMP"
-  else
+  elif [ "$compiler" == "oneapi" ]; then
      ompcflag="-qopenmp -DOPENMP"
+  else
+     ompcflag="-fopenmp -DOPENMP"
   fi
   ompflag="-fopenmp -DOPENMP"
 fi
@@ -441,6 +445,9 @@ elif [ "$mkl" == "yes" ]; then
   fi
   # Determine how we are linking MKL: hard-wire to 'line' for now
   link_type='line'
+  if [ "$compiler" = "oneapi" ]; then
+    link_type='openmpi'
+  fi
   # Always link static version of MKL - just easier from an end
   # user perspective.
   if [ "$link_type" = 'line' ] ; then
@@ -473,7 +480,7 @@ elif [ "$mkl" == "yes" ]; then
   else
     # ----- Use simple flag for Intel compilers ------------
     if [ "$openmp" = 'yes' ]; then
-      flibs_mkl='-mkl'
+      flibs_mkl='-qmkl'
     else
       flibs_mkl='-qmkl=sequential'
     fi
@@ -481,6 +488,7 @@ elif [ "$mkl" == "yes" ]; then
   flibs_la="-larpack $flibs_mkl"
 
 else
+   #  ----- build fftw libraries from source: -----------
 
    if [ ! -s "lib/libfftw3.a" ] || \
        [ "$mpi" == "yes" -a ! -s "lib/libfftw3_mpi.a" ] || \
@@ -741,7 +749,7 @@ FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_ar
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
+FFLAGS=$clangf $inc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
 FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags

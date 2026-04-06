@@ -12,5 +12,10 @@ clean::
 	cd src && $(MAKE) clean
 
 uninstall::
+	touch config.h
 	cd src && $(MAKE) uninstall
+
+distclean::
+	touch config.h
+	cd src && $(MAKE) distclean
 

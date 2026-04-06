@@ -242,34 +242,11 @@ xray_dpartial_impl_gpu.o:   xray_dpartial_impl_gpu.F90
 	$(VB)$(FC) -c \
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ xray_dpartial_impl_gpu.F90
 
-xray_fft_interface.o: \
-                    xray_fft_interface_impl_fftw.o\
-                    xray_fft_interface_impl_mkl.o\
-                    xray_fft_interface_impl_none.o
-
 
 xray_fft_interface.o:   xray_fft_interface.F90
 	@echo [XRAY]  FC $<
 	$(VB)$(FC) -c \
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ xray_fft_interface.F90
-
-
-xray_fft_interface_impl_fftw.o:   xray_fft_interface_impl_fftw.F90
-	@echo [XRAY]  FC $<
-	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ xray_fft_interface_impl_fftw.F90
-
-
-xray_fft_interface_impl_mkl.o:   xray_fft_interface_impl_mkl.F90
-	@echo [XRAY]  FC $<
-	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ xray_fft_interface_impl_mkl.F90
-
-
-xray_fft_interface_impl_none.o:   xray_fft_interface_impl_none.F90
-	@echo [XRAY]  FC $<
-	$(VB)$(FC) -c \
-		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ xray_fft_interface_impl_none.F90
 
 xray_interface2.o: \
                     ../include/assert.fh\
@@ -282,6 +259,7 @@ xray_interface2.o: \
                     xray_non_bulk.o\
                     xray_bulk_model.o\
                     xray_dpartial.o\
+                    xray_dpartial_impl_cpu.o\
                     ../msander/def_time.h\
                     xray_atomic_scatter_factor.o\
                     xray_scaling.o
@@ -463,7 +441,6 @@ xray_target_max_likelihood_impl_cpu.o:   xray_target_max_likelihood_impl_cpu.F90
 		$(FOPTFLAGS) $(LOCALFLAGS) $(FFLAGS) -o $@ xray_target_max_likelihood_impl_cpu.F90
 
 xray_target_vector_least_squares.o: \
-                    xray_target_vector_least_squares_impl_gpu.o\
                     xray_target_vector_least_squares_impl_cpu.o
 
 

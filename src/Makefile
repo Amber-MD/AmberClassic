@@ -103,7 +103,8 @@ uninstall: clean
 	-(cd ../bin && /bin/rm -f *)
 	-(cd ../bin/wrapped_progs && /bin/rm -f *)
 	-(cd ../lib && /bin/rm -f liblapack.a libblas.a libxray.a libxray_cuda.a \
-        libarpack.a librism.a libsff.a libnab.c libnabc.a libxblas-amb.a )
+        libarpack.a librism.a libsff.a libnab.a libnabc.a libxblas-amb.a \
+        libcifparse.a)
 	-(cd ../include && /bin/rm -f sander.h nab*.h sff.h xmin_opt.h )
 	-/bin/rm -f ../config.h ../config_testing.h
 
