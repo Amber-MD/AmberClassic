@@ -21,7 +21,7 @@ trajout tmp.xsymm.pdb
 go
 EOF
 
-collapse1 < tmp.xsymm.pdb | sort -k6n | collapse2 > tmp.pdb
+collapse1 < tmp.xsymm.pdb | sort -k6n -k2n | collapse2 > tmp.pdb
 
 cat <<EOF > cryst1.pdb
 CRYST1   27.070   31.250   33.760  87.98 108.00 112.11 P 1           1          
