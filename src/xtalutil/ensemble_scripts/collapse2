@@ -13,23 +13,16 @@ if( $_ =~ /^ATOM|^HETATM/){
 chop($_);
 $_ .= "                                                                    ";
 
+# N.B.: space before the altloc was added by collapse1;
 ( $label, $atno, $atname, $alt, $resname, $chainId, $resno, $iCode,
       $x, $y, $z, $occ, $bfact, $element, $charge ) =
     unpack("a6 a5 x a4 x a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",$_);
 
-if ($chainId eq ' ' ){    # PDB standard says chainId's cannot be blank
-    if ($chain < 26){ 
-       $chainId = chr($chain + 65); 
-    } elsif ($chain < 51) { 
-       $chainId = chr($chain + 71);
-    } else {
-       $chainId = 'z';
-    }
-}
-
 #
 #  do modifications necessary here:
 #
+
+# nothing to do here: format below will remove the space before altloc
 
 #
 #  write back out
