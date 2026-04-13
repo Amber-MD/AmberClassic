@@ -493,16 +493,6 @@ Saeed Izadi (Genentech)
 \end_inset
 
 Xiongwu Wu (NIH) 
-\end_layout
-
-\begin_layout Plain Layout
-
-\size small
-George Giambasu (Rutgers)
-\begin_inset Newline newline
-\end_inset
-
-Jian Liu (Peking Univ.)
 \begin_inset Newline newline
 \end_inset
 
@@ -59407,6 +59397,43 @@ This section gives a bird's-eye view of capabilities of the some useful auxiliar
  which almost certainly not the best approach.
 \end_layout
 
+\begin_layout Standard
+
+\series bold
+Please note:
+ 
+\series default
+These scripts are not designed to be used as ordinary programs,
+ with defined input parameters.
+ Rather,
+ the expectation is that the user will 
+\emph on
+copy
+\emph default
+ scripts to a working directory,
+ edit them following the instructions in each script,
+ and then run them.
+ (This allows the scripts to be updated frequently,
+ and avoids the need to decide in advance what all the possible inputs might be.)
+\end_layout
+
+\begin_layout Standard
+One way to combine these scripts,
+ along with msander,
+ into a crystallographic refinement is outlined in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:xray-workflow"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+
+\end_inset
+
+.
+\end_layout
+
 \begin_layout Subsection
 ccp4_scripts
 \end_layout
@@ -59440,7 +59467,7 @@ refmac5
 \emph default
 .
  As a comparison,
- ignores the input solvent density and uses the standard 
+ it ignores the input solvent density and uses the standard 
 \emph on
 refmac5 
 \emph default
@@ -59468,6 +59495,23 @@ sfall
  Special attention is paid to reducing disk space requirements,
  so that scattering amplitudes from many snapshots can be stored and analyzed.
  The code optionally will constuct map coefficients and an electron density map arising from the simulation.
+ (I plan to try to replace the original 
+\emph on
+sfall
+\emph default
+ with 
+\begin_inset Quotes eld
+\end_inset
+
+
+\emph on
+gemmi sfall
+\emph default
+
+\begin_inset Quotes erd
+\end_inset
+
+ at some point.)
 \end_layout
 
 \begin_layout Description
@@ -59512,31 +59556,38 @@ md2map.sh
  does not make this assumption.
 \end_layout
 
+\begin_layout Description
+sf-dat_to_mtz uses 
+\emph on
+f2mtz
+\emph default
+ to convert the ASCII-formatted reflection files used by 
+\emph on
+msander
+\emph default
+ into mtz format.
+\end_layout
+
+\begin_layout Description
+vac_bubble (from James Holton) uses gemmi tools to search for empty water 
+\begin_inset Quotes eld
+\end_inset
+
+bubbles
+\begin_inset Quotes erd
+\end_inset
+
+ in a snapshot from a solvated MD simulation.
+\end_layout
+
 \begin_layout Subsection
 phenix_scripts
 \end_layout
 
 \begin_layout Description
-XrayPrep This script currently has two parts,
- which can be run together,
- or separately.
- The first part uses the 
+XrayPrep This script takes an 
 \emph on
-phenix.AmberPrep
-\emph default
- script to prepare an input pdb-format file for use in refinement.
- It usually works well,
- but is limited in its ability to handle unusual situations,
- such as post-translational modifications,
- etc.
- See the 
-\emph on
-run_alt_tleap
-\emph default
- script below for a more flexible alternative.
- The second part of the script takes an 
-\emph on
-xxx-sf-cif
+xxxx-sf-cif
 \emph default
  file from the PDB,
  and converts the information into files needed for amber-based refinement.
@@ -59549,14 +59600,45 @@ phenix.refine
  possible convert intensities to structure factors,
  expand to P1 symmetry,
  and so on.
- (Going forward,
- I will probably remove the first part of this script.)
+\end_layout
+
+\begin_layout Description
+XrayPrep_redo does the same task as XrayPrep,
+ but starts from the 
+\emph on
+xxxx_final.mtz
+\emph default
+ file from PDB-redo.
 \end_layout
 
 \begin_layout Description
 CryoPrep These two scripts take an atomic model (in the form of a PDB-format file),
  and either an electron density (as a CCP4 map) or structure factors (as an sf-cif file),
  and prepare all the files needed to carry out refinements that employ a molecular force field (rather than Engh-Huber like distance and angle restraints) to constrain the molecular geometry.
+\end_layout
+
+\begin_layout Description
+expand_to_p1.py uses 
+\emph on
+cctbx
+\emph default
+ routines to expand an asu into a full unit cell in P1 symmetry.
+ This replicates the functionality of 
+\emph on
+UnitCell
+\emph default
+,
+ but does not require the presence of 
+\begin_inset Quotes eld
+\end_inset
+
+REMARK 290
+\begin_inset Quotes erd
+\end_inset
+
+ records in the input PDB file.
+ But because of this,
+ the results from the two programs may not always be the same.
 \end_layout
 
 \begin_layout Description
@@ -59596,12 +59678,27 @@ phenix.fmodel
  and re-formats the output in a simple but occasionally useful way.
 \end_layout
 
+\begin_layout Description
+run_cycle is a script to do an analog of a 
+\begin_inset Quotes eld
+\end_inset
+
+macrocycle
+\begin_inset Quotes erd
+\end_inset
+
+ in phenix.refine:
+ xyz optimization is carried out via msander,
+ followed by ADP optimazation using phenix.refine.
+ 
+\end_layout
+
 \begin_layout Subsection
 rism_scripts
 \end_layout
 
 \begin_layout Description
-run_rism A simple script to run 3D-rism calcualtions (using the 
+run_rism_place A simple script to run 3D-rism calcualtions (using the 
 \emph on
 msander
 \emph default
@@ -59609,14 +59706,29 @@ msander
  Typical values for grid spacing,
  closure and solvent model are hard-wired here,
  but you should edit this if you wish to make changes.
+ The script then runs 
+\emph on
+metatwist
+\emph default
+ to find oxygen positions for 
+\begin_inset Quotes eld
+\end_inset
+
+placing
+\begin_inset Quotes erd
+\end_inset
+
+ discrete water molecules in the solvent region,
+ followed by a run of 
+\emph on
+gwh
+\emph default
+ (Guess Water Hydrogens) to add hydrogen atoms.
 \end_layout
 
 \begin_layout Description
-run_metatwist_rho Takes the output from 
-\emph on
-run_rism
-\emph default
- and computes an electron density map for the solvent.
+run_metatwist_rho Runs 3D-rism (as in run_rism_place),
+ then computes an electron density map for the solvent.
  This can be used to replace the 
 \begin_inset Quotes eld
 \end_inset
@@ -59687,7 +59799,55 @@ alternate conformer
 \begin_inset Quotes erd
 \end_inset
 
- model
+ model;
+ uses the 
+\emph on
+collpase1
+\emph default
+ and 
+\emph on
+collapse2
+\emph default
+ scripts internally.
+ In the output PDB file,
+ each ASU in a supercell has been rotated and translated back to a reference ASU position (usually that of a deposited PDB entry),
+ and an altloc identification has been used to distinguish each superimposed copy.
+\end_layout
+
+\begin_layout Description
+ptraj.xtalsymm.in does the same task as collapse_pdb,
+ but the output PDB file is a 
+\begin_inset Quotes eld
+\end_inset
+
+multimodel
+\begin_inset Quotes erd
+\end_inset
+
+ PDB entry,
+ where each original ASU (after translation and rotation back to the reference ASU) is contained in a separate MODEL/ENDMDL section.
+ No alternate conformer flags are used.
+\end_layout
+
+\begin_layout Description
+run_alt_tleap This is the main script to create Amber 
+\emph on
+parm7
+\emph default
+ and 
+\emph on
+rst7
+\emph default
+ files from the output of 
+\emph on
+select_alts
+\emph default
+,
+ adding in the Xray information needed for Xray refinement in 
+\emph on
+msander
+\emph default
+.
 \end_layout
 
 \begin_layout Subsection
@@ -59711,6 +59871,29 @@ XtalPlot.sh
 \emph default
  files.
  Read these for now to see how to run things.
+\end_layout
+
+\begin_layout Section
+Example workflow for Xray supercell refinements using AmberClassic
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:xray-workflow"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(Coming 
+\begin_inset Quotes eld
+\end_inset
+
+soon
+\begin_inset Quotes erd
+\end_inset
+
+).
 \end_layout
 
 \begin_layout Part
