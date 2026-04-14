@@ -1,9 +1,18 @@
+# synopsis of commands for the simple 4tut peptide example:
+
 #  system setup:
-UnitCell -p 4tut.pdb -o 4tut_1uc.pdb
-PropPDB -p 4tut_1uc.pdb -o 4tut_6uc.pdb -ix 2 -iy 3 -iz 1
-ln -s 4tut_6uc.pdb alt1.pdb
-./run_alt_tleap 4tut
+UnitCell -p 4tut.pdb -o 4tut_1uc.pdb    #create unit cell
+PropPDB -p 4tut_1uc.pdb -o 4tut_6uc.pdb -ix 2 -iy 3 -iz 1  # expand to 6 uc
+./set_chainID 4tut_6uc.pdb   # optional: set up chainIDs for each original ASU
+ln -s 4tut_6uc.pdb alt1.pdb  # no need for select_alts in this example
+./run_alt_tleap 4tut         # create the Amber .parm7/.rst7 and other files
 
 #  reflection file setup:
-./XrayPrep_redo 4tut
+./XrayPrep_redo 4tut         # convert 4tut_final.mtz to Amber format
+awk 'NR>1 {print 2*$1, 3*$2, $3, $4, $5, $6}' 4tut-sf.dat > alt1-sf.dat
+                             # re-index to 6 unit cells
+
+#  run cycles 0 and 1 of refinement:
+./run_cycle  0
+./run_cycle  1
 
