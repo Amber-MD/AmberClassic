@@ -1,0 +1,74 @@
+-I: Adding /home/case/AmberClassic/dat/leap/prep to search path.
+-I: Adding /home/case/AmberClassic/dat/leap/lib to search path.
+-I: Adding /home/case/AmberClassic/dat/leap/parm to search path.
+-I: Adding /home/case/AmberClassic/dat/leap/cmd to search path.
+-f: Source tleap.in.
+
+Welcome to LEaP!
+(no leaprc in search path)
+Sourcing: ./tleap.in
+----- Source: /home/case/AmberClassic/dat/leap/cmd/leaprc.protein.ff19SB
+----- Source of /home/case/AmberClassic/dat/leap/cmd/leaprc.protein.ff19SB done
+Log file: ./leap.log
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/parm19.dat
+Reading title:
+PARM99 + frcmod.ff99SB + frcmod.parmbsc0 + OL3 for RNA + ff19SB
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/frcmod.ff19SB
+Reading force field modification type file (frcmod)
+Reading title:
+ff19SB AA-specific backbone CMAPs for protein 07/25/2019
+Loading library: /home/case/AmberClassic/dat/leap/lib/amino19.lib
+Loading library: /home/case/AmberClassic/dat/leap/lib/aminoct12.lib
+Loading library: /home/case/AmberClassic/dat/leap/lib/aminont12.lib
+----- Source: /home/case/AmberClassic/dat/leap/cmd/leaprc.water.spce
+----- Source of /home/case/AmberClassic/dat/leap/cmd/leaprc.water.spce done
+Loading library: /home/case/AmberClassic/dat/leap/lib/atomic_ions.lib
+Loading library: /home/case/AmberClassic/dat/leap/lib/solvents.lib
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/frcmod.spce
+Reading force field modification type file (frcmod)
+Reading title:
+This is the additional/replacement parameter set for SPC/E water
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/frcmod.ionsjc_spce
+Reading force field modification type file (frcmod)
+Reading title:
+Monovalent ion parameters for Ewald and SPC/E water from Joung & Cheatham JPCB (2008)
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/frcmod.ions234lm_126_spce
+Reading force field modification type file (frcmod)
+Reading title:
+Li/Merz ion parameters of divalent to tetravalent ions for SPC/E water model (12-6 normal usage set)
+----- Source: /home/case/AmberClassic/dat/leap/cmd/leaprc.gaff2
+----- Source of /home/case/AmberClassic/dat/leap/cmd/leaprc.gaff2 done
+Log file: ./leap.log
+Loading parameters: /home/case/AmberClassic/dat/leap/parm/gaff2.dat
+Reading title:
+AMBER General Force Field for organic molecules (Version 2.2.30, Oct 2025)
+Loading PDB file: ./alt1.pdb
+  total atoms in file: 552
+  Leap added 600 missing atoms according to residue templates:
+       600 H / lone pairs
+Checking Unit.
+Building topology.
+"order_residues" off: keep input residue order.
+Building atom parameters.
+Building bond parameters.
+Building angle parameters.
+Building proper torsion parameters.
+Building improper torsion parameters.
+ total 204 improper torsions applied
+Building H-Bond parameters.
+Incorporating Non-Bonded adjustments.
+Not Marking per-residue atom chain types.
+Marking per-residue atom chain types.
+  (Residues lacking connect0/connect1 - 
+   these don't have chain types marked:
+
+	res	total affected
+
+	CGLY	12
+	NGLY	12
+	WAT	60
+  )
+ (no restraints)
+	Quit
+
+Exiting LEaP: Errors = 0; Warnings = 0; Notes = 0.
