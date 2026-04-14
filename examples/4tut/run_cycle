@@ -19,7 +19,7 @@ mtzfile="4tut_final.mtz"
 #  Optionally, run xyz refinement in Amber:
 #--------------------------------------------------------------------
 
-# ./run_6uc $in
+./run_6uc $in
 
 #--------------------------------------------------------------------------
 #  Prepare pdb file for phenix.refine: each chain gets its own altloc;
