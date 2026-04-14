@@ -26,4 +26,4 @@ $AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}.parm7
 
 $AMBERCLASSICHOME/bin/ambpdb -p ${id}.parm7 -ext < ${id}.rst7 > ${id}_000.pdb
 
-/bin/rm -f foo.parm7 foo.rst7 $id.parm7
+/bin/rm -f foo.parm7 foo.rst7

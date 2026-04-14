@@ -1,0 +1,9 @@
+#  system setup:
+UnitCell -p 4tut.pdb -o 4tut_1uc.pdb
+PropPDB -p 4tut_1uc.pdb -o 4tut_6uc.pdb -ix 2 -iy 3 -iz 1
+ln -s 4tut_6uc.pdb alt1.pdb
+./run_alt_tleap 4tut
+
+#  reflection file setup:
+./XrayPrep_redo 4tut
+

@@ -1,0 +1,135 @@
+Starting phenix.holton_geometry_validation
+on Tue Apr 14 14:57:34 2026 by case
+===============================================================================
+
+Processing files:
+-------------------------------------------------------------------------------
+
+  Found model, alt1_001.pdb
+
+Processing PHIL parameters:
+-------------------------------------------------------------------------------
+
+  No PHIL parameters found
+
+Final processed PHIL parameters:
+-------------------------------------------------------------------------------
+  data_manager {
+    model {
+      file = "alt1_001.pdb"
+    }
+    default_model = "alt1_001.pdb"
+  }
+
+
+Starting job
+===============================================================================
+
+Model read from alt1_001.pdb
+
+=============================================================================== 
+     VALUES EXPECTED FOR IDEAL STRUCTURE WITH NORMAL DIST OF ERRORS 
+===============================================================================
+
+    Category        N     Mean    Worst    Chisq     Pnna   Energy Using mean 
+
+    CBETADEV       36     0.84     5.74   0.3970   0.5391   3.5285   0.4500 
+       CLASH        1     2.79     5.50   0.7534   0.7127   5.3315   3.6119 
+       OMEGA       60     0.70     6.93   0.4153   0.5768   4.2134   0.4630 
+        RAMA       48     1.05     7.32   0.6461   0.6398   4.8628   0.7542 
+        ROTA       36     0.68     5.27   0.3947   0.5067   2.9445   0.4092 
+       ANGLE      636     1.06    10.35   0.5462   0.5495   5.3320   0.5646 
+        BOND      492     1.03    10.43   0.5943   0.5848   5.6867   0.6222 
+        CHIR       48     1.01     5.75   0.4958   0.5166   3.1750   0.5324 
+     TORSION      240     1.14     9.24   0.4387   0.5830   5.2360   0.4597 
+FULL_NONBOND    25731     1.00     0.00   0.3802   0.0000   0.0000   0.3807 
+     NONBOND    25731     1.00    17.29   0.5516   0.5383   5.6879   0.5541 
+       PLANE      564     1.10    10.35   0.5535   0.5668   5.4858   0.5823 
+
+      EXPECTED STANDARD DEVIATIONS OF VALUES 
+
+    Category        N     Mean    Worst    Chisq     Pnna   Energy Using mean 
+
+    CBETADEV       36     0.84     2.30   0.3305   0.1893   2.3657   0.4541 
+       CLASH        1     2.79     4.84   0.3274   0.3108   3.5267   2.2097 
+       OMEGA       60     0.70     2.23   0.3285   0.1566   2.3339   0.4322 
+        RAMA       48     1.05     1.63   0.2650   0.1173   1.8797   0.3828 
+        ROTA       36     0.68     1.82   0.2640   0.1518   1.8442   0.3258 
+       ANGLE      636     1.06     2.02   0.2930   0.1174   1.4829   0.3151 
+        BOND      492     1.03     1.91   0.2713   0.1139   1.4551   0.3041 
+        CHIR       48     1.01     1.61   0.2493   0.1280   1.7218   0.3377 
+     TORSION      240     1.14     2.32   0.3174   0.1263   1.8186   0.3592 
+FULL_NONBOND    25731     1.00     0.00   0.2408   0.0000   0.0000   0.2437 
+     NONBOND    25731     1.00     2.16   0.2515   0.1127   1.2566   0.2552 
+       PLANE      564     1.10     1.68   0.3226   0.1082   1.4227   0.3622 
+
+Expected total energy for ideal structure: 60.87 +/- 7.13
+
+=============================================================================== 
+     END OF EXPECTATIONS FOR IDEAL STRUCTURE WITH NORMAL DIST OF ERRORS 
+===============================================================================
+
+SUMMARY of Holton geometry validation scoring for alt1_001.pdb
+
+
+    Category        N     Mean    Worst    Chisq     Pnna   Energy Using mean 
+
+    CBETADEV       36     0.93     3.24   0.4160   0.3258   1.0555   0.3881 
+       CLASH        0     None     None     None     None     None     None 
+       OMEGA       60     1.91     9.98   1.0000   0.7938   7.9208   1.9114 
+        RAMA       48     0.39     0.61   0.0000   0.0480   0.0291   0.0000 
+        ROTA       36     0.28     0.62   0.0000   0.0587   0.0362   0.0000 
+       ANGLE      636     0.56     6.20   0.0000   0.2746   1.7016   0.0000 
+        BOND      492     0.33     2.16   0.0000   0.0628   0.1354   0.0000 
+        CHIR       48     0.13     0.59   0.0000   0.0465   0.0274   0.0000 
+     TORSION      240     0.59     6.53   0.0000   0.3988   2.6035   0.0000 
+FULL_NONBOND    25731    -0.17     None   0.0000   0.0000   0.0000   0.0000 
+     NONBOND    25731    18.11    64.94   1.0000   1.0000  11.8708  10.5937 
+       PLANE      564     1.59    51.84   1.0000   1.0000  11.6456   1.5889 
+
+   -----  Worst deviation in each category -----
+
+CBETADEV: Energy = 3.2400 dev = 0.090 A 
+   Residue:   LEU A    5
+
+OMEGA: Energy = 9.978871 (0 Proline) Angle: -167.22 deg
+   Residue:   GLY A    2
+RAMA: Energy = 0.6056 
+   Residue:   TYR K  113
+ROTA: Energy = 0.6160 
+   Residue:   LEU G   71
+ANGLE: Energy = 6.20 dev = -7.47 deg  obs = 125.47 target = 118.00 sigma = 3.0
+   Atom 1:   O    GLY  B   17 
+   Atom 2:   C    GLY  B   17 
+   Atom 3:   OXT  GLY  B   17  
+BOND: Energy = 2.16 dev = 0.031 A  obs = 1.345 target = 1.376 sigma = 0.02
+   Atom 1:   CZ   TYR  E   47 
+   Atom 2:   OH   TYR  E   47  
+CHIR: Energy = 0.588 delta = 0.15 A**3  obs = -2.74 target = -2.59 sigma = 0.2
+   Atom 1:   CG   LEU  B   16 
+   Atom 2:   CB   LEU  B   16 
+   Atom 3:   CD1  LEU  B   16 
+   Atom 4:   CD2  LEU  B   16 
+TORSION: Energy = 6.5282 dev = -12.8 deg  obs = -167.2 target = -180 sigma = 5.0
+   Atom 1:   CA   GLY  A    2 
+   Atom 2:   C    GLY  A    2 
+   Atom 3:   N    TYR  A    3 
+   Atom 4:   CA   TYR  A    3 
+NONBOND: Energy = 64.938006 dev = 0.755 A  obs = 1.695 target = 2.450
+   Atom 1:   O    HOH  F   62 
+   Atom 2:   H2   HOH  L  129 
+PLANE: Energy = 51.8400 dev = 0.144 A  sigma = 0.02
+   Atom 1:   CB   TYR  B   14 
+
+Total H interactions removed: 1140 (not removed from nonbonded)
+Total ARG H-nonbond removed: 0
+
+Ratio of geometry deviations to sigmas (excluding worst 0.3%):   2.46 
+Expected energy for ideal structure with normal dist of errors: 60.87 +/- 7.13
+Overall geometry energy:                                        51.51
+
+
+===============================================================================
+Job complete
+usr+sys time: 5.25 seconds
+wall clock time: 5.91 seconds

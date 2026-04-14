@@ -1,0 +1,159 @@
+#!/bin/bash
+
+#--------------------------------------------------------------------
+#  Tool to run "cycles" of xyz and adp refinment
+#--------------------------------------------------------------------
+
+in=$1
+let out=$in+1
+out=$(printf "%03d" $out)
+
+id="alt1"
+supercell="  20.790   29.193   17.382"
+origcell="  10.395    9.731   17.382"
+spacegroup=" P 1 21 1"
+residuesperchain=11
+mtzfile="4tut_final.mtz"
+
+#--------------------------------------------------------------------
+#  Optionally, run xyz refinement in Amber:
+#--------------------------------------------------------------------
+
+# ./run_6uc $in
+
+#--------------------------------------------------------------------------
+#  Prepare pdb file for phenix.refine: each chain gets its own altloc;
+#     set occ to about 1/12.
+#--------------------------------------------------------------------------
+
+cat <<EOF > set_occ
+#
+#   first, read in a pdb file line and unpack
+#
+
+\$residuesperchain = $residuesperchain;
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop(\$_);
+\$_ .= "                                                                    ";
+
+( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno, \$iCode,
+      \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+#
+#  do modifications necessary here:
+#
+if    (\$resno <=    \$residuesperchain ){ \$alt = "A"}
+elsif (\$resno <=  2*\$residuesperchain ){ \$alt = "B"}
+elsif (\$resno <=  3*\$residuesperchain ){ \$alt = "C"}
+elsif (\$resno <=  4*\$residuesperchain ){ \$alt = "D"}
+elsif (\$resno <=  5*\$residuesperchain ){ \$alt = "E"}
+elsif (\$resno <=  6*\$residuesperchain ){ \$alt = "F"}
+elsif (\$resno <=  7*\$residuesperchain ){ \$alt = "G"}
+elsif (\$resno <=  8*\$residuesperchain ){ \$alt = "H"}
+elsif (\$resno <=  9*\$residuesperchain ){ \$alt = "I"}
+elsif (\$resno <= 10*\$residuesperchain ){ \$alt = "J"}
+elsif (\$resno <= 11*\$residuesperchain ){ \$alt = "K"}
+elsif (\$resno <= 12*\$residuesperchain ){ \$alt = "L"}
+
+\$occ = 0.08;
+\$resname = "CYS" if \$resname eq "CYX";
+\$resname = "HOH" if \$resname eq "WAT";
+\$resname = "HIS" if \$resname eq "HID";
+\$resname = "HIS" if \$resname eq "HIE";
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+
+} else {
+   s/$supercell/$origcell/;  #set cell to original lengths
+   print;
+}
+
+EOF
+
+#--------------------------------------------------------------------------
+#  Run adp refinement in phenix or refmac:
+#--------------------------------------------------------------------------
+perl < ${id}_$out.min1.pdb -n -f ./set_occ > tmp.pdb
+
+if true; then
+   ./run_phenix_refine tmp.pdb $mtzfile ${id} $out > phenix.log
+else
+
+# ========== run refmac with the md-derived solvent and
+#            disable the default flat bulk solvent
+
+./amber2refmac tmp.pdb
+
+refmac5 hklin refme.mtz xyzin tmp.pdb xyzout ${id}_$out.pdb \
+    << EOF > ${id}_$out.reflog
+LABIN FP=FP SIGFP=SIGFP FPART1=Fpart PHIP1=PHIpart FREE=FreeR_flag
+SOLVENT NO
+MAKE NEWLigand Noexit
+SCPART 1
+NCYC 40
+REFI BREF
+DAMP 0 1 1
+MAKE HOUT
+EOF
+
+fi
+
+#--------------------------------------------------------------------------
+#  Undo most of the changes made by set_occ:
+#--------------------------------------------------------------------------
+cat <<EOF > reset_occ
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop(\$_);
+\$_ .= "                                                                    ";
+
+( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno, \$iCode,
+      \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+#
+#  do modifications necessary here:
+#
+
+\$occ = 1.0;
+\$alt = ' ';
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+
+} else {
+   s/$origcell/$supercell/;  #set cell to expanded lengths
+   s/$spacegroup/ P 1/;      #set spacegroup back to P1
+   print;
+}
+EOF
+perl -i.bak -n -f ./reset_occ ${id}_$out.pdb  # gets file for next msander run
+
+#--------------------------------------------------------------------------
+#  Run some geometry checks:
+#--------------------------------------------------------------------------
+phenix.molprobity ${id}_$out.pdb > ${id}_$out.molp
+phenix.holton_geometry_validation ${id}_$out.pdb > ${id}_$out.hgv
+
+/bin/rm -f molprobity* ${id}_$out.eff tmp.pdb phenix.log set_occ reset_occ
+
