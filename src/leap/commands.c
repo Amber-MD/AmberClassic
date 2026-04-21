@@ -113,8 +113,8 @@
 
 int     iMemDebug = 0;
 int     iC4count = 0; //NewT
-double  daC4Type[8]; //NewT
-char    sA[4][8], sB[4][8]; //NewT
+double  daC4Type[16]; //NewT
+char    sA[8][16], sB[8][16]; //NewT
 
 extern DICTIONARY       GdVariables;
 extern BOOL             bCmdDeleteObj;
@@ -1291,6 +1291,7 @@ char            *sCmd = "bond";
         default:
             VPFATALEXIT(( "%s: Unknown bond order (%c), no bond made.\n"
                     "Valid bond orders are: S, D, T, A.\n", sCmd, cOrder ));
+            goto DONE;
     }
     AtomBondToOrder( aA, aB, iOrder );
 DONE:
@@ -2201,7 +2202,7 @@ char            *sUsage =
 
                 /* adjust box for diagonal clearance if necc */
 
-    ToolOctBoxCheck( uSolute, daBuffer, TRUE );
+    ToolOctBoxCheck( uSolute, daBuffer, TRUE, bIsotropic );
 
                 /* Solvate the solute */
 
@@ -2738,6 +2739,19 @@ setUsage()
               "   or:  set default <parameter> <value>\n" ));
 }
 
+void
+SetOnOff(int *pVar, char *name, char *str) {
+        if ( !strcmp( str, "on" ) || !strcmp(str,"true") || !strcmp(str,"1") ) {
+             *pVar = 1;
+        } else if ( !strcmp( str, "off" ) || !strcmp(str,"false") || !strcmp(str,"0") ) {
+             *pVar = 0;
+        } else {
+              VPFATAL(("Set %s: must be 'on'/'true' or 'off'/'false'\n",name));
+              setUsage();
+        }
+}
+
+// FIXME: there is no type checking here; also:merge and simplify all on/off settings
 OBJEKT
 oCmd_set( int iArgCount, ASSOC aaArgs[] )
 {
@@ -2855,17 +2869,20 @@ char            *sCmd = "set";
                 }
                 return(NULL);
         } 
-        if ( !strcmp( sString, "useresids" )) {
+        if ( !strcmp( sString, "hybrid36" )) {
                 sString = sOString(oAssocObject(aaArgs[2]));
                 StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.iUseResIds = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.iUseResIds = 0;
-                } else {
-                        VPFATAL(("Set UseResIds: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
+                SetOnOff(&GDefaults.bPdbHybrid36,"hybrid36",sString);
+                return(NULL);
+        }
+        if ( !strcmp( sString, "keep_chainid" )) {
+                sString = sOString(oAssocObject(aaArgs[2]));
+                StringLower( sString );
+                SetOnOff(&GDefaults.bPdbKeepChainId,"Keep_chainId",sString);
+                return(NULL);
+        }
+        if ( !strcmp( sString, "pdbreadbiomt" )) {
+                GDefaults.iPdbReadBioMT = (int)dODouble(oAssocObject(aaArgs[2]));
                 return(NULL);
         } 
         if ( !strcmp( sString, "charmm" )) {
@@ -3015,25 +3032,6 @@ char            *sCmd = "set";
                 VP0(("Please change the setting in frcmod/parm.dat.\n"));
             } else {
                 GDefaults.iIPOL = myinteger;
-            }
-            return(NULL);
-        }
-        if ( !strcmp( sString, "pdbloadsequential" )) {
-            if ( iObjectType(oAssocObject(aaArgs[2])) != OSTRINGid ) {
-                VPFATAL(("expected 'true' or 'false'\n"));
-                setUsage();
-                return(NULL);
-            }
-            sString = sOString(oAssocObject(aaArgs[2]));
-            StringLower( sString );
-
-            if (!strcmp(sString, "true"))
-                GDefaults.iPdbLoadSequential = 1;
-            else if (!strcmp(sString, "false"))
-                GDefaults.iPdbLoadSequential = 0;
-            else {
-                VPFATAL(("expected 'true' or 'false'\n"));
-                setUsage();
             }
             return(NULL);
         }
@@ -3321,7 +3319,9 @@ int             ALL, ind, found;
         found += PrntOnOff(sString, "pdbwritecharges", "PdbWriteCharges", GDefaults.pdbwritecharges, ALL);
         found += PrntOnOff(sString, "oldprmtopformat", "OldPrmtopFormat", GDefaults.iOldPrmtopFormat, ALL);
         found += PrntOnOff(sString, "gibbs", "Gibbs", GDefaults.iGibbs, ALL);
-        found += PrntOnOff(sString, "useresids", "UseResIds", GDefaults.iUseResIds, ALL);
+        found += PrntOnOff(sString, "hybrid36", "Hybrid36", GDefaults.bPdbHybrid36, ALL);
+        found += PrntOnOff(sString, "keep_chainid", "Keep_chainId", GDefaults.bPdbKeepChainId, ALL);
+        found += PrntInt(sString, "pdbreadbiomt", "PdbReadBioMT", GDefaults.iPdbReadBioMT, ALL);
         found += PrntOnOff(sString, "charmm", "Charmm", GDefaults.iCharmm, ALL);
         found += PrntOnOff(sString, "flexiblewater", "FlexibleWater", GDefaults.iFlexibleWater, ALL);
         found += PrntOnOff(sString, "deleteextrapointangles", "DeleteExtraPointAngles", GDefaults.iDeleteExtraPointAngles, ALL);
@@ -3335,7 +3335,6 @@ int             ALL, ind, found;
         found += PrntReal(sString, "scnbscalefactor", "SCNB 1-4 Scale Factor", GDefaults.dScnbScaleFactor, ALL);
         found += PrntOnOff(sString, "cmap", "CMAP", GDefaults.iCMAP, ALL);
         found += PrntInt(sString, "ipol", "IPOL", GDefaults.iIPOL, ALL);
-        found += PrntOnOff(sString, "pdbloadsequential", "PdbLoadSequential", GDefaults.iPdbLoadSequential, ALL);
         char* s1[3]={"Constant","Distance","Undefined"};
         if (GDefaults.iDielectricFlag == DIEL_R ) ind = 0;
         else if (GDefaults.iDielectricFlag == DIEL_R2 ) ind = 1;
@@ -6371,7 +6370,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   {
     case 3:  // One ion and desired number / charge
       if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
-        ++ierr;
+          ++ierr;
         break;
     case 4:  // One ion and desired number / charge and minimum separation
       if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n n" ))

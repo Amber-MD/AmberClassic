@@ -1106,13 +1106,13 @@ STRING		sTemp;
         lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
 #ifdef DEBUG
 	while ( ( iInt=(INTERNAL)oNext(&lInternals) ) != NULL ) {
-	    MESSAGE(( "    Internal type = %c  at: %lX\n", 
+	    MESSAGE(( "    Internal type = %c  at: %p\n",
 			iInternalType(iInt), iInt ));
 	}
 #endif
 	lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
         while ( ( iInt=(INTERNAL)oNext(&lInternals) ) != NULL ) {
-	    MESSAGE(( "    destroying    = %c  at: %lX\n", 
+	    MESSAGE(( "    destroying    = %c  at: %p\n",
 			iInternalType(iInt), iInt ));
             Destroy( (OBJEKT *)&iInt );
         }

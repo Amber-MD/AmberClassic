@@ -1509,25 +1509,35 @@ Allowed arguments to "set default variable value" are these:
   variables        values       descriptions
 
 
-  PdbWriteCharges  "on"         add charges to each ATOM record
-                   "off"        don't do this (default)
+  PdbWriteCharges  "on"         Write charge to each ATOM record as B-factor
+                   "off"        (default)
+
+
+  keep_chainid     "on"         Keep ChainId and ResId number read from PDB.
+                                These are written to prmtop arrays
+                                RESIDUE_CHAINID and RESIDUE_NUMBER, as with
+                                parmed "addPdb". Supports 2-character chainId
+                   "off"        (default)
+
+
+  hybrid36         "on"         Write PDB files using hybrid36 format for
+                                overflow instead of Leap's extra column mode.
+                                (Reading PDB will auto-detect either form.)
+                                (default)
+                   "off"        Use old LEaP procedure for overflows
+
+
+  PdbReadBioMT     "on"         Read REMARK 350 BIOMT matrices in place of
+                                MTRIXn matrices to generate a biological unit.
+                                Currently only functional with single defined
+                                biomolecule, an does noe de-duplicate chainId;
+                                If off, MTRIXn expansion is always enabled.
+                                (Reading PDB will auto-detect either form.)
+                   "off"        (default)
 
 
   OldPrmtopFormat  "on"         use prmtop format from Amber6 and earlier
                    "off"        use the new prmtop format (default)
-
-
-  Gibbs            "on"         require perturbed atoms to be set explicitly
-                                   (needed for gibbs)
-                   "off"        set perturbed if Type != PertType (default)
-                                   (OK for sander)
-
-
-  UseResIds        "on"         put cols 22-27 of the input pdb file into
-                   "off"        a RESIDUE_ID table in prmtop files; default
-                                is "off"; only works with new prmtop formats,
-                                and when a single loadPdb command is used to
-                                create a unit.
 
 
   Charmm           "on"         include terms for CHARMM22 force fields
@@ -1577,10 +1587,6 @@ Allowed arguments to "set default variable value" are these:
                    "off"        don't include these (default)
 
 
-  PHIPSIMAP        "on"         include residue-based PHIPSI parameters
-                   "off"        don't include these (default)
-
-
   ipol             integer      Sets the default value for IPOL.
                                 Valid values are 0 - 4.
                                 Default value is 0, meaning disabled.
@@ -1593,7 +1599,7 @@ Allowed arguments to "set default variable value" are these:
 
   reorder_residues "on"         solvent will be moved to the end (default)
                    "off"        residue order will be maintained as input.
-                                Beta feature: use at your own risk!
+
 
 @@endHelp
 

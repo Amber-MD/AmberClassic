@@ -377,7 +377,7 @@ DICTLOOP	dlLoop;
 		iDictionaryElementCount(dDict) ));
     dlLoop = ydlDictionaryLoop(dDict);
     while ( yPDictionaryNext( dDict, &dlLoop ) ) {
-	VP0(( "%40s = %lX\n", 
+	VP0(( "%40s = %p\n", 
 		sDictLoopKey(dlLoop), 
 		PDictLoopData(dlLoop) ));
     }

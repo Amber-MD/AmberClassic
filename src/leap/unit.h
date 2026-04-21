@@ -90,9 +90,6 @@
 
 typedef struct  {
         CONTAINERt      cHeader;
-
-/* TODO: Get rid of aaConnect in UNITs, instead use a first atom/last atom */
-/* TODO: paradigm */
         OBJEKT          aHead;
         OBJEKT          aTail;
         PARMSET         psParameters;
@@ -133,8 +130,6 @@ typedef struct  {
         VARARRAY        vaConnect;
         VARARRAY        vaGroupNames;
         VARARRAY        vaGroupAtoms;
-        int             iMaxPdbSeq;      // Cached max PDB sequence number
-        BOOL            bSeqCacheValid;   // TRUE if cache is valid
 } UNITt;
 
 typedef UNITt   *UNIT;
@@ -175,7 +170,7 @@ extern void     UnitCheckForParms( UNIT uUnit, PARMLIB plParms,
                         PARMSET psParmSet );
 
 extern void     UnitSaveAmberParmFile(UNIT uUnit, FILE *fOut, char *crdName,
-                        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ); //NewT
+                        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ); //NewT
 
 extern void     UnitYouAreBeingRemoved(UNIT uUnit);
 extern void     UnitIAmBeingRemoved(UNIT uUnit, CONTAINER cRemoved);

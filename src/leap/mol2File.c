@@ -184,7 +184,7 @@ void zMol2FileWriteAtomRecord(MOL2WRITEt * pwPFile, ATOM aAtom, int choice)
 
     MESSAGE(("Element: |%s|   pdb_name=|%s|\n", sElement, sName));
 
-    p.pdb.atom.residue.chain_id = ' ';
+    memcpy(p.pdb.atom.residue.chain_id,"  ",2);
     p.pdb.atom.residue.seq_num = pwPFile->iResidueSeq;
     p.pdb.atom.residue.insert_code = ' ';
 /*    p.pdb.atom.alt_loc = ' ' ; */
@@ -193,7 +193,6 @@ void zMol2FileWriteAtomRecord(MOL2WRITEt * pwPFile, ATOM aAtom, int choice)
     p.pdb.atom.z = dVZ(&vAtomPosition(aAtom));
     p.pdb.atom.occupancy = 1.0;
     p.pdb.atom.temp_factor = dAtomCharge(aAtom);
-    p.pdb.atom.ftnote_num = 0;
     p.record_type = MOL2_ATOM;
     pdb_write_record(pwPFile->fPdbFile, &p, NULL, 0);
 

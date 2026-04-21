@@ -16,7 +16,7 @@ OA = $(OA1)
 #  General tools
 # 
 
-OG1= pdb_format.o pdb_read.o pdb_sprntf.o 
+OG1= pdb_format.o pdb_read.o pdb_sprntf.o hybrid36.o
 OG2= pdb_sscanf.o pdb_write.o
 OG3= vector.o zMatrix.o sort.o bag.o hash.o 
 OG4= dictionary.o database.o nVector.o ring.o matrix.o

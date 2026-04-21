@@ -1919,56 +1919,40 @@ OBJEKT          oObj;
     return(lList);
 }
 
-
+/*
+ *      2026 SSchott checked modifications to ToolOctBoxCheck, as suggested by 
+ *      Nikolai Skrynnikov, Danil Yevdokimov, Olga O. Lebedenko and
+ *      Ivan S. Podkorytov and improved with Claude. Mods fixes bugs in padding,
+ *      making sure octahedral box is scaled to fit whole solute. Additional
+ *      vdW and anisotropic box checks. 
+ */
 void
-ToolOctBoxCheck( UNIT uSolute, double *dPBuf, BOOL bMsg )
+ToolOctBoxCheck( UNIT uSolute, double *dPBuf, BOOL bMsg, BOOL bIsotropic )
 {
 LOOP            lTemp;
 ATOM            aAtom;
 VECTOR          vPos;
-double          dXmin, dYmin, dZmin, dXmax, dYmax, dZmax;
+double          dXBox, dYBox, dZBox;
 double          dXhalf, dYhalf, dZhalf, dXunit, dYunit, dZunit;
-double          dX, dY, dZ, dTmp, dMax, dBmax; 
-int             iFirst = 1;
+double          dX, dY, dZ, dTmp, dMax, dBmax;
 
-
-        /*
-         *  get atom centers' x,y,z max,min
+        /*  
+         *  get vdw bounding box (set by ToolCenterUnitByRadii)
+         *  and isotropize if requested, matching zToolSolvateAndShell
          */
-        lTemp = lLoop( (OBJEKT)uSolute, ATOMS );
-        while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
-                vPos = vAtomPosition(aAtom);
-                dX = dVX(&vPos);
-                dY = dVY(&vPos);
-                dZ = dVZ(&vPos);
-
-                if ( iFirst ) {
-                        dXmax = dXmin = dX;
-                        dYmax = dYmin = dY;
-                        dZmax = dZmin = dZ;
-                        iFirst = 0;
-                        continue;
-                }
-                if ( dX > dXmax ) 
-                        dXmax = dX;
-                else if ( dX < dXmin )
-                        dXmin = dX;
-                if ( dY > dYmax ) 
-                        dYmax = dY;
-                else if ( dY < dYmin )
-                        dYmin = dY;
-                if ( dZ > dZmax ) 
-                        dZmax = dZ;
-                else if ( dZ < dZmin )
-                        dZmin = dZ;
+        UnitGetBox( uSolute, &dXBox, &dYBox, &dZBox );
+        if ( bIsotropic ) {
+                dTmp = MAX(dXBox, dYBox);
+                dTmp = MAX(dTmp, dZBox);
+                dXBox = dYBox = dZBox = dTmp;
         }
 
         /*
-         *  calc halfbox on centers
+         *  calc halfbox matching downstream clipping criteria
          */
-        dXhalf = 0.5 * (dXmax - dXmin) + dPBuf[0];
-        dYhalf = 0.5 * (dYmax - dYmin) + dPBuf[1];
-        dZhalf = 0.5 * (dZmax - dZmin) + dPBuf[2];
+        dXhalf = 0.5 * dXBox + dPBuf[0];
+        dYhalf = 0.5 * dYBox + dPBuf[1];
+        dZhalf = 0.5 * dZBox + dPBuf[2];
 
         /*
          *  find unit vector of diagonal
@@ -1995,9 +1979,10 @@ int             iFirst = 1;
                 dY = dVY(&vPos);
                 dZ = dVZ(&vPos);
 
-                dTmp =  fabs(dX) * dXunit + 
-                        fabs(dY) * dYunit + 
+                dTmp =  fabs(dX) * dXunit +
+                        fabs(dY) * dYunit +
                         fabs(dZ) * dZunit;
+                dTmp += aAtom->dTemp;
 
                 if ( dTmp > dMax )
                         dMax = dTmp;
@@ -2006,7 +1991,10 @@ int             iFirst = 1;
         /*
          *  calc distance of diagonal face from origin
          */
-        dBmax = 0.5 * sqrt( dXhalf*dXhalf + dYhalf*dYhalf + dZhalf*dZhalf );
+        dBmax = 1.5 * dXhalf * dYhalf * dZhalf /
+                sqrt( dYhalf*dYhalf*dZhalf*dZhalf +
+                      dXhalf*dXhalf*dZhalf*dZhalf +
+                      dXhalf*dXhalf*dYhalf*dYhalf );
         
         /*
          *  see if diagonal clearance is satisfied
@@ -2027,8 +2015,8 @@ int             iFirst = 1;
             "Scaling up box by a factor of %f to meet diagonal cut criterion\n",
             dTmp ));
 
-        dPBuf[0] *= dTmp;
-        dPBuf[1] *= dTmp;
-        dPBuf[2] *= dTmp;
+        dPBuf[0] += dXhalf * (dTmp - 1.0);                                                                                                                                                          
+        dPBuf[1] += dYhalf * (dTmp - 1.0);                                                                                                                                                          
+        dPBuf[2] += dZhalf * (dTmp - 1.0); 
 
 }

@@ -541,17 +541,21 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
 
     if (bDBGetType(db, "residuesPdbSequenceNumber", &iType, &iTemp)) {
         bDBGetValue(db, "residuesPdbSequenceNumber", &iTemp,
-                    (GENP) & (srPResidue->iPdbSequenceNumber), iSize);
+                    (GENP) & (srPResidue->iPdbResSeq), iSize);
     } else {
 
         /* If no sequence numbers are defined then create some */
-
         srPResTemp = srPResidue;
         for (i = 0; i < iCount; i++) {
-            srPResTemp->iPdbSequenceNumber = i + 1;
+            //printf("make pdb seq %d\n",i+1);
+            srPResTemp->iPdbResSeq = i + 1;
             srPResTemp++;
         }
     }
+
+    /* ChainId not stored in OFF files, set to blank */
+    for (i = 0,srPResTemp = srPResidue; i < iCount; i++,srPResTemp++)
+        srPResTemp->sChainId[0]=0;
 
     bDBGetTable(db, "residueconnect", &iCount,
                 1, (char *) &(srPResidue->iaConnectIndex[0]), iSize,
@@ -909,7 +913,7 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
         }
         DBPutValue(db, "residuesPdbSequenceNumber",
                    ENTRYARRAY | ENTRYINTEGER, iCount,
-                   (GENP) & srPResidue->iPdbSequenceNumber, iSize);
+                   (GENP) & srPResidue->iPdbResSeq, iSize);
 
         DBPutTable(db, "residueconnect", iCount,
                    1, "c1x", (char *) &(srPResidue->iaConnectIndex[0]),
@@ -2700,7 +2704,10 @@ zUnitDoResidue(UNIT uUnit, RESIDUE rRes, int *iPPos)
     srPResidue->sResidueType[1] = '\0';
     srPResidue->iSequenceNumber = iContainerSequence(rRes);
     srPResidue->iNextChildSequence = iContainerNextChildsSequence(rRes);
-    srPResidue->iPdbSequenceNumber = iResiduePdbSequence(rRes);
+    srPResidue->iPdbResSeq = iResiduePdbSequence(rRes);
+    memcpy(srPResidue->sChainId,rRes->sChainId,sizeof(srPResidue->sChainId));
+    if (rRes->cICode == ' ') srPResidue->sICode[0]=0;
+    else { srPResidue->sICode[0]=rRes->cICode;srPResidue->sICode[1]=0; }
     (*iPPos)++;
 
 }
@@ -3369,7 +3376,8 @@ void zUnitIOBuildFromTables(UNIT uUnit)
         ContainerSetSequence(rRes, srPResidue->iSequenceNumber);
         ContainerSetNextChildsSequence(rRes,
                                        srPResidue->iNextChildSequence);
-        ResidueSetPdbSequence(rRes, srPResidue->iPdbSequenceNumber);
+        ResidueSetPdbSequence(rRes, srPResidue->iPdbResSeq);
+        ResidueSetChainId(rRes, srPResidue->sChainId);
         ResidueSetType(rRes, srPResidue->sResidueType[0]);
 
         /* Define the imaging ATOM */
@@ -3710,7 +3718,7 @@ static void
 zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
                           VARARRAY * vaPNBParameters,
                           VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds,
-                          char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ) //NewT
+                          char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ) //NewT
 {
     VARARRAY vaNBIndex, vaNonBonds, vaPNBEdits;
     int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY, iC4, jC4;
@@ -3874,30 +3882,49 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
     // Only update C4 that matches both atom type names NewT
     for (int jj = 0; jj < iC4count; jj ++)  
     {   
-        iC4 = -1;
-        jC4 = -1;
-        for (int ii = 0; ii < iVarArrayElementCount(uUnit->vaAtoms); ii++) {
-            //VP0(("Atom type is: %s\n", sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom)));
-            //VP0(("Target is: %s\n", sA[jj]));
-            if (!strcmp(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom), sA[jj])) {
-                iC4 = PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->iTypeIndex;
-                if (iC4 > iVarArrayElementCount(vaNonBonds)) {
-                        iC4 = iC4 - iVarArrayElementCount(vaNonBonds);
-                }
-		//VP0(("iC4 matches!!! value is %i\n", iC4));
-            }
-            if (!strcmp(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom), sB[jj])) {
-                jC4 = PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->iTypeIndex;
-                if (jC4 > iVarArrayElementCount(vaNonBonds)) {
-                        jC4 = jC4 - iVarArrayElementCount(vaNonBonds);
-                }
-		//VP0(("jC4 matches!!! value is %i\n", jC4));
-            }
+	int rawA = iParmSetFindAtom(uUnit->psParameters, sA[jj]);
+        int rawB = iParmSetFindAtom(uUnit->psParameters, sB[jj]);
+
+        if (rawA == PARM_NOT_FOUND || rawB == PARM_NOT_FOUND) {
+            VP0(("C4Type: could not find type %s or %s in ParmSet\n", sA[jj], sB[jj]));
+            continue;
         }
-        if (iC4 != -1 && jC4 != -1) {
-        VP0(("daC4Type value is %f\n", daC4Type[jj]));
-        PVAI(*vaPNBParameters, NONBONDACt, MAX(iC4,jC4)*(MAX(iC4,jC4)-1)/2+MIN(iC4,jC4)-1)->d4 = daC4Type[jj];
-        }
+
+        // Map raw atom parm index -> rolled-up unique NB index (0-based)
+        int iI = *PVAI(vaNBIndex, int, rawA);
+        int iJ = *PVAI(vaNBIndex, int, rawB);
+
+        int iX = MIN(iI, iJ);
+        int iY = MAX(iI, iJ);
+
+        // 0-based triangular index into vaPNBParameters
+        int idx = iY * (iY + 1) / 2 + iX;
+
+        PVAI(*vaPNBParameters, NONBONDACt, idx)->d4 = daC4Type[jj];
+        //iC4 = -1;
+        //jC4 = -1;
+        //for (int ii = 0; ii < iVarArrayElementCount(uUnit->vaAtoms); ii++) {
+        //    //VP0(("Atom type is: %s\n", sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom)));
+        //    //VP0(("Target is: %s\n", sA[jj]));
+        //    if (!strcmp(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom), sA[jj])) {
+        //        iC4 = PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->iTypeIndex;
+        //        if (iC4 > iVarArrayElementCount(vaNonBonds)) {
+        //                iC4 = iC4 - iVarArrayElementCount(vaNonBonds);
+        //        }
+	//	//VP0(("iC4 matches!!! value is %i\n", iC4));
+        //    }
+        //    if (!strcmp(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->aAtom), sB[jj])) {
+        //        jC4 = PVAI(uUnit->vaAtoms, SAVEATOMt, ii)->iTypeIndex;
+        //        if (jC4 > iVarArrayElementCount(vaNonBonds)) {
+        //                jC4 = jC4 - iVarArrayElementCount(vaNonBonds);
+        //        }
+	//	//VP0(("jC4 matches!!! value is %i\n", jC4));
+        //    }
+        //}
+        //if (iC4 != -1 && jC4 != -1) {
+        //VP0(("daC4Type value is %f\n", daC4Type[jj]));
+        //PVAI(*vaPNBParameters, NONBONDACt, MAX(iC4,jC4)*(MAX(iC4,jC4)-1)/2+MIN(iC4,jC4)-1)->d4 = daC4Type[jj];
+        //}
     }
 
     /* Return the arrays that refer to the atoms */
@@ -5081,7 +5108,7 @@ static int C4PairwiseFound(UNIT uUnit)
 //   bNetcdf:  flag to write a NetCDF coordinates file rather than the standard %12.7f format
 //---------------------------------------------------------------------------------------------
 void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
-                                BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ) //NewT
+                                BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ) //NewT
 {
   int i, iMax, iIndex;
   LOOP lTemp, lSpan;
@@ -5633,17 +5660,6 @@ void zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE * fOut, char *crdName,
     FortranWriteString(cPTemp);
   }
   FortranEndLine();
-  if (GDefaults.iHaveResIds && GDefaults.iUseResIds) {
-    MESSAGE(("Writing the residue ids\n"));
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG RESIDUE_ID");
-    FortranWriteString("%FORMAT(10a8)");
-    FortranFormat(10, IDFORMAT);
-    for (i = 1; i <= iVarArrayElementCount(uUnit->vaResidues); i++) {
-      FortranWriteString(GDefaults.sResidueId[i]);
-    }
-    FortranEndLine();
-  }
 
   // -10- Pointer list for all the residues
   FortranDebug("-10-");
@@ -7386,6 +7402,28 @@ tring("%FORMAT(10I8)");
     FortranEndLine();
   }
 
+  if ( GDefaults.bPdbKeepChainId) {
+    MESSAGE(("Writing residue PDB ResId\n"));
+    FortranFormat(1, "%-80s");
+    FortranWriteString("%FLAG RESIDUE_NUMBER");
+    FortranWriteString("%FORMAT(10I8)");
+    FortranFormat(10, "%8d");
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
+      FortranWriteInt( PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->iPdbResSeq );
+    }
+    FortranEndLine();
+
+    MESSAGE(("Writing residue PDB ChainId\n"));
+    FortranFormat(1, "%-80s");
+    FortranWriteString("%FLAG RESIDUE_CHAINID");
+    FortranWriteString("%FORMAT(20a4)");
+    FortranFormat(20, LBLFORMAT);
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
+      FortranWriteString(PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sChainId);
+    }
+    FortranEndLine();
+  }
+
   // CMAP parameters, Mengjuei Hsieh and Yong Duan
   SaveAmberParmCMAP(uUnit, fOut);
 
@@ -7495,7 +7533,7 @@ tring("%FORMAT(10I8)");
 
 void
 zUnitIOSaveAmberParmFormat_old( UNIT uUnit, FILE *fOut, char *crdName, 
-        BOOL bPolar, BOOL bPert, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count) //NewT
+        BOOL bPolar, BOOL bPert, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count) //NewT
 {
 int             i, iMax, iIndex;
 LOOP            lTemp, lSpan;
@@ -9479,185 +9517,3 @@ void UnitIOSaveAmberPrep(UNIT uUnit, FILE * fOut)
 }
 
 
-//void UnitIOSaveC4Type(UNIT uUnit, char *sA, char *sB, double daC4Type)
-//{
-//    VP0(("Yes we did it!!! %s %s %f %d\n", sA, sB, daC4Type, iVarArrayElementCount(uUnit->vaAtoms)));
-//
-//    
-//}
-
-/*
- *      UnitIOSaveC4Type  //NewT2021
- *      A possible way to add type-specific
- *      C4 from tleap commands. 
- */
-//static void
-//zUnitIOBuildNonBondArraysC4Type(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
-//                          VARARRAY * vaPNBParameters,
-//                          VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds
-//                          char *sA, char *sB, double daC4Type)
-//{
-//    VARARRAY vaNBIndex, vaNonBonds, vaPNBEdits;
-//    int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY;
-//    int iIndex, iHBondIndex, iNBIndex, iElement, iHybridization;
-//    double dMass, dPolar, dE, dR, dE14, dR14, dA, dC, dEI, dRI, dEJ, dRJ;
-//    double dScreenF;
-//    STRING sType, sTypeI, sTypeJ, sDesc;
-//    NONBONDt *nbPFirst, *nbPCur, *nbPTemp, *nbPLast;
-//
-//    /* Build the NON-BONDED arrays */
-//    /* First reduce the non-bond parameters to the absolute */
-//    /* minimum, by rolling up parameters with duplicate values */
-//    /* maintaining a many to one mapping into the */
-//    /* rolled up non-bond parameter array */
-//
-//
-//    vaNBIndex = vaVarArrayCreate(sizeof(int));
-//    vaNonBonds = vaVarArrayCreate(sizeof(NONBONDt));
-//    iNonBonds = iParmSetTotalAtomParms(uUnit->psParameters);
-//    iNBIndices = iNonBonds;
-//    VarArraySetSize(vaNonBonds, iNonBonds);
-//    VarArraySetSize(vaNBIndex, iNonBonds);
-//    vaPNBEdits = uUnit->psParameters->vaNBEdits;
-//    for (i = 0; i < iNonBonds; i++) {
-//        ParmSetAtom(uUnit->psParameters, i,
-//                    sType, &dMass, &dPolar, &dE, &dR, &dE14, &dR14,
-//                    &dScreenF, &iElement, &iHybridization, sDesc);
-//        PVAI(vaNonBonds, NONBONDt, i)->bCapableOfHBonding =
-//            bParmSetCapableOfHBonding(uUnit->psParameters, sType);
-//        PVAI(vaNonBonds, NONBONDt, i)->dE = dE;
-//        PVAI(vaNonBonds, NONBONDt, i)->dR = dR;
-//        PVAI(vaNonBonds, NONBONDt, i)->dE14 = dE14;
-//        PVAI(vaNonBonds, NONBONDt, i)->dR14 = dR14;
-//        strcpy(PVAI(vaNonBonds, NONBONDt, i)->sType, sType);
-//        *PVAI(vaNBIndex, int, i) = i;
-//    }
-//
-//    /* Now roll up the equivalent NON-BOND parameters */
-//
-//    if (!GDefaults.iCharmm) {
-//        nbPLast = PVAI(vaNonBonds, NONBONDt, iNonBonds - 1);
-//        for (iNBIndex = 0; iNBIndex < iVarArrayElementCount(vaNBIndex);
-//             iNBIndex++) {
-//            nbPFirst = PVAI(vaNonBonds, NONBONDt, 0);
-//            nbPCur =
-//                PVAI(vaNonBonds, NONBONDt, *PVAI(vaNBIndex, int, iNBIndex));
-//            if (!nbPCur->bCapableOfHBonding) {
-//                while (nbPFirst < nbPCur) {
-//                    if (nbPFirst->dE == nbPCur->dE &&
-//                        nbPFirst->dR == nbPCur->dR &&
-//                        nbPFirst->dE14 == nbPCur->dE14 &&
-//                        nbPFirst->dR14 == nbPCur->dR14 &&
-//                        CheckTypeNBEdit(nbPFirst->sType, vaPNBEdits) == 0 &&
-//                        CheckTypeNBEdit(nbPCur->sType, vaPNBEdits) == 0) {
-//                        for (nbPTemp = nbPCur; nbPTemp < nbPLast;
-//                             nbPTemp++) *nbPTemp = *(nbPTemp + 1);
-//                       iNonBonds--;
-//                        nbPLast--;
-//
-//                        /* Update the indices into the NON-BOND array */
-//                        /* Making sure that indices into parameters that */
-//                        /* follow the one at j will be moved back on */
-//
-//                        j = nbPFirst - PVAI(vaNonBonds, NONBONDt, 0);
-//                        *PVAI(vaNBIndex, int, iNBIndex) = j;
-//                        for (iTemp = iNBIndex + 1; iTemp < iNBIndices;
-//                             iTemp++) {
-//                            if (*PVAI(vaNBIndex, int, iTemp) > j)
-//                                 (*PVAI(vaNBIndex, int, iTemp))--;
-//                        }
-//                        break;
-//                    }
-//                    nbPFirst++;
-//                }
-//            }
-//        }
-//    }
-//    /* Now the first iNonBonds entries of the array vaNonBonds */
-//    /* contain unique NON-BOND parameters, and the array vaNBIndex */
-//    /* contains indices into the vaNonBonds array for every */
-//    /* NON-BOND type */
-//    /* Change the size of the vaNonBonds array to the number of */
-//    /* valid non-bond parameters */
-//    VarArraySetSize(vaNonBonds, iNonBonds);
-//
-//    /* Build the NxN integer index array */
-//
-//    *vaPNBIndexMatrix = vaVarArrayCreate(sizeof(int));
-//    VarArraySetSize((*vaPNBIndexMatrix), iNonBonds * iNonBonds);
-//    for (i = 0; i < iNBIndices; i++) {
-//        for (j = 0; j < iNBIndices; j++) {
-//
-//            /* Calculate the position of the parameters for the */
-//            /* non-bond interaction i-j within the vaPNBParameters */
-//            /* array */
-//
-//            iI = *PVAI(vaNBIndex, int, i);
-//            iJ = *PVAI(vaNBIndex, int, j);
-//            iX = MIN(iI, iJ);
-//            iY = MAX(iI, iJ);
-//            iIndex = iY * (iY + 1) / 2 + iX + 1;        /* +1 because they are FORTRAN */
-//            /* style arrays !!!!! */
-//
-//            /* Check if there is an H-Bond parameter for this */
-//            /* interaction, if there is, make iIndex = -iHBondIndex */
-//            /* -ve to signify that the index is into the HBOND tables */
-//
-//            ParmSetAtom(uUnit->psParameters, i, sTypeI, &dMass, &dPolar,
-//                        &dE, &dR, &dE14, &dR14, &dScreenF, &iElement,
-//                        &iHybridization, sDesc);
-//            ParmSetAtom(uUnit->psParameters, j, sTypeJ, &dMass, &dPolar,
-//                        &dE, &dR, &dE14, &dR14, &dScreenF, &iElement,
-//                        &iHybridization, sDesc);
-//            iHBondIndex =
-//                iParmSetFindHBond(uUnit->psParameters, sTypeI, sTypeJ);
-//            if (iHBondIndex != PARM_NOT_FOUND)
-//                iIndex = -(iHBondIndex + 1);
-//            *PVAI(*vaPNBIndexMatrix, int, iI * iNonBonds + iJ) = iIndex;
-//        }
-//    }
-//
-//    /* Now calculate the A,C parameters for all unique */
-//    /* NON-BOND interactions */
-//
-//    *vaPNBParameters = vaVarArrayCreate(sizeof(NONBONDACt));
-//    VarArraySetSize((*vaPNBParameters), iNonBonds * (iNonBonds + 1) / 2);
-//    for (j = 0; j < iNonBonds; j++) {
-//        for (i = 0; i <= j; i++) {
-//            iX = i;
-//            iY = j;
-//            iIndex = iY * (iY + 1) / 2 + iX;
-//            dEI = PVAI(vaNonBonds, NONBONDt, i)->dE;
-//            dRI = PVAI(vaNonBonds, NONBONDt, i)->dR;
-//            dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE;
-//            dRJ = PVAI(vaNonBonds, NONBONDt, j)->dR;
-//            MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dC);
-//            CheckAgainstNBEdits(vaPNBEdits,
-//                                PVAI(vaNonBonds, NONBONDt, i)->sType,
-//                                PVAI(vaNonBonds, NONBONDt, j)->sType,
-//                                &dA, &dC);
-//            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA = dA;
-//            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dC = dC;
-//            if (GDefaults.iCharmm) {
-//                dEI = PVAI(vaNonBonds, NONBONDt, i)->dE14;
-//                dRI = PVAI(vaNonBonds, NONBONDt, i)->dR14;
-//                dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE14;
-//                dRJ = PVAI(vaNonBonds, NONBONDt, j)->dR14;
-//                MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dC);
-//                CheckAgainstNBEdits(vaPNBEdits,
-//                                    PVAI(vaNonBonds, NONBONDt, i)->sType,
-//                                    PVAI(vaNonBonds, NONBONDt, j)->sType,
-//                                    &dA, &dC);
-//                PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA14 = dA;
-//                PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dC14 = dC;
-//            }
-//        }
-//    }
-//
-//    /* Return the arrays that refer to the atoms */
-//    *vaPNonBonds = vaNonBonds;
-//    *vaPNBIndex = vaNBIndex;
-//    /* The other two arrays, vaPNBIndexMatrix and vaPNBParameters, */
-//    /* have already been assigned their return values. */
-//
-//}
