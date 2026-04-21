@@ -11,11 +11,7 @@ contains
   
     use iso_fortran_env
     implicit none
-#ifdef MKL
-    include 'fftw/fftw3.f'
-#else
     include 'fftw3.f'
-#endif
     
     integer, intent(in) :: dim(3)
     integer, allocatable, intent(in) :: data_in(:)

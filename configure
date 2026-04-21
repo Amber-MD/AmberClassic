@@ -15,6 +15,7 @@ verbose="@"
 requested_help="no"
 openblas="no"
 mkl="no"
+mklinc=""
 sfx=""
 debug="-DNDEBUG"
 fpic="-fPIC"
@@ -443,6 +444,7 @@ elif [ "$mkl" == "yes" ]; then
   else
     echo "Using MKL for BLAS/LAPACK/FFTW"
   fi
+  mklinc=$mklroot/include/fftw
   # Determine how we are linking MKL: hard-wire to 'line' for now
   link_type='line'
   if [ "$compiler" = "oneapi" ]; then
@@ -749,7 +751,7 @@ FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_ar
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags
+FFLAGS=$clangf $inc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags $mklinc
 FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags

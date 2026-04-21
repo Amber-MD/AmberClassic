@@ -2,18 +2,8 @@
 module FFTW3
   use, intrinsic :: iso_c_binding
 #  ifdef MPI
-#    ifdef MKL
-        include 'fftw/fftw3-mpi.f03'
-#    else
-        include 'fftw/fftw3-mpi.f03'
-#    endif
-
+     include 'fftw3-mpi.f03'
 #  else
-#    ifdef MKL
-        include 'fftw/fftw3.f03'
-#    else
-        include 'fftw3.f03'
-#    endif
-
+     include 'fftw3.f03'
 #  endif
 end module FFTW3
