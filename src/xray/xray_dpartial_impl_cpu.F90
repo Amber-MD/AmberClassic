@@ -22,7 +22,6 @@ contains
   function calc_partial_d_target_d_frac(frac, f_scale, &
         d_target_d_abs_Fcalc) result(d_target_d_frac)
     use xray_atomic_scatter_factor_module, only : atomic_scatter_factor
-    use xray_pure_utils, only : PI
     implicit none
     real(real_kind), intent(in) :: frac(:, :)
     real(real_kind), intent(in) :: f_scale(:)
@@ -36,6 +35,7 @@ contains
     integer :: i, ihkl, hkls(3)
     real(real_kind) :: time0, time1
 
+    real(real_kind), parameter :: M_TWOPI = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
     call wallclock( time0 )
     
     ASSERT(size(frac, 1) == 3)
@@ -60,8 +60,7 @@ contains
           cycle
         end if
         
-        ! hkl-vector by 2pi
-        hkl_v(:) = hkl(:, ihkl) * 2 * PI
+        hkl_v(:) = hkl(:, ihkl) * M_TWOPI
         
         !  fa should be the same for all symmetry mates
         fa = atomic_scatter_factor(ihkl, atom_scatter_type(i)) &
@@ -80,7 +79,8 @@ contains
            hkls(1) = -hkl(1,ihkl)
            hkls(2) = -hkl(2,ihkl)
            hkls(3) =  hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
+           hkl_v(:) = hkls(:) * M_TWOPI
+
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) f = -f
@@ -91,7 +91,7 @@ contains
            hkls(1) = -hkl(1,ihkl)
            hkls(2) =  hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
+           hkl_v(:) = hkls(:) * M_TWOPI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
@@ -102,7 +102,7 @@ contains
            hkls(1) =  hkl(1,ihkl)
            hkls(2) = -hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
+           hkl_v(:) = hkls(:) * M_TWOPI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) f = -f
@@ -114,7 +114,7 @@ contains
            hkls(1) = -hkl(1,ihkl)
            hkls(2) =  hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
+           hkl_v(:) = hkls(:) * M_TWOPI
            phase = sum(hkl_v(:) * frac(:, i))
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(2)/nb, 2) .ne. 0 ) f = -f
@@ -136,7 +136,6 @@ contains
          result(d_target_d_frac)
     use xray_atomic_scatter_factor_module, only : atomic_scatter_factor
     use xray_target_vector_least_squares_data_module, only: derivc
-    use xray_pure_utils, only : PI
     use xray_interface2_data_module, only : n_work
     implicit none
     real(real_kind), intent(in) :: frac(:, :)
@@ -146,6 +145,8 @@ contains
     real(real_kind) :: f, phase
     integer :: ihkl, i
     
+    real(real_kind), parameter :: M_TWOPI = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
+
     ASSERT(size(frac, 1) == 3)
     ASSERT(size(frac, 2) == size(atom_b_factor))
     ASSERT(size(frac, 2) == size(atom_scatter_type))
@@ -167,8 +168,7 @@ contains
           cycle
         end if
         
-        ! hkl-vector by 2pi
-        hkl_v = hkl(:, ihkl) * 2 * PI
+        hkl_v = hkl(:, ihkl) * M_TWOPI
         
         phase = -sum(hkl_v * frac(:, i))
         f = atomic_scatter_factor(ihkl, atom_scatter_type(i)) &

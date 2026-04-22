@@ -16,8 +16,7 @@ module xray_non_bulk_impl_cpu_module
   public :: calc_f_non_bulk
   public :: get_f_non_bulk
 
-  real(real_kind), parameter :: m_twopi = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
-  real(real_kind), parameter :: m_pi = 3.1415926535897932384626433832795d0 ! FIXME: use constants module
+  real(real_kind), parameter :: M_TWOPI = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
 
 contains
   
@@ -100,7 +99,7 @@ contains
     !$omp parallel do private(ihkl,f,angle,hkls,fcalcs)  num_threads(xray_num_threads)
     do ihkl = 1, size(hkl, 2)
       
-      ! Fhkl = SUM( fj * exp(2 * M_PI * i * (h * xj + k * yj + l * zj)) ),
+      ! Fhkl = SUM( fj * exp(M_TWOPI * i * (h * xj + k * yj + l * zj)) ),
       !      j = 1,num_selected_atoms
       ! where:
       !    The sum is versus j, over all selected atoms
@@ -115,8 +114,8 @@ contains
       ! after the A and B components are summed over all selected atoms.
       ! This can be written as:
       !
-      ! Ahkl = SUM( fj * cos(2 * M_PI * (h * xj + k * yj + l * zj)) ),
-      ! Bhkl = SUM( fj * sin(2 * M_PI * (h * xj + k * yj + l * zj)) ),
+      ! Ahkl = SUM( fj * cos(M_TWOPI * (h * xj + k * yj + l * zj)) ),
+      ! Bhkl = SUM( fj * sin(M_TWOPI * (h * xj + k * yj + l * zj)) ),
       !    j = 1,num_selected_atoms
       
       f(:) = exp(mSS4(ihkl) * b_factor(:)) * occupancy(:) &
