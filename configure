@@ -444,7 +444,7 @@ elif [ "$mkl" == "yes" ]; then
   else
     echo "Using MKL for BLAS/LAPACK/FFTW"
   fi
-  mklinc=$mklroot/include/fftw
+  mklinc=-I$mklroot/include/fftw
   # Determine how we are linking MKL: hard-wire to 'line' for now
   link_type='line'
   if [ "$compiler" = "oneapi" ]; then
