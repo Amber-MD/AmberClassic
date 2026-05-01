@@ -64,11 +64,11 @@ contains
         
         !  fa should be the same for all symmetry mates
         fa = atomic_scatter_factor(ihkl, atom_scatter_type(i)) &
-            * exp(mSS4(ihkl) * atom_b_factor(i)) * atom_occupancy(i) &
+            * exp(mSS4(ihkl) * atom_b_factor(i)) &
             * f_scale(ihkl) * d_target_d_abs_Fcalc(ihkl) / abs_Fcalc(ihkl)
         
         ! original hkl for symmetrization:
-        phase = sum(hkl_v(:) * frac(:, i))
+        phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
         f = fa * cmplx(cos(phase), sin(phase), real_kind)
         d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
             * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
@@ -81,7 +81,7 @@ contains
            hkls(3) =  hkl(3,ihkl)
            hkl_v(:) = hkls(:) * M_TWOPI
 
-           phase = sum(hkl_v(:) * frac(:, i))
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
@@ -92,7 +92,7 @@ contains
            hkls(2) =  hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
            hkl_v(:) = hkls(:) * M_TWOPI
-           phase = sum(hkl_v(:) * frac(:, i))
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
@@ -103,7 +103,7 @@ contains
            hkls(2) = -hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
            hkl_v(:) = hkls(:) * M_TWOPI
-           phase = sum(hkl_v(:) * frac(:, i))
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
@@ -115,7 +115,7 @@ contains
            hkls(2) =  hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
            hkl_v(:) = hkls(:) * M_TWOPI
-           phase = sum(hkl_v(:) * frac(:, i))
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(2)/nb, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
