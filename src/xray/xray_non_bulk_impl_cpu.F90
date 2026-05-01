@@ -95,7 +95,7 @@ contains
     ASSERT(size(frac, 2) == size(b_factor))
     ASSERT(size(frac, 2) == size(scatter_type_index))
     ASSERT(size(hkl, 2) == size(atomic_scatter_factor, 1))
-    
+
     !$omp parallel do private(ihkl,f,angle,hkls,fcalcs)  num_threads(xray_num_threads)
     do ihkl = 1, size(hkl, 2)
       
@@ -118,11 +118,14 @@ contains
       ! Bhkl = SUM( fj * sin(M_TWOPI * (h * xj + k * yj + l * zj)) ),
       !    j = 1,num_selected_atoms
       
-      f(:) = exp(mSS4(ihkl) * b_factor(:)) * occupancy(:) &
+!     f(:) = exp(mSS4(ihkl) * b_factor(:)) * occupancy(:)
+      f(:) = exp(mSS4(ihkl) * b_factor(:)) &
           * atomic_scatter_factor(ihkl, scatter_type_index(:))
 
       ! original hkl for space group symmetrization:
-      angle(:) = matmul(M_TWOPI * hkl(1:3, ihkl), frac(1:3, :))
+      angle(:) = M_TWOPI*(hkl(1, ihkl)*frac(1,:) + &
+                          hkl(2, ihkl)*frac(2,:) + &
+                          hkl(3, ihkl)*frac(3,:))
       F_non_bulk(ihkl) = cmplx(sum(f(:) * cos(angle(:))), &
           sum(f(:) * sin(angle(:))), real_kind)
 
@@ -132,7 +135,9 @@ contains
          hkls(1) = -hkl(1,ihkl)
          hkls(2) = -hkl(2,ihkl)
          hkls(3) =  hkl(3,ihkl)
-         angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
          if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) fcalcs = -fcalcs
@@ -142,7 +147,9 @@ contains
          hkls(1) = -hkl(1,ihkl)
          hkls(2) =  hkl(2,ihkl)
          hkls(3) = -hkl(3,ihkl)
-         angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
          if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) fcalcs = -fcalcs
@@ -152,7 +159,9 @@ contains
          hkls(1) =  hkl(1,ihkl)
          hkls(2) = -hkl(2,ihkl)
          hkls(3) = -hkl(3,ihkl)
-         angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
          if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
@@ -164,7 +173,9 @@ contains
          hkls(1) = -hkl(1,ihkl)
          hkls(2) =  hkl(2,ihkl)
          hkls(3) = -hkl(3,ihkl)
-         angle(:) = matmul(M_TWOPI * hkls(1:3), frac(1:3, :))
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
          fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
          if( mod(hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
