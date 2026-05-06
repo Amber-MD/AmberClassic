@@ -11125,16 +11125,7 @@ xleap
 \end_layout
 
 \begin_layout Standard
-LEaP is the basic tool to construct force field files (see Fig.
- 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:infoflow"
-nolink "false"
-
-\end_inset
-
-).
+LEaP is the basic tool to construct force field files.
  Using 
 \shape italic
 tleap
@@ -59885,15 +59876,414 @@ name "sec:xray-workflow"
 \end_layout
 
 \begin_layout Standard
-(Coming 
+
+\emph on
+Please note:
+
+\emph default
+ the scripts inside the 
+\family typewriter
+src/xtalutil
+\family default
+ folder form the basis for most workflows that I use.
+ These scripts don't try to put all possible options into command-line parameters.
+ Rather,
+ you should copy each script to a working directory,
+ then edit this local copy:
+ usually,
+ the options that need attention are described at the top of each script.
+\end_layout
+
+\begin_layout Subsection
+A simple peptide example:
+ 4tut
+\end_layout
+
+\begin_layout Standard
+The input and output files for this example are in the 
+\family typewriter
+examples/4tut
+\family default
+ folder.
+ This is a small peptide,
+ and the README file covers the basics of how a supercell simulation would be performed.
+ Below is an annotated version how all this works.
+ The 
+\emph on
+4tut.pdb
+\emph default
+ file in the folder was downloaded from the RCSB pdb site,
+ 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://rcsb.org"
+target "https://rcsb/org"
+literal "false"
+
+\end_inset
+
+.
+ The file with observed structure factors,
+ 
+\emph on
+4tut_final.mtz
+\emph default
+,
+ came from 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://pdb-redo.eu"
+target "https://pdb-redu.eu"
+literal "false"
+
+\end_inset
+
+.
+ (I'm using the pdb-redo version of the input mtz file,
+ since it has already converted intensities into structure factors;
+ a script for using the rcsb.org version is mentioned below,
+ but not used here.)
+\end_layout
+
+\begin_layout Standard
+The first step is to create a 
 \begin_inset Quotes eld
 \end_inset
 
-soon
+supercell
 \begin_inset Quotes erd
 \end_inset
 
-).
+ from the downloaded pdb file (which has only information about a single ASU):
+\end_layout
+
+\begin_layout LyX-Code
+UnitCell -p 4tut.pdb -o 4tut_1uc.pdb
+\end_layout
+
+\begin_layout LyX-Code
+PropPDB -p 4tut_1uc.pdb -o 4tut_6uc.pdb -ix 2 -iy 3 -iz 1 
+\end_layout
+
+\begin_layout LyX-Code
+./set_chainID 4tut_6uc.pdb
+\end_layout
+
+\begin_layout Standard
+The first line creates a single unit cell,
+ and the second line expands this into a supercell with 2 copies along the 
+\emph on
+a
+\emph default
+ axis,
+ 3 along the 
+\emph on
+b
+\emph default
+ axis,
+ and 1 (no expansion) along the 
+\emph on
+c 
+\emph default
+axis.
+ Since each unit cell has 2 copies of the peptide chain,
+ this choice leads to 12 total peptides,
+ which is an arbitrary number,
+ but seems to be a reasonable number for many types of analyses.
+ Use a visualization program (say VMD or ChimeraX) to see what these output PDB files look like.
+ The final line just assigns a chainID (
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+ through 
+\begin_inset Quotes eld
+\end_inset
+
+L
+\begin_inset Quotes erd
+\end_inset
+
+) to each of the 12 peptide chains;
+ this is not required,
+ but makes analysis and visualization of the results a little simpler.
+\end_layout
+
+\begin_layout Standard
+If the input PDB file has alternate conformations (
+\begin_inset Quotes eld
+\end_inset
+
+altlocs
+\begin_inset Quotes erd
+\end_inset
+
+),
+ those will be carried over to the output files above.
+ These need to be dealt with before a molecular mechanics description can be created.
+ There are a couple of ways to do that,
+ which will be described below.
+ For the 4tut structure considered here,
+ we don't have this complication,
+ so we can just give a new name to the file created above:
+\end_layout
+
+\begin_layout LyX-Code
+ln -s 4tut_6uc.pdb alt1.pdb
+\end_layout
+
+\begin_layout Standard
+(
+\begin_inset Quotes eld
+\end_inset
+
+alt1.pdb
+\begin_inset Quotes erd
+\end_inset
+
+ is just an arbitrary name that fits into my personal conventions;
+ you can use any name to like here.
+\end_layout
+
+\begin_layout Standard
+The next step is to edit your copy of the 
+\emph on
+run_alt_tleap
+\emph default
+ script,
+ whose original is in the 
+\family typewriter
+src/xtaltutil/ensemble_scripts
+\family default
+ folder.
+ Here is my edited version–you should look at Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "cha:LEaP-and-sleap"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+
+\end_inset
+
+for a description of the commands used here:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+id=
+\begin_inset Quotes erd
+\end_inset
+
+alt1
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cat <<EOF > tleap.in
+\end_layout
+
+\begin_layout Plain Layout
+
+set default nocenter on      
+\end_layout
+
+\begin_layout Plain Layout
+
+set default reorder_residues off
+\end_layout
+
+\begin_layout Plain Layout
+
+source leaprc.protein.ff19SB
+\end_layout
+
+\begin_layout Plain Layout
+
+source leaprc.water.spce
+\end_layout
+
+\begin_layout Plain Layout
+
+x = loadPdb $id.pdb
+\end_layout
+
+\begin_layout Plain Layout
+
+set x box { 20.790   29.193   17.382 }
+\end_layout
+
+\begin_layout Plain Layout
+
+saveAmberParm x $id.parm7 foo.rst7
+\end_layout
+
+\begin_layout Plain Layout
+
+quit
+\end_layout
+
+\begin_layout Plain Layout
+
+EOF
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+tleap -f tleap.in > tleap.out
+\end_layout
+
+\begin_layout Plain Layout
+
+/bin/rm tleap.in
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+ChBox -c foo.rst7 -o ${id}.rst7 -al 90.00 -bt 105.94 -gm 90.00 -X 20.790 -Y 29.193 -Z 17.382
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+$AMBERCLASSICHOME/bin/add_pdb -i $id.parm7 -p ${id}.pdb -o foo.parm7 
+\end_layout
+
+\begin_layout Plain Layout
+
+$AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}.parm7
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+$AMBERCLASSICHOME/bin/ambpdb -p ${id}.parm7 -ext < ${id}.rst7 > ${id}_000.pdb
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/bin/rm -f foo.parm7 foo.rst7
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the 
+\emph on
+tleap.in
+\emph default
+ file,
+ some useful defaults are invoked,
+ then the source commands indicate which force fields to use for the protein and water.
+ The 
+\emph on
+tleap
+\emph default
+ program will then load the 
+\emph on
+alt1.pdb
+\emph default
+ file into memory,
+ and prepare the system for Amber simulation.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+set box
+\begin_inset Quotes erd
+\end_inset
+
+ command tells the program that periodic (crystal) symmetry should be used.
+ (For historical reasons,
+ only the cell dimensions are given here;
+ the cell angles are set in the 
+\emph on
+ChBox
+\emph default
+ command that follows 
+\emph on
+tleap
+\emph default
+.) The function of the 
+\emph on
+add_pdb
+\emph default
+,
+ 
+\emph on
+add_xray
+\emph default
+ and 
+\emph on
+ambpdb
+\emph default
+ commands is to add additional information from the original PDB file into the 
+\emph on
+alt1.parm7
+\emph default
+ file,
+ which (along with the 
+\emph on
+alt1.rst7
+\emph default
+ file) are the outputs of this step.
+\end_layout
+
+\begin_layout Standard
+Either before or after the steps above,
+ we need to convert the input mtz file into a format that Amber can use:
+\end_layout
+
+\begin_layout LyX-Code
+./XrayPrep_redo 4tut # convert 4tut_final.mtz to Amber format
+\end_layout
+
+\begin_layout LyX-Code
+awk 'NR>1 {print 2*$1,
+ 3*$2,
+ $3,
+ $4,
+ $5,
+ $6}' 4tut-sf.dat > alt1-sf.dat
+\end_layout
+
+\begin_layout Standard
+The first line just reformats the information in the mtz file into a text format,
+ and the second line reindexes the h,k,l values to be correct for a 2x3x1 supercell.
 \end_layout
 
 \begin_layout Part
@@ -75340,13 +75730,13 @@ placement document
 alignment document
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/AT.pair.eps
+	filename AT.pair.eps
 	width 85text%
 
 \end_inset

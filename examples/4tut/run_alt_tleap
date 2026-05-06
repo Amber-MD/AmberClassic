@@ -9,7 +9,6 @@ set default nocenter on
 set default reorder_residues off
 source leaprc.protein.ff19SB
 source leaprc.water.spce
-source leaprc.gaff2
 x = loadPdb $id.pdb
 set x box { 20.790   29.193   17.382 }
 saveAmberParm x $id.parm7 foo.rst7
