@@ -194,7 +194,8 @@ namespace {
     __shared__ thrust::complex<FloatType> term[BLOCK_SIZE];
     term[tid] = {};
 
-    // Basic code to compute f is here; (is it really what is used?)
+    // Basic code to compute f is here; (per xray_non_bulk.cu, this
+    // StraightForward code seems(?) to be what is used
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -211,8 +212,28 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l
         );
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
-      }
 
+#if 0  /* first test of symmetrization:  */
+      // test for spacegroup_number here; or hard-wire
+
+        h = -hkl[i_hkl * 3 + 0];
+        k = hkl[i_hkl * 3 + 1];
+        l = -hkl[i_hkl * 3 + 2];
+
+        angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+      
+        if( mod(k(2)/nb, 2) .ne. 0 ) {  //N.B.: need na,nb,nc here somehow
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
+        }
+#endif
+
+      }
       __syncthreads();
 
       for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
