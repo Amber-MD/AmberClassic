@@ -213,23 +213,24 @@ namespace {
         );
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
-#if 0  /* first test of symmetrization:  */
-      // test for spacegroup_number here; or hard-wire
+#if 1  /* first test of symmetrization:  */
+      // test for spacegroup_number here; or hard-wire, as here
 
-        h = -hkl[i_hkl * 3 + 0];
-        k = hkl[i_hkl * 3 + 1];
-        l = -hkl[i_hkl * 3 + 2];
+        const int h2 = -hkl[i_hkl * 3 + 0];
+        const int k2 =  hkl[i_hkl * 3 + 1];
+        const int l2 = -hkl[i_hkl * 3 + 2];
 
-        angle = 2 * M_PI * (
-          frac_xyz[j_atom * 3 + 0] * h +
-          frac_xyz[j_atom * 3 + 1] * k +
-          frac_xyz[j_atom * 3 + 2] * l
+        const FloatType angle2 = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h2 +
+          frac_xyz[j_atom * 3 + 1] * k2 +
+          frac_xyz[j_atom * 3 + 2] * l2
         );
       
-        if( mod(k(2)/nb, 2) .ne. 0 ) {  //N.B.: need na,nb,nc here somehow
-          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
+        // hard-wire nb=3
+        if( k2/3 % 2 != 0 ) {  //N.B.: need na,nb,nc here somehow
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
-          term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         }
 #endif
 
