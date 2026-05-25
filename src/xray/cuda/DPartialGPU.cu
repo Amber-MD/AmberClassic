@@ -53,13 +53,30 @@ namespace {
 
         FloatType scatter_factor = atomic_scatter_factor[offset + i_hkl];
 
-        FloatType f = scatter_factor * exp(mSS4[i_hkl] * atom_b_factor);
-        FloatType tmp = f * f_scale[i_hkl] * d_target_d_abs_f_calc_by_2_pi[i_hkl]
-            * sin(phase + f_calc_phase[i_hkl]) * atom_occupancy;
+        FloatType f = scatter_factor * exp(mSS4[i_hkl] * atom_b_factor) *
+                      f_scale[i_hkl] * d_target_d_abs_f_calc_by_2_pi[i_hkl] *
+                      atom_occupancy;
+        FloatType tmp = f * sin(phase + f_calc_phase[i_hkl]);
 
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp;
+
+#if 1
+        // insert hard-wired symmetrization code here: P21
+        FloatType phase2 = -(
+          - hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+          + hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1] 
+          - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        );
+        FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
+        // note that nb is hard-wired to 3 here:
+        if( hkl[i_hkl * 3 + 1]/3 % 2 != 0 ){ tmp2 = -tmp2; }
+        term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
+        term_y[tid] += hkl[i_hkl * 3 + 1] * tmp2;
+        term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp2;
+#endif
+
       }
 
       __syncthreads();
