@@ -6,9 +6,6 @@
 
 namespace {
 
-  const int WARP_SIZE = 32;
-  const int MAX_N_SCATTER_TYPES = 16;
-
   template<int BLOCK_SIZE, typename FloatType>
   __global__
   void calc_f_non_bulk_kernel(int n_atom,
