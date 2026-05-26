@@ -6,6 +6,9 @@
 #include <thrust/functional.h>
 #include <thrust/transform.h>
 
+#define P21  1
+#define NB   3
+
 namespace {
   template<int blockDimX, typename FloatType>
   __global__
@@ -62,16 +65,16 @@ namespace {
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp;
 
-#if 1
-        // insert hard-wired symmetrization code here: P21
+#ifdef P21
+        // spacegroup 4 code here
         FloatType phase2 = -(
           - hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
           + hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1] 
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
-        // note that nb is hard-wired to 3 here:
-        if( hkl[i_hkl * 3 + 1]/3 % 2 != 0 ){ tmp2 = -tmp2; }
+        // note that NB is def-ed at top of file
+        if( hkl[i_hkl * 3 + 1]/NB % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp2;

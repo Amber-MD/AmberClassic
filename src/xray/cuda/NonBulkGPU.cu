@@ -4,6 +4,9 @@
 #include <thrust/device_vector.h>
 #include <cstdio>
 
+#define P21 1
+#define NB  3
+
 namespace {
 
   template<int BLOCK_SIZE, typename FloatType>
@@ -44,8 +47,8 @@ namespace {
         );
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
-#if 1  /* first test of symmetrization:  */
-      // test for spacegroup_number here; or hard-wire, as here
+#ifdef P21
+        // code for spacegroup 4:
 
         const int h2 = -hkl[i_hkl * 3 + 0];
         const int k2 =  hkl[i_hkl * 3 + 1];
@@ -57,8 +60,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l2
         );
       
-        // hard-wire nb=3
-        if( k2/3 % 2 != 0 ) {  //N.B.: need na,nb,nc here somehow
+        if( k2/NB % 2 != 0 ) {  //N.B.: NB is def-ed at top of file
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
