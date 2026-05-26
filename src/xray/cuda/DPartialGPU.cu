@@ -7,9 +7,9 @@
 #include <thrust/transform.h>
 
 #undef P212121
-#define P21  1
+#undef P21
 #define NA   1
-#define NB   3
+#define NB   1
 #define NC   1
 
 namespace {
