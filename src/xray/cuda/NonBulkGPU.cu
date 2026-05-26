@@ -9,6 +9,7 @@ namespace {
   const int WARP_SIZE = 32;
   const int MAX_N_SCATTER_TYPES = 16;
 
+#if 0
   /***
    * Alternative implementation to calc_f_non_bulk_kernel
    *    with manual GPU cache management
@@ -175,6 +176,8 @@ namespace {
     }
   }
 
+#endif
+
   template<int BLOCK_SIZE, typename FloatType>
   __global__
   void calc_f_non_bulk_kernel(int n_atom,
@@ -195,7 +198,7 @@ namespace {
     term[tid] = {};
 
     // Basic code to compute f is here; (per xray_non_bulk.cu, this
-    // StraightForward code seems(?) to be what is used
+    // StraightForward code seems to be what is used
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -277,6 +280,7 @@ void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, co
   thrust::fill(m_dev_f_non_bulk.begin(), m_dev_f_non_bulk.end(), 0.0);
 
   switch (KERNEL_VERSION) {
+#if 0
     case (NonBulkKernelVersion::ManualCaching): {
 
       const int block_size = 256;
@@ -299,6 +303,7 @@ void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, co
       );
       break;
     }
+#endif
     case (NonBulkKernelVersion::StraightForward): {
 
       dim3 numBlocks(m_n_hkl);
