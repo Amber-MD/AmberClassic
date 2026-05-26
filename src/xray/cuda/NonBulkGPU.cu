@@ -256,9 +256,9 @@ namespace {
 
 template<xray::NonBulkKernelVersion KERNEL_VERSION, xray::KernelPrecision PRECISION>
 xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::NonBulkGPU(
-  int n_hkl, const int* hkl, complex_double* f_non_bulk, const double* mSS4, int n_atom,
+  int n_hkl, const int* hkl, complex_double* f_non_bulk, const double* mSS4, int n_atom, int nb,
   const double* b_factor, const double* occupancy, int n_scatter_types, const int* scatter_type_index,
-  const double* atomic_scatter_factor) : NonBulk(n_hkl, hkl, f_non_bulk, mSS4, n_atom,
+  const double* atomic_scatter_factor) : NonBulk(n_hkl, hkl, f_non_bulk, mSS4, n_atom, nb,
                                                  b_factor, occupancy, n_scatter_types,
                                                  scatter_type_index, atomic_scatter_factor) {
   m_dev_frac_xyz = thrust::device_vector<FloatType>(n_atom * 3);

@@ -22,6 +22,7 @@ extern "C" void pmemd_xray_non_bulk_init_gpu(
   complex_double* f_non_bulk,
   const double* mSS4,
   int n_atom,
+  int nb,
   const double* b_factor,
   const double* occupancy,
   int n_scatter_types,
@@ -29,7 +30,7 @@ extern "C" void pmemd_xray_non_bulk_init_gpu(
   const double* atomic_scatter_factor) {
   non_bulk_instance().reset(
     new xray::NonBulkGPU<xray::NonBulkKernelVersion::StraightForward, xray::KernelPrecision::CUDA_PRECISION>(
-      n_hkl, hkl, f_non_bulk, mSS4, n_atom, b_factor, occupancy, n_scatter_types, scatter_type_index, atomic_scatter_factor
+      n_hkl, hkl, f_non_bulk, mSS4, n_atom, nb, b_factor, occupancy, n_scatter_types, scatter_type_index, atomic_scatter_factor
    ));
 }
 
