@@ -99,7 +99,6 @@ namespace {
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
-#endif
 
         // set #3: -h,k,-l
         FloatType phase3 = -(
@@ -112,7 +111,6 @@ namespace {
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp3;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp3;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
-#endif
 
         // set #4:  h,-k,-l
         FloatType phase4 = -(
