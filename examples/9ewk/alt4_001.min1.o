@@ -1,0 +1,358 @@
+
+          -------------------------------------------------------
+          MSANDER                                      2021
+          -------------------------------------------------------
+
+| Run on 04/06/2026 at 11:08:52
+
+|   Executable path: /home/case/AmberClassic/bin/msander
+| Working directory: /home/case/Dropbox/xtal/9ewk/alt4
+|          Hostname: Unknown
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: mdin                                                                  
+| MDOUT: alt4_001.min1.o                                                       
+|INPCRD: alt4.rst7                                                             
+|  PARM: alt4.parm7                                                            
+|RESTRT: alt4_001.min1.x                                                       
+|  REFC: alt4.rst7                                                             
+| MDVEL: mdvel                                                                 
+| MDFRC: mdfrc                                                                 
+|  MDEN: mden                                                                  
+| MDCRD: mdcrd                                                                 
+|MDINFO: mdinfo                                                                
+|  MTMD: mtmd                                                                  
+|INPDIP: inpdip                                                                
+|RSTDIP: rstdip                                                                
+|INPTRA: inptraj                                                               
+
+ 
+ Here is the input file:
+ 
+   checking out 9ewk crystal                                                   
+ &cntrl                                                                        
+    imin=1, maxcyc=200, ntpr=25,                                               
+    ntx=1, irest=0,                                                            
+    tempi=300.0, ntt=3, gamma_ln=5.0, dt=0.001, temp0=0.,                      
+    ! isgld=0, tsgavg=0.2,sgft=1.0, nsgsize=2,                                 
+    ntc=2, ntf=2, tol=1.d-6,                                                   
+    nstlim=1000, ntwx=0, ntwr=0,                                               
+    nmropt=0,                                                                  
+    ntr=0, restraint_wt=0.0, restraintmask='!@H=',                             
+ /                                                                             
+ &lmod  xmin_verbosity=0, xmin_method='PRCG', /                                
+ &wt type='TEMP0', istep1=    0, istep2=  5000, value1=  0., value2=300. /     
+ &wt type='TEMP0', istep1= 5001, istep2= 15000, value1=300., value2=300. /     
+ &wt type='TEMP0', istep1=15001, istep2= 27000, value1=300., value2= 20. /     
+ &wt type='TEMP0', istep1=27001, istep2= 30000, value1= 10., value2=  0. /     
+ &wt type='XRAY', istep1=1, istep2= 25000, value1=0.2, value2=0.8/             
+ &wt type='XRAY', istep1=25001, istep2= 30000, value1=0.8, value2=0.8/         
+ &wt type='END' /                                                              
+ &xray                                                                         
+   pdb_infile = 'alt4_000.pdb',                                                
+   pdb_read_coordinates = .true.,                                              
+   pdb_outfile = 'alt4_001.min1.pdb',                                          
+   reflection_infile = 'alt4-sf.dat',                                          
+   spacegroup_name = 'P 21', spacegroup_number=4,                              
+   na = 3, nb = 2, nc = 1,                                                     
+   atom_selection_mask = ':*',                                                 
+   xray_weight = 0.8,                                                          
+   bulk_solvent_model = 'afonine-2013',  target = 'ml',                        
+   ml_update_period = 60000,                                                   
+   scale_update_period = 60000,                                                
+   mask_update_period = 60000,                                                 
+ /                                                                             
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags:                                                                        
+ getting new box info from bottom of inpcrd
+| Largest sphere to fit in unit cell has radius =    18.767
+ NATOM  =    9939 NTYPES =      18 NBONH =    5954 MBONA  =    4070
+ NTHETH =    8815 MTHETA =    5572 NPHIH =   18143 MPHIA  =   18352
+ NHPARM =       0 NPARM  =       0 NNB   =   46146 NRES   =    1260
+ NBONA  =    4070 NTHETA =    5572 NPHIA =   18352 NUMBND =      57
+ NUMANG =     130 NPTRA  =     150 NATYP =      29 NPHB   =       0
+ IFBOX  =       1 NMXRS  =      24 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+| CMAP information read from topology file: 
+
+|     Memory Use     Allocated
+|     Real              722692
+|     Hollerith          31079
+|     Integer          1993139
+|     Max Pairs        3313000
+|     nblistReal        119268
+|     nblist Int        596895
+|       Total            29757 kbytes
+
+| Note: 1-4 EEL scale factors are being read from the topology file.
+
+| Note: 1-4 VDW scale factors are being read from the topology file.
+|CMAP: Reticulating splines.
+ XRAY_SYMMETRY_TYPE not found in PRMTOP file; assuming P1
+
+X-ray Refinement Parameters:
+     PDB InFile: alt4_000.pdb
+     PDB OutFile:alt4_001.min1.pdb
+     PDB Read Coordinates: T
+     PDB Use SegID: F
+     PDB Wrap Names: F
+     Spacegroup: P 21 number   4
+     Reflection InFile: alt4-sf.dat
+     X-ray weight:  0.800E+00
+     Use target: ml  
+     Scale update Interval: 60000
+     Solvent Mask Update Interval: 60000
+     Solvent scale:   0.350, B-factor:  46.000
+     Atom Selection Mask: :*
+
+     BOX TYPE: RECTILINEAR
+| Note: ig = -1. Setting random seed to   616658 based on wallclock time in microseconds.
+
+--------------------------------------------------------------------------------
+   2.  CONTROL  DATA  FOR  THE  RUN
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+
+General flags:
+     imin    =       1, nmropt  =       0
+
+Nature and format of input:
+     ntx     =       1, irest   =       0, ntrx    =       1
+
+Nature and format of output:
+     ntxo    =       2, ntpr    =      25, ntrx    =       1, ntwr    =    1000
+     ntwx    =       0, ntwv    =       0, ntwe    =       0
+     ioutfm  =       1, ntwprt  =       0, rbornstat=      0
+
+Potential function:
+     ntf     =       2, ntb     =       1, igb     =       0, nsnb    =       1
+     ipol    =       0, gbsa    =       0, iesp    =       0
+     dielc   =   1.00000, cut     =   8.00000, intdiel =   1.00000
+
+Frozen or restrained atoms:
+     ibelly  =       0, ntr     =       0
+
+Energy minimization:
+     maxcyc  =     200, ncyc    =      10, ntmin   =       3
+     dx0     =   0.01000, drms    =   0.00010
+
+LMOD:
+     xmin_method                  = PRCG 
+     matrix_vector_product_method = forward finite difference
+     xmin_verbosity               =       0
+
+SHAKE:
+     ntc     =       2, jfastw  =       0
+     tol     =   0.00000
+
+Ewald parameters:
+     verbose =       0, ew_type =       0, nbflag  =       1, use_pme =       1
+     vdwmeth =       1, eedmeth =       1, netfrc  =       0
+     Box X =   68.175   Box Y =   37.534   Box Z =   41.059
+     Alpha =   90.000   Beta  =   90.550   Gamma =   90.000
+     NFFT1 =   72       NFFT2 =   40       NFFT3 =   45
+     Cutoff=    8.000   Tol   = 0.100E-04
+     Ewald Coefficient =  0.34864
+     Interpolation order =    4
+     Setting ifbox to 3 for non-orthogonal unit cell
+| Running OpenMP with   1 threads
+| Running RISM OpenMP with   1 threads
+
+--------------------------------------------------------------------------------
+   3.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+                                                                                
+ begin time read from input coords =     0.000 ps
+
+PDB: All atoms read successfully.
+ getting box info from bottom of alt4.rst7
+XRAY: UNIT CELL=    68.175   37.534   41.059  90.00  90.55  90.00
+| found    47112 reflections, with has_Fuser =  0
+Found   9939 atoms in :*;                                                                                                                                                                                                                                                             
+| Running Xray OpenMP with  30 threads
+ Number of triangulated 3-point waters found:      684
+
+     Sum of charges from parm topology file =      -0.0000
+     Forcing neutrality...
+
+--------------------------------------------------------------------------------
+   4.  RESULTS
+--------------------------------------------------------------------------------
+
+  LMOD XMIN Minimization.
+
+  Note: Owing to the behaviour of the XMIN algorithm,
+        coordinates in the trajectory and intermediate
+        restart files will not match up with energies
+        in the mdout and mdinfo files. The final energy
+        and final coordinates do match.
+
+ ---------------------------------------------------
+ APPROXIMATING switch and d/dx switch using CUBIC SPLINE INTERPOLATION
+ using   5000.0 points per unit in tabled values
+ TESTING RELATIVE ERROR over r ranging from 0.0 to cutoff
+| CHECK switch(x): max rel err =   0.2211E-08   at   0.000080
+| CHECK d/dx switch(x): max rel err =   0.3900E-04   at   0.000020
+ ---------------------------------------------------
+| Local SIZE OF NONBOND LIST =    1983833
+| TOTAL SIZE OF NONBOND LIST =    1983833
+| updating f_mask
+| updating scaling factors
+| gradient norms, amber/xray:  0.32186E+06 0.31359E+04 0.10264E+03
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      0       1.8388E+05     1.5762E+03     7.3191E+04     O        7285
+
+ BOND    =     5559.7502  ANGLE   =     4666.0395  DIHED      =     2402.3301
+ VDWAALS =    62410.7277  EEL     =   -39899.1720  HBOND      =        0.0000
+ 1-4 VDW =     2566.7457  1-4 EEL =    21354.3251  RESTRAINT  =   124323.6646
+ CMAP    =      490.7520
+ EAMBER  =    59551.4982
+ Exray   =   124323.6646  Rwork   =        0.1929  Rfree      =        0.1940
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     25       9.7251E+04     7.1518E+00     1.1806E+02     SG       4191
+
+ BOND    =      221.0461  ANGLE   =     1009.0845  DIHED      =     2382.0825
+ VDWAALS =    -4747.5780  EEL     =   -45181.4139  HBOND      =        0.0000
+ 1-4 VDW =     2116.1716  1-4 EEL =    21336.8193  RESTRAINT  =   119707.3131
+ CMAP    =      407.8545
+ EAMBER  =   -22455.9332
+ Exray   =   119707.3131  Rwork   =        0.1608  Rfree      =        0.1624
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     50       9.4435E+04     4.7020E+00     1.1279E+02     SG       4191
+
+ BOND    =      171.0753  ANGLE   =      800.6053  DIHED      =     2384.1188
+ VDWAALS =    -4953.9344  EEL     =   -47087.2619  HBOND      =        0.0000
+ 1-4 VDW =     2115.1247  1-4 EEL =    21329.5319  RESTRAINT  =   119269.9637
+ CMAP    =      405.3082
+ EAMBER  =   -24835.4321
+ Exray   =   119269.9637  Rwork   =        0.1561  Rfree      =        0.1577
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     75       9.3185E+04     3.0279E+00     6.1624E+01     SG       3363
+
+ BOND    =      155.7912  ANGLE   =      759.8818  DIHED      =     2356.8272
+ VDWAALS =    -4971.7202  EEL     =   -48023.3810  HBOND      =        0.0000
+ 1-4 VDW =     2102.5584  1-4 EEL =    21347.1317  RESTRAINT  =   119052.7574
+ CMAP    =      405.5565
+ EAMBER  =   -25867.3544
+ Exray   =   119052.7574  Rwork   =        0.1531  Rfree      =        0.1546
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    100       9.2467E+04     2.7046E+00     4.7680E+01     SG       4513
+
+ BOND    =      153.3184  ANGLE   =      762.3160  DIHED      =     2351.5098
+ VDWAALS =    -4934.6440  EEL     =   -48664.9229  HBOND      =        0.0000
+ 1-4 VDW =     2097.1341  1-4 EEL =    21329.5437  RESTRAINT  =   118969.0838
+ CMAP    =      403.6893
+ EAMBER  =   -26502.0558
+ Exray   =   118969.0838  Rwork   =        0.1519  Rfree      =        0.1535
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    125       9.1975E+04     2.3284E+00     4.8712E+01     SG       8321
+
+ BOND    =      146.8434  ANGLE   =      742.1752  DIHED      =     2317.6321
+ VDWAALS =    -4881.4802  EEL     =   -49112.5897  HBOND      =        0.0000
+ 1-4 VDW =     2097.6255  1-4 EEL =    21369.8297  RESTRAINT  =   118891.5113
+ CMAP    =      402.9723
+ EAMBER  =   -26916.9918
+ Exray   =   118891.5113  Rwork   =        0.1511  Rfree      =        0.1532
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    150       9.1659E+04     1.9780E+00     6.3246E+01     SG       4589
+
+ BOND    =      144.4776  ANGLE   =      743.0255  DIHED      =     2310.2800
+ VDWAALS =    -4870.9637  EEL     =   -49393.9441  HBOND      =        0.0000
+ 1-4 VDW =     2090.8092  1-4 EEL =    21373.1661  RESTRAINT  =   118858.5420
+ CMAP    =      403.4070
+ EAMBER  =   -27199.7424
+ Exray   =   118858.5420  Rwork   =        0.1507  Rfree      =        0.1523
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    175       9.1460E+04     1.7819E+00     6.0057E+01     SG       5847
+
+ BOND    =      141.4409  ANGLE   =      736.2354  DIHED      =     2315.9858
+ VDWAALS =    -4836.0659  EEL     =   -49594.9811  HBOND      =        0.0000
+ 1-4 VDW =     2089.7850  1-4 EEL =    21375.8688  RESTRAINT  =   118828.0641
+ CMAP    =      403.6099
+ EAMBER  =   -27368.1211
+ Exray   =   118828.0641  Rwork   =        0.1505  Rfree      =        0.1524
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    200       9.1308E+04     1.5748E+00     5.4882E+01     SG       3363
+
+ BOND    =      141.3523  ANGLE   =      725.6394  DIHED      =     2312.5148
+ VDWAALS =    -4791.5150  EEL     =   -49762.0619  HBOND      =        0.0000
+ 1-4 VDW =     2091.0548  1-4 EEL =    21378.0844  RESTRAINT  =   118809.1720
+ CMAP    =      403.9300
+ EAMBER  =   -27501.0011
+ Exray   =   118809.1720  Rwork   =        0.1502  Rfree      =        0.1523
+
+
+                    FINAL RESULTS
+
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+     -1       9.1308E+04     1.5748E+00     5.4882E+01     SG       3363
+
+ BOND    =      141.3523  ANGLE   =      725.6394  DIHED      =     2312.5148
+ VDWAALS =    -4791.5150  EEL     =   -49762.0619  HBOND      =        0.0000
+ 1-4 VDW =     2091.0548  1-4 EEL =    21378.0844  RESTRAINT  =   118809.1720
+ CMAP    =      403.9300
+ EAMBER  =   -27501.0011
+ Exray   =   118809.1720  Rwork   =        0.1502  Rfree      =        0.1523
+
+--------------------------------------------------------------------------------
+   5.  TIMINGS
+--------------------------------------------------------------------------------
+
+|                Build the list             0.24 (95.74% of List )
+|                Other                      0.01 ( 4.26% of List )
+|             List time                  0.25 ( 2.01% of Nonbo)
+|                   Short_ene time             9.27 (98.64% of Direc)
+|                   Other                      0.13 ( 1.36% of Direc)
+|                Direct Ewald time          9.40 (76.82% of Ewald)
+|                Adjust Ewald time          0.28 ( 2.31% of Ewald)
+|                   Fill Bspline coeffs        0.11 ( 4.31% of Recip)
+|                   Fill charge grid           0.31 (12.39% of Recip)
+|                   Scalar sum                 0.51 (20.43% of Recip)
+|                   Grad sum                   0.77 (30.84% of Recip)
+|                   FFT time                   0.80 (32.02% of Recip)
+|                Recip Ewald time           2.48 (20.31% of Ewald)
+|             Ewald time                12.23 (97.99% of Nonbo)
+|          Nonbond force             12.49 ( 3.82% of Force)
+|             Fcalc loop                89.49 (28.56% of Xray )
+|             Deriv loop               222.28 (70.93% of Xray )
+|          Xray restaints           313.39 (95.95% of Force)
+|       Force time               326.60 (100.0% of Runmd)
+|    Runmd Time               326.60 (99.84% of Total)
+| Total time               327.12 (100.0% of ALL  )
+
+| Number of list builds   :          7
+
+| Highest rstack allocated:     549107
+| Highest istack allocated:       9939
+|           Job began  at 11:08:52.562  on 04/06/2026
+|           Setup done at 11:08:52.728  on 04/06/2026
+|           Run   done at 11:14:19.680  on 04/06/2026
+|     wallclock() was called   18333 times
