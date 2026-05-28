@@ -19,7 +19,7 @@ mtzfile="../XrayPrep/4yuo.mtz"
 #  Optionally, run xyz refinement in Amber:
 #--------------------------------------------------------------------
 
-# ./run_3uc $in
+# ./run_xyzopt $in
 
 #--------------------------------------------------------------------------
 #  Prepare pdb file for phenix.refine: each chain gets its own altloc;
