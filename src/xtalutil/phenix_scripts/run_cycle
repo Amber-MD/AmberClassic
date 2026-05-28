@@ -86,7 +86,7 @@ EOF
 perl < ${id}_$out.min1.pdb -n -f ./set_occ > tmp.pdb
 
 if true; then
-   ./run_phenix_refine tmp.pdb $mtzfile ${id} $out > phenix.log
+   ./run_phenix_B tmp.pdb $mtzfile ${id} $out > phenix.log
 else
 
 # ========== run refmac with the md-derived solvent and

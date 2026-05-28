@@ -17,7 +17,7 @@ refinement {
     export_final_f_model = False
   }
   refine {
-    strategy = *individual_sites individual_sites_real_space rigid_body \
+    strategy = individual_sites individual_sites_real_space rigid_body \
                *individual_adp group_adp tls occupancies group_anomalous
     sites {
     }
@@ -29,7 +29,7 @@ refinement {
   }
   main {
     nqh_flips = True
-    number_of_macro_cycles = 10
+    number_of_macro_cycles = 5
     target = auto *ml mlhl ml_sad ls mli
     use_experimental_phases = False
     scattering_table = wk1995 *it1992 n_gaussian electron neutron
