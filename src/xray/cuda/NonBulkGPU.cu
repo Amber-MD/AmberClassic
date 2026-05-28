@@ -6,7 +6,7 @@
 
 #undef P212121
 #undef P21
-#undef P6
+#define P6 1
 #define NA  1
 #define NB  1
 #define NC  1
@@ -87,7 +87,7 @@ namespace {
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
 
         // set #3: k,-h-k,l
-        const int h3 = -hkl[i_hkl * 3 + 1];
+        const int h3 =  hkl[i_hkl * 3 + 1];
         const int k3 = -hkl[i_hkl * 3 + 0] - hkl[i_hkl * 3 + 1];
 
         const FloatType angle3 = 2 * M_PI * (

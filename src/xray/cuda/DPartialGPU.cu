@@ -8,7 +8,7 @@
 
 #undef P212121
 #undef P21
-#undef P6
+#define P6 1
 #define NA   1
 #define NB   1
 #define NC   1
@@ -102,8 +102,8 @@ namespace {
 
         // set #3:   k,-h-k,l
         FloatType phase3 = -(
-           (hkl[i_hkl*3 + 0] + hkl[i_hkl*3 + 1]) * frac_by_2_pi[i * 3 + 0]
-          - hkl[i_hkl*3 + 0] * frac_by_2_pi[i * 3 + 1]
+            hkl[i_hkl*3 + 1] * frac_by_2_pi[i * 3 + 0]
+          -(hkl[i_hkl*3 + 0] + hkl[i_hkl*3 + 1]) * frac_by_2_pi[i * 3 + 1]
           + hkl[i_hkl*3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp3 = f * sin(phase3 + f_calc_phase[i_hkl]);

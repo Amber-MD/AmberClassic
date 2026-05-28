@@ -124,10 +124,10 @@ contains
 
         else if( spacegroup_number .eq. 168 ) then  ! P6
 
-           ! set #2:   h+k,-h,-l
-           hkls(1) = -hkl(1,ihkl)
-           hkls(2) =  hkl(2,ihkl)
-           hkls(3) = -hkl(3,ihkl)
+           ! set #2:   h+k,-h,l
+           hkls(1) =  hkl(1,ihkl) + hkl(2,ihkl)
+           hkls(2) = -hkl(1,ihkl)
+           hkls(3) =  hkl(3,ihkl)
            hkl_v(:) = hkls(:) * M_TWOPI
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
