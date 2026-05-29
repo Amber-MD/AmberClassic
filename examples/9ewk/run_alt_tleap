@@ -9,8 +9,12 @@ set default nocenter on
 set default reorder_residues off
 source leaprc.protein.ff19SB
 source leaprc.water.spce
+source leaprc.gaff2
+EOH = loadMol2 EOH.mol2
+loadAmberParams EOH.frcmod
 x = loadPdb $id.pdb
-set x box { 20.790   29.193   17.382 }
+source sslinks
+set x box { 68.175   37.534   41.059 }
 saveAmberParm x $id.parm7 foo.rst7
 quit
 EOF
@@ -18,9 +22,9 @@ EOF
 tleap -f tleap.in > tleap.out
 /bin/rm tleap.in
 
-ChBox -c foo.rst7 -o ${id}.rst7 -al 90.00 -bt 105.94 -gm 90.00 -X 20.790 -Y 29.193 -Z 17.382
+ChBox -c foo.rst7 -o ${id}.rst7 -al 90.00 -bt 90.55 -gm 90.00 -X 68.175 -Y 37.534 -Z 41.059
 
-$AMBERCLASSICHOME/bin/add_pdb -i $id.parm7 -p ${id}.pdb -o foo.parm7 
+$AMBERCLASSICHOME/bin/add_pdb -i $id.parm7 -p $id.pdb -o foo.parm7 
 $AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}.parm7
 
 $AMBERCLASSICHOME/bin/ambpdb -p ${id}.parm7 -ext < ${id}.rst7 > ${id}_000.pdb

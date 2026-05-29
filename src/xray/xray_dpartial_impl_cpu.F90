@@ -22,7 +22,6 @@ contains
   function calc_partial_d_target_d_frac(frac, f_scale, &
         d_target_d_abs_Fcalc) result(d_target_d_frac)
     use xray_atomic_scatter_factor_module, only : atomic_scatter_factor
-    use xray_pure_utils, only : PI
     implicit none
     real(real_kind), intent(in) :: frac(:, :)
     real(real_kind), intent(in) :: f_scale(:)
@@ -36,6 +35,7 @@ contains
     integer :: i, ihkl, hkls(3)
     real(real_kind) :: time0, time1
 
+    real(real_kind), parameter :: M_TWOPI = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
     call wallclock( time0 )
     
     ASSERT(size(frac, 1) == 3)
@@ -60,64 +60,116 @@ contains
           cycle
         end if
         
-        ! hkl-vector by 2pi
-        hkl_v(:) = hkl(:, ihkl) * 2 * PI
+        hkl_v(:) = hkl(:, ihkl) * M_TWOPI
         
         !  fa should be the same for all symmetry mates
         fa = atomic_scatter_factor(ihkl, atom_scatter_type(i)) &
-            * exp(mSS4(ihkl) * atom_b_factor(i)) * atom_occupancy(i) &
+            * exp(mSS4(ihkl) * atom_b_factor(i)) &
             * f_scale(ihkl) * d_target_d_abs_Fcalc(ihkl) / abs_Fcalc(ihkl)
         
         ! original hkl for symmetrization:
-        phase = sum(hkl_v(:) * frac(:, i))
+        phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
         f = fa * cmplx(cos(phase), sin(phase), real_kind)
         d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
             * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        if( spacegroup_number .eq. 19 ) then
+        else if( spacegroup_number .eq. 14 ) then  ! P21/c
 
-           ! set #2:  -h,-k,l
-           hkls(1) = -hkl(1,ihkl)
-           hkls(2) = -hkl(2,ihkl)
-           hkls(3) =  hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
-           phase = sum(hkl_v(:) * frac(:, i))
-           f = fa * cmplx(cos(phase), sin(phase), real_kind)
-           if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) f = -f
-           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
-               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
-
-           ! set #3:  -h,k,-l
+           ! set #2:  -h,k,l
            hkls(1) = -hkl(1,ihkl)
            hkls(2) =  hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
-           phase = sum(hkl_v(:) * frac(:, i))
+           hkl_v(:) = hkls(:) * M_TWOPI
+
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-           ! set #4:   h,-k,-l
-           hkls(1) =  hkl(1,ihkl)
+           ! set #3:  -h,-k,-l
+           hkls(1) = -hkl(1,ihkl)
            hkls(2) = -hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
-           phase = sum(hkl_v(:) * frac(:, i))
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
-           if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) f = -f
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 4 ) then
+           ! set #4:   h,-k, l
+           hkls(1) =  hkl(1,ihkl)
+           hkls(2) = -hkl(2,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+        else if( spacegroup_number .eq. 4 ) then  ! P21
+
            ! set #2:   -h,k,-l
            hkls(1) = -hkl(1,ihkl)
            hkls(2) =  hkl(2,ihkl)
            hkls(3) = -hkl(3,ihkl)
-           hkl_v(:) = hkls(:) * 2 * PI
-           phase = sum(hkl_v(:) * frac(:, i))
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
            f = fa * cmplx(cos(phase), sin(phase), real_kind)
            if( mod(hkls(2)/nb, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+        else if( spacegroup_number .eq. 168 ) then  ! P6
+
+           ! set #2:   h+k,-h,l
+           hkls(1) =  hkl(1,ihkl) + hkl(2,ihkl)
+           hkls(2) = -hkl(1,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #3:  k,-h-k,l
+           hkls(1) =  hkl(2,ihkl)
+           hkls(2) = -hkl(1,ihkl) - hkl(2,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #4:  -h,-k,l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) = -hkl(2,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #5:  -h-k,h,l
+           hkls(1) = -hkl(1,ihkl) - hkl(2,ihkl)
+           hkls(2) =  hkl(1,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #6:  -k,h+k,l
+           hkls(1) = -hkl(2,ihkl)
+           hkls(2) =  hkl(1,ihkl) + hkl(2,ihkl)
+           hkls(3) =  hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
@@ -136,7 +188,6 @@ contains
          result(d_target_d_frac)
     use xray_atomic_scatter_factor_module, only : atomic_scatter_factor
     use xray_target_vector_least_squares_data_module, only: derivc
-    use xray_pure_utils, only : PI
     use xray_interface2_data_module, only : n_work
     implicit none
     real(real_kind), intent(in) :: frac(:, :)
@@ -146,6 +197,8 @@ contains
     real(real_kind) :: f, phase
     integer :: ihkl, i
     
+    real(real_kind), parameter :: M_TWOPI = 2 * 3.1415926535897932384626433832795d0 ! FIXME: use constants module
+
     ASSERT(size(frac, 1) == 3)
     ASSERT(size(frac, 2) == size(atom_b_factor))
     ASSERT(size(frac, 2) == size(atom_scatter_type))
@@ -167,8 +220,7 @@ contains
           cycle
         end if
         
-        ! hkl-vector by 2pi
-        hkl_v = hkl(:, ihkl) * 2 * PI
+        hkl_v = hkl(:, ihkl) * M_TWOPI
         
         phase = -sum(hkl_v * frac(:, i))
         f = atomic_scatter_factor(ihkl, atom_scatter_type(i)) &

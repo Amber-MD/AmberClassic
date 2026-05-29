@@ -57,6 +57,8 @@
 \output_sync 0
 \bibtex_command default
 \index_command default
+\float_placement class
+\float_alignment class
 \paperfontsize 10
 \spacing single
 \use_hyperref true
@@ -11125,16 +11127,7 @@ xleap
 \end_layout
 
 \begin_layout Standard
-LEaP is the basic tool to construct force field files (see Fig.
- 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:infoflow"
-nolink "false"
-
-\end_inset
-
-).
+LEaP is the basic tool to construct force field files.
  Using 
 \shape italic
 tleap
@@ -59885,15 +59878,1848 @@ name "sec:xray-workflow"
 \end_layout
 
 \begin_layout Standard
-(Coming 
+
+\emph on
+Please note:
+
+\emph default
+ the scripts inside the 
+\family typewriter
+src/xtalutil
+\family default
+ folder form the basis for most workflows that I use.
+ These scripts don't try to put all possible options into command-line parameters.
+ Rather,
+ you should copy each script to a working directory,
+ then edit this local copy:
+ usually,
+ the options that need attention are described at the top of each script.
+\end_layout
+
+\begin_layout Subsection
+A simple peptide example:
+ 4tut
+\end_layout
+
+\begin_layout Standard
+The input and output files for this example are in the 
+\family typewriter
+examples/4tut
+\family default
+ folder.
+ This is a small peptide,
+ and the README file covers the basics of how a supercell simulation would be performed.
+ Below is an annotated version how all this works.
+ The 
+\emph on
+4tut.pdb
+\emph default
+ file in the folder was downloaded from the RCSB pdb site,
+ 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://rcsb.org"
+target "https://rcsb/org"
+literal "false"
+
+\end_inset
+
+.
+ The file with observed structure factors,
+ 
+\emph on
+4tut_final.mtz
+\emph default
+,
+ came from 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://pdb-redo.eu"
+target "https://pdb-redu.eu"
+literal "false"
+
+\end_inset
+
+.
+ (I'm using the pdb-redo version of the input mtz file,
+ since it has already converted intensities into structure factors;
+ a script for using the rcsb.org version is mentioned below,
+ but not used here.)
+\end_layout
+
+\begin_layout Standard
+The first step is to create a 
 \begin_inset Quotes eld
 \end_inset
 
-soon
+supercell
 \begin_inset Quotes erd
 \end_inset
 
-).
+ from the downloaded pdb file (which has only information about a single ASU):
+\end_layout
+
+\begin_layout LyX-Code
+UnitCell -p 4tut.pdb -o 4tut_1uc.pdb
+\end_layout
+
+\begin_layout LyX-Code
+PropPDB -p 4tut_1uc.pdb -o 4tut_6uc.pdb -ix 2 -iy 3 -iz 1 
+\end_layout
+
+\begin_layout LyX-Code
+./set_chainID 4tut_6uc.pdb
+\end_layout
+
+\begin_layout Standard
+The first line creates a single unit cell,
+ and the second line expands this into a supercell with 2 copies along the 
+\emph on
+a
+\emph default
+ axis,
+ 3 along the 
+\emph on
+b
+\emph default
+ axis,
+ and 1 (no expansion) along the 
+\emph on
+c 
+\emph default
+axis.
+ Since each unit cell has 2 copies of the peptide chain,
+ this choice leads to 12 total peptides,
+ which is an arbitrary number,
+ but seems to be a reasonable number for many types of analyses.
+ Use a visualization program (say VMD or ChimeraX) to see what these output PDB files look like.
+ The final line just assigns a chainID (
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+ through 
+\begin_inset Quotes eld
+\end_inset
+
+L
+\begin_inset Quotes erd
+\end_inset
+
+) to each of the 12 peptide chains;
+ this is not required,
+ but makes analysis and visualization of the results a little simpler.
+\end_layout
+
+\begin_layout Standard
+If the input PDB file has alternate conformations (
+\begin_inset Quotes eld
+\end_inset
+
+altlocs
+\begin_inset Quotes erd
+\end_inset
+
+),
+ those will be carried over to the output files above.
+ These need to be dealt with before a molecular mechanics description can be created.
+ There are a couple of ways to do that,
+ which will be described below.
+ For the 4tut structure considered here,
+ we don't have this complication,
+ so we can just give a new name to the file created above:
+\end_layout
+
+\begin_layout LyX-Code
+ln -s 4tut_6uc.pdb alt1.pdb
+\end_layout
+
+\begin_layout Standard
+(
+\begin_inset Quotes eld
+\end_inset
+
+alt1.pdb
+\begin_inset Quotes erd
+\end_inset
+
+ is just an arbitrary name that fits into my personal conventions;
+ you can use any name to like here.
+\end_layout
+
+\begin_layout Standard
+The next step is to edit your copy of the 
+\emph on
+run_alt_tleap
+\emph default
+ script,
+ whose original is in the 
+\family typewriter
+src/xtaltutil/ensemble_scripts
+\family default
+ folder.
+ Here is my edited version–you should look at Chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "cha:LEaP-and-sleap"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+
+\end_inset
+
+for a description of the commands used here:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+id=
+\begin_inset Quotes erd
+\end_inset
+
+alt1
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cat <<EOF > tleap.in
+\end_layout
+
+\begin_layout Plain Layout
+
+set default nocenter on      
+\end_layout
+
+\begin_layout Plain Layout
+
+set default reorder_residues off
+\end_layout
+
+\begin_layout Plain Layout
+
+source leaprc.protein.ff19SB
+\end_layout
+
+\begin_layout Plain Layout
+
+source leaprc.water.spce
+\end_layout
+
+\begin_layout Plain Layout
+
+x = loadPdb $id.pdb
+\end_layout
+
+\begin_layout Plain Layout
+
+set x box { 20.790   29.193   17.382 }
+\end_layout
+
+\begin_layout Plain Layout
+
+saveAmberParm x $id.parm7 foo.rst7
+\end_layout
+
+\begin_layout Plain Layout
+
+quit
+\end_layout
+
+\begin_layout Plain Layout
+
+EOF
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+tleap -f tleap.in > tleap.out
+\end_layout
+
+\begin_layout Plain Layout
+
+/bin/rm tleap.in
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+ChBox -c foo.rst7 -o ${id}.rst7 -al 90.00 -bt 105.94 -gm 90.00 -X 20.790 -Y 29.193 -Z 17.382
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+$AMBERCLASSICHOME/bin/add_pdb -i $id.parm7 -p ${id}.pdb -o foo.parm7 
+\end_layout
+
+\begin_layout Plain Layout
+
+$AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${id}.parm7
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+$AMBERCLASSICHOME/bin/ambpdb -p ${id}.parm7 -ext < ${id}.rst7 > ${id}_000.pdb
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/bin/rm -f foo.parm7 foo.rst7
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the 
+\emph on
+tleap.in
+\emph default
+ file,
+ some useful defaults are invoked,
+ then the source commands indicate which force fields to use for the protein and water.
+ The 
+\emph on
+tleap
+\emph default
+ program will then load the 
+\emph on
+alt1.pdb
+\emph default
+ file into memory,
+ and prepare the system for Amber simulation.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+set box
+\begin_inset Quotes erd
+\end_inset
+
+ command tells the program that periodic (crystal) symmetry should be used.
+ (For historical reasons,
+ only the cell dimensions are given here;
+ the cell angles are set in the 
+\emph on
+ChBox
+\emph default
+ command that follows 
+\emph on
+tleap
+\emph default
+.) The function of the 
+\emph on
+add_pdb
+\emph default
+,
+ 
+\emph on
+add_xray
+\emph default
+ and 
+\emph on
+ambpdb
+\emph default
+ commands is to add additional information from the original PDB file into the 
+\emph on
+alt1.parm7
+\emph default
+ file,
+ which (along with the 
+\emph on
+alt1.rst7
+\emph default
+ file) are the outputs of this step.
+\end_layout
+
+\begin_layout Standard
+Either before or after the steps above,
+ we need to convert the input mtz file into a format that Amber can use:
+\end_layout
+
+\begin_layout LyX-Code
+./XrayPrep_redo 4tut # convert 4tut_final.mtz to Amber format
+\end_layout
+
+\begin_layout LyX-Code
+awk 'NR>1 {print 2*$1,
+ 3*$2,
+ $3,
+ $4,
+ $5,
+ $6}' 4tut-sf.dat > alt1-sf.dat
+\end_layout
+
+\begin_layout Standard
+The first line just reformats the information in the mtz file into a text format,
+ and the second line reindexes the h,k,l values to be correct for a 2x3x1 supercell.
+\end_layout
+
+\begin_layout Standard
+We are now ready to start optimization.
+ A first step is to perform coordinate (xyz) optimization with the 
+\family typewriter
+run_xyzoopt
+\family default
+ script:
+\begin_inset listings
+lstparams "numbers=left,numberstyle={\tiny}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#!/bin/bash
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+export XRAY_NUM_THREADS=20
+\end_layout
+
+\begin_layout Plain Layout
+
+#export DO_PARALLEL='mpirun -np 8'
+\end_layout
+
+\begin_layout Plain Layout
+
+export CUDA_VISIBLE_DEVICES=0
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+in=$(printf "%03d" $1)
+\end_layout
+
+\begin_layout Plain Layout
+
+let out=$in+1
+\end_layout
+
+\begin_layout Plain Layout
+
+out=$(printf "%03d" $out)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+sander="$AMBERCLASSICHOME/bin/msander"
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cat > mdin <<eof
+\end_layout
+
+\begin_layout Plain Layout
+
+   checking out 4tut with 6 unit cells
+\end_layout
+
+\begin_layout Plain Layout
+
+ &cntrl
+\end_layout
+
+\begin_layout Plain Layout
+
+    imin=1,
+ maxcyc=500,
+ ntpr=50,
+\end_layout
+
+\begin_layout Plain Layout
+
+    ntx=1,
+ irest=0,
+\end_layout
+
+\begin_layout Plain Layout
+
+    ntc=2,
+ ntf=2,
+ tol=1.d-6,
+ cut=7.3,
+\end_layout
+
+\begin_layout Plain Layout
+
+ /
+\end_layout
+
+\begin_layout Plain Layout
+
+ &ewald  skinnb=1.0,
+ /
+\end_layout
+
+\begin_layout Plain Layout
+
+ &lmod  xmin_verbosity=0,
+ xmin_method='PRCG',
+ /
+\end_layout
+
+\begin_layout Plain Layout
+
+ &xray
+\end_layout
+
+\begin_layout Plain Layout
+
+   pdb_infile = 'alt1_$in.pdb',
+\end_layout
+
+\begin_layout Plain Layout
+
+   pdb_read_coordinates = .true.,
+\end_layout
+
+\begin_layout Plain Layout
+
+   pdb_outfile = 'alt1_$out.min1.pdb',
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+   reflection_infile = 'alt1-sf.dat',
+\end_layout
+
+\begin_layout Plain Layout
+
+   spacegroup_name = 'P 21',
+ spacegroup_number = 4,
+\end_layout
+
+\begin_layout Plain Layout
+
+   na = 2,
+ nb = 3,
+ nc=1,
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+   atom_selection_mask = ':*',
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+   xray_weight =  0.8,
+\end_layout
+
+\begin_layout Plain Layout
+
+   bulk_solvent_model = 'afonine-2013',
+  target = 'ml',
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+   ml_update_period = 40000,
+\end_layout
+
+\begin_layout Plain Layout
+
+   scale_update_period = 40000,
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+   mask_update_period = 40000,
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+ /
+\end_layout
+
+\begin_layout Plain Layout
+
+eof
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+$DO_PARALLEL $sander -O -i mdin -o alt1_$out.min1.o -r alt1_$out.min1.x 
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    -p alt1.parm7 -c alt1.rst7 
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    < /dev/null || { echo "  $0:
+  Program error";
+ exit 1;
+ }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/bin/rm -f mdin mdinfo restrt
+\end_layout
+
+\begin_layout Plain Layout
+
+exit 0
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The inputs to 
+\family typewriter
+msander
+\family default
+ (in the 
+\emph on
+mdin
+\emph default
+ file) are explained in the chapters above.
+ We are doing 500 steps of minimization.
+ Non-default values for 
+\emph on
+cut
+\emph default
+ and 
+\emph on
+skinnb
+\emph default
+ are needed since this is a very small system,
+ even with 6 unit cells.
+ The value of 0.8 for 
+\emph on
+xray_weight
+\emph default
+ seems to provide a good balance between restaints based on the Amber force field,
+ and restraints arising from the Xray reflections.
+ Minor changes in this value might be explored,
+ but generally make little difference.
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+run_xyzopt
+\family default
+ script above is referenced in a large 
+\family typewriter
+run_cycle
+\family default
+ script that carries out both coordinate and B-factor (ADP) refinement;
+ this script would be run on the command line as
+\end_layout
+
+\begin_layout LyX-Code
+
+\family typewriter
+./run_cycle 0
+\end_layout
+
+\begin_layout Standard
+where 0 is the cycle starting point.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "numbers=left,numberstyle={\tiny}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#!/bin/bash
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+#  Tool to run "cycles" of xyz and adp refinment
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+in=$1
+\end_layout
+
+\begin_layout Plain Layout
+
+let out=$in+1
+\end_layout
+
+\begin_layout Plain Layout
+
+out=$(printf "%03d" $out)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+id="alt1"
+\end_layout
+
+\begin_layout Plain Layout
+
+supercell="  20.790   29.193   17.382"
+\end_layout
+
+\begin_layout Plain Layout
+
+origcell="  10.395    9.731   17.382"
+\end_layout
+
+\begin_layout Plain Layout
+
+spacegroup=" P 1 21 1"
+\end_layout
+
+\begin_layout Plain Layout
+
+residuesperchain=11
+\end_layout
+
+\begin_layout Plain Layout
+
+mtzfile="4tut_final.mtz"
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+#  Optionally,
+ run xyz refinement in Amber:
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+./run_6uc $in
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+#  Prepare pdb file for phenix.refine:
+ each chain gets its own altloc;
+\end_layout
+
+\begin_layout Plain Layout
+
+#     set occ to about 1/12.
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cat <<EOF > set_occ
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+#   first,
+ read in a pdb file line and unpack
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$residuesperchain = $residuesperchain;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+if( 
+\backslash
+$_ =~ /^ATOM|^HETATM/){
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#  expand to 80+ characters (really hokey version):
+\end_layout
+
+\begin_layout Plain Layout
+
+chop(
+\backslash
+$_);
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$_ .= "                                                                    ";
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+( 
+\backslash
+$label,
+ 
+\backslash
+$atno,
+ 
+\backslash
+$atname,
+ 
+\backslash
+$alt,
+ 
+\backslash
+$resname,
+ 
+\backslash
+$chainId,
+ 
+\backslash
+$resno,
+ 
+\backslash
+$iCode,
+\end_layout
+
+\begin_layout Plain Layout
+
+      
+\backslash
+$x,
+ 
+\backslash
+$y,
+ 
+\backslash
+$z,
+ 
+\backslash
+$occ,
+ 
+\backslash
+$bfact,
+ 
+\backslash
+$element,
+ 
+\backslash
+$charge ) =
+\end_layout
+
+\begin_layout Plain Layout
+
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",
+\backslash
+$_);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+#  do modifications necessary here:
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+if    (
+\backslash
+$resno <=    
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "A"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  2*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "B"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  3*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "C"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  4*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "D"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  5*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "E"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  6*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "F"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  7*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "G"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  8*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "H"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <=  9*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "I"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <= 10*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "J"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <= 11*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "K"}
+\end_layout
+
+\begin_layout Plain Layout
+
+elsif (
+\backslash
+$resno <= 12*
+\backslash
+$residuesperchain ){ 
+\backslash
+$alt = "L"}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$occ = 0.08;
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$resname = "CYS" if 
+\backslash
+$resname eq "CYX";
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$resname = "HOH" if 
+\backslash
+$resname eq "WAT";
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$resname = "HIS" if 
+\backslash
+$resname eq "HID";
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$resname = "HIS" if 
+\backslash
+$resname eq "HIE";
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+#  write back out
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+printf 
+\end_layout
+
+\begin_layout Plain Layout
+
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s
+\backslash
+n",
+\end_layout
+
+\begin_layout Plain Layout
+
+      
+\backslash
+$label,
+ 
+\backslash
+$atno,
+\backslash
+$atname,
+\backslash
+$alt,
+ 
+\backslash
+$resname,
+\backslash
+$chainId,
+ 
+\backslash
+$resno,
+ 
+\backslash
+$iCode,
+\end_layout
+
+\begin_layout Plain Layout
+
+        
+\backslash
+$x,
+\backslash
+$y,
+\backslash
+$z,
+ 
+\backslash
+$occ,
+ 
+\backslash
+$bfact,
+ 
+\backslash
+$element,
+ 
+\backslash
+$charge;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+   s/$supercell/$origcell/;
+  #set cell to original lengths
+\end_layout
+
+\begin_layout Plain Layout
+
+   print;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+EOF
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+#  Run adp refinement in phenix or refmac:
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+perl < ${id}_$out.min1.pdb -n -f ./set_occ > tmp.pdb
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+if true;
+ then
+\end_layout
+
+\begin_layout Plain Layout
+
+   ./run_phenix_refine tmp.pdb $mtzfile ${id} $out > phenix.log
+\end_layout
+
+\begin_layout Plain Layout
+
+else
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# ========== run refmac with the md-derived solvent and
+\end_layout
+
+\begin_layout Plain Layout
+
+#            disable the default flat bulk solvent
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+./amber2refmac tmp.pdb
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+refmac5 hklin refme.mtz xyzin tmp.pdb xyzout ${id}_$out.pdb 
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    << EOF > ${id}_$out.reflog
+\end_layout
+
+\begin_layout Plain Layout
+
+LABIN FP=FP SIGFP=SIGFP FPART1=Fpart PHIP1=PHIpart FREE=FreeR_flag
+\end_layout
+
+\begin_layout Plain Layout
+
+SOLVENT NO
+\end_layout
+
+\begin_layout Plain Layout
+
+MAKE NEWLigand Noexit
+\end_layout
+
+\begin_layout Plain Layout
+
+SCPART 1
+\end_layout
+
+\begin_layout Plain Layout
+
+NCYC 40
+\end_layout
+
+\begin_layout Plain Layout
+
+REFI BREF
+\end_layout
+
+\begin_layout Plain Layout
+
+DAMP 0 1 1
+\end_layout
+
+\begin_layout Plain Layout
+
+MAKE HOUT
+\end_layout
+
+\begin_layout Plain Layout
+
+EOF
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+fi
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+#  Undo most of the changes made by set_occ:
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+cat <<EOF > reset_occ
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+#   first,
+ read in a pdb file line and unpack
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+if( 
+\backslash
+$_ =~ /^ATOM|^HETATM/){
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#  expand to 80+ characters (really hokey version):
+\end_layout
+
+\begin_layout Plain Layout
+
+chop(
+\backslash
+$_);
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$_ .= "                                                                    ";
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+( 
+\backslash
+$label,
+ 
+\backslash
+$atno,
+ 
+\backslash
+$atname,
+ 
+\backslash
+$alt,
+ 
+\backslash
+$resname,
+ 
+\backslash
+$chainId,
+ 
+\backslash
+$resno,
+ 
+\backslash
+$iCode,
+\end_layout
+
+\begin_layout Plain Layout
+
+      
+\backslash
+$x,
+ 
+\backslash
+$y,
+ 
+\backslash
+$z,
+ 
+\backslash
+$occ,
+ 
+\backslash
+$bfact,
+ 
+\backslash
+$element,
+ 
+\backslash
+$charge ) =
+\end_layout
+
+\begin_layout Plain Layout
+
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",
+\backslash
+$_);
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+#  do modifications necessary here:
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$occ = 1.0;
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+$alt = ' ';
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+#  write back out
+\end_layout
+
+\begin_layout Plain Layout
+
+#
+\end_layout
+
+\begin_layout Plain Layout
+
+printf 
+\end_layout
+
+\begin_layout Plain Layout
+
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s
+\backslash
+n",
+\end_layout
+
+\begin_layout Plain Layout
+
+      
+\backslash
+$label,
+ 
+\backslash
+$atno,
+\backslash
+$atname,
+\backslash
+$alt,
+ 
+\backslash
+$resname,
+\backslash
+$chainId,
+ 
+\backslash
+$resno,
+ 
+\backslash
+$iCode,
+\end_layout
+
+\begin_layout Plain Layout
+
+        
+\backslash
+$x,
+\backslash
+$y,
+\backslash
+$z,
+ 
+\backslash
+$occ,
+ 
+\backslash
+$bfact,
+ 
+\backslash
+$element,
+ 
+\backslash
+$charge;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+   s/$origcell/$supercell/;
+  #set cell to expanded lengths
+\end_layout
+
+\begin_layout Plain Layout
+
+   s/$spacegroup/ P 1/;
+      #set spacegroup back to P1
+\end_layout
+
+\begin_layout Plain Layout
+
+   print;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+EOF
+\end_layout
+
+\begin_layout Plain Layout
+
+perl -i.bak -n -f ./reset_occ ${id}_$out.pdb  # gets file for next msander run
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+#  Run some geometry checks:
+\end_layout
+
+\begin_layout Plain Layout
+
+#--------------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+phenix.molprobity ${id}_$out.pdb > ${id}_$out.molp
+\end_layout
+
+\begin_layout Plain Layout
+
+phenix.holton_geometry_validation ${id}_$out.pdb > ${id}_$out.hgv
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/bin/rm -f molprobity* ${id}_$out.eff tmp.pdb phenix.log set_occ reset_occ
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This is a complex script.
+ After the xyz refinement step,
+ the output 
+\emph on
+alt1_001.min1.pdb
+\emph default
+ file is edited with the set_occ Perl script to give each chain its own altloc identifier,
+ so that it can be passed into 
+\emph on
+phenix
+\emph default
+ with the original unit cell parameters.
+ (Instructions for using refmac5 instead of phenix are given in the 
+\family typewriter
+run_cycle
+\family default
+ script in the examples/4tut folder.) The run_phenix_refine script (not given here,
+ but is in the examples/4tut folder) runs 5 cycles of ADP-only refinement.
+ After this,
+ changes made by 
+\family typewriter
+set_occ
+\family default
+ to accommodate the original unit cell parameters are undone,
+ and some geometry checks are made.
+\end_layout
+
+\begin_layout Standard
+The output 
+\emph on
+alt1_001.pdb
+\emph default
+ file is ready for input for further cycles.
+ The next step would be run via
+\end_layout
+
+\begin_layout LyX-Code
+./run_cycle  1
+\end_layout
+
+\begin_layout Standard
+which would create an output 
+\emph on
+alt1_002.pdb
+\emph default
+ file.
+ Further cycles might continue to use minimization,
+ or could turn to MD-based refinement.
+ For example,
+ setting imin=0 and nmropt=1 (and probably modifying ntpr to a larger value) in the 
+\emph on
+$AMBERCLASSICHOME/src/xtalutil/ensemble_scripts/run_xyzopt
+\emph default
+ script,
+ would run a 10,000 step simulated annealing protocol;
+ something like this is often useful in getting structures to better R-factors and Amber energies.
 \end_layout
 
 \begin_layout Part
@@ -75340,13 +77166,13 @@ placement document
 alignment document
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
 \align center
 \begin_inset Graphics
-	filename /home/case/nabc/doc/AT.pair.eps
+	filename AT.pair.eps
 	width 85text%
 
 \end_inset

@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+@nums = (0..11);
+
+for $n (@nums) {
+   printf("bond x.%d.SG x.%d.SG\n",  3 + $n*105, 40 + $n*105);
+   printf("bond x.%d.SG x.%d.SG\n",  4 + $n*105, 32 + $n*105);
+   printf("bond x.%d.SG x.%d.SG\n", 16 + $n*105, 26 + $n*105);
+}
+

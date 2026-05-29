@@ -8,7 +8,7 @@ print "REMARK   select_alts run with seed of $ARGV[0]\n";
 #-----------------------------------------------------------------------
 # following is specfic to this particular system
 @repeats = ();
-$residuesperchain = 438;
+$residuesperchain = 105;
 #-----------------------------------------------------------------------
 
 for $i (@repeats){ $repeat[$i] = 1; }
@@ -81,11 +81,15 @@ if( $_ =~ /^ATOM|^HETATM/){
     $resno = int($resno1);
     $atno = int($atno1);
 
+    $resname = "CYX" if $resname eq "CYS";
+
     #  determine the relative residue number: only needed for repeats
     $relres = $resno % $residuesperchain;
 
     if( $resno != $resno_prev ){ 
        $rand = rand() unless defined $repeat[$relres];
+       $rand22 = $rand if $relres == 22;
+       $rand = $rand22 if $relres == 25;
        $resno_prev = $resno;
     }
 
