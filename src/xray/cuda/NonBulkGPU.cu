@@ -6,7 +6,8 @@
 
 #undef P212121
 #undef P21
-#define P6 1
+#undef P6
+#undef P21c
 #define NA  1
 #define NB  1
 #define NC  1
