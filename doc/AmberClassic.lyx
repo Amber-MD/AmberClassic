@@ -876,12 +876,31 @@ make clean && make install   # builds msander.cuda.MPI
 \end_layout
 
 \begin_layout Standard
+
+\series bold
 Please note:
+
+\series default
  CUDA acceleration only affects the Xray restraint terms.
  Further,
- msander.cuda.MPI is not parallelized across GPUs:
+ 
+\emph on
+msander.cuda.MPI 
+\emph default
+is not parallelized across GPUs:
  the force field terms are parallelized via MPI,
  and a single MPI thread runs the CUDA code for Xray restraints.
+ Also,
+ as of May,
+ 2026,
+ if symmetrized reflections are used (see Section ),
+ a separate 
+\emph on
+msander.cuda
+\emph default
+ exectuable must be constructed for each space group;
+ contact David Case,
+ <dacase1@gmail.com> for more information about this option.
 \end_layout
 
 \begin_layout Standard
@@ -58509,6 +58528,14 @@ literal "false"
 
  also adjusts the overall scaling coefficient that is applied to calculated SFs.
  The implementation follows the one in cctbx library with several minor modifications.
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Mikhailovskii24"
+literal "false"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -58537,6 +58564,110 @@ sf_outfile
 ).
 \end_layout
 
+\begin_layout Standard
+In the original versions of these codes,
+ crystal refinements were carried out without respect to spacegroup symmetry,
+ 
+\emph on
+i.e.
+
+\emph default
+ in P1.
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Gray21,Mikhailovskii22,Mikhailovskii24"
+literal "false"
+
+\end_inset
+
+ The lists of observed structure factors were expanded from their original form into P1 symmetry,
+ using CCP4 or phenix commands.
+ This procedure allows for conformational flexibility,
+ and is consistent with Amber's lack of support for spacegroup symmety,
+ but has two significant drawbacks.
+ First,
+ the final atomic model only approximately satisfies the symmetries apparent in the diffraction pattern;
+ second,
+ each individual chain is restrained to resemble that in the primary ASU of the crystal,
+ rather than requiring only that the total ensemble match experiment.
+\end_layout
+
+\begin_layout Standard
+Recently (in May,
+ 2026),
+ we have expanded the codes to account for spacegroup symmetries,
+ even though the unit cell (or supercell) coordinates do not.
+ In most crystallographic codes,
+ spacegroup symmetry is enforced by applying (in turn) the rotation/translation symmetry operators to the atomic coordinates,
+ re-computing the Fcalc values,
+ and carrying out an average of Fcalc over this set of symmetry operations;
+ there is no need to expand the list of observed structure factors to P1.
+ In 
+\emph on
+msander
+\emph default
+,
+ we use use a 
+\begin_inset Quotes eld
+\end_inset
+
+reciprocal space
+\begin_inset Quotes erd
+\end_inset
+
+ approach,
+ where the rotation/translation symmetry operators are applied during the structure factor calculation,
+ without the need to modify coordinates.
+ (This is referred to as 
+\begin_inset Quotes eld
+\end_inset
+
+symmetrization
+\begin_inset Quotes erd
+\end_inset
+
+ in the code,
+ although some better language might be used here.) The basic idea is this:
+\begin_inset Formula 
+\[
+F_{symm}(h,k,l)=\sum_{i}\exp[i\phi_{i}(h,k,l)]F(h',k',l')
+\]
+
+\end_inset
+
+where:
+\begin_inset Formula 
+\[
+(h',k',l')=R_{i}^{T}\cdot(h,k,l);\,\,\phi_{i}=2\pi(ht_{1}^{i}+kt_{2}^{i}+lt_{3}^{i})
+\]
+
+\end_inset
+
+and 
+\begin_inset Formula $R_{i}^{T}$
+\end_inset
+
+ is the transpose of the rotation matrix of the i-th symmetry operator,
+ and 
+\begin_inset Formula $t^{i}$
+\end_inset
+
+ is the corresponding translation vector.
+ (Rather than trying to directly encode the above (general) equations,
+ we have inserted the rotation/translation operators for several common biomolecular spacegroups,
+ leading to separate code sections for each supported spacegroup.) The symmetrized 
+\begin_inset Formula $\left|F_{symm}\right|$
+\end_inset
+
+ values are then compared to 
+\begin_inset Formula $F_{obs}$
+\end_inset
+
+ as discussed in the following section.
+ The amount of computational work is akin to what is done in the real-space procedure,
+ but (at least for our codes) the bookkeeping is simplified.
+\end_layout
+
 \begin_layout Subsection
 Structure-factor-based potential
 \end_layout
@@ -58552,13 +58683,9 @@ The X-ray energy term
 
  (controlled by 
 \emph on
-xray_weight_initial
+xray_weight 
 \emph default
- / 
-\emph on
-xray_weight_final 
-\emph default
-variables):
+variable):
  
 \end_layout
 
@@ -59070,6 +59197,105 @@ formatted MTZ
 \begin_layout Standard
 
 \series bold
+Spacegroup information:
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+spacegroup_number
+\begin_inset Index idx
+range none
+pageformat default
+status open
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\nospellcheck off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+spacegroup
+\backslash
+_number
+\end_layout
+
+\end_inset
+
+ CCP4 spacegroup number;
+ currently only 1,
+ 4,
+ 14,
+ 19,
+ and 168 are supported.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+spacegroup_name
+\begin_inset Index idx
+range none
+pageformat default
+status open
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\nospellcheck off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+spacegroup
+\backslash
+_name
+\end_layout
+
+\end_inset
+
+ String identifying the spacegroup,
+ as it appears in the CYRST1 record of the PDB legacy format.
+ Currently supported:
+ 'P 1',
+ 'P 1 21 1',
+ 'P 21 21 21',
+ 'P 1 21/c 1',
+ and 'P 6'.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+na,nb,nc Number of cells in the supercell,
+ along the 
+\emph on
+a,
+ b 
+\emph default
+and 
+\emph on
+c 
+\emph default
+crystal directions.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
 Bulk solvent parameters:
 \end_layout
 
@@ -59571,6 +59797,22 @@ bubbles
 \end_inset
 
  in a snapshot from a solvated MD simulation.
+\end_layout
+
+\begin_layout Description
+print_sg_rules.py Prints the rules for 
+\begin_inset Quotes eld
+\end_inset
+
+symmetrization
+\begin_inset Quotes erd
+\end_inset
+
+ of the computed structure factors,
+ as described in Section ??.
+ These results have been hand-inserted into the code for several spacegroups (P21,
+ P212121,
+ P21/c and P6 so far.)
 \end_layout
 
 \begin_layout Subsection
@@ -61720,6 +61962,21 @@ $AMBERCLASSICHOME/src/xtalutil/ensemble_scripts/run_xyzopt
  script,
  would run a 10,000 step simulated annealing protocol;
  something like this is often useful in getting structures to better R-factors and Amber energies.
+\end_layout
+
+\begin_layout Subsection
+Second example:
+ crambin,
+ 9ewk
+\end_layout
+
+\begin_layout Standard
+This example builds on the previous one,
+ primarily by having alternate conformations in the deposited PDB file.
+ Basically,
+ we randomly choose a particular altloc (weighted by its occupation) for each chain.
+ Files are in the examples/9ewk folder,
+ and explanations will be added here as time permits.
 \end_layout
 
 \begin_layout Part
