@@ -73,7 +73,7 @@ contains
         d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
             * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 14 ) then  ! P21/c
+        if( spacegroup_number .eq. 14 ) then  ! P21/c
 
            ! set #2:  -h,k,l
            hkls(1) = -hkl(1,ihkl)
