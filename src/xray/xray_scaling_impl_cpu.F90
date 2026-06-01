@@ -135,11 +135,17 @@ contains
   end subroutine optimize_scale_factors
   
   function combine (Fprot, Fbulk) result(result)
+    use xray_interface2_data_module, only : has_Fuser
     complex(real_kind), intent(in) :: Fprot(:) ! Unscaled protein (non-bulk) structure factors
     complex(real_kind), intent(in) :: Fbulk(size(Fprot)) ! Unscaled bulk structure factors
     complex(real_kind) :: result(size(Fprot)) ! Final Fcalc structure factors
     
-    result = Fprot + k_bulk * Fbulk
+    if( has_Fuser > 0 ) then
+       result = Fprot + Fbulk  ! don't scale Fuser relative to Fprot
+       write(6,*) 'combining Fprot and Fbulk'
+    else
+       result = Fprot + k_bulk * Fbulk
+    endif
   
   end function combine
   
