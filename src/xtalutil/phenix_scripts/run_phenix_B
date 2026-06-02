@@ -39,9 +39,9 @@ refinement {
   }
   pdb_interpretation {
     c_beta_restraints = False
-#    clash_guard {
-#      nonbonded_distance_threshold=None  
-#    }
+     clash_guard {
+       nonbonded_distance_threshold=None  
+     }
   }
   mask {
     ignore_hydrogens = True
