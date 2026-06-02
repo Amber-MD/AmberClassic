@@ -7,6 +7,7 @@
 #include <thrust/transform.h>
 
 #undef P212121
+#undef C121
 #undef P21
 #undef P6
 #undef P21c
@@ -185,6 +186,43 @@ namespace {
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
+
+#endif
+
+#ifdef C121
+        // spacegroup 5 code here
+
+        // set #3:  h, k,l
+        FloatType tmp2 = tmp;
+        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp2 = -tmp2; }
+        term_x[tid] += hkl[i_hkl * 3 + 0] * tmp2;
+        term_y[tid] += hkl[i_hkl * 3 + 1] * tmp2;
+        term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
+
+        // set #2: -h,k,-l
+        FloatType phase3 = -(
+          - hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+          + hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1]
+          - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        );
+        FloatType tmp3 = f * sin(phase3 + f_calc_phase[i_hkl]);
+        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 == 0 ){ 
+           term_x[tid] -= hkl[i_hkl * 3 + 0] * 2*tmp3;
+           term_y[tid] += hkl[i_hkl * 3 + 1] * 2*tmp3;
+           term_z[tid] -= hkl[i_hkl * 3 + 2] * 2*tmp3;
+        }
+
+        // set #4:  -h,k,-l
+        // FloatType phase4 = -(
+        //     hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+        //   - hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1]
+        //   - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        // );
+        // FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
+        // if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp4 = -tmp4; }
+        // term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
+        // term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
+        // term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 
 #endif
 

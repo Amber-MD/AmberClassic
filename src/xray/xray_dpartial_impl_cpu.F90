@@ -73,7 +73,79 @@ contains
         d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
             * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        if( spacegroup_number .eq. 14 ) then  ! P21/c
+        if( spacegroup_number .eq. 19 ) then  ! P212121
+
+           ! set #2:  -h,-k,l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) =  hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(1)/na + hkls(3)/nc, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #3:  h,-k,-l
+           hkls(1) =  hkl(1,ihkl)
+           hkls(2) = -hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #4:   -h,k,-l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) =  hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+        else if( spacegroup_number .eq. 5 ) then  ! C 1 2 1
+
+           ! set #3:  h,k,l
+           ! hkls(1) =  hkl(1,ihkl)
+           ! hkls(2) =  hkl(2,ihkl)
+           ! hkls(3) =  hkl(3,ihkl)
+           ! hkl_v(:) = hkls(:) * M_TWOPI
+
+           ! phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           ! f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) f = -f
+           d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #2:  -h,k,-l
+           hkls(1) = -hkl(1,ihkl)
+           hkls(2) =  hkl(2,ihkl)
+           hkls(3) = -hkl(3,ihkl)
+           hkl_v(:) = hkls(:) * M_TWOPI
+           phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           if( mod(hkls(1)/na + hkls(2)/nb, 2) .eq. 0 ) &
+             d_target_d_frac(:, i) = d_target_d_frac(:, i) + 2.d0*hkl_v(:) &
+               * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+           ! set #4:   -h,k,-l
+           ! hkls(1) = -hkl(1,ihkl)
+           ! hkls(2) =  hkl(2,ihkl)
+           ! hkls(3) = -hkl(3,ihkl)
+           ! hkl_v(:) = hkls(:) * M_TWOPI
+           ! phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
+           ! f = fa * cmplx(cos(phase), sin(phase), real_kind)
+           ! if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) f = -f
+           ! d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
+           !     * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
+
+        else if( spacegroup_number .eq. 14 ) then  ! P21/c
 
            ! set #2:  -h,k,l
            hkls(1) = -hkl(1,ihkl)
