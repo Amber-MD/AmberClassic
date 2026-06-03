@@ -9,6 +9,7 @@
 #undef P212121
 #undef P21212
 #undef C121
+#undef C2221
 #undef P21
 #undef P6
 #undef P21c
@@ -228,6 +229,74 @@ namespace {
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 
+#endif
+
+#ifdef C2221
+        // spacegroup 20 code here
+
+        // set #5: h,k,l
+        FloatType phase5 = -(
+            hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+          + hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1]
+          + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        );
+        FloatType tmp5 = f * sin(phase5 + f_calc_phase[i_hkl]);
+        if( (hkl[i_hkl + 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp5 = -tmp5; }
+        term_x[tid] += hkl[i_hkl * 3 + 0] * tmp5;
+        term_y[tid] += hkl[i_hkl * 3 + 1] * tmp5;
+        term_z[tid] += hkl[i_hkl * 3 + 2] * tmp5;
+
+        // set #2/6: -h,-k,l
+        FloatType phase2 = -(
+          - hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+          - hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1]
+          + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        );
+        FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
+        if( (hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
+        term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp2;
+        term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
+
+        FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
+        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_ihl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
+        term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp2;
+        term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
+
+        // set #3/7:  h,-k,-l
+        FloatType phase3 = -(
+            hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+          - hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1]
+          - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        );
+        FloatType tmp3 = f * sin(phase3 + f_calc_phase[i_hkl]);
+        term_x[tid]  = hkl[i_hkl * 3 + 0] * tmp3;
+        term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp3;
+        term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
+
+        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_ihl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp3 = -tmp3; }
+        term_x[tid]  = hkl[i_hkl * 3 + 0] * tmp3;
+        term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp3;
+        term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
+
+        // set #4/8:  -h,k,-l
+        FloatType phase4 = -(
+          - hkl[i_hkl * 3 + 0] * frac_by_2_pi[i * 3 + 0]
+          + hkl[i_hkl * 3 + 1] * frac_by_2_pi[i * 3 + 1]
+          - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
+        );
+        FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
+        if( (hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp4 = -tmp4; }
+        term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
+        term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
+        term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
+
+        FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
+        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_ihl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp4 = -tmp4; }
+        term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
+        term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
+        term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 #endif
 
 #ifdef C121

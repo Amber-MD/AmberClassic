@@ -7,6 +7,7 @@
 #undef P212121
 #undef P21212
 #undef C121
+#undef C2221
 #undef P21
 #undef P6
 #undef P21c
@@ -35,8 +36,7 @@ namespace {
     __shared__ thrust::complex<FloatType> term[BLOCK_SIZE];
     term[tid] = {};
 
-    // Basic code to compute f is here; (per xray_non_bulk.cu, this
-    // StraightForward code seems to be what is used
+    // Basic code to compute f is here; 
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -67,7 +67,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l2
         );
       
-        if( k2/NB % 2 != 0 ) {  //N.B.: NB is def-ed at top of file
+        if( k2/NB % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -189,6 +189,90 @@ namespace {
 
         if( (h4/NA + k4/NB) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
+        }
+
+#endif
+
+#ifdef C2221
+        // code for spacegroup 20:
+
+        // set #2/6: -h,-k,l
+        const int h2 = -hkl[i_hkl * 3 + 0];
+        const int k2 = -hkl[i_hkl * 3 + 1];
+        const int l2 =  hkl[i_hkl * 3 + 2];
+
+        const FloatType angle2 = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h2 +
+          frac_xyz[j_atom * 3 + 1] * k2 +
+          frac_xyz[j_atom * 3 + 2] * l2
+        );
+
+        if( (l2/NC) % 2 != 0 ) {
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
+        }
+        if( (h2/NA + k2/NB + l2/NC) % 2 != 0 ) {
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
+        }
+
+
+        // set #3/7: -h,k,-l
+        const int h3 = -hkl[i_hkl * 3 + 0];
+        const int k3 =  hkl[i_hkl * 3 + 1];
+        const int l3 = -hkl[i_hkl * 3 + 2];
+
+        const FloatType angle3 = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h3 +
+          frac_xyz[j_atom * 3 + 1] * k3 +
+          frac_xyz[j_atom * 3 + 2] * l3
+        );
+
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle3), f * std::sin(angle3)} * occupancy[j_atom];
+        if( (h3/NA + k3/NB) % 2 != 0 ) {
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
+        }
+
+        // set #4/8: h,-k,-l
+        const int h4 =  hkl[i_hkl * 3 + 0];
+        const int k4 = -hkl[i_hkl * 3 + 1];
+        const int l4 = -hkl[i_hkl * 3 + 2];
+
+        const FloatType angle4 = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h4 +
+          frac_xyz[j_atom * 3 + 1] * k4 +
+          frac_xyz[j_atom * 3 + 2] * l4
+        );
+
+        if( (l4/NC) % 2 != 0 ) {
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
+        }
+        if( (h4/NA + k4/NB + l4/NC) % 2 != 0 ) {
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
+        } else {
+          term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
+        }
+
+        // set #5: h,k,l
+        const int h5 =  hkl[i_hkl * 3 + 0];
+        const int k5 =  hkl[i_hkl * 3 + 1];
+        const int l5 =  hkl[i_hkl * 3 + 2];
+
+        const FloatType angle5 = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h5 +
+          frac_xyz[j_atom * 3 + 1] * k5 +
+          frac_xyz[j_atom * 3 + 2] * l5
+        );
+        if( (h5/NA + k5/NB) % 2 != 0 ) {
+          term[tid] -= thrust::complex<FloatType>{f * std::cos(angle5), f * std::sin(angle5)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         }
