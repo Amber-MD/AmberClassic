@@ -205,6 +205,73 @@ contains
          if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
+      else if( spacegroup_number .eq. 20 ) then   ! C 2 2 21
+
+         ! set #5:  h,k,l
+         if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) then
+            F_non_bulk(ihkl) = 0.d0
+         else
+            F_non_bulk(ihkl) = 2.*F_non_bulk(ihkl)
+         endif
+
+         ! set #2/6:  -h,-k,l
+         hkls(1) = -hkl(1,ihkl)
+         hkls(2) = -hkl(2,ihkl)
+         hkls(3) =  hkl(3,ihkl)
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
+         fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
+             sum(f(:) * sin(angle(:))), real_kind)
+         if( mod(hkls(3)/nc, 2) .ne. 0 ) then
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) - fcalcs
+         else
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+         endif
+
+         if( mod(hkls(1)/na + hkls(2)/nb + hkls(3)/nc , 2) .ne. 0 ) then
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) - fcalcs
+         else
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+         endif
+
+         ! set #4/8:  -h,k,-l
+         hkls(1) = -hkl(1,ihkl)
+         hkls(2) =  hkl(2,ihkl)
+         hkls(3) = -hkl(3,ihkl)
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
+         fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
+             sum(f(:) * sin(angle(:))), real_kind)
+         if( mod(hkls(3)/nc, 2) .ne. 0 ) then
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) - fcalcs
+         else
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+         endif
+
+         if( mod(hkls(1)/na + hkls(2)/nb + hkls(3)/nc , 2) .ne. 0 ) then
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) - fcalcs
+         else
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+         endif
+    
+         ! set #3/7:  h,-k,-l
+         hkls(1) =  hkl(1,ihkl)
+         hkls(2) = -hkl(2,ihkl)
+         hkls(3) = -hkl(3,ihkl)
+         angle(:) = M_TWOPI*(hkls(1)*frac(1,:) + &
+                             hkls(2)*frac(2,:) + &
+                             hkls(3)*frac(3,:))
+         fcalcs = cmplx(sum(f(:) * cos(angle(:))), &
+             sum(f(:) * sin(angle(:))), real_kind)
+         F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+         if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) then
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) - fcalcs
+         else
+            F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
+         endif
+
       else if( spacegroup_number .eq. 5 ) then   ! C 1 2 1
 
          ! set #3:   h,k, l
