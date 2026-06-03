@@ -59237,7 +59237,7 @@ _number
  14,
  18,
  19,
- and 168 are supported.
+ 20 and 168 are supported.
 \end_layout
 
 \begin_layout Labeling
@@ -59278,7 +59278,8 @@ _name
  'P 21 21 21',
  'P 21 21 2',
  'P 1 21/c 1',
- 'C 1 2 1' and 'P 6'.
+ 'C 1 2 1',
+ 'C 2 2 21'  and 'P 6'.
 \end_layout
 
 \begin_layout Labeling

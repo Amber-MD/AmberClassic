@@ -23,6 +23,7 @@ SHELL = /bin/sh
 AmberClassic.pdf: AmberClassic.lyx amberclassic.bib
 	-echo -n `date` > today
 	-$(LYX) --export pdf2 AmberClassic.lyx
+	-/bin/rm -f today
 
 clean::
 	/bin/rm -f AmberClassic.pdf
