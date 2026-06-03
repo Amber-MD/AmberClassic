@@ -59233,7 +59233,9 @@ _number
  CCP4 spacegroup number;
  currently only 1,
  4,
+ 5,
  14,
+ 18,
  19,
  and 168 are supported.
 \end_layout
@@ -59274,8 +59276,9 @@ _name
  'P 1',
  'P 1 21 1',
  'P 21 21 21',
+ 'P 21 21 2',
  'P 1 21/c 1',
- and 'P 6'.
+ 'C 1 2 1' and 'P 6'.
 \end_layout
 
 \begin_layout Labeling
