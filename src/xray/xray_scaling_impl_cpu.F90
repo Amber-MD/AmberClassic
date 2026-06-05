@@ -140,12 +140,11 @@ contains
     complex(real_kind), intent(in) :: Fbulk(size(Fprot)) ! Unscaled bulk structure factors
     complex(real_kind) :: result(size(Fprot)) ! Final Fcalc structure factors
     
-    if( has_Fuser > 0 ) then
-       result = Fprot + Fbulk  ! don't scale Fuser relative to Fprot
-       write(6,*) 'combining Fprot and Fbulk'
-    else
+    ! if( has_Fuser > 0 ) then
+    !    result = Fprot + Fbulk  ! don't scale Fuser relative to Fprot
+    ! else
        result = Fprot + k_bulk * Fbulk
-    endif
+    ! endif
   
   end function combine
   
