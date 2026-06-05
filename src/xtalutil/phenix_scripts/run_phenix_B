@@ -7,7 +7,24 @@ serial=$4
 cif=$5
 
 cat <<EOF > cdl.eff
+data_manager {
+  miller_array {
+    file = "$mtz"
+  }
+  default_miller_array = "$mtz"
+  model {
+    file = "$pdb"
+  }
+  default_model = "$pdb"
+}
 refinement {
+# input {
+#   bulk_solvent_map {
+#     file_name = Fuser_phenix.mtz
+#     amplitudes_label = Fpart
+#     phases_label = PHIpart
+#   }
+# }
   output {
     write_eff_file = False
     write_geo_file = False
@@ -61,6 +78,6 @@ output {
 }
 EOF
 
-phenix.refine  $pdb $mtz $cif cdl.eff 
+phenix.refine  cdl.eff
 
 /bin/rm -f cdl.eff 

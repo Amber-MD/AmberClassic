@@ -8,12 +8,12 @@ in=$1
 let out=$in+1
 out=$(printf "%03d" $out)
 
-id="alt5"
-supercell=" 128.700   52.430   89.110"
-origcell="  42.900   52.430   89.110"
-spacegroup=" P 1 21 1"
-residuesperchain=323
-mtzfile="../XrayPrep/4yuo.mtz"
+id="alt10"
+supercell="45.900   40.700   90.300"
+origcell="45.900   40.700   30.100"
+spacegroup=" P 21 21 21"
+residuesperchain=151
+mtzfile="../XrayPrep/1aho.mtz"
 
 #--------------------------------------------------------------------
 #  Optionally, run xyz refinement in Amber:
@@ -92,18 +92,22 @@ else
 # ========== run refmac with the md-derived solvent and
 #            disable the default flat bulk solvent
 
-./amber2refmac tmp.pdb
+# ./amber2refmac tmp.pdb
 
-refmac5 hklin refme.mtz xyzin tmp.pdb xyzout ${id}_$out.pdb \
+refmac5 hklin Fuser_refmac.mtz xyzin tmp.pdb xyzout ${id}_$out.pdb \
     << EOF > ${id}_$out.reflog
-LABIN FP=FP SIGFP=SIGFP FPART1=Fpart PHIP1=PHIpart FREE=FreeR_flag
+LABIN FP=FOBS SIGFP=SIGFOBS FREE=FreeR_flag FPART1=Fpart PHIP1=PHIpart
 SOLVENT NO
 MAKE NEWLigand Noexit
 SCPART 1
 NCYC 40
-REFI BREF
+REFI BREF ISOT
 DAMP 0 1 1
-MAKE HOUT
+monitor few
+make link no
+make ss no
+make hydr y
+make hout y
 EOF
 
 fi
