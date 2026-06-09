@@ -32,6 +32,20 @@
 #   EOF
 #
 #   The only files in the $sim_pdb_dir (set below) should be these pdb files
+# 
+# example from a 6o2h simulation:
+# cpptraj <<EOF
+# 
+# parm ../alt18wat.parm7
+# reference ../alt18wat.rst7
+# trajin ../alt18wat.md3.nc
+# rms reference nofit @C,CA,N&!:NO3 nofit out drift.dat time 0.2
+# rms reference fitbb @C,CA,N&!:NO3 norotate out drift.dat time 0.2
+# strip @1-26700
+# image byatom
+# trajout $pdbprefix.pdb pdb multi pdbv3 keepext sg "P 1"
+# go
+# EOF
 #
 ###############################################################################
 #
@@ -39,7 +53,7 @@
 #
 
 # directory with simulation pdb files:
-sim_pdb_dir=PDBData/
+sim_pdb_dir=PDBdata/
 
 # supercell multiplicity (x y z):
 MD_mult=( 1 1 1 )
@@ -48,16 +62,16 @@ MD_mult=( 1 1 1 )
 SG="P1"
 
 # grid spacing for SFALL map
-GRID="GRID 120 120 120"
+GRID="GRID 180 180 180"
 
 # flat B-factor added to frames in SFALL map calculation:
 B=15
 
 # structure factor calculation resolution limit:
-reso=1.0
+reso=1.1
 
 #  CRYST1 record from experimental PDB:
-CRYST="CRYST1   27.240   31.870   34.230  88.52 108.53 111.89 P 1           1 "
+CRYST="CRYST1   82.272   64.268   69.026  88.66 108.46 111.88 P 1           1 "
 
 ###############################################################################
 #
@@ -122,6 +136,8 @@ rm -f sfallme.pdb
 #                             MAIN                                     #
 ########################################################################
 
+if false; then
+
 # SET-UP:
 frames=`ls -1 $sim_pdb_dir | wc -l`  #no. of frames
 symops=`awk -v SG=$SG '$4==SG{print $2;exit}' ${CLIBD}/symop.lib` #no. of sym operations
@@ -163,6 +179,8 @@ echo -e "=======================\n"
 echo "Scaling map by 1/$scale"
 echo | mapdump mapin md_avg.map | egrep dens
 
+fi
+
 # CALCULATE SF FROM AVERAGE DENISTY MAP:
 sfall mapin md_avg.map hklout md_avg_1.mtz << EOF > /dev/null
 MODE SFCALC MAPIN
@@ -173,11 +191,9 @@ EOF
 sftools << EOF > /dev/null
 read md_avg_1.mtz
 set labels
-FP
-PHI
-calc Q COL SIGFP = 0.1
-calc W COL FOM = 0.9
-write md_avg_2.mtz col FP SIGFP PHI FOM
+Fpart
+PHIpart
+write md_avg_2.mtz col Fpart PHIpart
 y
 stop
 EOF
@@ -191,5 +207,4 @@ EOF
 # CLEAN:
 rm -f md_avg_1.mtz 
 rm -f md_avg_2.mtz
-rm -f sfall.mtz
 rm -f sum.map
