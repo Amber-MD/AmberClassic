@@ -8,12 +8,12 @@ in=$1
 let out=$in+1
 out=$(printf "%03d" $out)
 
-id="alt10"
-supercell="45.900   40.700   90.300"
-origcell="45.900   40.700   30.100"
-spacegroup=" P 21 21 21"
-residuesperchain=151
-mtzfile="../XrayPrep/1aho.mtz"
+id="alt17"
+supercell="82.272   64.268   69.026"
+origcell="27.424   32.134   34.513"
+spacegroup=" P 1"
+residuesperchain=159
+mtzfile="alt17-ext.mtz"
 
 #--------------------------------------------------------------------
 #  Optionally, run xyz refinement in Amber:
@@ -64,6 +64,7 @@ elsif (\$resno <= 12*\$residuesperchain ){ \$alt = "L"}
 \$resname = "HOH" if \$resname eq "WAT";
 \$resname = "HIS" if \$resname eq "HID";
 \$resname = "HIS" if \$resname eq "HIE";
+\$resname = "HIS" if \$resname eq "HIP";
 
 #
 #  write back out
@@ -159,5 +160,5 @@ perl -i.bak -n -f ./reset_occ ${id}_$out.pdb  # gets file for next msander run
 phenix.molprobity ${id}_$out.pdb > ${id}_$out.molp
 phenix.holton_geometry_validation ${id}_$out.pdb > ${id}_$out.hgv
 
-/bin/rm -f molprobity* ${id}_$out.eff tmp.pdb phenix.log set_occ reset_occ
+/bin/rm -f molprobity* ${id}_$out.eff tmp.pdb phenix.log set_occ reset_occ nb.txt
 
