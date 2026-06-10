@@ -34,18 +34,26 @@
 #   The only files in the $sim_pdb_dir (set below) should be these pdb files
 # 
 # example from a 6o2h simulation:
-# cpptraj <<EOF
-# 
-# parm ../alt18wat.parm7
-# reference ../alt18wat.rst7
-# trajin ../alt18wat.md3.nc
-# rms reference nofit @C,CA,N&!:NO3 nofit out drift.dat time 0.2
-# rms reference fitbb @C,CA,N&!:NO3 norotate out drift.dat time 0.2
-# strip @1-26700
-# image byatom
-# trajout $pdbprefix.pdb pdb multi pdbv3 keepext sg "P 1"
-# go
-# EOF
+
+if false; then
+
+pdbprefix="PDBdata/alt18wat"
+
+cpptraj <<EOF
+parm alt18wat.parm7
+reference alt18wat.rst7
+trajin alt18wat.md3.nc
+rms reference nofit @C,CA,N&!:NO3 nofit out drift.dat time 0.2
+rms reference fitbb @C,CA,N&!:NO3 norotate out drift.dat time 0.2
+strip @1-26700
+image byatom
+trajout $pdbprefix.pdb pdb multi pdbv3 keepext sg "P 1"
+go
+EOF
+
+exit
+
+fi
 #
 ###############################################################################
 #
@@ -62,7 +70,7 @@ MD_mult=( 1 1 1 )
 SG="P1"
 
 # grid spacing for SFALL map
-GRID="GRID 180 180 180"
+GRID="GRID 200 200 200"
 
 # flat B-factor added to frames in SFALL map calculation:
 B=15
@@ -136,7 +144,7 @@ rm -f sfallme.pdb
 #                             MAIN                                     #
 ########################################################################
 
-if false; then
+if true; then
 
 # SET-UP:
 frames=`ls -1 $sim_pdb_dir | wc -l`  #no. of frames
