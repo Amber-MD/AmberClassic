@@ -16,7 +16,7 @@ id="4zm7"
 idalt="alt1"
 seed=1
 #  supercell unit cell parameters:
-a=45.764
+a=137.292
 b=57.955
 c=63.079
 al=90.0
@@ -24,11 +24,13 @@ bt=90.0
 gm=90.0
 
 #==========================================================================
-#  set up unit cell (alternative is to use phenix or gemmi here),
-#     and supercell
+#  set up unit cell and supercell
 #==========================================================================
 
-UnitCell -p $id.pdb -o ${id}_uc.pdb
+# N.B.: AmberClassic UnitCell program requires REMARK 290 records
+# UnitCell -p $id.pdb -o ${id}_uc.pdb
+# one alternative is to use gemmi:
+gemmi convert --assembly unit_cell $id.pdb ${id}_uc.pdb
 PropPDB -p ${id}_uc.pdb -o ${id}_${nabc}uc.pdb -ix $na -iy $nb -iz $nc
 
 #==========================================================================
