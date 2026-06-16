@@ -1,0 +1,293 @@
+#!/bin/bash
+
+#  collect earlier scripts to set up Amber crystal simulations
+
+#==========================================================================
+#  set variables here:
+#==========================================================================
+
+na=3      # cells along a axis
+nb=1      # cells along b axis
+nc=1      # cells along c axis
+let nabc=$na*$nb*$nc
+residuesperchain=609
+repeats="(100..103)"
+id="4zm7"
+idalt="alt1"
+seed=1
+#  supercell unit cell parameters:
+a=45.764
+b=57.955
+c=63.079
+al=90.0
+bt=90.0
+gm=90.0
+
+#==========================================================================
+#  set up unit cell (alternative is to use phenix or gemmi here),
+#     and supercell
+#==========================================================================
+
+UnitCell -p $id.pdb -o ${id}_uc.pdb
+PropPDB -p ${id}_uc.pdb -o ${id}_${nabc}uc.pdb -ix $na -iy $nb -iz $nc
+
+#==========================================================================
+#  set chainID's for each ASU:
+#==========================================================================
+
+cat <<EOF > set_chainID
+#
+#   first, read in a pdb file line and unpack
+#
+\$residuesperchain=$residuesperchain;
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop(\$_);
+\$_ .= "                                                                    ";
+
+( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno, \$iCode,
+      \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+#
+#  do modifications necessary here:
+#
+if    (\$resno <=    \$residuesperchain ){ \$chainId = "A"; }
+elsif (\$resno <=  2*\$residuesperchain ){ \$chainId = "B"; }
+elsif (\$resno <=  3*\$residuesperchain ){ \$chainId = "C"; }
+elsif (\$resno <=  4*\$residuesperchain ){ \$chainId = "D"; }
+elsif (\$resno <=  5*\$residuesperchain ){ \$chainId = "E"; }
+elsif (\$resno <=  6*\$residuesperchain ){ \$chainId = "F"; }
+elsif (\$resno <=  7*\$residuesperchain ){ \$chainId = "G"; }
+elsif (\$resno <=  8*\$residuesperchain ){ \$chainId = "H"; }
+elsif (\$resno <=  9*\$residuesperchain ){ \$chainId = "I"; }
+elsif (\$resno <= 10*\$residuesperchain ){ \$chainId = "J"; }
+elsif (\$resno <= 11*\$residuesperchain ){ \$chainId = "K"; }
+elsif (\$resno <= 12*\$residuesperchain ){ \$chainId = "L"; }
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+} else {
+   print;
+}
+EOF
+
+perl -n -i.bak -f ./set_chainID ${id}_${nabc}uc.pdb
+
+#==========================================================================
+#  select alternates to be used
+#==========================================================================
+
+cat <<EOF > select_alts
+
+\$resno_prev = 0;
+\$chain_prev = "";
+\$seed = srand(int(\$ARGV[0]));
+print "REMARK   select_alts run with seed of \$ARGV[0]\n"; 
+
+#-----------------------------------------------------------------------
+# following is specfic to this particular system
+@repeats = $repeats;
+\$residuesperchain = $residuesperchain;
+#-----------------------------------------------------------------------
+
+for \$i (@repeats){ \$repeat[\$i] = 1; }
+
+
+open( PDB, "<", \$ARGV[1] );
+
+#-----------------------------------------------------------------------
+#  first: find all the alternates that are in the input file:
+#-----------------------------------------------------------------------
+
+ATOM: while (<PDB>){
+
+   if( \$_ =~ /^ATOM|^HETATM/){
+
+   #  expand to 80+ characters (really hokey version):
+   chop(\$_);
+   \$_ .= "                                                                    ";
+
+   ( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno1, \$iCode,
+         \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+       unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+   \$resno = int(\$resno1);
+   \$altocc{\$resno . \$alt} = \$occ if \$alt ne " ";
+
+   }
+}
+seek PDB, 0, 0;  # rewind the input file
+\$max_res = \$resno;
+
+#-----------------------------------------------------------------------
+#  next, use the alternate info above to select the ensemble:
+#-----------------------------------------------------------------------
+
+@res = (1..\$max_res);
+for \$res (@res) {
+    if (defined \$altocc{\$res . "A"}) {
+       \$sum_occ = \$altocc{\$res . "A"} +
+                  \$altocc{\$res . "B"} +
+                  \$altocc{\$res . "C"} +
+                  \$altocc{\$res . "D"} +
+                  \$altocc{\$res . "E"};
+       \$altocc{\$res . "A"} /= \$sum_occ;
+       \$altocc{\$res . "B"} /= \$sum_occ;
+       \$altocc{\$res . "C"} /= \$sum_occ;
+       \$altocc{\$res . "D"} /= \$sum_occ;
+       \$altocc{\$res . "E"} /= \$sum_occ;
+    }  
+}
+
+#-----------------------------------------------------------------------
+#  next, use the alternate info above to select the ensemble:
+#-----------------------------------------------------------------------
+
+ATOM: while (<PDB>){
+
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+    #  expand to 80+ characters (really hokey version):
+    chop(\$_);
+    \$_ .= "                                                                    "; 
+    ( \$label, \$atno1, \$atname, \$alt, \$resname, \$chainId, \$resno1, \$iCode,
+          \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+        unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+    \$resno = int(\$resno1);
+    \$atno = int(\$atno1);
+
+    #  determine the relative residue number: only needed for repeats
+    \$relres = \$resno % \$residuesperchain;
+
+    if( \$resno != \$resno_prev ){ 
+       \$rand = rand() unless defined \$repeat[\$relres];
+       \$resno_prev = \$resno;
+    }
+
+    # N.B.: following should not require conformers to be in alphabetical order
+
+    if( \$alt eq "A" ){
+        next ATOM if \$rand > \$altocc{\$resno."A"}; 
+    } elsif( \$alt eq "B" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"}; 
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"}; 
+    } elsif( \$alt eq "C" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"} + \$altocc{\$resno."B"}; 
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"};
+    } elsif( \$alt eq "D" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"};
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"} + \$altocc{\$resno."D"};
+    } elsif( \$alt eq "E" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"} + \$altocc{\$resno."D"};
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"} + \$altocc{\$resno."D"}
+                           + \$altocc{\$resno."E"};
+    } elsif( \$alt eq "F" ){
+        print STDERR "Error: should never have an F conformer\n";
+        exit(1);
+    } elsif( \$alt ne " " ){ 
+        print STDERR "Error: trouble processing altocc \$altocc\n";
+        exit(1);
+    }
+                          
+    \$occ = 1.0;
+    \$alt = " ";
+
+    #
+    #  write back out
+    #
+    printf 
+    "%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+          \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
+            \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+
+} else {
+    print;
+}
+
+}
+EOF
+
+perl -f ./select_alts $seed ${id}_${nabc}uc.pdb > $idalt.pdb
+
+#-----------------------------------------------------------------------
+#  if needed, set up sslinks (should go away with updated tleap):
+#-----------------------------------------------------------------------
+
+if true; then
+
+cat << EOF > make_sslinks
+\$rpc = $residuesperchain;
+@nums = (0..11);
+
+for \$n (@nums) {
+   printf("bond x.%d.SG x.%d.SG\n", 21 + \$n*\$rpc, 116 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 26 + \$n*\$rpc, 54 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 57 + \$n*\$rpc, 142 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 87 + \$n*\$rpc, 96 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 158 + \$n*\$rpc, 172 + \$n*\$rpc);
+}
+EOF
+
+perl -f ./make_sslinks > sslinks
+
+fi
+
+#-----------------------------------------------------------------------
+#  prepare Amber files using tleap;
+#-----------------------------------------------------------------------
+
+cat <<EOF > tleap.in
+set default nocenter on
+set default reorder_residues off
+source leaprc.protein.ff19SB
+source leaprc.water.spce
+source leaprc.gaff2
+x = loadPdb $idalt.pdb
+source sslinks
+set x box { $a $b $c }
+saveAmberParm x $idalt.parm7 foo.rst7
+quit
+EOF
+
+tleap -f tleap.in > tleap.out \
+   || { echo "  tleap:  Program error"; exit 1; }
+/bin/rm tleap.in
+
+ChBox -c foo.rst7 -o ${idalt}.rst7 -al $al -bt $bt -gm $gm \
+    -X $a -Y $b -Z $c \
+   || { echo "  ChBox:  Program error"; exit 1; }
+
+$AMBERCLASSICHOME/bin/add_pdb -i $idalt.parm7 -p ${idalt}.pdb -o foo.parm7 \
+   >& add_pdb.log || { echo "  add_pdb:  Program error"; exit 1; }
+
+$AMBERCLASSICHOME/bin/add_xray -i foo.parm7 -o ${idalt}.parm7 \
+   >& add_xray.log || { echo "  add_xray:  Program error"; exit 1; }
+
+$AMBERCLASSICHOME/bin/ambpdb -p ${idalt}.parm7 -ext < ${idalt}.rst7 \
+   > ${idalt}_000.pdb 2> /dev/null || { echo "  ambpdb:  Program error"; exit 1; }
+
+/bin/rm -f foo.parm7 foo.rst7
+
+#-----------------------------------------------------------------------
+#  cleanup:
+#-----------------------------------------------------------------------
+
+/bin/rm -f set_chainID select_alts make_sslinks leap.log \
+   ${id}_${nabc}uc.pdb.bak add_pdb.log add_xray.log
