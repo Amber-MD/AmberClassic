@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 
+$rpc = 242;
 @nums = (0..11);
 
 for $n (@nums) {
-   printf("bond x.%d.SG x.%d.SG\n", 12 + $n*141, 63 + $n*141);
-   printf("bond x.%d.SG x.%d.SG\n", 16 + $n*141, 36 + $n*141);
-   printf("bond x.%d.SG x.%d.SG\n", 22 + $n*141, 46 + $n*141);
-   printf("bond x.%d.SG x.%d.SG\n", 26 + $n*141, 48 + $n*141);
+   printf("bond x.%d.FE x.%d.NE2\n", 156 + $n*$rpc, 93 + $n*$rpc);
+   printf("bond x.%d.FE x.%d.C\n",   156 + $n*$rpc, 157 + $n*$rpc);
 }
 
