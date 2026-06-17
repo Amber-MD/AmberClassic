@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#  run "cycles" of xyz and adp optimization; optionall to geometry checks
+
+./xyz_opt  $in
+
+./adp_opt  $in
+
+
+#--------------------------------------------------------------------------
+#  Run some geometry checks:
+#--------------------------------------------------------------------------
+phenix.molprobity ${id}_$out.pdb > ${id}_$out.molp
+phenix.holton_geometry_validation ${id}_$out.pdb > ${id}_$out.hgv
+
+/bin/rm molp* nb.txt 
+

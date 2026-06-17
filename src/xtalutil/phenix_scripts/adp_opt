@@ -149,7 +149,7 @@ refinement {
 }
 output {
   prefix = "$id"
-  serial = "$serial"
+  serial = "$out"
   overwrite = True
 }
 EOF
@@ -198,12 +198,6 @@ printf
 }
 EOF
 perl -i.bak -n -f ./reset_occ ${id}_$out.pdb  # gets file for next msander run
-
-#--------------------------------------------------------------------------
-#  Run some geometry checks:
-#--------------------------------------------------------------------------
-# phenix.molprobity ${id}_$out.pdb > ${id}_$out.molp
-# phenix.holton_geometry_validation ${id}_$out.pdb > ${id}_$out.hgv
 
 /bin/rm -f ${id}_$out.eff tmp.pdb phenix.log set_occ reset_occ
 
