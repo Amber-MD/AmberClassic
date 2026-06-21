@@ -1,10 +1,17 @@
 #!/bin/bash
 
-#  run "cycles" of xyz and adp optimization; optionall to geometry checks
+#  run "cycles" of xyz and adp optimization; optionally do geometry checks
 
-./xyz_opt  $in
+in=$1
 
-./adp_opt  $in
+let out=$in+1
+out=$(printf "%03d" $out)
+
+id="alt5"
+
+# ./xyz_opt  $in
+
+# ./adp_opt  $in
 
 
 #--------------------------------------------------------------------------
