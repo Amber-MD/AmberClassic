@@ -231,7 +231,7 @@ static	unsigned short	SusaPrimes[] = {
  *	Algorithm is fairly standard shift and xor stuff.
  */
 static int
-ziHTHash( HASH_TABLE htTable, char *sKey )
+ziHTHash( HASH_TABLE htTable, const char *sKey )
 {
 register unsigned char	*RucPC;
 register unsigned int	RiValue = 0;
@@ -288,7 +288,7 @@ HASH_LISTt	*hlPNew;
  *	contains the key.
  */
 static HASH_LISTt **
-zhlPPHTSearchList( HASH_LISTt **hlPPStart, char *sKey )
+zhlPPHTSearchList( HASH_LISTt **hlPPStart, const char *sKey )
 {
 HASH_LISTt	**hlPPCur;
 
@@ -426,7 +426,7 @@ HASH_LISTt	**hlPPNew;
 
     iPos = ziHTHash( htTable, sKey );
 
-    MESSAGE(( "Inserting in HASH_TABLE at: %d\n", iPos ));
+    MESSAGE("Inserting in HASH_TABLE at: %d\n", iPos );
 
 		/* Insert the key/data into the list */
 
@@ -449,7 +449,7 @@ HASH_LISTt	**hlPPNew;
  *	Return NULL if nothing was found.
  */
 GENP
-PHTFind( HASH_TABLE htTable, char *sKey )
+PHTFind( HASH_TABLE htTable, const char *sKey )
 {
 int		iPos;
 GENP		PData;
@@ -459,7 +459,7 @@ HASH_LISTt	**hlPPPre;
 
     iPos = ziHTHash( htTable, sKey );
 
-    MESSAGE(( "Searching HASH_TABLE at: %d\n", iPos ));
+    MESSAGE("Searching HASH_TABLE at: %d\n", iPos );
 
 		/* Insert the key/data into the list */
 
@@ -485,7 +485,7 @@ HASH_LISTt	**hlPPPre;
  *	Return the pointer to the data stored in that entry.
  */
 BOOL
-bHTDelete( HASH_TABLE htTable, char *sKey, char **cPPKey, GENP *PPData )
+bHTDelete( HASH_TABLE htTable, const char *sKey, char **cPPKey, GENP *PPData )
 {
 int		iPos;
 HASH_LISTt	**hlPPPre;
@@ -495,7 +495,7 @@ HASH_LISTt	*hlPFree;
 
     iPos = ziHTHash( htTable, sKey );
 
-    MESSAGE(( "Searching HASH_TABLE at: %d\n", iPos ));
+    MESSAGE("Searching HASH_TABLE at: %d\n", iPos );
 
 		/* Search for the key in the list */
 
@@ -531,18 +531,18 @@ HTDescribe( HASH_TABLE htTable )
 HASH_LISTt	*hlPCur;
 int		i;
 
-    PRINTF(( "HASH_TABLE    %d elements\n", htTable->iTableSize ));
+    PRINTF("HASH_TABLE    %d elements\n", htTable->iTableSize );
     for ( i=0; i<htTable->iTableSize; i++ ) {
 	if ( htTable->hlPaTable[i] ) {
 	    hlPCur = htTable->hlPaTable[i];
-	    PRINTF(( "[%3d] = %s\n", i, hlPCur->heEntry.cPKey ));
+	    PRINTF("[%3d] = %s\n", i, hlPCur->heEntry.cPKey );
 	    hlPCur = hlPCur->hlPNext;
 	    while ( hlPCur ) {
-		PRINTF(( "        %s\n", hlPCur->heEntry.cPKey ));
+		PRINTF("        %s\n", hlPCur->heEntry.cPKey );
 		hlPCur = hlPCur->hlPNext;
 	    }
 	} else {
-	    PRINTF(( "[%3d] = NULL\n", i ));
+	    PRINTF("[%3d] = NULL\n", i );
 	}
     }
 

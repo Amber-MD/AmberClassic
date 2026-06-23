@@ -83,7 +83,7 @@ typedef ODOUBLEt	*ODOUBLE;
 /*      Define Create, Destroy, Describe methods */
 
 
-extern ODOUBLE		odODoubleCreate();
+extern ODOUBLE		odODoubleCreate(void);
 extern void		ODoubleDestroy(ODOUBLE *odPDbl);
 extern void		ODoubleDescribe(ODOUBLE odDbl);
 extern ODOUBLE		odODoubleDuplicate( ODOUBLE od );

@@ -212,7 +212,7 @@ DISPLAYERNODE	dnCur, dnPrev;
 	return(TRUE);
     }
 
-    DFATAL(( "DISPLAYER could not find callback/data pair\n" ));
+    DFATAL("DISPLAYER could not find callback/data pair\n" );
     return(FALSE);
 
 }
@@ -252,7 +252,7 @@ DISPLAYERNODE	dnCur;
 		if ( dTmp == dDisp )
 			return;
     	if ( dDisp->dNext != NULL )
-		DFATAL(("bad dDisp->dNext pointer\n"));
+		DFATAL("bad dDisp->dNext pointer\n");
 	dDisp->dNext = SdDisplayerAccumulateList;
 	SdDisplayerAccumulateList = dDisp;
 	return;
@@ -297,7 +297,7 @@ DisplayerReleaseUpdates()
 DISPLAYER	dCur, dPrev;
 
     if ( GiDisplayerAccumulateUpdates == 0 ) {
-    	DFATAL(( "Too many DisplayerReleaseUpdates called." ));
+    	DFATAL("Too many DisplayerReleaseUpdates called." );
     }
 
     GiDisplayerAccumulateUpdates--;
@@ -332,8 +332,7 @@ TurnOffDisplayerUpdates()
 {
 	if ( GbGraphicalEnvironment ) {
 		if ( iOffed )
-			DFATAL(( 
-			    " programmer error - TurnOffDisplayerUpdates\n" ));
+			DFATAL(" programmer error - TurnOffDisplayerUpdates\n" );
 		iOffed++;
 		GbGraphicalEnvironment = FALSE;
 	}

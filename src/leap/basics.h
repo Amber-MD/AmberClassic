@@ -85,8 +85,10 @@
 # undef ATOM
 # undef ERROR
 
+# define strcasecmp _stricmp
 #else
 # include <unistd.h>
+# include <strings.h>
 #endif
 
 
@@ -128,17 +130,6 @@
 
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
-#endif
-
-// functions
-// ---------------------------------------------------------------------
-
-#ifndef HAVE_TOLOWER
-# define        tolower(c)      ( c - 'A' + 'a' )
-#endif
-
-#ifndef HAVE_TOUPPER
-# define        toupper(c)      ( c - 'a' + 'A' )
 #endif
 
 // types
@@ -191,19 +182,6 @@ typedef unsigned char   BOOL;
 #ifdef __APPLE__
   // for PATH_MAX
 # include <sys/syslimits.h> 
-#endif
-
-// functions
-// ---------------------------------------------------------------------
-
-extern	double	strtod();
-
-#ifndef tolower
-# define        tolower(c)      ( c - 'A' + 'a' )
-#endif
-
-#ifndef toupper
-# define        toupper(c)      ( c - 'a' + 'A' )
 #endif
 
 // types
@@ -302,7 +280,7 @@ typedef struct  {
 /* 10^{-12} */
 #define VERYSMALL       0.000000000001
 #define TOLERANCE       0.001           /* Used for comparing doubles */
-#define DEGTORAD        0.0174533
+#define DEGTORAD        0.01745329251994329576 // Was 0.0174533
 
 
 extern  double  zzdS,zzdS6;
@@ -388,17 +366,14 @@ extern  BOOL    GbInterrupt;
 #define BasicsSetInterrupt()    ( GbInterrupt = TRUE )
 
 
-
-
-
 /*
  *      Some basic functions found in basics.c
  */
 
 
                 /* Convert cases */
-#define cUpper(c)       ( (c)>='a'&&(c)<='z' ? toupper((c)) : (c) )
-#define cLower(c)       ( (c)>='A'&&(c)<='Z' ? tolower((c)) : (c) )
+#define cUpper(c) (((c) >= 'a' && (c) <= 'z') ? ((c) & ~0x20) : (c))
+#define cLower(c) (((c) >= 'A' && (c) <= 'Z') ? ((c) | 0x20) : (c))
 
 
 
@@ -411,6 +386,8 @@ extern  BOOL    GbInterrupt;
 #define isdigit( c )    ( (c>='0')&&(c<='9'))
 #endif
 
+// for avoiding compiler warnings on compile-condition ignored variables (e.g. DEBUG)
+#define UNUSED(x) ((void)(x))
 
 
 
@@ -419,8 +396,8 @@ extern  BOOL    GbInterrupt;
  *
  *      This is a general facility for printing information
  *      to the user.
- *      The global variable GiVerboseLevel contains a
- *      value that determines whether or not to print a message 
+ *      The global variable GiVerbosityLevel contains a
+ *      value that determines whether or not to print a message
  *      to the stdout.
  *      Also, if the file variable GhAllOut is not -1 then
  *      ALL output is written to the stream GhAllOut regardless
@@ -445,6 +422,8 @@ extern  BOOL    GbInterrupt;
  *      to the TTY screen using 'printf'.
  */
 
+#define MAXCHARSPERPRINTF       4096    /* 4096 characters max */
+
 typedef void            (*VFUNCTION)();
 
 extern BOOL             GbPrintPrefix;
@@ -454,24 +433,33 @@ extern GENP             GPData;
 
 extern int              GiTraceIndentationLevel;
 extern int              GiVerbosityLevel;
-extern int              GiVerbosity;
 extern FILE             *GfLog;
 
-#define VerbositySet( x )       ( GiVerbosityLevel = x )
-#define iVerbosity()            ( GiVerbosityLevel )
+#define VerbositySet( x )        ( GiVerbosityLevel = x )
+#define iVerbosity()             ( GiVerbosityLevel )
 #define VerbositySetLogFile( x ) ( GfLog = x )
-#define fVerbosityLogFile()     ( GfLog )
+#define fVerbosityLogFile()      ( GfLog )
 
+/*
+ *      Verbose print macros.
+ *
+ *      Message level is the first argument; compared against GiVerbosityLevel
+ *      inside myPrintf.  No double-parens, no global side effects.
+ *
+ *      VP(level, fmt, ...)  — generic, explicit level
+ *      VP0..VP4             — convenience wrappers for common levels
+ *      VPDISPLAY            — always prints (level -1, never filtered)
+ *      VPLOG                — log-only / trace-level (level 99999)
+ */
+#define VPDISPLAY(...)      myPrintf(-1,     __VA_ARGS__)
+#define VP0(...)            myPrintf(0,      __VA_ARGS__)
+#define VP1(...)            myPrintf(1,      __VA_ARGS__)
+#define VP2(...)            myPrintf(2,      __VA_ARGS__)
+#define VP3(...)            myPrintf(3,      __VA_ARGS__)
+#define VP4(...)            myPrintf(4,      __VA_ARGS__)
+#define VPLOG(...)          myPrintf(99999,  __VA_ARGS__)
+#define VP(level, ...)      myPrintf((level),__VA_ARGS__)
 
-#define VPDISPLAY( m )  ( GiVerbosity =-1, myPrintf m)
-#if 1
-#  define VP0( m )        ( GiVerbosity = 0, myPrintf m)
-#else
-#  define VP0( m )        ( printf m)
-#endif
-#define VP1( m )        ( GiVerbosity = 1, myPrintf m)
-#define VP2( m )        ( GiVerbosity = 2, myPrintf m)
-#define VPLOG( m )      ( GiVerbosity = 99999, myPrintf m)
 
 /*
  *      VPERROR, VPFATAL, VPFATALDELAYEDEXIT, VPFATALEXIT, VPWARN, and VPNOTE
@@ -479,7 +467,7 @@ extern FILE             *GfLog;
  *      They are the preferred mechanism for user notifications to ensure
  *      consistency in the user interface and from a software methodology
  *      perspective to follow the principle of information hiding.
- *      
+ *
  *      Their behavior depends on whether LEaP is getting input from
  *      standard input (note that input to LEaP cannot be redirected)
  *      or from an input file.  The VPFATAL*EXIT macros check for stdin:
@@ -490,7 +478,7 @@ extern FILE             *GfLog;
  */
 
 extern STRING  GsProgramName;  /* in parser.h, but not easy to include that */
-extern FILE    *fINPUTFILE();  /* in parser.h, but not easy to include that */
+extern FILE    *fINPUTFILE(void);  /* in parser.h, but not easy to include that */
 extern int     GiVPerrorCount;   /* Count the number of Fatal errors */
 extern int     GiVPwarningCount; /* Count the number of Warnings */
 extern int     GiVPnoteCount;    /* Count the number of Notes */
@@ -498,27 +486,22 @@ extern int     GiVPnoteCount;    /* Count the number of Notes */
 /*
  *      VPEPILOG emits the numbers of errors, warnings, and notes.
  */
-#define VPEPILOG( )     ( \
-                            myPrintf( "\nExiting LEaP: Errors = %i; Warnings " \
-                            "= %i; Notes = %i.\n", GiVPerrorCount, \
-                            GiVPwarningCount, GiVPnoteCount ) \
-                        )
+#define VPEPILOG() \
+    myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
+             GiVPerrorCount, GiVPwarningCount, GiVPnoteCount)
 
 /*
  *      VPERROR is for the uncommon case of error reporting where immediate
- *      aborting is not desired usually in order to check for more issues.
+ *      aborting is not desired, usually in order to check for more issues.
  */
-#define VPERROR( m )    if ( fINPUTFILE() == NULL ) { \
-                            ++ GiVPerrorCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\nError: " ), \
-                            myPrintf m ; \
-                        } else ( \
-                            ++ GiVPerrorCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\n%s: Error!\n", GsProgramName ), \
-                            myPrintf m \
-                        )
+#define VPERROR( fmt, ... ) do { \
+        ++GiVPerrorCount; \
+        if ( fINPUTFILE() == NULL ) { \
+            myPrintf(0, "\nError: " fmt, ##__VA_ARGS__); \
+        } else { \
+            myPrintf(0, "\n%s: Error!\n" fmt, GsProgramName, ##__VA_ARGS__); \
+        } \
+    } while (0)
 
 /*
  *      VPFATAL and VPFATALDELAYEDEXIT are for error handling that spans
@@ -526,121 +509,104 @@ extern int     GiVPnoteCount;    /* Count the number of Notes */
  *      detection and reporting use VPFATAL and subsequent termination
  *      occurs in a parent function via VPFATALDELAYEDEXIT.
  */
-#define VPFATAL( m )    if ( fINPUTFILE() == NULL ) { \
-                            ++ GiVPerrorCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\nError: " ), \
-                            myPrintf m ; \
-                        } else ( \
-                            ++ GiVPerrorCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\n%s: Fatal Error!\n", GsProgramName ), \
-                            myPrintf m \
-                        )
-#define VPFATALDELAYEDEXIT( m ) if ( fINPUTFILE() == NULL ) { \
-                            GiVerbosity = 0, \
-                            myPrintf m ; \
-                        } else ( \
-                            GiVerbosity = 0, \
-                            myPrintf m , \
-                            myPrintf( "\nExiting LEaP: Errors = %i; Warnings " \
-                            "= %i; Notes = %i.\n", GiVPerrorCount, \
-                            GiVPwarningCount, GiVPnoteCount ), \
-                            exit(21) \
-                        )
+#define VPFATAL( fmt, ... ) do { \
+        ++GiVPerrorCount; \
+        if ( fINPUTFILE() == NULL ) { \
+            myPrintf(0, "\nError: " fmt, ##__VA_ARGS__); \
+        } else { \
+            myPrintf(0, "\n%s: Fatal Error!\n" fmt, GsProgramName, ##__VA_ARGS__); \
+        } \
+    } while (0)
+
+#define VPFATALDELAYEDEXIT( fmt, ... ) do { \
+        myPrintf(0, fmt, ##__VA_ARGS__); \
+        if ( fINPUTFILE() != NULL ) { \
+            myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
+                     GiVPerrorCount, GiVPwarningCount, GiVPnoteCount); \
+            exit(21); \
+        } \
+    } while (0)
+
 /*
  *      VPFATALEXIT is for the common case of error reporting and immediate
  *      aborting (in the non interactive mode of usage of LEaP) at the
  *      point of error detection.
  */
-#define VPFATALEXIT( m ) if ( fINPUTFILE() == NULL ) { \
-                            ++ GiVPerrorCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\nError: " ), \
-                            myPrintf m ; \
-                        } else ( \
-                            ++ GiVPerrorCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\n%s: Fatal Error!\n", GsProgramName ), \
-                            myPrintf m , \
-                            myPrintf( "\nExiting LEaP: Errors = %i; Warnings " \
-                            "= %i; Notes = %i.\n", GiVPerrorCount, \
-                            GiVPwarningCount, GiVPnoteCount ), \
-                            exit(31) \
-                        )
+#define VPFATALEXIT( fmt, ... ) do { \
+        ++GiVPerrorCount; \
+        if ( fINPUTFILE() == NULL ) { \
+            myPrintf(0, "\nError: " fmt, ##__VA_ARGS__); \
+        } else { \
+            myPrintf(0, "\n%s: Fatal Error!\n" fmt, GsProgramName, ##__VA_ARGS__); \
+            myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
+                     GiVPerrorCount, GiVPwarningCount, GiVPnoteCount); \
+            exit(31); \
+        } \
+    } while (0)
+
 /*
  *      VPWARN does not abort.  VPWARN indicates that a message is
  *      a warning, and the intention is that users should investigate.
  */
-#define VPWARN( m )     if ( fINPUTFILE() == NULL ) { \
-                            ++ GiVPwarningCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\nWarning: " ), \
-                            myPrintf m ; \
-                        } else ( \
-                            ++ GiVPwarningCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\n%s: Warning!\n", GsProgramName ), \
-                            myPrintf m \
-                        )
+#define VPWARN( fmt, ... ) do { \
+        ++GiVPwarningCount; \
+        if ( fINPUTFILE() == NULL ) { \
+            myPrintf(0, "\nWarning: " fmt, ##__VA_ARGS__); \
+        } else { \
+            myPrintf(0, "\n%s: Warning!\n" fmt, GsProgramName, ##__VA_ARGS__); \
+        } \
+    } while (0)
+
 /*
  *      VPNOTE does not abort.  VPNOTE indicates that a message is
  *      informational, and the intention is that users should note it.
  */
-#define VPNOTE( m )     if ( fINPUTFILE() == NULL ) { \
-                            ++ GiVPnoteCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\nNote: " ), \
-                            myPrintf m ; \
-                        } else ( \
-                            ++ GiVPnoteCount, \
-                            GiVerbosity = 0, \
-                            myPrintf( "\n%s: Note.\n", GsProgramName ), \
-                            myPrintf m \
-                        )
+#define VPNOTE( fmt, ... ) do { \
+        ++GiVPnoteCount; \
+        if ( fINPUTFILE() == NULL ) { \
+            myPrintf(0, "\nNote: " fmt, ##__VA_ARGS__); \
+        } else { \
+            myPrintf(0, "\n%s: Note.\n" fmt, GsProgramName, ##__VA_ARGS__); \
+        } \
+    } while (0)
+
 
 #ifdef  DEBUG
 /*
  *      Tracing macros based on the original VP* macros.
  *      But these are guarded with DEBUG.
+ *
+ *      myPrintTrace() builds "Trace: <prefix> <caller-msg> from call depth NN.\n"
+ *      in a single call, avoiding the old sequence of 3 myPrintf calls that
+ *      relied on GiVerbosity being set as a global side effect.
  */
 #define TRACE_VERBOSITY 1069
-#define VPTRACEENTER( m ) ( GiVerbosity = TRACE_VERBOSITY, \
-                          myPrintf( "Trace: Enter " ), \
-                          myPrintf m, \
-                          myPrintf( " from call depth %2d.\n", \
-                                    GiTraceIndentationLevel++ ) )
-#define VPTRACEEXIT( m )  ( GiVerbosity = TRACE_VERBOSITY, \
-                          myPrintf( "Trace: Exit  " ), \
-                          myPrintf m, \
-                          myPrintf( " from call depth %2d.\n", \
-                                    --GiTraceIndentationLevel ) )
-/*
- *      VPTRACEMULTIPLEEXIT is for functions that do not have a single exit
- *      in order to eschew tedious modifications.
- */
-#define VPTRACEMULTIPLEEXIT( m )     ( GiVerbosity = TRACE_VERBOSITY, \
-                          myPrintf( "Trace: Exit (premature due to multiple returns) "  ), \
-                          myPrintf m, \
-                          myPrintf( " from call depth %2d.\n", \
-                                    --GiTraceIndentationLevel ) )
-#define VPTRACE( m )      ( GiVerbosity = TRACE_VERBOSITY, \
-                          myPrintf( "Trace: " ), \
-                          myPrintf m )
+
+extern void myPrintTrace(const char *prefix, int depth, const char *fmt, ...);
+
+#define VPTRACEENTER( ... ) \
+    myPrintTrace("Enter", GiTraceIndentationLevel++, __VA_ARGS__)
+#define VPTRACEEXIT( ... ) \
+    myPrintTrace("Exit ", --GiTraceIndentationLevel, __VA_ARGS__)
+#define VPTRACEMULTIPLEEXIT( ... ) \
+    myPrintTrace("Exit (premature due to multiple returns)", \
+                 --GiTraceIndentationLevel, __VA_ARGS__)
+#define VPTRACE( ... ) \
+    myPrintf(TRACE_VERBOSITY, "Trace: " __VA_ARGS__)
+
 #else
-#define VPTRACEENTER( m )
-#define VPTRACEEXIT( m )
-#define VPTRACEMULTIPLEEXIT( m )
-#define VPTRACE( m )
-#endif
+#define VPTRACEENTER( ... )
+#define VPTRACEEXIT( ... )
+#define VPTRACEMULTIPLEEXIT( ... )
+#define VPTRACE( ... )
+#endif  /* DEBUG */
 
 
                 /* PRINTF is only to be used to dump messages */
                 /* to stdout, which might be picked up by xMessageFilter */
 
-
-#define PRINTF(m)               { printf( "+" ); printf m; }
-#define PRINTF_NO_PREFIX(m)     { printf m; }
+#define PRINTF(fmt, ...)         printf( "+" fmt, ##__VA_ARGS__ )
+#define PRINTF_NO_PREFIX(...)    printf( __VA_ARGS__ )
 
 /*
  *-------------------------------------------------------------------
@@ -648,9 +614,9 @@ extern int     GiVPnoteCount;    /* Count the number of Notes */
  *      DEBUGGING messages.  It is better to use MESSAGE!!!!
  */
 #ifdef  DEBUG
-#define DDEBUG( m )             printf m
+#define DDEBUG( ... )           printf( __VA_ARGS__ )
 #else
-#define DDEBUG( m )
+#define DDEBUG( ... )
 #endif
 
 
@@ -685,30 +651,35 @@ extern int     GiVPnoteCount;    /* Count the number of Notes */
 #define MAXMESSAGEFILES 10
 
 #ifdef  DEBUG
-#define MESSAGE( m ) { \
+#define MESSAGE( ... ) do { \
         if (bMessageCheck(__FILE__)) { \
-        printf( "%c%s %d|", PRINT_MESSAGE, __FILE__, __LINE__ ); \
-        printf m ; fflush(stdout); } \
-}
+            printf( "%c%s %d|", PRINT_MESSAGE, __FILE__, __LINE__ ); \
+            printf( __VA_ARGS__ ); \
+            fflush(stdout); \
+        } \
+    } while(0)
 
 #define MESSAGEEXECUTE( c )     if (bMessageCheck(__FILE__)) c;
 
-#define FILEMESSAGE(f,m) { \
+#define FILEMESSAGE(f, ... ) do { \
         if ( bMessageCheck(f) ) { \
-                printf( "%c%s %d|", PRINT_MESSAGE, __FILE__, __LINE__ ); \
-                printf m; fflush(stdout); } \
-}
+            printf( "%c%s %d|", PRINT_MESSAGE, __FILE__, __LINE__ ); \
+            printf( __VA_ARGS__ ); \
+            fflush(stdout); \
+        } \
+    } while(0)
 
 #else
-#define MESSAGE( m )
+#define MESSAGE( ... )
 #define MESSAGEEXECUTE( c )
-#define FILEMESSAGE(f,m)
+#define FILEMESSAGE(f, ... )
 #endif
 
-#define ALWAYS( m ) { \
+#define ALWAYS( ... ) do { \
         printf( "%c%s %d|", PRINT_MESSAGE, __FILE__, __LINE__ ); \
-        printf m ; fflush(stdout); \
-}
+        printf( __VA_ARGS__ ); \
+        fflush(stdout); \
+    } while(0)
 
 
 
@@ -793,7 +764,7 @@ extern BOOL     GbTestMemory;
 # define        MALLOC( dest, type, size ) { \
     (dest) = (type)malloc(size); \
     if ( (dest)==(type)NULL ) { \
-        DFATAL(( "Malloc: %s", strerror(errno) )); \
+        DFATAL( "Malloc: %s", strerror(errno) ); \
         }}
 
 # define        FREE(x) { \
@@ -802,7 +773,7 @@ extern BOOL     GbTestMemory;
 # define        REALLOC( dest, type, src, size ) { \
         (dest) = (type) realloc( src, size ); \
         if ( (dest)==(type)NULL ) { \
-                DFATAL(( "Realloc: %s", strerror(errno) )); \
+                DFATAL( "Realloc: %s", strerror(errno) ); \
         }}
 
 # define        LISTUNFREEDMEMORYTOLOGFILE()
@@ -850,30 +821,30 @@ extern BOOL     GbTestMemory;
 
 #define TESTMEMORY()    { \
         DebugMemoryTest( __FILE__, __LINE__, FALSE ); \
-        REGISTERMEMOP(); \
+        REGISTERMEMOP(void); \
 }
 
 #define MALLOC( dest, type, size ) { \
     (dest) = (type)DebugMalloc((long)(size), __FILE__, __LINE__ ); \
     if ( (dest)==(type)NULL ) { \
-        DFATAL(( "Bad malloc" )); \
-    } REGISTERMEMOP(); \
+        DFATAL( "Bad malloc" ); \
+    } REGISTERMEMOP(void); \
 }
 
 #define FREE(x)        { \
         *(char*)(x)='?'; \
         DebugFree(x,__FILE__,__LINE__);x=NULL; \
-        REGISTERMEMOP(); \
+        REGISTERMEMOP(void); \
 }
 
 #define REALLOC( dest, type, src, size ) { \
         (dest)=(type)DebugRealloc((src),(long)(size),__FILE__,__LINE__); \
-                REGISTERMEMOP(); \
+                REGISTERMEMOP(void); \
 }
 
 #define LISTUNFREEDMEMORYTOLOGFILE()    { \
         DebugMemoryTest( __FILE__,__LINE__, TRUE ); \
-        REGISTERMEMOP(); \
+        REGISTERMEMOP(void); \
 }
 #endif
 
@@ -893,35 +864,27 @@ extern BOOL     GbTestMemory;
     (dest) = (type)malloc(size); \
     if ( (dest)==(type)NULL ) { \
         printf( "BAD MALLOC file: %s line: %d\n", __FILE__, __LINE__); \
-        exit(1);}REGISTERMEMOP(); \
+        exit(1);}REGISTERMEMOP(void); \
 }
 
 # define        FREE(x)    { \
                         *(char*)(x)='?',free(x); \
-                        x=NULL;REGISTERMEMOP(); \
+                        x=NULL;REGISTERMEMOP(void); \
 }
 
 # define        REALLOC( dest, type, src, size ) { \
-                        (dest = (type) realloc( src, size ),REGISTERMEMOP();) }
+                        (dest = (type) realloc( src, size ),REGISTERMEMOP(void);) }
 # define        LISTUNFREEDMEMORYTOLOGFILE()
 #endif
 
 
-
-
-
-
-
-#define DFATAL(mmm)\
-{ printf( "%cFATAL ERROR----------------------------------------\n",\
-        PRINT_ALWAYS );\
-  printf( "%cFATAL:    In file [%s], line %d\n", PRINT_ALWAYS,\
-                 __FILE__, __LINE__ );\
-  printf( "%cFATAL:    Message: ", PRINT_ALWAYS );\
-  printf mmm;\
-  printf( "%c\n", PRINT_ALWAYS );\
-  printf( "%cABORTING.\n", PRINT_ALWAYS );\
-  exit(1);}
+#define DFATAL(fmt, ...) do { \
+    printf( "%cFATAL ERROR----------------------------------------\n", PRINT_ALWAYS ); \
+    printf( "%cFATAL:    In file [%s], line %d\n", PRINT_ALWAYS, __FILE__, __LINE__ ); \
+    printf( "%cFATAL:    Message: " fmt "\n", PRINT_ALWAYS, ##__VA_ARGS__ ); \
+    printf( "%cABORTING.\n", PRINT_ALWAYS ); \
+    exit(1); \
+} while(0)
 
 
 
@@ -942,45 +905,49 @@ extern BOOL     GbTestMemory;
 #include        "minimizer.h"
 #include        "byteArray.h"
 */
-extern void            IMem();
-extern void            TMem();
+extern void            IMem(void);
+extern void            TMem(void);
 
 /*  sysdepend.c  */
 
-extern void             myPrintf(char *fmt,...);
-extern void             SysdependDirectoryList( char *cPPath, 
+extern void             myPrintf(int iVerbosity, const char *fmt, ...);
+extern void             myPrintString(const char *cPString, int iVerbosity);
+extern void             myPrintTrace(const char *prefix, int depth,
+                                     const char *fmt, ...);
+extern void             SysdependDirectoryList( char *cPPath,
                                 STRING *saPNames[], int *iPNumber);
 extern FILESTATUSt      fsSysdependFileStatus(char *cPName);
 extern void             SysdependCurrentWorkingDirectory(STRING sPath);
 
 /*  basics.c  */
 
-extern void             StringLower( char *sStr );
 extern double           myAcos( double d );
 extern double           myPow( double x, double y );
 extern int              iDoubleCompare( double dA, double dB );
 extern BOOL             bStringToDouble( char *cPData, double *dPData );
 extern BOOL             bStringToInt( char *cPData, int *iPData );
 extern void             StringLower( char *sStr );
+extern void             StringUpper( char *sStr );
+extern void             StringTrim( char *sStr );
+extern void             StringRTrim( char *sStr );
 extern char             *DebugMalloc( long lSize, char *sFile, int iLine );
-extern char             *DebugRealloc( char *cPBlock, long lSize, char *sFile, 
+extern char             *DebugRealloc( char *cPBlock, long lSize, char *sFile,
                                 int iLine );
 extern void             DebugFree( char *cPBlock, char *sFile, int iLine );
 extern BOOL             bMessageCheck( char *sFile );
 extern void             MessageAddFile( char *sFile );
 extern void             MessageRemoveFile( char *sFile );
-extern void             MessageFileList();
+extern void             MessageFileList(void);
 extern int              BasicsAddDirectory( STRING sDirectory, int bomb );
-extern FILE             *fBasicsMyFopen( char *sFilename, char *sAttributes, 
+extern FILE             *fBasicsMyFopen( char *sFilename, char *sAttributes,
                                 BOOL bComplain );
-extern int              iCreatePrintSink( VFUNCTION fOutputCallback, 
+extern int              iCreatePrintSink( VFUNCTION fOutputCallback,
                                 char *sPrefix, GENP PData );
 extern void             DestroyPrintSink( int iHandle );
 extern void             PushCurrentPrintSink( int iSink );
-extern void             PopCurrentPrintSink();
-extern void             myPrintString( char *cPString );
-extern void             BasicsInitialize();
-extern void             BasicsKlassMismatchPanic( GENP PObj, char *cPFile, 
+extern void             PopCurrentPrintSink(void);
+extern void             BasicsInitialize(void);
+extern void             BasicsKlassMismatchPanic( GENP PObj, char *cPFile,
                                 int iLine );
 
 

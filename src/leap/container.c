@@ -103,7 +103,7 @@ CONTAINER       c;
     c = NULL;
     switch ( iType ) {
         case CONTAINERid:
-            DFATAL( ("Illegal to create raw CONTAINERs") );
+            DFATAL("Invalid to create raw CONTAINERs");
             break;
         case UNITid:
             c = (CONTAINER)uUnitCreate();
@@ -118,7 +118,7 @@ CONTAINER       c;
             c = (CONTAINER)aAtomCreate();
             break;
         default:
-            DFATAL( ("ERROR, can't create unknown CONTAINER id:%d", iType) );
+            DFATAL("ERROR, can't create unknown CONTAINER id:%d", iType);
             break;
     }
 
@@ -175,7 +175,7 @@ OBJEKT          oObj;
     
     switch ( iObjectType(*cPContainer) ) {
         case CONTAINERid:
-            DFATAL( ("Illegal to destroy raw CONTAINERs") );
+            DFATAL("Invalid to destroy raw CONTAINERs" );
             break;
         case UNITid:
             UnitDestroy((UNIT *)cPContainer);
@@ -190,8 +190,8 @@ OBJEKT          oObj;
             AtomDestroy((ATOM *)cPContainer);
             break;
         default:
-            DFATAL( ("Attempting to destroy CONTAINER with id:%c", 
-                        iObjectType(*cPContainer)) );
+            DFATAL("Attempting to destroy CONTAINER with id:%c", 
+                        iObjectType(*cPContainer));
             break;
     }
 }
@@ -220,7 +220,7 @@ ContainerDescribe( CONTAINER cContainer  )
 {
     switch ( iObjectType(cContainer) ) {
         case CONTAINERid:
-            DFATAL( ("Attempt to describe a raw CONTAINER") );
+            DFATAL("Attempt to describe a raw CONTAINER");
             break;
         case UNITid:
             UnitDescribe( (UNIT)cContainer );
@@ -235,8 +235,8 @@ ContainerDescribe( CONTAINER cContainer  )
             AtomDescribe( (ATOM)cContainer );
             break;
         default:
-            DFATAL( ("Attempting to describe CONTAINER with id:%d", 
-                        iObjectType(cContainer)) );
+            DFATAL("Attempting to describe CONTAINER with id:%d", 
+                        iObjectType(cContainer));
             break;
     }
 }
@@ -435,8 +435,8 @@ ContainerResetPointers( CONTAINER cContainer )
             AtomResetPointers((ATOM)cContainer);
             break;
         default:
-            DFATAL( ("Can not ResetPointers for unknown class id: %d",
-                        iObjectType(cContainer) ) );
+            DFATAL("Can not ResetPointers for unknown class id: %d",
+                        iObjectType(cContainer) );
             break;
     }
 }
@@ -484,7 +484,7 @@ OBJEKT  oObj;
  *      If it is found, return it, otherwise return NULL.
  */
 CONTAINER       
-cContainerFindName( CONTAINER cCont, int iContainerType, char *sName )
+cContainerFindName( CONTAINER cCont, int iContainerType, const char *sName )
 {
 LOOP    lContainers;
 OBJEKT  oObj;
@@ -565,27 +565,27 @@ ATOM            aAtom;
             while ( (aAtom = (ATOM)oNext( &lAtoms )) ) {
                 if ( dXMin > dVX( &(vAtomPosition( aAtom )))) {
                     dXMin = dVX( &(vAtomPosition( aAtom )));
-                    MESSAGE(( "Min X Value:  %4.2lf\n", dXMin ));
+                    MESSAGE("Min X Value:  %4.2lf\n", dXMin );
                 }
                 if ( dYMin > dVY( &(vAtomPosition( aAtom )))) {
                     dYMin = dVY( &(vAtomPosition( aAtom )));
-                    MESSAGE(( "Min Y Value:  %4.2lf\n", dYMin ));
+                    MESSAGE("Min Y Value:  %4.2lf\n", dYMin );
                 }
                 if ( dZMin > dVZ( &(vAtomPosition( aAtom )))) {
                     dZMin = dVZ( &(vAtomPosition( aAtom )));
-                    MESSAGE(( "Min Z Value:  %4.2lf\n", dZMin ));
+                    MESSAGE("Min Z Value:  %4.2lf\n", dZMin );
                 }
                 if ( dXMax < dVX( &(vAtomPosition( aAtom )))) {
                     dXMax = dVX( &(vAtomPosition( aAtom )));
-                    MESSAGE(( "Max X Value:  %4.2lf\n", dXMax ));
+                    MESSAGE("Max X Value:  %4.2lf\n", dXMax );
                 }
                 if ( dYMax < dVY( &(vAtomPosition( aAtom )))) {
                     dYMax = dVY( &(vAtomPosition( aAtom )));
-                    MESSAGE(( "Max Y Value:  %4.2lf\n", dYMax ));
+                    MESSAGE("Max Y Value:  %4.2lf\n", dYMax );
                 }
                 if ( dZMax < dVZ( &(vAtomPosition( aAtom )))) {
                     dZMax = dVZ( &(vAtomPosition( aAtom )));
-                    MESSAGE(( "Max Z Value:  %4.2lf\n", dZMax ));
+                    MESSAGE("Max Z Value:  %4.2lf\n", dZMax );
                 }
             }
     VectorDef( vPMin, dXMin, dYMin, dZMin );
@@ -615,8 +615,8 @@ OBJEKT  aAtom;
 
     vCur = vContainerGeometricCenter( cCont ) ;
     vOffset = vVectorSub( &vCenter, &vCur );
-    MESSAGE(( "Containers' Geometric Center: (%4.2lf, %4.2lf, %4.2lf)\n",
-        dVX(&vCur), dVY(&vCur), dVZ(&vCur)));
+    MESSAGE("Containers' Geometric Center: (%4.2lf, %4.2lf, %4.2lf)\n",
+        dVX(&vCur), dVY(&vCur), dVZ(&vCur));
         
     if ( iObjectType(cCont) == ATOMid ) {
         AtomSetPosition( cCont, vVectorAdd( &vOffset, &vAtomPosition(cCont) ));
@@ -625,14 +625,14 @@ OBJEKT  aAtom;
         while ( (aAtom = oNext(&lAtoms)) != NULL ) {
             if ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN )) {
                 vPos = vVectorAdd( &vOffset, &vAtomPosition(aAtom));
-                MESSAGE(( "Atoms old Z:  %4.2lf\n", dVX(&vAtomPosition(aAtom)) ));
-                MESSAGE(( "Vectors' Z:  %4.2lf\n", dVX(&vPos) ));
+                MESSAGE("Atoms old Z:  %4.2lf\n", dVX(&vAtomPosition(aAtom)) );
+                MESSAGE("Vectors' Z:  %4.2lf\n", dVX(&vPos) );
                 AtomSetPosition( aAtom, vPos);
-                MESSAGE(( "Atoms new Z:  %4.2lf\n", dVX(&vAtomPosition(aAtom)) ));
+                MESSAGE("Atoms new Z:  %4.2lf\n", dVX(&vAtomPosition(aAtom)) );
             } else
-                VP0(( "ContainerCenterAt(): %s: %s:%s\n",
+                VP0("ContainerCenterAt(): %s: %s:%s\n",
                         "Skipping atom w/ unknown position",
-                        sContainerName(aAtom), sAtomName(aAtom) ));
+                        sContainerName(aAtom), sAtomName(aAtom) );
         }
     }
 }
@@ -867,12 +867,19 @@ ATOM            aAtom;
 char *
 sContainerDescriptor( CONTAINER cCont, char *sDesc )
 {
-    if ( iObjectType(cCont) == UNITid ) {
-        strcpy( sDesc, "" );
+    if ( iObjectType(cCont) == UNITid) {
+        if ( GiVerbosityLevel < 4 ) strcpy( sDesc, "" );
+        else sprintf(sDesc, "%c<%s>", iObjectType(cCont), sContainerName(cCont));
     } else {
-        sprintf( sDesc, "%c<%s %d>", iObjectType(cCont), 
-                sContainerName(cCont), 
-                iContainerSequence(cCont) );
+        if (GiVerbosityLevel > 2 && iObjectType(cCont)==RESIDUEid)
+            sprintf( sDesc, "%c<%s | %s:%d | %d>", iObjectType(cCont), 
+                    sContainerName(cCont),
+                    sResidueChainId(cCont),iResiduePdbSequence(cCont),
+                    iContainerSequence(cCont) );
+        else
+            sprintf( sDesc, "%c<%s %d>", iObjectType(cCont), 
+                    sContainerName(cCont), 
+                    iContainerSequence(cCont) );
     }
     return(sDesc);
 }
@@ -947,7 +954,7 @@ ContainerCheck( CONTAINER cCont, int *iPErrors, int *iPWarnings )
 {
     switch ( iObjectType(cCont) ) {
         case CONTAINERid:
-            DFATAL( ("Attempt to test a raw CONTAINER") );
+            DFATAL("Attempt to test a raw CONTAINER");
             break;
         case UNITid:
             UnitCheck( (UNIT)cCont, iPErrors, iPWarnings );
@@ -962,8 +969,8 @@ ContainerCheck( CONTAINER cCont, int *iPErrors, int *iPWarnings )
             AtomCheck( (ATOM)cCont, iPErrors, iPWarnings );
             break;
         default:
-            DFATAL( ("Attempting to check CONTAINER with id:%c", 
-                        iObjectType(cCont)) );
+            DFATAL("Attempting to check CONTAINER with id:%c", 
+                        iObjectType(cCont));
             break;
     }
 }
@@ -1013,7 +1020,7 @@ ContainerYouAreBeingRemoved( CONTAINER cCont )
 {
     switch ( iObjectType(cCont) ) {
         case CONTAINERid:
-            DFATAL( ("Attempt to inform a raw CONTAINER") );
+            DFATAL("Attempt to inform a raw CONTAINER");
             break;
         case UNITid:
             UnitYouAreBeingRemoved( (UNIT)cCont );
@@ -1030,8 +1037,8 @@ ContainerYouAreBeingRemoved( CONTAINER cCont )
         case INTERNALid:
             break;
         default:
-            DFATAL( ("Attempting to inform CONTAINER with id:%c", 
-                        iObjectType(cCont)) );
+            DFATAL("Attempting to inform CONTAINER with id:%c", 
+                        iObjectType(cCont));
             break;
     }
 }
@@ -1063,7 +1070,7 @@ ContainerIAmBeingRemoved( CONTAINER cCont, CONTAINER cRemoved )
 
     switch ( iObjectType(cCont) ) {
         case CONTAINERid:
-            DFATAL( ("Attempt to inform a raw CONTAINER") );
+            DFATAL("Attempt to inform a raw CONTAINER");
             break;
         case UNITid:
             UnitIAmBeingRemoved( (UNIT)cCont, (CONTAINER)cRemoved );
@@ -1078,8 +1085,8 @@ ContainerIAmBeingRemoved( CONTAINER cCont, CONTAINER cRemoved )
             AtomIAmBeingRemoved( (ATOM)cCont, (CONTAINER)cRemoved );
             break;
         default:
-            DFATAL( ("Attempting to inform CONTAINER with id:%c", 
-                        iObjectType(cCont)) );
+            DFATAL("Attempting to inform CONTAINER with id:%c", 
+                        iObjectType(cCont));
             break;
     }
 }
@@ -1106,7 +1113,7 @@ ContainerSetAttribute( CONTAINER cCont, STRINGref sAttribute, OBJEKT oValue )
 
     switch ( iObjectType(cCont) ) {
         case CONTAINERid:
-            DFATAL( ("Attempt to set an attribute of a raw CONTAINER") );
+            DFATAL("Attempt to set an attribute of a raw CONTAINER");
             break;
         case UNITid:
             UnitSetAttribute( (UNIT)cCont, sAttribute, oValue );
@@ -1121,10 +1128,54 @@ ContainerSetAttribute( CONTAINER cCont, STRINGref sAttribute, OBJEKT oValue )
             AtomSetAttribute( (ATOM)cCont, sAttribute, oValue );
             break;
         default:
-            DFATAL( ("Attempting to change attribute of unknown OBJEKT ID:%c", 
-                        iObjectType(cCont)) );
+            DFATAL("Attempting to change attribute of unknown OBJEKT ID:%c", 
+                        iObjectType(cCont));
             break;
     }
+}
+
+
+
+
+/*
+ *      ContainerGetAttribute
+ *
+ *      Author: Juno Krahn (2026)
+ *
+ *      This routine gets an attribute of the CONTAINER.
+ */
+OBJEKT
+oContainerGetAttribute( CONTAINER cCont, STRINGref sAttribute )
+{
+OBJEKT   oResult;
+        /* If the CONTAINER being informed is NULL then we are */
+        /* at the top of the hierarchy, just return */
+
+    if ( cCont == NULL ) return NULL;
+
+    switch ( iObjectType(cCont) ) {
+        case CONTAINERid:
+            DFATAL("Attempt to get an attribute of a raw CONTAINER");
+            break;
+        case UNITid:
+            oResult = oUnitGetAttribute( (UNIT)cCont, sAttribute );
+            break;
+//      case MOLECULEid:
+//          MoleculeGetAttribute( (MOLECULE)cCont, sAttribute );
+//          break;
+        case RESIDUEid:
+            oResult = oResidueGetAttribute( (RESIDUE)cCont, sAttribute );
+            break;
+        case ATOMid:
+            oResult = oAtomGetAttribute( (ATOM)cCont, sAttribute );
+            break;
+        default:
+            DFATAL("Attempting to get attribute of unknown OBJEKT ID:%c", 
+                        iObjectType(cCont));
+            oResult = NULL;
+            break;
+    }
+    return oResult;
 }
 
 

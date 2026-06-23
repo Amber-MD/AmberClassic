@@ -84,7 +84,7 @@ typedef OINTEGERt	*OINTEGER;
 /*      Define Create, Destroy, Describe methods */
 
 
-extern OINTEGER		oiOIntegerCreate();
+extern OINTEGER		oiOIntegerCreate(void);
 extern void		OIntegerDestroy(OINTEGER *oiPInt);
 extern void		OIntegerDescribe(OINTEGER oiInt);
 extern OINTEGER		oiOIntegerDuplicate( OINTEGER oi );

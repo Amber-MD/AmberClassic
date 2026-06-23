@@ -129,11 +129,11 @@ STRING		s1, s2, s3, s4;
     switch ( iInternalType(*iPInt) ) {
         case INTERNALIMPROPER:
         case INTERNALTORSION:
-	    MESSAGE(( "Removing torsion INTERNAL: %s-%s-%s-%s\n",
+	    MESSAGE("Removing torsion INTERNAL: %s-%s-%s-%s\n",
 		sContainerFullDescriptor((CONTAINER)(*iPInt)->iType.niNormal.aAtom1,s1),
 		sContainerFullDescriptor((CONTAINER)(*iPInt)->iType.niNormal.aAtom2,s2),
 		sContainerFullDescriptor((CONTAINER)(*iPInt)->iType.niNormal.aAtom3,s3),
-		sContainerFullDescriptor((CONTAINER)(*iPInt)->iType.niNormal.aAtom4,s4) ));
+		sContainerFullDescriptor((CONTAINER)(*iPInt)->iType.niNormal.aAtom4,s4) );
             bContainerRemove( (CONTAINER)(*iPInt)->iType.niNormal.aAtom4, (OBJEKT)*iPInt );
 	    bContainerRemove( (CONTAINER)(*iPInt)->iType.niNormal.aAtom3, (OBJEKT)*iPInt );
 	    bContainerRemove( (CONTAINER)(*iPInt)->iType.niNormal.aAtom2, (OBJEKT)*iPInt );
@@ -144,8 +144,10 @@ STRING		s1, s2, s3, s4;
 	    break;
         case INTERNALANGLE:
             bContainerRemove( (CONTAINER)(*iPInt)->iType.niNormal.aAtom3, (OBJEKT)*iPInt );
+            /* fallthrough */
         case INTERNALBOND:
             bContainerRemove( (CONTAINER)(*iPInt)->iType.niNormal.aAtom2, (OBJEKT)*iPInt );
+            /* fallthrough */
         case INTERNALCHIRALITY:
             bContainerRemove( (CONTAINER)(*iPInt)->iType.niNormal.aAtom1, (OBJEKT)*iPInt );
             break;
@@ -157,7 +159,7 @@ STRING		s1, s2, s3, s4;
 	    RingDestroy( &((*iPInt)->iType.riRing.rAtoms) );
 	    break;
         default:
-	    DFATAL(( "Illegal type of INTERNAL" ));
+	    DFATAL("Invalid type of INTERNAL" );
             break;
     }
 
@@ -186,45 +188,45 @@ InternalDescribe( INTERNAL iInt )
 {
     switch ( iInternalType(iInt) ) {
         case INTERNALCHIRALITY:
-            VP0(( "Internal chirality.\n" ));
-            VP0(( "Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) ));
+            VP0("Internal chirality.\n" );
+            VP0("Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) );
             break;
         case INTERNALBOND:
-            VP0(( "Internal bond length.\n" ));
-            VP0(( "Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) ));
-            VP0(( "Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) ));
+            VP0("Internal bond length.\n" );
+            VP0("Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) );
+            VP0("Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) );
             break;
         case INTERNALANGLE:
-            VP0(( "Internal bond angle.\n" ));
-            VP0(( "Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) ));
-            VP0(( "Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) ));
-            VP0(( "Atom3=%s\n", sContainerName(iInt->iType.niNormal.aAtom3) ));
+            VP0("Internal bond angle.\n" );
+            VP0("Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) );
+            VP0("Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) );
+            VP0("Atom3=%s\n", sContainerName(iInt->iType.niNormal.aAtom3) );
             break;
         case INTERNALTORSION:
-            VP0(( "Internal torsion angle.\n" ));
-            VP0(( "Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) ));
-            VP0(( "Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) ));
-            VP0(( "Atom3=%s\n", sContainerName(iInt->iType.niNormal.aAtom3) ));
-            VP0(( "Atom4=%s\n", sContainerName(iInt->iType.niNormal.aAtom4) ));
+            VP0("Internal torsion angle.\n" );
+            VP0("Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) );
+            VP0("Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) );
+            VP0("Atom3=%s\n", sContainerName(iInt->iType.niNormal.aAtom3) );
+            VP0("Atom4=%s\n", sContainerName(iInt->iType.niNormal.aAtom4) );
             break;
         case INTERNALIMPROPER:
-            VP0(( "Internal improper angle.\n" ));
-            VP0(( "Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) ));
-            VP0(( "Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) ));
-            VP0(( "Atom3=%s\n", sContainerName(iInt->iType.niNormal.aAtom3) ));
-            VP0(( "Atom4=%s\n", sContainerName(iInt->iType.niNormal.aAtom4) ));
+            VP0("Internal improper angle.\n" );
+            VP0("Atom1=%s\n", sContainerName(iInt->iType.niNormal.aAtom1) );
+            VP0("Atom2=%s\n", sContainerName(iInt->iType.niNormal.aAtom2) );
+            VP0("Atom3=%s\n", sContainerName(iInt->iType.niNormal.aAtom3) );
+            VP0("Atom4=%s\n", sContainerName(iInt->iType.niNormal.aAtom4) );
             break;
         case INTERNALUNDEFINED:
-            VP0(( "Internal undefined coordinate.\n" ));
+            VP0("Internal undefined coordinate.\n" );
             break;
 	case INTERNALRING:
-	    VP0(( "Ring with %d atoms\n", iInternalRingSize(iInt) ));
+	    VP0("Ring with %d atoms\n", iInternalRingSize(iInt) );
 	    break;
         default:
-            DFATAL(( "Unknown INTERNAL" ));
+            DFATAL("Unknown INTERNAL" );
             break;
     }
-    VP0(( "Internal value=%lf\n\n", iInt->iType.niNormal.dValue ));
+    VP0("Internal value=%lf\n\n", iInt->iType.niNormal.dValue );
 }
 
 
@@ -397,20 +399,20 @@ LOOP            lInternals;
 INTERNAL        iInt;
 
 
-    MESSAGE(( "Looking for torsion %s-%s-%s-%s\n",
+    MESSAGE("Looking for torsion %s-%s-%s-%s\n",
 		sContainerName(aAtom1),
 		sContainerName(aAtom2),
 		sContainerName(aAtom3),
-		sContainerName(aAtom4) ));
+		sContainerName(aAtom4) );
 
     lInternals = lLoop( (OBJEKT)aAtom1, INTERNALS );
     while ( ( iInt = (INTERNAL)oNext(&lInternals) ) != NULL ) {
         if ( iInternalType(iInt) != INTERNALTORSION ) continue;
-	MESSAGE(( "Looking at: %s-%s-%s-%s\n",
+	MESSAGE("Looking at: %s-%s-%s-%s\n",
 		sContainerName(aInternalAtom1(iInt)),
 		sContainerName(aInternalAtom2(iInt)),
 		sContainerName(aInternalAtom3(iInt)),
-		sContainerName(aInternalAtom4(iInt)) ));
+		sContainerName(aInternalAtom4(iInt)) );
         if ( aAtom1 == aInternalAtom1(iInt) ) {
             if ( (aAtom2 == aInternalAtom2(iInt)) &&
                  (aAtom3 == aInternalAtom3(iInt)) &&
@@ -421,7 +423,7 @@ INTERNAL        iInt;
                  (aAtom4 == aInternalAtom1(iInt)) ) return(iInt);
 	}	    
     }
-    MESSAGE(( "Found nothing\n" ));
+    MESSAGE("Found nothing\n" );
 
     return(NULL);
 }
@@ -556,13 +558,13 @@ BOOL		bFound;
 	}
 	if ( !*iPBond || !*iPAngle || !*iPTorsion ) {
 	    STRING	s1, s2, s3, s4;
-	    VP0(( "From: %s to: %s - %s - %s\n",
+	    VP0("From: %s to: %s - %s - %s\n",
 			sContainerFullDescriptor((CONTAINER) a1, s1 ),
 			sContainerFullDescriptor((CONTAINER) a2, s2 ),
 			sContainerFullDescriptor((CONTAINER) a3, s3 ),
-			sContainerFullDescriptor((CONTAINER) a4, s4 ) ));
-	    DFATAL(( "Bad internal coordinate: iBond = %p, iAngle = %p\n",
-			*iPBond, *iPAngle ));
+			sContainerFullDescriptor((CONTAINER) a4, s4 ) );
+	    DFATAL("Bad internal coordinate: iBond = %p, iAngle = %p\n",
+			*iPBond, *iPAngle );
 	}
     }
 #endif
@@ -630,6 +632,7 @@ INTERNAL        iNew;
              bGotOne = TRUE;
         }
     }
+    UNUSED(aAtom3);
     if ( !bGotOne ) return(FALSE);
 
                 /* Loop over the internals of the first atom */
@@ -891,7 +894,7 @@ bInternalRingRemoveAtom( INTERNAL iInt, ATOM aAtom )
     if ( bRingRemove( iInt->iType.riRing.rAtoms, (GENP)aAtom ) ) {
 	REF( iInt );  /* bContainerRemove() needs this */
 	if ( !bContainerRemove( (CONTAINER)aAtom, (OBJEKT)iInt ) ) {
-	    DFATAL(( "The ATOM did not contain the INTERNAL" ));
+	    DFATAL("The ATOM did not contain the INTERNAL" );
 	}
 	DEREF( iInt );  /* reset after bContainerRemove() */
 	return(TRUE);

@@ -141,10 +141,10 @@ zGraphUtilDescribeRing( INTERNAL inRing )
 ATOM		aCur;
 STRING		sTemp;
 
-    PRINTF(( "Ring with %d atoms: ", iInternalRingSize(inRing) ));
+    PRINTF("Ring with %d atoms: ", iInternalRingSize(inRing) );
     InternalRingLoopAtoms(inRing);
     while ( (aCur = aInternalRingNextAtom(inRing)) ) {
-	PRINTF(( "       %s\n", sContainerFullDescriptor((CONTAINER)aCur,sTemp) ));
+	PRINTF("       %s\n", sContainerFullDescriptor((CONTAINER)aCur,sTemp) );
     }
 }
 
@@ -180,10 +180,10 @@ STRING		sTemp, sA, sB;
 
 
     MESSAGEEXECUTE( {
-			MESSAGE(( "Seperating the following rings:\n" ));
+			MESSAGE("Seperating the following rings:\n" );
 			zGraphUtilDescribeRing(iBig);
 			zGraphUtilDescribeRing(iSmall);
-			MESSAGE(( "------------\n" ));
+			MESSAGE("------------\n" );
 		    } );
 
 	/* Allocate an array to keep track of ATOMs in the larger ring */
@@ -229,6 +229,9 @@ STRING		sTemp, sA, sB;
     roPBefore = roPLast-1;
     roPCur    = roPFirst;
     roPAfter  = roPFirst+1;
+    roPAPrevNotInSmall = roPFirst; // FIXME: what to initialize as? -- JMK
+    roPA = roPFirst;               // FIXME
+    roPB = roPFirst;               // FIXME
     while ( roPCur < roPLast ) {
 
 		/* Check if ATOM at (i) is one of the boundary ATOMs */
@@ -259,11 +262,11 @@ STRING		sTemp, sA, sB;
     if ( roPAfter == roPLast ) roPAfter = roPFirst;
 
     if ( !roPAfter->bInSmallRing ) {
-	DFATAL(( "The ATOM after the first fused ATOM is not fused" ));
+	DFATAL("The ATOM after the first fused ATOM is not fused" );
     }
 
-    MESSAGE(( "The boundary atoms are: %s and %s\n",
-			sAtomName(roPA->aAtom), sAtomName(roPB->aAtom) ));
+    MESSAGE("The boundary atoms are: %s and %s\n",
+			sAtomName(roPA->aAtom), sAtomName(roPB->aAtom) );
 
 	/* Now find the shortest path between the two boundary ATOMs */
 	/* Generate a path from roPA->aAtom to roPB->aAtom */
@@ -273,12 +276,12 @@ STRING		sTemp, sA, sB;
     fBond = fAtomFindBondFlags( roPA->aAtom, roPAPrevNotInSmall->aAtom );
     AtomRemoveBond( roPA->aAtom, roPAPrevNotInSmall->aAtom );
     lSpanning = lLoop( (OBJEKT)roPB->aAtom, SPANNINGTREE );
-    MESSAGE(( "Searching for shortest path from %s to %s\n",
+    MESSAGE("Searching for shortest path from %s to %s\n",
 		sContainerFullDescriptor( (CONTAINER)roPB->aAtom, sB ),
-		sContainerFullDescriptor( (CONTAINER)roPA->aAtom, sA ) ));
+		sContainerFullDescriptor( (CONTAINER)roPA->aAtom, sA ) );
     while ( (aCur = (ATOM)oNext(&lSpanning)) ) {
-	MESSAGE(( "    found %s\n", 
-			sContainerFullDescriptor( (CONTAINER)aCur, sA ) ));
+	MESSAGE("    found %s\n", 
+			sContainerFullDescriptor( (CONTAINER)aCur, sA ) );
 	if ( aCur == roPA->aAtom ) break;
     }
     AtomBondToFlags( roPA->aAtom, roPAPrevNotInSmall->aAtom, fBond );
@@ -301,11 +304,11 @@ STRING		sTemp, sA, sB;
 	     roPCur != roPA &&
 	     roPCur != roPB ) {
 	    if ( bInternalRingRemoveAtom( iBig, roPCur->aAtom ) ) {
-		MESSAGE(( "Removed %s from the big ring\n", 
-				sContainerFullDescriptor((CONTAINER)roPCur->aAtom, sTemp ) ));
+		MESSAGE("Removed %s from the big ring\n", 
+				sContainerFullDescriptor((CONTAINER)roPCur->aAtom, sTemp ) );
 	    } else {
-		DFATAL(( "Atom: %s was not in big ring", 
-			sAtomName(roPCur->aAtom) ));
+		DFATAL("Atom: %s was not in big ring", 
+			sAtomName(roPCur->aAtom) );
 	    }
 	}
 	roPCur++;
@@ -316,17 +319,17 @@ STRING		sTemp, sA, sB;
 
     aCur = aAtomBackSpan(roPA->aAtom);
     while ( aCur != roPB->aAtom ) {
-	MESSAGE(( "Adding %s back to the big ring\n", 
-		sContainerFullDescriptor( (CONTAINER)aCur, sTemp ) ));
+	MESSAGE("Adding %s back to the big ring\n", 
+		sContainerFullDescriptor( (CONTAINER)aCur, sTemp ) );
 	InternalRingAddAtomAfter( iBig, aCur, roPB->aAtom );
 	aCur = aAtomBackSpan(aCur);
     }
 
     MESSAGEEXECUTE( {
-			MESSAGE(( "Result of seperation:\n" ));
+			MESSAGE("Result of seperation:\n" );
 			zGraphUtilDescribeRing(iBig);
 			zGraphUtilDescribeRing(iSmall);
-			MESSAGE(( "=============\n" ));
+			MESSAGE("=============\n" );
 		    } );
 
     return(TRUE);
@@ -378,12 +381,12 @@ LIST		lGroup1, lGroup2, lLarger, lSmaller;
 	lSmaller = lGroup2;
     }
 
-    MESSAGE(( "Concatenating ring group #%d to ring group #%d\n",
-		iSmaller, iLarger ));
-    MESSAGE(( "Ring group #%d has %d rings.\n",
-		iLarger, iListSize(lLarger) ));
-    MESSAGE(( "Ring group #%d has %d rings.\n",
-		iSmaller, iListSize(lSmaller) ));
+    MESSAGE("Concatenating ring group #%d to ring group #%d\n",
+		iSmaller, iLarger );
+    MESSAGE("Ring group #%d has %d rings.\n",
+		iLarger, iListSize(lLarger) );
+    MESSAGE("Ring group #%d has %d rings.\n",
+		iSmaller, iListSize(lSmaller) );
 
 		/* Change all of the ATOMs in the smaller ring */
 		/* group by putting them in the larger ring group */
@@ -483,8 +486,8 @@ INTERNAL	inRingBig, inRingSmall;
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
     while ( (aFirst = (ATOM)oNext(&lAtoms)) ) {
 	if ( bAtomFlagsSet( aFirst, ATOMTOUCHED ) ) continue;
-	MESSAGE(( "Starting a new molecule at atom: %s\n",
-			sContainerFullDescriptor((CONTAINER)aFirst,sA) ));
+	MESSAGE("Starting a new molecule at atom: %s\n",
+			sContainerFullDescriptor((CONTAINER)aFirst,sA) );
 
 			/* First build a spanning tree to build all of the */
 			/* back pointers, also set the ATOMTOUCHED flag */
@@ -493,13 +496,13 @@ INTERNAL	inRingBig, inRingSmall;
 
 	lTemp = lLoop( (OBJEKT)aFirst, SPANNINGTREE );
 	while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
-	    MESSAGE(( "Molecule part: %s   ", 
-		sContainerFullDescriptor((CONTAINER)aAtom,sA) ));
+	    MESSAGE("Molecule part: %s   ", 
+		sContainerFullDescriptor((CONTAINER)aAtom,sA) );
 	    if ( aAtomBackSpan(aAtom) == NULL ) {
-		MESSAGE(( "Points back to nowhere\n" ));
+		MESSAGE("Points back to nowhere\n" );
 	    } else {
-		MESSAGE(( "Points back to: %s\n", 
-			sAtomName(aAtomBackSpan(aAtom)) ));
+		MESSAGE("Points back to: %s\n", 
+			sAtomName(aAtomBackSpan(aAtom)) );
 	    }
 	    AtomSetFlags( aAtom, ATOMTOUCHED );
 	}
@@ -516,8 +519,8 @@ INTERNAL	inRingBig, inRingSmall;
 	LoopGetBond( &lTemp, &aA, &aB );
 	if ( ! ( aAtomBackSpan(aA) == aB ||
 		 aAtomBackSpan(aB) == aA ) ) {
-	    MESSAGE(( "Loop closing bond %s - %s\n", 
-			sAtomName(aA), sAtomName(aB) ));
+	    MESSAGE("Loop closing bond %s - %s\n", 
+			sAtomName(aA), sAtomName(aB) );
 	    bbTemp.aAtom1 = aA;
 	    bbTemp.aAtom2 = aB;
 	    bbTemp.fFlags = fAtomFindBondFlags( aA, aB );
@@ -531,9 +534,9 @@ INTERNAL	inRingBig, inRingSmall;
 	aA = PVAI(vaBrokenBonds,BROKENBONDt,i)->aAtom1;
 	aB = PVAI(vaBrokenBonds,BROKENBONDt,i)->aAtom2;
 
-	MESSAGE(( "Breaking bond between %s and %s\n",
+	MESSAGE("Breaking bond between %s and %s\n",
 			sContainerFullDescriptor((CONTAINER)aA,sA),
-			sContainerFullDescriptor((CONTAINER)aB,sB) ));
+			sContainerFullDescriptor((CONTAINER)aB,sB) );
 	AtomRemoveBond( aA, aB );
     }
 
@@ -544,8 +547,8 @@ INTERNAL	inRingBig, inRingSmall;
 	/* of rings, but are not minimal rings, the have to be separated */
 	/* from each other */
 
-    MESSAGE(( "There are %d broken bonds\n", 
-		iVarArrayElementCount(vaBrokenBonds) ));
+    MESSAGE("There are %d broken bonds\n", 
+		iVarArrayElementCount(vaBrokenBonds) );
     for ( i=0; i<iVarArrayElementCount(vaBrokenBonds); i++ ) {
 	aA = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom1;
 	aB = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom2;
@@ -554,9 +557,9 @@ INTERNAL	inRingBig, inRingSmall;
 		/* between aA and aB */
 		/* This will set the backpointers from (aB) back to (aA) */
 
-	MESSAGE(( "Tracing shortest path between: %s and %s\n",
+	MESSAGE("Tracing shortest path between: %s and %s\n",
 			sContainerFullDescriptor((CONTAINER)aA,sA), 
-			sContainerFullDescriptor((CONTAINER)aB,sB) ));
+			sContainerFullDescriptor((CONTAINER)aB,sB) );
 
 	lTemp = lLoop( (OBJEKT)aA, SPANNINGTREE );
 	while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
@@ -605,8 +608,8 @@ INTERNAL	inRingBig, inRingSmall;
 	inRing = iInternalRing();
 	aLast = NULL;
 	for ( aAtom = aB; aAtom != NULL; aAtom = aAtomBackSpan(aAtom) ) {
-	    MESSAGE(( "Adding %s to ring\n",
-				sContainerFullDescriptor((CONTAINER)aAtom,sA) ));
+	    MESSAGE("Adding %s to ring\n",
+				sContainerFullDescriptor((CONTAINER)aAtom,sA) );
 	    InternalRingAddAtomAfter( inRing, aAtom, aLast );
 	    aLast = aAtom;
 	    AtomSetFlags( aAtom, ATOMTOUCHED2 );
@@ -624,12 +627,12 @@ INTERNAL	inRingBig, inRingSmall;
 
 	/* Rebuild the broken bonds */
 
-    MESSAGE(( "About to rejoin bonds\n" ));
+    MESSAGE("About to rejoin bonds\n" );
     for ( i=0; i<iVarArrayElementCount(vaBrokenBonds); i++ ) {
 	aA = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom1;
 	aB = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom2;
-	MESSAGE(( "Rejoining bond between: %s - %s\n",
-			sAtomName(aA), sAtomName(aB) ));
+	MESSAGE("Rejoining bond between: %s - %s\n",
+			sAtomName(aA), sAtomName(aB) );
 	fFlags = PVAI( vaBrokenBonds, BROKENBONDt, i )->fFlags;
 	AtomBondToFlags( aA, aB, fFlags );
     }
@@ -637,15 +640,15 @@ INTERNAL	inRingBig, inRingSmall;
 	/* For debugging purposes print up a summary of the ring groups */
 
 #ifdef DEBUG
-    MESSAGE(( "There are total %d ring groups\n", 
-		iVarArrayElementCount(vaRingGroups) ));
+    MESSAGE("There are total %d ring groups\n", 
+		iVarArrayElementCount(vaRingGroups) );
     for ( i=0; i<iVarArrayElementCount(vaRingGroups); i++ ) {
 	if ( *PVAI(vaRingGroups,LIST,i) == NULL ) {
-	    MESSAGE(( "Ring group #%d is EMPTY\n", i ));
+	    MESSAGE("Ring group #%d is EMPTY\n", i );
 	} else {
 	    lRingGroup = *PVAI(vaRingGroups,LIST,i);
-	    MESSAGE(( "Ring group #%d has %d rings\n",
-			i, iListSize(lRingGroup) ));
+	    MESSAGE("Ring group #%d has %d rings\n",
+			i, iListSize(lRingGroup) );
 	}
     }
 #endif
@@ -656,7 +659,7 @@ INTERNAL	inRingBig, inRingSmall;
 	lRingGroup = *PVAI(vaRingGroups,LIST,h);
 	if ( lRingGroup != NULL ) {
 
-	    MESSAGE(( "About to sort rings for group: %d\n", h ));
+	    MESSAGE("About to sort rings for group: %d\n", h );
 
 			/* First sort the rings within the ring group */
 			/* so that we separate them in order */
@@ -676,7 +679,7 @@ INTERNAL	inRingBig, inRingSmall;
 				&(PVAI(vaRingSort,RINGSORTt,0)->iSize),
 				FALSE );
 
-	    MESSAGE(( "About to separate the rings.\n" ));
+	    MESSAGE("About to separate the rings.\n" );
 
 	    for ( i=0; i<iVarArrayElementCount(vaRingSort); i++ ) {
 		inRingBig = PVAI( vaRingSort, RINGSORTt, i )->inRing;

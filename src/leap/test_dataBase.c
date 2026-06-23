@@ -145,7 +145,7 @@ BEGIN
 		printf( "++Table\n" );
 		break;
 	    default:
-		printf( "++    Illegal modifier type\n" );
+		printf( "++    Invalid modifier type\n" );
 		break;
 	}
 

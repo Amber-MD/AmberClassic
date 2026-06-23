@@ -1,3 +1,6 @@
+#ifndef CMAP_H
+#define CMAP_H
+
 typedef struct CMNT_t {
     char *record;
     struct CMNT_t *next;
@@ -49,3 +52,5 @@ typedef struct CMAPLST_t {
 extern CMAP *cmap;
 extern CMAPLST *cmaplst;
 extern int mapnum;
+
+#endif

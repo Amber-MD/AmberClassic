@@ -73,9 +73,9 @@ extern BOOL		bDisplayerRemove(DISPLAYER dDisp, VFUNCTION vFunc,
 extern void		DisplayerUpdate(DISPLAYER dDisp);
 
 #define	DisplayerAccumulateUpdates()	(GiDisplayerAccumulateUpdates++)
-extern void		DisplayerReleaseUpdates();
-extern void		TurnOffDisplayerUpdates();
-extern void		TurnOnDisplayerUpdates();
+extern void		DisplayerReleaseUpdates(void);
+extern void		TurnOffDisplayerUpdates(void);
+extern void		TurnOnDisplayerUpdates(void);
 
 #define	DisplayerSetSensitive(d,s) \
 (d->cStatus = (s ? (d->cStatus|D_SENSITIVE) : (d->cStatus&(~D_SENSITIVE))) )

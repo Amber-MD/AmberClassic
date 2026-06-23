@@ -80,7 +80,7 @@ typedef MOLECULEt	*MOLECULE;
 
 /*      Define Create, Destroy, Describe methods */
 
-extern MOLECULE		mMoleculeCreate();
+extern MOLECULE		mMoleculeCreate(void);
 extern void		MoleculeDelete(MOLECULE *mPMolecule);
 extern void		MoleculeDescribe(MOLECULE mMolecule);
 extern void             MoleculeDestroy(MOLECULE *mPMolecule);

@@ -98,7 +98,7 @@ static VARARRAY	vtest = NULL;
  */
 
 void 
-IMem()
+IMem(void)
 {
 /*
 	int   i, *ip;
@@ -111,7 +111,7 @@ IMem()
 }
 
 void 
-TMem()
+TMem(void)
 {
 /*
 	int	i, *ip;
@@ -127,7 +127,7 @@ TMem()
 }
 
 
-#ifdef DEBUG
+#if 0 // DEBUG
 /*
  *	zBasicsTrapBUS
  *
@@ -138,7 +138,7 @@ TMem()
 static void	
 zBasicsTrapBUS( int iSignal, int iCode )
 {
-    DFATAL(( "Bus error.\n" ));
+    DFATAL("Bus error.\n" );
 }
 
 /*
@@ -153,7 +153,7 @@ zBasicsTrapSEGV( int iSignal, int iCode )
 {
 TMem();
 
-    DFATAL(( "Segmentation violation.\n" ));
+    DFATAL("Segmentation violation.\n" );
 }
 #endif
 
@@ -241,7 +241,7 @@ bStringToDouble( char *cPData, double *dPData )
 	double	dValue;
 
 	dValue = (double)strtod( cPData, &cPEnd );
-	if ( cPEnd - cPData == strlen(cPData) ) {
+	if ( cPEnd - cPData == (long int)strlen(cPData) ) {
 		*dPData = dValue;
 		return(TRUE);
 	}
@@ -266,13 +266,13 @@ bStringToInt( char *cPData, int *iPData )
 	for (cp=cPData; *cp; cp++) {
 		if (*cp == '-') {
 			if (cp != cPData) {
-				VP0(( "'-' embedded in number %s\n", cPData ));
+				VP0("'-' embedded in number %s\n", cPData );
 				return(FALSE);
 			}
 			continue;
 		}
 		if (!isdigit(*cp)) {
-			VP0(( "non-digit in %s\n", cPData ));
+			VP0("non-digit in %s\n", cPData );
 			return(FALSE);
 		}
 		
@@ -289,19 +289,67 @@ bStringToInt( char *cPData, int *iPData )
  *	Author:	Christian Schafmeister (1991)
  *
  *      Convert the string to lower case.
+ *      Only attempt to modify letters that are uppercase
+ *      This allows const char* sStr if already lowercase.
  */
-void    
+void
 StringLower( char *sStr )
 {
     while ( *sStr != '\0' ) {
-        *sStr = cLower((int)*sStr);
+        char c = cLower(*sStr);
+        if (*sStr != c) *sStr = c;
         sStr++;
     }
 }
 
+/*
+ *      StringUpper
+ *
+ *	Author:	Juno Krahn (2026)
+ *
+ *      Uppercase version of StringLower
+ */
+void
+StringUpper( char *sStr )
+{
+    while ( *sStr != '\0' ) {
+        char c = cUpper(*sStr);
+        if (*sStr != c) *sStr = c;
+        sStr++;
+    }
+}
+
+/*
+ *      StringTrim
+ *
+ *	Author:	Juno Krahn (2026)
+ *
+ *      Trim whitespace at beginning and end.
+ */
+void
+StringTrim(char *sStr)
+{
+    char *start = sStr;
+    while (*start && isspace((unsigned char)*start)) start++;
+    if (start != sStr) memmove(sStr, start, strlen(start) + 1);
+    StringRTrim(sStr);
+}
 
 
-
+/*
+ *      StringRTrim
+ *
+ *	Author:	Juno Krahn (2026)
+ *
+ *      Trim whitespace at end.
+ */
+void
+StringRTrim(char *sStr)
+{
+    char *end = sStr + strlen(sStr);   /* points at NUL */
+    while (end > sStr && isspace((unsigned char)end[-1])) end--;
+    *end = '\0';
+}
 
 
 /*
@@ -327,7 +375,7 @@ static void
 DebugCheckMemoryBlock( MEMHEADER *mPMem )
 {
     if ( strcmp( mPMem->sCheck, CHECKSTR ) != 0 ) {
-        DFATAL(( "In FREE or REALLOC with a BAD memory block!\n" ));
+        DFATAL("In FREE or REALLOC with a BAD memory block!\n" );
     }
 }
 
@@ -343,7 +391,7 @@ DebugCheckMemoryBlock( MEMHEADER *mPMem )
  *	If bReport is TRUE then write the memory header for each
  *	block as it is checked to the LOG file.
  */
-void
+static void
 DebugMemoryTest( char *sFile, int iLine, BOOL bReport )
 {
 	MEMHEADER	*mPMem, *mPPreviousMem;
@@ -353,10 +401,10 @@ DebugMemoryTest( char *sFile, int iLine, BOOL bReport )
 		return;
 
 	if ( bReport ) {
-		VPLOG(( "Dumping unreleased memory\n" ));
+		VPLOG("Dumping unreleased memory\n" );
 	}
 
-	MESSAGE(( "---TESTMEMORY\n" ));
+	MESSAGE("---TESTMEMORY\n" );
     
 	mPPreviousMem = NULL;
 	mPMem = SmPMallocList;
@@ -364,49 +412,43 @@ DebugMemoryTest( char *sFile, int iLine, BOOL bReport )
 		sTrailer = ((char*)mPMem)+sizeof(MEMHEADER)+mPMem->lSize;
 		if ( strcmp( mPMem->sCheck, CHECKSTR ) != 0 ||
 		     strcmp( mPMem->sCheck, sTrailer ) != 0 ) {
-			PRINTF(( "MEMORY ERROR!!!!\n" ));
-			PRINTF(( "A memory block has been corrupted!\n\n" ));
-			PRINTF(( 
-			  "Last memory operation before error in: %15s:%5d\n",
-                          GsLastMemOpFile, GiLastMemOpLine ));
-			PRINTF(( 
-			  "Memory op. that discovered error in  : %15s:%5d\n",
-			  sFile, iLine ));
-			PRINTF(( "--------------------\n" ));
-			PRINTF(( 
-			  "Corrupted block malloc'd in: %s:%d   size: %ld\n",
+			PRINTF("MEMORY ERROR!!!!\n" );
+			PRINTF("A memory block has been corrupted!\n\n" );
+			PRINTF("Last memory operation before error in: %15s:%5d\n",
+                          GsLastMemOpFile, GiLastMemOpLine );
+			PRINTF("Memory op. that discovered error in  : %15s:%5d\n",
+			  sFile, iLine );
+			PRINTF("--------------------\n" );
+			PRINTF("Corrupted block malloc'd in: %s:%d   size: %ld\n",
                           mPMem->sFile, mPMem->iLineNumber,
-                          mPMem->lSize ));
-			PRINTF(( "Header= |%s|\n", mPMem->sCheck ));
-			PRINTF(( "Trailer=|%s|\n", sTrailer ));
-			PRINTF(( 
-			  "NOTE: Header must be the same as Trailer!!!!!\n" ));
+                          mPMem->lSize );
+			PRINTF("Header= |%s|\n", mPMem->sCheck );
+			PRINTF("Trailer=|%s|\n", sTrailer );
+			PRINTF("NOTE: Header must be the same as Trailer!!!!!\n" );
 			if ( mPPreviousMem != NULL ) {
-				PRINTF(( "------------------------\n" ));
-				PRINTF(( "The preceding memory block is:\n" ));
-				PRINTF(( 
-				  "malloc'd in: %s  line: %d   size: %ld\n",
+				PRINTF("------------------------\n" );
+				PRINTF("The preceding memory block is:\n" );
+				PRINTF("malloc'd in: %s  line: %d   size: %ld\n",
 				  mPPreviousMem->sFile, 
 				  mPPreviousMem->iLineNumber,
-				  mPPreviousMem->lSize ));
-				PRINTF(( "Header= |%s|\n",
-				  mPPreviousMem->sCheck ));
+				  mPPreviousMem->lSize );
+				PRINTF("Header= |%s|\n",
+				  mPPreviousMem->sCheck );
 			} else 
-				PRINTF(( "This is the first memory block.\n" ));
+				PRINTF("This is the first memory block.\n" );
 			abort();
 		} else {
 			if ( bReport ) {
-				VPLOG(( 
-				  "Block malloc'd in: %s:%d   size: %ld\n",
+				VPLOG("Block malloc'd in: %s:%d   size: %ld\n",
 				  mPMem->sFile, mPMem->iLineNumber,
-				  mPMem->lSize ));
+				  mPMem->lSize );
 			}
 		}
 		mPPreviousMem = mPMem;
 		mPMem = mPMem->mPNext;
 	}
     
-	MESSAGE(( "---TESTMEMORY GOOD!!!!!!!\n" ));
+	MESSAGE("---TESTMEMORY GOOD!!!!!!!\n" );
 }
 
 
@@ -435,27 +477,27 @@ DebugMalloc( long lSize, char *sFile, int iLine )
 {
 MEMHEADER	*mPMem;
 char		*sTrailer;
-char		*cPBlock;
+//char		*cPBlock;
 
                 /* Check for consistency */
 
-    MESSAGE(( "---MALLOC\n" ));
+    MESSAGE("---MALLOC\n" );
 
     DebugMemoryTest( sFile, iLine, FALSE );
 
                 /* Malloc what the user wants and a header and trailer */
                 
     mPMem = (MEMHEADER*)malloc( lSize + sizeof(MEMHEADER) + TRAILERLEN );
-    FILEMESSAGE( "MEMORY", ( "In: %s:%d Malloc at: %p,  %ld bytes\n",
-				sFile, iLine, mPMem, lSize ));
+    FILEMESSAGE("MEMORY", "In: %s:%d Malloc at: %p,  %ld bytes\n",
+				sFile, iLine, (void*)mPMem, lSize );
     if ( mPMem == NULL ) {
-        DFATAL(( "Could not malloc: %s\n", strerror(errno) ));
+        DFATAL("Could not malloc: %s\n", strerror(errno) );
     }
     
-    cPBlock = ((char*)mPMem)+sizeof(MEMHEADER);
+    //cPBlock = ((char*)mPMem)+sizeof(MEMHEADER);
 
     if ( strcmp( mPMem->sCheck, "" ) != 0 ) {
-        MESSAGE(( "---In MALLOC, previous contents=%s\n", mPMem->sCheck ));
+        MESSAGE("---In MALLOC, previous contents=%s\n", mPMem->sCheck );
     }
     
                 /* Fill the header */
@@ -494,15 +536,15 @@ char		*sTrailer;
 
                 /* Check for consistency */
 
-    MESSAGE(( "---REALLOC\n" ));
+    MESSAGE("---REALLOC\n" );
     DebugMemoryTest( sFile, iLine, FALSE );
 
     
                 /* Find where the actual memory block begins */
 
     mPMem = (MEMHEADER*)( cPBlock - sizeof(MEMHEADER) );
-    FILEMESSAGE( "MEMORY", ( "<<<In %s:%d  Realloc at: %p,  %ld bytes\n",
-			sFile, iLine, cPBlock, mPMem->lSize ));
+    FILEMESSAGE("MEMORY", "<<<In %s:%d  Realloc at: %p,  %ld bytes\n",
+			sFile, iLine, cPBlock, mPMem->lSize );
     DebugCheckMemoryBlock(mPMem);
 
                 /* Find the memory block in the linked list */
@@ -515,7 +557,7 @@ char		*sTrailer;
         mPCur = mPCur->mPNext;
     }
     if ( mPCur == NULL ) {
-        DFATAL(( "In DebugRealloc, MEMORY CORRUPTION!, block not found!" ));
+        DFATAL("In DebugRealloc, MEMORY CORRUPTION!, block not found!" );
     }
                 /* Remove the block from the linked list */
     if ( mPPrevious == NULL ) {
@@ -529,10 +571,10 @@ char		*sTrailer;
 
     mPPrevious = mPMem;
     mPMem = (MEMHEADER*)malloc( lSize+sizeof(MEMHEADER)+TRAILERLEN );
-    FILEMESSAGE( "MEMORY", ( "In %s:%d  >>>Realloc at: %p,  %ld bytes\n",
-				sFile, iLine, mPMem, lSize ));
+    FILEMESSAGE("MEMORY", "In %s:%d  >>>Realloc at: %p,  %ld bytes\n",
+				sFile, iLine, (void*)mPMem, lSize );
     if ( mPMem == NULL ) {
-        DFATAL(( "Could not malloc in REALLOC: %s\n", strerror(errno) ));
+        DFATAL("Could not malloc in REALLOC: %s\n", strerror(errno) );
     }
     memmove( mPMem, mPPrevious, 
            MIN( lSize, mPPrevious->lSize) + sizeof(MEMHEADER)+TRAILERLEN );
@@ -572,15 +614,15 @@ MEMHEADER	*mPMem, *mPCur, *mPPrevious;
 
                 /* Check for consistency */
 
-    MESSAGE(( "---FREE\n" ));
+    MESSAGE("---FREE\n" );
     DebugMemoryTest( sFile, iLine, FALSE );
 
 
                 /* Find where the actual memory block begins */
 
     mPMem = (MEMHEADER*)( cPBlock - sizeof(MEMHEADER) );
-    FILEMESSAGE( "MEMORY", ( "In %s:%d Free at: %p  %ld bytes\n",
-			sFile, iLine, cPBlock, mPMem->lSize));
+    FILEMESSAGE("MEMORY", "In %s:%d Free at: %p  %ld bytes\n",
+			sFile, iLine, cPBlock, mPMem->lSize);
     DebugCheckMemoryBlock(mPMem);
 
     strcpy( mPMem->sCheck, FREESTR );
@@ -595,7 +637,7 @@ MEMHEADER	*mPMem, *mPCur, *mPPrevious;
         mPCur = mPCur->mPNext;
     }
     if ( mPCur == NULL ) {
-        DFATAL(( "In DebugFree, MEMORY CORRUPTION!, Memory block could not be found!!!!!" ));
+        DFATAL("In DebugFree, MEMORY CORRUPTION!, Memory block could not be found!!!!!" );
     }
                 /* Remove the block from the linked list */
     if ( mPPrevious == NULL ) {
@@ -670,7 +712,7 @@ MessageAddFile( char *sFile )
     strcpy( SsaMessageFiles[SiMessageFiles], sFile );
     SiMessageFiles++;
 
-    PRINTF(( "TURNING ON MESSAGES FROM: <%s>\n", sFile ));
+    PRINTF("TURNING ON MESSAGES FROM: <%s>\n", sFile );
 }
 
 
@@ -697,7 +739,7 @@ int             i, j;
             break;
         }
     }
-    PRINTF(( "TURNING OFF MESSAGES FROM: <%s>\n", sFile ));
+    PRINTF("TURNING OFF MESSAGES FROM: <%s>\n", sFile );
 }
 
 
@@ -709,15 +751,15 @@ int             i, j;
  *      Print a list of the files which will generate messages.
  */
 void    
-MessageFileList()
+MessageFileList(void)
 {
 	int	i;
 
 
     for ( i=0; i<SiMessageFiles; i++ ) {
-        myPrintf( "%s\n", SsaMessageFiles[i] );
+        myPrintf(0, "%s\n", SsaMessageFiles[i] );
     }
-    myPrintf( "------\n" );
+    myPrintf(0, "------\n" );
 }    
 
 
@@ -735,12 +777,12 @@ MessageFileList()
  *	separated by spaces.
  */
 static void	
-MessageInitialize()
+MessageInitialize(void)
 {
 STRING	sName;
 char	*cPGet, *cPPut;
 
-    PRINTF(( "Reading MESSAGEON environment variable.\n" ));
+    PRINTF("Reading MESSAGEON environment variable.\n" );
     cPGet = (char*)getenv("MESSAGEON");
 
     if ( cPGet == NULL ) 
@@ -757,6 +799,24 @@ char	*cPGet, *cPPut;
 	if ( *cPGet ) cPGet++;
 	MESSAGEON(sName);
     }
+}
+
+void
+myPrintTrace( const char *prefix, int depth, const char *fmt, ... )
+{
+    char    sBuf[MAXCHARSPERPRINTF];
+    char    sMsg[MAXCHARSPERPRINTF];
+    va_list args;
+
+    va_start( args, fmt );
+    vsnprintf( sBuf, sizeof(sBuf), fmt, args );
+    va_end( args );
+
+    snprintf( sMsg, sizeof(sMsg),
+              "Trace: %s %.*s from call depth %2d.\n",
+              prefix, (int)(MAXSTRINGLENGTH - 32), sBuf, depth );
+
+    myPrintString( sMsg, TRACE_VERBOSITY );
 }
 #endif
 
@@ -798,7 +858,7 @@ TODO: add string size protection
         i++;
         char *var = getenv(user);
         if ( var == NULL ) {
-	    VP0(( "Could not get environment value for: %s\n", user));
+	    VP0("Could not get environment value for: %s\n", user);
             return 0;
         }
         strcpy( sExpanded, var );
@@ -828,7 +888,7 @@ TODO: add string size protection
 
 	home = (char*)getenv("HOME");
 	if ( home == (char*)NULL ) {
-		VP0(( "~: Could not get HOME from environment\n" ));
+		VP0("~: Could not get HOME from environment\n" );
 		return(1);
 	}
 	strcpy( sExpanded, home);
@@ -852,8 +912,8 @@ TODO: add string size protection
     i++;
     pw = getpwnam( user );
     if ( pw == NULL ) {
-	VP0(( "%s: Could not get from password file: %s\n", user,
-						strerror(errno) ));
+	VP0("%s: Could not get from password file: %s\n", user,
+						strerror(errno) );
 	return(1);
     }
 
@@ -880,7 +940,7 @@ STRING		sTmpDir;
 FILESTATUSt	fsStatus;
 
     if ( SiCurDirectory + 1 >= MAXDIRECTORIES ) {
-	VP0(( "Limit reached on include directories - can't add dir\n" ));
+	VP0("Limit reached on include directories - can't add dir\n" );
 	if ( bomb )
 		exit(1);
 	return(0);
@@ -893,9 +953,9 @@ FILESTATUSt	fsStatus;
     fsStatus = fsSysdependFileStatus(sTmpDir);
     if ( !(fsStatus.fMode & FILEDIRECTORY) ) {
 	if (errno)
-		VP0(( "%s: %s\n", sTmpDir, strerror(errno) ));
+		VP0("%s: %s\n", sTmpDir, strerror(errno) );
 	else
-		VP0(( "%s: not a directory %s\n", sTmpDir ));
+		VP0("%s: not a directory %s\n", sTmpDir );
 	if ( bomb )
 		exit(1);
 	return(0);
@@ -930,13 +990,13 @@ FILESTATUSt	fsStatus;
 STRING		sExpanded;
 int absolutePath;
 
-    VPTRACEENTER(( "fBasicsMyFopen" ));
-    VPTRACEMULTIPLEEXIT(( "fBasicsMyFopen" ));
+    VPTRACEENTER("fBasicsMyFopen" );
+    VPTRACEMULTIPLEEXIT("fBasicsMyFopen" );
     if ( strlen(sFilename) == 0 ) 
 	return(NULL);
 
     if ( strlen(sFilename) == 1 && sFilename[0] == '-' ) {
-	VP2(( "Reading from standard input.\n" ));
+	VP2("Reading from standard input.\n" );
 	return(stdin);
     }
 
@@ -945,7 +1005,7 @@ int absolutePath;
     fsStatus = fsSysdependFileStatus(sExpanded);
 
     if ( fsStatus.fMode & FILEDIRECTORY ) {
-	VP0(( "%s is a directory\n", sExpanded ));
+	VP0("%s is a directory\n", sExpanded );
 	return(NULL);
     }
 
@@ -960,14 +1020,14 @@ int absolutePath;
         strcpy ( GsBasicsFullName, sExpanded );
         fFile = fopen( sExpanded, sAttributes );
 	if ( fFile == NULL  &&  bComplain ) {
-		VPFATALEXIT(( "Could not open file %s: %s\n", 
-						sExpanded, strerror(errno) ));
+		VPFATALEXIT("Could not open file %s: %s\n", 
+						sExpanded, strerror(errno) );
 	}
 	return(fFile);
     }
-    sprintf ( GsBasicsFullName, "./%s", sExpanded );
-
-    fFile = fopen( sExpanded, sAttributes );
+    int len = snprintf ( GsBasicsFullName, sizeof(GsBasicsFullName), "./%s", sExpanded );
+    if (len >= (int)sizeof(GsBasicsFullName) ) fFile = NULL;
+    else fFile = fopen( sExpanded, sAttributes );
     if ( fFile != NULL ) 
 	return(fFile);
     iExistErr = 1;
@@ -979,13 +1039,13 @@ int absolutePath;
 	if ( fFile != NULL ) 
 	    return(fFile);
 	if ( errno != ENOENT ) {
-	    VP0(( "Opening %s: %s\n", GsBasicsFullName, strerror(errno) ));
+	    VP0("Opening %s: %s\n", GsBasicsFullName, strerror(errno) );
 	    iExistErr = 0;
 	}
     }
     if ( bComplain ) {
-	VPFATALEXIT(( "Could not open file %s: %s\n", sExpanded,
-			( iExistErr ? "not found" : "system error" )  ));
+	VPFATALEXIT("Could not open file %s: %s\n", sExpanded,
+			( iExistErr ? "not found" : "system error" )  );
     }
     return(NULL);
 }
@@ -1071,7 +1131,7 @@ BOOL		bFoundOne;
 	     *	current print sink now point to freed memory
 	     */
 	    if (iCurrentPrintSink == -1)
-		DFATAL(("iCurrentPrintSink == -1\n"));
+		DFATAL("iCurrentPrintSink == -1\n");
 	    GcPPrefix = SsiPSinks[iCurrentPrintSink].sPrefix;
 	    GbPrintPrefix = SsiPSinks[iCurrentPrintSink].bPrintPrefix;
 	    GfPrintStringCallback = SsiPSinks[iCurrentPrintSink].fCallback;
@@ -1086,7 +1146,7 @@ BOOL		bFoundOne;
     SsiPSinks[i].fCallback = fOutputCallback;
     strcpy( SsiPSinks[i].sPrefix, sPrefix );
     SsiPSinks[i].PData = PData;
-    MESSAGE(( "Created print sink: %d\n", i ));
+    MESSAGE("Created print sink: %d\n", i );
 
     return(i);
 }
@@ -1109,11 +1169,11 @@ zDefineCurrentPrintSink( int iHandle )
     iCurrentPrintSink = iHandle;
 
     if ( iHandle >= SiNumberOfSinks || iHandle < 0 ) {
-	DFATAL(( "Illegal print sink handle: %d, must be in [0..%d]\n",
-			iHandle, SiNumberOfSinks-1 ));
+	DFATAL("Invalid print sink handle: %d, must be in [0..%d]\n",
+			iHandle, SiNumberOfSinks-1 );
     }
 
-    MESSAGE(( "Selecting print sink: %d\n", iHandle ));
+    MESSAGE("Selecting print sink: %d\n", iHandle );
 
     if ( SsiPSinks[iHandle].bSinkUsed ) {
 	GcPPrefix = SsiPSinks[iHandle].sPrefix;
@@ -1121,7 +1181,7 @@ zDefineCurrentPrintSink( int iHandle )
 	GfPrintStringCallback = SsiPSinks[iHandle].fCallback;
 	GPData = SsiPSinks[iHandle].PData;
     } else {
-	DFATAL(( "Unused print sink: %d\n", iHandle ));
+	DFATAL("Unused print sink: %d\n", iHandle );
     }
 }
 
@@ -1137,16 +1197,16 @@ void
 DestroyPrintSink( int iHandle )
 {
     if ( iHandle >= SiNumberOfSinks || iHandle < 0 ) {
-	DFATAL(( "Illegal print sink handle: %d, must be in [0..%d]\n",
-			iHandle, SiNumberOfSinks-1 ));
+	DFATAL("Invalid print sink handle: %d, must be in [0..%d]\n",
+			iHandle, SiNumberOfSinks-1 );
     }
 
-    MESSAGE(( "Destroying print sink: %d\n", iHandle ));
+    MESSAGE("Destroying print sink: %d\n", iHandle );
 
     if ( SsiPSinks[iHandle].bSinkUsed ) {
 	SsiPSinks[iHandle].bSinkUsed = FALSE;
     } else {
-	DFATAL(( "Unused print sink: %d\n", iHandle ));
+	DFATAL("Unused print sink: %d\n", iHandle );
     }
 }
 
@@ -1162,7 +1222,7 @@ void
 PushCurrentPrintSink( int iSink )
 {
     if ( SiNextSink >= MAX_SINK_STACK ) {
-	DFATAL(( "Exhausted Print Sink Stack\n" ));
+	DFATAL("Exhausted Print Sink Stack\n" );
     }
     SiaSinkStack[SiNextSink] = iSink;
     SiNextSink++;
@@ -1177,10 +1237,10 @@ PushCurrentPrintSink( int iSink )
  *	Pop the top print sink from the stack.
  */
 void
-PopCurrentPrintSink()
+PopCurrentPrintSink(void)
 {
 	if ( SiNextSink <= 0 ) {
-		DFATAL(( "Underflow in Print Sink Stack\n" ));
+		DFATAL("Underflow in Print Sink Stack\n" );
 	}
 	SiNextSink--;
 	if ( SiNextSink == 0 ) {
@@ -1232,88 +1292,71 @@ myPuts( char *sLine, GENP PData )
     printf( "%s", sLine );
 }
 
-void	(*GfPrintStringCallback)() = myPuts;
+void	(*GfPrintStringCallback)() = (VFUNCTION)myPuts;
 
-
-#define	MAXCHARSPERPRINTF	5000		/* 5000 characters max */
-static	char	SsTempBuffer[MAXCHARSPERPRINTF];
 
 /*
- *	myPrintString
+ *  myPrintString
  *
- *	Author:	Christian Schafmeister (1991)
+ *  Author: Christian Schafmeister (1991) — updated (2025)
  *
- *	Print the string to the appropriate devices.
- *	Break up the line at \n characters.
- *	Prefix the string with GcPPrefix if the last character
- *	printed was a \n.
+ *  Print cPString to appropriate devices.
+ *  Breaks on \n characters; prefixes lines with GcPPrefix when enabled.
+ *  iVerbosity replaces the former GiVerbosity global.
  */
-int itest=0;
-void	
-myPrintString( char *cPString )
+void
+myPrintString(const char *cPString, int iVerbosity)
 {
-char	*cPStart, *cPStop, *cPPrint;
-BOOL	bPrintPrefix;
+    const char  *cPStart, *cPStop;
+    char         sTempBuf[MAXCHARSPERPRINTF];
+    char        *cPPrint;
+    BOOL         bPrintPrefix;
+    size_t       len;
 
     cPStart = cPString;
     cPStop  = cPString;
 
-    while ( *cPStop ) {
+    while (*cPStop) {
+        /* Advance cPStop to next \n or end of string */
+        while (*cPStop && *cPStop != '\n')
+            cPStop++;
 
-			/* Seperate out the \n, \0 terminated pieces */
-			/* and print them possibly prefixed with GcPPrefix */
-	/*
-	 *  set cPStop to next newline or end of string
-	 */
-	while ( *cPStop ) {
-	    if ( *cPStop == '\n' ) break;
-	    cPStop++;
-	}
+        if (*cPStop == '\n') {
+            /* Copy segment including the \n, null-terminate */
+            len = (size_t)(cPStop - cPStart) + 1;   /* include \n */
+            if (len >= sizeof(sTempBuf))
+                len = sizeof(sTempBuf) - 1;          /* truncate safely */
+            memcpy(sTempBuf, cPStart, len);
+            sTempBuf[len] = '\0';
+            cPPrint      = sTempBuf;
+            bPrintPrefix = TRUE;
+            cPStart      = ++cPStop;                 /* next segment */
+        } else {
+            /* End of string — print remainder as-is (no copy needed) */
+            cPPrint      = (char *)cPStart;          /* cast: read-only use */
+            bPrintPrefix = FALSE;
+        }
 
-	if ( *cPStop == '\n' ) {
-	    /*
-	     *  will print this line: copy into buffer to null-terminate
-	     */
-	    strncpy( SsTempBuffer, cPStart, (cPStop-cPStart)+1 );
-	    SsTempBuffer[(cPStop-cPStart)+1] = '\0';
-	    cPPrint = SsTempBuffer;
-	    bPrintPrefix = TRUE;
-	    /*
-	     *  prepare for next line
-	     */
-	    cPStart = ++cPStop;
-	} else {
-	    /*
-	     *  end of string: print as-is
-	     */
-	    cPPrint = cPStart;
-	    bPrintPrefix = FALSE;
-	}
+        /* Emit prefix if required */
+        if (GbPrintPrefix && GcPPrefix != NULL) {
+            if (GfPrintStringCallback == NULL) {
+                DFATAL("Invalid print string callback!");
+            }
+            if (GiVerbosityLevel >= iVerbosity)
+                GfPrintStringCallback(GcPPrefix, GPData);
+            if (GfLog != NULL && iVerbosity >= 0)
+                fputs(GcPPrefix, GfLog);
+        }
 
-	if ( GbPrintPrefix  &&  GcPPrefix != NULL ) {
+        GbPrintPrefix = bPrintPrefix;
 
-	    if ( GfPrintStringCallback == NULL ) {
-		DFATAL(( "Illegal print string callback!" ));
-	    }
-	    if ( GiVerbosityLevel >= GiVerbosity ) {
-		GfPrintStringCallback( GcPPrefix, GPData );
-	    }
-	    if ( GfLog != NULL  &&  GiVerbosity >= 0 ) {
-		fputs( GcPPrefix, GfLog );
-	    }
-	}
-	GbPrintPrefix = bPrintPrefix;
-	if ( GiVerbosityLevel >= GiVerbosity ) {
-	    GfPrintStringCallback( cPPrint, GPData );
-	}
-	if ( (GfLog != NULL) && ( GiVerbosity >= 0 ) ) {
-	    fputs( cPPrint, GfLog );
-	}
+        if (GiVerbosityLevel >= iVerbosity)
+            GfPrintStringCallback(cPPrint, GPData);
+
+        if (GfLog != NULL && iVerbosity >= 0)
+            fputs(cPPrint, GfLog);
     }
 }
-
-
-
 
 /*
  *	BasicsInitialize
@@ -1323,13 +1366,14 @@ BOOL	bPrintPrefix;
  *	Initialize basic routines.
  */
 void	
-BasicsInitialize()
+BasicsInitialize(void)
 {
-	int i;
 	(void)zMatrixInit();
 
-/*   initialize some of the defaults   */
-
+/*   Defaults are now stireed in a defaults descriptor struct in commands.c   */
+        extern void InitializeDefaults(void);
+        InitializeDefaults();
+#if 0
 	GDefaults.pdbwritecharges = 0;
 	GDefaults.dGridSpace = 1.0;
 	GDefaults.dShellExtent = 4.0;
@@ -1352,7 +1396,27 @@ BasicsInitialize()
 	GDefaults.iIPOL = 0;
 	GDefaults.iIPOLset = 0;
 	GDefaults.nocenter = 0;
-  GDefaults.reorder_residues = 1;
+        GDefaults.reorder_residues = 1;
+
+        GDefaults.reverse_lists = 0;
+        GDefaults.bPdbAutoMatch = 0;
+        GDefaults.bPdbAutoLink = 0;
+        GDefaults.dPdbLinkCovalentCutoff = 1.2;
+        GDefaults.dPdbCrosslinkCovalentCutoff = 1.1;
+        GDefaults.bPdbAutoLoadRes = 0;
+        GDefaults.cPdbAltLocSelect = 'A';
+        GDefaults.bPdbUseLinkRecords = 0;
+        GDefaults.bPdbUseConect = 0;
+        GDefaults.bPdbLinkIons = 0;
+        GDefaults.bPdbResetChainID = 0;
+        GDefaults.iPdbIgnoreNonConnect = 0;
+        GDefaults.iPdbReadModel = -1;
+        GDefaults.bPdbUseBioMt = 0;
+        GDefaults.bPdbUseNCSMt = 1;
+        GDefaults.iPdbConvertResName = 0;
+        GDefaults.bCIFReadAuth = 1;
+        GDefaults.sPdbPatchFilename[0]=0;
+#endif
 
 /*
     signal( SIGSEGV, zBasicsTrapSEGV );
@@ -1363,7 +1427,7 @@ BasicsInitialize()
 #endif
 
 #ifdef DEBUG
-    ALWAYS(( "Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) ));
+    ALWAYS( "Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) );
 #endif
 
 } 

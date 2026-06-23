@@ -180,7 +180,7 @@ bRestraintContainsAtom( RESTRAINT rRes, ATOM aAtom )
 		 rRes->rType.rbBond.aAtom2 == aAtom ) return(TRUE);
 	    return(FALSE);
 	default:
-	    DFATAL(( "Illegal RESTRAINT type!" ));
+	    DFATAL("Invalid RESTRAINT type!" );
     }
     return(FALSE);	/* for lint */
 }

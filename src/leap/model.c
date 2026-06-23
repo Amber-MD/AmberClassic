@@ -190,14 +190,14 @@ dVal/DEGTORAD);
 			  maPY->aAtom,
 			  maPD->aAtom,
 			  dVal );
-        MESSAGE(( "++++Torsion INTERNAL: %lf to %s - %s - %s - %s\n",
+        MESSAGE("++++Torsion INTERNAL: %lf to %s - %s - %s - %s\n",
 		dVal/DEGTORAD,
 		sContainerFullDescriptor((CONTAINER)maPA->aAtom,s1),
 		sContainerFullDescriptor((CONTAINER)maPX->aAtom,s2),
 		sContainerFullDescriptor((CONTAINER)maPY->aAtom,s3),
-		sContainerFullDescriptor((CONTAINER)maPD->aAtom,s4) ));
+		sContainerFullDescriptor((CONTAINER)maPD->aAtom,s4) );
     } else {
-	MESSAGE(( "Torsional INTERNAL already exists\n" ));
+	MESSAGE("Torsional INTERNAL already exists\n" );
     }
 }
 
@@ -307,8 +307,8 @@ double	dADOffset;
 	/* and twist all the others with it */
 
 
-    MESSAGE(( "dADAbsolute = %lf\n", 
-			mtPTorsions->dAbsolute/DEGTORAD ));
+    MESSAGE("dADAbsolute = %lf\n", 
+			mtPTorsions->dAbsolute/DEGTORAD );
 
     dADOffset = mtPTorsions->dAbsolute - (180.0*DEGTORAD);
     d180 =  180.0*DEGTORAD + dADOffset;
@@ -496,7 +496,7 @@ MODELATOMt	maTemp;
 
 
     Sift( maaXBonds, sizeof(maaXBonds[0]), iX, 
-		zbModelTrueIfPosKnown, iPFirstXUnknown );
+		(SIFTFUNCTION)zbModelTrueIfPosKnown, iPFirstXUnknown );
 
 		/* Find the 'heaviest' atom in the second half of the */
 		/* list and put it at the front */
@@ -586,8 +586,8 @@ STRING		s1, s2, s3, s4;
     maPCur->vPos = vTemp;
     maPCur->bPosKnown = TRUE;
 
-    MESSAGE(( "=======  Started mock coords from: %s\n",
-		sContainerFullDescriptor((CONTAINER)aInternalAtom1(iInt),s1) ));
+    MESSAGE("=======  Started mock coords from: %s\n",
+		sContainerFullDescriptor((CONTAINER)aInternalAtom1(iInt),s1) );
 
 		/* Now start looping through the torsions, looking for */
 		/* those that have one ATOM defined and then build the */
@@ -595,14 +595,14 @@ STRING		s1, s2, s3, s4;
 		/* from the ARRAY */
 
 MESSAGEEXECUTE( {
-    MESSAGE(( "========  %d Torsions to build mock coords from:\n",
-		iTorsions ));
+    MESSAGE("========  %d Torsions to build mock coords from:\n",
+		iTorsions );
     for ( i=0; i<iTorsions; i++ ) {
-	MESSAGE(( "------- Known torsion: %s - %s - %s - %s\n",
+	MESSAGE("------- Known torsion: %s - %s - %s - %s\n",
 		sContainerFullDescriptor((CONTAINER)aInternalAtom1(iaTorsions[i]),s1),
 		sContainerFullDescriptor((CONTAINER)aInternalAtom2(iaTorsions[i]),s2),
 		sContainerFullDescriptor((CONTAINER)aInternalAtom3(iaTorsions[i]),s3),
-		sContainerFullDescriptor((CONTAINER)aInternalAtom4(iaTorsions[i]),s4) ));
+		sContainerFullDescriptor((CONTAINER)aInternalAtom4(iaTorsions[i]),s4) );
     }
  		} );
 
@@ -629,13 +629,13 @@ MESSAGEEXECUTE( {
 	    } else continue;
 	    bGotOne = TRUE;
 
-	    MESSAGE(( "======= Building mock coord for: %s\n",
-			sContainerFullDescriptor((CONTAINER)maPNew->aAtom,s1) ));
-	    MESSAGE(( "======= Using torsion: %s - %s - %s - %s\n",
+	    MESSAGE("======= Building mock coord for: %s\n",
+			sContainerFullDescriptor((CONTAINER)maPNew->aAtom,s1) );
+	    MESSAGE("======= Using torsion: %s - %s - %s - %s\n",
 		sContainerFullDescriptor((CONTAINER)aInternalAtom1(iaTorsions[j]),s1),
 		sContainerFullDescriptor((CONTAINER)aInternalAtom2(iaTorsions[j]),s2),
 		sContainerFullDescriptor((CONTAINER)aInternalAtom3(iaTorsions[j]),s3),
-		sContainerFullDescriptor((CONTAINER)aInternalAtom4(iaTorsions[j]),s4) ));
+		sContainerFullDescriptor((CONTAINER)aInternalAtom4(iaTorsions[j]),s4) );
 
 			/* Now build the coordinate for aNew */
 
@@ -652,8 +652,8 @@ MESSAGEEXECUTE( {
 	    break;
 	}
 	if ( !bGotOne ) {
-	    DFATAL(( "There are %d torsions left over for mock coords\n",
-			iLeft ));
+	    DFATAL("There are %d torsions left over for mock coords\n",
+			iLeft );
 	}
     }
 }
@@ -790,13 +790,13 @@ this++;
     }
     if ( iAtomCoordination(aX) != 
           1 + maPAtom - &(mtTorsions.maaXBonds[0]) ) {
-	VPFATALEXIT(( "Atom %s has force field coordination %i\n"
+	VPFATALEXIT("Atom %s has force field coordination %i\n"
 	      "       but only %i bonded neighbors.\n"
 	      "       The cause may be an incorrect atom type, and\n"
 	      "       the effect may be a crash very soon (if running interactively).\n",
 	      sContainerFullDescriptor((CONTAINER)aX,s1),
 	      iAtomCoordination(aX),
-	      1 + maPAtom - &(mtTorsions.maaXBonds[0]) ));
+	      1 + maPAtom - &(mtTorsions.maaXBonds[0]) );
     }
     for ( i=iAtomCoordination(aX); i<MAXBONDS; i++ ) {
 	maPAtom->aAtom = NULL;
@@ -833,13 +833,13 @@ this++;
     }
     if ( iAtomCoordination(aY) != 
           1 + maPAtom - &(mtTorsions.maaYBonds[0]) ) {
-	VPFATALEXIT(( "Atom %s has force field coordination %i\n"
+	VPFATALEXIT("Atom %s has force field coordination %i\n"
 	      "       but only %i bonded neighbors.\n"
 	      "       The cause may be an incorrect atom type, and\n"
 	      "       the effect may be a crash very soon (if running interactively).\n",
 	      sContainerFullDescriptor((CONTAINER)aY,s1),
 	      iAtomCoordination(aY),
-	      1 + maPAtom - &(mtTorsions.maaYBonds[0]) ));
+	      1 + maPAtom - &(mtTorsions.maaYBonds[0]) );
     }
     for ( i=iAtomCoordination(aY); i<MAXBONDS; i++ ) {
 	maPAtom->aAtom = NULL;
@@ -858,9 +858,9 @@ fprintf(stderr, "not both %d \n", iTorsions);
 */
 	if ( iTorsions != 0 ) {
 
-	    MESSAGE(( "Using INTERNALs to fit new torsions around: %s - %s\n",
+	    MESSAGE("Using INTERNALs to fit new torsions around: %s - %s\n",
 			sContainerFullDescriptor((CONTAINER)aX,s1),
-			sContainerFullDescriptor((CONTAINER)aY,s2) ));
+			sContainerFullDescriptor((CONTAINER)aY,s2) );
 
 			/* There are torsion INTERNALs around the */
 			/* central ATOMs, build mock external coordinates */
@@ -872,9 +872,9 @@ fprintf(stderr, "not both %d \n", iTorsions);
 	    zModelBuildMockExternals( &mtTorsions, iaTorsions, iTorsions );
 
 	} else {
-	    MESSAGE(( "Completely free in assigning new torsions for: %s - %s\n",
+	    MESSAGE("Completely free in assigning new torsions for: %s - %s\n",
 			sContainerFullDescriptor((CONTAINER)aX,s1),
-			sContainerFullDescriptor((CONTAINER)aY,s2) ));
+			sContainerFullDescriptor((CONTAINER)aY,s2) );
 	}
     } else {
 
@@ -882,9 +882,9 @@ fprintf(stderr, "not both %d \n", iTorsions);
 if(this)
 fprintf(stderr, "using ext\n");
 */
-	MESSAGE(( "Using externals to fit new torsions around: %s - %s\n",
+	MESSAGE("Using externals to fit new torsions around: %s - %s\n",
 			sContainerFullDescriptor((CONTAINER)aX,s1),
-			sContainerFullDescriptor((CONTAINER)aY,s2) ));
+			sContainerFullDescriptor((CONTAINER)aY,s2) );
 
     }
 		/* Order the ATOMs around (aX) */
@@ -923,19 +923,19 @@ fprintf(stderr, "using ext\n");
     }
 
 MESSAGEEXECUTE( {
-    MESSAGE(( "Orientation around: %s = %lf\n", 
+    MESSAGE("Orientation around: %s = %lf\n", 
 		sContainerName(mtTorsions.maX.aAtom),
-		mtTorsions.dXOrientation ));
+		mtTorsions.dXOrientation );
     for ( i=0; i<mtTorsions.iXBonds; i++ ) {
-	MESSAGE(( "Atom %d: = %s\n", i, 
-		sContainerName(mtTorsions.maaXBonds[i].aAtom) ));
+	MESSAGE("Atom %d: = %s\n", i, 
+		sContainerName(mtTorsions.maaXBonds[i].aAtom) );
     }
-    MESSAGE(( "Orientation around: %s = %lf\n", 
+    MESSAGE("Orientation around: %s = %lf\n", 
 		sContainerName(mtTorsions.maY.aAtom),
-		mtTorsions.dYOrientation ));
+		mtTorsions.dYOrientation );
     for ( i=0; i<mtTorsions.iYBonds; i++ ) {
-	MESSAGE(( "Atom %d: = %s\n", i, 
-		sContainerName(mtTorsions.maaYBonds[i].aAtom) ));
+	MESSAGE("Atom %d: = %s\n", i, 
+		sContainerName(mtTorsions.maaYBonds[i].aAtom) );
     }
 		} );
 
@@ -989,12 +989,12 @@ sAtomName(mtTorsions.maaYBonds[0].aAtom),
 	} else if ( iHX==HSP2 && iHY==HSP2 ) {
 	    ModelCreateSp2Sp2Torsions( &mtTorsions ); 
 	} else {
-	    PRINTF(( "Currently only Sp3-Sp3/Sp3-Sp2/Sp2-Sp2 are supported\n" ));
-	    PRINTF(( "---Tried to superimpose torsions for: *-%s-%s-*\n",
-			sContainerName(aX), sContainerName(aY) ));
-	    PRINTF(( "--- With Sp%d - Sp%d\n", iHX, iHY ));
-	    PRINTF(( "--- Sp0 probably means a new atom type is involved\n" ));
-	    PRINTF(( "--- which needs to be added via addAtomTypes\n" ));
+	    PRINTF("Currently only Sp3-Sp3/Sp3-Sp2/Sp2-Sp2 are supported\n" );
+	    PRINTF("---Tried to superimpose torsions for: *-%s-%s-*\n",
+			sContainerName(aX), sContainerName(aY) );
+	    PRINTF("--- With Sp%d - Sp%d\n", iHX, iHY );
+	    PRINTF("--- Sp0 probably means a new atom type is involved\n" );
+	    PRINTF("--- which needs to be added via addAtomTypes\n" );
 	}
     }
 this = 0;
@@ -1039,10 +1039,10 @@ double dModelBondLength( ATOM aAtom1, ATOM aAtom2 )
 	
     ModelBondParm( aAtom1, aAtom2, &dK, &dValue );
 
-    MESSAGE(( "Model bond length for: %s - %s = %lf\n",
+    MESSAGE("Model bond length for: %s - %s = %lf\n",
 		sContainerFullDescriptor((CONTAINER)aAtom1,s1), 
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
-		dValue ));
+		dValue );
     return(dValue);
 }
 
@@ -1082,11 +1082,11 @@ int		iTag;
 
     ModelAngleParm( aAtom1, aAtom2, aAtom3, &dK, &dValue );
 
-    MESSAGE(( "Model bond angle for: %s - %s - %s  = %lf\n",
+    MESSAGE("Model bond angle for: %s - %s - %s  = %lf\n",
 		sContainerFullDescriptor((CONTAINER) aAtom1, s1 ),
 		sContainerFullDescriptor((CONTAINER) aAtom2, s2 ),
 		sContainerFullDescriptor((CONTAINER) aAtom3, s3 ),
-		dValue/DEGTORAD ));
+		dValue/DEGTORAD );
 
     return(dValue);
 }
@@ -1117,7 +1117,7 @@ STRING		sName;
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
     while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
 
-	MESSAGE(( "Looking at atom: %s\n", sContainerName(aAtom) ));
+	MESSAGE("Looking at atom: %s\n", sContainerName(aAtom) );
 
 		/* How many protons does each element take when SP3 */
 
@@ -1150,9 +1150,9 @@ STRING		sName;
 
 	switch ( iAtomHybridization(aAtom) ) {
 	    case 0:
-		VP0(( "(%s: hybridization for type %s unknown)\n",
+		VP0("(%s: hybridization for type %s unknown)\n",
 					sContainerName(aAtom), 
-					sAtomType( aAtom ) ));
+					sAtomType( aAtom ) );
 		break;
 	    case HSP3:
 		iNeeded -= 0;
@@ -1164,14 +1164,14 @@ STRING		sName;
 		iNeeded -= 1;
 		break;
 	    default:
-		DFATAL(( "%s: Illegal hybridization (%d; bonds needed: %d)",
+		DFATAL("%s: Invalid hybridization (%d; bonds needed: %d)",
 					sContainerName(aAtom), 
 					iAtomHybridization(aAtom), 
-					iNeeded ));
+					iNeeded );
 		break;
 	}
 
-	MESSAGE(( "Number of protons to add: %d\n", iNeeded ));
+	MESSAGE("Number of protons to add: %d\n", iNeeded );
 
 	if ( iNeeded > 0 ) {
 
@@ -1381,9 +1381,9 @@ int		i, iHybrid1, iHybrid2;
 	    return;
 	}
     }
-    VPWARN(( "failed to find default bond length %s-%s, types %s-%s\n", 
+    VPWARN("failed to find default bond length %s-%s, types %s-%s\n", 
 		sAtomName(a1), sAtomName(a2), 
-		sAtomType(a1), sAtomType(a2) ));
+		sAtomType(a1), sAtomType(a2) );
 }
 
 

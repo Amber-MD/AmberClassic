@@ -128,8 +128,38 @@ void
 AssocDescribe( ASSOC aAssoc )
 {
 	if ( strlen(sAssocName(aAssoc)) == 0)
-		VP0(( " <assoc>: " ));
+		VP0(" <assoc>: " );
 	else
-		VP0(( "%s: ", sAssocName(aAssoc) ));
+		VP0("%s: ", sAssocName(aAssoc) );
 	Describe( oAssocObject(aAssoc) );
+}
+
+
+// Create a vector as LIST of ASCOC of DOUBLE from VECTOR 
+OBJEKT
+CreateAssocVector(VECTOR vVector) {
+    LIST lResult = (LIST)oCreate(LISTid);
+
+    OBJEKT oDouble = oCreate(ODOUBLEid);
+    ODoubleSet( oDouble,  vVector.dX );
+    ASSOC aAssoc = (ASSOC)oCreate(ASSOCid);
+    AssocSetName( aAssoc, "x" );
+    AssocSetObject( aAssoc, oDouble);
+    ListAddToEnd( lResult, (OBJEKT)aAssoc );
+
+    oDouble = oCreate(ODOUBLEid);
+    ODoubleSet( oDouble,  vVector.dY );
+    aAssoc = (ASSOC)oCreate(ASSOCid);
+    AssocSetName( aAssoc, "y" );
+    AssocSetObject( aAssoc, oDouble);
+    ListAddToEnd( lResult, (OBJEKT)aAssoc );
+
+    oDouble = oCreate(ODOUBLEid);
+    ODoubleSet( oDouble,  vVector.dZ );
+    aAssoc = (ASSOC)oCreate(ASSOCid);
+    AssocSetName( aAssoc, "z" );
+    AssocSetObject( aAssoc, oDouble);
+    ListAddToEnd( lResult, (OBJEKT)aAssoc );
+
+    return (OBJEKT)lResult;
 }

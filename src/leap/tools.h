@@ -73,6 +73,9 @@ extern void     zToolSolvateAndShell( UNIT uSolute, UNIT uSolvent,
                         double dXW, double dYW, double dZW, double dCloseness,
                         double dFarness, BOOL bShell, BOOL bClip, BOOL bOct,
                         BOOL bIsotropic );
+extern void     ToolSolvateCell( UNIT uSolute, UNIT uSolvent, double dCloseness);
+extern void     BuildFractionalTransforms( UNIT uUnit, MATRIX M, MATRIX Mi );
+
 extern void     zToolSolvateInSphere( UNIT uSolute, UNIT uSolvent, 
                         VECTOR *vPCenter, double dRadius, double dCloseness );
 extern void     ToolSetUnitBoxByCenters( UNIT uUnit );

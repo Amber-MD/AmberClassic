@@ -183,6 +183,7 @@ extern  ELEMENTt        GeaElements[];
 
 
 extern int	iElementNumber(char *sName);
+extern int	iPdbElementNumber(const char *sName);
 extern char	*sElementName(int iNumber, char *sName);
 extern int	iElementNumberFromAmber(char *sName);
 

@@ -94,17 +94,16 @@ double  dE, dR, dR6, dER6;
  *	in (mV).  Return the number of rotations performed in (*iPNrot).
  */
 void
-MathOpDiagonalize( MATRIX mA, VECTORASPTR vPEigen, MATRIX mV, int *iPNrot )
+MathOpDiagonalize( MATRIX mA, VECTOR *vPEigen, MATRIX mV, int *iPNrot )
 {
-VECTORASPTR	vD;
-VECTORASARRAY	vB, vZ;
+double          vD[VSIZE] = { vPEigen->dX, vPEigen->dY, vPEigen->dZ };
+double          vB[VSIZE], vZ[VSIZE];
 int		j, iq, ip, i;
 double		thresh, theta, tau, t, sm, s, h, g, c;
 #define	ROTATE(a,i,j,k,l)	g=a[i][j];h=a[k][l];a[i][j]=g-s*(h+g*tau);\
 				a[k][l]=h+s*(g-h*tau);
 
 
-    vD = vPEigen;
     for ( ip=0; ip<VSIZE; ip++ ) {
 	for ( iq=0; iq<VSIZE; iq++ ) mV[ip][iq] = 0.0;
 	mV[ip][ip] = 1.0;
@@ -169,7 +168,7 @@ double		thresh, theta, tau, t, sm, s, h, g, c;
 	    vZ[ip] = 0.0;
 	}
     }
-    DFATAL(( "Too many iterations" ));
+    DFATAL("Too many iterations" );
 }
 
 

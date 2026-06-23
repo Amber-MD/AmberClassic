@@ -384,12 +384,12 @@ BOOL            bFoundOne;
     }
 #ifdef        DEBUG
     if ( bFoundOne ) {
-        MESSAGE(( "Matched torsion %s-%s-%s-%s to: %s-%s-%s-%s\n",
+        MESSAGE("Matched torsion %s-%s-%s-%s to: %s-%s-%s-%s\n",
                     tpPTorsion->sType1,
                     tpPTorsion->sType2,
                     tpPTorsion->sType3,
                     tpPTorsion->sType4,
-                    s1, s2, s3, s4 ));
+                    s1, s2, s3, s4 );
     }
 #endif
                     
@@ -699,16 +699,16 @@ BOOL            bFoundOne;
             bFoundOne = TRUE;
             break;
         default:
-            DFATAL(( "Illegal number of wildcards (0-3) got: %d\n",
-                            iWild ));
+            DFATAL("Invalid number of wildcards (0-3) got: %d\n",
+                            iWild );
             break;
     }
     if ( bFoundOne ) {
-        MESSAGE(( "Matched improper: %s-%s-%s-%s\n",
+        MESSAGE("Matched improper: %s-%s-%s-%s\n",
                 tpPTorsion->sType1,
                 tpPTorsion->sType2,
                 tpPTorsion->sType3,
-                tpPTorsion->sType4 ));
+                tpPTorsion->sType4 );
     }
 
     return(bFoundOne);
@@ -875,7 +875,7 @@ ParmSetSave( PARMSET psLib, DATABASE db )
                 /* parameter tables from the database, if they exist at all */
 
     if ( psLib == NULL ) {
-        VP0(( "PARMSET is NULL => deleting all parameter tables from dbase\n"));
+        VP0("PARMSET is NULL => deleting all parameter tables from dbase\n");
         bDBRndDeleteEntry( db, "parm.atoms" );
         bDBRndDeleteEntry( db, "parm.bonds" );
         bDBRndDeleteEntry( db, "parm.C4Pairwise" ); //New2021
@@ -1312,7 +1312,7 @@ int                i;
      *        compatibility - disentangle here
      */
     bDBGetType( db, "parm.torsions", &iType, &iLines );
-    MESSAGE(( "There are %d torsion+improper parameters.\n" ));
+    MESSAGE("There are %d torsion+improper parameters.\n", iLines );
     if ( iLines ) {
         VARARRAY        vaTorsTypes; 
         TORSIONPARMt        *tP, *tP2;
@@ -1456,15 +1456,17 @@ int             i, iMax;
 STRING                sElement;
 
     BasicsResetInterrupt();
-    VP0(( "PARMSET\n" ));
+    VP0("PARMSET\n" );
+    VP2("Filename: %s\n",sParmName( psLib ) );
+    VP2("Title: %s\n", psLib->sTitle );
 
                 /* Dump Atoms */
 
-    VP0(( "--Atoms\n" ));
+    VP0("--Atoms\n" );
     iMax = iVarArrayElementCount( psLib->vaAtoms );
 
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         apPAtom = PVAI( psLib->vaAtoms, ATOMPARMt, 0 );
         for ( i=0; i<iMax; apPAtom++, i++ ) {
@@ -1473,12 +1475,12 @@ STRING                sElement;
                 sprintf(s1, "def=0");
             else
                 sprintf(s1, "%8.2lf", apPAtom->dPolar);
-            VP0(( "    %4s  Mass=%8.2lf  Polar=%s  E = %8.2lf  R=%8.2lf\n",
+            VP0("    %4s  Mass=%8.2lf  Polar=%s  E = %8.2lf  R=%8.2lf\n",
                         apPAtom->sType, apPAtom->dMass, s1,
-                        apPAtom->dEpsilon, apPAtom->dR ));
-            VP0(( "           Element=%s  Hybrid= Sp%d  Desc:%s\n",
+                        apPAtom->dEpsilon, apPAtom->dR );
+            VP0("           Element=%s  Hybrid= Sp%d  Desc:%s\n",
                         sElementName( apPAtom->iElement, sElement ), 
-                        apPAtom->iHybridization, apPAtom->sDesc ));
+                        apPAtom->iHybridization, apPAtom->sDesc );
             if ( bBasicsInterrupt() ) 
                 goto QUIT;
         }
@@ -1486,16 +1488,16 @@ STRING                sElement;
 
                 /* Dump bonds */
 
-    VP0(( "--Bonds\n" ));
+    VP0("--Bonds\n" );
     iMax = iVarArrayElementCount( psLib->vaBonds );
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         bpPBond = PVAI( psLib->vaBonds, BONDPARMt, 0 );
         for ( i=0; i<iMax; bpPBond++, i++ ) {
-            VP0(( "    %4s - %4s   Kb=%8.2lf   R0=%8.2lf   Desc:%s\n",
+            VP0("    %4s - %4s   Kb=%8.2lf   R0=%8.2lf   Desc:%s\n",
                         bpPBond->sType1, bpPBond->sType2,
-                        bpPBond->dKb, bpPBond->dR0, bpPBond->sDesc ));
+                        bpPBond->dKb, bpPBond->dR0, bpPBond->sDesc );
             if ( bBasicsInterrupt() ) 
                 goto QUIT;
         }
@@ -1503,16 +1505,16 @@ STRING                sElement;
 
                 /* Dump C4Pairwise */
 
-    VP0(( "--C4Pairwise\n" ));
+    VP0("--C4Pairwise\n" );
     iMax = iVarArrayElementCount( psLib->vaC4Pairwise );
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         cpPC4Pairwise = PVAI( psLib->vaC4Pairwise, C4Pairwiset, 0 );
         for ( i=0; i<iMax; cpPC4Pairwise++, i++ ) {
-            VP0(( "    %4s - %4s   C4Pairwise=%8.2lf   Desc:%s\n",
+            VP0("    %4s - %4s   C4Pairwise=%8.2lf   Desc:%s\n",
                         cpPC4Pairwise->sType1, cpPC4Pairwise->sType2,
-                        cpPC4Pairwise->daC4Pairwise, bpPBond->sDesc ));
+                        cpPC4Pairwise->daC4Pairwise, cpPC4Pairwise->sDesc ); //BUGFIX
             if ( bBasicsInterrupt() )
                 goto QUIT;
         }
@@ -1521,17 +1523,17 @@ STRING                sElement;
 
                 /* Dump angles */
 
-    VP0(( "--Angles\n" ));
+    VP0("--Angles\n" );
     iMax = iVarArrayElementCount( psLib->vaAngles );
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         apPAngle = PVAI( psLib->vaAngles, ANGLEPARMt, 0 );
         for ( i=0; i<iMax; apPAngle++, i++ ) {
-            VP0(( "    %4s - %4s - %4s   Kt=%8.2lf   T0=%8.2lf   Desc:%s\n",
+            VP0("    %4s - %4s - %4s   Kt=%8.2lf   T0=%8.2lf   Desc:%s\n",
                         apPAngle->sType1, apPAngle->sType2, apPAngle->sType3,
                         apPAngle->dKt, apPAngle->dT0/DEGTORAD, 
-                        apPAngle->sDesc ));
+                        apPAngle->sDesc );
             if ( bBasicsInterrupt() ) 
                 goto QUIT;
         }
@@ -1539,20 +1541,20 @@ STRING                sElement;
      
                 /* Dump torsions */
 
-    VP0(( "--Torsions\n" ));
+    VP0("--Torsions\n" );
     iMax = iVarArrayElementCount( psLib->vaTorsions );
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         tpPTorsion = PVAI( psLib->vaTorsions, TORSIONPARMt, 0 );
         for ( i=0; i<iMax; tpPTorsion++, i++ ) {
-            VP0(( "  %4s - %4s - %4s - %4s\n",
+            VP0("  %4s - %4s - %4s - %4s\n",
                         tpPTorsion->sType1, tpPTorsion->sType2, 
-                        tpPTorsion->sType3, tpPTorsion->sType4 ));
-            VP0(( "        Kp=%8.2lf   N=%d   P0=%8.2lf   Order: %s  Desc:%s\n",
+                        tpPTorsion->sType3, tpPTorsion->sType4 );
+            VP0("        Kp=%8.2lf   N=%d   P0=%8.2lf   Order: %s  Desc:%s\n",
                         tpPTorsion->dKp, tpPTorsion->iN,
                         tpPTorsion->dP0/DEGTORAD, tpPTorsion->sOrder, 
-                        tpPTorsion->sDesc ));
+                        tpPTorsion->sDesc );
             if ( bBasicsInterrupt() ) 
                 goto QUIT;
         }
@@ -1560,20 +1562,20 @@ STRING                sElement;
 
                 /* Dump impropers */
 
-    VP0(( "--Impropers\n" ));
+    VP0("--Impropers\n" );
     iMax = iVarArrayElementCount( psLib->vaImpropers );
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         tpPTorsion = PVAI( psLib->vaImpropers, TORSIONPARMt, 0 );
         for ( i=0; i<iMax; tpPTorsion++, i++ ) {
-            VP0(( "  %4s - %4s - %4s - %4s\n",
+            VP0("  %4s - %4s - %4s - %4s\n",
                         tpPTorsion->sType1, tpPTorsion->sType2, 
-                        tpPTorsion->sType3, tpPTorsion->sType4 ));
-            VP0(( "        Kp=%8.2lf   N=%d   P0=%8.2lf   Order: %s  Desc:%s\n",
+                        tpPTorsion->sType3, tpPTorsion->sType4 );
+            VP0("        Kp=%8.2lf   N=%d   P0=%8.2lf   Order: %s  Desc:%s\n",
                         tpPTorsion->dKp, tpPTorsion->iN,
                         tpPTorsion->dP0/DEGTORAD, tpPTorsion->sOrder, 
-                        tpPTorsion->sDesc ));
+                        tpPTorsion->sDesc );
             if ( bBasicsInterrupt() ) 
                 goto QUIT;
         }
@@ -1581,16 +1583,16 @@ STRING                sElement;
 
                 /* Dump Hbonds */
 
-    VP0(( "--HBonds\n" ));
+    VP0("--HBonds\n" );
     iMax = iVarArrayElementCount( psLib->vaHBonds );
     if ( !iMax ) {
-        VP0(( "  --None\n" ));
+        VP0("  --None\n" );
     } else {
         hpPHBond = PVAI( psLib->vaHBonds, HBONDPARMt, 0 );
         for ( i=0; i<iMax; hpPHBond++, i++ ) {
-            VP0(( "    %4s - %4s   A=%8.2lf   B=%8.2lf   Desc:%s\n",
+            VP0("    %4s - %4s   A=%8.2lf   B=%8.2lf   Desc:%s\n",
                         hpPHBond->sType1, hpPHBond->sType2,
-                        hpPHBond->dA, hpPHBond->dB, hpPHBond->sDesc ));
+                        hpPHBond->dA, hpPHBond->dB, hpPHBond->sDesc );
             if ( bBasicsInterrupt() ) 
                 goto QUIT;
         }
@@ -1598,27 +1600,27 @@ STRING                sElement;
 
                 /* Dump NB Edits */
 
-    VP0(( "--Nonbonded Edits\n" ));
+    VP0("--Nonbonded Edits\n" );
     iMax = iVarArrayElementCount( psLib->vaNBEdits );
     if ( !iMax ) {
-      VP0(( "  --None\n" ));
+      VP0("  --None\n" );
     } else {
       hpPNBEdit = PVAI( psLib->vaNBEdits, NBEDITt, 0 );
       for ( i=0; i<iMax; hpPNBEdit++, i++ ) {
-        VP0(( "    %4s - %4s   EI=%8.5lf  EJ=%8.5lf  RI=%8.5lf  RJ=%8.5lf   "
+        VP0("    %4s - %4s   EI=%8.5lf  EJ=%8.5lf  RI=%8.5lf  RJ=%8.5lf   "
               "Desc:%s\n", hpPNBEdit->sType1, hpPNBEdit->sType2,
               hpPNBEdit->dEI, hpPNBEdit->dEJ, hpPNBEdit->dRI, hpPNBEdit->dRJ,
-              hpPNBEdit->sDesc ));
+              hpPNBEdit->sDesc );
         if ( bBasicsInterrupt() )
           goto QUIT;
       }
     }
 
-    VP0(( "\n" ));
+    VP0("\n" );
     return;
 
 QUIT:
-    VP0(( "Interrupted\n" ));
+    VP0("Interrupted\n" );
     BasicsResetInterrupt();
 }
 
@@ -1720,7 +1722,7 @@ int iParmSetAddC4Pairwise(PARMSET psLib, char *sType1, char *sType2, double daC4
     strcpy(bpC4Pairwise.sDesc, "");
   }
   VarArrayAdd((psLib->vaC4Pairwise), (GENP)&bpC4Pairwise);
-  //VP0(("Return value of iParmSetAddC4Pairwise is: %i\n", iVarArrayElementCount(psLib->vaC4Pairwise) - 1));
+  //VP0("Return value of iParmSetAddC4Pairwise is: %i\n", iVarArrayElementCount(psLib->vaC4Pairwise) - 1);
   return(iVarArrayElementCount(psLib->vaC4Pairwise) - 1);
 }
 
@@ -2019,8 +2021,8 @@ STRING                s1, s2;
         }
     }
     if ( bFoundOne ) {
-        MESSAGE(( "-Bond Parameter %s - %s\n", 
-                sType1, sType2 ));
+        MESSAGE("-Bond Parameter %s - %s\n", 
+                sType1, sType2 );
         return(i);
     }
     return(PARM_NOT_FOUND);
@@ -2048,7 +2050,7 @@ STRING                s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaC4Pairwise );
     //if (psLib->vaC4Pairwise == NULL) {
-      VP0(("iMax is: %i\n", iMax));
+      VP0("iMax is: %i\n", iMax);
     //}
     //TODO: iMax is always zero
     if ( !iMax )
@@ -2060,7 +2062,7 @@ STRING                s1, s2;
 
     bFoundOne = FALSE;
     cpPC4Pairwise = PVAI( psLib->vaC4Pairwise, C4Pairwiset, 0 );
-    VP0(("Initial C4Pairwise %i\n", cpPC4Pairwise));
+    VP0("Initial C4Pairwise %i\n", cpPC4Pairwise);
     for ( i=0; i<iMax; cpPC4Pairwise++, i++ ) {
         if ( strcmp( cpPC4Pairwise->sType1, s1 ) == 0 ) {
             if ( strcmp( cpPC4Pairwise->sType2, s2 ) == 0 ) {
@@ -2070,8 +2072,8 @@ STRING                s1, s2;
         }
     }
     if ( bFoundOne ) {
-        MESSAGE(( "-C4Pairwise Parameter %s - %s\n",
-                sType1, sType2 ));
+        MESSAGE("-C4Pairwise Parameter %s - %s\n",
+                sType1, sType2 );
         return(i);
     }
     return(PARM_NOT_FOUND);
@@ -2120,8 +2122,8 @@ STRING                s1, s2, s3;
         }
     }
     if ( bFoundOne ) {
-        MESSAGE(( "-Angle Parameter %s - %s - %s\n", 
-                sType1, sType2, sType3));
+        MESSAGE("-Angle Parameter %s - %s - %s\n", 
+                sType1, sType2, sType3);
     }
     if ( bFoundOne )
         return(i);
@@ -2263,8 +2265,8 @@ STRING                s1, s2;
         }
     }
     if ( bFoundOne ) {
-        MESSAGE(( "-HBond Parameter %s - %s\n", 
-                sType1, sType2 ));
+        MESSAGE("-HBond Parameter %s - %s\n", 
+                sType1, sType2 );
         return(i);
     } 
     return(PARM_NOT_FOUND);
@@ -2310,7 +2312,7 @@ STRING                s1, s2;
         }
     }
     if ( bFoundOne ) {
-        MESSAGE(( "-HBond Parameter %s - %s\n", sType1, sType2 ));
+        MESSAGE("-HBond Parameter %s - %s\n", sType1, sType2 );
         return(i);
     }
     return(PARM_NOT_FOUND);
@@ -2519,8 +2521,8 @@ int                iTemp, iBetter, iBetterIndex;
                 SWAP( cPaTypes[3], cPaTypes[0], cPTemp );
                 SWAP( iaIndexes[3], iaIndexes[0], iTemp );
             } else
-                DFATAL(( "Could not order atoms, could not find 0th type: %s\n",
-                                cPParm[0] ));
+                DFATAL("Could not order atoms, could not find 0th type: %s\n",
+                                cPParm[0] );
         }
     }
 
@@ -2553,8 +2555,8 @@ int                iTemp, iBetter, iBetterIndex;
                 SWAP( cPaTypes[3], cPaTypes[1], cPTemp );
                 SWAP( iaIndexes[3], iaIndexes[1], iTemp );
             } else
-                DFATAL(( "Could not order atoms, could not find 1st type: %s\n",
-                                cPParm[1] ));
+                DFATAL("Could not order atoms, could not find 1st type: %s\n",
+                                cPParm[1] );
         }
     }
 
@@ -2586,8 +2588,8 @@ int                iTemp, iBetter, iBetterIndex;
                 SWAP( cPaTypes[3], cPaTypes[1], cPTemp );
                 SWAP( iaIndexes[3], iaIndexes[1], iTemp );
             } else
-                DFATAL(( "Could not order atoms, could not find 3rd type: %s\n",
-                                cPParm[3] ));
+                DFATAL("Could not order atoms, could not find 3rd type: %s\n",
+                                cPParm[3] );
         }
     }
 
@@ -2740,7 +2742,7 @@ ATOMPARMt      *apPAtom;
         /*
          *  default values
          */
-        VPWARN(( "Using default atom values (NOELEMENT)\n" ));
+        VPWARN("Using default atom values (NOELEMENT)\n" );
         strcpy( sType, WILD_CARD_TYPE );
         *dPMass = 0.0;
         *dPPolar = -1.0;
@@ -2795,7 +2797,7 @@ void ParmSetBond(PARMSET psLib, int i, char *sType1, char *sType2, double *dPKb,
   if (!iVarArrayElementCount(psLib->vaBonds)) {
 
     // Default values
-    VPWARN(("Using default bond values (0)\n"));
+    VPWARN("Using default bond values (0)\n");
     strcpy(sType1, WILD_CARD_TYPE);
     strcpy(sType2, WILD_CARD_TYPE);
     *dPKb      = 0.0;
@@ -2837,7 +2839,7 @@ void ParmSetC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double 
   if (!iVarArrayElementCount(psLib->vaC4Pairwise)) {
 
     // Default values
-    VPWARN(("Using default C4 values (0)\n"));
+    VPWARN("Using default C4 values (0)\n");
     strcpy(sType1, WILD_CARD_TYPE);
     strcpy(sType2, WILD_CARD_TYPE);
     *daC4Pairwise = 0.0;
@@ -2870,7 +2872,7 @@ ANGLEPARMt     *apPAngle;
         /*
          *  default values
          */
-        VPWARN(( "Using default angle values (0)\n" ));
+        VPWARN("Using default angle values (0)\n" );
         strcpy( sType1, WILD_CARD_TYPE );
         strcpy( sType2, WILD_CARD_TYPE );
         strcpy( sType3, WILD_CARD_TYPE );
@@ -2910,7 +2912,7 @@ TORSIONPARMt   *tpPTorsion;
         /*
          *  default values
          */
-        VPWARN(( "Using default torsion values (0)\n" ));
+        VPWARN("Using default torsion values (0)\n" );
         strcpy( sType1, WILD_CARD_TYPE );
         strcpy( sType2, WILD_CARD_TYPE );
         strcpy( sType3, WILD_CARD_TYPE );
@@ -2953,7 +2955,7 @@ TORSIONPARMt   *tpPImproper;
         /*
          *  default values
          */
-        VPWARN(( "Using default improper torsion values (0)\n" ));
+        VPWARN("Using default improper torsion values (0)\n" );
         strcpy( sType1, WILD_CARD_TYPE );
         strcpy( sType2, WILD_CARD_TYPE );
         strcpy( sType3, WILD_CARD_TYPE );
@@ -2994,7 +2996,7 @@ HBONDPARMt     *hpPHBond;
         /*
          *  default values
          */
-        VPWARN(( "Using default hbond values (0)\n" ));
+        VPWARN("Using default hbond values (0)\n" );
         strcpy( sType1, WILD_CARD_TYPE );
         strcpy( sType2, WILD_CARD_TYPE );
         *dPA = 0;
@@ -3030,7 +3032,7 @@ NBEDITt     *hpPNBEdit;
         /*
          *  default values
          */
-        VPWARN(( "Using zeros for edited Lennard-Jones values (0)\n" ));
+        VPWARN("Using zeros for edited Lennard-Jones values (0)\n" );
         strcpy( sType1, WILD_CARD_TYPE );
         strcpy( sType2, WILD_CARD_TYPE );
         *dEI = 0.0;
@@ -3333,7 +3335,7 @@ ParmSetNewAtoms( PARMSET psParmSet, int iCount )
     VarArrayDestroy( &psParmSet->vaAtoms );
     psParmSet->vaAtoms = vaVarArrayCreate( sizeof( ATOMPARMt ));
     VarArraySetSize( psParmSet->vaAtoms, iCount );
-    MESSAGE(( "Atom parameters size changed to %i\n", iCount ));
+    MESSAGE("Atom parameters size changed to %i\n", iCount );
 }
 
 
@@ -3353,7 +3355,7 @@ ParmSetNewBonds( PARMSET psParmSet, int iCount )
     VarArrayDestroy( &psParmSet->vaBonds );
     psParmSet->vaBonds = vaVarArrayCreate( sizeof( BONDPARMt ));
     VarArraySetSize( psParmSet->vaBonds, iCount );
-    MESSAGE(( "Bond parameters size changed to %i\n", iCount ));
+    MESSAGE("Bond parameters size changed to %i\n", iCount );
 }
 
 /*
@@ -3372,7 +3374,7 @@ ParmSetNewC4Pairwise( PARMSET psParmSet, int iCount )
     VarArrayDestroy( &psParmSet->vaC4Pairwise );
     psParmSet->vaC4Pairwise = vaVarArrayCreate( sizeof( C4Pairwiset ));
     VarArraySetSize( psParmSet->vaC4Pairwise, iCount );
-    MESSAGE(( "C4 parameters size changed to %i\n", iCount ));
+    MESSAGE("C4 parameters size changed to %i\n", iCount );
 }
 
 
@@ -3392,7 +3394,7 @@ ParmSetNewAngles( PARMSET psParmSet, int iCount )
     VarArrayDestroy( &psParmSet->vaAngles );
     psParmSet->vaAngles = vaVarArrayCreate( sizeof( ANGLEPARMt ));
     VarArraySetSize( psParmSet->vaAngles, iCount );
-    MESSAGE(( "Angle parameters size changed to %i\n", iCount ));
+    MESSAGE("Angle parameters size changed to %i\n", iCount );
 }
            
             
@@ -3412,7 +3414,7 @@ ParmSetNewTorsions( PARMSET psParmSet, int iCount )
     VarArrayDestroy( &psParmSet->vaTorsions );
     psParmSet->vaTorsions = vaVarArrayCreate( sizeof( TORSIONPARMt ));
     VarArraySetSize( psParmSet->vaTorsions, iCount );
-    MESSAGE(( "Torsion parameters size changed to %i\n", iCount ));
+    MESSAGE("Torsion parameters size changed to %i\n", iCount );
 }  
 
 
@@ -3433,7 +3435,7 @@ ParmSetNewHBonds( PARMSET psParmSet, int iCount )
     VarArrayDestroy( &psParmSet->vaHBonds );
     psParmSet->vaHBonds = vaVarArrayCreate( sizeof( HBONDPARMt ));
     VarArraySetSize( psParmSet->vaHBonds, iCount );
-    MESSAGE(( "Hydgrogen Bond parameters size changed to %i\n", iCount ));
+    MESSAGE("Hydgrogen Bond parameters size changed to %i\n", iCount );
 }
 
 
@@ -3458,7 +3460,7 @@ VARARRAY        vaTemp;
     
     VarArrayDestroy( &psParmSet->vaImpropers );
     psParmSet->vaImpropers = vaTemp;
-    MESSAGE(("improper parameters size changed to %i\n", iCount ));
+    MESSAGE("improper parameters size changed to %i\n", iCount );
 }
 
 int

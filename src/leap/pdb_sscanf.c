@@ -12,13 +12,15 @@
  *      width defaults to one.  If the line is shorter than expected then
  *      the default is returned.
  *
+ *      No Length modifier characters allowed e.g. %lf (%f = double)
+ *
  *              d       get an integer.  Default:  0.
  *              x       get a hexadecimal integer.  Default:  0.
  *              h       get a hybrid36 encoded integer.  Default:  0.
  *              f       get a floating point number (C double).  Default:  0.0.
  *              (space) ignore characters within field
- *              s       get a C string, leading and trailing spaces are
- *                      stripped; the field width is used as a limit on
+ *              s       get a C string, trailing spaces are stripped (leading
+ *                      spaces retained); the field width is used as a limit on
  *                      the string length, the null character is appended
  *                      to the end of the string.  Default:  empty string.
  *              c       get a character(s); no stripping of spaces, nor is

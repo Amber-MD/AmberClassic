@@ -54,7 +54,7 @@ typedef struct  {
 	VARARRAY        vaAngles;
 	VARARRAY        vaTorsions;
     /* The following fields are used to monitor the minimizer */
-	BOOL		(*bFCallback)();
+	BOOL		(*bFCallback)(GENP data);
 	GENP		PCallbackData;
 	double		dEnergy;
 	double		dRmsGradient;
@@ -71,7 +71,7 @@ typedef MINIMIZERt	*MINIMIZER;
         Messages
 */
 
-extern MINIMIZER	mMinimizerCreate();
+extern MINIMIZER	mMinimizerCreate(void);
 extern void		MinimizerDestroy(MINIMIZER *mPMinimizer);
 extern void		MinimizerAddAtom(MINIMIZER mMinimizer, ATOM aAtom);
 extern BOOL		bMinimizerAddBond(MINIMIZER mMinimizer, 
@@ -94,7 +94,7 @@ extern void		MinimizerMinimize(MINIMIZER mMinimizer);
 	/* TRUE then the minimization will continue, otherwise it will  */
 	/* terminate.   Call the callback with the data the caller provides. */
 
-#define	MinimizerSetCallback( m, c, d )	( m->bFCallback = c, m->PCallbackData = (GENP)(d) )
+#define	MinimizerSetCallback( m, c, d )	( m->bFCallback = (BOOL(*)(GENP))c, m->PCallbackData = (GENP)(d) )
 #define dMinimizerEnergy( m )		( m->dEnergy )
 #define	dMinimizerCurrentRms(m)		( m->dRmsGradient )
 

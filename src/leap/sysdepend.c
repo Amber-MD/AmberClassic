@@ -37,21 +37,14 @@
 
 	/*
 	 * Define some macros that make determining the system 
-	 */
-	/*
 	 * easier 
 	 */
 
 #include        <errno.h>
 #include	<signal.h>
-
 #include	<sys/types.h>
-
 #include	<sys/stat.h>
-
 #include	"basics.h"
-
-
 #include        <stdarg.h>
 #include        <stdlib.h>
 
@@ -62,49 +55,34 @@
  *      and writes output to an optional log file.
  */
 
-#define	MAXCHARSPERPRINTF	5000	/*
-					 * 5000 characters max 
-					 */
-static char SsOutputBuffer[MAXCHARSPERPRINTF];
-extern void myPrintString();
-
-
 
 /*
- *      myPrintf
+ *  myPrintf
  *
- *      If the verbosity level in GiVerbosityLevel is greater than the
- *      value GiVerbosity then print the message to stdout.
- *      If the log file GFLog is defined then write the output to
- *      GFLog regardless of verbosity level, unless the verbosity level
- *      is -1.
+ *  iVerbosity: message level; compared against GiVerbosityLevel inside
+ *              myPrintString so the global GiVerbosity is no longer needed.
  */
-
-void 
-myPrintf (char *fmt,...)
+void
+myPrintf(int iVerbosity, const char *fmt, ...)
 {
-	va_list args;
+    char        sBuf[MAXCHARSPERPRINTF];
+    va_list     args;
 
-	if (GfPrintStringCallback == NULL) {
-		DFATAL (("Illegal print string callback!"));
-	}
+    if (GfPrintStringCallback == NULL) {
+        DFATAL("Invalid print string callback!");
+    }
 
-	va_start (args, fmt);
+    va_start(args, fmt);
+    vsnprintf(sBuf, sizeof(sBuf), fmt, args);   /* bounded — no overflow */
+    va_end(args);
 
-	vsprintf (SsOutputBuffer, fmt, args);
-	myPrintString (SsOutputBuffer);
+    myPrintString(sBuf, iVerbosity);
 
-	/*
-	 * Flush the file constantly so that we are sure 
-	 * that if the program crashes it will contain 
-	 * the session 
-	 */
-
-	if (GfLog != NULL)
-		fflush (GfLog);
-
-	va_end( args );
+    /* Flush log constantly so crashes don't lose the session */
+    if (GfLog != NULL)
+        fflush(GfLog);
 }
+
 
 /*
  *    SysdependDirectoryList
@@ -136,7 +114,7 @@ SysdependDirectoryList( char *cPPath, STRING *saPNames[], int *iPNumber)
   HANDLE findHandle;
 
   if ((findHandle = FindFirstFile(pathWithSuffix, &findData)) == INVALID_HANDLE_VALUE) {
-	VPFATALEXIT(("FindFirstFile(%s): %s\n", cPPath, strerror(errno) ));
+	VPFATALEXIT("FindFirstFile(%s): %s\n", cPPath, strerror(errno) );
     	*iPNumber = 0;
     	return;
   }
@@ -185,7 +163,7 @@ SysdependDirectoryList( char *cPPath, STRING *saPNames[], int *iPNumber)
   int iNumber, i;
 
   if ((dp = opendir(cPPath)) == NULL) {
-	VPFATALEXIT(("opendir(%s): %s\n", cPPath, strerror(errno) ));
+	VPFATALEXIT("opendir(%s): %s\n", cPPath, strerror(errno) );
     	*iPNumber = 0;
     	return;
   }
@@ -222,7 +200,7 @@ SysdependDirectoryList( char *cPPath, STRING *saPNames[], int *iPNumber)
 
   iNumber = scandir (cPPath, &namelist, NULL, NULL);
   if (iNumber == -1) {
-	VPFATALEXIT(("scandir(%s): %s\n", cPPath, strerror(errno) ));
+	VPFATALEXIT("scandir(%s): %s\n", cPPath, strerror(errno) );
     	*iPNumber = 0;
     	return;
   }
@@ -297,10 +275,10 @@ SysdependCurrentWorkingDirectory (STRING sPath)
 #endif
 
   if (cPResult == NULL) {
-    DFATAL (("Could not get working path\n"));
+    DFATAL("Could not get working path\n");
   }
   if (strlen (caPath) > sizeof (STRING)) {
-    DFATAL (("Path name %s is too long!", caPath));
+    DFATAL("Path name %s is too long!", caPath);
   }
   strcpy (sPath, caPath);
   strcat (sPath, "/");

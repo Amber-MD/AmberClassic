@@ -93,19 +93,19 @@ int             iColumns;
 	if ( bBasicsInterrupt() ) goto CANCEL;
         if ( i % iColumns ) { 
 	    /* columns 0-(end-1) */
-            VP0(( "%-10s", sDictLoopKey(dlLoop) ));
+            VP0("%-10s", sDictLoopKey(dlLoop) );
         } else {
 	   /* last column in line */
-            VP0(( "%-10s\n", sDictLoopKey(dlLoop) ));
+            VP0("%-10s\n", sDictLoopKey(dlLoop) );
         }
         i++;
     }
     if ( (i-1) % iColumns )
-        VP0(( "\n" ));	/* close final part line */
+        VP0("\n" );	/* close final part line */
     return;
 
 CANCEL:
-    VP0(( "Interrupt.\n" ));
+    VP0("Interrupt.\n" );
     BasicsResetInterrupt();
     return;
 }
@@ -120,7 +120,7 @@ CANCEL:
  *      Define a variable, making sure to REF and DEREF OBJEKTs.
  *
  */
-void    VariableSet( char *sName, OBJEKT oObj )
+void    VariableSet(const char *sName, OBJEKT oObj )
 {
 OBJEKT  oOld;
 
@@ -142,7 +142,7 @@ OBJEKT  oOld;
  *      Remove a variable, DEREF'ing the obj.
  */
 void
-VariableRemove( char *sName )
+VariableRemove(const char *sName )
 {
 OBJEKT  oOld;
 
@@ -161,7 +161,7 @@ OBJEKT  oOld;
  *      Return the value of a variable, NULL if it does not exist.
  */
 OBJEKT
-oVariable( char *sName )
+oVariable(const char *sName )
 {
 OBJEKT  oVar;
 

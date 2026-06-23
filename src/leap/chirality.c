@@ -102,8 +102,8 @@ ATOM	aTemp;
 	*dPNew = dOrig;
 /*
 for ( i=0; i<4; i++ ) {
-VP0((" -- orig/new %s %s\n", sContainerName(aaOrig[i]), sContainerName(aaNew[i])
-));
+VP0(" -- orig/new %s %s\n", sContainerName(aaOrig[i]), sContainerName(aaNew[i])
+);
 }
 */
 	for ( i=0; i<4; i++ ) {
@@ -114,7 +114,7 @@ VP0((" -- orig/new %s %s\n", sContainerName(aaOrig[i]), sContainerName(aaNew[i])
 		if ( j >= 4 ) {
 			STRING sOrigDesc[4];
 			STRING sNewDesc[4];
-			VPERROR(( "Comparing atoms\n"
+			VPERROR("Comparing atoms\n"
                   "        %s, \n"
                   "        %s, \n"
                   "        %s, and \n"
@@ -132,14 +132,14 @@ VP0((" -- orig/new %s %s\n", sContainerName(aaOrig[i]), sContainerName(aaNew[i])
 				sContainerFullDescriptor( (CONTAINER) aaNew[0],  sNewDesc[0] ),
 				sContainerFullDescriptor( (CONTAINER) aaNew[1],  sNewDesc[1] ),
 				sContainerFullDescriptor( (CONTAINER) aaNew[2],  sNewDesc[2] ),
-				sContainerFullDescriptor( (CONTAINER) aaNew[3],  sNewDesc[3] )  ));
+				sContainerFullDescriptor( (CONTAINER) aaNew[3],  sNewDesc[3] )  );
 /*
 			Describe( cContainerWithin( aaOrig[0] ) ) ;
 			Describe( cContainerWithin( aaNew[i] ) ) ;
 */
-			DFATAL(( "Atom named %s from %s did not match !\n",
+			DFATAL("Atom named %s from %s did not match !\n",
 				sContainerName( aaNew[i] ),
-				sContainerName( (CONTAINER) cContainerWithin(aaNew[i]) ) ));
+				sContainerName( (CONTAINER) cContainerWithin(aaNew[i]) ) );
 		}
 		/* Swap elements and flip sign */
 		if ( j != i ) {
@@ -211,22 +211,22 @@ int	iCoor;
 		return;
 
 	*aPAtomA = zaChiralityFindLeastLargerThan( aAtom, NULL );
-	MESSAGE(( "Order atom A=%s\n", sContainerName(*aPAtomA) ));
+	MESSAGE("Order atom A=%s\n", sContainerName(*aPAtomA) );
 	if ( iCoor <= 1 ) 
 		return;
 
 	*aPAtomB = zaChiralityFindLeastLargerThan( aAtom, *aPAtomA );
-	MESSAGE(( "Order atom B=%s\n", sContainerName(*aPAtomB) ));
+	MESSAGE("Order atom B=%s\n", sContainerName(*aPAtomB) );
 	if ( iCoor <= 2 ) 
 		return;
 
 	*aPAtomC = zaChiralityFindLeastLargerThan( aAtom, *aPAtomB );
-	MESSAGE(( "Order atom C=%s\n", sContainerName(*aPAtomC) ));
+	MESSAGE("Order atom C=%s\n", sContainerName(*aPAtomC) );
 	if ( iCoor <= 3 ) 
 		return;
 
 	*aPAtomD = zaChiralityFindLeastLargerThan( aAtom, *aPAtomC );
-	MESSAGE(( "Order atom D=%s\n", sContainerName(*aPAtomD) ));
+	MESSAGE("Order atom D=%s\n", sContainerName(*aPAtomD) );
 }
 
 
@@ -345,8 +345,8 @@ int		i, j;
 	    }
 	}
     } else if ( !bNewNull && bOrigNull ) {
-	DFATAL(( "Only three neighbors around: %s, but orientation has 4\n",
-			sContainerName(aCenter) ));
+	DFATAL("Only three neighbors around: %s, but orientation has 4\n",
+			sContainerName(aCenter) );
     }
 
 CONT:
@@ -403,8 +403,8 @@ int		i, j;
 	    }
 	}
     } else if ( bNewNull && !bOrigNull ) {
-	DFATAL(( "Only three neighbors around: %s, but orientation has 4\n",
-			sContainerName(aCenter) ));
+	DFATAL("Only three neighbors around: %s, but orientation has 4\n",
+			sContainerName(aCenter) );
     }
 CONT:
     zChiralityTransformOrientation( dOrient, aaOrig, &dChirality, aaNew );

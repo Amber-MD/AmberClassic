@@ -297,7 +297,7 @@ int             i;
 LABELTYPE       lTemp;
 
 
-    MESSAGE(( "FillLabel #elements=%d\n", iElements ));
+    MESSAGE("FillLabel #elements=%d\n", iElements );
     *vaPArray = vaVarArrayCreate( sizeof(LABELTYPE) );
     VarArraySetSize( (*vaPArray), iElements );
     if ( !iElements ) {

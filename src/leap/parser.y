@@ -44,7 +44,7 @@
  *      [variable] = ;                           Clears a variable 
  *      
  *
- *      The parser requires all commands to be ended with a semicolon ';'
+ *      The parser requires all commands to be ended with a semicolon ';' or newline
  *      Comments are started with a '#' and terminated with a '\n'.
  *      Strings can be delimited with double quotes '"', or
  *      started with a single '$' character and ended with a comma, space,
@@ -71,8 +71,17 @@
 %token  LNULL
 %token  LNOTSINGLECHAR
 
+%token  LEVAL
+%token  LINT LFRAC LSTR
+%token  LPLUS LMINUS LMUL LDIV LPOW
+%left LPLUS LMINUS
+%left LMUL LDIV
+%right UMINUS LPOW
+%type <aVal> rawexp scalar evalcmd evalexpr evalterm evalfactor
+
 %{
 #include	<unistd.h>
+#include	<math.h>
 #include        "basics.h"
 
 #include        "classes.h"
@@ -164,7 +173,7 @@ FILE*           GfaInputFileStack[MAXINPUTFILES];
 
 ATOM            aDummy;
 ASSOC           aaArgs[MAXARGS];
-int             iArgCount, i;
+int             iArgCount;
 
                                 /* List stuff is used for input of nested */
                                 /* lists */
@@ -199,6 +208,7 @@ extern  OBJEKT oGetObject( char *sName );
 static  int    yyerror( const char *sStr );
 static  int    yylex();
 static  int    yyparse();
+static ASSOC zaEvalBinary(char operator, ASSOC arg1, ASSOC arg2 );
 %}
 
 
@@ -235,7 +245,7 @@ line    :       LENDOFCOMMAND
                         }
         |       error LENDOFCOMMAND
                         {
-                            VP0(( "\n" ));
+                            VP0("\n" );
                             yyerrok;
                         }
         ;
@@ -249,28 +259,29 @@ assign  :       LVARIABLE LASSIGN express
                                 /* Set the value of the variable */
                             aAssoc = $<aVal>3;
 			    if ( aAssoc != NULL ) {
-                                MESSAGE(( "Assigning a value to %s\n", 
-                                                        $<sVal>1 ));
+                                MESSAGE("Assigning a value to %s\n", 
+                                                        $<sVal>1 );
                                 VariableSet( $<sVal>1, oAssocObject(aAssoc) );
-				MESSAGE(( "DEREF (assign) - %s\n",
-							sAssocName(aAssoc) ));
+				MESSAGE("DEREF (assign) - %s\n",
+							sAssocName(aAssoc) );
                                 DEREF( aAssoc );
 			    } else {
-				MESSAGE(("Not assigning value to %s - rmving\n",
-							$<sVal>1 ));
+				MESSAGE("Not assigning value to %s - rmving\n",
+							$<sVal>1 );
 				VariableRemove( $<sVal>1 );
 			    }
 
                         }
         |       LVARIABLE LASSIGN 
                         {
-                            MESSAGE(( "Removing variable %s\n", $<sVal>1 ));
+                            MESSAGE("Removing variable %s\n", $<sVal>1 );
                             VariableRemove( $<sVal>1 );
                         }
         ;
 
 express :       rawexp
         |       function
+        |       evalcmd
         ;
 
 rawexp  :       LOPENLIST 
@@ -287,7 +298,25 @@ rawexp  :       LOPENLIST
                             $<aVal>$ = $<aVal>3;
                             POPLIST();
                         }
-        |       LNUMBER
+        |       scalar
+        |       LDUMMY
+                        {
+                            aAssoc = (ASSOC)oCreate(ASSOCid);
+                            AssocSetName( aAssoc, "" );
+                            AssocSetObject( aAssoc, aDummy );
+                            $<aVal>$ = aAssoc;
+                        }
+        |       LNULL
+                        {
+                            MESSAGE("Parsed a null\n" );
+                            aAssoc = (ASSOC)oCreate(ASSOCid);
+                            AssocSetName( aAssoc, "" );
+                            AssocSetObject( aAssoc, NULL );
+                            $<aVal>$ = aAssoc;
+                        }
+        ;
+
+scalar :       LNUMBER
                         {
                             aAssoc = (ASSOC)oCreate(ASSOCid);
                             AssocSetName( aAssoc, "" );
@@ -314,23 +343,7 @@ rawexp  :       LOPENLIST
                             AssocSetObject( aAssoc, o ); /* REF's o */
                             $<aVal>$ = aAssoc;
                         }
-        |       LDUMMY
-                        {
-                            aAssoc = (ASSOC)oCreate(ASSOCid);
-                            AssocSetName( aAssoc, "" );
-                            AssocSetObject( aAssoc, aDummy );
-                            $<aVal>$ = aAssoc;
-                        }
-        |       LNULL
-                        {
-                            MESSAGE(( "Parsed a null\n" ));
-                            aAssoc = (ASSOC)oCreate(ASSOCid);
-                            AssocSetName( aAssoc, "" );
-                            AssocSetObject( aAssoc, NULL );
-                            $<aVal>$ = aAssoc;
-                        }
-        ;
-
+         ;
 
 function:       cmdname 
                         { iArgCount = 0;
@@ -338,41 +351,113 @@ function:       cmdname
                     args  
                         {
                                 /* Execute the command */
-			    MESSAGE(( "executing function\n"));
+			    MESSAGE("executing function\n");
 			    bCmdDeleteObj = FALSE;
                             // XXX bCmdDeleteObj is never set to true. This causes small memory leaks
-                            // with literal that coccurs on the command line. Note that OBJEKTs by design
-                            // are refernce tracked but parsing is a bit hard to track and the leaks are small
+                            // with literals that coccurs on the command line. Note that OBJEKTs by design
+                            // are reference tracked but parsing is a bit hard to track and the leaks are small
+                            // In general, only strings and double objects leak, so total space is small?
                             o0 = $<fCallback>1( iArgCount, aaArgs );
 			    if ( o0 != NULL ) {
                             	aAssoc = (ASSOC)oCreate(ASSOCid);
                             	AssocSetObject( aAssoc, o0 );
                             	$<aVal>$ = aAssoc;
 			    } else {
-				MESSAGE(( "func == NULL---\n"));
+				MESSAGE("func == NULL---\n");
 				$<aVal>$ = NULL;
 			    }
 
                                 /* DEREF each of the arguments */
 
-                            for ( i=0; i<iArgCount; i++ ) {
+                            for (int i=0; i<iArgCount; i++ ) {
 				if ( bCmdDeleteObj ) {
-					MESSAGE(( "bCmdDeleteObj---\n" ));
+					MESSAGE("bCmdDeleteObj---\n" );
 					DEREF( oAssocObject( aaArgs[i] ) );
 				}
-				MESSAGE(( "DEREF (function) - %s\n",
-						sAssocName(aaArgs[i])));
+				MESSAGE("DEREF (function) - %s\n",
+						sAssocName(aaArgs[i]));
                                 DEREF( aaArgs[i] );
                             }
                         }
         ;
 
+evalcmd :       LEVAL evalexpr
+                        {
+                            $<aVal>$ = $<aVal>2;
+                            if ($<aVal>$ != NULL && GiVerbosityLevel > 2 ) {
+                                OBJEKT oVar = oAssocObject($<aVal>$);
+                                if (iObjectType(oVar) == OSTRINGid)
+                                    VP2("Expression evaluated to string: \"%s\"\n", sOString(oVar));
+                                else
+                                    VP2("Expression evaluated to number: %g\n", dODouble(oVar));
+                            }
+                        }
+        ;
+
+evalexpr: evalexpr LPLUS evalterm
+                        {
+                            $<aVal>$ = zaEvalBinary('+', $<aVal>1, $<aVal>3);
+                        }
+                        | evalexpr LMINUS evalterm
+                        {
+                            $<aVal>$ = zaEvalBinary('-', $<aVal>1, $<aVal>3);
+                        }
+                        | evalterm
+                        {
+                            $<aVal>$ = $<aVal>1;
+                        }
+                        ;
+
+evalterm : evalterm LDUMMY evalpower  /* LDUMMY == '*' */
+                        {
+                            $<aVal>$ = zaEvalBinary('*', $<aVal>1, $<aVal>3);
+                        }
+                        | evalterm LDIV evalpower
+                        {
+                            $<aVal>$ = zaEvalBinary('/', $<aVal>1, $<aVal>3);
+                        }
+                        | evalpower
+                        {
+                            $<aVal>$ = $<aVal>1;
+                        }
+         ;
+
+evalpower: evalfactor LPOW evalpower
+                        {
+                            $<aVal>$ = zaEvalBinary('^', $<aVal>1, $<aVal>3);
+                        }
+                        | evalfactor
+                        {
+                            $<aVal>$ = $<aVal>1;
+                        }
+          ;
+
+evalfactor: scalar
+                        | LMINUS evalfactor
+                        {
+                            // This is the only unary operator
+                            $<aVal>$ = $<aVal>2;
+                            dODouble(oAssocObject($<aVal>$)) *= -1.0;
+                        }
+                        | LINT LOPENPAREN evalexpr LCLOSEPAREN
+                        {
+                            OBJEKT doVal = oAssocObject($<aVal>3);
+                            double int_part;
+                            modf(dODouble(doVal), &int_part); 
+                            ODoubleSet(doVal, int_part);
+                            $<aVal>$ = $<aVal>3;
+                        }
+                        | LOPENPAREN evalexpr LCLOSEPAREN
+                        {
+                            $<aVal>$ = $<aVal>2;
+                        }
+          ;
 
 elements:       /* nothing */
         |       elements rawexp 
                         {
                                 /* Get the element and add it to the list */
-                            MESSAGE(( "Adding to list:\n" ));
+                            MESSAGE("Adding to list:\n" );
                             ListAddToEnd( (LIST)oAssocObject(CURRENTLIST), 
 							(OBJEKT) $<aVal>2 );
                             $<aVal>$ = CURRENTLIST;
@@ -423,10 +508,11 @@ static  char    ScUngetc;
 int
 yyerror( const char *sStr )
 {
-    VPFATALEXIT(( "Error from the parser: \n       %s.\n       "
-            "Check for typos, misspellings, etc.\n       "
-            "Try help on the command name and desc on the command arguments.\n",
-            sStr ));
+    VP0("\n%s%*s",GsInputLine,GiInputPos,"^");
+    VPFATALEXIT("Error from the parser: \n       %s.\n"
+            "       Check for typos, misspellings, etc.\n"
+            "       Try help on the command name and desc on the command arguments.\n",
+            sStr );
     return 1;
 }
 
@@ -437,8 +523,6 @@ fINPUTFILE()
 		return(NULL);
 	return( GfaInputFileStack[GiInputFileStackPos] );
 }
-
-
 
 /*
  *	zbGetLine
@@ -455,11 +539,11 @@ zbGetLine( char *sLine, BOOL *bPFromExecute )
 BOOL		bGotBlock;
 char		c;
 
-    /* VPTRACEENTER(( "zbGetLine" )); */
+    /* VPTRACEENTER("zbGetLine" ); */
 
     if ( fINPUTFILE() == NULL ) {
 	*bPFromExecute = FALSE;
-	/* VPTRACEEXIT (( "zbGetLine" )); */
+	/* VPTRACEEXIT("zbGetLine" ); */
 	return(bBlockReadLine( GbCommand, sLine ));
     }
 
@@ -489,11 +573,11 @@ char		c;
 	    	if ( fINPUTFILE() != NULL )
 	    		fclose( fINPUTFILE() );
 	    	INPUTPOPFILE();
-	    	VPTRACE(( "After pop in zbGetLine GiInputFileStackPos = %d\n",
-	    	          GiInputFileStackPos ));
+	    	VPTRACE("After pop in zbGetLine GiInputFileStackPos = %d\n",
+	    	          GiInputFileStackPos );
 	    }
     }
-    /* VPTRACEEXIT (( "zbGetLine" )); */
+    /* VPTRACEEXIT("zbGetLine" ); */
     return(bBlockReadLine( GbExecute, sLine ));
 }
 
@@ -535,11 +619,11 @@ BOOL		bFromExecute;
 	GbLastLine = zbGetLine( GsInputLine, &bFromExecute );
 	GiInputPos = 0;
 	if ( bFromExecute ) {
-	    for ( i=GiClipPrompts; i<=iINPUTSTACKDEPTH(); i++ ) VP2(( ">" ));
-	    VP2(( " " ));
-	    VP2(( "%s", GsInputLine ));
+	    for (int i=GiClipPrompts; i<=iINPUTSTACKDEPTH(); i++ ) VP2(">" );
+	    VP2(" " );
+	    VP2("%s", GsInputLine );
 	} else {
-	    VPLOG(( "> %s", GsInputLine ));
+	    VPLOG("> %s", GsInputLine );
 	}
     }
 
@@ -590,7 +674,6 @@ char    c;
 	return(c);
 }
 
- 
 int
 iOneCharToken( int c )
 {
@@ -639,7 +722,7 @@ int
 yylex()
 {
 STRING          sStr;
-int             j, iMax, tok;
+int             iMax, tok;
 BOOL            bGotExp, bGotDot;
 char            c;
 STRING		sCmd;
@@ -658,7 +741,7 @@ STRING		sPossibleCmd;
      */
     tok = iOneCharToken( c );
     if ( tok != LNOTSINGLECHAR ) {
-        MESSAGE(( "Parsed /%c/\n", c ));
+        MESSAGE("Parsed /%c/\n", c );
 	return(tok);
     }
 
@@ -667,10 +750,10 @@ STRING		sPossibleCmd;
      *	and push back the terminating char
      */
     sStr[0] = c;
-    for (j=1;;j++) {
+    for (int j=1;;j++) {
 
 	if ( j >= sizeof(STRING) )
-	    DFATAL(( "string too long" ));
+	    DFATAL("string too long");
 
 	c = cGetChar();
 	/*
@@ -697,12 +780,12 @@ STRING		sPossibleCmd;
 	if ( c == ' ' || c == '\t' || c == '\n' || c=='\r' || c == ',' ) {
 	    	sStr[j] = '\0';
 	    	if ( c=='\r' ) {
-	    	    VPNOTE(("A carriage return character has been read.\n"
+	    	    VPNOTE("A carriage return character has been read.\n"
 	    	            "This is an indicator of DOS line endings.\n"
 	    	            "Although LEaP treats it as whitespace, other"
 	    	            " programs may not.\n"
 	    	            "One can convert line endings from DOS to UNIX with"
-	    	            " various tools including:\n    dos2unix\n" ));
+	    	            " various tools including:\n    dos2unix\n" );
 	    	}
 	    	break;
 	}
@@ -728,6 +811,15 @@ STRING		sPossibleCmd;
 	sStr[j] = c;
     }
 
+    // Unary minus or subtraction. Not in single char set because it
+    // may be a leading sign in a negative number or be in filenames.
+    if ( sStr[1] == 0 ) {
+        if ( sStr[0] == '-' ) return LMINUS;
+        if ( sStr[0] == '^' ) return(LPOW);
+        if ( sStr[0] == '+' ) return(LPLUS);
+        if ( sStr[0] == '/' ) return(LDIV);
+    }
+
     /*
      *  see if it's a number
      */
@@ -736,25 +828,25 @@ STRING		sPossibleCmd;
     if ( isdigit(sStr[0]) || sStr[0] == '-' || sStr[0] == '+' || 
 				( sStr[0] == '.' && isdigit(sStr[1]) ) ) {
 
-        for ( j=0; j<sizeof(STRING); j++ ) {
-            MESSAGE(( "Thinking NUMBER got: %c\n", sStr[j] ));
+        for (int j=0; j<sizeof(STRING); j++ ) {
+            MESSAGE("Thinking NUMBER got: %c\n", sStr[j] );
 	    switch ( sStr[j] ) {
 		case '\0':
         	    if ( sscanf( sStr, "%lf", &yylval.dVal ) != 1 ) {
-			VPWARN(( " Couldn't scan NUMBER from (%s)\n", sStr ));
+			VPWARN(" Couldn't scan NUMBER from (%s)\n", sStr );
 			return(LNULL);
 		    }
-        	    MESSAGE(( "Parsed a number: %lf\n", yylval.dVal ));
+        	    MESSAGE("Parsed a number: %lf\n", yylval.dVal );
         	    return(LNUMBER);
 		case '.':
 		    if ( bGotDot ) {
-			VPERROR(( "Multiple decimal points in NUMBER-like token"
-					" (%s).\n", sStr ));
+			VPERROR("Multiple decimal points in NUMBER-like token"
+					" (%s).\n", sStr );
 			goto notnum;
 		    }
 		    if ( bGotExp ) {
-			VPERROR(( "Decimal point follows exponent in NUMBER-like"
-					" token (%s).\n", sStr ));
+			VPERROR("Decimal point follows exponent in NUMBER-like"
+					" token (%s).\n", sStr );
 			goto notnum;
 		    }
         	    bGotDot = TRUE;
@@ -762,8 +854,8 @@ STRING		sPossibleCmd;
 		case 'e':
 		case 'E':
             	    if ( bGotExp ) {
-			VPERROR(( "Multiple exponent indicators ('e') in "
-					"NUMBER-like token (%s).\n", sStr ));
+			VPERROR("Multiple exponent indicators ('e') in "
+					"NUMBER-like token (%s).\n", sStr );
 			goto notnum;
 		    }
                     bGotExp = TRUE;
@@ -785,7 +877,7 @@ notnum:
      */
     if ( sStr[0] == '"' ) {
         strcpy( yylval.sVal, &sStr[1] );
-        MESSAGE(( "Parsed a STRING: %s\n", sStr ));
+        MESSAGE("Parsed a STRING: %s\n", sStr );
         return(LSTRING);
     }
 
@@ -794,7 +886,7 @@ notnum:
      */
     if ( sStr[0] == '$' ) {
         strcpy( yylval.sVal, &sStr[1] );
-        MESSAGE(( "Parsed a STRING: %s\n", sStr ));
+        MESSAGE("Parsed a STRING: %s\n", sStr );
         return(LSTRING);
     }
 
@@ -803,9 +895,30 @@ notnum:
      */
     if ( sStr[0] == '@' ) {
         strcpy( yylval.sVal, &sStr[1] );
-        MESSAGE(( "Parsed a @variable: %s\n", sStr ));
+        MESSAGE("Parsed a @variable: %s\n", sStr );
         return(LVARIABLE);
     }
+
+    /*
+     *  see if it's an eval function)
+     */
+    if ( !strcmp(sStr,"int") ) {
+        strcpy( yylval.sVal, sStr );
+        return(LINT);
+    }
+    if ( !strcmp(sStr,"frac") ) {
+        strcpy( yylval.sVal, sStr );
+        return(LFRAC);
+    }
+    if ( !strcmp(sStr,"str") ) {
+        strcpy( yylval.sVal, sStr );
+        return(LSTR);
+    }
+                /* LASTLY!!!!!!!! */
+    /* 
+     *  see if it's a variable/command 
+     */
+    strcpy( yylval.sVal, sStr );
                 /* LASTLY!!!!!!!! */
     /* 
      *  see if it's a variable/command 
@@ -814,11 +927,15 @@ notnum:
     strcpy( sPossibleCmd, sStr );
     StringLower( sPossibleCmd );
 
+                /* Check for parser based eval command first */
+
+    if ( strcasecmp( sStr, "eval" ) == 0 ) return(LEVAL);
+    
     		/* Check if there is an alias that is an exact match */
     if ( (iMax = iVarArrayElementCount( GvaAlias )) ) {
 	ALIAS		aAlias;
 	aAlias = PVAI( GvaAlias, ALIASt, 0 );
-	for ( i=0; i<iMax; i++, aAlias++ ) {
+	for (int i=0; i<iMax; i++, aAlias++ ) {
 	    if ( strcmp( aAlias->sName, sPossibleCmd ) == 0 ) {
 	    	strcpy( sPossibleCmd, aAlias->sCommand );
 	    }
@@ -830,12 +947,12 @@ notnum:
                 	but rather as a STRING variable */
                 	
     if ( !bCommandFound ) {
-	for ( j=0; strlen(cCommands[j].sName) != 0; j++ ) {
+	for (int j=0; strlen(cCommands[j].sName) != 0; j++ ) {
 	    strcpy( sCmd, cCommands[j].sName );
 	    StringLower( sCmd );
             if ( strcmp( sCmd, sPossibleCmd ) == 0 ) {
 		yylval.fCallback = cCommands[j].fCallback;
-		MESSAGE(( "Parsed a command: %s\n", sStr ));
+		MESSAGE("Parsed a command: %s\n", sStr );
 		bCommandFound = TRUE;
 		return(LCOMMAND);
 	    }
@@ -851,212 +968,394 @@ notnum:
                 /* Return the variable name */
 
     strcpy( yylval.sVal, sStr );
-    MESSAGE(( "Parsed a variable: %s\n", sStr ));
+    MESSAGE("Parsed a variable: %s\n", sStr );
     return(LVARIABLE);
 
 }
 
 
+//----------- Molecular object hierarchy parser ---------------
+// main function is zoFindObject() which uses the following
+// internal tokenizer helpers. If not resolved, the full token
+// is returned as a string.
+//
+// Parser syntax:
+// Initial object resolved as variable, which can be indirect:
+//      $var1 resolves to varible named by var1
+// input stream requires 2 
+// <COLLECTION>.<integer> -- single depth list/vector member
+// <UNIT>.<RESIDUE>.<ATOM>
 
+typedef enum {
+    CTOK_ERROR    = -1,
+    CTOK_INT      =  0,
+    CTOK_STRING   =  1,
+    CTOK_CHAINRES =  2,
+} eContTokenType;
+
+static int
+zsNextObjectToken(char *string, char **next_return)
+{
+char    *next;
+    for (next = string; *next; next++) {
+        if (strchr(".@%", *next)) {
+            char sep = *next;
+            *next = 0;
+            *next_return = next + 1;
+            return sep;
+        }
+    }
+    return 0;
+}
+
+/* Returns TRUE if s is a non-empty string of digits */
+static BOOL
+zbResidNumeric(const char *s)
+{
+    if (!*s) return FALSE;
+    for (const char *p = s; *p; p++)
+        if (!isdigit(*p)) return FALSE;
+    return TRUE;
+}
 
 /*
- *      oGetObject
+ * Resolve a token (which may have a leading '$' and/or a ':' separator)
+ * into a typed value.
  *
- *      If the string is a variable then return the OBJEKT that
- *      it is attached to, otherwise if the string is
- *      a string like: 'unit.mol.res.atom' then parse the
- *      individual names and search the CONTAINERS for
- *      the subcontainers.
+ * Literals are untyped: digit-only → CTOK_INT, otherwise → CTOK_STRING,
+ *   except that a ':' anywhere means CTOK_CHAINRES (left side may be empty).
+ * Variables are typed by their object type: ODOUBLEid → CTOK_INT,
+ *   OSTRINGid → CTOK_STRING or CTOK_CHAINRES if value contains ':'.
+ *   A numeric-looking OSTRINGid is NOT converted to CTOK_INT.
+ *
+ * For CTOK_CHAINRES: sOut receives chain (may be ""), *piValue receives resid.
+ * For CTOK_STRING:   sOut receives the name.
+ * For CTOK_INT:      *piValue receives the index.
+ * Emits VPWARN and returns CTOK_ERROR on any problem.
  */
-OBJEKT
-oGetObject( char *sName )
+static eContTokenType
+eResolveToken(const char *cPPos, char *sOut, int *piValue)
 {
-CONTAINER       cCont[5];
-int             j, k, iSeq;
-OBJEKT          oObj;
-STRING          sLine, sHead;
-BOOL		bDot, bAt, bPdbSeq;
-STRING		sGroup;
-LIST		lGroup;
-OSTRING		osString;
-LOOP		lRes;
-RESIDUE		rRes;
+OBJEKT      oVar;
+const char  *sVal;
+char        sBuf[MAXSTRINGLENGTH];
+char        *cPColon;
+BOOL        bFromVar = FALSE;
 
-    oObj = oVariable( sName );
-    if ( oObj != NULL ) return(oObj);
-
-        /* Now try to parse the name */
-    strcpy( sLine, sName );
-    bDot = FALSE;
-    bAt = FALSE;
-    bPdbSeq = FALSE;
-    for ( k=0; k<strlen(sName); k++ ) {
-	if ( sLine[k] == '.' ) {
-	    sLine[k]=' ';
-	    bDot = TRUE;
-/*fprintf(stderr, "GOTDOT\n"); */
-	} else if ( sLine[k] == '@' ) {
-	    sLine[k] = ' ';
-	    bAt = TRUE;
-	} else if ( sLine[k] == '%' ) {
-	    if ( !bDot ) {
-	        sLine[k] = ' ';
-	        bPdbSeq = TRUE;
-	    }
-	}
+    /* --- expand leading '$' if present --- */
+    if (*cPPos == '$') {
+        cPPos++;
+        oVar = oVariable(cPPos);
+        if (!oVar) {
+            VPWARN("Variable %s not found\n", cPPos);
+            return CTOK_ERROR;
+        }
+        if (iObjectType(oVar) == ODOUBLEid) {
+            *piValue = (int)dODouble(oVar);
+            return CTOK_INT;
+        }
+        if (iObjectType(oVar) != OSTRINGid) {
+            VPWARN("Variable %s is not a string or numeric\n", cPPos);
+            return CTOK_ERROR;
+        }
+        sVal = sOString(oVar);
+        bFromVar = TRUE;
+    } else {
+        sVal = cPPos;
     }
 
+    /* --- check for 'chain:resid' pattern (chain may be empty) --- */
+    strcpy(sBuf, sVal);
+    cPColon = strchr(sBuf, ':');
+    if (cPColon) {
+        const char *sResid;
+        *cPColon = '\0';
+        strcpy(sOut, sBuf);     /* chain -- preserve as-is, may be "" or "042" etc */
+        sResid = cPColon + 1;
 
-    sRemoveFirstString( sLine, sHead );
-    cCont[0] = (CONTAINER)oVariable(sHead);
-    if ( cCont[0] == NULL ) {
-/* fprintf(stderr, "STRING %s\n", sName); */
-    	/* It is not an object variable so...
-    	   return the whole string as a OSTRING */
-	goto String;
-    }
-    
-/*fprintf(stderr, "VARIABLE %c %c\n", bAt, bPdbSeq);*/
-    if ( bPdbSeq ) {
-	sRemoveLeadingSpaces( sLine );
-	sRemoveFirstString( sLine, sHead );
-	if ( strlen(sHead) == 0 ) {
-	    goto String;
-	}
-	if ( isdigit(sHead[0]) ) {
-
-			/* Make sure the rest are digits */
-			/* If not return NULL */
-	    for ( j=1; j<strlen(sHead); j++ ) {
-		if ( !isdigit(sHead[j]) ) {
-			    /* It is not an object variable so...
-			       return the whole string as a OSTRING */
-		    goto String;
-		}
-	    }
-	
-			/* Find the PDB sequence number */
-
-	    cCont[1] = NULL;	
-	    iSeq = atoi(sHead);
-	    lRes = lLoop( (OBJEKT)cCont[0], RESIDUES );
-	    while ( (rRes = (RESIDUE)oNext(&lRes)) ) {
-		if ( iResiduePdbSequence(rRes)==iSeq ) {
-		    cCont[1] = (CONTAINER) rRes;
-		}
-	    }
-
-	    if ( !cCont[1] ) {
-		goto String;
-	    }
-
-	    if ( bDot ) {
-		sRemoveLeadingSpaces( sLine );
-		sRemoveFirstString( sLine, sHead );
-		if ( strlen(sHead) == 0 ) {
-		    goto String;
-		}
-		if ( isdigit(sHead[0]) ) {
-
-				/* Make sure the rest are digits */
-				/* If not return NULL */
-		    for ( j=1; j<strlen(sHead); j++ ) {
-			if ( !isdigit(sHead[j]) ) {
-				    /* It is not an object variable so...
-				       return the whole string as a OSTRING */
-			    goto String;
-			}
-		    }
-			
-		    iSeq = atoi(sHead);
-		    cCont[2] = cContainerFindSequence( cCont[1], 
-						DIRECTCONTENTS, iSeq );
-		} else {
-		    cCont[2] = 
-			cContainerFindName( cCont[1], DIRECTCONTENTS, sHead );
-		}
-		return((OBJEKT)cCont[2]);
-	    } else {
-		return((OBJEKT)cCont[1]);
-	    }
-	} else {
-	    goto String;
-	}
+        /* right side: may itself have a leading '$' */
+        if (*sResid == '$') {
+            sResid++;
+            oVar = oVariable(sResid);
+            if (!oVar) {
+                VPWARN("Variable %s not found\n", sResid);
+                return CTOK_ERROR;
+            }
+            if (iObjectType(oVar) == ODOUBLEid) {
+                *piValue = (int)dODouble(oVar);
+            } else if (iObjectType(oVar) == OSTRINGid) {
+                const char *sR = sOString(oVar);
+                if (!zbResidNumeric(sR)) {
+                    VPWARN("Resid variable %s value '%s' is not numeric\n", sResid, sR);
+                    return CTOK_ERROR;
+                }
+                *piValue = atoi(sR);
+            } else {
+                VPWARN("Resid variable %s is not a string or numeric\n", sResid);
+                return CTOK_ERROR;
+            }
+        } else {
+            if (!zbResidNumeric(sResid)) {
+                VPWARN("Resid '%s' is not numeric\n", sResid);
+                return CTOK_ERROR;
+            }
+            *piValue = atoi(sResid);
+        }
+        return CTOK_CHAINRES;
     }
 
-
-    if ( bDot ) {
-	k = 0;
-	do {
-	    sRemoveLeadingSpaces( sLine );
-	    sRemoveFirstString( sLine, sHead );
-	    if ( strlen(sHead) == 0 ) break;
-	    k++;
-	    if ( cCont[k-1]->oHeader.cObjType == PARMSETid ) {
-		/*  semi-HACK - parmsets don't have contents in this sense */
-		cCont[k] = NULL;
-	    } else if ( isdigit(sHead[0]) ) {
-
-			    /* Make sure the rest are digits */
-			    /* If not return NULL */
-		for ( j=1; j<strlen(sHead); j++ ) {
-		    if ( !isdigit(sHead[j]) ) {
-   				/* It is not an object variable so...
-			    	   return the whole string as a OSTRING */
-			goto String;
-    		    }
-		}
-		iSeq = atoi(sHead);
-		cCont[k] = cContainerFindSequence( cCont[k-1], 
-					    DIRECTCONTENTS, iSeq );
-	    } else {
-		cCont[k] = 
-			cContainerFindName( cCont[k-1], DIRECTCONTENTS, sHead );
-	    }
-	    if ( cCont[k] == NULL ) break;
-	} while ( strlen(sHead) != 0 ) ;
-        if ( cCont[k] == NULL ) {
-    		/* It is not an object variable so...
-    		   return the whole string as a OSTRING */
-		goto String;
-    	}
-	return((OBJEKT)cCont[k]);
+    /* --- no colon ---
+     * vars: OSTRINGid is always a name, even if digits only
+     * literals: digit-only → int, otherwise → string             */
+    if (!bFromVar && zbResidNumeric(sVal)) {
+        *piValue = atoi(sVal);
+        return CTOK_INT;
     }
-
-			/* If group notation then return the group */
-
-    if ( bAt ) {
-	sRemoveLeadingSpaces( sLine );
-	sRemoveFirstString( sLine, sGroup );
-	if ( iObjectType(cCont[0]) != UNITid ) {
-    		/* It is not an object variable so...
-    		   return the whole string as a OSTRING */
-		goto String;
-	}
-
-	lGroup = lUnitGroup( (UNIT)cCont[0], sGroup );
-	return((OBJEKT)lGroup);
-    }
-
-String:
-
-   /* 
-    *  It is not an object variable so...
-    *	   return the whole string as a OSTRING
-    *	   -- need to set refs to 0 so that
-    *	      it will be freed later.. HACK
-    *   XXX This is done because the parser tokens are never
-    *   freed, and bits of memory are leaked, except this one.
-    */
-
-    osString = (OSTRING)oCreate(OSTRINGid);
-    OStringDefine( osString, sName );
-    ((OBJEKT)(osString))->iReferences = 0;
-    return((OBJEKT)osString );
+    strcpy(sOut, sVal);
+    return CTOK_STRING;
 }
 
 
+OBJEKT
+zoFindObject(char *sIdentifier)
+{
+CONTAINER       cCont;
+int             iType, iValue;
+OBJEKT          oObj;
+STRING          sLine;
+STRING          sOut;
+char            cSep, cSepNext;
+char            *cPPos, *cPNext;
+LOOP            lRes;
+RESIDUE         rRes;
+eContTokenType  eTok;
 
+    strcpy(sLine, sIdentifier);
+
+    cPPos    = sLine;
+    cSepNext = zsNextObjectToken(cPPos, &cPNext);
+
+    if (*cPPos == '$') {
+        cPPos++;
+        OBJEKT oVar = oVariable(cPPos);
+        if (!oVar) {
+            VPWARN("Variable %s not found\n", cPPos);
+            return NULL;
+        }
+        if (iObjectType(oVar) != OSTRINGid) {
+            VPWARN("Variable %s is not a string\n", cPPos);
+            return NULL;
+        }
+        cPPos = sOString(oVar);
+    }
+    oObj = oVariable(cPPos);
+    if (!cSepNext) return oObj;
+
+    cPPos    = cPNext;
+    cSep     = cSepNext;
+    cSepNext = zsNextObjectToken(cPPos, &cPNext);
+
+    if ( bObjectInClass(oObj, COLLECTIONid ) && isdigit(*cPPos))  {
+        int index = atoi(cPPos);
+        ASSOC aAssocElem;
+        int i=0;
+        LISTLOOP ll = llListLoop((LIST)oObj);
+        while ( (aAssocElem = (ASSOC)oListNext(&ll)) ) {
+            i=i+1;
+            if (i == index) return oAssocObject(aAssocElem);
+        }
+        VPWARN("Index %d out of bounds trying to index object\n", index );
+        return NULL;
+    }
+
+    while (cSep) {
+        if (!bObjectInClass(oObj, CONTAINERid)) return NULL;
+        iType = iObjectType(oObj);
+        cCont = NULL;
+
+        switch (cSep) {
+        case '.':
+            eTok = eResolveToken(cPPos, sOut, &iValue);
+            switch (eTok) {
+            case CTOK_ERROR:
+                return NULL;
+
+            case CTOK_CHAINRES:
+                if (iObjectType(oObj) != UNITid) {
+                    VPWARN("ChainId:Resid selection only valid within UNIT\n");
+                    return NULL;
+                }
+                lRes = lLoop(oObj, RESIDUES);
+                while ((rRes = (RESIDUE)oNext(&lRes))) {
+                    if (iResiduePdbSequence(rRes) == iValue &&
+                            !strcmp(sOut, rRes->sChainId)) {
+                        cCont = (CONTAINER)rRes;
+                        break;
+                    }
+                }
+                if (!cCont) {
+                    VPWARN("ChainId:Resid %s:%d not found in %s %s\n",
+                            sOut, iValue, sObjectIndexType(iType), sContainerName(oObj));
+                    return NULL;
+                }
+                break;
+
+            case CTOK_INT:
+                /* try flat index first; fall through to name on failure */
+                cCont = cContainerFindSequence((CONTAINER)oObj, DIRECTCONTENTS, iValue);
+                if (cCont) break;
+                /* not found by index -- try as name using the original token */
+                strcpy(sOut, cPPos);
+                /* FALLTHROUGH */
+            case CTOK_STRING:
+                cCont = cContainerFindName((CONTAINER)oObj, DIRECTCONTENTS, sOut);
+                if (!cCont) {
+                    VPWARN("Name/index %s not found in %s %s\n",
+                            sOut, sObjectIndexType(iType), sContainerName(oObj));
+                    return NULL;
+                }
+                break;
+            }
+            break;
+
+        case '@':
+            /* '@' always means name -- no numeric interpretation.
+             * Only '$' expansion allowed; var must be OSTRINGid.        */
+            if (*cPPos == '$') {
+                const char *sVarName = cPPos + 1;
+                OBJEKT oVar = oVariable(sVarName);
+                if (!oVar) {
+                    VPWARN("Variable %s not found\n", sVarName);
+                    return NULL;
+                }
+                if (iObjectType(oVar) != OSTRINGid) {
+                    VPWARN("Atom name variable %s is not a string\n", sVarName);
+                    return NULL;
+                }
+                strcpy(sOut, sOString(oVar));
+            } else {
+                strcpy(sOut, cPPos);
+            }
+            /* check for group notation if parent is UNIT */
+            if (iObjectType(oObj) == UNITid) {
+                OBJEKT oGroup = (OBJEKT)lUnitGroup((UNIT)oObj, sOut);
+                if (oGroup) return oGroup;
+            }
+            cCont = cContainerFindName((CONTAINER)oObj, DIRECTCONTENTS, sOut);
+            if (!cCont) {
+                VPWARN("Name %s not found in %s %s\n",
+                        sOut, sObjectIndexType(iType), sContainerName(oObj));
+                return NULL;
+            }
+            break;
+
+        case '%':
+            /* Legacy: resid without chainid. Must be UNIT, must be int. */
+            if (iObjectType(oObj) != UNITid) {
+                VPWARN("Selection delimiter %% is only valid within UNIT\n");
+                return NULL;
+            }
+            eTok = eResolveToken(cPPos, sOut, &iValue);
+            if (eTok == CTOK_ERROR) return NULL;
+            if (eTok != CTOK_INT) {
+                VPWARN("Resid selection requires an integer\n");
+                return NULL;
+            }
+            lRes = lLoop(oObj, RESIDUES);
+            while ((rRes = (RESIDUE)oNext(&lRes))) {
+                if (iResiduePdbSequence(rRes) == iValue) {
+                    cCont = (CONTAINER)rRes;
+                    break;
+                }
+            }
+            if (!cCont) {
+                VPWARN("PDB resId %d not found in %s %s\n",
+                        iValue, sObjectIndexType(iType), sContainerName(oObj));
+                return NULL;
+            }
+            break;
+
+        default:
+            VPFATAL("Programming error (cSep %c) %s %s\n", cSep, __FILE__, __func__);
+            return NULL;
+        }
+
+        oObj     = (OBJEKT)cCont;
+        cPPos    = cPNext;
+        cSep     = cSepNext;
+        if (cSep) cSepNext = zsNextObjectToken(cPPos, &cPNext);
+    }
+
+    return oObj;
+
+}
+ 
+OBJEKT
+oGetObject(char *sName)
+{
+    OBJEKT oObj;
+    OSTRING osString;
+
+    oObj = zoFindObject(sName);
+    if (oObj != NULL) return oObj;
+
+    /*
+     * Not an object variable or resolvable object reference.
+     * Return the whole string as an OSTRING.
+     */
+    osString = (OSTRING)oCreate(OSTRINGid);
+    OStringDefine(osString, sName);
+    // XXX This is done because the parser tokens are never freed.
+    ((OBJEKT)osString)->iReferences = 0;
+    return (OBJEKT)osString;
+}
+
+static ASSOC
+zaEvalBinary(char operator, ASSOC arg1, ASSOC arg2 ) {
+OBJEKT oResult = NULL;
+int iType1 = iObjectType(oAssocObject(arg1));
+int iType2 = iObjectType(oAssocObject(arg2));
+OBJEKT oArg1 = oAssocObject(arg1);
+OBJEKT oArg2 = oAssocObject(arg2);
+    if (iType1 == OSTRINGid && iType2 == OSTRINGid) {
+        if (operator == '+') {
+            oResult = oCreate(OSTRINGid);
+            OStringCopy((OSTRING)oResult, (OSTRING)oArg1);
+            OStringConcat((OSTRING)oResult, (OSTRING)oArg2);
+        } else oResult = NULL;
+    }
+    else if (iType1 == OSTRINGid && iType2 == ODOUBLEid) {
+        if (operator == '+') {
+            STRING sLine;
+            double d2 = dODouble(oAssocObject(arg2));
+            sprintf(sLine,"%s%lg",sOString(oArg1), d2);
+            oResult = oCreate(OSTRINGid);
+            OStringDefine((OSTRING)oResult, sLine);
+        } else oResult = NULL;
+    }
+    else if (iType1 == ODOUBLEid && iType2 == ODOUBLEid) {
+        oResult = oCreate(ODOUBLEid);
+        double d1 = dODouble(oArg1);
+        double d2 = dODouble(oArg2);
+        switch (operator) {
+            case '*': ODoubleSet(oResult,d1*d2); break;
+            case '/': ODoubleSet(oResult,d1/d2); break; // FIXME check for divide by zero
+            case '+': ODoubleSet(oResult,d1+d2); break;
+            case '-': ODoubleSet(oResult,d1-d2); break;
+            case '^': ODoubleSet(oResult,pow(d1,d2)); break;
+            default: oResult = NULL; break;
+        }
+    }
+
+    if (!oResult) {
+        VPFATAL("Invalid operator/type: %s %c %s\n",sObjectIndexType(iType1),
+                         operator, sObjectIndexType(iType2));
+        return NULL;
+    }
+    // re-use arg1 for the result -- FIXME  is this OK?
+    AssocSetObject( arg1, oResult);
+    return arg1;
+}
 
 
     
@@ -1132,11 +1431,11 @@ ParseInit( RESULTt *rPResult )
 FILE	*fStartup;
 int	iFile;
 
-    VPTRACEENTER(( "ParseInit" ));
-    VP0(( "\nWelcome to LEaP!\n" ));
+    VPTRACEENTER("ParseInit" );
+    VP0("\nWelcome to LEaP!\n" );
 
 #ifdef  DEBUG
-    VP0(( "LEaP is running in DEBUG mode!\n" ));
+    VP0("LEaP is running in DEBUG mode!\n" );
 #endif
 
 		/* Initialize memory manager debugging */
@@ -1164,12 +1463,12 @@ int	iFile;
     if ( SbUseStartup ) {
         fStartup = FOPENNOCOMPLAIN( LEAPRC, "r" );
         if ( fStartup == NULL ) {
-	    VP0(( "(no %s in search path)\n", LEAPRC ));
+	    VP0("(no %s in search path)\n", LEAPRC );
 	} else {
 	    /*
 	     *  source the leaprc
 	     */
-	    VP0(( "Sourcing %s: %s\n", LEAPRC, GsBasicsFullName ));
+	    VP0("Sourcing %s: %s\n", LEAPRC, GsBasicsFullName );
 	    INPUTPUSHFILE( fStartup );
 	    GiClipPrompts = 1;
 	    while ( fINPUTFILE() != NULL ) {
@@ -1191,10 +1490,10 @@ int	iFile;
     for (iFile=0; iFile<iFirstSource; iFile++) {
 	fStartup = FOPENCOMPLAIN( SbFirstSourceFiles[iFile], "r" );
 	if ( fStartup != NULL ) {
-	    VP0(( "Sourcing: %s\n", GsBasicsFullName ));
+	    VP0("Sourcing: %s\n", GsBasicsFullName );
 	    INPUTPUSHFILE( fStartup );
-	    VPTRACE(( "After push GiInputFileStackPos = %d\n",
-	               GiInputFileStackPos ));
+	    VPTRACE("After push GiInputFileStackPos = %d\n",
+	               GiInputFileStackPos );
 	    GiClipPrompts = 1;
 	    while ( fINPUTFILE() != NULL ) {
 		yyparse();
@@ -1202,8 +1501,8 @@ int	iFile;
 	    	    if ( fINPUTFILE() != NULL )
 	    	    	fclose( fINPUTFILE() );
 	    	    INPUTPOPFILE();
-	    	    VPTRACE(( "After pop GiInputFileStackPos = %d\n",
-	    	              GiInputFileStackPos ));
+	    	    VPTRACE("After pop GiInputFileStackPos = %d\n",
+	    	              GiInputFileStackPos );
 		}
 	    }
 	    *rPResult = GrMainResult;
@@ -1214,7 +1513,7 @@ int	iFile;
     }
     if ( SbFirstSourceFiles )
 	FREE( SbFirstSourceFiles );
-    VPTRACEEXIT (( "ParseInit" ));
+    VPTRACEEXIT("ParseInit" );
 }
 
 
@@ -1231,8 +1530,8 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
 {
 		/* Set up the BLOCK from which to read the command */
 
-    VPTRACEENTER(( "ParseBlock" ));
-    MESSAGE(( "Parsing block: %s\n", sBlockText(bBlock) ));
+    VPTRACEENTER("ParseBlock" );
+    MESSAGE("Parsing block: %s\n", sBlockText(bBlock) );
     GbCommand = bBlock;
     BlockResetRead( GbCommand );
 
@@ -1248,8 +1547,8 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
 	    if ( fINPUTFILE() != NULL )
 	    	fclose( fINPUTFILE() );
 	    INPUTPOPFILE();
-	    VPTRACE(( "After pop GiInputFileStackPos = %d\n",
-	              GiInputFileStackPos ));
+	    VPTRACE("After pop GiInputFileStackPos = %d\n",
+	              GiInputFileStackPos );
 	}
     } while ( fINPUTFILE() != NULL );
 
@@ -1261,7 +1560,7 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
 
     *rPResult = GrMainResult;
 
-    VPTRACEEXIT (( "ParseBlock" ));
+    VPTRACEEXIT("ParseBlock" );
 }
 
 

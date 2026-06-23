@@ -100,28 +100,33 @@ STRING          sAtom1, sAtom2;
 PARMSET         psTemp;
 int             iIndex;
     
-    VPTRACEENTER(( "zbUnitCheckBondParameters" ));
+    VPTRACEENTER("zbUnitCheckBondParameters" );
     bFailedGeneratingParameters = FALSE;
     
-    VP0(( "Checking for bond parameters.\n" ));
+    VP0("Checking for bond parameters.\n" );
 
     lTemp = lLoop( (OBJEKT)uUnit, BONDS );
     while ( oNext(&lTemp) != NULL ) {
         LoopGetBond( &lTemp, &aAtom1, &aAtom2 );
         strcpy( sAtom1, sAtomType(aAtom1) );
         strcpy( sAtom2, sAtomType(aAtom2) );
+        iIndex = PARM_NOT_FOUND; // in case of empty parmSet
         PARMLIB_LOOP( plLib, psTemp,
                 ( iIndex = iParmSetFindBond( psTemp, sAtom1, sAtom2 )));
         if ( iIndex == PARM_NOT_FOUND ) {
                 bFailedGeneratingParameters = TRUE;
                 VECTOR vPos1 = vAtomPosition(aAtom1);
                 VECTOR vPos2 = vAtomPosition(aAtom2);
-                VPERROR(( "Could not find bond parameter for atom types: %s - %s\n"
-                        "        for atom %s at position %f, %f, %f \n"
-                        "        and atom %s at position %f, %f, %f.\n",
-                        sAtom1, sAtom2, sContainerName( aAtom1), vPos1.dX,
-                        vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
-                        vPos2.dX, vPos2.dY, vPos2.dZ ));
+                RESIDUE rRes1 = (RESIDUE)cContainerWithin(aAtom1);
+                RESIDUE rRes2 = (RESIDUE)cContainerWithin(aAtom2);
+                VPERROR("Could not find bond parameter for atom types: %s - %s\n"
+                        "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f \n"
+                        "        and atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f.\n",
+                        sAtom1, sAtom2,
+                        sContainerName(rRes1),sResidueChainId(rRes1),iResiduePdbSequence(rRes1),sContainerName(aAtom1),
+                        vPos1.dX, vPos1.dY, vPos1.dZ,
+                        sContainerName(rRes2),sResidueChainId(rRes2),iResiduePdbSequence(rRes2),sContainerName(aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ );
         }
 
         if ( bAtomFlagsSet( aAtom1, ATOMPERTURB ) ||
@@ -138,12 +143,12 @@ int             iIndex;
                     ( iIndex = iParmSetFindBond( psTemp, sAtom1, sAtom2 ))) ;
             if ( iIndex == PARM_NOT_FOUND ) {
                     bFailedGeneratingParameters = TRUE;
-                    VPERROR(( "No bond parameter for: %s - %s\n", sAtom1, sAtom2 ));
+                    VPERROR("No bond parameter for: %s - %s\n", sAtom1, sAtom2 );
             }
         }
     }
 
-    VPTRACEEXIT (( "zbUnitCheckBondParameters" ));
+    VPTRACEEXIT("zbUnitCheckBondParameters" );
     return(bFailedGeneratingParameters);
 }
 
@@ -168,7 +173,7 @@ int             iIndex;
 
     bFailedGeneratingParameters = FALSE;
 
-    VP0(( "Checking for bond parameters.\n" ));
+    VP0("Checking for bond parameters.\n" );
 
     lTemp = lLoop( (OBJEKT)uUnit, C4Pairwise );
     while ( oNext(&lTemp) != NULL ) { 
@@ -177,8 +182,8 @@ int             iIndex;
         strcpy( sAtom2, sAtomType(aAtom2) );
         if ( iIndex == PARM_NOT_FOUND ) {
                 bFailedGeneratingParameters = TRUE;
-                VPERROR(( "Could not find C4 parameter for: %s - %s\n",
-                        sAtom1, sAtom2 ));
+                VPERROR("Could not find C4 parameter for: %s - %s\n",
+                        sAtom1, sAtom2 );
         }
     }
 
@@ -213,7 +218,7 @@ int             iTemp = PARM_NOT_FOUND;
     bFailedGeneratingParameters = FALSE;
 
             /* Now generate the ANGLE table */
-    VP0(( "Checking for angle parameters.\n" ));
+    VP0("Checking for angle parameters.\n" );
 
     lTemp = lLoop( (OBJEKT)uUnit, ANGLES );
     while ( oNext(&lTemp) != NULL ) {
@@ -236,14 +241,20 @@ int             iTemp = PARM_NOT_FOUND;
                 VECTOR vPos1 = vAtomPosition(aAtom1);
                 VECTOR vPos2 = vAtomPosition(aAtom2);
                 VECTOR vPos3 = vAtomPosition(aAtom3);
-                VPERROR(( "Could not find angle parameter for atom types: %s - %s - %s\n"
-                        "        for atom %s at position %f, %f, %f,\n"
-                        "            atom %s at position %f, %f, %f,\n"
-                        "        and atom %s at position %f, %f, %f.\n",
-                        sAtom1, sAtom2, sAtom3, sContainerName( aAtom1),
-                        vPos1.dX, vPos1.dY, vPos1.dZ, sContainerName( aAtom2),
-                        vPos2.dX, vPos2.dY, vPos2.dZ, sContainerName( aAtom3),
-                        vPos3.dX, vPos3.dY, vPos3.dZ ));
+                RESIDUE rRes1 = (RESIDUE)cContainerWithin(aAtom1);
+                RESIDUE rRes2 = (RESIDUE)cContainerWithin(aAtom2);
+                RESIDUE rRes3 = (RESIDUE)cContainerWithin(aAtom3);
+                VPERROR("Could not find angle parameter for atom types: %s - %s - %s\n"
+                        "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f,\n"
+                        "            atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f,\n"
+                        "        and atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f.\n",
+                        sAtom1, sAtom2, sAtom3,
+                        sContainerName(rRes1),sResidueChainId(rRes1),iResiduePdbSequence(rRes1),sContainerName(aAtom1),
+                        vPos1.dX, vPos1.dY, vPos1.dZ,
+                        sContainerName(rRes2),sResidueChainId(rRes2),iResiduePdbSequence(rRes2),sContainerName(aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ,
+                        sContainerName(rRes3),sResidueChainId(rRes3),iResiduePdbSequence(rRes3),sContainerName(aAtom3),
+                        vPos3.dX, vPos3.dY, vPos3.dZ );
         }
 
 IGNORE1:
@@ -275,8 +286,8 @@ IGNORE1:
                                         sAtom2, sAtom3 )));
             if ( iTemp == PARM_NOT_FOUND ){
                     bFailedGeneratingParameters = TRUE;
-                    VPERROR(( "Can't find angle parameter: %s - %s - %s\n", 
-                            sAtom1, sAtom2, sAtom3 ));
+                    VPERROR("Can't find angle parameter: %s - %s - %s\n", 
+                            sAtom1, sAtom2, sAtom3 );
             }
         }
 IGNORE2:
@@ -413,7 +424,7 @@ BOOL    bMissing = FALSE;
     }
     
     if ( !uUnit ) {
-        DFATAL(( "Unit is NULL!\n" ));
+        DFATAL("Unit is NULL!\n" );
     }
 
     bMissing |= 
@@ -496,39 +507,14 @@ uUnitCreate()
 UNIT    m;
 
     MALLOC( m, UNIT, sizeof(UNITt) );
+    memset(m,0,sizeof(UNITt));
 
-        /* Allocate BAGs for RESTRAINTs */
+    UnitSetMode( m, UNITNORMAL );
+    UnitSetBeta( m, 90.0*DEGTORAD );
 
     m->bRestraints = bBagCreate();
-
-        /* Zero the VARARRAYs used to store the table representation of */
-        /* the UNIT used when writing the UNIT to a file */
-    m->cHeader.dDisp = NULL;
-    m->psParameters = NULL;
-    m->vaAtoms = NULL;
-    m->vaBonds = NULL;
-    m->vaC4Pairwise = NULL; //New
-    m->vaAngles = NULL;
-    m->vaTorsions = NULL;
-    m->vaConnectivity = NULL;
-    m->vaRestraints = NULL;
-    m->vaResidues = NULL;
-    m->vaMolecules = NULL;
-    m->vaHierarchy = NULL;
-    m->vaConnect = NULL;
-    m->vaGroupNames = NULL;
-    m->vaGroupAtoms = NULL;
-    UnitSetMode( m, UNITNORMAL );
-    UnitDefineFlags( m, 0 );
-    UnitSetUseBox( m, FALSE );
-    UnitSetBoxOct( m, FALSE );
-    UnitSetBox( m, 0.0, 0.0, 0.0 );
-    UnitSetBeta( m, 90.0*DEGTORAD );
-    UnitSetHead( m, NULL );
-    UnitSetTail( m, NULL );
-    UnitSetSolventCap( m, 0.0, 0.0, 0.0, 0.0 );
-    UnitSetUseSolventCap( m, FALSE );
     m->dAtomGroups = dDictionaryCreate();
+    m->dHeterogens = dDictionaryCreate();
 
     return(m);
 }
@@ -552,7 +538,7 @@ UnitDestroy( UNIT *uPUnit )
 BAGLOOP         blRestraints;
 RESTRAINT       rRest;
 LIST            lGroup;
-DICTLOOP        dlGroups;
+DICTLOOP        dlGroups, dlHeterogens;
 
                 /* Destroy everything in the UNIT */
 
@@ -576,8 +562,14 @@ DICTLOOP        dlGroups;
         lGroup = (LIST)PDictLoopData(dlGroups);
         ListDestroy( &lGroup );
     }
-
     DictionaryDestroy( &((*uPUnit)->dAtomGroups) );
+
+    dlHeterogens = ydlDictionaryLoop( (*uPUnit)->dHeterogens );
+    while ( yPDictionaryNext( (*uPUnit)->dHeterogens, &dlHeterogens ) ) {
+        STRING *sDesc = (STRING*)PDictLoopData(dlHeterogens);
+        FREE(sDesc);
+    }
+    DictionaryDestroy( &((*uPUnit)->dHeterogens) );
 
     if ( (*uPUnit)->vaAtoms )
         VarArrayDestroy( &(*uPUnit)->vaAtoms );
@@ -637,48 +629,52 @@ UnitDescribe( UNIT uUnit )
 LOOP            lContents;
 OBJEKT          oObj;
 STRING          sTemp;
-double          dX, dY, dZ, dR;
+double          dX, dY, dZ, dR, dA, dB, dG;
 BAGLOOP         blRestraints;
 ATOM            aAtom1, aAtom2, aAtom3, aAtom4;
 STRING          sAtom1, sAtom2, sAtom3, sAtom4;
 double          dKr, dR0, dKt, dT0, dKp, dP0, dN;
 RESTRAINT       rRest;
-DICTLOOP        dlGroups;
+DICTLOOP        dlGroups, dlHeterogens;
 LIST            lAtoms;
 LISTLOOP        llAtoms;
 ATOM            aAtom;
 STRING          sAtom;
 
 
-    VP0(( "UNIT name: %s\n", uUnit->cHeader.sName ));
-    if ( bUnitHeadUsed(uUnit) ) 
-        strcpy( sAtom1, sContainerFullDescriptor( (CONTAINER)aUnitHead(uUnit), sTemp ) );
-    else strcpy( sAtom1, "null" );
-    VP0(( "Head atom: %s\n", sAtom1 ));
-    if ( bUnitTailUsed(uUnit) ) 
-        strcpy( sAtom1, sContainerFullDescriptor( (CONTAINER)aUnitTail(uUnit), sTemp ) );
-    else strcpy( sAtom1, "null" );
-    VP0(( "Tail atom: %s\n", sAtom1 ));
+    VP0("UNIT name: %s\n", sContainerName(uUnit));
+    if ( uUnit->sDescription[0] ) {
+        VP0("UNIT Description: %s\n", uUnit->sDescription );
+    }
+    VP0("Head atom: %s\n", bUnitHeadUsed(uUnit) ?
+            sContainerFullDescriptor( (CONTAINER)aUnitHead(uUnit), sTemp ) : "null" );
+    VP0("Tail atom: %s\n", bUnitTailUsed(uUnit) ?
+            sContainerFullDescriptor( (CONTAINER)aUnitTail(uUnit), sTemp ) : "null" );
     
     if ( bUnitUseBox(uUnit) ) {
-        UnitGetBox( uUnit, &dX, &dY, &dZ );
-        VP0(( "Periodic box: %10.5lf, %10.5lf, %10.5lf\n",
-                dX, dY, dZ ));
+        UnitGetCell( uUnit, &dX, &dY, &dZ, &dA, &dB, &dG );
+        VP0("Periodic box: %10.5lf, %10.5lf, %10.5lf\n", dX, dY, dZ );
+        if ( fabs(dA - 90.0) > 1e-4 ||
+                fabs(dB  - 90.0) > 1e-4 ||
+                fabs(dG - 90.0) > 1e-4 ) {
+            VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
+                    dA/DEGTORAD, dB/DEGTORAD, dG/DEGTORAD );
+        }
     }
     if ( bUnitUseSolventCap(uUnit) ) {
         UnitGetSolventCap( uUnit, &dX, &dY, &dZ, &dR );
-        VP0(( "Solvent cap origin:%10.5lf, %10.5lf, %10.5lf  radius:%10.5lf\n",
-                dX, dY, dZ, dR ));
+        VP0("Solvent cap origin:%10.5lf, %10.5lf, %10.5lf  radius:%10.5lf\n",
+                dX, dY, dZ, dR );
     }
     if ( iBagSize(uUnit->bRestraints) > 0 ) {
         blRestraints = blBagLoop(uUnit->bRestraints);
         while ( (rRest = (RESTRAINT)PBagNext(&blRestraints)) ) {
             if ( iRestraintType(rRest) == RESTRAINTBOND ) {
                 RestraintBondGet( rRest, &aAtom1, &aAtom2, &dKr, &dR0 );
-                VP0(( "Restraint BOND: %s - %s   Kr=%lf  R0=%lf\n",
+                VP0("Restraint BOND: %s - %s   Kr=%lf  R0=%lf\n",
                         sContainerFullDescriptor( (CONTAINER)aAtom1, sAtom1 ),
                         sContainerFullDescriptor( (CONTAINER)aAtom2, sAtom2 ),
-                        dKr, dR0 ));
+                        dKr, dR0 );
             }
         }
         blRestraints = blBagLoop(uUnit->bRestraints);
@@ -686,11 +682,11 @@ STRING          sAtom;
             if ( iRestraintType(rRest) == RESTRAINTANGLE ) {
                 RestraintAngleGet( rRest, &aAtom1, &aAtom2, &aAtom3,
                                   &dKt, &dT0 );
-                VP0(( "Restraint ANGLE: %s - %s - %s  Kt=%lf  T0=%lf\n",
+                VP0("Restraint ANGLE: %s - %s - %s  Kt=%lf  T0=%lf\n",
                         sContainerFullDescriptor( (CONTAINER)aAtom1, sAtom1 ),
                         sContainerFullDescriptor( (CONTAINER)aAtom2, sAtom2 ),
                         sContainerFullDescriptor( (CONTAINER)aAtom3, sAtom3 ),
-                        dKt, dT0 ));
+                        dKt, dT0 );
             }
         }
         blRestraints = blBagLoop(uUnit->bRestraints);
@@ -698,44 +694,51 @@ STRING          sAtom;
             if ( iRestraintType(rRest) == RESTRAINTTORSION ) {
                 RestraintTorsionGet( rRest, &aAtom1, &aAtom2, &aAtom3, &aAtom4,
                                   &dKp, &dP0, &dN );
-        VP0(( "Restraint TORSION: %s - %s - %s - %s  Kt=%lf  T0=%lf  N=%lf\n",
+        VP0("Restraint TORSION: %s - %s - %s - %s  Kt=%lf  T0=%lf  N=%lf\n",
                         sContainerFullDescriptor( (CONTAINER)aAtom1, sAtom1 ),
                         sContainerFullDescriptor( (CONTAINER)aAtom2, sAtom2 ),
                         sContainerFullDescriptor( (CONTAINER)aAtom3, sAtom3 ),
                         sContainerFullDescriptor( (CONTAINER)aAtom4, sAtom4 ),
-                        dKp, dP0, dN ));
+                        dKp, dP0, dN );
             }
         }
     }
+    if ( iDictionaryElementCount(uUnit->dHeterogens) != 0 ) {
+        VP0("Heterogens:\n" );
+        dlHeterogens = ydlDictionaryLoop( uUnit->dHeterogens );
+        while ( yPDictionaryNext( uUnit->dHeterogens, &dlHeterogens ) ) {
+            VP0("  Name: %s  Desc: %s\n", sDictLoopKey(dlHeterogens),
+                        (STRING*)PDictLoopData(dlHeterogens) );
+        }
+    }
     BasicsResetInterrupt();
-    VP0(( "Contents: \n" ));
+    VP0("Contents: \n" );
     lContents = lLoop( (OBJEKT)uUnit, DIRECTCONTENTSBYSEQNUM );
     while ( (oObj = oNext(&lContents )) ) {
-        VP0(( "%s\n", sContainerDescriptor( (CONTAINER)oObj, sTemp ) ));
+        VP0("%s\n", sContainerDescriptor( (CONTAINER)oObj, sTemp ) );
         if ( bBasicsInterrupt() ) {
             BasicsResetInterrupt();
-            VP0(( "Interrupted\n" ));
+            VP0("Interrupted\n" );
             break;
         }
     }
     if ( iDictionaryElementCount(uUnit->dAtomGroups) != 0 ) {
         int     i;
-        VP0(( "Atom groups:\n" ));
+        VP0("Atom groups:\n" );
         dlGroups = ydlDictionaryLoop( uUnit->dAtomGroups );
         while ( yPDictionaryNext( uUnit->dAtomGroups, &dlGroups ) ) {
-            VP0(( "  Group: %s\n", sDictLoopKey(dlGroups) ));
+            VP0("  Group: %s\n", sDictLoopKey(dlGroups) );
             lAtoms = (LIST)PDictLoopData(dlGroups);
             llAtoms = llListLoop(lAtoms);
             i = 0;
             while ( (aAtom = (ATOM)oListNext(&llAtoms)) ) {
-                VP0(( "    %s\n", sContainerFullDescriptor((CONTAINER)aAtom,sAtom) ));
+                VP0("    %s\n", sContainerFullDescriptor((CONTAINER)aAtom,sAtom) );
                 i++;
             }
             if ( !i )
-                VP0(( "    (empty group)\n" ));
+                VP0("    (empty group)\n" );
         }
     }
-    
 }
 
 
@@ -763,6 +766,7 @@ UNIT            uNew;
 
     uNew->bRestraints = bBagCreate();
     uNew->dAtomGroups = dDictionaryCreate();
+    uNew->dHeterogens = dDictionaryCreate();
 
     return(uNew);
 }
@@ -826,6 +830,7 @@ UnitResetPointers( UNIT uUnit )
 
     UnitSetHead( uUnit, cContainerCopyPointer(aUnitHead(uUnit)) );
     UnitSetTail( uUnit, cContainerCopyPointer(aUnitTail(uUnit)) );
+   // FIXME: why are the pointers not reset??
 }
 
 
@@ -879,57 +884,30 @@ OBJEKT  cCont;
 static void
 UnitJoinTailHead( UNIT uA, UNIT uB, BONDt bBondOrder )
 {
-LOOP            lContents;
-OBJEKT          oObj;
-ATOM            aA, aB, aNext;
-RESIDUE         rRes;
+ATOM            aA, aB;
 
     if ( !bUnitTailUsed(uA) ) { 
-        VPWARN(( "UNIT (%s) does not have a tail atom.\n",
-                sContainerName(uA) ));
-        goto DONE;
-    } else aA = aUnitTail(uA);
-    if ( !bUnitHeadUsed(uB) ) {
-        VPWARN(( "UNIT (%s) does not have a head atom.\n",
-                sContainerName(uB) ));
-        goto DONE;
-    } else aB = aUnitHead(uB);
-
-                /* Get the tail atom on uB */
-    if ( !bUnitTailUsed(uB) ) aNext = NULL;
-    else aNext = aUnitTail(uB);
-
-                /* Remove all of the objects from uB and put them in uA */
-                /* This COMPLETELY empties the second UNIT, making it */
-                /* have NULL connect atoms */
-
-    lContents = lLoop( (OBJEKT)uB, DIRECTCONTENTSBYSEQNUM );
-    while ( (oObj = oNext(&lContents)) ) {
-        REF( oObj );    /* bContainerRemove() does a DEREF */
-        bContainerRemove( (CONTAINER)uB, oObj );
-
-                /* If the object being added is a RESIDUE then set */
-                /* default PDB sequence number to the Container sequence number */
-        if ( iObjectType(oObj) == RESIDUEid )
-            ResidueSetPdbSequence( oObj,  iContainerNextChildsSequence(uA));
-
-        ContainerAdd( (CONTAINER) uA, oObj );
-        DEREF( oObj );  /* ContainerAdd() does a REF */
+        VPWARN("UNIT (%s) does not have a tail atom.\n",
+                sContainerName(uA) );
+        Destroy((OBJEKT *) &uB );
+        return;
     }
+    if ( !bUnitHeadUsed(uB) ) {
+        VPWARN("UNIT (%s) does not have a head atom.\n",
+                sContainerName(uB) );
+        Destroy((OBJEKT *) &uB );
+        return;
+    }
+    aA = aUnitTail(uA);
+    aB = aUnitHead(uB);
+
+    UnitJoin( uA, uB );
 
                 /* Now connect the atoms together */
 
     AtomBondToOrder( aA, aB, bBondOrder );
-    UnitSetTail( uA, aNext );
 
-DONE:
-                /* Destroy UNIT uB */
-
-    DisplayerUpdate(dContainerDisplayer(uA));
-    Destroy((OBJEKT *) &uB );
-    CDU(uA);
 }
- 
     
 
 /*
@@ -947,11 +925,38 @@ UnitJoin( UNIT uA, UNIT uB )
 LOOP            lContents;
 OBJEKT          oObj;
 ATOM            aB;
-RESIDUE         rRes;
 
     aB = aUnitTail(uB);
 
                 /* Remove all of the objects from uB and put them in uA */
+                /* This COMPLETELY empties the second UNIT, making it */
+                /* have NULL connect atoms */
+    // If it is a Residue Template (UNIT with single RESIDUE) and has a
+    // Description, add it to the parent UNIT's heterogen list
+// FIXME: requre HET: tag??
+#if 0
+    if (iContainerNumberOfChildren(uB) == 1 && !strncmp(sUnitDescription(uB),"HET:",4)) {
+        RESIDUE rRes = (RESIDUE)oContainerFirstObject(uB);
+        if ( iObjectType(rRes) == RESIDUEid &&
+                !yPDictionaryFind( uA->dHeterogens, sContainerName(rRes)) ) {
+            STRING *sDesc;
+            MALLOC(sDesc, STRING *, sizeof(STRING));
+            StringCopyMax( *sDesc, sUnitDescription(uB)+4, sizeof(STRING) );
+            DictionaryAdd( uA->dHeterogens, sContainerName(rRes), sDesc);
+        }
+    }
+#endif
+
+    if (iContainerNumberOfChildren(uB) == 1 && sUnitDescription(uB)[0]) {
+        RESIDUE rRes = (RESIDUE)oContainerFirstObject(uB);
+        if ( iObjectType(rRes) == RESIDUEid &&
+                !yPDictionaryFind( uA->dHeterogens, sContainerName(rRes)) ) {
+            STRING *sDesc;
+            MALLOC(sDesc, STRING *, sizeof(STRING));
+            StringCopyMax( *sDesc, sUnitDescription(uB), sizeof(STRING) );
+            DictionaryAdd( uA->dHeterogens, sContainerName(rRes), sDesc);
+        }
+    }
 
     lContents = lLoop( (OBJEKT)uB, DIRECTCONTENTSBYSEQNUM );
     while ( (oObj = oNext(&lContents)) ) {
@@ -960,8 +965,9 @@ RESIDUE         rRes;
 
                 /* If the object being added is a RESIDUE then set */
                 /* default PDB sequence number to the Container sequence number */
-        if ( iObjectType(oObj) == RESIDUEid )
+        if ( iObjectType(oObj) == RESIDUEid ) {
             ResidueSetPdbSequence( oObj,  iContainerNextChildsSequence(uA));
+        }
 
         ContainerAdd( (CONTAINER) uA, oObj );
         DEREF( oObj );  /* ContainerAdd() does a REF */
@@ -1002,21 +1008,21 @@ BOOL            bA, bB;
     bB = bUnitHeadUsed(uB);
 
     if ( bA && bB ) {
-        MESSAGE(( "Joining %s - %s\n", 
+        MESSAGE("Joining %s - %s\n", 
                 sContainerName(cContainerWithin(aUnitTail(uA))),
                 sContainerName(cContainerWithin(aUnitHead(uB)))
-                ));
+                );
         UnitJoinTailHead( uA, uB, BONDSINGLE );
     } else if ( !bA && !bB ) {
-        VP1(( "Starting new chain with %s\n", sContainerName(uB ) ));
+        VP1("Starting new chain with %s\n", sContainerName(uB ) );
         UnitJoin( uA, uB );
     } else if ( !bA ) {
-        VPWARN(( "One sided connection. Residue (%s) missing connect%d atom.\n",
-                sContainerName(uA), LASTEND ));
+        VPWARN("One sided connection. Residue (%s) missing connect%d atom.\n",
+                sContainerName(uA), LASTEND );
         UnitJoin( uA, uB );
     } else {
-        VPWARN(( "One sided connection. Residue (%s) missing connect%d atom.\n",
-                sContainerName(uB), FIRSTEND ));
+        VPWARN("One sided connection. Residue (%s) missing connect%d atom.\n",
+                sContainerName(uB), FIRSTEND );
 /* %%% */
         UnitJoin( uA, uB );
     }
@@ -1092,18 +1098,20 @@ UnitSaveAmberParmFile( UNIT uUnit, FILE *fOut, char *crdName,
         PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ) //NewT
 {
         BOOL            bGeneratedParameters;
-        // VP0(("what saveparm returns before buildtable%d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
+        // VP0("what saveparm returns before buildtable%d\n", iVarArrayElementCount(uUnit->vaAtoms)); //NewTdebug
         zUnitIOBuildTables( uUnit, plParms, &bGeneratedParameters, bPert, TRUE );
-        // VP0(("what saveparm returns after buildtable %d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
+        // VP0("what saveparm returns after buildtable %d\n", iVarArrayElementCount(uUnit->vaAtoms)); //NewTdebug
         if ( bGeneratedParameters == TRUE ) {
+#if 0
                 if( GDefaults.iOldPrmtopFormat ) 
                         zUnitIOSaveAmberParmFormat_old( uUnit, fOut, crdName, 
                                                                 bPolar, bPert, sA, sB, daC4Type, iC4count ); //NewT 
                 else
+#endif
                         zUnitIOSaveAmberParmFormat( uUnit, fOut, crdName, 
                                                                 bPolar, bPert, bNetcdf, sA, sB, daC4Type, iC4count ); //NewT 
         } else {
-                VPWARN(( "Parameter file was not saved.\n" ));
+                VPWARN("Parameter file was not saved.\n" );
         }
         zUnitIODestroyTables( uUnit );
 }
@@ -1118,7 +1126,7 @@ UnitSaveAmberParmFile( UNIT uUnit, FILE *fOut, char *crdName,
 void
 UnitYouAreBeingRemoved( UNIT uUnit )
 {
-    DFATAL(( "UNITs should never be removed from anything!" ));
+    DFATAL("UNITs should never be removed from anything!" );
 }
 
 
@@ -1168,7 +1176,7 @@ LIST            lAtoms;
             }
         }
         if ( bFoundOne ) {
-            VP1(( "Removed all restraints that contained the atom.\n" ));
+            VP1("Removed all restraints that contained the atom.\n" );
         }
 
                 /* Check the ATOM groups, remove (cRemoved) from */
@@ -1400,8 +1408,8 @@ STRING  sTemp1;
         return;
     if ( aAtom != NULL ) {
         if ( !bContainerContainedBy( (CONTAINER)aAtom, (CONTAINER)uUnit ) ) {
-            VPFATALEXIT(( "The UNIT must contain %s.\n",
-                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp1 ) ));
+            VPFATALEXIT("The UNIT must contain %s.\n",
+                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp1 ) );
             return;
         }
     }
@@ -1426,8 +1434,8 @@ STRING  sTemp1;
         return;
     if ( aAtom != NULL ) {
         if ( !bContainerContainedBy( (CONTAINER)aAtom, (CONTAINER)uUnit ) ) {
-            VPFATALEXIT(( "The UNIT must contain %s.\n",
-                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp1 ) ));
+            VPFATALEXIT("The UNIT must contain %s.\n",
+                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp1 ) );
             return;
         }
     }
@@ -1493,11 +1501,11 @@ ASSOC           aAssoc;
                     if ( i<3 ) {
                         daVector[i++] = dODouble(oAssocObject(aAssoc));
                     } else {
-                        VPFATALEXIT(( "Illegal vector\n" ));
+                        VPFATALEXIT("Invalid vector\n" );
                         break;
                     }
                 } else {
-                    VPFATALEXIT(( "Illegal vector\n" ));
+                    VPFATALEXIT("Invalid vector\n" );
                     break;
                 }
             }
@@ -1511,7 +1519,7 @@ ASSOC           aAssoc;
             UnitSetUseBox( uUnit, FALSE );
             break;
         default:
-            VPFATALEXIT(( "Illegal box definition.\n" ));
+            VPFATALEXIT("Invalid box definition.\n" );
             break;
     }
 }
@@ -1544,11 +1552,11 @@ ASSOC           aAssoc;
                     if ( i<4 ) {
                         daVector[i++] = dODouble(oAssocObject(aAssoc));
                     } else {
-                        VPFATALEXIT(( "Illegal vector\n" ));
+                        VPFATALEXIT("Invalid vector\n" );
                         break;
                     }
                 } else {
-                    VPFATALEXIT(( "Illegal vector\n" ));
+                    VPFATALEXIT("Invalid vector\n" );
                     break;
                 }
             }
@@ -1563,7 +1571,7 @@ ASSOC           aAssoc;
             UnitSetUseSolventCap( uUnit, FALSE );
             break;
         default:
-            VPFATALEXIT(( "Illegal box definition.\n" ));
+            VPFATALEXIT("Invalid box definition.\n" );
             break;
     }
 }
@@ -1607,19 +1615,82 @@ UnitSetAttribute( UNIT uUnit, STRING sAttr, OBJEKT oAttr )
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         ContainerSetName( uUnit, sOString(oAttr) );
         goto DONE;
+    } else if ( strcmp( sAttr, "description" ) == 0 ) {
+        if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
+        UnitSetDescription( uUnit, sOString(oAttr) );
+        goto DONE;
     }
 
-    VPFATALEXIT(( "%s: %s is a non-existent attribute for a unit.\n"
+    VPFATALEXIT("%s: %s is a non-existent attribute for a unit.\n"
             "\tUnit attributes: head, tail, restype, box, cap, name\n",
-                                sContainerName(uUnit), sAttr ));
+                                sContainerName(uUnit), sAttr );
     if ( strncmp( sAttr, "connect", 7 ) == 0 )
-        VP0(( "\t-- 'connectX' is used for residues, e.g. %s.1\n",
-                                                sContainerName(uUnit) ));
+        VP0("\t-- 'connectX' is used for residues, e.g. %s.1\n",
+                                                sContainerName(uUnit) );
     return;
 
 DONE:
     CDU(uUnit);
 
+}
+
+OBJEKT
+oUnitGetAttribute( UNIT uUnit, STRING sAttr)
+{
+OBJEKT  oResult = NULL;
+
+    if ( strcasecmp( sAttr, "head" ) == 0 ) {
+        oResult = (OBJEKT)aUnitHead(uUnit);
+    } else if ( strcmp( sAttr, "tail" ) == 0 ) {
+        oResult = (OBJEKT)aUnitTail(uUnit);
+    } else if ( strcasecmp( sAttr, "box" ) == 0 ) {
+        VECTOR v = { uUnit->dXWidth, uUnit->dYWidth, uUnit->dYWidth};
+        oResult = CreateAssocVector(v);
+    } else if ( strcasecmp( sAttr, "box.x" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, uUnit->dXWidth);
+    } else if ( strcasecmp( sAttr, "box.y" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, uUnit->dYWidth);
+    } else if ( strcasecmp( sAttr, "box.z" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, uUnit->dZWidth);
+    } else if ( strcasecmp( sAttr, "cap" ) == 0 ) {
+        oResult = CreateAssocVector(uUnit->vCapOrigin);
+    } else if ( strcasecmp( sAttr, "cap.x" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, dVX(&(uUnit->vCapOrigin)));
+    } else if ( strcasecmp( sAttr, "cap.y" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, dVY(&(uUnit->vCapOrigin)));
+    } else if ( strcasecmp( sAttr, "cap.z" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, dVZ(&(uUnit->vCapOrigin)));
+    } else if ( strcasecmp( sAttr, "cap.r" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet((ODOUBLE)oResult, uUnit->dCapRadius);
+    } else if ( strcasecmp( sAttr, "pertcharge" ) == 0) {
+        double dCharge, dPertCharge;
+        ContainerTotalCharge((CONTAINER)uUnit, &dCharge, &dPertCharge );
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet( (ODOUBLE)oResult, dPertCharge);
+    } else if ( strcasecmp( sAttr, "charge" ) == 0) {
+        double dCharge, dPertCharge;
+        ContainerTotalCharge((CONTAINER)uUnit, &dCharge, &dPertCharge );
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet( (ODOUBLE)oResult, dCharge);
+    } else if ( strcasecmp( sAttr, "name" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sContainerName( uUnit ) );
+    } else if ( strcasecmp( sAttr, "description" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sUnitDescription( uUnit ) );
+    } else {
+        VPFATALEXIT("%s: %s is a non-existent attribute for a unit.\n"
+                "\tUnit attributes: head, tail, restype, box, cap, name\n",
+                                    sContainerName(uUnit), sAttr );
+    }
+    return oResult;
 }
 
 
@@ -1802,11 +1873,11 @@ BOOL            bPert;
 		 strcmp( sAtomName( aAtom2 ), "EPW" ) == 0 ) {
 	      /* Lone pair, ignore it  */
 	    } else {
-            VPWARN(( "There is a bond of %.3lf angstroms between %s and %s atoms:"
+            VPWARN("There is a bond of %.3lf angstroms between %s and %s atoms:"
                     "\n-------  %s and %s\n",
                     dLen, sAtomName( aAtom1 ), sAtomName( aAtom2 ),
                     sContainerFullDescriptor( (CONTAINER)aAtom1, sTemp1 ),
-                    sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp2 ) ));
+                    sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp2 ) );
 	    }
         }
     }
@@ -1832,27 +1903,27 @@ BOOL            bPert;
     dAbs = fabs(dCharge);
     dFrac = fabs( dAbs - (double)(int)(dAbs+0.5) );
     if ( dFrac > 0.01 ) {
-        VPWARN(( "The unperturbed charge of the unit (%lf) is not integral.\n",
-                dCharge ));
+        VPWARN("The unperturbed charge of the unit (%lf) is not integral.\n",
+                dCharge );
         (*iPWarnings)++;
     }
     if ( fabs(dCharge) > 0.01 ) {
-        VPWARN(( "The unperturbed charge of the unit (%lf) is not zero.\n",
-                dCharge ));
+        VPWARN("The unperturbed charge of the unit (%lf) is not zero.\n",
+                dCharge );
         (*iPWarnings)++;
     }
     if ( bPert == TRUE ) {
         dAbs = fabs(dCharge + dPertCharge);
         dFrac = fabs( dAbs - (double)(int)(dAbs+0.5) );
         if ( dFrac > 0.01 ) {
-            VPWARN(( "The perturbed charge (%lf) is not integral.\n",
-                    (dCharge+dPertCharge) ));
+            VPWARN("The perturbed charge (%lf) is not integral.\n",
+                    (dCharge+dPertCharge) );
             (*iPWarnings)++;
         }
 
         if ( fabs(dCharge+dPertCharge) > 0.01 ) {
-            VPWARN(( "The perturbed charge (%lf) is not zero.\n",
-                    (dCharge+dPertCharge) ));
+            VPWARN("The perturbed charge (%lf) is not zero.\n",
+                    (dCharge+dPertCharge) );
             (*iPWarnings)++;
         }
     }
@@ -1880,12 +1951,12 @@ BOOL            bPert;
 void
 UnitCheckForParms( UNIT uUnit, PARMLIB plParms, PARMSET psParmSet )
 {
-    // VP0(("what check returns %d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug
+    // VP0("what check returns %d\n", iVarArrayElementCount(uUnit->vaAtoms)); //NewTdebug
     if ( zbUnitParmsMissing( uUnit, plParms) == TRUE ) {
     
-        VPWARN(( "There are missing parameters.\n" ));
+        VPWARN("There are missing parameters.\n" );
         if ( psParmSet ) {
-            VP0(( "Missing parameters have been added to the PARMSET.\n" ));
+            VP0("Missing parameters have been added to the PARMSET.\n" );
         }
     }
 }
@@ -1915,27 +1986,27 @@ double  dXMax, dYMax, dZMax;
     while ( (aAtom = (ATOM)oNext( &lAtoms ))) {
         if ( dXMin > dVX( &(vAtomPosition( aAtom )))) {
             dXMin = dVX( &(vAtomPosition( aAtom )));
-            MESSAGE(( "Min X Value:  %4.2lf\n", dXMin ));
+            MESSAGE("Min X Value:  %4.2lf\n", dXMin );
         }
         if ( dYMin > dVY( &(vAtomPosition( aAtom )))) {
             dYMin = dVY( &(vAtomPosition( aAtom )));
-            MESSAGE(( "Min Y Value:  %4.2lf\n", dYMin ));
+            MESSAGE("Min Y Value:  %4.2lf\n", dYMin );
         }
         if ( dZMin > dVZ( &(vAtomPosition( aAtom )))) {
             dZMin = dVZ( &(vAtomPosition( aAtom )));
-            MESSAGE(( "Min Z Value:  %4.2lf\n", dZMin ));
+            MESSAGE("Min Z Value:  %4.2lf\n", dZMin );
         }
         if ( dXMax < dVX( &(vAtomPosition( aAtom )))) {
            dXMax = dVX( &(vAtomPosition( aAtom )));
-           MESSAGE(( "Max X Value:  %4.2lf\n", dXMax ));
+           MESSAGE("Max X Value:  %4.2lf\n", dXMax );
         }
         if ( dYMax < dVY( &(vAtomPosition( aAtom )))) {
             dYMax = dVY( &(vAtomPosition( aAtom )));
-            MESSAGE(( "Max Y Value:  %4.2lf\n", dYMax ));
+            MESSAGE("Max Y Value:  %4.2lf\n", dYMax );
         }
         if ( dZMax < dVZ( &(vAtomPosition( aAtom )))) {
             dZMax = dVZ( &(vAtomPosition( aAtom )));
-            MESSAGE(( "Max Z Value:  %4.2lf\n", dZMax ));
+            MESSAGE("Max Z Value:  %4.2lf\n", dZMax );
         }
     }
     VectorDef( vPLower, dXMin, dYMin, dZMin );
@@ -1947,14 +2018,14 @@ double  dXMax, dYMax, dZMax;
 /*
 void UnitSaveC4Type(UNIT uUnit, char *sA, char *sB, double daC4Type)
 {
-    VP0(("what unit passed %s %s %f %d\n", sA, sB, daC4Type, iVarArrayElementCount(uUnit->vaAtoms)));
+    VP0("what unit passed %s %s %f %d\n", sA, sB, daC4Type, iVarArrayElementCount(uUnit->vaAtoms));
      
     for (int i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++)
     {
-        VP0(("Atom type found!!!\n"));
+        VP0("Atom type found!!!\n");
         if (! strcmp( sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom), sA ))
         {
-            VP0(("Atom type found!!!\n"));
+            VP0("Atom type found!!!\n");
         }
     }
     

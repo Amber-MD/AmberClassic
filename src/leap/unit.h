@@ -95,14 +95,17 @@ typedef struct  {
         PARMSET         psParameters;
         FLAGS           fFlags;
         int             iMode;
-        double          dBeta;
+        double          dAlpha, dBeta, dGamma;
         double          dXWidth;
         double          dYWidth;
         double          dZWidth;
         VECTOR          vCapOrigin;
         double          dCapRadius;
 
-                        /* Stuff to maintain named groups of ATOMs */
+        STRING          sDescription;
+        DICTIONARY      dHeterogens;
+
+                        /* Dictionary of named groups (LISTs) of ATOMs */
                         
         DICTIONARY      dAtomGroups;
 
@@ -117,19 +120,23 @@ typedef struct  {
                         /* UNITs with parameters for SPASMS */
 
         int             iCapTempInt;
-        VARARRAY        vaAtoms;
-        VARARRAY        vaBonds;
-	VARARRAY        vaC4Pairwise; //New
-        VARARRAY        vaAngles;
-        VARARRAY        vaTorsions;
-        VARARRAY        vaConnectivity;
-        VARARRAY        vaRestraints;
-        VARARRAY        vaResidues;
-        VARARRAY        vaMolecules;
-        VARARRAY        vaHierarchy;
-        VARARRAY        vaConnect;
-        VARARRAY        vaGroupNames;
-        VARARRAY        vaGroupAtoms;
+        VARARRAY        vaAtoms;       // SAVEATOMt
+        VARARRAY        vaBonds;       // SAVEBONDt
+	VARARRAY        vaC4Pairwise;  // SAVEC4Pairwiset
+        VARARRAY        vaAngles;      // SAVEANGLEt
+        VARARRAY        vaTorsions;    // SAVETORSIONt
+        VARARRAY        vaConnectivity;// SAVECONNECTIVITYt
+        VARARRAY        vaRestraints;  // SAVERESTRAINTt
+        VARARRAY        vaResidues;    // SAVERESIDUEt
+        VARARRAY        vaMolecules;   // SAVEMOLECULEt
+        VARARRAY        vaHierarchy;   // SAVEHIERARCHYt (unused?)
+        VARARRAY        vaConnect;     // int
+        VARARRAY        vaGroupNames;  // STRING
+        VARARRAY        vaGroupAtoms;  // SAVEGROUPSt
+
+// from  zUnitIOFindAndCountMolecules()
+        int             iFirstSolvent;
+        VARARRAY        vaAtomsPerMolecule; // int (was also called vaMolecules and not part of UNIT struct)
 } UNITt;
 
 typedef UNITt   *UNIT;
@@ -152,7 +159,7 @@ typedef UNITt   *UNIT;
 
 /*      Define Create, Destroy, Describe methods */
 
-extern UNIT     uUnitCreate();
+extern UNIT     uUnitCreate(void);
 extern void     UnitDelete(UNIT *uPUnit);
 extern void     UnitDescribe(UNIT uUnit);
 extern UNIT     uUnitDuplicate(UNIT uOld);
@@ -170,7 +177,9 @@ extern void     UnitCheckForParms( UNIT uUnit, PARMLIB plParms,
                         PARMSET psParmSet );
 
 extern void     UnitSaveAmberParmFile(UNIT uUnit, FILE *fOut, char *crdName,
-                        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ); //NewT
+                        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf,
+                        char sA[8][16], char sB[8][16],
+                        double daC4Type[16], int iC4count ); //NewT
 
 extern void     UnitYouAreBeingRemoved(UNIT uUnit);
 extern void     UnitIAmBeingRemoved(UNIT uUnit, CONTAINER cRemoved);
@@ -187,6 +196,7 @@ extern RESTRAINT        rUnitNextRestraint(UNIT uUnit);
 extern int      iUnitRestraintTypeCount(UNIT uUnit, int iType);
 
 extern void     UnitSetAttribute(UNIT uUnit, STRING sAttr, OBJEKT oAttr);
+extern OBJEKT   oUnitGetAttribute(UNIT uUnit, STRING sAttr);
 
 extern BOOL     bUnitCapContainsAtom(UNIT uUnit, ATOM aAtom);
 extern BOOL     bUnitCapContainsContainer(UNIT uUnit, CONTAINER cCont);
@@ -210,6 +220,9 @@ extern BOOL     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
 
 //extern void     UnitSaveC4Type( UNIT uUnit, char *sA, char *sB, double daC4Type ); //NewT
 
+#define sUnitDescription( u )     ( ((UNIT)u)->sDescription )
+#define UnitSetDescription( u, s ) ( StringCopyMax( ((UNIT)u)->sDescription, s,\
+                                        sizeof(STRING) ) )
 #define UnitUseParameters( u, p ) \
         ( ((UNIT)(u))->psParameters = (OBJEKT)(p),CDU(u) )
 #define psUnitParameters( u )     ((PARMSET)( ((UNIT)(u))->psParameters ))
@@ -233,6 +246,20 @@ extern BOOL     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
         ((UNIT)(u))->dXWidth = (x),\
         ((UNIT)(u))->dYWidth = (y),\
         ((UNIT)(u))->dZWidth = (z),CDU(u) )
+#define UnitGetCell( u, xP, yP, zP, aP, bP, gP ) (\
+        *(xP) = ((UNIT)(u))->dXWidth,\
+        *(yP) = ((UNIT)(u))->dYWidth,\
+        *(zP) = ((UNIT)(u))->dZWidth,\
+        *(aP) = ((UNIT)(u))->dAlpha,\
+        *(bP) = ((UNIT)(u))->dBeta,\
+        *(gP) = ((UNIT)(u))->dGamma)
+#define UnitSetCell( u, x, y, z, a, b, g ) (\
+        ((UNIT)(u))->dXWidth = (x),\
+        ((UNIT)(u))->dYWidth = (y),\
+        ((UNIT)(u))->dZWidth = (z),\
+        ((UNIT)(u))->dAlpha = (a),\
+        ((UNIT)(u))->dBeta = (b),\
+        ((UNIT)(u))->dGamma = (g), CDU(u) )
 #define UnitGetSolventCap( u, xP, yP, zP, rP ) {\
         (*xP) = dVX(&(u->vCapOrigin));\
         (*yP) = dVY(&(u->vCapOrigin));\
@@ -241,7 +268,8 @@ extern BOOL     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
 #define UnitSetSolventCap( u, x, y, z, r ) {\
         VectorDef( &(u->vCapOrigin), x, y, z );\
         u->dCapRadius = r;CDU(u); }
-#define UnitSetBeta( u, d )     ( ((UNIT)(u))->dBeta = d,CDU(u) )
+#define UnitSetBeta( u, d )     ( ((UNIT)(u))->dBeta = d, \
+        ((UNIT)(u))->dAlpha = ((UNIT)(u))->dGamma = 90.0*DEGTORAD, CDU(u))
 #define dUnitBeta( u )          ( ((UNIT)(u))->dBeta )
 #define UnitDefineFlags( u, f ) ( ((UNIT)(u))->fFlags = (f), CDU(u) )
 #define UnitSetFlags( u, f )    { ((UNIT)(u))->fFlags |= (f); CDU(u); }

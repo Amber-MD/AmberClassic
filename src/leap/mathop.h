@@ -45,7 +45,7 @@
 
 extern void	MathOpConvertNonBondToAC(double dE1, double dR1, 
 			double dE2, double dR2, double *dPA, double *dPC);
-extern void	MathOpDiagonalize( MATRIX mA, VECTORASPTR vPEigen, MATRIX mV, 
+extern void	MathOpDiagonalize( MATRIX mA, VECTOR *vEigen, MATRIX mV, 
 			int *iPNrot );
 extern void	MathOpMomentOfInertia( UNIT uUnit, MATRIX mMoment );
 

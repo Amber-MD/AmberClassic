@@ -34,6 +34,10 @@
  *	Description:
  *		List is a doubly linked list of OBJEKTS.
  *
+ *	Note:
+ *	        ListAdd() inserts at the head node, reversing
+ *		order. Use ListAddToEnd() to maintain insertion order.
+ *
  *	WARNING:
  *		NEVER NEVER NEVER remove OBJEKTs from
  *		a LIST that you are currently looping over.
@@ -43,6 +47,7 @@
  *		to the next element in the list instead
  *		of just to the current one which is to
  *		be Removed from the list.
+ *
  *TODO:	Change LISTLOOP to contain the pointer to the next
  *TODO:	element in the list.
  */
@@ -53,6 +58,7 @@
 #include	"basics.h"
 
 #include	"classes.h"
+#include        "defaults.h"
 
 
 /*
@@ -269,9 +275,9 @@ ListConcat( LIST lList1, LIST lList2 )
     VERIFYOBJEKT( lList1, LISTid );
     VERIFYOBJEKT( lList2, LISTid );
 
-    MESSAGE(( "Before concat List1 size = %d,    List2 size = %d\n",
+    MESSAGE("Before concat List1 size = %d,    List2 size = %d\n",
 		iCollectionSize(lList1),
-		iCollectionSize(lList2) ));
+		iCollectionSize(lList2) );
 
     if ( iListSize(lList2) == 0 ) return;
 
@@ -296,9 +302,9 @@ ListConcat( LIST lList1, LIST lList2 )
     lList2->nPLastNode = NULL;
     CollectionSetSize( lList2, 0 );
 
-    MESSAGE(( "After concat List1 size = %d,    List2 size = %d\n",
+    MESSAGE("After concat List1 size = %d,    List2 size = %d\n",
 		iCollectionSize(lList1),
-		iCollectionSize(lList2) ));
+		iCollectionSize(lList2) );
 
     
 }
@@ -323,7 +329,7 @@ int             iSize;
 LISTLOOP        llL;
 
     iSize = iCollectionSize(lList);
-    VP0(( "List size=%d\n", iSize ));
+    VP0("List size=%d\n", iSize );
     llL = (LISTLOOP)PCollectionLoop( (COLLECTION)lList );
     if ( llL == NULL ) 
 	return;
@@ -331,7 +337,7 @@ LISTLOOP        llL;
 								!= NULL ) {
         Describe( oObj );
     }
-    VP0(( "--End of list\n" ));
+    VP0("--End of list\n" );
 }
 
 
@@ -434,7 +440,7 @@ LISTLOOP
 llListLoop( LIST lList )
 {
     if ( lList == NULL )
-	DFATAL(( "llListLoop called with NULL list\n" ));
+	DFATAL("llListLoop called with NULL list\n" );
     return(lList->nPFirstNode);
 }
 
@@ -488,7 +494,9 @@ LISTLOOP        llLoop;
     llLoop = llListLoop(lOld);
     while ( ( oObj = oListNext(&llLoop) ) != NULL ) {
         oNew = oObjectDuplicate(oObj);
-        ListAdd( (LIST)lNew, oNew );
+        /* Call ListAddTeEnd() to maintain the same order! JMK 2026 */
+        if (GDefaults.reverse_lists) ListAdd( (LIST)lNew, oNew );
+        else ListAddToEnd( (LIST)lNew, oNew );
 	oNew->iReferences = 1;	/* since ListAdd() increments */
     }
     return((LIST)lNew);

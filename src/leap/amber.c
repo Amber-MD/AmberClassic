@@ -54,7 +54,7 @@
  */
 
 typedef struct  {
-        char    sType[5];
+        char    sType[ATOMTYPELEN];
         int     iElement;
         int     iHybridization;
 } TYPEELEMENTt;
@@ -62,7 +62,7 @@ typedef struct  {
 static VARARRAY         vaAtomTypes = NULL;
 
 typedef struct  {
-        char            sNonBondType[NAMELEN];
+        char            sNonBondType[ATOMNAMELEN];
         double          dRStar;
         double          dDepth;
         double          dRStar14;
@@ -70,7 +70,7 @@ typedef struct  {
 } NONBONDt;
 
 typedef struct  {
-        char            sType[NAMELEN];
+        char            sType[ATOMTYPELEN];
         double          dMass;
         double          dPolar;
         double          dScreenF;
@@ -79,9 +79,9 @@ typedef struct  {
 } MASSt;        
 
 #define MAXEQUIV        20
-typedef char    SHORTt[NAMELEN];
+typedef char    SHORTt[ATOMNAMELEN];
 typedef struct  {
-        char            sName[NAMELEN];
+        char            sName[ATOMNAMELEN];
         int             iEquivs;
         SHORTt          saEquivs[MAXEQUIV];
 } EQUIVt;
@@ -144,7 +144,7 @@ STRING          sHybridization;
                 /* read the non-bond parameters */
 
     memset(&mMass, 0, sizeof(mMass));                   /* for Purify */
-    MESSAGE(( "Reading MASSes.\n" ));
+    MESSAGE("Reading MASSes.\n" );
     vaMasses = vaVarArrayCreate( sizeof(MASSt) );
 
     while (1) {
@@ -154,13 +154,13 @@ STRING          sHybridization;
                         &iElement, sHybridization );
         if (iRead <= 0)
             break;
-        MESSAGE(( "Read %d MASS terms from: %s", iRead, sLine ));
+        MESSAGE("Read %d MASS terms from: %s", iRead, sLine );
         if ( iRead == 1 ) {
-            VPWARN(( "%s: mass not read - omitting\n", mMass.sType ));
+            VPWARN("%s: mass not read - omitting\n", mMass.sType );
             continue;
         }
         if ( mMass.dMass < 0.0 ) {
-            VPWARN(( "%s: mass %lf - omitting\n", mMass.sType, mMass.dMass ));
+            VPWARN("%s: mass %lf - omitting\n", mMass.sType, mMass.dMass );
             continue;
         }
         mMass.dPolar = -1.0;    /* flag that default=0.0 will be used */
@@ -181,32 +181,36 @@ STRING          sHybridization;
                     mMass.iHybridization = 0;
                 else {
                     mMass.iHybridization = HUNDEFINED;
-                    VPWARN(( "atom type %s - unknown hybridization %s\n",
-                             mMass.sType, sHybridization ));
+                    VPWARN("atom type %s - unknown hybridization %s\n",
+                             mMass.sType, sHybridization );
                 }
+                /* fall through */
             case 5:
                 mMass.iElement = iElement;
+                /* fall through */
             case 4:
                 mMass.dScreenF = dScreenF;
+                /* fall through */
             case 3:
                 if ( dPolar < 0.0 ) {
                     if ( dPolar < -0.99 && dPolar > -1.01 )
                         break;
-                    VPWARN(( "%s: polarization %lf - omitting\n",
-                                                mMass.sType, dPolar ));
+                    VPWARN("%s: polarization %lf - omitting\n",
+                                                mMass.sType, dPolar );
                     continue;
                 }
                 if ( dPolar > 15.0 ){
-                    VPWARN(( "%s: polarization %lf\n", mMass.sType, dPolar ));
+                    VPWARN("%s: polarization %lf\n", mMass.sType, dPolar );
                 }
                 mMass.dPolar = dPolar;
+                /* fall through */
             case 2:
                 break;
         };
 
         VarArrayAdd( vaMasses, (GENP)&mMass );
     }
-    MESSAGE(( "Done reading MASSes.\n" ));
+    MESSAGE("Done reading MASSes.\n" );
     *vaPMasses = vaMasses;
 }
 
@@ -231,7 +235,7 @@ static void zAmberReadParmSetBonds(PARMSET psParms, FILE *fIn)
 
     // For Purify
     memset(saStr, 0, sizeof(saStr));
-    MESSAGE(( "Reading BONDs.\n" ));
+    MESSAGE("Reading BONDs.\n" );
     while (1) {
         FGETS(sLine, fIn);
         REPLACEDASHES(sLine);
@@ -245,11 +249,11 @@ static void zAmberReadParmSetBonds(PARMSET psParms, FILE *fIn)
             dRpull0  = 100.0;
             dRpress0 =   0.0;
         }
-        MESSAGE(( "Read %d BOND terms from: %s", iRead, sLine ));
+        MESSAGE("Read %d BOND terms from: %s", iRead, sLine );
         iParmSetAddBond(psParms, saStr[0], saStr[1], dKb, dR0, dKpull, dRpull0,
                         dKpress, dRpress0, "");
     }
-    MESSAGE(( "Done reading BONDs.\n" ));
+    MESSAGE("Done reading BONDs.\n" );
 }
 
 /*
@@ -267,7 +271,7 @@ double          dKt, dT0, dTkub, dRkub, zero;
 
     zero = 0.0;
     memset(saStr, 0, sizeof(saStr));                /* for Purify */
-    MESSAGE(( "Reading ANGLEs.\n" ));
+    MESSAGE("Reading ANGLEs.\n" );
     while (1) {
         FGETS( sLine, fIn );
         REPLACEDASHES(sLine);
@@ -276,7 +280,7 @@ double          dKt, dT0, dTkub, dRkub, zero;
                             saStr[0], saStr[1], saStr[2], &dKt, &dT0, &dTkub, &dRkub );
             if ( iRead != 7 )
                 break;
-            MESSAGE(( "Read 7 ANGLE terms from: %s", sLine ));
+            MESSAGE("Read 7 ANGLE terms from: %s", sLine );
             iParmSetAddAngle( psParms, saStr[0], saStr[1], saStr[2],
                               dKt, dT0*DEGTORAD, dTkub, dRkub, "" );
         } else {
@@ -284,15 +288,15 @@ double          dKt, dT0, dTkub, dRkub, zero;
                             saStr[0], saStr[1], saStr[2], &dKt, &dT0 );
             if ( iRead != 5 )
                 break;
-            MESSAGE(( "Read 5 ANGLE terms from: %s", sLine ));
+            MESSAGE("Read 5 ANGLE terms from: %s", sLine );
             iParmSetAddAngle( psParms, saStr[0], saStr[1], saStr[2],
                               dKt, dT0*DEGTORAD, zero, zero, "" );
         }
     } 
     if ( iRead > 0 ){
-        VPWARN(( "Incomplete Angle line:\n%s", sLine ));
+        VPWARN("Incomplete Angle line:\n%s", sLine );
     }
-    MESSAGE(( "Done reading ANGLEs.\n" ));
+    MESSAGE("Done reading ANGLEs.\n" );
 }
 
 static void
@@ -305,9 +309,9 @@ int             iRead,myiPOL;
         NODASHES(sLine);
         iRead = sscanf( sLine, "%i", &myiPOL );
         if ( iRead != 1 ) break;
-        MESSAGE(( "Read: %s\n", sLine ));
+        MESSAGE("Read: %s\n", sLine );
         if (GDefaults.iIPOLset == 1 && GDefaults.iIPOL != myiPOL ) {
-           VPWARN(( "Conflicting IPOL. %i %i\n", myiPOL, GDefaults.iIPOL));
+           VPWARN("Conflicting IPOL. %i %i\n", myiPOL, GDefaults.iIPOL);
         } else {
            GDefaults.iIPOL = myiPOL;
            GDefaults.iIPOLset = 1;
@@ -371,7 +375,7 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
 //                    cmap = (CMAP *)malloc(sizeof(CMAP) * (mapnum));
                     //printf("mjhsieh: mapnum =%d\n",mapnum);
 //                    mapnum += tmpint1;
-//                    VP0(("Read %i cmaps\n",tmpint1));
+//                    VP0("Read %i cmaps\n",tmpint1);
 
                 } else if(strcmp("CMAP_TITLE", tmpchar2)==0) {
                     FGETS(sLine, fIn);
@@ -386,7 +390,7 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
 
                     for (i=0;i<80 && sLine[i] != '\n'; i++) cmap->title[i]=sLine[i];
                     cmap->title[i] = '\0';
-//                    VP0(("Read cmap %s\n",cmap->title));
+//                    VP0("Read cmap %s\n",cmap->title);
                     cmnt=(CMNT *) malloc(sizeof(CMNT));
                     cmnt->next=NULL;
                     cmap->cmnt=cmnt;
@@ -493,7 +497,7 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
                            &cmap->termmap);
 
                 } else {
-                    VPWARN(( "Unknown Flag : %s\n",sLine));
+                    VPWARN("Unknown Flag : %s\n",sLine);
                 }
             }
             if (strcmp("%COMMENT",tmpchar1) == 0 ) {
@@ -542,7 +546,7 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
 
     memset(saStr, 0, sizeof(saStr));                    /* for Purify */
     memset(taStr, 0, sizeof(taStr));
-    MESSAGE(( "Reading DIHEDRALs.\n" ));
+    MESSAGE("Reading DIHEDRALs.\n" );
     while (1) {
         FGETS( sLine, fIn );
         REPLACEDASHES(sLine);
@@ -559,8 +563,8 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
         if ( iRead <= 0 )
             break;
         if ( sLine[0] == ' ' && sLine[1] == ' ') {
-            VPWARN(( "Bad proper torsion definition (skipping):\n (%s)\n", 
-                                                                sLine ));
+            VPWARN("Bad proper torsion definition (skipping):\n (%s)\n", 
+                                                                sLine );
             continue;
         }
 /* Try GLYCAM format
@@ -599,7 +603,7 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
         zAmberConvertWildCard( saStr[2] );
         zAmberConvertWildCard( saStr[3] );
 
-        MESSAGE(( "Read %d DIHEDRAL terms from: %s", iRead, sLine ));
+        MESSAGE("Read %d DIHEDRAL terms from: %s", iRead, sLine );
         iParmSetAddProperTerm( psParms, 
                                 saStr[0], saStr[1], saStr[2], saStr[3],
                                 abs(iN), dKp, dP0*DEGTORAD, dScEE,
@@ -618,14 +622,14 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
                 dDivisions = 1.0;
             dKp /= dDivisions;
             iN = (int)floor(dN+0.5);
-            MESSAGE(( "Read %d DIHEDRAL extra terms from: %s", iRead, sLine ));
+            MESSAGE("Read %d DIHEDRAL extra terms from: %s", iRead, sLine );
             iParmSetAddProperTerm( psParms, saStr[0], saStr[1], saStr[2], saStr[3],
                                    abs(iN), dKp, dP0*DEGTORAD, dScEE, dScNB, "" );
         }
         if ( iRead <= 0 )
             break;
     }
-    MESSAGE(( "Done reading DIHEDRALs.\n" ));
+    MESSAGE("Done reading DIHEDRALs.\n" );
 }
 
 
@@ -644,7 +648,7 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
     BOOL            bPrintLine;
 
     memset(saStr, 0, sizeof(saStr));                    /* for Purify */
-    MESSAGE(( "Reading IMPROPERs.\n" ));
+    MESSAGE("Reading IMPROPERs.\n" );
     while (1) {
         FGETS( sLine, fIn );
         REPLACEDASHES(sLine);
@@ -657,11 +661,11 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
                                 saStr[0], saStr[1], saStr[2], saStr[3] );
         if ( iRead != 4 )
             break;
-        MESSAGE(( "Read %d IMPROPER strings;\n", iRead ));
+        MESSAGE("Read %d IMPROPER strings;\n", iRead );
         iRead = sscanf( sLine+15, "%lf %lf %lf", &dKp, &dP0, &dN );
         if ( iRead != 3 )
             break;
-        MESSAGE(( "read %d IMPROPER floats from: %s", iRead, sLine ));
+        MESSAGE("read %d IMPROPER floats from: %s", iRead, sLine );
         dN = (int)floor(dN+0.5);
         zAmberConvertWildCard( saStr[0] );
         zAmberConvertWildCard( saStr[1] );
@@ -676,28 +680,28 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
          */
         bPrintLine = FALSE;
         if ( dKp < 0.0 ) {
-            VPWARN(( "Expected Improper Torsion PK>=0 (%f)\n", dKp ));
+            VPWARN("Expected Improper Torsion PK>=0 (%f)\n", dKp );
             bPrintLine = TRUE;
         }
         if ( dP0 < 179.999  ||  dP0 > 180.001 ) {
-            VPWARN(( "Expected Improper Torsion PHASE=180 (%f)\n", dP0 ));
+            VPWARN("Expected Improper Torsion PHASE=180 (%f)\n", dP0 );
             bPrintLine = TRUE;
         }
         if ( iN < 1  ||  iN > 6 ) {
-            VPWARN(( "Unexpected Improper Torsion PN term (%d)\n", iN ));
+            VPWARN("Unexpected Improper Torsion PN term (%d)\n", iN );
             bPrintLine = TRUE;
         }
         if ( bPrintLine )
-            VP0(( "Here is the Improper Torsion line in question:\n%s", sLine ));
+            VP0("Here is the Improper Torsion line in question:\n%s", sLine );
 
         iParmSetAddImproperTerm( psParms, 
                                 saStr[0], saStr[1], saStr[2], saStr[3],
                                 iN, dKp, dP0*DEGTORAD, dScEE, dScNB, "" );
     }
     if ( iRead > 0 ){
-        VPWARN(( "Incomplete Improper Torsion line:\n%s", sLine ));
+        VPWARN("Incomplete Improper Torsion line:\n%s", sLine );
     }
-    MESSAGE(( "Done reading IMPROPERs.\n" ));
+    MESSAGE("Done reading IMPROPERs.\n" );
 }
 
 
@@ -717,16 +721,16 @@ STRING          saStr[10];
 double          dA, dB;
 
     memset(saStr, 0, sizeof(saStr));                    /* for Purify */
-    MESSAGE(( "Reading H-BONDs.\n" ));
+    MESSAGE("Reading H-BONDs.\n" );
     while (1) {
         FGETS( sLine, fIn );
         iRead = sscanf( sLine, "%s %s %lf %lf", saStr[0], saStr[1], &dA, &dB );
         if ( iRead <= 0 )
             break;
-        MESSAGE(( "Read %d H-BOND terms from: %s", iRead, sLine ));
+        MESSAGE("Read %d H-BOND terms from: %s", iRead, sLine );
         iParmSetAddHBond( psParms, saStr[0], saStr[1], dA, dB, "" );
     } 
-    MESSAGE(( "Done reading H-BONDs.\n" ));
+    MESSAGE("Done reading H-BONDs.\n" );
 }
  
 
@@ -748,7 +752,7 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
     memset(saStr, 0, sizeof(saStr));                        /* for Purify */
     memset(&nbNonBond, 0, sizeof(nbNonBond));               /* for Purify */
     vaNonBonds = vaVarArrayCreate(sizeof(NONBONDt));
-    MESSAGE(( "Reading NON-BONDs.\n" ));
+    MESSAGE("Reading NON-BONDs.\n" );
     while (1) {
         FGETS( sLine, fIn );
         if( GDefaults.iCharmm ){
@@ -773,9 +777,9 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
             nbNonBond.dDepth14 = dDepth;
             VarArrayAdd( vaNonBonds, (GENP)&nbNonBond );
         }
-        MESSAGE(( "Read %d NON-BOND terms from: %s", iRead, sLine ));
+        MESSAGE("Read %d NON-BOND terms from: %s", iRead, sLine );
     }
-    MESSAGE(( "Done reading NON-BONDs.\n" ));
+    MESSAGE("Done reading NON-BONDs.\n" );
     *vaPNonBonds = vaNonBonds;
 }
 
@@ -797,7 +801,7 @@ zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
     double          dEI, dEJ, dRI, dRJ;
 
     memset(saStr, 0, sizeof(saStr));                        /* for Purify */
-    MESSAGE(( "Reading LJEDITs.\n" ));
+    MESSAGE("Reading LJEDITs.\n" );
 
     /* Scan the file for the card */
     while ( segfound == 0) {
@@ -820,15 +824,15 @@ zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
         if ( iRead <= 0 ) {
             break;
         } else if ( iRead < 6 ) {
-            VPWARN(( "Incomplete LJEDIT line (skipping):\n%s", sLine ));
+            VPWARN("Incomplete LJEDIT line (skipping):\n%s", sLine );
             continue;
         } else if ( iRead > 6 ) {
             /* Silently ignore trailing characters */
         }
-        MESSAGE(( "Read %d LJEDIT terms from: %s", iRead, sLine ));
+        MESSAGE("Read %d LJEDIT terms from: %s", iRead, sLine );
         iParmSetAddNBEdit( psParms, saStr[0], saStr[1], dEI, dEJ, dRI, dRJ, "" );
     }
-    MESSAGE(( "Done reading LJEDITs.\n" ));
+    MESSAGE("Done reading LJEDITs.\n" );
 }
 
 
@@ -888,7 +892,7 @@ TYPEELEMENTt    *tP;
 
     iCount = iVarArrayElementCount( vaAtomTypes );
     if ( iCount == 0 ) {
-        VP1(( " (UNKNOWN ATOM TYPE: %s [no types loaded])\n", sType ));
+        VP1(" (UNKNOWN ATOM TYPE: %s [no types loaded])\n", sType );
         return( NOELEMENT );
     }
 
@@ -905,7 +909,7 @@ TYPEELEMENTt    *tP;
         }
     }
     if ( iElement == NOELEMENT ) {
-        VP1(( "(UNKNOWN ATOM TYPE: %s)\n", sType ));
+        VP1("(UNKNOWN ATOM TYPE: %s)\n", sType );
     }
     return(iElement);
 }
@@ -936,8 +940,9 @@ int             i, j, k, iRead, iSet;
     
                 /* Read and write the title */
 
-    FGETS( sLine, fIn );
-    VP0(("Reading title:\n%s", sLine ));
+    FGETS( psParms->sTitle, fIn );
+    StringTrim(psParms->sTitle);
+    VP0("Reading title:\n%s\n", psParms->sTitle );
 
                 /* Read the masses */
 
@@ -958,28 +963,28 @@ int             i, j, k, iRead, iSet;
 
                 /* Read the bond parameters */
 
-    MESSAGE(( "Reading bond parameters\n" ));
+    MESSAGE("Reading bond parameters\n" );
     zAmberReadParmSetBonds( psParms, fIn );
 
 
 
                 /* Read the angle parameters */
                 
-    MESSAGE(( "Reading angle parameters\n" ));
+    MESSAGE("Reading angle parameters\n" );
     zAmberReadParmSetAngles( psParms, fIn );
 
 
 
                 /* Read the torsion parameters */
                 
-    MESSAGE(( "Reading torsion parameters\n" ));
+    MESSAGE("Reading torsion parameters\n" );
     zAmberReadParmSetPropers( psParms, fIn );
 
 
 
                 /* Read the improper parameters */
 
-    MESSAGE(( "Reading improper parameters\n" ));
+    MESSAGE("Reading improper parameters\n" );
     zAmberReadParmSetImpropers( psParms, fIn );
 
 
@@ -987,7 +992,7 @@ int             i, j, k, iRead, iSet;
 
                 /* Read the H-bond parameters */
                 
-    MESSAGE(( "Reading H-Bond parameters\n" ));
+    MESSAGE("Reading H-Bond parameters\n" );
     zAmberReadParmSetHBonds( psParms, fIn );
 
 
@@ -997,7 +1002,7 @@ int             i, j, k, iRead, iSet;
 
                 /* Read the equivalences for non-bond parameters */
 
-    MESSAGE(( "Reading non-bond equivalences\n" ));
+    MESSAGE("Reading non-bond equivalences\n" );
     vaEquivs = vaVarArrayCreate(sizeof(EQUIVt));
     memset(&eEquiv, 0, sizeof(eEquiv));                 /* for Purify */
     while (1) {
@@ -1007,7 +1012,7 @@ int             i, j, k, iRead, iSet;
         sRemoveLeadingSpaces( sLine );
         if ( strlen(sLine)==0 ) 
                 break;
-        MESSAGE(( "Read: %s\n", sLine ));
+        MESSAGE("Read: %s\n", sLine );
         sRemoveFirstString( sLine, eEquiv.sName );
         for (i=0; i<MAXEQUIV; i++) {
             sRemoveLeadingSpaces(sLine);
@@ -1016,8 +1021,8 @@ int             i, j, k, iRead, iSet;
             sRemoveFirstString( sLine, eEquiv.saEquivs[i] );
         }
         if ( strlen(sLine)!=0 ){
-             VPWARN(( "Parmset: equiv %s: Unrecognized equivs (> %d)!!\n",
-                        eEquiv.sName, MAXEQUIV ));
+             VPWARN("Parmset: equiv %s: Unrecognized equivs (> %d)!!\n",
+                        eEquiv.sName, MAXEQUIV );
         }
         eEquiv.iEquivs = i;
         VarArrayAdd( vaEquivs, (GENP)&eEquiv );
@@ -1029,7 +1034,7 @@ int             i, j, k, iRead, iSet;
 
                 /* Skip a line */
     FGETS( sLine, fIn );
-    MESSAGE(( "Reading non-bond parameters\n" ));
+    MESSAGE("Reading non-bond parameters\n" );
     zAmberReadParmSetNonBonds( &vaNonBonds, fIn );
 
     /*
@@ -1037,9 +1042,9 @@ int             i, j, k, iRead, iSet;
      */
     nbNonBondP = PVAI( vaNonBonds, NONBONDt, 0 );
     for ( i=0; i<iVarArrayElementCount(vaNonBonds); i++, nbNonBondP++ ) {
-        double          dMass, dPolar, dDepth, dRStar, dDepth14, dRStar14;
-        double          dScreenF;
-        int             iElement, iHybridization;
+        double          dMass=0.0, dPolar=0.0, dDepth, dRStar, dDepth14, dRStar14;
+        double          dScreenF=0.0;
+        int             iElement=-10, iHybridization=HUNDEFINED;
         MASSt           *MassP;
         EQUIVt          *EquivP;
 
@@ -1067,11 +1072,11 @@ int             i, j, k, iRead, iSet;
             }
         }
         if ( iSet == 0 ) {
-            VPWARN(( "No mass was defined for non-bond atom type: %s - ignoring\n",
-                        saStr[0] ));
+            VPWARN("No mass was defined for non-bond atom type: %s - ignoring\n",
+                        saStr[0] );
         } else {
-                MESSAGE(( "Adding %d atom type: %s  %lf %lf %lf %lf\n",
-                        i, saStr[0], dMass, dPolar, dRStar, dDepth ));
+                MESSAGE("Adding %d atom type: %s  %lf %lf %lf %lf\n",
+                        i, saStr[0], dMass, dPolar, dRStar, dDepth );
                 iParmSetAddAtom( psParms, saStr[0], dMass, dPolar, 
                                 dDepth, dRStar, dDepth14, dRStar14,
                                 dScreenF,
@@ -1086,8 +1091,8 @@ int             i, j, k, iRead, iSet;
             if ( strcmp( saStr[0], EquivP->sName )==0 ) {
                 for ( k=0; k<EquivP->iEquivs; k++ ) {
                     if ( iSet == 0 ) {
-                        VPWARN(( "No mass equivalenced type: %s - skipping\n",
-                                    EquivP->saEquivs[k] ));
+                        VPWARN("No mass equivalenced type: %s - skipping\n",
+                                    EquivP->saEquivs[k] );
                         continue;
                     }
                     iParmSetAddAtom( psParms, EquivP->saEquivs[k],
@@ -1106,7 +1111,7 @@ int             i, j, k, iRead, iSet;
     /* Read in non-bonded pair interaction edits, check their */
     /* validity against existing atom types, and add them to  */
     /* the parmset.                                           */
-    MESSAGE(( "Seeking non-bond pair edits\n" ));
+    MESSAGE("Seeking non-bond pair edits\n" );
     zAmberReadParmSetNBPairEdits( psParms, fIn, 0 );
 
     VarArrayDestroy( &vaMasses );
@@ -1134,62 +1139,51 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
     VARARRAY        vaMasses, vaNonBonds;
     VARARRAY        vaFoo;
     PARMSET         psParms;
-    int             lastsegment;
     int             i, j;
 
-    VPTRACEENTER(( "zpsAmberReadParmSetFrcMod" ));
+    VPTRACEENTER("zpsAmberReadParmSetFrcMod" );
     memset(saStr, 0, sizeof(saStr));                    /* for Purify */
     psParms = (PARMSET)oCreate(PARMSETid);
     
                 /* Read and write the title */
 
-    FGETS( sLine, fIn );
-    VP0(("Reading title:\n%s", sLine ));
+    FGETS( psParms->sTitle, fIn );
+    StringTrim(psParms->sTitle);
+    VP0("Reading title:\n%s\n", psParms->sTitle );
 
     vaMasses = NULL;
     vaNonBonds = NULL;
-    lastsegment = 0;
 
     do {
         FGETS( sLine, fIn );
         if ( strncmp( sLine, "MASS", 4 ) == 0 ) {
             zAmberReadParmSetMasses( &vaMasses, fIn );
-            lastsegment = 1;
         } else if ( strncmp( sLine, "BOND", 4 ) == 0 ) {
             zAmberReadParmSetBonds( psParms, fIn );
-            lastsegment = 2;
         } else if ( strncmp( sLine, "ANGL", 4 ) == 0 ) {
             zAmberReadParmSetAngles( psParms, fIn );
-            lastsegment = 3;
         } else if ( strncmp( sLine, "DIHE", 4 ) == 0 ) {
             zAmberReadParmSetPropers( psParms, fIn );
-            lastsegment = 4;
         } else if ( strncmp( sLine, "IMPR", 4 ) == 0 ) {
             zAmberReadParmSetImpropers( psParms, fIn );
-            lastsegment = 5;
         } else if ( strncmp( sLine, "HBON", 4 ) == 0 ) {
             zAmberReadParmSetHBonds( psParms, fIn );
-            lastsegment = 6;
         } else if ( strncmp( sLine, "NONB", 4 ) == 0 ) {
             zAmberReadParmSetNonBonds( &vaNonBonds, fIn );
-            lastsegment = 7;
         } else if ( strncmp( sLine, "CMAP", 4 ) == 0 ) {
             zAmberReadParmSetCMAP( &vaFoo, fIn );
-            lastsegment = 8;
         } else if ( strncmp( sLine, "IPOL", 4 ) == 0 ) {
             zAmberReadParmSetIPOL( fIn );
-            lastsegment = 9;
         } else if ( strncmp( sLine, "LJEDIT", 6 ) == 0 ) {
             zAmberReadParmSetNBPairEdits( psParms, fIn, 1 );
-            lastsegment = 10;
         } else if ( strncmp( sLine, "END", 3 ) == 0 ) {
             continue;
         } else {
             char *s = sLine;
             while ( isspace( *s ) ) ++s ;
             if ( strlen(s) > 0 ) {
-                VPWARN(( "Unknown keyword (%s) in parameter file. Perhaps "
-                        "a format issue?\n", sLine ));
+                VPWARN("Unknown keyword (%s) in parameter file. Perhaps "
+                        "a format issue?\n", sLine );
             }
         }
     } while ( !feof(fIn) );
@@ -1227,12 +1221,12 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
                 }
             }
             if ( iSet == 0 ) {
-                VPWARN(( "No mass defined for non-bond atom type: %s - skipping\n",
-                            saStr[0] ));
+                VPWARN("No mass defined for non-bond atom type: %s - skipping\n",
+                            saStr[0] );
                 continue;
             }
-            MESSAGE(( "Adding %d atom type: %s  %lf %lf %lf %lf\n",
-                            i, saStr[0], dMass, dPolar, dRStar, dDepth ));
+            MESSAGE("Adding %d atom type: %s  %lf %lf %lf %lf\n",
+                            i, saStr[0], dMass, dPolar, dRStar, dDepth );
             iParmSetAddAtom( psParms, saStr[0], dMass, dPolar, dDepth, dRStar,
                     dDepth14, dRStar14, dScreenF,
                                 iElement!=-10?iElement
@@ -1249,7 +1243,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
         VarArrayDestroy( &vaNonBonds );
     fclose(fIn);
 
-    VPTRACEEXIT (( "zpsAmberReadParmSetFrcMod" ));
+    VPTRACEEXIT("zpsAmberReadParmSetFrcMod" );
     return(psParms);
 }
 
@@ -1285,7 +1279,7 @@ uAmberReadUnitFromPrep( FILE *fIn )
 {
 TREENODEt       *cPCoor;
 TREENODEt       cCoor;
-STRING          sLine, sChain, sDesc;
+STRING          sLine, sChain, sDesc, sResName;
 STRING          saStr[15];
 int             iRead, iIndex;
 UNIT            uUnit = NULL;
@@ -1320,19 +1314,19 @@ BOOL            bUseFirstColumn;
         return(NULL);
     }
     if ( feof( fIn ) ) {
-        VPWARN(( "Unexpected EOF: Assuming STOP\n" ));
+        VPWARN("Unexpected EOF: Assuming STOP\n" );
         return(NULL);
     }
-    sDesc[strlen(sDesc)-1] = '\0';
+    StringTrim(sDesc);
 
     uUnit = (UNIT)oCreate(UNITid);
     rRes  = (RESIDUE)oCreate(RESIDUEid);
     ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rRes );
 
-                /* Skip a line */
+                /* Skip a line (this is the mainchain filename, if present) */
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",  sDesc ));
+        VPERROR("Unexpected EOF: discarding residue (%s)\n",  sDesc );
         goto ERROR;
     }
 
@@ -1345,20 +1339,23 @@ BOOL            bUseFirstColumn;
 
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
+        VPERROR("Unexpected EOF: discarding residue (%s)\n", sDesc );
         goto ERROR;
     }
-    sscanf( sLine, "%s %s %s", saStr[1], saStr[2], saStr[3] );
-    ContainerSetName( uUnit, saStr[1] );
-    ContainerSetName( rRes, saStr[1] );
+    sscanf( sLine, "%s %s %s", sResName, saStr[2], saStr[3] );
+    ContainerSetName( uUnit, sResName );
+    ContainerSetName( rRes, sResName );
+    StringTrim(sDesc);
+    if (!strcmp(sDesc,"This is a remark line")) sDesc[0]=0;
+    if ( strlen(sDesc) > 0 ) {
+        UnitSetDescription( uUnit, sDesc );
+        VP2("Residue %s Desc:\n%s\n", sResName, sDesc );
+    }
 
                 /* Read the line: CORR/CHANGE, OMIT/NOMIT, DU, ALL/BEG */
 
     FGETS( sLine, fIn );
-    if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
-        goto ERROR;
-    }
+    if ( feof( fIn ) ) goto EOFERROR;
     sscanf( sLine, "%s", saStr[1] );
     bUseFirstColumn = TRUE;
     if ( strncmp( saStr[1], "CORR", 4 ) == 0 ) {
@@ -1368,10 +1365,7 @@ BOOL            bUseFirstColumn;
                 /* Read the CUT line */
 
     FGETS( sLine, fIn );
-    if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
-        goto ERROR;
-    }
+    if ( feof( fIn ) ) goto EOFERROR;
     sscanf( sLine, "%lf", &dCutoff );
 
 
@@ -1382,10 +1376,7 @@ BOOL            bUseFirstColumn;
     memset(ilLine.sLine, 0, sizeof(ilLine.sLine));              /* for Purify */
     for (;;) {
         FGETS( sLine, fIn );
-        if ( feof( fIn ) ) {
-                VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
-                return(NULL);
-        }
+        if ( feof( fIn ) ) goto EOFERROR;
         iRead = sscanf( sLine, "%s %s %s %s %s %s %s %s %s %s %s",
                         saStr[1], saStr[2], saStr[3], saStr[4], saStr[5],
                         saStr[6], saStr[7], saStr[8], saStr[9], saStr[10],
@@ -1394,7 +1385,7 @@ BOOL            bUseFirstColumn;
                 break;
         ilLine.iLineNumber = atoi(saStr[1]);
         strcpy( ilLine.sLine, sLine );
-        MESSAGE(( "iRead = %d   Adding: |%s|\n", iRead, sLine ));
+        MESSAGE("iRead = %d   Adding: |%s|\n", iRead, sLine );
         VarArrayAdd( vaLines, (GENP)&ilLine );
     }
 
@@ -1404,11 +1395,11 @@ BOOL            bUseFirstColumn;
     strcpy( sSave, sLine );
 
 #ifdef  DEBUG
-MESSAGE(( "------------\n" ));
+MESSAGE("------------\n" );
 for ( i=0; i<iVarArrayElementCount(vaLines); i++ ) {
-    MESSAGE(( "%s", PVAI(vaLines,INPUTLINEt,i)->sLine ));
+    MESSAGE("%s", PVAI(vaLines,INPUTLINEt,i)->sLine );
 }
-MESSAGE(( "============\n" ));
+MESSAGE("============\n" );
 #endif
     if ( bUseFirstColumn ) {
         INPUTLINEt      *Pil = PVAI(vaLines,INPUTLINEt,0);
@@ -1419,11 +1410,11 @@ MESSAGE(( "============\n" ));
                         (GENP) &Pil->iLineNumber, TRUE );
     }
 #ifdef  DEBUG
-MESSAGE(( "------------\n" ));
+MESSAGE("------------\n" );
 for ( i=0; i<iVarArrayElementCount(vaLines); i++ ) {
-    MESSAGE(( "%s", PVAI(vaLines,INPUTLINEt,i)->sLine ));
+    MESSAGE("%s", PVAI(vaLines,INPUTLINEt,i)->sLine );
 }
-MESSAGE(( "============\n" ));
+MESSAGE("============\n" );
 #endif
 
 
@@ -1439,10 +1430,12 @@ MESSAGE(( "============\n" ));
 
     iTreeStackTop = -1;
     TREEPUSH(-1);
-    MESSAGE(( "Reading atom records\n" ));
+    MESSAGE("Reading atom records\n" );
     aMain0 = NULL;
     aMain1 = NULL;
     iIndex = 0;
+    iAngle = -1;
+    iTorsion = -1;
     memset(&cCoor, 0, sizeof(cCoor));                   /* for Purify */
     for ( i=0; i<iVarArrayElementCount(vaLines); i++ ) {
         strcpy( sLine, PVAI( vaLines, INPUTLINEt, i )->sLine );
@@ -1454,7 +1447,7 @@ MESSAGE(( "============\n" ));
             if ( feof(fIn) ) goto DONE;
             continue;
         }
-        MESSAGE(( "Read atom: %s\n", saStr[2] ));
+        MESSAGE("Read atom: %s\n", saStr[2] );
         iAtoms++;
 
                 /* Create an entry in the vaCoor array */
@@ -1468,22 +1461,21 @@ MESSAGE(( "============\n" ));
         strcpy( sName, saStr[2] );
         iLen = strlen( sName );
         if ( iLen > 4 ) {
-            VPERROR(( "residue %s atom %s: name must be <= 4 characters\n", sDesc, sName ));
+            VPERROR("residue %s atom %s: name must be <= 4 characters\n", sResName, sName );
             iErrors++;
         }
 
         strcpy( sType, saStr[3] );
         iLen = strlen( sType );
         if ( iLen > 2 ) {
-            VPERROR(( 
-                "residue %s atom %s type %s: type must be 1 or 2 characters\n", sDesc, sName, sType ));
+            VPERROR("residue %s atom %s type %s: type must be 1 or 2 characters\n", sResName, sName, sType );
             iErrors++;
         }
 
         strcpy( sChain, saStr[4] );
         iLen = strlen( sChain );
         if ( iLen > 1 ) {
-            VPERROR(( "residue %s atom %s: chain type [%s] must be 1 character\n", sDesc, sName, sChain ));
+            VPERROR("residue %s atom %s: chain type [%s] must be 1 character\n", sResName, sName, sChain );
             iErrors++;
         }
 
@@ -1519,9 +1511,9 @@ MESSAGE(( "============\n" ));
                 cPCoor->iUnfilled = 6;
                 break;
             default:
-                VPFATAL(( "Atom %s: Illegal chain specifier [%c] in PREP file.\n", 
-                        saStr[2], sChain[0] ));
-                VPFATALDELAYEDEXIT(( "%s\n", sLine ));
+                VPFATAL("Atom %s: Invalid chain specifier [%c] in PREP file.\n", 
+                        saStr[2], sChain[0] );
+                VPFATALDELAYEDEXIT("%s\n", sLine );
                 goto ERROR;
         }
 
@@ -1534,7 +1526,7 @@ MESSAGE(( "============\n" ));
             PVAI( vaCoor, TREENODEt, iTREETOP() )->iUnfilled--;
             if ( PVAI( vaCoor, TREENODEt, iTREETOP() )->iUnfilled == 0 ) {
                 TREEPOP();
-                if ( iTREESTACKPOS() <= 0 ) DFATAL(( "Stack is empty" ));
+                if ( iTREESTACKPOS() <= 0 ) DFATAL("Stack is empty" );
             }
         }
 
@@ -1604,7 +1596,7 @@ MESSAGE(( "============\n" ));
         VectorDef( &(cPCoor->vPos), dX, dY, dZ );
         aAtom = NULL;
         if ( strcmp( sType, "DU" ) != 0 ) {
-            MESSAGE(( "Creating atom: %s\n", sName ));
+            MESSAGE("Creating atom: %s\n", sName );
             aAtom = (ATOM)oCreate(ATOMid);
             ContainerSetName( aAtom, sName );
             AtomSetElement( aAtom, iAtomTypeToElement(sType) );
@@ -1616,9 +1608,9 @@ MESSAGE(( "============\n" ));
             if ( iBond != -1 ) {
                 aAtom2 = (PVAI( vaCoor, TREENODEt, iBond))->aAtom;
                 if ( aAtom2 != NULL ) {
-                    MESSAGE(( "Created bond between: %s - %s\n",
+                    MESSAGE("Created bond between: %s - %s\n",
                                 sContainerName(aAtom),
-                                sContainerName(aAtom2) ));
+                                sContainerName(aAtom2) );
                     AtomBondTo( aAtom, aAtom2 );
                 }
             }
@@ -1629,7 +1621,7 @@ MESSAGE(( "============\n" ));
         }
         else {
             if ( strncmp( sName, "DUMM", 4 ) != 0 ) {
-                VPNOTE(( "Entry of type DUmmy; atom %s not created\n", sName ));
+                VPNOTE("Entry of type DUmmy; atom %s not created\n", sName );
             }
         }
         cPCoor->aAtom = aAtom;
@@ -1637,11 +1629,11 @@ MESSAGE(( "============\n" ));
     }
 
     if ( iCharges == 0 ) {
-        VPNOTE(( "(no charges read on atoms lines in %s)\n", sDesc ));
+        VPNOTE("(no charges read on atoms lines in %s)\n", sResName );
     } else {
         if ( iCharges != iAtoms ){
-            VPWARN(( "%d of %d atoms missing charges on atoms lines: %s\n",
-                    iAtoms-iCharges, iAtoms, sDesc ));
+            VPWARN("%d of %d atoms missing charges on atoms lines: %s\n",
+                    iAtoms-iCharges, iAtoms, sResName );
         }
         iChgWarn = 1;
         iCharges = 0;
@@ -1651,7 +1643,7 @@ MESSAGE(( "============\n" ));
 
     strcpy( sLine, sSave );
 
-    MESSAGE(( "Parsing commands after atom records\n" ));
+    MESSAGE("Parsing commands after atom records\n" );
 
                 /* Parse the commands that follow the atom records */
     bFirstTime = TRUE;
@@ -1659,12 +1651,12 @@ MESSAGE(( "============\n" ));
         if ( bFirstTime ) bFirstTime = FALSE;
         else            FGETS( sLine, fIn );
         if ( feof( fIn ) ) {
-                VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
+                VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
                 return(NULL);
         }
         iRead = sscanf( sLine, "%s", saStr[1] );
         if ( iRead <= 0 ) continue;
-        MESSAGE(( "Parsed command: %s\n", saStr[1] ));
+        MESSAGE("Parsed command: %s\n", saStr[1] );
         TESTMEMORY();
         if ( strcmp( saStr[1], "DONE" ) == 0 ) break;
         else if ( strcmp( saStr[1], "LOOP" ) == 0 ) {
@@ -1672,14 +1664,14 @@ MESSAGE(( "============\n" ));
             while (1) {
                 FGETS( sLine, fIn );
                 if ( feof( fIn ) ) {
-                        VPERROR(( "Unexpected EOF: discarding (%s)\n", sDesc ));
+                        VPERROR("Unexpected EOF: discarding (%s)\n", sResName );
                         goto ERROR;
                 }
                 iRead = sscanf( sLine, "%s %s", saStr[1], saStr[2] );
                 if ( iRead <= 0 ) break;
                 if ( iRead != 2 ) {
-                    VPERROR(( "** only got 1 atom (%s) from LOOP line - skipping\n",
-                                        sLine ));
+                    VPERROR("** only got 1 atom (%s) from LOOP line - skipping\n",
+                                        sLine );
                     problem++;
                     continue;
                 }
@@ -1688,35 +1680,35 @@ MESSAGE(( "============\n" ));
                 aAtom2= (ATOM)cContainerFindName( (CONTAINER)rRes, 
                                                         ATOMid, saStr[2] );
                 if ( aAtom == NULL ) {
-                    VPERROR(( "** LOOP atom %s not found - bond not formed\n",
-                            saStr[1] ));
+                    VPERROR("** LOOP atom %s not found - bond not formed\n",
+                            saStr[1] );
                     problem++;
                     continue;
                 }
                 if ( aAtom2 == NULL ) {
-                    VPERROR(( "** LOOP atom %s not found - bond not formed\n",
-                            saStr[2] ));
+                    VPERROR("** LOOP atom %s not found - bond not formed\n",
+                            saStr[2] );
                     problem++;
                     continue;
                 }
                 if (bAtomBondedTo(aAtom, aAtom2)) {
-                    VPWARN(( "%s:  LOOP: redundant bond  %s--%s  ignored\n", sDesc, saStr[1], saStr[2] ));
+                    VPWARN("%s:  LOOP: redundant bond  %s--%s  ignored\n", sResName, saStr[1], saStr[2] );
                 } else
                         AtomBondTo( aAtom, aAtom2 );
             }
             if (problem) {
-                VPERROR(( "Discarding residue (%s) to EOF\n", sDesc ));
+                VPERROR("Discarding residue (%s) to EOF\n", sResName );
                 goto ERROR;
             }
         } else if ( strcmp( saStr[1], "CHARGE" )==0 ) {
             if ( iChgWarn ){
-                VPWARN(( "Per-line charges being overridden by CHARGE block in %s\n", sDesc ));
+                VPWARN("Per-line charges being overridden by CHARGE block in %s\n", sResName );
             }
             iCharge = 3;
             while (1) {
                 FGETS( sLine, fIn );
                 if ( feof( fIn ) ) {
-                        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
+                        VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
                         goto ERROR;
                 }
                 iRead = sscanf( sLine, "%lf %lf %lf %lf %lf", 
@@ -1725,7 +1717,7 @@ MESSAGE(( "============\n" ));
                 if ( iRead<=0 ) break;
                 for ( i=0; i<iRead; i++ ) {
                     if ( iCharge >= iIndex ) {
-                        VPWARN(( "Skipping extra charge in: %s\n", sDesc ));
+                        VPWARN("Skipping extra charge in: %s\n", sResName );
                         continue;
                     }
                     AtomSetCharge( PVAI( vaCoor, TREENODEt, iCharge )->aAtom,
@@ -1734,7 +1726,7 @@ MESSAGE(( "============\n" ));
                 }
             }
             if ( iCharge < iAtoms ) {
-                    VPERROR(( "Incomplete CHARGE block in: %s: %d/%d\n", sDesc, iCharge, iAtoms ));
+                    VPERROR("Incomplete CHARGE block in: %s: %d/%d\n", sResName, iCharge, iAtoms );
                     goto ERROR;
             }
         } else if ( strcmp( saStr[1], "IMPROPER" )==0 ) {
@@ -1749,23 +1741,23 @@ MESSAGE(( "============\n" ));
             while (1) {
                 FGETS( sLine, fIn );
                 if ( feof( fIn ) ) {
-                        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
+                        VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
                         goto ERROR;
                 }
                 iRead = sscanf( sLine, "%s %s %s %s", 
                                 saStr[1], saStr[2], saStr[3], saStr[4] );
                 if ( iRead <= 0 ) break;
                 if ( iRead != 4 ) {
-                    VPNOTE(( "** got %d atom%s from IMPROPER line (%s) %s\n",
+                    VPNOTE("** got %d atom%s from IMPROPER line (%s) %s\n",
                                 iRead, (iRead>1 ? "s":""), sLine,
-                                " - expected 4 (skipping line)" ));
+                                " - expected 4 (skipping line)" );
                     problem++;
                     continue;
                 }
                 for ( i=1; i<=4; i++ ) {
                     if ( strcmp(saStr[i], "-M") && strcmp(saStr[i], "+M") &&
                              !cContainerFindName( (CONTAINER)rRes, ATOMid, saStr[i] ) ) {
-                        VPNOTE(( "** %s: 'IMPROPER' atom %s not found\n",  sDesc, saStr[i] ));
+                        VPNOTE("** %s: 'IMPROPER' atom %s not found\n",  sResName, saStr[i] );
                         problem++;
                     }
                 }
@@ -1779,7 +1771,7 @@ MESSAGE(( "============\n" ));
                 }
             }
             if (problem && 0) {
-                VPERROR(( "Discarding residue (%s) to EOF\n", sDesc ));
+                VPERROR("Discarding residue (%s) to EOF\n", sResName );
                 goto ERROR;
             }
         }
@@ -1796,9 +1788,9 @@ MESSAGE(( "============\n" ));
                 /* use it in a Distance Search to create bonds */
 
     if ( bUseFirstColumn == TRUE  &&  dCutoff > 0.01 ) {
-        VP1(( "Distance search to create bonds for: %s  distance: %10.5lf\n",
-                sContainerName(uUnit), dCutoff ));
-        iToolDistanceSearch( (CONTAINER)uUnit, dCutoff, TRUE, 
+        VP1("Distance search to create bonds for: %s  distance: %10.5lf\n",
+                sContainerName(uUnit), dCutoff );
+        iToolDistanceSearch( (CONTAINER)uUnit, dCutoff, TRUE, /* Absolute distance */
                                 DISTANCE_SEARCH_CREATE_BONDS );
     }
 
@@ -1808,6 +1800,8 @@ DONE:
 
     return(uUnit);
 
+EOFERROR:
+    VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
 ERROR:
     VarArrayDestroy( &vaCoor );
     VarArrayDestroy( &vaLines );
@@ -1841,7 +1835,7 @@ OBJEKT          oEntry2;
 TYPEELEMENTt    tTypeInfo;
 
     if ( iObjectType(lEntries) != LISTid ) {
-        DFATAL(( "AmberAddAtomTypes: Need LIST" ));
+        DFATAL("AmberAddAtomTypes: Need LIST" );
     }
     if ( vaAtomTypes == NULL )
         vaAtomTypes = vaVarArrayCreate( sizeof( TYPEELEMENTt ) );
@@ -1857,20 +1851,20 @@ TYPEELEMENTt    tTypeInfo;
         aEntry2 = (ASSOC)oListNext(&llEntry);   /* get 1st thing */
 
         if ( aEntry2 == NULL ) {
-                VPWARN(( "addAtomTypes: null atom type entry\n" ));
+                VPWARN("addAtomTypes: null atom type entry\n" );
                 continue;
         }
         oEntry2 = (OBJEKT)oAssocObject(aEntry2); /* get the objekt it is */
         if ( iObjectType(oEntry2) != OSTRINGid ) {
-                VPWARN(( "addAtomTypes: atom type - expected string\n" ));
+                VPWARN("addAtomTypes: atom type - expected string\n" );
                 continue;
         }
 #if 0
         /*  Joung-Cheatham use ion types with three characters,
             so skip this warning  */
         if ( strlen( sOString( oEntry2 ) ) > 2 ) {
-                VPWARN(( "addAtomTypes: type %s - max length is 2\n", 
-                                        sOString( oEntry2 ) ));
+                VPWARN("addAtomTypes: type %s - max length is 2\n", 
+                                        sOString( oEntry2 ) );
                 continue;
         }
 #endif
@@ -1879,14 +1873,14 @@ TYPEELEMENTt    tTypeInfo;
 
         aEntry2 = (ASSOC)oListNext(&llEntry);   /* get next thing */
         if ( aEntry2 == NULL ) {
-                VPWARN(( "addAtomTypes: incomplete type entry (%s)\n", 
-                                        tTypeInfo.sType ));
+                VPWARN("addAtomTypes: incomplete type entry (%s)\n", 
+                                        tTypeInfo.sType );
                 continue;
         }
         oEntry2 = (OBJEKT)oAssocObject(aEntry2); /* get the objekt it is */
         if ( iObjectType(oEntry2) != OSTRINGid ) {
-                VPWARN(( "addAtomTypes: %s - expected string for element\n",
-                                                tTypeInfo.sType ));
+                VPWARN("addAtomTypes: %s - expected string for element\n",
+                                                tTypeInfo.sType );
                 continue;
         }
         if ( strlen( sOString( oEntry2 ) ) == 0 ) {
@@ -1895,15 +1889,15 @@ TYPEELEMENTt    tTypeInfo;
         } else {
                 tTypeInfo.iElement = iElementNumber( sOString( oEntry2 ) );
                 if ( tTypeInfo.iElement == NOELEMENT ) {
-                        VPWARN(( "atom type %s - unknown element %s\n",
+                        VPWARN("atom type %s - unknown element %s\n",
                                                 tTypeInfo.sType,
-                                                sOString( oEntry2 ) ));
+                                                sOString( oEntry2 ) );
                         continue;
                 }
         }
         aEntry2 = (ASSOC)oListNext(&llEntry);   /* get next thing */
         if ( aEntry2 == NULL ) {
-                VPWARN(( "incomplete atomtype entry (%s)\n", tTypeInfo.sType ));
+                VPWARN("incomplete atomtype entry (%s)\n", tTypeInfo.sType );
                 continue;
         }
         oEntry2 = (OBJEKT)oAssocObject(aEntry2); /* get the objekt it is */
@@ -1914,8 +1908,8 @@ TYPEELEMENTt    tTypeInfo;
                 else if ( !strcmp( sOString( oEntry2 ), "sp3") )
                         tTypeInfo.iHybridization = HSP3;
                 else {
-                        VPWARN(( "atom type %s - unknown hybridization %s\n",
-                                                tTypeInfo.sType, sOString( oEntry2 ) ));
+                        VPWARN("atom type %s - unknown hybridization %s\n",
+                                                tTypeInfo.sType, sOString( oEntry2 ) );
                         continue;
                 }
         } else if ( iObjectType(oEntry2) == OINTEGERid ) {
@@ -1923,13 +1917,13 @@ TYPEELEMENTt    tTypeInfo;
                 if (tTypeInfo.iHybridization != HSP2  &&
                     tTypeInfo.iHybridization != HSP3  &&
                     tTypeInfo.iHybridization != 0) {
-                        VPWARN(( "atom type %s - unknown hybridization %d\n",
-                                                tTypeInfo.iHybridization ));
+                        VPWARN("atom type %s - unknown hybridization %d\n",
+                                                tTypeInfo.iHybridization );
                         continue;
                 }
         } else {
-          VPWARN(( "atom type %s - expected string or integer for hybridization\n",
-                                                tTypeInfo.sType ));
+          VPWARN("atom type %s - expected string or integer for hybridization\n",
+                                                tTypeInfo.sType );
           continue;
         }
         VarArrayAdd( vaAtomTypes, (GENP)&tTypeInfo );
@@ -1977,7 +1971,7 @@ STRING          sTemp;
     fIn = FOPENCOMPLAIN( sFilename, "r" );
     if ( fIn == NULL ) 
         return(NULL);
-    VP0(( "Loading Prep file: %s\n", GsBasicsFullName ));
+    VP0("Loading Prep file: %s\n", GsBasicsFullName );
 
     dUnits = dDictionaryCreate();
 
@@ -2020,14 +2014,14 @@ PARMSET         psParms;
          *  frcmod
          */
         if ( bMass != bNonBonds ) {
-                VPERROR(( "Modified force field files must have both MASS "
+                VPERROR("Modified force field files must have both MASS "
                     "and NONBOND entries or neither.\n"
                     "Could not load parameter set from %s.\n",
-                    sFilename ));
+                    sFilename );
                 fclose(fIn);
                 return(NULL);
         }
-        VP0(( "Reading force field modification type file (frcmod)\n" ));
+        VP0("Reading force field modification type file (frcmod)\n" );
         psParms = zpsAmberReadParmSetFrcMod( fIn );
     }
 

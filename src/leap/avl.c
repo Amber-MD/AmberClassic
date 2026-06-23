@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <limits.h>
 
@@ -35,7 +36,7 @@ typedef char	way3; /* -1, 0, 1 */
 
 typedef struct _node {
 	struct _node 	*ptr[2]; /* left, right */
-	way3 		balance, trace;
+	way3 		balance, trace; /* trace flags where left off, for prev/next */
 	rectype 	data;
 } node;
 
@@ -57,7 +58,7 @@ typedef struct _node {
 
 static int ix_keylength,ix_dupkeys; /* set from IX_DESC */
 static int rec_keylength;           /* set from actual key */
-static int node_overhead=sizeof(node)-DEFAULTKEYLEN;
+static const int node_overhead=sizeof(node)-IX_DEFAULTKEYLEN;
 
 /******************************************************************************
 								WAY3
@@ -99,7 +100,7 @@ compkey(rectype *r1, rectype *r2)
        		memcmp(r1->key,r2->key,ix_keylength) :
        		strcmp(r1->key,r2->key);
 	if (n || !ix_dupkeys) return n;
-	return memcmp(&(r1->recptr),&(r2->recptr),sizeof(RECPOS));
+	return memcmp(&(r1->recptr),&(r2->recptr),sizeof(IX_RECPOS));
 }
 
 static void
@@ -376,6 +377,7 @@ avltree_clear(node **tt)
 						'PLUS' interface style
  ******************************************************************************/
 
+// This should return IX_FAIL, not print to stderr and exit()
 int
 create_index(IX_DESC *pix, int dup, int keylength)
 {
@@ -406,14 +408,20 @@ destroy_index(IX_DESC *pix)
 }
 
 int
-find_key(IX_REC *pe, IX_DESC *pix)
+find_key(IX_REC *pe, IX_DESC *pix, int direction)
 {
 	rectype *ptr;
 
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
-	memset((void *)&(pe->recptr), 0, sizeof(RECPOS));
-	ptr=avltree_search((node **)&(pix->root),pe,
-			SRF_FINDEQUAL|SRF_SETMARK|SRF_FINDGREAT);
+        int flags = SRF_FINDEQUAL|SRF_SETMARK;
+        if (direction<0) {
+            flags |= SRF_FINDLESS;
+            pe->recptr = (void *)(uintptr_t)UINTPTR_MAX;
+        } else if (direction>0) {
+            flags |= SRF_FINDGREAT;
+            pe->recptr = NULL;
+        }
+	ptr=avltree_search((node **)&(pix->root),pe,flags);
 	if (ptr == NULL) return IX_FAIL;
 	pe->recptr=ptr->recptr;
 	pe->count = ptr->count;
@@ -421,16 +429,31 @@ find_key(IX_REC *pe, IX_DESC *pix)
 }
 
 int
-locate_key(IX_REC *pe, IX_DESC *pix)
+locate_key(IX_REC *pe, IX_DESC *pix, int direction)
 {
 	rectype *ptr; int ret;
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
-	memset((void *)&(pe->recptr),0,sizeof(RECPOS));
-	ptr=avltree_search((node **)&(pix->root),pe,
-			SRF_FINDEQUAL|SRF_SETMARK|SRF_FINDGREAT);
-	if (ptr==NULL) return EOIX;
+        int flags = SRF_FINDEQUAL|SRF_SETMARK;
+        if (direction<0) {
+            flags |= SRF_FINDLESS;
+            pe->recptr = (void *)(uintptr_t)UINTPTR_MAX;
+        } else if (direction>0) {
+            flags |= SRF_FINDGREAT;
+            pe->recptr = NULL;
+        }
+	ptr=avltree_search((node **)&(pix->root),pe,flags);
+	if (ptr==NULL) return IX_END;
 	ret= compkey(pe,ptr) ? IX_FAIL : IX_OK;
 	copydata(pe,ptr); return ret;
+}
+
+int
+has_key(IX_REC *pe, IX_DESC *pix)
+{
+    ix_keylength = pix->keylength;
+    ix_dupkeys   = pix->dup_keys;
+    return avltree_search((node **)&(pix->root), pe, SRF_FINDEQUAL) != NULL
+        ? IX_OK : IX_FAIL;
 }
 
 int
@@ -478,7 +501,7 @@ next_key(IX_REC *pe, IX_DESC *pix)
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
 	if ((ptr=avltree_search((node **)&(pix->root),pe, /* pe not used */
                        SRF_FROMMARK|SRF_SETMARK|SRF_FINDGREAT))==NULL)
-	   	return EOIX;
+	   	return IX_END;
 	copydata(pe,ptr); return IX_OK;
 }
 
@@ -489,18 +512,7 @@ prev_key(IX_REC *pe, IX_DESC *pix)
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
 	if ((ptr=avltree_search((node **)&(pix->root),pe, /* pe not used */
                        SRF_FROMMARK|SRF_SETMARK|SRF_FINDLESS))==NULL)
-	   	return EOIX;
+	   	return IX_END;
 	copydata(pe,ptr); return IX_OK;
 }
 
-int
-find_exact(IX_REC *pe, IX_DESC *pix)
-{
-	rectype *ptr;
-	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
-	ptr=avltree_search((node **)&(pix->root),pe,
-                  SRF_FINDEQUAL|SRF_FINDGREAT|SRF_SETMARK);
-	if (ptr==NULL) return IX_FAIL;
-	if (!ix_dupkeys && pe->recptr!=ptr->recptr) return IX_FAIL;
-	return IX_OK;
-}

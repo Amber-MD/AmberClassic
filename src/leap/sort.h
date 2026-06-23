@@ -50,7 +50,7 @@ extern void	SortByDouble( GENP PStart, int iElements, int iSize,
 extern void	SortByString(GENP PStart, int iElements, int iSize,
 			GENP PFirst, BOOL bAscending);
 
-typedef BOOL	(*SIFTFUNCTION)(); 
+typedef BOOL	(*SIFTFUNCTION)(void*); 
 
 extern void	Sift(GENP PData, int iElementSize, int iElements, 
 			SIFTFUNCTION bFCriteria, int *iPFirstFalse);

@@ -228,7 +228,7 @@ BNODEP   bnPTempBag;
 void
 BagDescribe( BAG bBag )
 {
-    VP0(( "Bag elt count=%d\n", bBag->iElementCount ));
+    VP0("Bag elt count=%d\n", bBag->iElementCount );
 }
 
 

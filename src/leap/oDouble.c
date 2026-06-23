@@ -100,7 +100,7 @@ void
 ODoubleDescribe( ODOUBLE odDbl )
 {
 
-    VP0(( "%lf\n", dODouble(odDbl) ));
+    VP0("%lf\n", dODouble(odDbl) );
 }
 
 

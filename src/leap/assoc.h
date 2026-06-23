@@ -93,9 +93,12 @@ typedef ASSOCt  *ASSOC;
 
 /*  assoc.c  */
 
-extern ASSOC            aAssocCreate();
+extern ASSOC            aAssocCreate(void);
 extern void             AssocDestroy( ASSOC *aPAssoc );
 extern void             AssocDescribe( ASSOC aAssoc );
+
+// helper function:
+extern OBJEKT           CreateAssocVector(VECTOR vVector);
 
 
 #endif /* ASSOC_H */

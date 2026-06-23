@@ -13,6 +13,8 @@ static  void e_outfloat();
 /*
  * added fields:
  *    h    encode a hybrid36 string, 4 or 5 digits
+ *    C    same as %c but NUL -> space
+ *    D    same as %d but zero -> space
  *    ' '  add blank space
  */
 

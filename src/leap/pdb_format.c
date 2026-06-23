@@ -25,7 +25,7 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "%6 %5h %4s%c%3s  %c%4h%c %7d%7d%7d%7d%7d%7d",
                 "ANISOU%5h %-4s%C%3s %C%4h%C %7d%7d%7d%7d%7d%7d"
         },
-        {                                       /* 2 PDB_ATOM, HETATM, SIGATM */
+        {                                       /* 2 PDB_ATOM */
                 "%6 %5h %4s%c%3s%2s%4h%c   %8f%8f%8f%6f%6f          %2s%2s",
                 "ATOM  %5h %-4s%C%3s%2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
         },
@@ -105,8 +105,8 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "%8 %2d %9s %4s%6 %4s %4s %4s %4s %4s %4s %4s %4s",
                 "SPRSDE  %2D %-9s %-10s%-5s%-5s%-5s%-5s%-5s%-5s%-5s%-4s" },
         {                                       /* 29 PDB_SSBOND */
-                "%7 %3d %3s %c %4h%c   %3s %c %4h%c%4 %30s",
-                "SSBOND %3D %3s %C %4h%C   %3s %C %4h%C    %-30s" },
+                "%7 %3d %3s %c %4h%c   %3s %c %4h%c%24 %6s %6s %5f",
+                "SSBOND %3D %3s %C %4h%C   %3s %C %4h%C                        %6s %6s %5.2f" },
         {                                       /* 30 PDB_TER */
                 "%6 %5h%6 %3s%2c%4h%c",
                 "TER   %5h      %3s%.2s%4h%C" },
@@ -122,8 +122,45 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "%9 %5d", "MODEL    %5d" },
         {                                       /* 35 PDB_ENDMDL */
                 "", "ENDMDL" },
-        {                                       /* MOL2_ATOM */
+        {                                       /* 36 PDB_CAVEAT */
+                "%8 %2.2s %4.4s    %-60.60s",
+                "CAVEAT  %2.2s %4.4s    %-60.60s" },
+        {                                       /* 37 PDB_CISPEP */
+                "%7 %3d %-3.3s %1.1s %4d%1.1s   %-3.3s %1.1s %4d%1.1s       %3d       %6.2f",
+                "CISPEP %3d %-3.3s %1.1s %4d%1.1s   %-3.3s %1.1s %4d%1.1s       %3d       %6.2f"  },
+        {                                       /* 38 PDB_DBREF */
+                "%7 %4.4s %1.1s %4d%1.1s %4d%1.1s %-6.6s %-8.8s %-12.12s %5d%1.1s %5d%1.1s",
+                "DBREF  %4.4s %1.1s %4d%1.1s %4d%1.1s %-6.6s %-8.8s %-12.12s %5d%1.1s %5d%1.1s" },
+        {                                       /* 39 PDB_HETNAM */
+                "%8 %2d %3s %54s%10s",
+                "HETNAM  %2D %3s %-54s%-10s" },
+        {                                       /* 40 PDB_HETSYN */
+                "%8 %2d %3s %54s%10s",
+                "HETSYN  %2D %3s %-54s%-10s" },
+        {                                       /* 41 PDB_KEYWDS */
+                "%8 %2d%-60s",
+                "KEYWDS  %2D%-60s" },
+        {                                       /* 42 PDB_LINK */
+                "%12 %4s%c%3s%2s%4h%c%15 %4s%c%3s%2s%4h%c  %6s %6s %5f",
+                "LINK        %-4s%C%3s%2s%4h%C               %-4s%C%3s%2s%4h%C  %6s %6s %5.2f" },
+        {                                       /* 43 PDB_MDLTYP */
+                "%10 %2d%-70s",
+                "MDLTYP  %2D%-70s" },
+        {                                       /* 44 PDB_NUMMDL */
+                "%10 %4d",
+                "NUMMDL    %4d" },
+        {                                       /* 45 PDB_SEQADV */
+                "%7 %4.4s %3.3s %1.1s %4d%1.1s %-4.4s %-9.9s %3.3s %5d %-21s",
+                "SEQADV %4.4s %3.3s %1.1s %4d%1.1s %-4.4s %-9.9s %3.3s %5d %-21s" },
+        {                                       /* 46 PDB_SPLIT */
+                "%8 %2D %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s",
+                "SPLIT   %2D %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s %4.4s" },
+        {                                       /* 47 PDB_TITLE */
+                "%8 %2d%70s",
+                "TITLE   %2D%-70s" },
+        {                                       /* 48 MOL2_ATOM */
                 "%3d %6s   %12.6f%12.6f%12.6f %3s %3d %3s %12.4f", 
                 "%3d %-4s %11.6f %11.6f %11.6f %-4s %2d %-5s %8.4f ****" },
+
 };
 

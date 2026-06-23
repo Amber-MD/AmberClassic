@@ -1,3 +1,5 @@
+#ifndef FUNCTION_H
+#define FUNCTION_H
 /*
  *	File:	function.h
  *
@@ -85,7 +87,4 @@ extern int	iFunctionFilenameFind(char *sFilename);
 #define	sFunctionFileFilename(i)	(PVAI(GvaFiles,STRING,i))
 
 
-
-
-
-
+#endif

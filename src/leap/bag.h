@@ -68,7 +68,7 @@ typedef BAGt	*BAG;
 
 /*  bag.c  */
 
-extern BAG		bBagCreate();
+extern BAG		bBagCreate(void);
 extern void 		BagDestroy( BAG *bPBag );
 extern void		BagAdd( BAG bBag, GENP PObj );
 extern void		BagAddToEnd( BAG bBag, GENP PObj );

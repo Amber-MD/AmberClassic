@@ -68,20 +68,20 @@ extern	BOOL	GbGraphicalEnvironment;	/* TRUE if in a graphical environment*/
 /*
  *      variables.c
  */
-extern void	VariablesInit();
-extern void	VariablesList();
-extern void	VariableSet(char *sName, OBJEKT oObj);
-extern void	VariableRemove( char *sName );
-extern OBJEKT	oVariable(char *sName);
-extern void	VariablesDestroy();
-extern DICTIONARY dVariablesDictionary();
+extern void	VariablesInit(void);
+extern void	VariablesList(void);
+extern void	VariableSet(const char *sName, OBJEKT oObj);
+extern void	VariableRemove(const char *sName );
+extern OBJEKT	oVariable(const char *sName);
+extern void	VariablesDestroy(void);
+extern DICTIONARY dVariablesDictionary(void);
 
 
 
 /*
  *      set.c
  */
-extern  void    SetAttribute();         /* ( OBJEKT, STRING, OBJEKT ) */
+extern  void    SetAttribute(void);         /* ( OBJEKT, STRING, OBJEKT ) */
 
 
 #endif

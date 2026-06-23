@@ -92,7 +92,7 @@ OBJEKT  o;
     switch ( iType ) {
     
         case OBJEKTid:
-            PRINTF(( "A raw OBJEKT is being created!!\n" ));
+            PRINTF("A raw OBJEKT is being created!!\n" );
             MALLOC( o, OBJEKT, sizeof(OBJEKTt) );
             break;
 
@@ -113,7 +113,7 @@ OBJEKT  o;
             break;
 
         case COLLECTIONid:   
-            case LISTid:
+        case LISTid:
             o = (OBJEKT)cCollectionCreate(iType);
             break;
             
@@ -138,8 +138,8 @@ OBJEKT  o;
             break;
                     
         default:
-            DFATAL( ("Unknown object type=%d being created with size %d!", iType,
-                        iSize ) );
+            DFATAL("Unknown object type=%d being created with size %d!", iType,
+                        iSize );
             break;
     }
     
@@ -198,11 +198,11 @@ Destroy( OBJEKT  *oPObject )
     if ( *oPObject == NULL ) 
 	return;
 
-    MESSAGE(( "Destroying object: %c\n", iObjectType(*oPObject) ));
+    MESSAGE("Destroying object: %c\n", iObjectType(*oPObject) );
 
     switch ( iObjectType(*oPObject) ) {
         case OBJEKTid:
-            PRINTF(( "A raw OBJEKT is being destroyed!" ));
+            PRINTF( "A raw OBJEKT is being destroyed!" );
             FREE( *oPObject );
             break;
 
@@ -248,9 +248,9 @@ Destroy( OBJEKT  *oPObject )
             break;
             
         default:
-            DFATAL(("Unknown object type=%c/%d addr %p being destroyed!", 
+            DFATAL("Unknown object type=%c/%d addr %p being destroyed!", 
 		iObjectType(*oPObject), iObjectType(*oPObject),
-		*oPObject ));
+		(void*)*oPObject );
             break;
     }
     
@@ -277,7 +277,7 @@ OBJEKT	oNew;
 
 		/* First duplicate the OBJEKT */
 
-    MESSAGE( ("copying type %s\n", sObjectType(oCur) ));
+    MESSAGE("copying type %s\n", sObjectType(oCur) );
 
     oNew = oObjectDuplicate(oCur);
 
@@ -301,8 +301,8 @@ OBJEKT	oNew;
         case PARMSETid:
             break;
         default:
-            VP0( ("Unknown object type=%s being copied!",
-                 sObjectType(oCur)) );
+            VP0("Unknown object type=%s being copied!",
+                 sObjectType(oCur) );
 	    Destroy( &oNew );
 	    return(NULL);
             break;
@@ -332,13 +332,13 @@ Describe( OBJEKT oObject )
 {
 
     if ( oObject == NULL ) {
-        VP0(( "--NULL--\n" ));
+        VP0("--NULL--\n" );
         return;
     }
 
     switch ( iObjectType(oObject) ) {
         case OBJEKTid:
-            VP0(( "OBJEKT\n" ));
+            VP0("OBJEKT\n" );
             break;
             
         case ASSOCid:
@@ -383,8 +383,8 @@ Describe( OBJEKT oObject )
             break;
             
         default:
-            DFATAL( ("Unknown object id=%c being described!",
-                 iObjectType(oObject)) );
+            DFATAL("Unknown object id=%c being described!",
+                 iObjectType(oObject) );
             break;
     }
     
@@ -527,7 +527,7 @@ OBJEKT  o;
             break;
             
         case OBJEKTid:
-            DFATAL( ( "A raw OBJEKT is being duplicated!!" ) );
+            DFATAL("A raw OBJEKT is being duplicated!!" );
             break;
  
         case OINTEGERid:
@@ -552,8 +552,8 @@ OBJEKT  o;
             
             
         default:
-            DFATAL( ("Unknown object id=%c being duplicated", 
-                        iObjectType(oOld) ) );
+            DFATAL("Unknown object id=%c being duplicated", 
+                        iObjectType(oOld) );
             break;
     }
     o->iReferences = 1;
@@ -606,7 +606,7 @@ sObjectIndexType( int iType )
 char *
 sObjectType( OBJEKT oObj )
 {
-    return(sObjectIndexType(iObjectType(oObj)));
+    return sObjectIndexType(iObjectType(oObj));
 }
 
 
@@ -624,7 +624,7 @@ bObjektWarnType( OBJEKT oObj, int iType )
 {
 
     if ( iObjectType(oObj) == iType ) return(TRUE);
-    VP0(( "The value must be of the type: %s\n", sObjectIndexType(iType) ));
+    VP0("The value must be of the type: %s\n", sObjectIndexType(iType) );
     return(FALSE);
 }
 

@@ -123,10 +123,10 @@ int	iSize;
     if ( (bBlock->iTextSize-1) <= bBlock->iTextNext ) {
 	if ( bBlock->cPText == NULL ) {
 	    MALLOC( cPText, char*, iSize );
-	    MESSAGE(( "MALLOCed the BLOCK text\n" ));
+	    MESSAGE("MALLOCed the BLOCK text\n" );
         } else {
 	    REALLOC( cPText, char*, bBlock->cPText, iSize );
-	    MESSAGE(( "REALLOCed the BLOCK text\n" ));
+	    MESSAGE("REALLOCed the BLOCK text\n" );
 	}
 	bBlock->cPText = cPText;
         bBlock->iTextSize = iSize;
@@ -196,7 +196,7 @@ BOOL	bEndOfBlock;
 
     bEndOfBlock = FALSE;
     if ( c == '\\' ) {
-        MESSAGE(( "Got continuation\n" ));
+        MESSAGE("Got continuation\n" );
     } else if ( c == '{' ) {
 	bBlock->iUnclosedLists++;
     } else if ( c == '}' ) {
@@ -211,7 +211,7 @@ BOOL	bEndOfBlock;
 
 #ifdef	DEBUG
 if ( bEndOfBlock ) {
-    MESSAGE(( "Ending block.  Text=%s\n", sBlockText(bBlock) ));
+    MESSAGE("Ending block.  Text=%s\n", sBlockText(bBlock) );
 }
 #endif
 
@@ -317,12 +317,12 @@ BOOL		bQuote = FALSE;
     }
     sLine[i] = cBlockRead(bBlock);
     if ( bQuote == TRUE ) {
-	VP0(( "A close quote was missing.\n" ));
-	VP0(( "I have added quotes to the end of the line and will try it.\n" ));
+	VP0("A close quote was missing.\n" );
+	VP0("I have added quotes to the end of the line and will try it.\n" );
 	sLine[i++] = '"';
 	sLine[i] = '\n';
 	sLine[i+1] = '\0';
-	VP0((sLine));
+	VP0(sLine);
     }
     sLine[++i] = '\0';
     return(( cBlockPeek(bBlock) == '\0' ));

@@ -51,7 +51,7 @@
  *
  */
  
-//#include        "atom.h" // New
+#include        "atom.h"
 #include        "basics.h"
 #include        "defaults.h"
 #include        "classes.h"
@@ -115,7 +115,7 @@ int     i, j;
     for ( i=0; i<iAtomCoordination(aAtom1); i++ )
         if ( aAtom1->aaBonds[i] == aAtom2 ) break;
     if ( i == iAtomCoordination(aAtom1) ) 
-        DFATAL( ("The atom does not contain that bond") );
+        DFATAL("The atom does not contain that bond");
     for ( j=i; j<iAtomCoordination(aAtom1)-1; j++ ) {
         aAtom1->aaBonds[j] = aAtom1->aaBonds[j+1];
         aAtom1->faBondFlags[j] = aAtom1->faBondFlags[j+1];
@@ -232,80 +232,80 @@ STRING          sTemp, sTemp1;
 
     if ( strlen(sAtomPertType(aAtom)) != 0 ||
          strlen(sAtomPertName(aAtom)) != 0 ) {
-        VP0(( "ATOM\n" ));
-        VP0(( "             Normal      Perturbed\n" ));
-        VP0(( "Name:         %-5s         %-5s\n",
-                sContainerName(aAtom), sAtomPertName(aAtom) ));
-        VP0(( "Type:         %-5s         %-5s\n",
-                sAtomType(aAtom), sAtomPertType(aAtom) ));
-        VP0(( "Charge:       %6.4f        %5.3f\n",
-                dAtomCharge(aAtom), dAtomPertCharge(aAtom) ));
-        VP0(( "Polarization: %6.4f        %5.3f\n",
-                dAtomPolar(aAtom), dAtomPertPolar(aAtom) ));
-        VP0(( "Element: %-5s         (not affected by pert)\n",
-                sElementName( iAtomElement(aAtom), sTemp1 ) ));
+        VP0("ATOM\n" );
+        VP0("             Normal      Perturbed\n" );
+        VP0("Name:         %-5s         %-5s\n",
+                sContainerName(aAtom), sAtomPertName(aAtom) );
+        VP0("Type:         %-5s         %-5s\n",
+                sAtomType(aAtom), sAtomPertType(aAtom) );
+        VP0("Charge:       %6.4f        %5.3f\n",
+                dAtomCharge(aAtom), dAtomPertCharge(aAtom) );
+        VP0("Polarization: %6.4f        %5.3f\n",
+                dAtomPolar(aAtom), dAtomPertPolar(aAtom) );
+        VP0("Element: %-5s         (not affected by pert)\n",
+                sElementName( iAtomElement(aAtom), sTemp1 ) );
     } else {    
-        VP0(( "ATOM\n" ));
-        VP0(( "Name:         %-5s\n", sContainerName(aAtom) ));
-        VP0(( "Type:         %-5s\n", sAtomType(aAtom) ));
-        VP0(( "Charge:       %6.4f\n", dAtomCharge(aAtom) ));
-        VP0(( "Polarization: %6.4f\n", dAtomPolar(aAtom) ));
-        VP0(( "Element:      %-5s\n",
-                sElementName( iAtomElement(aAtom), sTemp1 ) ));
+        VP0("ATOM\n" );
+        VP0("Name:         %-5s\n", sContainerName(aAtom) );
+        VP0("Type:         %-5s\n", sAtomType(aAtom) );
+        VP0("Charge:       %6.4f\n", dAtomCharge(aAtom) );
+        VP0("Polarization: %6.4f\n", dAtomPolar(aAtom) );
+        VP0("Element:      %-5s\n",
+                sElementName( iAtomElement(aAtom), sTemp1 ) );
     }
 
-    VP0(( "Atom flags: (decimal %ld hex 0x%lx)\n", 
-                                fAtomFlags(aAtom), fAtomFlags(aAtom) ));
-    VP0(( "\tposfxd %c  posblt %c  posdrwn %c  selected %c\n",
+    VP0("Atom flags: (decimal %ld hex 0x%lx)\n", 
+                                fAtomFlags(aAtom), fAtomFlags(aAtom) );
+    VP0("\tposfxd %c  posblt %c  posdrwn %c  selected %c\n",
         ( bAtomFlagsSet( aAtom, ATOMPOSITIONFIXED ) ? 'Y' : 'n' ),
         ( bAtomFlagsSet( aAtom, ATOMPOSITIONBUILT ) ? 'Y' : 'n' ),
         ( bAtomFlagsSet( aAtom, ATOMPOSITIONDRAWN ) ? 'Y' : 'n' ),
-        ( bAtomFlagsSet( aAtom, ATOMSELECTED ) ? 'Y' : 'n' ) ));
-    VP0(( "\tpert %c  notdisp %c  touched %c  posknwn %c\n",
+        ( bAtomFlagsSet( aAtom, ATOMSELECTED ) ? 'Y' : 'n' ) );
+    VP0("\tpert %c  notdisp %c  touched %c  posknwn %c\n",
         ( bAtomFlagsSet( aAtom, ATOMPERTURB ) ? 'Y' : 'n' ),
         ( bAtomFlagsSet( aAtom, ATOMNOTDISPLAYED ) ? 'Y' : 'n' ),
         ( bAtomFlagsSet( aAtom, ATOMTOUCHED ) ? 'Y' : 'n' ),
-        ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ? 'Y' : 'n' ) ));
-    VP0(( "\tinternal %c  needsmin %c  needsbuild %c\n",
+        ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ? 'Y' : 'n' ) );
+    VP0("\tinternal %c  needsmin %c  needsbuild %c\n",
         ( bAtomFlagsSet( aAtom, ATOMPOSITIONINTERNAL ) ? 'Y' : 'n' ),
         ( bAtomFlagsSet( aAtom, ATOMNEEDSMINIMIZER ) ? 'Y' : 'n' ),
-        ( bAtomFlagsSet( aAtom, ATOMNEEDSBUILD ) ? 'Y' : 'n' ) ));
+        ( bAtomFlagsSet( aAtom, ATOMNEEDSBUILD ) ? 'Y' : 'n' ) );
 
-    VP0(( "Atom position: %lf, %lf, %lf\n", 
+    VP0("Atom position: %lf, %lf, %lf\n", 
                 dVX(&vAtomPosition(aAtom)),
                 dVY(&vAtomPosition(aAtom)),
-                dVZ(&vAtomPosition(aAtom)) ));
-    VP0(( "Atom velocity: %lf, %lf, %lf\n", 
+                dVZ(&vAtomPosition(aAtom)) );
+    VP0("Atom velocity: %lf, %lf, %lf\n", 
                 dVX(&vAtomVelocity(aAtom)),
                 dVY(&vAtomVelocity(aAtom)),
-                dVZ(&vAtomVelocity(aAtom)) ));
+                dVZ(&vAtomVelocity(aAtom)) );
     if ( iAtomCoordination(aAtom) == 0 ) 
-        VP0(( "  NO BONDS\n" ));
+        VP0("  NO BONDS\n" );
     for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
-        VP0(( "  Bonded to %s by a", 
-             sContainerFullDescriptor((CONTAINER)aAtomBondedNeighbor(aAtom,i), sTemp) ));
+        VP0("  Bonded to %s by a", 
+             sContainerFullDescriptor((CONTAINER)aAtomBondedNeighbor(aAtom,i), sTemp) );
         switch ( iAtomBondOrder(aAtom,i) ) {
             case BONDSINGLE:
-                VP0(( " single" ));
+                VP0(" single" );
                 break;
             case BONDDOUBLE:
-                VP0(( " double" ));
+                VP0(" double" );
                 break;
             case BONDTRIPLE:
-                VP0(( " triple" ));
+                VP0(" triple" );
                 break;
             case BONDAROMATIC:
-                VP0(( "n aromatic" ));
+                VP0("n aromatic" );
                 break;
             default:
-                VP0(( " ????" ));
+                VP0(" ????" );
                 break;
         }
-        VP0(( " bond.\n" ));
+        VP0(" bond.\n" );
     }
     if ( iListSize(aAtom->cHeader.lContents) != 0 ) {
-        VP0(( "Number of internals = %d\n",
-                iListSize(aAtom->cHeader.lContents) ));
+        VP0("Number of internals = %d\n",
+                iListSize(aAtom->cHeader.lContents) );
     }
 }
 
@@ -319,7 +319,7 @@ char            *cP;
 
         cTemp = cContainerWithin( aA );
         if ( cTemp == NULL )
-                DFATAL(( " atom container is null\n" ));
+                DFATAL( " atom container is null\n" );
         sContainerDescriptor( cTemp, sTemp );
         cP = strchr( sTemp+2, ' ' );
         if ( bResNum ) {
@@ -403,17 +403,17 @@ int     problem = 0;
 STRING  sTemp;
 
     if ( bAtomCoordinationSaturated( aAtom1 ) ) {
-        VPNOTE(( "Bond: maximum coordination exceeded on %s\n",
-                sContainerFullDescriptor( (CONTAINER)aAtom1, sTemp )) );
+        VPNOTE("Bond: maximum coordination exceeded on %s\n",
+                sContainerFullDescriptor( (CONTAINER)aAtom1, sTemp) );
         problem = 1;
     }
     if ( bAtomCoordinationSaturated( aAtom2 ) ) {
-        VPNOTE(( "Bond: Maximum coordination exceeded on %s\n",
-                sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp )) );
+        VPNOTE( "Bond: Maximum coordination exceeded on %s\n",
+                sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp) );
         problem = 1;
     }
     if ( problem ) {
-        VPNOTE(( "      -- setting atoms pert=true overrides default limits\n" ));
+        VPNOTE( "      -- setting atoms pert=true overrides default limits\n" );
         return( TRUE );
     }
     return( FALSE );
@@ -439,8 +439,8 @@ AtomBondTo( ATOM aAtom1, ATOM aAtom2 )
         STRING  sAtom1, sAtom2;
         sContainerFullDescriptor( (CONTAINER)aAtom1, sAtom1 );
         sContainerFullDescriptor( (CONTAINER)aAtom2, sAtom2 );
-        VP0(( "ATOMS NOT BONDED: %s %s\n", sAtom1, sAtom2 ));
-        DFATAL(("bondAtomProblem found\n"));
+        VP0("ATOMS NOT BONDED: %s %s\n", sAtom1, sAtom2 );
+        DFATAL("bondAtomProblem found\n");
     }
 
     /*
@@ -456,9 +456,9 @@ AtomBondTo( ATOM aAtom1, ATOM aAtom2 )
 
         sContainerDescriptor( rR1, sDesc1 );
         sContainerDescriptor( rR2, sDesc2 );
-        VPWARN(( "Connecting residues %s -- %s\n"
+        VPWARN("Connecting residues %s -- %s\n"
                 "LEaP can have problems with residue order"
-                 "and parm topology when this happens.", sDesc1+1, sDesc2+1 ));
+                 "and parm topology when this happens.", sDesc1+1, sDesc2+1 );
 
 TODO - if leap rewritten so that residue parents are
 molecules, then it will be easy to check if molecules
@@ -479,8 +479,8 @@ so the 'earlier' mol1 residue #s are < mol2 residues
             else if ( i2 < i1 )
                 OrderResidues( rR2, rR1 );
             else
-                VP0(( "Connected same connect atoms (%d), %s\n",
-                        i1, "residue order not checked" ));
+                VP0("Connected same connect atoms (%d), %s\n",
+                        i1, "residue order not checked" );
         }
     }
      */
@@ -518,13 +518,13 @@ int     ierr = 0;
     VERIFYOBJEKT( aAtom2, ATOMid );
 
     if ( iAtomCoordination( aAtom1 ) >= MAXBONDS ) {
-        VP0(("Can't make temp bond - out of bonds for %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aAtom1, sTemp ) ));
+        VP0("Can't make temp bond - out of bonds for %s\n",
+                        sContainerFullDescriptor( (CONTAINER)aAtom1, sTemp ) );
         ierr = 1;
     }
     if ( iAtomCoordination( aAtom2 ) >= MAXBONDS ) {
-        VP0(("Can't make temp bond - out of bonds for %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp ) ));
+        VP0("Can't make temp bond - out of bonds for %s\n",
+                        sContainerFullDescriptor( (CONTAINER)aAtom2, sTemp ) );
         ierr = 1;
     }
     if ( ierr )
@@ -653,9 +653,9 @@ AtomRemoveBond( ATOM aAtom1, ATOM aAtom2 )
     VERIFYOBJEKT( aAtom2, ATOMid );
     
     if ( iAtomCoordination(aAtom1) <= 0 ) 
-        DFATAL( ("There is no bond!") );
+        DFATAL("There is no bond!");
     if ( iAtomCoordination(aAtom2) <= 0 ) 
-        DFATAL( ("There is no bond!") );
+        DFATAL("There is no bond!");
     
     zAtomRemoveBond( aAtom1, aAtom2 );
     zAtomRemoveBond( aAtom2, aAtom1 );
@@ -708,7 +708,7 @@ int             i;
 
     for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
         if ( aAtomBondedNeighbor( aAtom, i ) == aNeighbor )
-                return(iAtomBondOrder( aAtom, i ));
+                return iAtomBondOrder( aAtom, i );
     }
     return(BONDNONE);
 }
@@ -852,8 +852,8 @@ STRING          sTemp;
         /* FATAL error if the atom doesn't have a type */
 
     if ( strlen(sAtomType(aAtom)) == 0 ) {
-        VP0(( "FATAL:  Atom %s does not have a type.\n",
-                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) ));
+        VP0("FATAL:  Atom %s does not have a type.\n",
+                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) );
         (*iPErrors)++;
         iFatal++;
     }
@@ -864,8 +864,8 @@ STRING          sTemp;
         
         if ( strlen(sAtomPertName(aAtom)) == 0 &&
                 strlen(sAtomPertType(aAtom)) != 0 ) {
-                VPWARN(( "Atom %s has a perturbation type, but no name.\n",
-                        sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) ));
+                VPWARN("Atom %s has a perturbation type, but no name.\n",
+                        sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) );
                 (*iPWarnings)++;
         }
 
@@ -873,9 +873,9 @@ STRING          sTemp;
 
         if ( strlen(sAtomPertName(aAtom)) != 0 &&
                 strlen(sAtomPertType(aAtom)) == 0 ) {
-                VPWARN(( "Atom %s has a perturbation name,%s",
+                VPWARN("Atom %s has a perturbation name,%s",
                         sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ),
-                                "\nbut no perturbation type.\n" ));
+                                "\nbut no perturbation type.\n" );
                 (*iPWarnings)++;
         }
     }
@@ -931,9 +931,9 @@ ATOM            aaBond[MAXCONNECT];
     */
     for ( i = 0; i < iNumberOfBonds; i++ ) {
         aBond = aaBond[i];
-        VP1(( "Breaking bond: %s - %s\n",
+        VP1("Breaking bond: %s - %s\n",
                 sAtom1,
-                sContainerFullDescriptor( (CONTAINER)aBond, sAtom2 ) ));
+                sContainerFullDescriptor( (CONTAINER)aBond, sAtom2 ) );
         AtomRemoveBond( aAtom, aBond );
     }
 
@@ -966,7 +966,7 @@ ATOM            aaBond[MAXCONNECT];
 void
 AtomIAmBeingRemoved( ATOM aAtom, CONTAINER cRemoved )
 {
-    DFATAL(( "AtomIAmBeingRemoved should NEVER be called!\n" ));
+    DFATAL("AtomIAmBeingRemoved should NEVER be called!\n" );
 }
 
 
@@ -982,6 +982,10 @@ AtomIAmBeingRemoved( ATOM aAtom, CONTAINER cRemoved )
  *      This routine is called mainly from the command
  *      line interface to allow users to change the
  *      attributes of ATOMs by name.
+ *
+ *      NOTE: only pert flag is settable. Maybe add: fixed, touched
+ *      select bit toggled by select,deSelect
+ *      Also cannot set: velocity, polarization
  */
 void
 AtomSetAttribute( ATOM aAtom, STRING sAttr, OBJEKT oAttr )
@@ -992,12 +996,12 @@ VECTOR          vPos;
 int             iElement;
 STRING          sTemp;
 
-    if ( strcmp( sAttr, "charge" ) == 0 ) {
+    if ( strcasecmp( sAttr, "charge" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, ODOUBLEid ) ) return;
         AtomSetCharge( aAtom, dODouble(oAttr) );
         return;
     }
-    if ( strcmp( sAttr, "pert" ) == 0 ) {
+    if ( strcasecmp( sAttr, "pert" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         strcpy( sTemp, sOString(oAttr) );
         StringLower(sTemp);
@@ -1006,27 +1010,27 @@ STRING          sTemp;
         } else if ( strcmp( sTemp, "false") == 0) {
             AtomResetFlags( aAtom, ATOMPERTURB );
         } else
-            VPFATALEXIT(( "pert: expected 'true' or 'false'\n" ));
+            VPFATALEXIT("pert: expected 'true' or 'false'\n" );
         return;
     } 
-    if ( strcmp( sAttr, "pertCharge" ) == 0 ) {
+    if ( strcasecmp( sAttr, "pertCharge" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, ODOUBLEid ) ) return;
         AtomSetPertCharge( aAtom, dODouble(oAttr) );
         return;
     }
-    if ( strcmp( sAttr, "name" ) == 0 ) {
+    if ( strcasecmp( sAttr, "name" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         ContainerSetName( aAtom, sOString(oAttr) );
         return;
     }
-    if ( strcmp( sAttr, "pertName" ) == 0 ) {
+    if ( strcasecmp( sAttr, "pertName" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetPertName( aAtom, "" );
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         AtomSetPertName( aAtom, sOString(oAttr) );
         return;
     }
-    if ( strcmp( sAttr, "type" ) == 0 ) {
+    if ( strcasecmp( sAttr, "type" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetType( aAtom, "" );
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) 
@@ -1034,20 +1038,20 @@ STRING          sTemp;
         AtomSetType( aAtom, sOString(oAttr) );
         return;
     }
-    if ( strcmp( sAttr, "element" ) == 0 ) {
+    if ( strcasecmp( sAttr, "element" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetElement( aAtom, NOELEMENT );
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) 
             return;
         iElement = iElementNumber(sOString(oAttr));
         if ( iElement == NOELEMENT ) {
-            VPFATALEXIT(( "Unknown element: %s\n", sOString(oAttr) ));
+            VPFATALEXIT("Unknown element: %s\n", sOString(oAttr) );
         } else {
             AtomSetElement( aAtom, iElement );
         }
         return;
     }
-    if ( strcmp( sAttr, "pertType" ) == 0 ) {
+    if ( strcasecmp( sAttr, "pertType" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetPertType( aAtom, "" );
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
@@ -1061,10 +1065,10 @@ STRING          sTemp;
         }
         return;
     }
-    if ( strcmp( sAttr, "position" ) == 0 ) {
+    if ( strcasecmp( sAttr, "position" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, LISTid ) ) return;
         if ( iListSize( oAttr ) != 3 ) {
-            VPFATALEXIT(( "Illegal vector\n" ));
+            VPFATALEXIT("Invalid vector\n" );
         } else {
             llElements = llListLoop( (LIST)oAttr );
             aXCoord = (ASSOC)oListNext(&llElements);
@@ -1080,7 +1084,74 @@ STRING          sTemp;
         }
         return;
     }
-    VPFATALEXIT(( "%s: non-existent attribute for an atom.\n", sAttr ));
+    VPFATALEXIT("%s: non-existent attribute for an atom.\n", sAttr );
+    VP0("\tAtom attributes: charge, name, type, element, position\n");
+    VP0("\t\tpert, pertCharge, pertName, pertType\n" );
+}
+
+
+
+/*
+ *      AtomGetAttribute
+ *
+ *      Author: Juno Krahn (2026)
+ *
+ *      Return the named attribute of the ATOM.
+ */
+OBJEKT
+oAtomGetAttribute( ATOM aAtom, STRING sAttr )
+{
+OBJEKT          oResult = NULL;
+    if ( strcasecmp( sAttr, "charge" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, dAtomCharge( aAtom ) );
+    } else if ( strcasecmp( sAttr, "pert" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, bAtomFlagsSet( aAtom, ATOMPERTURB ) );
+    } else if ( strcasecmp( sAttr, "pertCharge" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, dAtomPertCharge( aAtom ) );
+    } else if ( strcasecmp( sAttr, "name" ) == 0 ) {
+        oResult = oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sContainerName( aAtom ) );
+    } else if ( strcasecmp( sAttr, "pertName" ) == 0 ) {
+        oResult = oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sAtomPertName( aAtom ) );
+    } else if ( strcasecmp( sAttr, "type" ) == 0 ) {
+        oResult = oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sAtomType( aAtom ) );
+    } else if ( strcasecmp( sAttr, "element" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, iAtomElement( aAtom ) );
+    } else if ( strcasecmp( sAttr, "pertType" ) == 0 ) {
+        oResult = oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sAtomPertType( aAtom ) );
+    } else if ( strcasecmp( sAttr, "position" ) == 0 ) {
+        oResult = CreateAssocVector(vAtomPosition(aAtom));
+    } else if ( strcasecmp( sAttr, "position.x" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, vAtomPosition(aAtom).dX );
+    } else if ( strcasecmp( sAttr, "position.y" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, vAtomPosition(aAtom).dY );
+    } else if ( strcasecmp( sAttr, "position.z" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, vAtomPosition(aAtom).dZ );
+    } else if ( strcmp( sAttr, "hybridization" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, iAtomHybridization(aAtom) );
+    } else if ( strcasecmp( sAttr, "seq" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, iContainerSequence( aAtom ) );
+    } else if ( strcasecmp( sAttr, "parent" ) == 0 ) {
+        oResult = (OBJEKT)cContainerWithin( aAtom );
+        REF(oResult);
+    } else {
+        VPFATALEXIT("%s: non-existent attribute for an atom.\n", sAttr );
+        VP0("\tAtom attributes: charge, name, type, element, position[.x|.y|.z]\n");
+        VP0("\t\tpert, pertCharge, pertName, pertType, hybridization, seq, parent\n" );
+    }
+    return oResult;
 }
 
 
@@ -1141,7 +1212,7 @@ PARMSET         psSet;
                 iAromatic++;
                 break;
             default:
-                DFATAL(( "There is an illegal bond type" ));
+                DFATAL("There is an illegal bond type" );
                 break;
         }
     }
@@ -1270,7 +1341,7 @@ double  dScreenF;
     ParmSetAtom( psTemp, iTemp, sType, &dMass, &dPolar, &dEpsilon, &dR, 
                         &dEpsilon14, &dR14, &dScreenF, &iElement, &iHybrid,
 		       	sDesc );
-    MESSAGE(( "Type:  %s  r*:  %f\n", sType, dR ));
+    MESSAGE("Type:  %s  r*:  %f\n", sType, dR );
     VarArrayAdd( GvaVDWTypes, (GENP)sType );
     VarArrayAdd( GvaVDWValues, (GENP)&dR );
 

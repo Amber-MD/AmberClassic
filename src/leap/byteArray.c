@@ -122,8 +122,8 @@ void
 ByteArrayDescribe( BYTEARRAY baByteArray )
 {
     VERIFYOBJEKT( baByteArray, BYTEARRAYid );
-    VP0(( "BYTEARRAY size: %d\n", iByteArraySize(baByteArray) ));
-    VP0(( "BYTEARRAY= |%s|\n", PByteArray(baByteArray) ));
+    VP0("BYTEARRAY size: %d\n", iByteArraySize(baByteArray) );
+    VP0("BYTEARRAY= |%s|\n", PByteArray(baByteArray) );
 }
 
 

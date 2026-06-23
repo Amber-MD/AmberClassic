@@ -85,7 +85,7 @@ COLLECTION      cCollect;
             cCollect = (COLLECTION)lListCreate();
             break;
         default:
-            DFATAL( ("Unknown COLLECTION sub-class\n") );
+            DFATAL("Unknown COLLECTION sub-class\n");
             break;
     }
     
@@ -111,7 +111,7 @@ CollectionDestroy( COLLECTION *cPCollect )
             ListDestroy((LIST *)cPCollect);
             break;
         default:
-            DFATAL( ("Unknown COLLECTION sub-class\n") );
+            DFATAL("Unknown COLLECTION sub-class\n");
             break;
     }
 }
@@ -133,7 +133,7 @@ CollectionDescribe( COLLECTION cCollect )
             ListDescribe( (LIST)cCollect );
             break;
         default:
-            DFATAL( ("Unknown COLLECTION sub-class\n") );
+            DFATAL("Unknown COLLECTION sub-class\n");
             break;
     }
 }
@@ -159,8 +159,8 @@ GENP    PLoop;
             PLoop = (GENP)llListLoop( (LIST)cCollect );
             break;
         default:
-            DFATAL( ("Attempting to loop over invalid collection id: %d",
-                        iObjectType(cCollect) ) );
+            DFATAL("Attempting to loop over invalid collection id: %d",
+                        iObjectType(cCollect) );
     }
     return(PLoop);
 }
@@ -184,7 +184,7 @@ OBJEKT  oObj;
             oObj = oListNext((LISTLOOP *)PPNode);
             break;
         default:
-            DFATAL( ("Unknown COLLECTION sub-class\n") );
+            DFATAL("Unknown COLLECTION sub-class\n");
             break;
     }
     return(oObj);
@@ -215,8 +215,8 @@ COLLECTION      cNew;
             cNew = (COLLECTION) lListDuplicate((LIST)cCol);
             break;
         default:
-            DFATAL( ("Cannot duplicate unknown COLLECTION subclass id: %d",
-                        iObjectType(cCol) ) );
+            DFATAL("Cannot duplicate unknown COLLECTION subclass id: %d",
+                        iObjectType(cCol) );
             break;
     }
     

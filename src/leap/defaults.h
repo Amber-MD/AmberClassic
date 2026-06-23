@@ -1,3 +1,5 @@
+#ifndef DEFAULTS_H
+# define DEFAULTS_H
 
 typedef struct {
 	double	dDSearchDistance;
@@ -8,12 +10,12 @@ typedef struct {
 	int	pdbwritecharges;
 	int nocenter;
 	int reorder_residues;
+	int reverse_lists;
 	double	dGridSpace;
 	double	dShellExtent;
 	int	iDielectricFlag;
 	int	iGBparm;
-	int 	iOldPrmtopFormat;
-	int		iGibbs;
+	int	iGibbs;
 	int 	iCharmm; 
 	int	iResidueImpropers;
 	int	iDeleteExtraPointAngles;
@@ -27,7 +29,27 @@ typedef struct {
 	int     iCMAP;
 	int     iIPOL;    
 	int     iIPOLset;    /* indicate IPOL set in frcmod/parm.dat */
+
+        double  dPdbLinkCovalentCutoff;
+        double  dPdbCrosslinkCovalentCutoff;
+        int     iPdbIgnoreNonConnect;
+        int     iPdbReadModel;
+        int     iPdbConvertResName;
+        BOOL    bPdbAutoMatch;
+        BOOL    bPdbAutoLink;
+        BOOL    bPdbAutoLoadRes;
+        BOOL    bPdbUseLinkRecords;
+        BOOL    bPdbUseConect;
+        BOOL    bPdbLinkIons;
+        BOOL    bPdbResetChainID;
+        BOOL    bPdbExpandBioMt;
+        BOOL    bPdbExpandNCSMt;
+        BOOL    bPdbExpandSymm;
+        BOOL    bCIFReadAuth;
+        char    cPdbAltLocSelect;
+        STRING  sPdbPatchFilename;
 } defaultstruct ;
 
 extern defaultstruct GDefaults;
 
+#endif

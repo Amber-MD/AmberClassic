@@ -46,6 +46,21 @@
  *              can be used any way the programmer sees fit.
  *              More can be created as required.
  *
+ *              Goals:
+ *              DIRECTCONTENTS = loop over direct children, linked list order
+ *              DIRECTCONTENTSBYSEQNUM = direct children, sort order
+ *              DIRECTCONTENTSPARMORDER = direct children, PRMTOP order:
+ *                     sort by solvent_category, molecule_number, Sequence
+ *                     where solvent_category  0: non solvent, 1: RESTYPESOLVENT 2:RESIDUEINCAP
+ *                     and molecule number stored in residue iTemp
+ *
+ *              MOLECULES, RESIDUES, ATOMS,
+ *              CONTAINERS, INTERNALS = depth-first all matching objects
+ *                                   
+ *              BONDS, ANGLES, PROPERS, IMPROPERS, C4Pairwise = loops over 
+ *                      these objects stored in atoms
+ *
+ *
  */
 
 
@@ -119,6 +134,7 @@ FLAGS           fFlags;
 			/* If the TempInt field is being used to determine */
 			/* visibility, then check if the ATOM has the */
 			/* proper TempInt field */
+   // NOTE: it seems this is never used!
 
     if ( lPLoop->fVisibilityFlags & TEMPINTUSED ) {
 	if ( lPLoop->fVisibilityFlags & TEMPINTINVISIBLE ) {
@@ -476,13 +492,57 @@ TNONE:          break;
  *      are cA<cB, cA==cB, cA>cB.
  */
 static int
-iLoopContainerMatch( CONTAINER *cPA, CONTAINER *cPB )
+iLoopContainerMatch(const void *A, const void *B)
 {
+    CONTAINER *cPA = (CONTAINER *)A;
+    CONTAINER *cPB = (CONTAINER *)B;
     if ( iContainerSequence(*cPA)<iContainerSequence(*cPB) ) 
 	return(-1);
     if ( iContainerSequence(*cPA)==iContainerSequence(*cPB) ) 
 	return(0);
     return(1);
+}
+
+
+/*
+ *      iLoopParmOrder
+ */
+static int
+iLoopParmOrder(const void *A, const void *B)
+{
+    OBJEKT oA = *((OBJEKT*)A);
+    OBJEKT oB = *((OBJEKT*)B);
+    if (iObjectType(oA) == ATOMid) {
+        // If A is atom and B is not, A is a raw ATOM in a UNIT
+        // Raw ATOMs come last (and are excluded from UNITs) so A > B
+        if (iObjectType(oB) != ATOMid) return 1;
+        ATOM aA = (ATOM)oA;
+        ATOM aB = (ATOM)oB;
+        // Check if imaging atom this way because RESIDUEIMAGEATOM flag never implemented
+        BOOL bImagingA = aResidueImagingAtom(cContainerWithin(aA)) == aA;
+        BOOL bImagingB = aResidueImagingAtom(cContainerWithin(aB)) == aB;
+        if (bImagingA && !bImagingB) return -1;
+        if (bImagingB && !bImagingA) return 1;
+    } else if (iObjectType(oA) == RESIDUEid) {
+        if (iObjectType(oB) != RESIDUEid) return 1;
+        RESIDUE rA = (RESIDUE)oA;
+        RESIDUE rB = (RESIDUE)oB;
+        int iSolA = bResidueFlagsSet(rA, RESIDUEINCAP) ? 2 :
+                ((cResidueType(rA) == RESTYPESOLVENT) ? 1 : 0);
+        int iSolB = bResidueFlagsSet(rB, RESIDUEINCAP) ? 2 :
+                ((cResidueType(rB) == RESTYPESOLVENT) ? 1 : 0);
+        if (iSolA < iSolB) return -1;
+        else if (iSolA > iSolB) return 1;
+        // RESIDUE.iTemp MUST BE labelled with the molecule number
+        if (rA->iTemp < rB->iTemp) return -1;
+        if (rA->iTemp > rB->iTemp) return 1;
+    } else if (iObjectType(oA) == UNITid) {
+        // non-residues come last
+        return 1;
+    }
+    if (iContainerSequence((CONTAINER)oA) < iContainerSequence((CONTAINER)oB) ) return -1;
+    if (iContainerSequence((CONTAINER)oA) > iContainerSequence((CONTAINER)oB) ) return 1;
+    return 0;
 }
 
 
@@ -528,15 +588,13 @@ LOOPNODE	lnNew;
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Create an empty loop, over nothing.
- *      Further calls must be made to define what the loop is over
- *      and what it's goal is.
+ *      Create a loop over an objekt, with the given goal.
  *
  *      A loop over DIRECTCONTENTS returns only the OBJEKTs which
- *      are DIRECTLY contained within the cOver.
+ *      are DIRECTLY contained within the oOver.
  *
  *      A LOOP over DIRECTCONTENTSBYSEQNUM returns only the OBJEKTS
- *      which are DIRECTLY contained within cOver, sorted by
+ *      which are DIRECTLY contained within oOver, sorted by
  *      sequence number in ascending order.
  */
 LOOP
@@ -549,11 +607,11 @@ CONTAINER       *cPCur;
 CONTAINER	cTemp;
 
     if ( oOver == NULL ) {
-         DFATAL( ("Attempt to define LOOP over NULL") );
+         DFATAL("Attempt to define LOOP over NULL");
     }
     memset(&lL, 0, sizeof(lL));		/* for Purify */
 
-    MESSAGE(( "===Creating LOOP\n" ));
+    MESSAGE("===Creating LOOP\n" );
     lL.bInitialized 	  = FALSE;
     lL.bLoopDone          = FALSE;
 
@@ -579,7 +637,9 @@ CONTAINER	cTemp;
                 /* If the LOOP is by sequence number then first sort */
                 /* the CONTAINERs by sequence number and build a */
                 /* linked list */
-    if ( iGoal == DIRECTCONTENTSBYSEQNUM ) {
+    if ( iGoal == DIRECTCONTENTSBYSEQNUM ||
+         iGoal == DIRECTCONTENTSPARMORDER ) {
+
         i = iCollectionSize( cContainerContents(oOver) );
 	if ( i != 0 ) {
             vaSeqNum = vaVarArrayCreate( sizeof(CONTAINER) );
@@ -595,8 +655,10 @@ CONTAINER	cTemp;
 		cPCur++;
 	    }
 	    TESTMEMORY();
-            qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER),
-                (int (*) (const void *, const void *) )iLoopContainerMatch );
+            if ( iGoal == DIRECTCONTENTSBYSEQNUM )
+                qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER), iLoopContainerMatch );
+            else
+                qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER), iLoopParmOrder );
 	    TESTMEMORY();
                 /* Create the sorted linked list */
             cPCur = PVAI( vaSeqNum, CONTAINER, 0 );
@@ -659,7 +721,8 @@ ATOM                    aPrev, aBond;
                 /* Handle the loop differently if it's goal is */
                 /* DIRECTCONTENTSBYSEQNUM */
 
-    if ( lPLoop->iGoal == DIRECTCONTENTSBYSEQNUM ) {
+    if ( lPLoop->iGoal == DIRECTCONTENTSBYSEQNUM ||
+            lPLoop->iGoal == DIRECTCONTENTSPARMORDER ) {
         oObject = lPLoop->oaSubLoopOver[0];
         if ( oObject == NULL ) goto DONE;
         lPLoop->oaSubLoopOver[0] = (OBJEKT)cContainerLoopNext(oObject);
@@ -691,11 +754,11 @@ ATOM                    aPrev, aBond;
         AtomSetNextSpan( aPrev, NULL );
         for ( i=0; i<iAtomCoordination(lPLoop->aCurSpan); i++ ) {
             aBond = aAtomBondedNeighbor( lPLoop->aCurSpan, i );
-            MESSAGE(( "---Looking at: %s\n", sContainerName(aBond) ));
+            MESSAGE("---Looking at: %s\n", sContainerName(aBond) );
 
                         /* If the atom is visible then add it */
             if ( bSpanAtomVisible( lPLoop, aBond, &bSeenBefore ) ) {
-                MESSAGE(( "--- Visible\n" ));
+                MESSAGE("--- Visible\n" );
                 AtomSetSeenId( aBond, lPLoop->iSeenId );
                 AtomSetBackCount( aBond, iAtomBackCount(lPLoop->aCurSpan)+1 );
                 AtomSetBackSpan( aBond, (ATOM)lPLoop->aCurSpan );
@@ -703,14 +766,14 @@ ATOM                    aPrev, aBond;
                 AtomSetNextSpan( aBond, NULL );
                 aPrev = aBond;
             } else {
-                MESSAGE(( "--- NOT Visible\n" ));
+                MESSAGE("--- NOT Visible\n" );
 
                         /* If the atom is invisible, but has not been seen */
                         /* before then it counts as an invisible collision */
                         /* Increment the collision count and save the atom */
                         /* which caused the collision                      */
                 if ( !bSeenBefore ) {
-                    MESSAGE(( "--- COLLISION!\n" ));
+                    MESSAGE("--- COLLISION!\n" );
                     lPLoop->iInvisibleCollisions++; 
                     lPLoop->aLastCollision = (OBJEKT)aBond;
                 }

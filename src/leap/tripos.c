@@ -116,8 +116,8 @@ see below for usage examples.
                       if ( isprint(*r) ) { isallwhite=0; continue; } ;\
                       if ( iscntrl(*r) ) { ;\
                           *r = ' ' ;\
-                          VPWARN(( "Control character read; " \
-                              "it was converted to a space!\n" )) ;\
+                          VPWARN("Control character read; " \
+                              "it was converted to a space!\n" ) ;\
                       } ;\
                   } ;\
                   if ( ! isallwhite ) break ;\
@@ -139,9 +139,9 @@ see below for usage examples.
         }
     }
     if (!bGotIt) {
-        VPFATAL(( "Invalid MOL2 format.\n"
+        VPFATAL( "Invalid MOL2 format.\n"
                 "Cannot find case sensitive record type indicator: %s\n",
-                TRIPOS_MOLECULE ));
+                TRIPOS_MOLECULE );
         goto FAIL;
     }
 
@@ -149,15 +149,15 @@ see below for usage examples.
 
     uUnit = (UNIT) oCreate(UNITid);
     T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sUnitName), goto READFAIL);
-    VP0 ( ( "Reading MOLECULE named %s", sLine ) ) ;
+    VP0("Reading MOLECULE named %s", sLine);
     ContainerSetName(uUnit, sUnitName);
-    MESSAGE(("Reading unit: %s\n", sUnitName));
+    MESSAGE("Reading unit: %s\n", sUnitName);
     T_FSCANF(iRet, fIn, sLine,
              (sLine, "%d %d %d %d %d", &iFileAtoms, &iFileBonds,
               &iFileSubstructures, &iTemp, &iTemp), goto READFAIL);
-    MESSAGE(("Number of atoms: %d\n", iFileAtoms));
-    MESSAGE(("Number of bonds: %d\n", iFileBonds));
-    MESSAGE(("Number of substructures: %d\n", iFileSubstructures));
+    MESSAGE("Number of atoms: %d\n", iFileAtoms);
+    MESSAGE("Number of bonds: %d\n", iFileBonds);
+    MESSAGE("Number of substructures: %d\n", iFileSubstructures);
 
     /* Search for the TRIPOS_ATOM string */
 
@@ -170,9 +170,9 @@ see below for usage examples.
         }
     }
     if (!bGotIt) {
-        VPFATAL(( "Invalid MOL2 format.\n"
+        VPFATAL("Invalid MOL2 format.\n"
                 "Cannot find case sensitive record type indicator: %s\n",
-                TRIPOS_ATOM ));
+                TRIPOS_ATOM );
         goto FAIL;
     }
 
@@ -185,8 +185,8 @@ see below for usage examples.
                  (sLine, "%d %s %lf %lf %lf %s %d %s %lf", &iIndex, sName,
                   &dX, &dY, &dZ, sType, &iResidue, sTemp, &dCharge), goto READFAIL);
         if (iRet != 9) {
-            VPFATAL(( "Invalid MOL2 format.\n"
-                    "Incorrect number of items in atom record.\n" ));
+            VPFATAL("Invalid MOL2 format.\n"
+                    "Incorrect number of items in atom record.\n" );
             goto FAIL;
         }
 
@@ -195,7 +195,7 @@ see below for usage examples.
         iResidue = iResidue > iFileSubstructures ? iFileSubstructures : iResidue;
         iResidue = iResidue < 1 ? 1 : iResidue;
 
-        MESSAGE((" Atom: %s\n", sName));
+        MESSAGE(" Atom: %s\n", sName);
         aAtom = (ATOM) oCreate(ATOMid);
         ContainerSetName(aAtom, sName);
         AtomSetTempInt(aAtom, iResidue);
@@ -221,9 +221,9 @@ see below for usage examples.
 
     T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sCmd), goto READFAIL);
     if (strcmp(sCmd, TRIPOS_BOND) != 0) {
-        VPFATAL(( "Invalid MOL2 format.\n"
+        VPFATAL("Invalid MOL2 format.\n"
                 "Cannot find case sensitive record type indicator: %s\n",
-                TRIPOS_BOND ));
+                TRIPOS_BOND );
         goto FAIL;
     }
 
@@ -233,15 +233,15 @@ see below for usage examples.
         T_FSCANF(iRet, fIn, sLine,
                  (sLine, "%d %d %d %s", &iIndex, &iA, &iB, sOrder), goto READFAIL);
         if (iRet != 4) {
-            VPFATAL(( "Invalid MOL2 format.\n"
-                    "Incorrect number of items in bond record.\n" ));
+            VPFATAL("Invalid MOL2 format.\n"
+                    "Incorrect number of items in bond record.\n" );
             goto FAIL;
         }
 
-        MESSAGE((" Bond %d - %d\n", iA, iB));
+        MESSAGE(" Bond %d - %d\n", iA, iB);
         if (iA > iAtoms || iB > iAtoms) {
-            VPFATAL(( "Invalid MOL2 format.\n"
-                    "Cannot form bond between atoms %d and %d.\n", iA, iB ));
+            VPFATAL("Invalid MOL2 format.\n"
+                    "Cannot form bond between atoms %d and %d.\n", iA, iB );
             goto FAIL;
         } else {
             aA = *PVAI(vaAtoms, ATOM, iA - 1);
@@ -268,9 +268,9 @@ see below for usage examples.
     if( iFileSubstructures ){
         T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sCmd), goto READFAIL);
         if (strcmp(sCmd, TRIPOS_SUBSTRUCTURE) != 0) {
-            VPFATAL(( "Invalid MOL2 format.\n"
+            VPFATAL("Invalid MOL2 format.\n"
                     "Cannot find case sensitive record type indicator: %s\n",
-                    TRIPOS_SUBSTRUCTURE ));
+                    TRIPOS_SUBSTRUCTURE );
             goto FAIL;
         }
 
@@ -280,12 +280,12 @@ see below for usage examples.
                      (sLine, "%d %s %d %s", &iIndex, sName, &iRootAtom, sType),
                      goto READFAIL);
             if (iRet != 4) {
-                VPFATAL(( "Invalid MOL2 format.\n"
-                        "Incorrect number of items in substructure record.\n" ));
+                VPFATAL("Invalid MOL2 format.\n"
+                        "Incorrect number of items in substructure record.\n" );
                 goto FAIL;
             }
 
-            MESSAGE((" Substructure: %s\n", sName));
+            MESSAGE(" Substructure: %s\n", sName);
             rRes = (RESIDUE) oCreate(RESIDUEid);
             ContainerSetName(rRes, sName);
             ContainerSetSequence(rRes, iIndex);
@@ -303,7 +303,7 @@ see below for usage examples.
     }
 
     /* Connect everything together */
-    MESSAGE((" Building the UNIT\n" ));
+    MESSAGE(" Building the UNIT\n" );
 
     /* Put the ATOMs within the RESIDUES */
 
@@ -409,7 +409,7 @@ see below for usage examples.
     return (uUnit);
 
   READFAIL:
-    VPFATAL(( "Error during reading of MOL2 file.\n" ));
+    VPFATAL("Error during reading of MOL2 file.\n" );
   FAIL:
     /* Destroy everything */
     if (vaAtoms) {
@@ -426,6 +426,6 @@ see below for usage examples.
         }
         VarArrayDestroy(&vaResidues);
     }
-    VPFATALDELAYEDEXIT(( "Last line read: %s", sLine ));
+    VPFATALDELAYEDEXIT("Last line read: %s", sLine );
     return (NULL);
 }

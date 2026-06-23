@@ -48,9 +48,25 @@
  *      measure
  *      select   - change this one
  *      deSelect
+ *
+ *
+ * This help text pattern:
+ *
+ *        hTemp = hHelp( "addions" );
+ *        if ( hTemp == NULL ) {
+ *              VPFATALDELAYEDEXIT("No help available on addIons\n" );
+ *        } else {
+ *              VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
+ *        }
+ *
+ * Should be replaced by:
+ *        VPFATALDELAYEDEXIT("%s",sHelpText("addIons") );
+ *
+ *  where 1) sHelptext() searche tolower(arg) and the return includes newline character
+ *        2) if nor found, return a pointer to buffer with sprintf(buffer,"No help available on %s\n",arg)
  */
 
-/*        Modifications 
+/*        Modifications
  *        Christine Cezard  (2007)
  *        Universite de Picardie - Jules Verne, Amiens
  *        http://q4md-forcefieldtools.org
@@ -60,17 +76,17 @@
  *           &  Relax
  *              commands
  *        Added case i (integer) in function bCmdMatchTypes
- * 
- * 
+ *
+ *
  *        Robin Betz (2011, 2013)
  *        UC San Diego
- * 
+ *
  *        Added addIonsRand
  *        Added saveAmberParmNetCDF
- * 
+ *
 */
 
-/*        Modifications 
+/*        Modifications
  *        Mason Louchart  (2011)
  *        Universite de Picardie - Jules Verne, Amiens
  *        http://q4md-forcefieldtools.org
@@ -110,6 +126,7 @@
 #include        "mol3File.h"
 #include        "minimizer.h"
 #include        "model.h"
+#include        "elements.h"
 
 int     iMemDebug = 0;
 int     iC4count = 0; //NewT
@@ -127,7 +144,7 @@ extern BOOL             bCmdDeleteObj;
 void VarArrayDeleteMore( VARARRAY header, int pos, int num);
 void SelectRelaxInFramework(UNIT uUnit, MINIMIZER mMinimizer);
 
-/* 
+/*
  *  COMMANDt    cCommands[]
  *
  *      table mapping command oCmd_ routines to strings
@@ -158,7 +175,7 @@ void SelectRelaxInFramework(UNIT uUnit, MINIMIZER mMinimizer);
  *
  *      See 'bCmdGoodArguments' for a description of the type characters.
  */
-static  BOOL    
+static  BOOL
 bCmdMatchTypes( OBJEKT oObj, char **sPTypes, char *sNeedType, int *iPCount )
 {
 char    *sTemp;
@@ -170,67 +187,67 @@ char    *sTemp;
     while ( (**sPTypes!=' ') && (**sPTypes!='\0') ) {
         (*sPTypes)++;
     }
-    if ( **sPTypes==' ' ) 
+    if ( **sPTypes==' ' )
         (*sPTypes)++;
     do {
         switch ( *sTemp ) {
-            case '*': 
+            case '*':
                 return(TRUE);
-            case 'u': 
-                if ( iObjectType(oObj) == UNITid ) 
+            case 'u':
+                if ( iObjectType(oObj) == UNITid )
                         return(TRUE);
                 strcat( sNeedType, "unit" );
                 break;
-            case 'm': 
-                if ( iObjectType(oObj) == MOLECULEid ) 
-                        return(TRUE); 
+            case 'm':
+                if ( iObjectType(oObj) == MOLECULEid )
+                        return(TRUE);
                 strcat( sNeedType, "molecule" );
                 break;
             case 'r':
-                if ( iObjectType(oObj) == RESIDUEid ) 
+                if ( iObjectType(oObj) == RESIDUEid )
                         return(TRUE);
                 strcat( sNeedType, "residue" );
                 break;
-            case 'a': 
-                if ( iObjectType(oObj) == ATOMid ) 
+            case 'a':
+                if ( iObjectType(oObj) == ATOMid )
                         return(TRUE);
                 strcat( sNeedType, "atom" );
                 break;
             case 'l':
-                if ( iObjectType(oObj) == LISTid ) 
+                if ( iObjectType(oObj) == LISTid )
                         return(TRUE);
                 strcat( sNeedType, "list" );
                 break;
             case 'n':
-                if ( iObjectType(oObj) == ODOUBLEid ) 
+                if ( iObjectType(oObj) == ODOUBLEid )
                         return(TRUE);
                 strcat( sNeedType, "number" );
                 break;
             case 'i':
-                if ( iObjectType(oObj) == OINTEGERid ) 
+                if ( iObjectType(oObj) == OINTEGERid )
                         return(TRUE);
                 strcat( sNeedType, "integer" );
                 break;
             case 's':
-                if ( iObjectType(oObj) == OSTRINGid ) 
+                if ( iObjectType(oObj) == OSTRINGid )
                         return(TRUE);
                 strcat( sNeedType, "string" );
                 break;
             case 'p':
-                if ( iObjectType(oObj) == PARMSETid ) 
+                if ( iObjectType(oObj) == PARMSETid )
                         return(TRUE);
                 strcat( sNeedType, "parameter_set" );
                 break;
             case 'z':
-                if ( oObj == NULL ) 
+                if ( oObj == NULL )
                         return(TRUE);
                 strcat( sNeedType, "null" );
                 break;
             case '\0':
-            case ' ': 
+            case ' ':
                 return(FALSE);
             default:
-                DFATAL(( "ILLEGAL type character in bCmdMatchTypes" ));
+                DFATAL("ILLEGAL type character in bCmdMatchTypes" );
         }
         sTemp++;
         if ( *sTemp != ' ' && *sTemp ) {
@@ -240,9 +257,6 @@ char    *sTemp;
     } while ( *sTemp != '\0' );
     return(FALSE);
 }
-
-
-
 
 
 /*
@@ -266,15 +280,19 @@ char    *sTemp;
  *      i       - Matches an INTEGER
  *      s       - Matches an OSTRING.
  *      p       - Matches a PARMSET.
- *      z       - Matches a NULL.
+ *      z       - Matches a NULL. (literal string "null")
  *
  *      Eg:  "* umra l s" will match anything in [0],
  *              a UNIT/MOLECULE/RESIDUE/ATOM in [1],
  *              a LIST in [2], and an OSTRING in [3].
- *      
+ *
  *      The arguments in the oaArgs array are either OBJEKTs or
  *      they are ASSOCs.  If they are ASSOCs then the OBJEKT within
  *      the ASSOC is tested.
+ *
+ *      TODO: This should have a non-fatal option to query different
+ *      allowed option sets, or possibly have a marker in sTypes
+ *      to indicate "option liat allowed to end here"
  */
 static  BOOL
 bCmdGoodArguments( char *sCmd, int iArgCount, ASSOC aaArgs[], char *sTypes )
@@ -292,7 +310,7 @@ int             iNeedCount;
     } else {
         iNeeded = 1;
         for ( i=0; i<strlen(sTypes); i++ ) {
-            if ( sTypes[i] == ' ' ) 
+            if ( sTypes[i] == ' ' )
                 iNeeded++;
         }
     }
@@ -300,7 +318,7 @@ int             iNeedCount;
                 /* Check the number of arguments */
 
     if ( iArgCount != iNeeded ) {
-        VPFATAL(( "%s: Improper number of arguments!\n", sCmd ));
+        VPFATAL("%s: Improper number of arguments!\n", sCmd );
         return(FALSE);
     }
 
@@ -310,14 +328,14 @@ int             iNeedCount;
 
     for ( i=0; i<iArgCount; i++ ) {
         oObj = (OBJEKT)aaArgs[i];
-        if ( iObjectType(oObj) == ASSOCid ) 
+        if ( iObjectType(oObj) == ASSOCid )
                 oObj = oAssocObject(oObj);
         if ( !bCmdMatchTypes( oObj, &sTypes, sNeed, &iNeedCount ) ) {
-            VPFATAL(( "%s: Argument #%d is of type %s must be of type: [%s]\n"
+            VPFATAL("%s: Argument #%d is of type %s must be of type: [%s]\n"
                       "    Here are some suggestions for correcting this error:\n"
                       "    Verify the type of an argument with the desc command.\n"
                       "    Check for alternate argument names with the list command.\n",
-                sCmd, i+1, sObjectType(oObj), sNeed ));
+                sCmd, i+1, sObjectType(oObj), sNeed );
             return(FALSE);
         }
     }
@@ -356,19 +374,19 @@ OBJEKT          oObj;
 #endif
 
 
-        
-    
+
+
 
 
 /*
  *=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  *
  *      Actual commands
- * 
+ *
  */
 
 
-    
+
 /*
  *      oCmd_quit
  *
@@ -379,14 +397,13 @@ OBJEKT
 oCmd_quit( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "quit", iArgCount, aaArgs, (char *)"" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  quit\n" ));
+        VPFATALDELAYEDEXIT("usage:  quit\n" );
         return(NULL);
     }
 
     GrMainResult.iCommand = CQUIT;
-    VP0(( "\tQuit\n" ));
+    VP0("\tQuit\n" );
     VPEPILOG( );
- 
     return(NULL);
 }
 
@@ -403,7 +420,7 @@ OBJEKT
 oCmd_describe( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "desc", iArgCount, aaArgs, "*" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  desc <variable>\n" ));
+        VPFATALDELAYEDEXIT("usage:  desc <variable>\n" );
         return(NULL);
     }
 
@@ -425,12 +442,12 @@ OBJEKT
 oCmd_debugOn( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "debugOn", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  debugOn <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  debugOn <filename>\n" );
         return(NULL);
     }
 
     MessageAddFile( sOString(oAssocObject(aaArgs[0])) );
-    VP0(( "Messages will be displayed from the files:\n" ));
+    VP0("Messages will be displayed from the files:\n" );
     MessageFileList();
     return(NULL);
 }
@@ -447,12 +464,12 @@ OBJEKT
 oCmd_debugOff( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "debugOff", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  debugOff <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  debugOff <filename>\n" );
         return(NULL);
     }
 
     MessageRemoveFile( sOString(oAssocObject(aaArgs[0])) );
-    VP0(( "Messages will be displayed from the files:\n" ));
+    VP0("Messages will be displayed from the files:\n" );
     MessageFileList();
     return(NULL);
 }
@@ -484,26 +501,30 @@ char            *sCmd = "debugStatus";
 char            *sUsage = "usage:  debugStatus [testMemoryOff|testMemoryOn]\n";
 
     if ( iArgCount == 0 ) {
-        if ( !bCmdGoodArguments( sCmd,  iArgCount, aaArgs, "" ) ) 
+        if ( !bCmdGoodArguments( sCmd,  iArgCount, aaArgs, "" ) )
                 return(NULL);
-        VP0(( "Current memory usage: %ld bytes\n", GiMemoryAllocated ));
-        VP0(( "Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) ));
+        VP0("Current memory usage: %ld bytes\n", GiMemoryAllocated );
+        VP0("Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) );
         return(NULL);
     }
     if ( !bCmdGoodArguments( "debugStatus", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATALDELAYEDEXIT("%s",sUsage );
         return(NULL);
     }
 
     oObj = oAssocObject(aaArgs[0]);
     strcpy( sOption, sOString(oObj) );
     if ( strcmp( sOption, "testMemoryOn" ) == 0 ) {
+#if MEMORY_DEBUG == MEM_NO_DEBUG
+        VPWARN("Memory debugging disabled at compile time, command ignored.\n");
+#else
         TEST_MEMORY_ON( TRUE );
+#endif
     } else if ( strcmp( sOption, "testMemoryOff" ) == 0 ) {
         TEST_MEMORY_ON( FALSE );
     } else {
-        VPFATAL(( "%s: Illegal option: %s\n", sCmd, sOption ));
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATAL("%s: Invalid option: %s\n", sCmd, sOption );
+        VPFATALDELAYEDEXIT("%s",sUsage );
     }
 
     return(NULL);
@@ -511,7 +532,7 @@ char            *sUsage = "usage:  debugStatus [testMemoryOff|testMemoryOn]\n";
 
 
 
-                        
+
 
 
 /*
@@ -532,32 +553,32 @@ HELP            hTemp;
     iColumns = 4;
 
     if ( iArgCount == 0 ) {
-        VP0(( "Help is available on the following subjects:\n\n" ));
+        VP0("Help is available on the following subjects:\n\n" );
         HelpLoop();
         while ( (hTemp = hHelpNext()) ) {
-            if ( i % iColumns ) { 
+            if ( i % iColumns ) {
                 /* columns 0-(end-1) */
-                VP0(( "%-20s", sHelpUpSubject(hTemp) ));
+                VP0("%-22s", sHelpUpSubject(hTemp) );
             } else {
                 /* last column in line */
-                VP0(( "%s\n", sHelpUpSubject(hTemp) ));
+                VP0("%s\n", sHelpUpSubject(hTemp) );
             }
             i++;
         }
         if ( (i-1) % iColumns )
-            VP0(( "\n" ));      /* close final part line */
+            VP0("\n" );      /* close final part line */
 
         i = 0;
-        VP0(( "\nFor a list of the current aliases, type \"alias\".\n" ));
+        VP0("\nFor a list of the current aliases, type \"alias\".\n" );
     } else if ( !bCmdGoodArguments( "help", iArgCount, aaArgs, "s" )) {
-            VP0(( "usage:  help <command>\n" ));
+            VP0("usage:  help <command>\n" );
     } else {
         hTemp = hHelp( sOString(oAssocObject(aaArgs[0])));
         if ( hTemp == NULL ) {
-                VP0(( "No help available.\n" ));
+                VP0("No help available.\n" );
         } else {
-                VP0(( "\n" ));
-                VP0(( "%s\n", sHelpText(hTemp) ));
+                VP0("\n" );
+                VP0("%s\n", sHelpText(hTemp) );
         }
     }
     return(NULL);
@@ -577,8 +598,8 @@ HELP            hTemp;
 OBJEKT
 oCmd_list( int iArgCount, ASSOC aaArgs[] )
 {
-    if ( !bCmdGoodArguments( "list", iArgCount, aaArgs, "" ) ) 
-        VPFATALDELAYEDEXIT(( "usage:  list\n" ));
+    if ( !bCmdGoodArguments( "list", iArgCount, aaArgs, "" ) )
+        VPFATALDELAYEDEXIT("usage:  list\n" );
     else
         VariablesList();
     return(NULL);
@@ -604,22 +625,22 @@ OBJEKT          oObj;
 LIBRARY         ul;
 
     if ( !bCmdGoodArguments( "loadOff", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  loadOff <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  loadOff <filename>\n" );
         return(NULL);
     }
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
 
-    ul = lLibraryOpen( sFilename, OPENREADONLY ); 
-    if ( ul == NULL ) 
+    ul = lLibraryOpen( sFilename, OPENREADONLY );
+    if ( ul == NULL )
         return(NULL);
 
-    VP0(( "Loading library: %s\n", GsBasicsFullName )); 
+    VP0("Loading library: %s\n", GsBasicsFullName );
 
     LibraryLoop( ul );
     do {
         sNext = sLibraryNext( ul );
         if ( sNext != NULL ) {
-            VP1(( "Loading: %s\n", sNext ));
+            VP1("Loading: %s\n", sNext );
             oObj = oLibraryLoad( ul, sNext );   /* comes w/ 1 REF */
             VariableSet( sNext, oObj );         /* adds 1 REF */
             DEREF( oObj );                      /* balance REF */
@@ -635,14 +656,14 @@ LIBRARY         ul;
                 ParmLibAddParmSet( GplAllParameters, (PARMSET)oObj );
                 ParmLibDefineDefault( GplAllParameters );
             }
-        } 
+        }
     } while ( sNext != NULL );
 
     LibraryClose( &ul );
-    
+
     return(NULL);
 }
-        
+
 
 
 
@@ -670,7 +691,7 @@ RESIDUE         rRes;
 int             iDum;
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "l" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  sequence <LIST>\n" ));
+        VPFATALDELAYEDEXIT("usage:  sequence <LIST>\n" );
         return(NULL);
     }
     llElements = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
@@ -678,43 +699,43 @@ int             iDum;
                 /* Get the first element from the list */
 
     aAss = (ASSOC)oListNext(&llElements);
-    MESSAGE(( "Copying the first UNIT\n" ));
+    MESSAGE("Copying the first UNIT\n" );
     if ( iObjectType(oAssocObject(aAss)) != UNITid ) {
-        VPFATALEXIT(( "%s: Illegal UNIT at position #1.\n", sCmd ));
+        VPFATALEXIT("%s: Invalid UNIT at position #1.\n", sCmd );
         return(NULL);
     }
 
                 /* Get the first UNIT and build INTERNALs */
 
     uFirst = (UNIT)oCopy(oAssocObject(aAss));
-    VP1(( "Sequence: %s\n", sContainerName((CONTAINER) uFirst) ));
+    VP1("Sequence: %s\n", sContainerName((CONTAINER) uFirst) );
     while ( (aAss = (ASSOC)oListNext(&llElements)) ) {
         uUnit = (UNIT)oAssocObject(aAss);
         if ( uUnit == NULL ) {
-                VP0(( "Unknown UNIT: %s\n", sAssocName(aAss) ));
+                VP0("Unknown UNIT: %s\n", sAssocName(aAss) );
         } else {
 
-            MESSAGE(( "Copying a subsequent UNIT\n" ));
+            MESSAGE("Copying a subsequent UNIT\n" );
 
                 /* If the object is not a UNIT then destroy what we have */
                 /* up to this point and return */
 
             if ( iObjectType(uUnit) != UNITid ) {
                 Destroy((OBJEKT *)&uFirst);
-                VPFATALEXIT(( "%s: Illegal UNIT named: %s\n", sCmd,
-                        sAssocName(aAss) ));
+                VPFATALEXIT("%s: Invalid UNIT named: %s\n", sCmd,
+                        sAssocName(aAss) );
                 return(NULL);
             }
 
                         /* Copy the next UNIT */
 
             uSecond = (UNIT)oCopy( (OBJEKT)uUnit );
-            VP1(( "Sequence: %s\n", sContainerName((CONTAINER) uSecond) ));
+            VP1("Sequence: %s\n", sContainerName((CONTAINER) uSecond) );
 
                         /* Build INTERNALs for the next UNIT */
 
-            MESSAGE(( "Building internals for subsequent UNIT\n" ));
-            BuildInternalsForContainer( (CONTAINER) uSecond, 
+            MESSAGE("Building internals for subsequent UNIT\n" );
+            BuildInternalsForContainer( (CONTAINER) uSecond,
                         ATOMNEEDSBUILD, ATOMPOSITIONKNOWN );
 
             aConnect = aUnitHead( uSecond );
@@ -724,7 +745,7 @@ int             iDum;
                                         ATOMNEEDSBUILD,
                                         0 );
             }
-            MESSAGE(( "Joining two UNITS deleting the second\n" ));
+            MESSAGE("Joining two UNITS deleting the second\n" );
             UnitSequence( uFirst, uSecond );
 
             if ( aConnect != NULL ) {
@@ -772,14 +793,14 @@ FILE            *fMol2;
 UNIT            uUnit;
 
     if ( !bCmdGoodArguments( "loadMol2", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = loadMol2 <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = loadMol2 <filename>\n" );
         return(NULL);
     }
 
     fMol2 = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
     if ( fMol2 == NULL ) return(NULL);
 
-    VP0(( "Loading Mol2 file: %s\n", GsBasicsFullName )); 
+    VP0("Loading Mol2 file: %s\n", GsBasicsFullName );
     uUnit = uTriposReadUnit( fMol2 );
     fclose(fMol2);
 
@@ -808,20 +829,50 @@ FILE            *fMol3;
 UNIT            uUnit;
 
     if ( !bCmdGoodArguments( "loadMol3", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = loadMol3 <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = loadMol3 <filename>\n" );
         return(NULL);
     }
 
     fMol3 = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
     if ( fMol3 == NULL ) return(NULL);
 
-    VP0(( "Loading Mol3 file: %s\n", GsBasicsFullName ));
+    VP0("Loading Mol3 file: %s\n", GsBasicsFullName );
     uUnit = uTriposReadUnit( fMol3 );
 
     fclose(fMol3);
     return((OBJEKT)uUnit);
 }
 
+
+/*
+ *      oCmd_loadCif
+ *
+ *      Author: Christian Schafmeister (1991)
+ *
+ *      Load a UNIT from a PDB file.
+ *
+ *      Arguments:
+ *              [0]     - OSTRING, filename.
+ */
+OBJEKT
+oCmd_loadCif( int iArgCount, ASSOC aaArgs[] )
+{
+FILE            *fCif;
+UNIT            uUnit;
+    if ( !bCmdGoodArguments( "loadCif", iArgCount, aaArgs, "s" ) ) {
+        VPFATALDELAYEDEXIT("usage:  <variable> = loadCif <filename>\n" );
+        return(NULL);
+    }
+
+    fCif = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
+    if ( fCif == NULL ) return(NULL);
+
+    VP0("Loading CIF file: %s\n", GsBasicsFullName );
+    uUnit = uPdbRead( fCif, NULL, TRUE );
+    fclose(fCif);
+
+    return((OBJEKT)uUnit);
+}
 
 /*
  *      oCmd_loadPdb
@@ -838,19 +889,19 @@ oCmd_loadPdb( int iArgCount, ASSOC aaArgs[] )
 {
 FILE            *fPdb;
 UNIT            uUnit;
-
     if ( !bCmdGoodArguments( "loadPdb", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = loadPdb <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = loadPdb <filename>\n" );
         return(NULL);
     }
 
     fPdb = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
     if ( fPdb == NULL ) return(NULL);
 
-    VP0(( "Loading PDB file: %s\n", GsBasicsFullName )); 
-    uUnit = uPdbRead( fPdb, NULL );
+    VP0("Loading PDB file: %s\n", GsBasicsFullName );
+    uUnit = uPdbRead( fPdb, NULL, FALSE );
     fclose(fPdb);
 
+    // TODO:  Name UNIT based on filename?
     return((OBJEKT)uUnit);
 }
 
@@ -881,7 +932,7 @@ LISTLOOP        llLoop;
 char            *sCmd = "loadPdbUsingSeq";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s l" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = loadPdbUsingSeq <filename> <unitLIST>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = loadPdbUsingSeq <filename> <unitLIST>\n" );
         return(NULL);
     }
 
@@ -900,7 +951,7 @@ char            *sCmd = "loadPdbUsingSeq";
         oObj = oAssocObject(aObj);
         *PVAI( vaUnits, UNIT, i ) = (UNIT)oObj;
         if ( iObjectType(oObj) != UNITid ) {
-            VP0(( "%s: %s is not a unit!\n", sCmd, sAssocName(aObj) ));
+            VP0("%s: %s is not a unit!\n", sCmd, sAssocName(aObj) );
             iErr++;
         }
         i++;
@@ -908,14 +959,14 @@ char            *sCmd = "loadPdbUsingSeq";
     if ( iErr ) {
         VarArrayDestroy( &vaUnits );
         fclose(fPdb);
-        VP0(( "Not loaded\n" ));
+        VP0("Not loaded\n" );
         return(NULL);
     }
 
 
-    VP0(( "Loading PDB file: %s using sequence %s\n", 
-                GsBasicsFullName, sAssocName(aaArgs[1]) )); 
-    uUnit = uPdbRead( fPdb, vaUnits );
+    VP0("Loading PDB file: %s using sequence %s\n",
+                GsBasicsFullName, sAssocName(aaArgs[1]) );
+    uUnit = uPdbRead( fPdb, vaUnits, FALSE);
 
     VarArrayDestroy( &vaUnits );
 
@@ -950,7 +1001,7 @@ ASSOC           aObj;
 char            *sCmd = "saveOff";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "upl s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  saveOff <object> <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  saveOff <object> <filename>\n" );
         return(NULL);
     }
 
@@ -960,8 +1011,8 @@ char            *sCmd = "saveOff";
     DisplayerAccumulateUpdates();
     if ( iObjectType( oAssocObject(aaArgs[0]) ) == UNITid ||
          iObjectType( oAssocObject(aaArgs[0]) ) == PARMSETid ) {
-        VP1(( "Saving %s.\n", sAssocName(aaArgs[0]) ));
-        LibrarySave( ul, sAssocName(aaArgs[0]), 
+        VP1("Saving %s.\n", sAssocName(aaArgs[0]) );
+        LibrarySave( ul, sAssocName(aaArgs[0]),
                         oAssocObject(aaArgs[0]), NULL );
     } else {
         oObj = oAssocObject(aaArgs[0]);
@@ -970,11 +1021,11 @@ char            *sCmd = "saveOff";
             oObj = oAssocObject(aObj);
             if ( iObjectType(oObj) != UNITid &&
                  iObjectType(oObj) != PARMSETid ) {
-                VP0(( "%s: Cannot save %s - type %s (ignoring).\n", 
-                        sCmd, sAssocName(aObj), sObjectType(oObj) ));
+                VP0("%s: Cannot save %s - type %s (ignoring).\n",
+                        sCmd, sAssocName(aObj), sObjectType(oObj) );
             } else {
-                VP1(( "Saving %s.\n", sAssocName(aObj) ));
-                LibrarySave( ul, sAssocName(aObj), 
+                VP1("Saving %s.\n", sAssocName(aObj) );
+                LibrarySave( ul, sAssocName(aObj),
                                 oAssocObject(aObj), NULL );
             }
         }
@@ -990,7 +1041,7 @@ char            *sCmd = "saveOff";
  *      Davids Changes
  *
  */
- 
+
 /*
  *      oCmd_createParmset
  *
@@ -1001,13 +1052,13 @@ char            *sCmd = "saveOff";
  *      Arguments:
  *              [0]     - OSTRING PARMSET name.
  */
-OBJEKT 
+OBJEKT
 oCmd_createParmset( int iArgCount, ASSOC aaArgs[] )
 {
 PARMSET         psParmSet;
 
     if ( !bCmdGoodArguments( "createParmset",  iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = createParmset <name>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = createParmset <name>\n" );
         return(NULL);
     }
 
@@ -1035,7 +1086,7 @@ oCmd_createUnit( int iArgCount, ASSOC aaArgs[] )
 UNIT            uUnit;
 
     if ( !bCmdGoodArguments( "createUnit", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = createUnit <name>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = createUnit <name>\n" );
         return(NULL);
     }
 
@@ -1066,7 +1117,7 @@ TODO - no help for this.. write & rename to createMolecule
 or delete this cmd
 */
     if ( !bCmdGoodArguments( "moleculeCreate", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = moleculecreate <name>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = moleculecreate <name>\n" );
         return(NULL);
     }
 
@@ -1093,7 +1144,7 @@ oCmd_createResidue( int iArgCount, ASSOC aaArgs[] )
 RESIDUE         rRes;
 
     if ( !bCmdGoodArguments( "createResidue", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = createResidue <name>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = createResidue <name>\n" );
         return(NULL);
     }
 
@@ -1126,7 +1177,7 @@ ATOM            aAtom;
 char            *sCmd = "createAtom";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s n" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = createAtom <name> <type> <charge>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = createAtom <name> <type> <charge>\n" );
         return(NULL);
     }
 
@@ -1163,7 +1214,7 @@ STRING          sTemp;
 char            *sCmd = "add";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umr mra" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  add <unit/residue/atom> <unit/residue/atom>\n" ));
+        VPFATALDELAYEDEXIT("usage:  add <unit/residue/atom> <unit/residue/atom>\n" );
         return(NULL);
     }
 
@@ -1171,24 +1222,24 @@ char            *sCmd = "add";
     oB = oAssocObject(aaArgs[1]);
     iA = iObjectType(oA);
     iB = iObjectType(oB);
-    if ( (iA==UNITid) && 
+    if ( (iA==UNITid) &&
         !((iB==MOLECULEid)||(iB==RESIDUEid)||(iB==ATOMid)) ) {
-        VP0(( "%s: UNITs cannot contain UNITs.\n", sCmd ));
+        VP0("%s: UNITs cannot contain UNITs.\n", sCmd );
         return(NULL);
     }
-    if ( (iA==MOLECULEid) && 
+    if ( (iA==MOLECULEid) &&
         !((iB==RESIDUEid)||(iB==ATOMid)) ) {
-        VP0(( "%s: MOLECULEs can only contain RESIDUEs and ATOMs.\n", sCmd ));
+        VP0("%s: MOLECULEs can only contain RESIDUEs and ATOMs.\n", sCmd );
         return(NULL);
     }
     if ( (iA==RESIDUEid) && (iB!=ATOMid) ) {
-        VP0(( "%s: Residues can only contain ATOMs.\n", sCmd ));
+        VP0("%s: Residues can only contain ATOMs.\n", sCmd );
         return(NULL);
     }
     if ( cContainerWithin((CONTAINER) oB) != NULL ) {
-        VP0(( "%s: The object %s is already contained within %s\n",
-                sCmd, sAssocName(aaArgs[1]), 
-                sContainerFullDescriptor( cContainerWithin((CONTAINER) oB), sTemp ) ));
+        VP0("%s: The object %s is already contained within %s\n",
+                sCmd, sAssocName(aaArgs[1]),
+                sContainerFullDescriptor( cContainerWithin((CONTAINER) oB), sTemp ) );
         return(NULL);
     }
     ContainerAdd( (CONTAINER)oA, oB );
@@ -1216,7 +1267,7 @@ OBJEKT          oA, oB;
 char            *sCmd = "remove";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umr mra" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  remove <unit/residue/atom> <unit/residue/atom>\n" ));
+        VPFATALDELAYEDEXIT("usage:  remove <unit/residue/atom> <unit/residue/atom>\n" );
         return(NULL);
     }
 
@@ -1225,8 +1276,8 @@ char            *sCmd = "remove";
 
     REF( oB );  /* bContainerRemove() needs this */
     if ( !bContainerRemove( (CONTAINER)oA, oB ) ) {
-        VP0(( "%s: Could not find %s within %s.\n",
-                sCmd, sAssocName(aaArgs[1]), sAssocName(aaArgs[0]) ));
+        VP0("%s: Could not find %s within %s.\n",
+                sCmd, sAssocName(aaArgs[1]), sAssocName(aaArgs[0]) );
     }
     DEREF( oB ); /* reset count after bContainerRemove */
 
@@ -1259,38 +1310,38 @@ char            *sCmd = "bond";
    if ( iArgCount == 2 ) {
         cOrder = 'S';
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  bond <atom1> <atom2> [order]\n" ));
+            VPFATALDELAYEDEXIT("usage:  bond <atom1> <atom2> [order]\n" );
             return(NULL);
         }
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a s" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  bond <atom1> <atom2> [order]\n" ));
+            VPFATALDELAYEDEXIT("usage:  bond <atom1> <atom2> [order]\n" );
             return(NULL);
         }
         cOrder = sOString(oAssocObject(aaArgs[2]))[0];
     }
-    
+
     DisplayerAccumulateUpdates();
-    
+
     aA = (ATOM)oAssocObject(aaArgs[0]);
     aB = (ATOM)oAssocObject(aaArgs[1]);
-  
+
     switch ( cOrder ) {
-        case 'S': 
+        case 'S':
             iOrder = BONDSINGLE;
             break;
-        case 'D': 
+        case 'D':
             iOrder = BONDDOUBLE;
             break;
-        case 'T': 
+        case 'T':
             iOrder = BONDTRIPLE;
             break;
-        case 'A': 
+        case 'A':
             iOrder = BONDAROMATIC;
             break;
         default:
-            VPFATALEXIT(( "%s: Unknown bond order (%c), no bond made.\n"
-                    "Valid bond orders are: S, D, T, A.\n", sCmd, cOrder ));
+            VPFATALEXIT("%s: Unknown bond order (%c), no bond made.\n"
+                    "Valid bond orders are: S, D, T, A.\n", sCmd, cOrder );
             goto DONE;
     }
     AtomBondToOrder( aA, aB, iOrder );
@@ -1322,7 +1373,7 @@ oCmd_addC4Pairwise( int iArgCount, ASSOC aaArgs[] )
 {
   ATOM            aA, aB;
   double          daC4Pairwise;
-  char            *sCmd = "addC4Pairwise";
+  //char            *sCmd = "addC4Pairwise";
 
   aA = (ATOM)oAssocObject(aaArgs[0]);
   aB = (ATOM)oAssocObject(aaArgs[1]);
@@ -1354,27 +1405,31 @@ oCmd_addC4Pairwise( int iArgCount, ASSOC aaArgs[] )
  *
 */
 
+// FIXME: this routine does nothing -- JMK
 OBJEKT
 oCmd_addC4Type( int iArgCount, ASSOC aaArgs[] )
 {
+#if 0 // FIXME: dead code
   UNIT            uUnit;
   char            *sCmd = "addC4Type";
-  if (iObjectType( oAssocObject( aaArgs[0] )) == UNITid) 
+  if (iObjectType( oAssocObject( aaArgs[0] )) == UNITid)
   {
     uUnit = (UNIT)oAssocObject(aaArgs[0]); // This should be the final one
-    //sA[iC4count] = sOString( oAssocObject(aaArgs[1]) ); 
+    //sA[iC4count] = sOString( oAssocObject(aaArgs[1]) );
     strcpy(sA[iC4count], sOString(oAssocObject(aaArgs[1])) );
     //sB[iC4count] = sOString( oAssocObject(aaArgs[2]) );
     strcpy(sB[iC4count], sOString(oAssocObject(aaArgs[2])) );
     daC4Type[iC4count] = dODouble( oAssocObject(aaArgs[3]) ) ;
     iC4count++;
-    // VP0(("sA first is %s\n", sA[0])); // C4TypeDebug
+    // VP0("sA first is %s\n", sA[0]); // C4TypeDebug
     // Need to think about how this function will work
-    //VP0(("%s %s %f\n", sA, sB, daC4Type)); // just for testing
+    //VP0("%s %s %f\n", sA, sB, daC4Type); // just for testing
     //UnitSaveC4Type( uUnit, sA, sB, daC4Type ); // Define this in unit
     //UnitIOSaveC4Type( uUnit, sA, sB, daC4Type );
     return(NULL);
   }
+#endif
+  return(NULL);
 }
 
 /*
@@ -1398,7 +1453,7 @@ char            *sCmd = "deleteBond";
                 /* Check the arguments */
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  deleteBond <atom1> <atom2>\n" ));
+        VPFATALDELAYEDEXIT("usage:  deleteBond <atom1> <atom2>\n" );
         return(NULL);
     }
 
@@ -1409,11 +1464,11 @@ char            *sCmd = "deleteBond";
 
     if ( bAtomBondedTo( aA, aB ) ) {
         AtomRemoveBond( aA, aB );
-    } else 
-        VP0(( "%s: Atoms are not bonded.\n", sCmd ));
-    
+    } else
+        VP0("%s: Atoms are not bonded.\n", sCmd );
+
     DisplayerReleaseUpdates();
-    
+
     return(NULL);
 }
 
@@ -1455,18 +1510,18 @@ ASSOC           aAss, aAss2;
 char            *sCmd = "zMatrix";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umr l" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  zMatrix <unit/residue> <LIST>\n" ));
+        VPFATALDELAYEDEXIT("usage:  zMatrix <unit/residue> <LIST>\n" );
         return(NULL);
     }
 
     DisplayerAccumulateUpdates();
-    
+
     cCont = (CONTAINER)oAssocObject(aaArgs[0]);
-    llLines = llListLoop( (LIST)oAssocObject(aaArgs[1]) );    
+    llLines = llListLoop( (LIST)oAssocObject(aaArgs[1]) );
     while ( (aAss = (ASSOC)oListNext(&llLines) ) != NULL ) {
         lLine = (LIST)oAssocObject(aAss);
         if ( iObjectType(lLine) != LISTid ) {
-            VPWARN(( "%s: Illegal object in zMatrix list was ignored.\n", sCmd ));
+            VPWARN("%s: Invalid object in zMatrix list was ignored.\n", sCmd );
             continue;
         }
         llElements = llListLoop( lLine );
@@ -1474,17 +1529,17 @@ char            *sCmd = "zMatrix";
         while ( ( aAss2 = (ASSOC)oListNext(&llElements)) != NULL ) {
             oObj = oAssocObject(aAss2);
             if ( iObjectType(oObj) == OSTRINGid ) {
-                oObj = (OBJEKT)cContainerFindName( cCont, 
+                oObj = (OBJEKT)cContainerFindName( cCont,
                                 ATOMid, sOString(oObj) );
-            } 
+            }
             oaElements[iCount] = oObj;
             iCount++;
         }
-        
+
         switch ( iCount ) {
             case 3:
-                if ( !bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements, 
-                                                        "a a n" ) ) 
+                if ( !bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements,
+                                                        "a a n" ) )
                     goto BAD;
                 ZMatrixNothing( &vAtom2 );
                 AtomSetPosition( oaElements[1], vAtom2 );
@@ -1492,18 +1547,18 @@ char            *sCmd = "zMatrix";
                 AtomSetPosition( oaElements[0], vNew );
                 break;
             case 5:
-                if ( !bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements, 
+                if ( !bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements,
                                                         "a a a n n"))
                     goto BAD;
                 vAtom2 = vAtomPosition( oaElements[1] );
                 vAtom3 = vAtomPosition( oaElements[2] );
-                ZMatrixBondAngle( &vNew, &vAtom2, &vAtom3, 
+                ZMatrixBondAngle( &vNew, &vAtom2, &vAtom3,
                                 dODouble(oaElements[3]),
                                 dODouble(oaElements[4])*DEGTORAD );
                 AtomSetPosition( oaElements[0], vNew );
                 break;
             case 7:
-                if ( !bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements, 
+                if ( !bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements,
                                                 "a a a a n n n" ) )
                     goto BAD;
                 vAtom2 = vAtomPosition( oaElements[1] );
@@ -1513,31 +1568,31 @@ char            *sCmd = "zMatrix";
                                 dODouble(oaElements[4]),
                                 dODouble(oaElements[5])*DEGTORAD,
                                 dODouble(oaElements[6])*DEGTORAD );
-                AtomSetPosition( oaElements[0], vNew );  
+                AtomSetPosition( oaElements[0], vNew );
                 break;
             case 8:
-                if (!bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements, 
+                if (!bCmdGoodArguments( sCmd, iCount, (ASSOC *)oaElements,
                                                 "a a a a n n n n" ))
                     goto BAD;
                 vAtom2 = vAtomPosition( oaElements[1] );
                 vAtom3 = vAtomPosition( oaElements[2] );
                 vAtom4 = vAtomPosition( oaElements[3] );
-                ZMatrixBondTwoAnglesOrientation( &vNew, 
+                ZMatrixBondTwoAnglesOrientation( &vNew,
                                 &vAtom2, &vAtom3, &vAtom4,
                                 dODouble(oaElements[4]),
                                 dODouble(oaElements[5])*DEGTORAD,
                                 dODouble(oaElements[6])*DEGTORAD,
                                 dODouble(oaElements[7]) );
-                AtomSetPosition( oaElements[0], vNew );  
+                AtomSetPosition( oaElements[0], vNew );
                 break;
             default:
-                VPWARN(( "%s: Illegal zMatrix entry was ignored.\n", sCmd ));
+                VPWARN("%s: Invalid zMatrix entry was ignored.\n", sCmd );
                 goto DONE;
         }
         continue;
-BAD:    
-        VPWARN(( "%s: Illegal object in zMatrix entry.  Entry was ignored\n",
-                                                sCmd ));
+BAD:
+        VPWARN("%s: Invalid object in zMatrix entry.  Entry was ignored\n",
+                                                sCmd );
         continue;
     }
 
@@ -1568,29 +1623,29 @@ LISTLOOP        llUnits;
 UNIT            uUnit;
 char            *sCmd = "saveOffParm";
 
-    VP0(("saveOffParm: command deactivated\n" ));
+    VP0("saveOffParm: command deactivated\n" );
     return(NULL);
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "ul s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  saveOffParm <object> <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  saveOffParm <object> <filename>\n" );
         return(NULL);
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
-    
+
     ul = lLibraryOpen( sOString( oAssocObject(aaArgs[1]) ), OPENREADWRITE );
 
     if ( iObjectType( oAssocObject(aaArgs[0]) ) == UNITid ) {
-        LibrarySave( ul, sContainerName((CONTAINER) oAssocObject(aaArgs[0])), 
-                        oAssocObject(aaArgs[0]), 
+        LibrarySave( ul, sContainerName((CONTAINER) oAssocObject(aaArgs[0])),
+                        oAssocObject(aaArgs[0]),
                         GplAllParameters );
     } else {
         llUnits = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
         while ( (uUnit = (UNIT)oListNext(&llUnits) ) != NULL ) {
             if ( iObjectType(uUnit) != UNITid ) {
-                VPWARN(( "%s: Illegal UNIT in list was ignored.\n", sCmd ));
+                VPWARN("%s: Invalid UNIT in list was ignored.\n", sCmd );
                 continue;
             }
             LibrarySave( ul, sContainerName((CONTAINER) uUnit), (OBJEKT) uUnit, GplAllParameters );
@@ -1619,8 +1674,10 @@ char            *sCmd = "saveOffParm";
  *
  *      The option [1] is provided to change the names of Old AMBER
  *      types to distinguish All Atom residues from United Atom residues
- *      and to distinguish Terminating residues from main chain 
+ *      and to distinguish Terminating residues from main chain
  *      residues.
+ *
+ *      FIXME: This leaks a dictionary with every invokation
  */
 OBJEKT
 oCmd_loadAmberPrep( int iArgCount, ASSOC aaArgs[] )
@@ -1636,13 +1693,13 @@ char            *sCmd = "loadAmberPrep";
 
     if ( iArgCount == 1 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  loadAmberPrep <filename> [prefix]\n" ));
+            VPFATALDELAYEDEXIT("usage:  loadAmberPrep <filename> [prefix]\n" );
             return(NULL);
         }
         strcpy( sPrefix, "" );
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  loadAmberPrep <filename> [prefix]\n" ));
+            VPFATALDELAYEDEXIT("usage:  loadAmberPrep <filename> [prefix]\n" );
             return(NULL);
         }
         strcpy( sPrefix, sOString(oAssocObject(aaArgs[1])) );
@@ -1651,9 +1708,9 @@ char            *sCmd = "loadAmberPrep";
     if ( dUnits != NULL ) {
         dlLoop = ydlDictionaryLoop( dUnits );
         while ( (uUnit=(UNIT)yPDictionaryNext( dUnits, &dlLoop )) != NULL ) {
-            strcpy( sName, sPrefix ); 
+            strcpy( sName, sPrefix );
             strcat( sName, sContainerName((CONTAINER) uUnit) );
-            VP1(( "Loaded UNIT: %s\n", sName ));
+            VP1("Loaded UNIT: %s\n", sName );
 
                 /* Set the name for the UNIT */
 
@@ -1663,11 +1720,26 @@ char            *sCmd = "loadAmberPrep";
 
             lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
             rRes = (RESIDUE)oNext(&lResidues);
-            ContainerSetName( (CONTAINER) rRes, sName );    
+            ContainerSetName( (CONTAINER) rRes, sName );
             VariableSet( sName, (OBJEKT) uUnit );       /* adds 1 REF */
         }
+        DictionaryDestroy(&dUnits);
     }
     return(NULL);
+}
+
+static BOOL
+zbMatchesParmNNDat(const char *s) {
+    size_t len = strlen(s);
+    // Minimum length: "parm" (4) + 2 digits + ".dat" (4) = 9
+    if (len < 9) return FALSE;
+    // Check prefix "parm"
+    if (strncmp(s, "parm", 4) != 0) return FALSE;
+    // Check next two characters are digits
+    if (!isdigit((unsigned char)s[4]) || !isdigit((unsigned char)s[5])) return FALSE;
+    // Check suffix "dat"
+    if (strcmp(s + len - 4, ".dat") != 0) return FALSE;
+    return TRUE;
 }
 
 /*
@@ -1675,85 +1747,63 @@ char            *sCmd = "loadAmberPrep";
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Load an AMBER parameter file, return the PARMSET 
+ *      Load an AMBER parameter file, return the PARMSET
  *      and add the PARMSET to the systems PARMLIBRARY.
  *
  *      Arguments:
  *              [0] -   OSTRING, filename.
  *
+ *      TODO: fix the ugly hack of checking a subset of already loaded libs
+ *      Better: disable double load of all files? If so, by name or full path?
  */
 OBJEKT
 oCmd_loadAmberParams( int iArgCount, ASSOC aaArgs[] )
 {
 PARMSET         psParms;
-STRING          sFile;
+char            *sFile;
 FILE            *fIn;
-char            *sUsage = 
+char            *sUsage =
                   "usage:  <variable> = loadAmberParams <filename> \n";
 
-/*
- *   nasty, special kludge to prevent loading parm10 more than once;
- *      This is not generalizable....
- */
-static          int parm10_loaded = 0;
-static          int parm99_loaded = 0;
-static          int parm15_loaded = 0;
-static          char parm10[] = "parm10.dat";
-static          char parm99[] = "parm99.dat";
-static          char parm15[] = "parm15";
 
     if ( !bCmdGoodArguments( "loadAmberParams", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATALDELAYEDEXIT("%s",sUsage );
         return(NULL);
     }
-    strcpy( sFile, sOString(oAssocObject(aaArgs[0])) );
-
-    if( strstr( sFile, parm10 ) ) {
-        parm10_loaded += 1;
-        if( parm10_loaded > 1 ){
-            VPNOTE(( "Skipping %s: already loaded\n", sFile ));
-            parm10_loaded -= 1;
+    sFile = sOString(oAssocObject(aaArgs[0]));
+    char *start1 = strchr(sFile,'/');
+    if (!start1) start1 = sFile;
+    char *cPParmNNFilename = NULL;
+    PARMLIB_DEFAULT_LOOP_ALL( psParms ) {
+        char *start2 = strchr(psParms->sFname,'/');
+        if (!start2) start2 = psParms->sFname;
+        if (!strcmp(start1,start2)) {
+            VPNOTE("Skipping %s: already loaded\n", sFile );
             return(NULL);
+        }
+        if (zbMatchesParmNNDat(start2)) {
+            cPParmNNFilename = psParms->sFname;
         }
     }
-    if( strstr( sFile, parm99 ) ) {
-        parm99_loaded += 1;
-        if( parm99_loaded > 1 ){
-            VPNOTE(( "Skipping %s: already loaded\n", sFile ));
-            parm99_loaded -= 1;
-            return(NULL);
-        }
-    }
-    if( strstr( sFile, parm15 ) ) {
-        parm15_loaded += 1;
-        if( parm15_loaded > 1 ){
-            VPNOTE(( "Skipping %s: already loaded\n", sFile ));
-            parm15_loaded -= 1;
-            return(NULL);
-        }
+    if (zbMatchesParmNNDat(start1) && cPParmNNFilename) {
+        VPNOTE("Refusing to load %s because %s is already loaded\n", sFile, cPParmNNFilename );
+        VPFATALEXIT("Cannot load more than one parmset in the form: parmNN*.dat\n"
+                "Attempted to load: %s\n"
+                "Aready loaded: %s\n", sFile, cPParmNNFilename );
     }
 
-    //if( strstr( sFile, parm99 ) ) parm99_loaded += 1;
-    //if( strstr( sFile, parm15 ) ) parm15_loaded += 1;
     fIn = FOPENCOMPLAIN( sFile, "r" );
-    if ( fIn == NULL ) 
+    if ( fIn == NULL )
         return(NULL);
 
-    VP0(("Loading parameters: %s\n", GsBasicsFullName ));
-    if( parm99_loaded + parm15_loaded + parm10_loaded > 1 ){
-        VPFATALEXIT(( "Cannot load more than one of parm99/10/15.dat\n"
-                "If you are running interactively then you should save your work,"
-                "\nquit LEaP, and retry being careful to load only one parm of"
-                " above.\n" ));
-    }
-
+    VP0("Loading parameters: %s\n", GsBasicsFullName );
     psParms = psAmberReadParmSet( fIn, sFile );
 
     if ( psParms != NULL ) {
         ParmLibAddParmSet( GplAllParameters, psParms );
         ParmLibDefineDefault( GplAllParameters );
     } else
-        VPNOTE(( "-- no parameters loaded" ));
+        VPNOTE("-- no parameters loaded" );
 
     return((OBJEKT)psParms);
 }
@@ -1780,14 +1830,14 @@ char            *sString;
 FILE            *fOut;
 
     if ( !bCmdGoodArguments( "savePdb", iArgCount, aaArgs, "u s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  savePdb <object> <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  savePdb <object> <filename>\n" );
         return(NULL);
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
     fOut = FOPENCOMPLAIN( sString, "w" );
-    if ( fOut == NULL ) 
+    if ( fOut == NULL )
         return(NULL);
-    VP0(("Writing pdb file: %s\n", sString));
+    VP0("Writing pdb file: %s\n", sString);
     PdbWrite( fOut, (UNIT)oAssocObject(aaArgs[0]) );
     fclose( fOut );
     return(NULL);
@@ -1810,7 +1860,7 @@ FILE            *fOut;
  *      Arguments:
  *              [0] -   Unit to save.
  *              [1] -   Name of file to save to.
- *              [2] -   Option for column 6 (0 = Default, 1 = Amber Atom type) 
+ *              [2] -   Option for column 6 (0 = Default, 1 = Amber Atom type)
  */
 OBJEKT
 oCmd_saveMol2( int iArgCount, ASSOC aaArgs[] )
@@ -1820,17 +1870,17 @@ FILE            *fOut;
 double          choice;
 
     if ( !bCmdGoodArguments( "saveMol2", iArgCount, aaArgs, "u s n" ) ) {
-        VP0(( "usage:  saveMol2 <object> <filename> <option>\n" ));
-        VP0(( "<option> = 0 for Default atom types \n" ));
-        VPFATALDELAYEDEXIT(( "<option> = 1 for AMBER atom types \n" ));
+        VP0("usage:  saveMol2 <object> <filename> <option>\n" );
+        VP0("<option> = 0 for Default atom types \n" );
+        VPFATALDELAYEDEXIT("<option> = 1 for AMBER atom types \n" );
         return(NULL);
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
     choice =  (int) dODouble( oAssocObject(aaArgs[2]) ) ;
     fOut = FOPENCOMPLAIN( sString, "w" );
-    if ( fOut == NULL ) 
+    if ( fOut == NULL )
         return(NULL);
-    VP0(("Writing mol2 file: %s\n", sString));
+    VP0("Writing mol2 file: %s\n", sString);
     Mol2Write( fOut, (UNIT)oAssocObject(aaArgs[0]), choice);
     fclose( fOut );
     return(NULL);
@@ -1862,18 +1912,18 @@ FILE            *fOut;
 double          choice;
 
     if ( !bCmdGoodArguments( "saveMol3", iArgCount, aaArgs, "u s n" ) ) {
-        VP0(( "usage:  saveMol3 <object> <filename> <option>\n" ));
-        VP0(( "<option> = 0 for Default atom types \n" ));
-        VPFATALDELAYEDEXIT(( "<option> = 1 for AMBER atom types \n" ));
+        VP0("usage:  saveMol3 <object> <filename> <option>\n" );
+        VP0("<option> = 0 for Default atom types \n" );
+        VPFATALDELAYEDEXIT("<option> = 1 for AMBER atom types \n" );
         return(NULL);
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
     choice =  (int) dODouble( oAssocObject(aaArgs[2]) );
     fOut = FOPENCOMPLAIN( sString, "w" );
     if ( fOut == NULL ) return(NULL);
-        
-    VP0(("Writing mol3 file: %s\n", sString));
-    
+
+    VP0("Writing mol3 file: %s\n", sString);
+
     Mol3Write( fOut, (UNIT)oAssocObject(aaArgs[0]), choice);
     fclose( fOut );
     return(NULL);
@@ -1916,11 +1966,11 @@ char            *sUsage =
      *  check args - always need 2 units & cutoff
      */
     if ( !bCmdGoodArguments( sCmd, 3, aaArgs, "u u ln" ) ) {
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATALDELAYEDEXIT("%s",sUsage );
         return(NULL);
     }
     if ( iArgCount > 5 ) {
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATALDELAYEDEXIT("%s",sUsage );
         return(NULL);
     }
     if ( iArgCount != 3 ) {
@@ -1931,7 +1981,7 @@ char            *sUsage =
          */
         oObj = (OBJEKT)aaArgs[3];
         if ( iObjectType(oObj) != ASSOCid )
-                DFATAL(( "unexpected objtype %s\n", sObjectType(oObj) ));
+                DFATAL("unexpected objtype %s\n", sObjectType(oObj) );
 
         if ( strcmp("iso", sAssocName(oObj) ) ) {
                 oObj = oAssocObject(oObj);
@@ -1945,12 +1995,12 @@ char            *sUsage =
         }
         if ( oObj != NULL ) {
                 if ( iObjectType(oObj) != ODOUBLEid ) {
-                        VPFATALEXIT(( sUsage ));
+                        VPFATALEXIT("%s",sUsage );
                         return(NULL);
                 }
                 dCloseness = dODouble( oObj );
                 if ( dCloseness <= 0.0 ) {
-                        VPFATALEXIT(( sUsage ));
+                        VPFATALEXIT("%s",sUsage );
                         return(NULL);
                 }
         }
@@ -1959,7 +2009,7 @@ char            *sUsage =
         /* Make sure there is a parameter set loaded */
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
 
@@ -1971,29 +2021,29 @@ char            *sUsage =
          *  x,y,z box clearances
          */
         if ( iListSize(oAssocObject(aaArgs[2])) != 3 ) {
-            VPFATALEXIT(( "%s: Argument #3 must have three values: "
-                    "{ x y z } or one.\n%s", sCmd, sUsage ));
+            VPFATALEXIT("%s: Argument #3 must have three values: "
+                    "{ x y z } or one.\n%s", sCmd, sUsage );
             return(NULL);
         }
         llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
         for ( i=0; i<3; i++ ) {
             aAss = (ASSOC)oListNext(&llNumbers);
             if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
-                VPFATALEXIT(( "%s: Bad value #%d in the third argument.\n%s",
-                        sCmd, i, sUsage ));
+                VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
+                        sCmd, i, sUsage );
                 return(NULL);
-            } 
+            }
             daBuffer[i] = dODouble(oAssocObject(aAss));
             if ( daBuffer[i] < 0.0 ) {
-                VPFATALEXIT(( "%s: Bad value #%d in the third argument.\n%s",
-                        sCmd, i+1, sUsage ));
+                VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
+                        sCmd, i+1, sUsage );
                 return(NULL);
             }
         }
     } else {
         daBuffer[0] = dODouble(oAssocObject(aaArgs[2]));
         if ( daBuffer[0] < 0.0 ) {
-                VPFATALEXIT(( "%s: Bad box clearance.\n%s", sCmd, sUsage ));
+                VPFATALEXIT("%s: Bad box clearance.\n%s", sCmd, sUsage );
                 return(NULL);
         }
         daBuffer[2] = daBuffer[1] = daBuffer[0];
@@ -2024,7 +2074,7 @@ char            *sUsage =
 
     iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
 
-    zToolSolvateAndShell( uSolute, uSolvent, 
+    zToolSolvateAndShell( uSolute, uSolvent,
                 daBuffer[0], daBuffer[1], daBuffer[2], dCloseness,
                 NOSHELL, FALSE, TRUE, FALSE, bIsotropic );
 
@@ -2038,10 +2088,94 @@ char            *sUsage =
     ContainerDisplayerUpdate((CONTAINER) uSolute);
 
 
-    VP0(( "  Added %d residues.\n", iFinalSize - iInitialSize ));
+    VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
 
     return(NULL);
 }
+
+
+/*
+ *      oCmd_solvateBox
+ *
+ *      Author: Christian Schafmeister (1991)
+ *
+ *      Solvate the UNIT [0] within copies of a box of SOLVENT.
+ *
+ *      Arguments:
+ *              [0] -   Unit to add solvent to.
+ *              [1] -   Unit with solvent.
+ *              [2] -   LIST with ( x, y, z ) distances or
+ *                      xyz, the closest the wall of the solvent box
+ *                      can come to the smallest box which contains
+ *                      the entire unit that is centered on the
+ *                      origin.  This is called the BufferZone.
+ *                      Or a single ODOUBLE when x,y,z distances are the
+ *                      same.
+ *      Option  [3] -   ODOUBLE with closeness parameter.
+ */
+OBJEKT
+oCmd_solvateCell( int iArgCount, ASSOC aaArgs[] )
+{
+UNIT            uSolvent, uSolute;
+double          dCloseness = 1.0;
+int             iInitialSize, iFinalSize;
+BOOL            bUsage;
+char            *sCmd = "solvateBox";
+char            *sUsage =
+                 "usage:  solvateBox <solute> <solvent> [closeness]\n";
+
+    if (iArgCount == 2)
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u" );
+    else
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" );
+    if (bUsage) {
+        VPFATALDELAYEDEXIT("%s",sUsage );
+        return(NULL);
+    }
+
+        /* Make sure there is a parameter set loaded */
+
+    if ( iParmLibSize(GplAllParameters) == 0 ) {
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
+        return(NULL);
+    }
+
+    uSolute = (UNIT)oAssocObject(aaArgs[0]);
+    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    if ( iArgCount == 3 )
+        dCloseness = dODouble(oAssocObject(aaArgs[2]));
+
+    /*
+     *  make copy of solvent w/ box & solv residue types set
+     */
+    uSolvent = zToolSetupSolvent( uSolvent );
+
+    ContainerDisplayerUpdate( (CONTAINER) uSolute );
+
+    /*
+     *  do the solvation
+     */
+    TurnOffDisplayerUpdates();
+
+    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+
+    ToolSolvateCell( uSolute, uSolvent, dCloseness);
+
+    /*
+     *  Get rid of solvent copy
+     */
+    ContainerDestroy( (CONTAINER *) &uSolvent );
+    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+
+    TurnOnDisplayerUpdates();
+    ContainerDisplayerUpdate((CONTAINER) uSolute);
+
+
+    VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
+
+    return(NULL);
+}
+
 
 
 /*
@@ -2078,11 +2212,11 @@ char            *sUsage =
          *  check args - always need 2 units & cutoff
          */
         if ( !bCmdGoodArguments( sCmd, 3, aaArgs, "u u ln" ) ) {
-                VPFATALDELAYEDEXIT(( sUsage ));
+                VPFATALDELAYEDEXIT("%s",sUsage );
                 return(NULL);
         }
         if ( iArgCount > 5 ) {
-                VPFATALDELAYEDEXIT(( sUsage ));
+                VPFATALDELAYEDEXIT("%s",sUsage );
                 return(NULL);
         }
         if ( iArgCount != 3 ) {
@@ -2093,7 +2227,7 @@ char            *sUsage =
 
                 oObj = (OBJEKT)aaArgs[3];
                 if ( iObjectType(oObj) != ASSOCid )
-                DFATAL(( "unexpected objtype %s\n", sObjectType(oObj) ));
+                DFATAL("unexpected objtype %s\n", sObjectType(oObj) );
 
                 if ( strcmp("aniso", sAssocName(oObj) ) ) {
 
@@ -2101,7 +2235,7 @@ char            *sUsage =
                            check for old-fashioned iso keyword, and ignore it:  */
                         if ( strcmp("iso", sAssocName(oObj) ) ) {
                                 oObj = oAssocObject(oObj);
-                        } else {  
+                        } else {
                                 if ( iArgCount == 5 ) {
                                         oObj = (OBJEKT)aaArgs[4];
                                         oObj = oAssocObject(oObj);
@@ -2110,7 +2244,7 @@ char            *sUsage =
                                 }
                         }
 
-                } else {  
+                } else {
 
                         /* found aniso keyword: */
                         bIsotropic = FALSE;
@@ -2124,12 +2258,12 @@ char            *sUsage =
 
                 if ( oObj != NULL ) {
                         if ( iObjectType(oObj) != ODOUBLEid ) {
-                                VPFATALEXIT(( sUsage ));
+                                VPFATALEXIT("%s",sUsage );
                                 return(NULL);
                         }
                         dCloseness = dODouble( oObj );
                         if ( dCloseness <= 0.0 ) {
-                                VPFATALEXIT(( sUsage ));
+                                VPFATALEXIT("%s",sUsage );
                                 return(NULL);
                         }
                 }
@@ -2138,7 +2272,7 @@ char            *sUsage =
         /* Make sure there is a parameter set loaded */
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
 
@@ -2148,7 +2282,7 @@ char            *sUsage =
     if ( iObjectType( oAssocObject(aaArgs[2]) ) == LISTid ) {
 
         if ( bIsotropic ) {
-                VPFATALEXIT(( "%s: 'iso' requires a single clearance value\n", sCmd ));
+                VPFATALEXIT("%s: 'iso' requires a single clearance value\n", sCmd );
                 return(NULL);
         }
 
@@ -2156,29 +2290,29 @@ char            *sUsage =
          *  x,y,z,d box clearances
          */
         if ( iListSize(oAssocObject(aaArgs[2])) != 4 ) {
-            VPFATALEXIT(( "%s: Argument #3 must have four values: "
-                    "{ x y z d } or one.\n%s", sCmd, sUsage ));
+            VPFATALEXIT("%s: Argument #3 must have four values: "
+                    "{ x y z d } or one.\n%s", sCmd, sUsage );
             return(NULL);
         }
         llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
         for ( i=0; i<4; i++ ) {
             aAss = (ASSOC)oListNext(&llNumbers);
             if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
-                VPFATALEXIT(( "%s: Bad value #%d in the third argument.\n%s",
-                        sCmd, i, sUsage ));
+                VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
+                        sCmd, i, sUsage );
                 return(NULL);
-            } 
+            }
             daBuffer[i] = dODouble(oAssocObject(aAss));
             if ( daBuffer[i] < 0.0 ) {
-                VPFATALEXIT(( "%s: Bad value #%d in the third argument.\n%s",
-                        sCmd, i+1, sUsage ));
+                VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
+                        sCmd, i+1, sUsage );
                 return(NULL);
             }
         }
     } else {
         daBuffer[0] = dODouble(oAssocObject(aaArgs[2]));
         if ( daBuffer[0] < 0.0 ) {
-                VPFATALEXIT(( "%s: Bad box clearance.\n%s", sCmd, sUsage ));
+                VPFATALEXIT("%s: Bad box clearance.\n%s", sCmd, sUsage );
                 return(NULL);
         }
         daBuffer[3] = daBuffer[2] = daBuffer[1] = daBuffer[0];
@@ -2209,8 +2343,8 @@ char            *sUsage =
     TurnOffDisplayerUpdates();
 
     iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
-    zToolSolvateAndShell( uSolute, uSolvent, 
-                daBuffer[0], daBuffer[1], daBuffer[2], 
+    zToolSolvateAndShell( uSolute, uSolvent,
+                daBuffer[0], daBuffer[1], daBuffer[2],
                 dCloseness, NOSHELL, FALSE, TRUE, TRUE, bIsotropic );
 
     /*
@@ -2223,7 +2357,7 @@ char            *sUsage =
     ContainerDisplayerUpdate((CONTAINER) uSolute);
 
 
-    VP0(( "  Added %d residues.\n", iFinalSize - iInitialSize ));
+    VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
 
     return(NULL);
 }
@@ -2265,13 +2399,13 @@ char            *sUsage =
 
     if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u ln" ) ) {
-            VPFATALDELAYEDEXIT(( sUsage ));
+            VPFATALDELAYEDEXIT("%s",sUsage );
             return(NULL);
         }
         dCloseness = 1.0;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u ln n" ) ) {
-            VPFATALDELAYEDEXIT(( sUsage ));
+            VPFATALDELAYEDEXIT("%s",sUsage );
             return(NULL);
         }
         dCloseness = dODouble( oAssocObject(aaArgs[3]) );
@@ -2280,7 +2414,7 @@ char            *sUsage =
         /* Make sure there is a parameter set loaded */
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
 
@@ -2289,16 +2423,16 @@ char            *sUsage =
 
     if ( iObjectType( oAssocObject(aaArgs[2]) ) == LISTid ) {
         if ( iListSize(oAssocObject(aaArgs[2])) != 3 ) {
-            VPFATALEXIT(( "%s: Argument #3 must have three values: "
-                    "{ x y z } or one.\n%s", sCmd, sUsage ));
+            VPFATALEXIT("%s: Argument #3 must have three values: "
+                    "{ x y z } or one.\n%s", sCmd, sUsage );
             return(NULL);
         }
         llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
         for ( i=0; i<3; i++ ) {
             aAss = (ASSOC)oListNext(&llNumbers);
             if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
-                VPFATALEXIT(( "%s: Bad value #%d in the third argument.\n%s",
-                        sCmd, i, sUsage ));
+                VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
+                        sCmd, i, sUsage );
                 return(NULL);
             } else daBuffer[i] = dODouble(oAssocObject(aAss));
         }
@@ -2323,8 +2457,8 @@ char            *sUsage =
 
     TurnOffDisplayerUpdates();
     iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
-    zToolSolvateAndShell( uSolute, uSolvent, 
-                daBuffer[0], daBuffer[1], daBuffer[2], 
+    zToolSolvateAndShell( uSolute, uSolvent,
+                daBuffer[0], daBuffer[1], daBuffer[2],
                 dCloseness, NOSHELL, FALSE, FALSE, FALSE, bIsotropic );
 
     /*
@@ -2336,8 +2470,8 @@ char            *sUsage =
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate((CONTAINER) uSolute);
 
-    VP0(( "  Added %d residues.\n", iFinalSize - iInitialSize ));
-    
+    VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
+
     return(NULL);
 }
 
@@ -2370,13 +2504,13 @@ char            *sUsage =
 
     if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ) ) {
-            VPFATALDELAYEDEXIT(( sUsage ));
+            VPFATALDELAYEDEXIT("%s",sUsage );
             return(NULL);
         }
         dCloseness = 1.0;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n n" ) ) {
-            VPFATALDELAYEDEXIT(( sUsage ));
+            VPFATALDELAYEDEXIT("%s",sUsage );
             return(NULL);
         }
         dCloseness = dODouble( oAssocObject(aaArgs[3]) );
@@ -2385,7 +2519,7 @@ char            *sUsage =
         /* Make sure there is a parameter set loaded */
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
 
@@ -2407,13 +2541,13 @@ char            *sUsage =
 
     dThickness = dODouble(oAssocObject(aaArgs[2]));
     if ( dThickness <= 0.0 ) {
-        VPFATALEXIT(( "%s: bad thickness\n%s", sCmd, sUsage ));
+        VPFATALEXIT("%s: bad thickness\n%s", sCmd, sUsage );
         return( NULL );
     }
 
     TurnOffDisplayerUpdates();
     iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
-    zToolSolvateAndShell( uSolute, uSolvent, 
+    zToolSolvateAndShell( uSolute, uSolvent,
                 dThickness, dThickness, dThickness,
                 dCloseness, dThickness, TRUE, TRUE, FALSE, FALSE );
 
@@ -2426,9 +2560,9 @@ char            *sUsage =
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate((CONTAINER) uSolute);
 
-    VP0(( " Added %d residues.\n", iFinalSize - iInitialSize ));
+    VP0(" Added %d residues.\n", iFinalSize - iInitialSize );
 
-    
+
     return(NULL);
 }
 
@@ -2455,7 +2589,7 @@ oCmd_verbosity( int iArgCount, ASSOC aaArgs[] )
 int     iVerb;
 
     if ( !bCmdGoodArguments( "verbosity", iArgCount, aaArgs, "n" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  verbosity <level>\n" ));
+        VPFATALDELAYEDEXIT("usage:  verbosity <level>\n" );
         return(NULL);
     }
 
@@ -2464,7 +2598,7 @@ int     iVerb;
     GrMainResult.iCommand     = CVERBOSITY;
     GrMainResult.sVariable[0] = (char)iVerb;
 
-    VP2(( "Verbosity level: %d\n", iVerb ));
+    VP2("Verbosity level: %d\n", iVerb );
     return(NULL);
 }
 
@@ -2488,14 +2622,14 @@ STRING          sFilename;
 FILE            *fLog;
 
     if ( !bCmdGoodArguments( "logFile", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  logFile <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  logFile <filename>\n" );
         return(NULL);
     }
 
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
 
                 /* Close the old log file if it exists */
-                
+
     if ( fVerbosityLogFile() != NULL ) fclose( fVerbosityLogFile() );
     VerbositySetLogFile( NULL );
 
@@ -2507,7 +2641,7 @@ FILE            *fLog;
 
         fprintf(fLog, "log started: %s\n", ctime(&t) );
         VerbositySetLogFile( fLog );
-        VP0(( "Log file: %s\n", GsBasicsFullName ));
+        VP0("Log file: %s\n", GsBasicsFullName );
     }
     return(NULL);
 }
@@ -2538,7 +2672,7 @@ OBJEKT          oObj;
 char            *sCmd = "combine";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "l" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = combine <LIST>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = combine <LIST>\n" );
         return(NULL);
     }
     llElements = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
@@ -2549,27 +2683,27 @@ char            *sCmd = "combine";
     while ( (aAss = (ASSOC)oListNext(&llElements)) ) {
         oObj = oAssocObject(aAss);
         if ( iObjectType( oObj ) != UNITid ) {
-                VP0(( "%s: %s is type %s\n", sCmd, 
-                                sAssocName(aAss), sObjectType(oObj) ));
-                VP0(( "  expected UNIT\n" ));
+                VP0("%s: %s is type %s\n", sCmd,
+                                sAssocName(aAss), sObjectType(oObj) );
+                VP0("  expected UNIT\n" );
                 continue;
         }
         /*
         **      objekt is a unit, so make a copy
         */
         uCurrent = (UNIT)oCopy( oObj );
-        VP1(( "  Sequence: %s\n", sContainerName((CONTAINER) uCurrent) ));
+        VP1("  Sequence: %s\n", sContainerName((CONTAINER) uCurrent) );
         if ( uCombined == NULL ) {
-                MESSAGE(( "Copying the first UNIT\n" ));
+                MESSAGE("Copying the first UNIT\n" );
                 uCombined = uCurrent;
         } else {
-                MESSAGE(( "Copied a subsequent UNIT\n" ));
-                MESSAGE(( "Joining two UNITS deleting the second\n" ));
+                MESSAGE("Copied a subsequent UNIT\n" );
+                MESSAGE("Joining two UNITS deleting the second\n" );
                 UnitJoin( uCombined, uCurrent );
         }
     }
     if ( uCombined == NULL ) {
-        VP0(( "No UNITS, so no combine performed\n" ));
+        VP0("No UNITS, so no combine performed\n" );
         return(NULL);
     }
 
@@ -2604,7 +2738,7 @@ oCmd_source( int iArgCount, ASSOC aaArgs[] )
 FILE            *fCmds;
 
     if ( !bCmdGoodArguments( "source", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  source <filename>\n" ));
+        VPFATALDELAYEDEXIT("usage:  source <filename>\n" );
         return(NULL);
     }
 
@@ -2612,15 +2746,15 @@ FILE            *fCmds;
 
     if ( fCmds != NULL ) {
         if ( bINPUTMAXDEPTH() ) {
-            VP0(( "Source commands are nested too deep!\n" ));
+            VP0("Source commands are nested too deep!\n" );
 
         } else {
                 /* Push the file onto the input file stack.  The main */
                 /* parsing routine will continue parsing until there are */
                 /* no more files on the input file stack. */
-                VP0(( "----- Source: %s\n", GsBasicsFullName ));
+                VP0("----- Source: %s\n", GsBasicsFullName );
                 INPUTPUSHFILE( fCmds );
-                VP0(( "----- Source of %s done\n", GsBasicsFullName ));
+                VP0("----- Source of %s done\n", GsBasicsFullName );
         }
     }
 
@@ -2629,7 +2763,7 @@ FILE            *fCmds;
 
 
 
-        
+
 /*
  *      oCmd_check
  *
@@ -2652,44 +2786,62 @@ int             iErrors, iWarnings;
 UNIT            uUnit;
 PARMSET         psParmSet;
 char            *sCmd = "check";
-
+double          dCloseness = 1.5;
+BOOL            bAbsoluteDist = TRUE;
     switch ( iArgCount ) {
-        case 1: 
+        case 1:
             if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umra" )) {
-                VPFATALDELAYEDEXIT(( "usage:  check <unit> [parmset]\n" ));
+                VPFATALDELAYEDEXIT("usage:  check <unit> [parmset] [dCloseness]\n" );
                 return(NULL);
             }
             break;
-        case 2: 
-            if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u ps" )) {
-                VPFATALDELAYEDEXIT(( "usage:  check <unit> [parmset]\n" ));
+        case 2:
+            if ( bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n" )) {
+                dCloseness = dODouble(oAssocObject( aaArgs[1] ));
+                iArgCount = 1;
+            } else if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u ps" )) {
+                VPFATALDELAYEDEXIT("usage:  check <unit> [parmset] [dCloseness]\n" );
                 return(NULL);
             }
             break;
-        default: 
-            VP0(( "%s: A maximum of two parameters are acceptable:\n", sCmd ));
-            VP0(( "     a UNIT and an (optional) PARMSET.\n" ));
+        case 3:
+            if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u ps n" )) {
+                VPFATALDELAYEDEXIT("usage:  check <unit> [parmset] [dCloseness]\n" );
+                return(NULL);
+            }
+            dCloseness = dODouble(oAssocObject( aaArgs[2] ));
+            iArgCount = 2;
+            break;
+        default:
+            VP0("%s: A maximum of two parameters are acceptable:\n", sCmd );
+            VP0("     a UNIT and an (optional) PARMSET.\n" );
             return( NULL );
             break;
-    } 
+    }
+
+    if (dCloseness < 0)  {
+         bAbsoluteDist = FALSE;
+         dCloseness *= -1.0;
+    }
+
                 /* Run the checks on the objects */
 
     iErrors = 0;
     iWarnings = 0;
-    VP0(( "Checking '%s'....\n", sAssocName( aaArgs[0] )));
+    VP0("Checking '%s'....\n", sAssocName( aaArgs[0] ));
     ContainerCheck( (CONTAINER) oAssocObject( aaArgs[0] ), &iErrors, &iWarnings );
 
                         /* Look for close contacts */
-    iWarnings += iToolDistanceSearch( (CONTAINER)oAssocObject(aaArgs[0]), 1.5,
-                                        TRUE, DISTANCE_SEARCH_PRINT_WARNINGS );
+    iWarnings += iToolDistanceSearch( (CONTAINER)oAssocObject(aaArgs[0]), dCloseness,
+                                        bAbsoluteDist, DISTANCE_SEARCH_PRINT_WARNINGS );
 
     if ( iObjectType( oAssocObject( aaArgs[0] )) == UNITid ) {
-        VP0(( "Checking parameters for unit '%s'.\n", sAssocName( aaArgs[0] ))); 
+        VP0("Checking parameters for unit '%s'.\n", sAssocName( aaArgs[0] ));
         uUnit = (UNIT)oAssocObject( aaArgs[0] );
         //UnitSaveC4Type( uUnit, "sA", "sB", 0.1 ); //NewTdebug
         if ( iArgCount == 2 ) {
             if ( iObjectType(oAssocObject( aaArgs[1] )) == OSTRINGid ) {
-                VP0(( "Creating empty parmset %s\n", sAssocName( aaArgs[1] ) ));
+                VP0("Creating empty parmset %s\n", sAssocName( aaArgs[1] ) );
                 psParmSet = (PARMSET)oCreate(PARMSETid);
             } else {
                 psParmSet = (PARMSET)oAssocObject( aaArgs[1] );
@@ -2699,22 +2851,48 @@ char            *sCmd = "check";
                 Destroy((OBJEKT *) &psParmSet );
         } else {
             UnitCheckForParms( uUnit, GplAllParameters, NULL );
-        }       
+        }
     }
     if ( iErrors || iWarnings )
-        VP0(( "%s:  ", sCmd ));
+        VP0("%s:  ", sCmd );
     if ( iErrors )
-        VP0(( "Errors:  %d   ", iErrors ));
+        VP0("Errors:  %d   ", iErrors );
     if ( iWarnings )
-        VP0(( "Warnings: %d\n", iWarnings ));
-    
-    if ( iErrors == 0 ) 
-        VP0(( "%s is OK.\n", sObjectType( oAssocObject( aaArgs[0] ))));
-    
+        VP0("Warnings: %d\n", iWarnings );
+
+    if ( iErrors == 0 )
+        VP0("%s is OK.\n", sObjectType( oAssocObject( aaArgs[0] )));
+
     return(NULL);
 }
 
+static void
+getUsage()
+{
+        VPFATALDELAYEDEXIT("usage: variable = get <container> <parameter>\n");
+}
 
+OBJEKT
+oCmd_get( int iArgCount, ASSOC aaArgs[] )
+{
+char            *sCmd = "get";
+
+    if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umra s" ) ) {
+        getUsage();
+        return(NULL);
+    }
+
+    OBJEKT oResult = oContainerGetAttribute( (CONTAINER) oAssocObject(aaArgs[0]),
+                        sOString(oAssocObject(aaArgs[1])) );
+    if (iObjectType(oResult)==OSTRINGid)
+        VP2("Result: \"%s\"\n",sOString(oResult));
+    else if (iObjectType(oResult)==ODOUBLEid)
+        VP2("Result: %g\n",dODouble(oResult));
+    else
+        VP2("Result: object type %c\n",iObjectType(oResult));
+    return oResult;
+
+}
 
 /*
  *      oCmd_set
@@ -2730,392 +2908,341 @@ char            *sCmd = "check";
  *              [1] -  OSTRING with attribute to modify.
  *              [2] -  OBJEKT new value of attribute.
  */
+typedef struct {
+    int  iType; // B=bool, D=double, I=integer, S=string-enum
+    char *sNameLower, *sName;
+    void *pValue;
+    union {
+        double real;
+        int integer;
+    } defval; // integer for boolean, character, and string-enum types as well
+    // direct string default (currently) is always empty. If this changes, may need: char *defval.string
+    char **options;    // setting tokens
+    char **optionDesc; // full descriptive name
+} DefaultSetting;
 
+static char opt_null[]="null";
+static char *PBRadii_options[] =
+     {"bondi", "amber6", "mbondi", opt_null /*"pbamber"*/ ,opt_null,opt_null, "mbondi2", "parse", "mbondi3", NULL};
+static char *PBRadii_optionDesc[] =
+     {"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii","","","",
+       "H(N)-modified Bondi radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
+static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
+static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
+static char *PdbConvertResname_options[] = {"none","keep","variant","standard",NULL};
+static char *PdbConvertResname_optionDesc[] = {"PdbResMap","Retain all names",
+                                      "Variant names","Standard names",NULL };
+
+// NOTE: uninitialzed values get zero, and most defaults are zero
+static DefaultSetting
+zSDefaultSettings[] = {
+    { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
+    { 'B', "nocenter", "NoCenter", &GDefaults.nocenter },
+    { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.reorder_residues, .defval.integer = 1 },
+    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.reverse_lists },
+    //{ 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.iOldPrmtopFormat },
+    { 'B', "gibbs", "Gibbs", &GDefaults.iGibbs },
+    { 'B', "hybrid36", "Hybrid36", &GDefaults.bPdbHybrid36, .defval.integer=1 },
+    { 'B', "keep_chainid", "Keep_chainId", &GDefaults.bPdbKeepChainId },
+    { 'I', "pdbreadbiomt", "PdbReadBioMT", &GDefaults.iPdbReadBioMT },
+    { 'B', "charmm", "Charmm", &GDefaults.iCharmm },
+    { 'B', "flexiblewater", "FlexibleWater", &GDefaults.iFlexibleWater },
+    { 'B', "deleteextrapointangles", "DeleteExtraPointAngles", &GDefaults.iDeleteExtraPointAngles, .defval.integer=1 },
+    { 'S', "pbradii", "PB Radii", &GDefaults.iGBparm, .defval.integer=2,
+                .options = PBRadii_options, .optionDesc = PBRadii_optionDesc },
+    { 'D', "searchdistance", "SearchDistance", &GDefaults.dDSearchDistance, .defval.real=DEFAULT_DISTANCE_SEARCH },
+    { 'D', "gridspace", "GridSpace", &GDefaults.dGridSpace, .defval.real=1.0 },
+    { 'D', "shellextent", "ShellExtent", &GDefaults.dShellExtent, .defval.real=4.0 },
+    { 'D', "dipole_damp_factor", "Dipole Damping Factor", &GDefaults.dDipoleDampFactor },
+    { 'D', "scee", "SCEE 1-4 Scale Factor", &GDefaults.dSceeScaleFactor, .defval.real=1.2 },
+    { 'D', "scnb", "SCNB 1-4 Scale Factor", &GDefaults.dScnbScaleFactor, .defval.real=2.0 },
+    { 'B', "cmap", "CMAP", &GDefaults.iCMAP },
+    { 'I', "ipol", "IPOL", &GDefaults.iIPOL },
+    { 'S', "dielectric", "Dielectric", &GDefaults.iDielectricFlag, .defval.integer=DIEL_R2,
+               .options = Dielectric_options, .optionDesc = Dielectric_optionDesc },
+    { 'B', "residueimpropers", "ResidueImpropers", &GDefaults.iResidueImpropers },
+    { 'B', "pdb_auto_match","PDB_Auto_Match", &GDefaults.bPdbAutoMatch },
+    { 'B', "pdb_auto_link","PDB_Auto_Link", &GDefaults.bPdbAutoLink },
+    { 'D', "pdb_link_cutoff","PDB_Link_Cutoff", &GDefaults.dPdbLinkCovalentCutoff, .defval.real=1.2 },
+    { 'D', "pdb_crosslink_cutoff","PDB_CrossLink_Cutoff", &GDefaults.dPdbCrosslinkCovalentCutoff, .defval.real=1.1 },
+    { 'B', "pdb_auto_load","PDB_Auto_Load", &GDefaults.bPdbAutoLoadRes },
+    { 'C', "pdb_altloc","PDB_AltLoc", &GDefaults.cPdbAltLocSelect, .defval.integer = 'A' },
+    { 'B', "pdb_use_link","PDB_Use_LINK", &GDefaults.bPdbUseLinkRecords },
+    { 'B', "pdb_use_conect","PDB_Use_CONECT", &GDefaults.bPdbUseConect },
+    { 'B', "pdb_link_ions","PDB_Link_Ions", &GDefaults.bPdbLinkIons },
+    { 'B', "pdb_reset_chainids","PDB_Reset_ChainIds", &GDefaults.bPdbResetChainID },
+    { 'S', "pdb_convert_resname","PDB_Convert_ResName", &GDefaults.iPdbConvertResName,
+                                  .options = PdbConvertResname_options, .optionDesc = PdbConvertResname_optionDesc  },
+    { 'B', "pdb_ignore_nonconnect","PDB_Ignore_NonConnect", &GDefaults.iPdbIgnoreNonConnect },
+    { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
+    { 'B', "pdb_expand_biomt","PDB_Expand_BioMT", &GDefaults.bPdbExpandBioMt },
+    { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
+    { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },
+    { 'B', "cif_read_auth","CIF_Read_auth", &GDefaults.bCIFReadAuth, .defval.integer=1 },
+    { 'S', "pdb_patch_file","PDB_Patch_File", &GDefaults.sPdbPatchFilename },
+    { 0 }
+};
+
+void InitializeDefaults(void) {
+    for (int i=0; zSDefaultSettings[i].sName; i++) {
+        switch (zSDefaultSettings[i].iType) {
+            case 'B':
+                *((BOOL*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
+                break;
+            case 'I':
+                *((int*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
+                break;
+            case 'C':
+                *((char*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
+                break;
+            case 'D':
+                *((double*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.real;
+                break;
+            case 'S':
+                if (zSDefaultSettings[i].options)
+                    *((int*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
+                else
+                    (*((STRING*)zSDefaultSettings[i].pValue))[0] = 0;
+                break;
+        }
+    }
+}
 
 static void
 setUsage()
 {
-        VPFATALDELAYEDEXIT(( "usage:  set <container> <parameter> <object>\n"
-              "   or:  set default <parameter> <value>\n" ));
+        VPFATALDELAYEDEXIT("usage:  set <container> <parameter> <object>\n"
+              "   or:  set default <parameter> <value>\n" );
 }
 
-void
-SetOnOff(int *pVar, char *name, char *str) {
-        if ( !strcmp( str, "on" ) || !strcmp(str,"true") || !strcmp(str,"1") ) {
-             *pVar = 1;
-        } else if ( !strcmp( str, "off" ) || !strcmp(str,"false") || !strcmp(str,"0") ) {
-             *pVar = 0;
-        } else {
-              VPFATAL(("Set %s: must be 'on'/'true' or 'off'/'false'\n",name));
-              setUsage();
-        }
-}
-
-// FIXME: there is no type checking here; also:merge and simplify all on/off settings
 OBJEKT
 oCmd_set( int iArgCount, ASSOC aaArgs[] )
 {
 LISTLOOP        llElements;
 ASSOC           aAssoc;
+int             iType, iOptIndex;
 char            *sString;
-char             sStrings[100];
 char            *sCmd = "set";
 
-    if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "lumras s *" ) ) {
+    if ( (iArgCount == 2 && !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s ns")) ||
+         (iArgCount != 2 && !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "lumras s *" )) ){
         setUsage();
         return(NULL);
     }
 
-    if ( iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
-        /*
-         *  setting an 'environmental' default;
-         *      catch user attempt to reference non-existent unit
-         */
-        sString = sOString(oAssocObject(aaArgs[0]));
-        if (strchr(sString, '.')) {
-                VPFATAL(( "%s: not a container (e.g. residue)\n", sString ));
-                setUsage();
-                return(NULL);
-        }
-        /*
-         *  we've got to have 3 args due to hardwired arg checker, so
-         *      can't just 'set var value': 'set default var value' where
-         *      'default' just occupies space
-         */
-        StringLower( sString );
-        if ( strcmp( sString, "default" )) {
-                VPFATAL(( "%s: expected 'default'\n", sString ));
-                setUsage();
-                return(NULL);
-        }
-
-        /*
-        **  handle the default 
-        */
-        if ( iObjectType(oAssocObject(aaArgs[1])) != OSTRINGid ) {
-                VPFATAL(( "%s: expected 'default <type> <value>'\n", sString ));
-                setUsage();
-                return(NULL);
-        }
-
-        sString = sOString(oAssocObject(aaArgs[1]));
-        StringLower( sString );
-        strcpy( sStrings, sString );
-        sStrings[4] = 0;
-
-        if ( !strcmp( sString, "pdbwritecharges" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.pdbwritecharges = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.pdbwritecharges = 0;
-                } else {
-                        VPFATAL(("Set pdbwritecharges: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "nocenter" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.nocenter = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.nocenter = 0;
-                } else {
-                        VPFATAL(("Set nocenter: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        }
-        if ( !strcmp( sString, "reorder_residues" )) {
-          
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.reorder_residues = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.reorder_residues = 0;
-                } else {
-                        VPFATAL(("Set reorder_residues: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        }  
-        if ( !strcmp( sString, "oldprmtopformat" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.iOldPrmtopFormat = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.iOldPrmtopFormat = 0;
-                } else {
-                        VPFATAL(("Set OldPrmtopFormat: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "gibbs" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.iGibbs = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.iGibbs = 0;
-                } else {
-                        VPFATAL(("Set Gibbs: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "hybrid36" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                SetOnOff(&GDefaults.bPdbHybrid36,"hybrid36",sString);
-                return(NULL);
-        }
-        if ( !strcmp( sString, "keep_chainid" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                SetOnOff(&GDefaults.bPdbKeepChainId,"Keep_chainId",sString);
-                return(NULL);
-        }
-        if ( !strcmp( sString, "pdbreadbiomt" )) {
-                GDefaults.iPdbReadBioMT = (int)dODouble(oAssocObject(aaArgs[2]));
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "charmm" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.iCharmm = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.iCharmm = 0;
-                } else {
-                        VPFATAL(("Set Charmm: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "flexiblewater" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.iFlexibleWater = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.iFlexibleWater = 0;
-                } else {
-                        VPFATAL(("Set FlexibleWater: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "deleteextrapointangles" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "on" ) ) {
-                        GDefaults.iDeleteExtraPointAngles = 1;
-                } else if ( !strcmp( sString, "off" ) ) {
-                        GDefaults.iDeleteExtraPointAngles = 0;
-                } else {
-                        VPFATAL(("Set DeleteExtraPointAngles: must be 'on' or 'off'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "pbradii" )) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "bondi" ) ) {
-                        GDefaults.iGBparm = 0;
-                        VP0(("Using Bondi radii\n"));
-                } else if ( !strcmp( sString, "amber6" ) ) {
-                        GDefaults.iGBparm = 1;
-                        VP0(("Using amber6 modified Bondi radii\n"));
-                } else if ( !strcmp( sString, "mbondi" ) ) {
-                        GDefaults.iGBparm = 2;
-                        VP0(("Using modified Bondi radii\n"));
-#if 0
-                } else if ( !strcmp( sString, "pbamber" ) ) {
-                        GDefaults.iGBparm = 3;
-                        VP0(("Using radii optimized for Amber charges by Huo and Kollman\n"));
-#endif
-                } else if ( !strcmp( sString, "mbondi2" ) ) {
-                        GDefaults.iGBparm = 6;
-                        VP0(("Using H(N)-modified Bondi radii\n"));
-                } else if ( !strcmp( sString, "parse")){
-                       GDefaults.iGBparm = 7;
-                       VP0(("Using PARSE radii\n"));
-                } else if ( !strcmp( sString, "mbondi3")){
-                        GDefaults.iGBparm = 8;
-                        VP0(("Using ArgH and AspGluO modified Bondi2 radii\n"));
-                } else {
-                        VPFATAL(("pbradii option must be 'bondi', 'amber6', 'mbondi',"
-                                " 'mbondi2', 'mbondi3', 'pbamber', or 'parse'\n"));
-                        setUsage();
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "searchdistance" )) {
-                GDefaults.dDSearchDistance = dODouble(oAssocObject(aaArgs[2]));
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "gridspace" )) {
-                GDefaults.dGridSpace = dODouble(oAssocObject(aaArgs[2]));
-                if (GDefaults.dGridSpace < 0 ) {
-                    GDefaults.dGridSpace = 1.0;
-                    VPWARN(( "Must be greater than 0; resetting to %5.2f\n",
-                                GDefaults.dGridSpace));
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "shellextent" )) {
-                GDefaults.dShellExtent = dODouble(oAssocObject(aaArgs[2]));
-                if (GDefaults.dShellExtent < 0 ) {
-                    GDefaults.dShellExtent = 4.0;
-                    VPWARN(( "%s: Shell extent must be greater than 0;\n", sCmd));
-                    VP0(( "     resetting to %5.2f\n", GDefaults.dShellExtent));
-                }
-                return(NULL);
-        } 
-        if ( !strcmp( sString, "dipole_damp_factor" )) {
-            GDefaults.dDipoleDampFactor =  dODouble(oAssocObject(aaArgs[2]));
-            // Add some verification here.
-            if (GDefaults.dDipoleDampFactor < 0.0) {
-                    VPWARN(( "Illegal value: Dipole damping factor can not be < 0.0;\n"));
-                    VP0(( "resetting dipole_damp_factor to 0.0.\n"));
-                    GDefaults.dDipoleDampFactor = 0.0;
-                 }
-            return(NULL);
-        }
-        if ( !strcmp( sString, "sceescalefactor")  || !strcmp( sStrings, "scee" )) {
-            GDefaults.dSceeScaleFactor =  dODouble(oAssocObject(aaArgs[2]));
-            if (GDefaults.dSceeScaleFactor < 0.0) {
-                    VPWARN(( "Illegal value: 1-4 SCEE factor can not be < 0.0;\n"));
-                    VP0(( "resetting sceescalefactor to 1.2.\n"));
-                    GDefaults.dSceeScaleFactor = 1.2;
-                 }
-            return(NULL);
-        }
-        if ( !strcmp( sString, "scnbscalefactor" ) || !strcmp( sStrings, "scnb" )) {
-            GDefaults.dScnbScaleFactor =  dODouble(oAssocObject(aaArgs[2]));
-            if (GDefaults.dScnbScaleFactor < 0.0) {
-                    VPWARN(( "Illegal value: 1-4 SCNB factor can not be < 0.0;\n"));
-                    VP0(( "resetting scnbscalefactor to 2.0.\n"));
-                    GDefaults.dScnbScaleFactor = 2.0;
-                 }
-            return(NULL);
-        }
-        if ( !strcmp( sString, "cmap" )) {
-            sString = sOString(oAssocObject(aaArgs[2]));
-            StringLower( sString );
-            if ( !strcmp( sString, "on" ) ) {
-                GDefaults.iCMAP = 1;
-            } else if ( !strcmp( sString, "off" ) ) {
-                GDefaults.iCMAP = 0;
-            } else {
-                VPFATAL(("set default CMAP: must be 'on' or 'off'\n"));
-                setUsage();
-            }
-            return(NULL);
-        }
-        if ( !strcmp( sString, "ipol" )) {
-            int myinteger = dODouble(oAssocObject(aaArgs[2]));
-            if ( myinteger < 0 || myinteger > 4 ) {
-                VPWARN(("Only IPOL = 0 to 4 is supported; resetting IPOL to 0.\n"));
-                myinteger = 0;
-            } 
-            if ( GDefaults.iIPOLset > 0 ) {
-                VPWARN(("IPOL has already been set to %i in frcmod/parm.dat.\n",
-                            GDefaults.iIPOL));
-                VP0(("Please change the setting in frcmod/parm.dat.\n"));
-            } else {
-                GDefaults.iIPOL = myinteger;
-            }
-            return(NULL);
-        }
-        if ( !strcmp( sString, "dielectric" )) {
-            if ( iObjectType(oAssocObject(aaArgs[2])) == OSTRINGid ) {
-                sString = sOString(oAssocObject(aaArgs[2]));
-                StringLower( sString );
-                if ( !strcmp( sString, "constant" ) ) {
-                    GDefaults.iDielectricFlag = DIEL_R;
-                } else if ( !strcmp( sString, "distance" ) ) {
-                    GDefaults.iDielectricFlag = DIEL_R2;
-                } else {
-                    VPFATAL(("%s: expected 'distance' or 'constant'\n", sCmd ));
+    if ( iArgCount == 2 || iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
+        char *sParam;
+        STRING sParamLower;
+        OBJEKT oValue;
+        if (iArgCount == 2) {
+            sParam = sOString(oAssocObject(aaArgs[0]));
+            oValue = oAssocObject(aaArgs[1]);
+        } else {
+            /*
+             *  setting an 'environmental' default;
+             *      catch user attempt to reference non-existent unit
+             */
+            sString = sOString(oAssocObject(aaArgs[0]));
+            if (strchr(sString, '.')) {
+                    VPFATAL("%s: not a container (e.g. residue)\n", sString );
                     setUsage();
+                    return(NULL);
+            }
+            StringLower( sString );
+            if ( strcmp( sString, "default" )) {
+                    VPFATAL("%s: expected 'default'\n", sString );
+                    setUsage();
+                    return(NULL);
+            }
+            /*
+            **  handle the default
+            */
+            if ( iObjectType(oAssocObject(aaArgs[1])) != OSTRINGid ) {
+                VPFATAL("%s: expected 'default <type> <value>'\n", sString );
+                setUsage();
+                return(NULL);
+            }
+            sParam = sOString(oAssocObject(aaArgs[1]));
+            oValue = oAssocObject(aaArgs[2]);
+        }
+        strcpy(sParamLower,sParam);
+        StringLower(sParamLower);
+        iOptIndex = -1;
+        for (int i=0; zSDefaultSettings[i].sName; i++) {
+            if (!strcmp(zSDefaultSettings[i].sNameLower,sParamLower) ||
+                // special case for scee, scnb
+                (sParamLower[0]=='s' && sParamLower[1]=='c' && !strncmp(zSDefaultSettings[i].sNameLower,sParamLower,4))) {
+                iOptIndex=i;
+                break;
+            }
+        }
+        if (iOptIndex < 0) {
+            VPFATAL("Default setting \"%s\" not found.\n",sParam);
+            return NULL;
+        }
+        iType = iObjectType(oValue);
+        double dValue = ( iType == ODOUBLEid ) ? dODouble(oValue) : 0.0;
+        double intpart;
+        modf(dValue, &intpart);
+        int iValue = (int)intpart;
+        int iOptionValue = -1;
+        char *sValue = NULL;
+        BOOL bValue = FALSE;
+        if (iType == OSTRINGid) {
+            sValue = sOString(oValue);
+            if (!strcmp("?",sValue)) {
+                OBJEKT oResult;
+                switch (zSDefaultSettings[iOptIndex].iType) {
+                case 'B':
+                    dValue = (double) *((BOOL*)zSDefaultSettings[iOptIndex].pValue);
+                    break;
+                case 'I':
+                    dValue = (double) *((int*)zSDefaultSettings[iOptIndex].pValue);
+                    break;
+                case 'D':
+                    dValue = *((double*)zSDefaultSettings[iOptIndex].pValue);
+                    break;
+                case 'C':
+                    oResult = (OBJEKT) oCreate(OSTRINGid);
+                    {
+                        char str[2];
+                        str[0] = *((char*)zSDefaultSettings[iOptIndex].pValue);
+                        str[1] = 0;
+                        OStringDefine( (OSTRING)oResult, strdup(str) );
+                    }
+                    return oResult;
+                    break;
+                case 'S':
+                    iValue = *((int*)zSDefaultSettings[iOptIndex].pValue);
+                    oResult = (OBJEKT) oCreate(OSTRINGid);
+                    OStringDefine( (OSTRING)oResult, zSDefaultSettings[iOptIndex].options[iValue] );
+                    return oResult;
+                    break;
                 }
+                oResult = (OBJEKT) oCreate(ODOUBLEid);
+                ODoubleSet( (ODOUBLE)oResult, dValue );
+                return oResult;
             }
-            return(NULL);
-        } 
-        if ( !strcmp( sString, "residueimpropers" )) {
-            if ( iObjectType(oAssocObject(aaArgs[2])) != OSTRINGid ) {
-                VPFATAL(("expected 'true' or 'false'\n"));
-                setUsage();
-                return(NULL);
-            }
-            sString = sOString(oAssocObject(aaArgs[2]));
-            StringLower( sString );
-            if (!strcmp(sString, "true"))
-                GDefaults.iResidueImpropers = 1;
-            else if (!strcmp(sString, "false"))
-                GDefaults.iResidueImpropers = 0;
-            else {
-                VPFATAL(("expected 'true' or 'false'\n"));
-                setUsage();
-            }
-            return(NULL);
-        } 
-        if ( !strcmp( sString, "deleteextrapointangles" )) {
-            if ( iObjectType(oAssocObject(aaArgs[2])) != OSTRINGid ) {
-                VPFATAL(("expected 'true' or 'false'\n"));
-                setUsage();
-                return(NULL);
-            }
-            sString = sOString(oAssocObject(aaArgs[2]));
-            StringLower( sString );
-            if (!strcmp(sString, "true"))
-                GDefaults.iDeleteExtraPointAngles = 1;
-            else if (!strcmp(sString, "false"))
-                GDefaults.iDeleteExtraPointAngles = 0;
-            else {
-                VPFATAL(("expected 'true' or 'false'\n"));
-                setUsage();
-            }
-            return(NULL);
-        } 
-        VPFATAL(( "can't parse %s\n", sString ));
-        setUsage();
-        return(NULL);
-    } 
+        }
 
+        // Special case: IPOL can only be set once
+        if ( !strcmp( sParamLower,"ipol") && GDefaults.iIPOLset > 0 ) {
+            VPWARN("IPOL has already been set to %i in frcmod/parm.dat.\n",
+                            GDefaults.iIPOL);
+            VP0("Please change the setting in frcmod/parm.dat.\n");
+            return(NULL);
+        }
+
+
+        switch (zSDefaultSettings[iOptIndex].iType) {
+        case 'B':
+            if ( iType == OSTRINGid && (!strcasecmp( sValue, "on" ) || !strcasecmp(sValue,"true")))
+                bValue = TRUE;
+            else if ( iType == OSTRINGid && (!strcasecmp( sValue, "off" ) || !strcasecmp(sValue,"false")))
+                bValue = FALSE;
+            else if ( iType == ODOUBLEid && dValue != 0.0 )
+                bValue = TRUE;
+            else if ( iType == ODOUBLEid && dValue == 0.0 )
+                bValue = FALSE;
+            else {
+                VPFATAL("Set %s: value must be 'on'/'true'/1 or 'off'/'false'/0\n",zSDefaultSettings[iOptIndex].sName);
+                return NULL;
+            }
+            *((BOOL*)zSDefaultSettings[iOptIndex].pValue) = bValue;
+            break;
+        case 'D':
+            if ( iType != ODOUBLEid ) {
+                VPFATAL("Set %s: value must be a number\n",zSDefaultSettings[iOptIndex].sName);
+                return NULL;
+            }
+            if (dValue < 0.0) {
+                dValue = zSDefaultSettings[iOptIndex].defval.real;
+                VPWARN("%s: %s value must be greater than 0; resetting to %g\n", sCmd,
+                       zSDefaultSettings[iOptIndex].sName, dValue);
+            }
+            printf("Set value = %g\n",dValue);
+            *((double*)zSDefaultSettings[iOptIndex].pValue) = dValue;
+            break;
+        case 'I':
+            if ( iType != ODOUBLEid || dValue != (double)iValue ) {
+                VPFATAL("Set %s: value must be an integer\n",zSDefaultSettings[iOptIndex].sName);
+                return NULL;
+            }
+            if ( !strcmp( sParamLower, "ipol") && ( iValue < 0 || iValue > 4 ) ) {
+                 iValue = zSDefaultSettings[iOptIndex].defval.integer;
+                 VPWARN("Only IPOL = 0 to 4 is supported; resetting IPOL to %d.\n",iValue);
+            }
+            *((int*)zSDefaultSettings[iOptIndex].pValue) = iValue;
+            break;
+        case 'C':
+            if ( iType != OSTRINGid || (iType == OSTRINGid && strlen(sValue) != 1) ) {
+                VPFATAL("Set %s: value must be a single character\n",zSDefaultSettings[iOptIndex].sName);
+                return NULL;
+            }
+            *((char*)zSDefaultSettings[iOptIndex].pValue) = sValue[0];
+            break;
+        case 'S':
+            if ( iType != OSTRINGid) {
+                VPFATAL("Set %s: value must be an string\n",zSDefaultSettings[iOptIndex].sName);
+                return NULL;
+            }
+            // Can be raw string or named enum
+            if (zSDefaultSettings[iOptIndex].options) {
+                for (int i=0;zSDefaultSettings[iOptIndex].options[i];i++) {
+                    if (!strcasecmp(zSDefaultSettings[iOptIndex].options[i],sValue)) {
+                        iOptionValue = i;
+                        break;
+                    }
+                }
+                if (iOptionValue < 0) {
+                    STRING sLine;
+                    sprintf(sLine,"Set %s: value must be one of '%s'",
+                            zSDefaultSettings[iOptIndex].sName, zSDefaultSettings[iOptIndex].options[0]);
+                    for (int i=1;zSDefaultSettings[iOptIndex].options[i];i++) {
+                        sprintf(sLine+strlen(sLine),", '%s'",zSDefaultSettings[iOptIndex].options[i]);
+                    }
+                    VPFATAL("%s",sLine);
+                    return NULL;
+                }
+                *((int*)zSDefaultSettings[iOptIndex].pValue) = iOptionValue;
+                VP0("%s: Using %s\n", zSDefaultSettings[iOptIndex].sName,
+                        zSDefaultSettings[iOptIndex].optionDesc[iOptionValue]);
+            } else {
+                strcpy(*((STRING*)zSDefaultSettings[iOptIndex].pValue), sValue);
+            }
+            break;
+        }
+        return(NULL);
+    } // End of set default
+
+    DisplayerAccumulateUpdates();
     if ( iObjectType(oAssocObject(aaArgs[0])) == LISTid ) {
-        DisplayerAccumulateUpdates();
         llElements = llListLoop((LIST)oAssocObject(aaArgs[0]));
         while ( (aAssoc = (ASSOC)oListNext(&llElements)) ) {
-            MESSAGE(( "Setting attribute for: %s\n", sAssocName(aAssoc) ));
+            MESSAGE("Setting attribute for: %s\n", sAssocName(aAssoc) );
             if ( bObjectInClass( oAssocObject(aAssoc), CONTAINERid ) ) {
                 ContainerSetAttribute( (CONTAINER) oAssocObject(aAssoc),
                         sOString(oAssocObject(aaArgs[1])),
                         oAssocObject(aaArgs[2]) );
             } else {
-                VPFATALEXIT(( "%s: Cannot set attribute for %s - not a 'container'\n"
+                VPFATALEXIT("%s: Cannot set attribute for %s - not a 'container'\n"
                         "\ttype %s\n", sCmd, sAssocName(aAssoc),
-                         sObjectType(oAssocObject(aAssoc)) ));
+                         sObjectType(oAssocObject(aAssoc)) );
             }
         }
-        DisplayerReleaseUpdates();
-        return(NULL);
-    } 
-    DisplayerAccumulateUpdates();
-    ContainerSetAttribute( (CONTAINER) oAssocObject(aaArgs[0]),
-                        sOString(oAssocObject(aaArgs[1])),
-                        oAssocObject(aaArgs[2]) );
-    
+    } else {
+        MESSAGE("Setting attribute for: %s\n", sAssocName(oAssocObject(aaArgs[0])) );
+        if ( bObjectInClass( oAssocObject(aaArgs[0]), CONTAINERid ) ) {
+            ContainerSetAttribute( (CONTAINER) oAssocObject(aaArgs[0]),
+                    sOString(oAssocObject(aaArgs[1])),
+                    oAssocObject(aaArgs[2]) );
+        } else {
+            VPFATALEXIT("%s: Cannot set attribute for %s - not a 'container'\n"
+                    "\ttype %s\n", sCmd, sAssocName(aaArgs[0]),
+                     sObjectType(oAssocObject(aaArgs[0])) );
+        }
+    }
     DisplayerReleaseUpdates();
-    
     return(NULL);
 }
 
@@ -3141,13 +3268,13 @@ char    *sUsage = "usage:  setBox <unit> vdw|centers [ clearance | <clearance_xy
 char    *sOpt;
 BOOL    bVdw;
 
-    if ( iArgCount == 2 ) 
+    if ( iArgCount == 2 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" );
-    else 
+    else
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s ln" );
 
     if ( bUsage ) {
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATALDELAYEDEXIT("%s",sUsage );
         return(NULL);
     }
 
@@ -3158,17 +3285,17 @@ BOOL    bVdw;
     } else if ( !strcmp(sOpt, "centers")  ) {
         bVdw = FALSE;
     } else {
-        VPFATAL(( "%s: Expected 'vdw' or 'centers' for second argument.\n", sCmd ));
-        VPFATALDELAYEDEXIT(( sUsage ));
+        VPFATAL("%s: Expected 'vdw' or 'centers' for second argument.\n", sCmd );
+        VPFATALDELAYEDEXIT("%s",sUsage );
         return(NULL);
     }
 
     if ( bUnitBoxOct(uUnit) ) {
-        VP0(( " removing previous octbox..\n" ));
+        VP0(" removing previous octbox..\n" );
         UnitResetFlags(uUnit, UNITBOXOCT);
         UnitResetFlags(uUnit, UNITUSEBOUNDINGBOX);
     } else if ( bUnitUseBox( uUnit ) ) {
-        VP0(( " removing previous box..\n" ));
+        VP0(" removing previous box..\n" );
         UnitResetFlags(uUnit, UNITUSEBOUNDINGBOX);
     }
 
@@ -3183,41 +3310,41 @@ BOOL    bVdw;
              *  x,y,z box clearances
              */
             if ( iListSize(oAssocObject(aaArgs[2])) != 3 ) {
-                VPFATAL(( "%s: Expected 3 non-negative floating point numbers"
+                VPFATAL("%s: Expected 3 non-negative floating point numbers"
                         " { x y z } for third argument.\n",
-                        sCmd ));
-                VPFATALDELAYEDEXIT(( sUsage ));
+                        sCmd );
+                VPFATALDELAYEDEXIT("%s",sUsage );
                 return(NULL);
             }
             llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
             for ( i=0; i<3; i++ ) {
                 ASSOC   aAss = (ASSOC)oListNext(&llNumbers);
                 if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
-                    VPFATAL(( "%s: Bad value #%d in third argument.\n", sCmd, i ));
-                    VP0(( "%s: Expected 3 non-negative floating point numbers"
+                    VPFATAL("%s: Bad value #%d in third argument.\n", sCmd, i );
+                    VP0("%s: Expected 3 non-negative floating point numbers"
                             " { x y z } for third argument.\n",
-                            sCmd ));
-                    VPFATALDELAYEDEXIT(( sUsage ));
+                            sCmd );
+                    VPFATALDELAYEDEXIT("%s",sUsage );
                     return(NULL);
-                } 
+                }
                 daBuffer[i] = 2.0 * dODouble(oAssocObject(aAss));
                 if ( daBuffer[i] < 0.0 ) {
-                    VPFATAL(( "%s: Bad value #%d in third argument.\n", sCmd, i ));
-                    VP0(( "%s: Expected 3 non-negative floating point numbers"
+                    VPFATAL("%s: Bad value #%d in third argument.\n", sCmd, i );
+                    VP0("%s: Expected 3 non-negative floating point numbers"
                             " { x y z } for third argument.\n",
-                            sCmd ));
-                    VPFATALDELAYEDEXIT(( sUsage ));
+                            sCmd );
+                    VPFATALDELAYEDEXIT("%s",sUsage );
                     return(NULL);
                 }
             }
         } else {
             daBuffer[0] = 2.0 * dODouble(oAssocObject(aaArgs[2]));
             if ( daBuffer[0] < 0.0 ) {
-                VPFATAL(( "%s: Bad box clearance.\n", sCmd ));
-                VP0(( "%s: Expected a non-negative floating point number"
+                VPFATAL("%s: Bad box clearance.\n", sCmd );
+                VP0("%s: Expected a non-negative floating point number"
                         " for third argument.\n",
-                        sCmd ));
-                VPFATALDELAYEDEXIT(( sUsage ));
+                        sCmd );
+                VPFATALDELAYEDEXIT("%s",sUsage );
                 return(NULL);
             }
             daBuffer[2] = daBuffer[1] = daBuffer[0];
@@ -3229,6 +3356,8 @@ BOOL    bVdw;
         if (bVdw) {
             ToolCenterUnitByRadii( uUnit, FALSE );
         } else {
+//XXX This actually centers the box, which is then shifted back at unitio.c
+//    This does not support arbitrary box, it just uses 0,1 interval instead of -1/2,1/2
             VECTOR vOrigin;
             VectorDef( &vOrigin, 0.0, 0.0, 0.0 );
             ContainerCenterAt( (CONTAINER)uUnit, vOrigin );
@@ -3246,104 +3375,113 @@ BOOL    bVdw;
         dZ += daBuffer[2];
         UnitSetBox( uUnit, dX, dY, dZ );
     }
-    VP0(( "Box dimensions:  %f %f %f\n", dX, dY, dZ ));
+    VP0("Box dimensions:  %f %f %f\n", dX, dY, dZ );
     return(NULL);
 }
-int
-PrntOnOff(char* s1, char* s2, char* info, int iswitch, int ALL)
-{
-int l;
-        l = strlen(s1);
-        if ( !strncmp( s1, s2, l) || ALL) {
-                VP0(("%25s :    ", info));
-                if ( iswitch )
-                        VP0(("on/true\n"));
-                else
-                        VP0(("off/false\n"));
-return(1); } else return (0);
 
-}
-int
-PrntOpt(char* s1, char* s2, char* info, char* opt[], int ind, int ALL)
+/*
+ *      oCmd_setCell
+ *
+ *      Author: Juno Krahn (2026)
+ *
+ *      Arguments:
+ *              [0] -   OBJEKT to center/set vdw box.
+ *              [1] - [6] -- full unit cell parameters
+ */
+OBJEKT
+oCmd_setCell( int iArgCount, ASSOC aaArgs[] )
 {
-int l;
-        l = strlen(s1);
-        if ( !strncmp( s1, s2, l) || ALL) {
-                VP0(("%25s :    %s\n", info,opt[ind]));
-return(1); } else return (0);
+UNIT    uUnit;
+BOOL    bUsage;
+char    *sCmd = "setCell";
+char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> | <beta> ]\n";
+
+    if ( iArgCount == 4 )
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n n n" );
+    else if ( iArgCount == 5 )
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n n n n" );
+    else
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n n n n n n" );
+
+    if ( bUsage ) {
+        VPFATALDELAYEDEXIT("%s",sUsage );
+        return(NULL);
+    }
+
+    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    double a = dODouble(oAssocObject(aaArgs[1]));
+    double b = dODouble(oAssocObject(aaArgs[2]));
+    double c = dODouble(oAssocObject(aaArgs[3]));
+    double alpha=90.0, beta=90.0, gamma=90.0;
+    if (iArgCount == 7) {
+       alpha = dODouble(oAssocObject(aaArgs[4]));
+       beta = dODouble(oAssocObject(aaArgs[5]));
+       gamma = dODouble(oAssocObject(aaArgs[6]));
+    } else if (iArgCount == 5)
+       beta = dODouble(oAssocObject(aaArgs[4]));
+    UnitSetCell(uUnit,a,b,c,alpha,beta,gamma);
+    UnitSetUseBox( uUnit, TRUE );
+    VP0("Cell dimensions:  %f %f %f %f %f %f\n", a,b,c,alpha,beta,gamma );
+    return(NULL);
 }
 
-int
-PrntInt(char* s1, char* s2, char* info, int i, int ALL)
-{
-int l;
-        l = strlen(s1);
-        if ( !strncmp( s1, s2, l) || ALL) {
-                VP0(("%25s :    %i\n", info,i));
-return(1); } else return (0);
-}
 
-int
-PrntReal(char* s1, char* s2, char* info, double f, int ALL)
-{
-int l;
-        l = strlen(s1);
-        if ( !strncmp( s1, s2, l) || ALL) {
-                VP0(("%25s :    %lf\n", info,f));
-return(1); } else return (0);
+void
+zPrintDefaultSetting(int index) {
+    VP0("%25s :    ",zSDefaultSettings[index].sName);
+    if (zSDefaultSettings[index].iType == 'B') {
+        VP0("%s\n", *((BOOL*)zSDefaultSettings[index].pValue) ?  "on/true" : "off/false");
+    } else if (zSDefaultSettings[index].iType == 'I') {
+        VP0("%i\n",*((int*)zSDefaultSettings[index].pValue));
+    } else if (zSDefaultSettings[index].iType == 'S') {
+        if (!zSDefaultSettings[index].optionDesc) {
+            VP0("\"%s\"\n", (char*)zSDefaultSettings[index].pValue);
+            return;
+        }
+        int ioption = *((int*)zSDefaultSettings[index].pValue);
+        // We loop only because list length is defined by NULL
+        for (int i=0;zSDefaultSettings[index].optionDesc[i]; i++) {
+            if (ioption == i) {
+                VP0("%s\n",zSDefaultSettings[index].optionDesc[ioption] );
+                return;
+            }
+        }
+        VP0("ERROR: Undfined otion index: %d\n",ioption );
+    } else if (zSDefaultSettings[index].iType == 'D') {
+        VP0("%lf\n",*((double*)zSDefaultSettings[index].pValue) );
+    } else if (zSDefaultSettings[index].iType == 'C') {
+        char c = *((char*)zSDefaultSettings[index].pValue);
+        if (c) VP0("'%c'\n",*((char*)zSDefaultSettings[index].pValue) );
+        else VP0("''\n");
+    }
 }
 
 /*
  * Show default variables
- *      Author: Yong Duan 
+ *      Author: Yong Duan
  *      (adapted from set default)
  */
 OBJEKT
 oCmd_showDefault( int iArgCount, ASSOC aaArgs[] )
 {
-char            *sString;
-char            sStrings[]="all";
-int             ALL, ind, found;
-
-        ALL = 0;
-        found = 0;
-        if ( !iArgCount ) sString = sStrings;
-        else sString = sOString(oAssocObject(aaArgs[0]));
-        StringLower( sString );
-
-        if ( !strcmp(sString, "all") || !strcmp(sString, "*" )) ALL = 1;
-
-        if ( iArgCount) sString = sOString(oAssocObject(aaArgs[0]));
-        StringLower( sString );
-
-        found += PrntOnOff(sString, "pdbwritecharges", "PdbWriteCharges", GDefaults.pdbwritecharges, ALL);
-        found += PrntOnOff(sString, "oldprmtopformat", "OldPrmtopFormat", GDefaults.iOldPrmtopFormat, ALL);
-        found += PrntOnOff(sString, "gibbs", "Gibbs", GDefaults.iGibbs, ALL);
-        found += PrntOnOff(sString, "hybrid36", "Hybrid36", GDefaults.bPdbHybrid36, ALL);
-        found += PrntOnOff(sString, "keep_chainid", "Keep_chainId", GDefaults.bPdbKeepChainId, ALL);
-        found += PrntInt(sString, "pdbreadbiomt", "PdbReadBioMT", GDefaults.iPdbReadBioMT, ALL);
-        found += PrntOnOff(sString, "charmm", "Charmm", GDefaults.iCharmm, ALL);
-        found += PrntOnOff(sString, "flexiblewater", "FlexibleWater", GDefaults.iFlexibleWater, ALL);
-        found += PrntOnOff(sString, "deleteextrapointangles", "DeleteExtraPointAngles", GDefaults.iDeleteExtraPointAngles, ALL);
-        char* s[7]={"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii","","","","H(N)-modified Bondi radii"};
-        found += PrntOpt(sString, "pbradii", "PB Radii", s,GDefaults.iGBparm, ALL);
-        found += PrntReal(sString, "searchdistance", "SearchDistance", GDefaults.dDSearchDistance, ALL);
-        found += PrntReal(sString, "gridspace", "GridSpace", GDefaults.dGridSpace, ALL);
-        found += PrntReal(sString, "shellextent", "ShellExtent", GDefaults.dShellExtent, ALL);
-        found += PrntReal(sString, "dipole_damp_factor", "Dipole Damping Factor", GDefaults.dDipoleDampFactor, ALL);
-        found += PrntReal(sString, "sceescalefactor", "SCEE 1-4 Scale Factor", GDefaults.dSceeScaleFactor, ALL);
-        found += PrntReal(sString, "scnbscalefactor", "SCNB 1-4 Scale Factor", GDefaults.dScnbScaleFactor, ALL);
-        found += PrntOnOff(sString, "cmap", "CMAP", GDefaults.iCMAP, ALL);
-        found += PrntInt(sString, "ipol", "IPOL", GDefaults.iIPOL, ALL);
-        char* s1[3]={"Constant","Distance","Undefined"};
-        if (GDefaults.iDielectricFlag == DIEL_R ) ind = 0;
-        else if (GDefaults.iDielectricFlag == DIEL_R2 ) ind = 1;
-        else ind = 2;
-        found += PrntOpt(sString, "dielectric", "Dielectric", s1,ind, ALL);
-        found += PrntOnOff(sString, "residueimpropers", "ResidueImpropers", GDefaults.iResidueImpropers, ALL);
-        found += PrntOnOff(sString, "deleteextrapointangles", "DeleteExtraPointAngles", GDefaults.iDeleteExtraPointAngles, ALL);
-        if (!found) {VPWARN(( "can't parse %s\n", sString ));}
-
+char    *sCmd = "showDefault";
+    if (!bCmdGoodArguments( sCmd, iArgCount, aaArgs, (iArgCount == 1) ? "s" : "" )) {
+        VPFATALDELAYEDEXIT("usage:  showDefault [<parameter_name>]\n" );
+        return(NULL);
+    }
+    if ( iArgCount == 1 ) {
+        char *cPString = sOString(oAssocObject(aaArgs[0]));
+        for (int i=0;zSDefaultSettings[i].sName;i++) {
+            if (!strcasecmp(zSDefaultSettings[i].sName,cPString)) {
+                zPrintDefaultSetting(i);
+                return NULL;
+            }
+        }
+        VPWARN("Default parameter %s not found\n", cPString );
+    } else {
+        for (int i=0;zSDefaultSettings[i].sName;i++)
+            zPrintDefaultSetting(i);
+    }
     return(NULL);
 }
 
@@ -3356,6 +3494,21 @@ int             ALL, ind, found;
  *              [0] -   uNIT whose charge should be calculated.
  *
  */
+
+typedef struct {
+    double dFrac;
+    double dCharge;
+    RESIDUE rRes;
+} CHARGERESt;
+
+int qsort_rescharge(const void *a, const void *b) {
+    double dA = ((const CHARGERESt*)a)->dFrac;
+    double dB = ((const CHARGERESt*)b)->dFrac;
+    if (dA < dB) return 1;
+    if (dA > dB) return -1;
+    return 0;
+}
+
 OBJEKT
 oCmd_charge( int iArgCount, ASSOC aaArgs[] )
 {
@@ -3363,17 +3516,42 @@ CONTAINER               cCont;
 double                  dCharge, dPertCharge;
 
     if ( !bCmdGoodArguments( "charge", iArgCount, aaArgs, "umral" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  charge <object>\n" ));
+        VPFATALDELAYEDEXIT("usage:  charge <object>\n" );
         return(NULL);
     }
 
     cCont = (CONTAINER)oAssocObject(aaArgs[0]);
 
     ContainerTotalCharge( cCont, &dCharge, &dPertCharge );
-    VP0(( "Total unperturbed charge: %10.6lf\n", dCharge ));
+    VP0("Total unperturbed charge: %10.6lf\n", dCharge );
     /*dPertCharge is now the delta of the charge and not the actual perturbed charge*/
-    VP0(( "Total perturbed charge:   %10.6lf\n", (dCharge+dPertCharge) ));
+    VP0("Total perturbed charge:   %10.6lf\n", (dCharge+dPertCharge) );
 
+    int iCount=0, iNumRes = iContainerNumberOfChildren(cCont);
+    CHARGERESt *crResidues = malloc(sizeof(CHARGERESt)*iNumRes);
+    RESIDUE rRes;
+    LOOP lRes = lLoop( (OBJEKT)cCont, RESIDUES );
+    while ( ( rRes = (RESIDUE)oNext(&lRes) ) != NULL ) {
+            double charge=0;
+            ATOM aAtom;
+            LOOP lAtom = lLoop( (OBJEKT)rRes, ATOMS );
+            while ( ( aAtom = (ATOM)oNext(&lAtom)) != NULL ) {
+                charge += dAtomCharge(aAtom);
+            }
+            crResidues[iCount].dFrac = fabs(charge - round(charge));
+            crResidues[iCount].dCharge = charge;
+            crResidues[iCount++].rRes = rRes;
+    }
+    qsort((void *)crResidues, iNumRes, sizeof(CHARGERESt), qsort_rescharge);
+    if (crResidues[0].dFrac > 0.00005) {
+        VP0("Residues with the largest deviation from unit charge:\n");
+        for (int i=0;i<iNumRes && i<20 && crResidues[i].dFrac > 0.00005;i++) {
+            STRING sDesc;
+            printf("%15s  Q=%7.3f  dq=%8.4f\n",sContainerDescriptor((CONTAINER)crResidues[i].rRes,sDesc),
+                     crResidues[i].dCharge,crResidues[i].dFrac);
+        }
+    }
+    free(crResidues);
     return(NULL);
 }
 
@@ -3397,30 +3575,30 @@ UNIT    uUnit;
 FILE    *fOut;
 char    *sCmd = "saveAmberParm";
 
-    VPTRACEENTER(( "oCmd_saveAmberParm" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_saveAmberParm" ));
+    VPTRACEENTER("oCmd_saveAmberParm" );
+    VPTRACEMULTIPLEEXIT("oCmd_saveAmberParm" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
-        VPFATALDELAYEDEXIT(("usage:  saveAmberParm <unit> <topologyfile> <coordfile> \n" ));
+        VPFATALDELAYEDEXIT("usage:  saveAmberParm <unit> <topologyfile> <coordfile> \n" );
         return(NULL);
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
-        VPFATALEXIT(( "%s: Could not open file: %s\n", 
-                sCmd, sOString(oAssocObject(aaArgs[1]))));
+        VPFATALEXIT("%s: Could not open file: %s\n",
+                sCmd, sOString(oAssocObject(aaArgs[1])));
         return(NULL);
     }
     TurnOffDisplayerUpdates();
-    // VP0(("sA first is %s\n", sA[0])); // C4TypeDebug
+    // VP0("sA first is %s\n", sA[0]); // C4TypeDebug
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, FALSE, FALSE, FALSE, sA, sB, daC4Type, iC4count );   //NewT
     TurnOnDisplayerUpdates();
-    
+
     fclose( fOut );
     return(NULL);
 }
@@ -3442,24 +3620,24 @@ oCmd_saveAmberParmNetCDF( int iArgCount, ASSOC aaArgs[] )
 UNIT    uUnit;
 FILE    *fOut;
 char    *sCmd = "saveAmberParmNetCDF";
-  
-    VPTRACEENTER(( "oCmd_saveAmberParmNetCDF" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_saveAmberParmNetCDF" ));
+
+    VPTRACEENTER("oCmd_saveAmberParmNetCDF" );
+    VPTRACEMULTIPLEEXIT("oCmd_saveAmberParmNetCDF" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
-        VPFATALDELAYEDEXIT(("usage: saveAmberParmNetCDF <unit> <topologyfile>"
-                " <coordfile> \n" ));
+        VPFATALDELAYEDEXIT("usage: saveAmberParmNetCDF <unit> <topologyfile>"
+                " <coordfile> \n" );
         return(NULL);
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
-        VPFATALEXIT(( "%s: Could not open file: %s\n", 
-                sCmd, sOString(oAssocObject(aaArgs[1]))));
+        VPFATALEXIT("%s: Could not open file: %s\n",
+                sCmd, sOString(oAssocObject(aaArgs[1])));
         return(NULL);
     }
     TurnOffDisplayerUpdates();
@@ -3489,31 +3667,31 @@ UNIT    uUnit;
 FILE    *fOut;
 char    *sCmd = "saveAmberParmPol";
 
-    VPTRACEENTER(( "oCmd_saveAmberParmPol" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_saveAmberParmPol" ));
+    VPTRACEENTER("oCmd_saveAmberParmPol" );
+    VPTRACEMULTIPLEEXIT("oCmd_saveAmberParmPol" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  %s <unit> <topologyfile> <coordfile>\n",
-                sCmd ));
+        VPFATALDELAYEDEXIT("usage:  %s <unit> <topologyfile> <coordfile>\n",
+                sCmd );
         return(NULL);
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
-        VPFATALEXIT(( "%s: Could not open file: %s\n", 
-                sCmd, sOString(oAssocObject(aaArgs[1]))));
+        VPFATALEXIT("%s: Could not open file: %s\n",
+                sCmd, sOString(oAssocObject(aaArgs[1])));
         return(NULL);
     }
-    
+
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, TRUE, FALSE, FALSE, sA, sB, daC4Type, iC4count);  //NewT
     TurnOnDisplayerUpdates();
-    
+
     fclose( fOut );
     return(NULL);
 }
@@ -3537,31 +3715,31 @@ UNIT    uUnit;
 FILE    *fOut;
 char    *sCmd = "saveAmberParmPert";
 
-    VPTRACEENTER(( "oCmd_saveAmberParmPert" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_saveAmberParmPert" ));
+    VPTRACEENTER("oCmd_saveAmberParmPert" );
+    VPTRACEMULTIPLEEXIT("oCmd_saveAmberParmPert" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  %s <unit> <topologyfile> <coordfile>\n",
-                sCmd ));
+        VPFATALDELAYEDEXIT("usage:  %s <unit> <topologyfile> <coordfile>\n",
+                sCmd );
         return(NULL);
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
-        VPFATALEXIT(( "%s: Could not open file: %s\n", 
-                        sCmd, sOString(oAssocObject(aaArgs[1]))));
+        VPFATALEXIT("%s: Could not open file: %s\n",
+                        sCmd, sOString(oAssocObject(aaArgs[1])));
         return(NULL);
     }
-    
+
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[1])),
                 GplAllParameters, FALSE, TRUE, FALSE, sA, sB, daC4Type, iC4count); //NewT
     TurnOnDisplayerUpdates();
-    
+
     fclose( fOut );
     return(NULL);
 }
@@ -3583,31 +3761,31 @@ UNIT    uUnit;
 FILE    *fOut;
 char    *sCmd = "saveAmberParmPert";
 
-    VPTRACEENTER(( "oCmd_saveAmberParmPolPert" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_saveAmberParmPolPert" ));
+    VPTRACEENTER("oCmd_saveAmberParmPolPert" );
+    VPTRACEMULTIPLEEXIT("oCmd_saveAmberParmPolPert" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  %s <unit> <topologyfile> <coordfile>\n",
-                sCmd ));
+        VPFATALDELAYEDEXIT("usage:  %s <unit> <topologyfile> <coordfile>\n",
+                sCmd );
         return(NULL);
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
-        VPWARN(( "%s: There are no parameter sets loaded\n", sCmd ));
+        VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
-        VPFATALEXIT(( "%s: Could not open file: %s\n", 
-                        sCmd, sOString(oAssocObject(aaArgs[1]))));
+        VPFATALEXIT("%s: Could not open file: %s\n",
+                        sCmd, sOString(oAssocObject(aaArgs[1])));
         return(NULL);
     }
-    
+
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, TRUE, TRUE, FALSE, sA, sB, daC4Type, iC4count); //NewT
     TurnOnDisplayerUpdates();
-    
+
     fclose( fOut );
     return(NULL);
 }
@@ -3621,10 +3799,10 @@ UNIT            uUnit;
 FILE            *fOut;
 char            *sCmd = "saveAmberPrep";
 
-    VPTRACEENTER(( "oCmd_saveAmberPrep" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_saveAmberPrep" ));
+    VPTRACEENTER("oCmd_saveAmberPrep" );
+    VPTRACEMULTIPLEEXIT("oCmd_saveAmberPrep" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  saveAmberPrep <unit> <file>\n" ));
+        VPFATALDELAYEDEXIT("usage:  saveAmberPrep <unit> <file>\n" );
         return(NULL);
     }
 
@@ -3632,17 +3810,17 @@ char            *sCmd = "saveAmberPrep";
 
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
-        VPFATALEXIT(( "%s: Could not open file: %s\n", 
-                sCmd, sOString(oAssocObject(aaArgs[1]))));
+        VPFATALEXIT("%s: Could not open file: %s\n",
+                sCmd, sOString(oAssocObject(aaArgs[1])));
         return(NULL);
     }
-    
+
     TurnOffDisplayerUpdates();
     UnitIOSaveAmberPrep( uUnit, fOut );
     TurnOnDisplayerUpdates();
-    
+
     fclose( fOut );
-    VP0(( "  -- Remember to delete unwanted IMPROPER terms!\n" ));
+    VP0("  -- Remember to delete unwanted IMPROPER terms!\n" );
     return(NULL);
 }
 
@@ -3661,12 +3839,12 @@ LISTLOOP        llVariables;
 ASSOC           aAssoc;
 
     if ( iArgCount == 0 ) {
-        VP0(( "Clearing all variables\n" ));
+        VP0("Clearing all variables\n" );
         VariablesDestroy();
         VariablesInit();
     } else {
         if ( !bCmdGoodArguments( "clearVariables", iArgCount, aaArgs, "l" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  clearVariables [LIST]\n" ));
+            VPFATALDELAYEDEXIT("usage:  clearVariables [LIST]\n" );
             return(NULL);
         }
         llVariables = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
@@ -3703,7 +3881,7 @@ ASSOC           aAssoc;
 char            *sCmd = "matchVariables";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  <variable> = matchVariables <string>\n" ));
+        VPFATALDELAYEDEXIT("usage:  <variable> = matchVariables <string>\n" );
         return(NULL);
     }
     dVariables = dVariablesDictionary();
@@ -3746,7 +3924,7 @@ char            *sCmd = "matchVariables";
  *              [0] -   OBJEKT to edit.
  *      Davids Changes - changed "uz" to "ups" in bCmdGoodArguments call.
  *              Moved and copied the "GrMainResult.oObject = uUnit" to the
- *              first two if statements and added a check and 
+ *              first two if statements and added a check and
  *              GrMainResult.oObject = psParmSet added PARMSET psParmSet
  *              to the local variables.
  */
@@ -3758,12 +3936,12 @@ PARMSET         psParmSet;
 RESIDUE         rRes;
 
     if ( !GbGraphicalEnvironment ) {
-        VPWARN(( "The edit command only works in a graphical environment.\n" ));
+        VPWARN("The edit command only works in a graphical environment.\n" );
         GrMainResult.iCommand = CNONE;
         return(NULL);
     }
     if ( !bCmdGoodArguments( "edit", iArgCount, aaArgs, "ups" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  edit <unit/parmset>\n" ));
+        VPFATALDELAYEDEXIT("usage:  edit <unit/parmset>\n" );
         return(NULL);
     }
 
@@ -3773,15 +3951,15 @@ RESIDUE         rRes;
                 /* Check if the UNIT exists, if it doesn't then */
                 /* create a new one with a single RESIDUE in it */
 
-    if ( oAssocObject(aaArgs[0]) == NULL  || 
+    if ( oAssocObject(aaArgs[0]) == NULL  ||
                         iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
-            VP0(( "Creating a new, empty UNIT \"%s\"\n", 
-                        sOString( oAssocObject(aaArgs[0]))));
+            VP0("Creating a new, empty UNIT \"%s\"\n",
+                        sOString( oAssocObject(aaArgs[0])));
             uUnit = (UNIT)oCreate(UNITid);
-            ContainerSetName( (CONTAINER) uUnit, 
+            ContainerSetName( (CONTAINER) uUnit,
                                 sOString( oAssocObject(aaArgs[0])));
             rRes  = (RESIDUE)oCreate(RESIDUEid);
-            ContainerSetName( (CONTAINER) rRes, 
+            ContainerSetName( (CONTAINER) rRes,
                                 sOString(oAssocObject(aaArgs[0])));
             ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rRes );
             VariableSet( sOString( oAssocObject(aaArgs[0])), (OBJEKT)uUnit );   /* adds 1 REF */
@@ -3792,19 +3970,19 @@ RESIDUE         rRes;
             GrMainResult.oObject = (OBJEKT) uUnit;
 
     } else if ( iObjectType(oAssocObject(aaArgs[0])) == PARMSETid) {
-            psParmSet = (PARMSET)(oAssocObject(aaArgs[0]));    
+            psParmSet = (PARMSET)(oAssocObject(aaArgs[0]));
             GrMainResult.oObject = (OBJEKT) psParmSet;
 
     } else {
-            VPWARN(( "Can't edit type %s\n", 
-                                sObjectType(oAssocObject(aaArgs[0])) ));
+            VPWARN("Can't edit type %s\n",
+                                sObjectType(oAssocObject(aaArgs[0])) );
             GrMainResult.iCommand = CNONE;
     }
 
     return(NULL);
 }
 
-        
+
 
 
 /*
@@ -3824,19 +4002,19 @@ oCmd_alignAxes( int iArgCount, ASSOC aaArgs[] )
 {
 
     if ( !bCmdGoodArguments( "alignAxes", iArgCount, aaArgs, "u" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  alignAxes <unit>\n" ));
+        VPFATALDELAYEDEXIT("usage:  alignAxes <unit>\n" );
         return(NULL);
     }
 
     DisplayerAccumulateUpdates();
-    
+
     ToolOrientPrincipleAxisAlongCoordinateAxis( (UNIT)oAssocObject(aaArgs[0]) );
 
                 /* Instruct the graphics system to reset the viewing */
                 /* matrices of the UNIT */
 
     DisplayerReleaseUpdates();
-    
+
     return(NULL);
 }
 
@@ -3849,7 +4027,7 @@ oCmd_alignAxes( int iArgCount, ASSOC aaArgs[] )
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      This command sets the ATOMSELECTED flag of atoms 
+ *      This command sets the ATOMSELECTED flag of atoms
  *      within the OBJEKT
  *
  *      Arguments:
@@ -3864,12 +4042,12 @@ LOOP            lAtoms;
 ATOM            aAtom;
 
     if ( !bCmdGoodArguments( "select", iArgCount, aaArgs, "umral" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  select <object>\n" ));
+        VPFATALDELAYEDEXIT("usage:  select <object>\n" );
         return(NULL);
     }
 
     DisplayerAccumulateUpdates();
-    
+
     oOver = oAssocObject(aaArgs[0]);
     lAtoms = lLoop( oOver, ATOMS );
     while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
@@ -3893,14 +4071,14 @@ ATOM            aAtom;
 double          dScale;
 
     if ( !bCmdGoodArguments( "scaleCharges", iArgCount, aaArgs, "umral n" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  scaleCharges <object> <scale_factor>\n" ));
+        VPFATALDELAYEDEXIT("usage:  scaleCharges <object> <scale_factor>\n" );
         return(NULL);
     }
 
     dScale = dODouble(oAssocObject(aaArgs[1]));
     if ( dScale <= 0.0 ) {
-        VPFATAL(( "scaleCharges: scale_factor must be > 0\n" ));
-        VPFATALDELAYEDEXIT(( "usage:  scaleCharges <object> <scale_factor>\n" ));
+        VPFATAL("scaleCharges: scale_factor must be > 0\n" );
+        VPFATALDELAYEDEXIT("usage:  scaleCharges <object> <scale_factor>\n" );
         return(NULL);
     }
 
@@ -3920,7 +4098,7 @@ double          dScale;
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      This command resets the ATOMSELECTED flag of atoms 
+ *      This command resets the ATOMSELECTED flag of atoms
  *      within the OBJEKT
  *
  *      Arguments:
@@ -3935,20 +4113,20 @@ LOOP            lAtoms;
 ATOM            aAtom;
 
     if ( !bCmdGoodArguments( "deSelect", iArgCount, aaArgs, "umral" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  deSelect <object>\n" ));
+        VPFATALDELAYEDEXIT("usage:  deSelect <object>\n" );
         return(NULL);
     }
 
     DisplayerAccumulateUpdates();
-    
+
     oOver = oAssocObject(aaArgs[0]);
     lAtoms = lLoop( oOver, ATOMS );
     while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
         AtomResetFlags( aAtom, ATOMSELECTED );
     }
-    
+
     DisplayerReleaseUpdates();
-    
+
     return(NULL);
 }
 
@@ -3981,7 +4159,7 @@ RESTRAINT       rRest;
 char            *sCmd = "restrainBond";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a n n" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  restrainBond <unit> <a> <b> <force> <length>\n" ));
+        VPFATALDELAYEDEXIT("usage:  restrainBond <unit> <a> <b> <force> <length>\n" );
         return(NULL);
     }
 
@@ -3993,7 +4171,7 @@ char            *sCmd = "restrainBond";
 
     for ( i=0; i<ATOMSINBOND; i++ ) {
         if ( !bContainerContainedBy( (CONTAINER)aaAtoms[i], (CONTAINER)uUnit ) ) {
-            VPFATALEXIT(( "%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 ));
+            VPFATALEXIT("%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 );
             return(NULL);
         }
     }
@@ -4038,7 +4216,7 @@ RESTRAINT       rRest;
 char            *sCmd = "restrainAngle";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a n n" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  restrainAngle <unit> <a> <b> <c> <force> <length>\n" ));
+        VPFATALDELAYEDEXIT("usage:  restrainAngle <unit> <a> <b> <c> <force> <length>\n" );
         return(NULL);
     }
 
@@ -4050,7 +4228,7 @@ char            *sCmd = "restrainAngle";
 
     for ( i=0; i<ATOMSINANGLE; i++ ) {
         if ( !bContainerContainedBy( (CONTAINER)aaAtoms[i], (CONTAINER)uUnit ) ) {
-            VPFATALEXIT(( "%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 ));
+            VPFATALEXIT("%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 );
             return(NULL);
         }
     }
@@ -4097,8 +4275,7 @@ RESTRAINT       rRest;
 char            *sCmd = "restrainTorsion";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a a n n n" ) ) {
-        VPFATALDELAYEDEXIT(( 
-         "usage:  restrainTorsion <unit> <a> <b> <c> <d> <force> <length>\n" ));
+        VPFATALDELAYEDEXIT("usage:  restrainTorsion <unit> <a> <b> <c> <d> <force> <length>\n" );
         return(NULL);
     }
 
@@ -4111,7 +4288,7 @@ char            *sCmd = "restrainTorsion";
 
     for ( i=0; i<ATOMSINTORSION; i++ ) {
         if ( !bContainerContainedBy( (CONTAINER)aaAtoms[i], (CONTAINER)uUnit ) ) {
-            VPFATALEXIT(( "%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 ));
+            VPFATALEXIT("%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 );
             return(NULL);
         }
     }
@@ -4149,19 +4326,19 @@ char            *sCmd = "deleteRestraint";
 
     if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" ));
+          VPFATALDELAYEDEXIT("usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" );
           return(NULL);
         }
         iAtomCount = 2;
     } else if ( iArgCount == 4 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" ));
+          VPFATALDELAYEDEXIT("usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" );
           return(NULL);
         }
         iAtomCount = 3;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a a" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" ));
+          VPFATALDELAYEDEXIT("usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" );
           return(NULL);
         }
         iAtomCount = 4;
@@ -4207,17 +4384,17 @@ char            *sCmd = "deleteRestraint";
                 }
                 break;
             default:
-                DFATAL(( "%s: Illegal RESTRAINT!\n", sCmd ));
+                DFATAL("%s: Invalid RESTRAINT!\n", sCmd );
         }
     }
 
 DONE:
     if ( !bGotOne ) {
-        VPFATALEXIT(( "%s: No such restraint could be found.\n", sCmd ));
+        VPFATALEXIT("%s: No such restraint could be found.\n", sCmd );
     } else {
-        VP1(( "Removing restraint.\n" ));
+        VP1("Removing restraint.\n" );
         bFound = bUnitRemoveRestraint( uUnit, rRest );
-        VP1(( "Restraint was removed = %i \n", bFound ));
+        VP1("Restraint was removed = %i \n", bFound );
     }
     return(NULL);
 }
@@ -4264,13 +4441,13 @@ LIST            lOne;
 char            *sCmd = "impose";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u l l" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  %s <unit> <residueseqlist> <internalslistlist>\n",
-                        sCmd ));
+        VPFATALDELAYEDEXIT("usage:  %s <unit> <residueseqlist> <internalslistlist>\n",
+                        sCmd );
         return(NULL);
     }
 
     DisplayerAccumulateUpdates();
- 
+
         /* Build the INTERNALs */
 
     uUnit = (UNIT)oAssocObject( aaArgs[0] );
@@ -4293,12 +4470,12 @@ char            *sCmd = "impose";
         while ( (aInternal = (ASSOC)oListNext(&llInternals)) ) {
 
             if ( iObjectType(oAssocObject(aInternal)) != LISTid ) {
-                VPFATALEXIT(( "%s: Invalid internal list in internalslistlist !\n"
+                VPFATALEXIT("%s: Invalid internal list in internalslistlist !\n"
                       "        Note that argument #3 is a list of lists.\n"
                       "        Here is an example:\n"
                       "        impose x {167 168} { { \"CH3\" $C $N $CA 180.0"
                       " } }\n",
-                      sCmd ));
+                      sCmd );
                 continue;
             }
 
@@ -4312,7 +4489,7 @@ char            *sCmd = "impose";
                 oOne = (OBJEKT)oAssocObject(aOne);
                 oaIntObjekts[iObjekts++] = oOne;
                 if ( iObjekts > MAXOBJEKTSININTERNALLIST ) {
-                    VPFATALEXIT(( "%s: Too many lists in argument #3\n", sCmd ));
+                    VPFATALEXIT("%s: Too many lists in argument #3\n", sCmd );
                     bSkipSubList = TRUE;
                     break;
                 }
@@ -4323,24 +4500,24 @@ char            *sCmd = "impose";
                         /* Now apply the INTERNAL onto the RESIDUE */
             iStart = 0;
             if ( iObjectType(oaIntObjekts[0]) == ODOUBLEid ) iStart = 1;
-        
+
             switch ( iObjekts - iStart ) {
                         /* Do a bond INTERNAL */
                 case 3:
-                    MESSAGE(( "Imposing a bond INTERNAL\n" ));
+                    MESSAGE("Imposing a bond INTERNAL\n" );
                     if ( iObjectType(oaIntObjekts[iStart+0]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+1]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+2]) != ODOUBLEid ) {
-                        VPFATALEXIT(( "%s: Illegal bond internal definition\n",
-                                sCmd ));
+                        VPFATALEXIT("%s: Invalid bond internal definition\n",
+                                sCmd );
                     } else {
                         if ( iStart == 1 ) {
-                           rResModify = rResidueConnected( rRes, 
+                           rResModify = rResidueConnected( rRes,
                                         (int)dODouble(oaIntObjekts[0]) );
                         } else rResModify = rRes;
-                        MESSAGE(( "Imposing on Residue: %s:%d\n",
+                        MESSAGE("Imposing on Residue: %s:%d\n",
                                 sContainerName((CONTAINER) rResModify),
-                                iContainerSequence((CONTAINER) rResModify) ));
+                                iContainerSequence((CONTAINER) rResModify) );
                         bBuildChangeInternalBond( (CONTAINER) rResModify,
                                 sOString(oaIntObjekts[iStart+0]),
                                 sOString(oaIntObjekts[iStart+1]),
@@ -4350,21 +4527,21 @@ char            *sCmd = "impose";
 
                         /* Do an angle INTERNAL */
                 case 4:
-                    MESSAGE(( "Imposing an angle INTERNAL\n" ));
+                    MESSAGE("Imposing an angle INTERNAL\n" );
                     if ( iObjectType(oaIntObjekts[iStart+0]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+1]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+2]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+3]) != ODOUBLEid ) {
-                        VPFATALEXIT(( "%s: Illegal angle internal definition\n",
-                                sCmd ));
+                        VPFATALEXIT("%s: Invalid angle internal definition\n",
+                                sCmd );
                     } else {
                         if ( iStart == 1 ) {
-                           rResModify = rResidueConnected( rRes, 
+                           rResModify = rResidueConnected( rRes,
                                         (int)dODouble(oaIntObjekts[0]) );
                         } else rResModify = rRes;
-                        MESSAGE(( "Imposing on Residue: %s:%d\n",
+                        MESSAGE("Imposing on Residue: %s:%d\n",
                                 sContainerName((CONTAINER) rResModify),
-                                iContainerSequence((CONTAINER) rResModify) ));
+                                iContainerSequence((CONTAINER) rResModify) );
                         bBuildChangeInternalAngle( (CONTAINER) rResModify,
                                 sOString(oaIntObjekts[iStart+0]),
                                 sOString(oaIntObjekts[iStart+1]),
@@ -4375,22 +4552,22 @@ char            *sCmd = "impose";
 
                         /* Do a torsion INTERNAL */
                 case 5:
-                    MESSAGE(( "Imposing a torsion INTERNAL\n" ));
+                    MESSAGE("Imposing a torsion INTERNAL\n" );
                     if ( iObjectType(oaIntObjekts[iStart+0]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+1]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+2]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+3]) != OSTRINGid ||
                          iObjectType(oaIntObjekts[iStart+4]) != ODOUBLEid ) {
-                        VPFATALEXIT(( "%s: Illegal angle internal definition\n",
-                                sCmd ));
+                        VPFATALEXIT("%s: Invalid angle internal definition\n",
+                                sCmd );
                     } else {
                         if ( iStart == 1 ) {
-                           rResModify = rResidueConnected( rRes, 
+                           rResModify = rResidueConnected( rRes,
                                         (int)dODouble(oaIntObjekts[0]) );
                         } else rResModify = rRes;
-                        MESSAGE(( "Imposing on Residue: %s:%d\n",
+                        MESSAGE("Imposing on Residue: %s:%d\n",
                                 sContainerName((CONTAINER) rResModify),
-                                iContainerSequence((CONTAINER) rResModify) ));
+                                iContainerSequence((CONTAINER) rResModify) );
                         bBuildChangeInternalTorsion( (CONTAINER) rResModify,
                                 sOString(oaIntObjekts[iStart+0]),
                                 sOString(oaIntObjekts[iStart+1]),
@@ -4400,7 +4577,7 @@ char            *sCmd = "impose";
                     }
                     break;
                 default:
-                    VPFATALEXIT(( "%s: Improper internal definition\n", sCmd ));
+                    VPFATALEXIT("%s: Improper internal definition\n", sCmd );
                     break;
             }
         }
@@ -4422,7 +4599,7 @@ char            *sCmd = "impose";
     BuildDestroyInternals( &lAtoms );
 
     DisplayerReleaseUpdates();
- 
+
     return(NULL);
 }
 
@@ -4454,13 +4631,13 @@ ASSOC           aAssoc;
 char            *sCmd = "translate";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umral l" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  %s <unit/residue/atom> <directionlist>\n",
-                                sCmd ));
+        VPFATALDELAYEDEXIT("usage:  %s <unit/residue/atom> <directionlist>\n",
+                                sCmd );
         return(NULL);
     }
 
     DisplayerAccumulateUpdates();
-    
+
                 /* Get the CONTAINER to translate */
 
     cCont = (CONTAINER)oAssocObject( aaArgs[0] );
@@ -4474,11 +4651,11 @@ char            *sCmd = "translate";
                 daVector[i] = dODouble(oAssocObject(aAssoc));
                 i++;
             } else {
-                VPFATALEXIT(( "%s: Illegal vector\n", sCmd ));
+                VPFATALEXIT("%s: Invalid vector\n", sCmd );
                 break;
             }
         } else {
-            VPFATALEXIT(( "%s: Illegal vector\n", sCmd ));
+            VPFATALEXIT("%s: Invalid vector\n", sCmd );
             break;
         }
     }
@@ -4516,7 +4693,7 @@ CONTAINER       cCont;
 VECTOR          vOffset;
 
     if ( !bCmdGoodArguments( "center", iArgCount, aaArgs, "umral" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  center <unit/residue/atom>\n" ));
+          VPFATALDELAYEDEXIT("usage:  center <unit/residue/atom>\n" );
           return(NULL);
     }
 
@@ -4526,8 +4703,8 @@ VECTOR          vOffset;
 
     vOffset = vContainerGeometricCenter(cCont);
 
-    VP0(( "The center is at: %4.2lf, %4.2lf, %4.2lf\n",
-                dVX(&vOffset), dVY(&vOffset), dVZ(&vOffset) ));
+    VP0("The center is at: %4.2lf, %4.2lf, %4.2lf\n",
+                dVX(&vOffset), dVY(&vOffset), dVZ(&vOffset) );
 
     return(NULL);
 }
@@ -4562,15 +4739,15 @@ char            *sCmd = "solvateCap";
 
     if ( iArgCount == 4 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u mral n" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  solvateCap <solute> <solvent> <position>"
-                    " <radius> <closeness>\n" ));
+            VPFATALDELAYEDEXIT("usage:  solvateCap <solute> <solvent> <position>"
+                    " <radius> <closeness>\n" );
             return(NULL);
         }
         dCloseness = 1.0;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u mral n n" ) ) {
-            VPFATALDELAYEDEXIT(( "usage:  solvateCap <solute> <solvent> <position>"
-                    " <radius> <closeness>\n" ));
+            VPFATALDELAYEDEXIT("usage:  solvateCap <solute> <solvent> <position>"
+                    " <radius> <closeness>\n" );
             return(NULL);
         }
         dCloseness = dODouble(oAssocObject(aaArgs[4]));
@@ -4591,10 +4768,10 @@ char            *sCmd = "solvateCap";
         return(NULL);
     }
 
-    
+
     dRadius = dODouble(oAssocObject(aaArgs[3]));
     if ( dRadius < 0.0 ) {
-        VPFATALEXIT(( "radius (%f) must be > 0\n", dRadius ));
+        VPFATALEXIT("radius (%f) must be > 0\n", dRadius );
         return(NULL);
     }
 
@@ -4604,7 +4781,7 @@ char            *sCmd = "solvateCap";
 
     iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
 
-    VP0(( "Added %d residues.\n", iFinalSize - iInitialSize ));
+    VP0("Added %d residues.\n", iFinalSize - iInitialSize );
 
                 /* Define the solvent cap within the UNIT */
 
@@ -4613,7 +4790,7 @@ char            *sCmd = "solvateCap";
 
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate( (CONTAINER) uSolute );
-    
+
     return(NULL);
 }
 
@@ -4627,7 +4804,7 @@ char            *sCmd = "solvateCap";
  *      Author: Christian Schafmeister (1991)
  *
  *      Arguments:
- *              [0] -   OSTRING, directory to add to file search 
+ *              [0] -   OSTRING, directory to add to file search
  *                      path list.
  *
  */
@@ -4635,13 +4812,13 @@ OBJEKT
 oCmd_addPath( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "addPath", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT(( "usage:  addPath <path>\n" ));
+        VPFATALDELAYEDEXIT("usage:  addPath <path>\n" );
         return(NULL);
     }
 
     if ( BasicsAddDirectory( sOString(oAssocObject(aaArgs[0])), 0 ) )
-        VP0(( "%s added to file search path.\n", 
-                        sOString(oAssocObject(aaArgs[0])) ));
+        VP0("%s added to file search path.\n",
+                        sOString(oAssocObject(aaArgs[0])) );
 
     return(NULL);
 }
@@ -4677,21 +4854,21 @@ char            *usage =
 
     if ( iArgCount == 5 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "r s r s s" ) ) {
-          VP0(( usage ));
-          VP0(("(For multiple molecules, note that residue numbering jumps\n"));
-          VPFATALDELAYEDEXIT((" by 1001 for each new molecule)\n"));
+          VP0(usage );
+          VP0("(For multiple molecules, note that residue numbering jumps\n");
+          VPFATALDELAYEDEXIT(" by 1001 for each new molecule)\n");
           return(NULL);
         }
         oObj = oAssocObject(aaArgs[4]);
         iOrder = iAtomBondOrderFromName(sOString(oObj));
         if ( iOrder == BONDNONE ) {
-            VPFATALEXIT(( "%s: Illegal bond order\n", sCmd ));
+            VPFATALEXIT("%s: Invalid bond order\n", sCmd );
             return(NULL);
         }
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "r s r s" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  crossLink <res1> <connect> <res2> "
-                                                 "<connect> [bondorder]\n" ));
+          VPFATALDELAYEDEXIT("usage:  crossLink <res1> <connect> <res2> "
+                                                 "<connect> [bondorder]\n" );
           return(NULL);
         }
         iOrder = BONDSINGLE;
@@ -4700,13 +4877,13 @@ char            *usage =
     oObj = oAssocObject(aaArgs[1]);
     iConnectA = iResidueConnectFromName(sOString(oObj));
     if ( iConnectA == NOEND ) {
-        VPFATALEXIT(( "%s: Invalid connect atom: %s\n", sCmd, sOString(oObj) ));
+        VPFATALEXIT("%s: Invalid connect atom: %s\n", sCmd, sOString(oObj) );
         return(NULL);
     }
     oObj = oAssocObject(aaArgs[3]);
     iConnectB = iResidueConnectFromName(sOString(oObj));
     if ( iConnectB == NOEND ) {
-        VPFATALEXIT(( "%s: Invalid connect atom: %s\n", sCmd, sOString(oObj) ));
+        VPFATALEXIT("%s: Invalid connect atom: %s\n", sCmd, sOString(oObj) );
         return(NULL);
     }
 
@@ -4714,14 +4891,14 @@ char            *usage =
     rB = (RESIDUE)oAssocObject(aaArgs[2]);
 
     DisplayerAccumulateUpdates();
-    
+
     if ( !bResidueCrossLink( rA, iConnectA, rB, iConnectB, iOrder ) ) {
-        VPFATALEXIT(( "%s: Could not form cross link, invalid connection atom\n", 
-                                sCmd ));
+        VPFATALEXIT("%s: Could not form cross link, invalid connection atom\n",
+                                sCmd );
     }
 
     DisplayerReleaseUpdates();
-    
+
     return(NULL);
 }
 
@@ -4744,7 +4921,7 @@ char            *usage =
  *      { ODOUBLE OSTRING OSTRING }
  *      { OSTRING OSTRING }
  *
- *      ODOUBLE can be 0 or 1 
+ *      ODOUBLE can be 0 or 1
  *      The first OSTRING is the name within the PDB file.
  *      The second OSTRING is the variable name to map to.
  */
@@ -4752,7 +4929,7 @@ OBJEKT
 oCmd_addPdbResMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "addPdbResMap", iArgCount, aaArgs, "l" ) ) {
-         VPFATALDELAYEDEXIT(( "usage:  addPdbResMap <list_of_lists>\n" ));
+         VPFATALDELAYEDEXIT("usage:  addPdbResMap <list_of_lists>\n" );
          return(NULL);
     }
     PdbAppendToResMap( (LIST)oAssocObject(aaArgs[0]) );
@@ -4769,7 +4946,7 @@ oCmd_addPdbAtomMap( int iArgCount, ASSOC aaArgs[] )
 {
 
     if ( !bCmdGoodArguments( "addPdbMap", iArgCount, aaArgs, "l" ) ) {
-         VPFATALDELAYEDEXIT(( "usage:  addPdbAtomMap <list_of_lists>\n" ));
+         VPFATALDELAYEDEXIT("usage:  addPdbAtomMap <list_of_lists>\n" );
          return(NULL);
     }
 
@@ -4788,7 +4965,7 @@ oCmd_addAtomTypes( int iArgCount, ASSOC aaArgs[] )
 {
 LIST            lList;
         if ( !bCmdGoodArguments( "addAtomTypes", iArgCount, aaArgs, "l" ) ) {
-                VPFATALDELAYEDEXIT(( "usage:  addAtomTypes <list_of_lists>\n" ));
+                VPFATALDELAYEDEXIT("usage:  addAtomTypes <list_of_lists>\n" );
                 return(NULL);
         }
 
@@ -4811,7 +4988,7 @@ OBJEKT
 oCmd_displayPdbResMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "displayPdbResMap", iArgCount, aaArgs, "" ) ) {
-         VPFATALDELAYEDEXIT(( "usage:  displayPdbResMap\n" ));
+         VPFATALDELAYEDEXIT("usage:  displayPdbResMap\n" );
          return(NULL);
     }
     PdbDisplayResMap();
@@ -4822,7 +4999,7 @@ OBJEKT
 oCmd_displayPdbAtomMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "displayPdbAtomMap", iArgCount, aaArgs, "" ) ) {
-         VPFATALDELAYEDEXIT(( "usage:  displayPdbAtomMap\n" ));
+         VPFATALDELAYEDEXIT("usage:  displayPdbAtomMap\n" );
          return(NULL);
     }
     PdbDisplayAtomMap();
@@ -4846,7 +5023,7 @@ OBJEKT
 oCmd_clearPdbResMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "clearPdbResMap", iArgCount, aaArgs, "" ) ) {
-         VPFATALDELAYEDEXIT(( "usage:  clearPdbResMap\n" ));
+         VPFATALDELAYEDEXIT("usage:  clearPdbResMap\n" );
          return(NULL);
     }
     PdbClearResMap();
@@ -4858,7 +5035,7 @@ oCmd_clearPdbAtomMap( int iArgCount, ASSOC aaArgs[] )
 {
 
     if ( !bCmdGoodArguments( "clearPdbAtomMap", iArgCount, aaArgs, "" ) ) {
-         VPFATALDELAYEDEXIT(( "usage:  clearPdbAtomMap\n" ));
+         VPFATALDELAYEDEXIT("usage:  clearPdbAtomMap\n" );
          return(NULL);
     }
     PdbClearAtomMap();
@@ -4896,7 +5073,7 @@ char            *sCmd = "measureGeom";
 
     if ( iArgCount == 4 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a a a" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  measureGeom <atom> <atom> [atom [atom]]\n" ));
+          VPFATALDELAYEDEXIT("usage:  measureGeom <atom> <atom> [atom [atom]]\n" );
           return(NULL);
         }
         aA = (ATOM)oAssocObject(aaArgs[0]);
@@ -4906,10 +5083,10 @@ char            *sCmd = "measureGeom";
         dVal = dVectorAtomTorsion(
                 &vAtomPosition(aA), &vAtomPosition(aB),
                 &vAtomPosition(aC), &vAtomPosition(aD) )/DEGTORAD;
-        VP0(( "Torsion angle: %4.2lf degrees\n", dVal ));
+        VP0("Torsion angle: %4.2lf degrees\n", dVal );
     } else if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a a" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  measureGeom <atom> <atom> [atom [atom]]\n" ));
+          VPFATALDELAYEDEXIT("usage:  measureGeom <atom> <atom> [atom [atom]]\n" );
           return(NULL);
         }
         aA = (ATOM)oAssocObject(aaArgs[0]);
@@ -4918,17 +5095,17 @@ char            *sCmd = "measureGeom";
         dVal = dVectorAtomAngle(
                 &vAtomPosition(aA), &vAtomPosition(aB),
                 &vAtomPosition(aC) )/DEGTORAD;
-        VP0(( "Angle: %4.2lf degrees\n", dVal ));
+        VP0("Angle: %4.2lf degrees\n", dVal );
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  measureGeom <atom> <atom> [atom [atom]]\n" ));
+          VPFATALDELAYEDEXIT("usage:  measureGeom <atom> <atom> [atom [atom]]\n" );
           return(NULL);
         }
         aA = (ATOM)oAssocObject(aaArgs[0]);
         aB = (ATOM)oAssocObject(aaArgs[1]);
         dVal = dVectorAtomLength(
                 &vAtomPosition(aA), &vAtomPosition(aB) );
-        VP0(( "Distance: %4.2lf angstroms\n", dVal ));
+        VP0("Distance: %4.2lf angstroms\n", dVal );
     }
     odVal = (ODOUBLE)oCreate(ODOUBLEid);
     ODoubleSet( odVal, dVal );
@@ -4966,14 +5143,14 @@ char            *sUsage = "usage:  bondByDistance <unit> [maxdistance]\n";
 
     if ( iArgCount == 1 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umrl" ) ) {
-            VPFATALDELAYEDEXIT(( sUsage ));
+            VPFATALDELAYEDEXIT("%s",sUsage );
             return(NULL);
         }
-        if (!(dDist = GDefaults.dDSearchDistance)) 
+        if (!(dDist = GDefaults.dDSearchDistance))
             dDist = DEFAULT_DISTANCE_SEARCH;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umrl n" ) ) {
-            VPFATALDELAYEDEXIT(( sUsage ));
+            VPFATALDELAYEDEXIT("%s",sUsage );
             return(NULL);
         }
         dDist = dODouble(oAssocObject(aaArgs[1]));
@@ -4984,11 +5161,11 @@ char            *sUsage = "usage:  bondByDistance <unit> [maxdistance]\n";
     iBonds = iToolDistanceSearch( (CONTAINER)oAssocObject(aaArgs[0]), dDist,
                                         TRUE, DISTANCE_SEARCH_CREATE_BONDS );
 
-    VP0(( "Created %d bonds.\n", iBonds ));
-    
+    VP0("Created %d bonds.\n", iBonds );
+
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate( (CONTAINER) oAssocObject(aaArgs[0]) );
-    
+
     return(NULL);
 }
 
@@ -5016,7 +5193,7 @@ int             iAtoms;
 char            *sCmd = "groupSelectedAtoms";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  groupSelectedAtoms <unit> <groupname>\n" ));
+          VPFATALDELAYEDEXIT("usage:  groupSelectedAtoms <unit> <groupname>\n" );
           return(NULL);
     }
 
@@ -5039,10 +5216,10 @@ char            *sCmd = "groupSelectedAtoms";
             iAtoms++;
         }
     }
-    VP0(( "Added %d atoms.\n", iAtoms ));
-    
+    VP0("Added %d atoms.\n", iAtoms );
+
     DisplayerReleaseUpdates();
-    
+
     return(NULL);
 }
 
@@ -5079,7 +5256,7 @@ ASSOC           aAssocY;
 char            *sCmd = "transform";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umral l" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  transform <atoms> <matrixlist>\n" ));
+          VPFATALDELAYEDEXIT("usage:  transform <atoms> <matrixlist>\n" );
           return(NULL);
     }
 
@@ -5116,12 +5293,12 @@ char            *sCmd = "transform";
     ContainerTransformBy( cCont, mTransform );
 
     DisplayerReleaseUpdates();
-   
+
     return(NULL);
- 
+
 ERROR:
 
-    VPFATALEXIT(( "%s: Illegal matrix\n", sCmd ));
+    VPFATALEXIT("%s: Invalid matrix\n", sCmd );
     return(NULL);
 }
 
@@ -5139,7 +5316,7 @@ oCmd_copy( int iArgCount, ASSOC aaArgs[] )
 OBJEKT          oNew;
 
     if ( !bCmdGoodArguments( "copy", iArgCount, aaArgs, "umranp" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  <newvariable> = copy <variable>\n" ));
+          VPFATALDELAYEDEXIT("usage:  <newvariable> = copy <variable>\n" );
           return(NULL);
     }
 
@@ -5149,6 +5326,182 @@ OBJEKT          oNew;
 }
 
 
+/*
+ *      oCmd_listParmSets
+ *
+ *      Author: Juno Krahn
+ *
+ *      List all ParmSets
+ */
+OBJEKT
+oCmd_listParmSets( int iArgCount, ASSOC aaArgs[] )
+{
+PARMSET         psSet;
+
+    if ( !bCmdGoodArguments( "listParmSets", iArgCount, aaArgs, "" ) ) {
+          VPFATALDELAYEDEXIT("usage:  listParmSets\n" );
+          return(NULL);
+    }
+
+    VPTRACEENTER(__func__ );
+    int sumAtoms=0, sumBonds=0, sumC4Pairwise=0, sumAngles=0;
+    int sumTorsions=0, sumImpropers=0, sumHBonds=0, sumNBEdits=0;
+    int nParmSets=0;
+    // XXX: what is the differnece between GplAllParameters and GplDefaultParmLib ?
+    ParmLibParmSetLoop(GplAllParameters);
+    while ( bParmLibNextParmSet(GplAllParameters, &psSet) ) {
+        int nAtoms =     iVarArrayElementCount(psSet->vaAtoms);
+        int nBonds =     iVarArrayElementCount(psSet->vaBonds);
+        int nC4Pairwise =iVarArrayElementCount(psSet->vaC4Pairwise);
+        int nAngles =    iVarArrayElementCount(psSet->vaAngles);
+        int nTorsions =  iVarArrayElementCount(psSet->vaTorsions);
+        int nImpropers = iVarArrayElementCount(psSet->vaImpropers);
+        int nHBonds =    iVarArrayElementCount(psSet->vaHBonds);
+        int nNBEdits =   iVarArrayElementCount(psSet->vaNBEdits);
+        nParmSets++;
+        VP0("\nFilename: %s\n",psSet->sFname);
+        VP0("Title: %s\n",psSet->sTitle);
+        VP0("Atoms:%d Bonds:%d C4Pairs:%d Angles:%d Tors:%d Impr:%d HBnds:%d NBFix:%d\n",
+                nAtoms, nBonds, nC4Pairwise, nAngles, nTorsions, nImpropers, nHBonds, nNBEdits);
+        sumAtoms += nAtoms;
+        sumBonds += nBonds;
+        sumC4Pairwise += nC4Pairwise;
+        sumAngles += nAngles;
+        sumTorsions += nTorsions;
+        sumImpropers += nImpropers;
+        sumHBonds += nHBonds;
+        sumNBEdits += nNBEdits;
+    }
+    VP0("\nTotal ParmSets: %d\n"
+         "Atoms:%d Bonds:%d C4Pairs:%d Angles:%d Tors:%d Impr:%d HBnds:%d NBFix:%d\n",
+                nParmSets, sumAtoms, sumBonds, sumC4Pairwise, sumAngles,
+                sumTorsions, sumImpropers, sumHBonds, sumNBEdits);
+    return NULL;
+}    
+    
+/*
+ *      oCmd_listResidues
+ *
+ *      Author: Juno Krahn
+ *
+ *      List all template residues in the variable table
+ */
+OBJEKT
+oCmd_listResidues( int iArgCount, ASSOC aaArgs[] )
+{
+DICTLOOP        dlLoop;
+DICTIONARY      dVariables;
+STRING          sErrors;
+int             iCount=0, iErrorCount=0;
+
+    if ( !bCmdGoodArguments( "listResidues", iArgCount, aaArgs, "" ) ) {
+          VPFATALDELAYEDEXIT("usage:  listResidues\n" );
+          return(NULL);
+    }
+
+    VPTRACEENTER(__func__ );
+    dVariables = dVariablesDictionary();
+    dlLoop = ydlDictionaryLoop(dVariables);
+    int iUpdatedElements = 0;
+    while ( yPDictionaryNext(dVariables, &dlLoop ) ) {
+        UNIT uUnit = (UNIT)PDictLoopData(dlLoop);
+        if ( iObjectType(uUnit) != UNITid ) continue;
+        if ( iContainerNumberOfChildren(uUnit) > 1 ) continue;
+        RESIDUE rRes = (RESIDUE)oContainerFirstObject(uUnit);
+        if ( iObjectType(rRes) != RESIDUEid ) continue; // unlikely
+        // Variable is a UNIT containing a single RESIDUE
+        if (iCount % 40 == 0) {
+            VP0("--------+-------+---+--------+---------+-------+---+----+----+----+----+----+----+---------\n");
+            VP0("   NAME   UNIT   End HEAD(el) TAIL(el)  RESIDUE Typ  C0   C1   C2   C3   C4   C5   Flags\n");
+            VP0("--------+-------+---+--------+---------+-------+---+----+----+----+----+----+----+---------\n");
+        }
+        iCount++;
+        char *cPVarName = sDictLoopKey(dlLoop);
+        char *cPUnitName = sContainerName(uUnit);
+        char *cPResName = sContainerName(rRes);
+        int fEndFlag = fGetPdbResMapped(cPUnitName);
+        char sEndFlags[4]="";
+        if (fEndFlag & RESIDUEFIRSTEND) strcat(sEndFlags,"F");
+        if (fEndFlag & RESIDUENOEND) strcat(sEndFlags,"N");
+        if (fEndFlag & RESIDUELASTEND) strcat(sEndFlags,"L");
+        ATOM aHead = (ATOM)uUnit->aHead;
+        ATOM aTail = (ATOM)uUnit->aTail;
+        ATOM aAtom;
+        BOOL bNonAtoms=FALSE, bLongAtomName=FALSE, bMissingElements=FALSE;
+        LOOP lContents = lLoop( (OBJEKT)rRes, DIRECTCONTENTSBYSEQNUM );
+        while ( (aAtom = (ATOM)oNext(&lContents)) ) {
+            char *cPAtomName = sContainerName(aAtom);
+            if ( iObjectType(aAtom) != ATOMid ) {
+                 bNonAtoms = TRUE;
+                 break;
+            }
+            if ( iAtomElement(aAtom) < 0 ) {
+                 iUpdatedElements++;
+                 AtomSetElement(aAtom,iElementNumberFromAmber(cPAtomName));
+                 if ( iAtomElement(aAtom) < 0 ) bMissingElements=TRUE;
+            }
+            if ( strlen(sContainerName(aAtom))>4) bLongAtomName=TRUE;
+        }
+        if (bNonAtoms) sprintf(sErrors,"Contains non-Atoms(%c), ",iObjectType(uUnit));
+        else sErrors[0]=0;
+        BOOL bMissingConnect01 = iContainerNumberOfChildren(rRes) > 1 &&
+                   !(bResidueConnectUsed(rRes,0) && bResidueConnectUsed(rRes,1));
+        if (bMissingConnect01) strcat(sErrors,"Missing Connect01, ");
+        if (strlen(sEndFlags)>1) strcat(sErrors,"Mixed END flags, ");
+        if ( (fEndFlag & RESIDUEFIRSTEND && (aHead || !aTail)) ||
+                 (fEndFlag & RESIDUELASTEND && (!aHead || aTail)) ||
+                 (fEndFlag & RESIDUENOEND && (!aHead) != (!aTail) ) ) {
+             strcat(sErrors,"PdbMap mismatch, ");
+        }
+        if (bMissingElements) strcat(sErrors,"Undefined elements, ");
+        if (bLongAtomName) strcat(sErrors,"name>4, ");
+        if (strlen(cPResName)>4 || (strlen(cPResName)==4 &&
+                (cPResName[0] != 'N' &&cPResName[0] != 'C'))) strcat(sErrors,"ResName>3, ");
+        if (cResidueType(rRes) == '?' && (aHead || aTail)) strcat(sErrors,"Undef. ResType, ");
+        // design note: connect0, connect1 always defined for tree purposes, (is it really used??)
+        //  but only unit head/tail used to link polymers
+        if (aHead && aHead != aResidueConnectAtom(rRes,0)) strcat(sErrors,"Head mismatch, ");
+        if (aTail && aTail != aResidueConnectAtom(rRes,1)) strcat(sErrors,"Tail mismatch, ");
+        for (int i=0;i<MAXCONNECT;i++) {
+            if ( aResidueConnectAtom(rRes,i) && iAtomElement(aResidueConnectAtom(rRes,i)) == HELIUM) {
+                strcat(sErrors,"Links to Hydrogen, ");
+                break;
+            }
+        }
+        if (strlen(sErrors)>2) {
+            sErrors[strlen(sErrors)-2]=0;
+            iErrorCount++;
+        }
+        VP0("%8s=<U %4s;%3s,%4s(%2d),%4s(%2d)>,<R %4s;%3.3s;%4s,%4s,%4s,%4s,%4s,%4s> "
+#ifdef DEBUG
+               "(%d,%d) "
+#endif
+               "%s\n",
+               cPVarName,cPUnitName,sEndFlags,
+               (aHead?sContainerName(aHead):""),
+               (aHead?iAtomElement(aHead):-1),
+               (aTail?sContainerName(aTail):""),
+               (aTail?iAtomElement(aTail):-1),
+               cPResName,
+               sResidueTypeNameFromChar(cResidueType(rRes)),
+               bResidueConnectUsed(rRes,0) ? sContainerName(aResidueConnectAtom(rRes,0)):"",
+               bResidueConnectUsed(rRes,1) ? sContainerName(aResidueConnectAtom(rRes,1)):"",
+               bResidueConnectUsed(rRes,2) ? sContainerName(aResidueConnectAtom(rRes,2)):"",
+               bResidueConnectUsed(rRes,3) ? sContainerName(aResidueConnectAtom(rRes,3)):"",
+               bResidueConnectUsed(rRes,4) ? sContainerName(aResidueConnectAtom(rRes,4)):"",
+               bResidueConnectUsed(rRes,5) ? sContainerName(aResidueConnectAtom(rRes,5)):"",
+#ifdef DEBUG
+               ((OBJEKT)uUnit)->iReferences,
+               ((OBJEKT)rRes)->iReferences,
+#endif
+               sErrors );
+    }
+    VP0("--------+-------+--------+---------+-------+---+----+----+----+----+----+----+---------\n");
+    VP0("Found %d Residue Template variables and %d with errors or warnings\n",iCount,iErrorCount);
+    if (iUpdatedElements) VP0("Updated %d missing Atom element defintions\n",iUpdatedElements);
+    VPTRACEEXIT(__func__ );
+    return(NULL);
+}
 
 /*
  *      oCmd_listOff
@@ -5165,29 +5518,25 @@ LIBRARY         lLib;
 char            *cPNext;
 
     if ( !bCmdGoodArguments( "listOff", iArgCount, aaArgs, "s" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  listOff <filename>\n" ));
+          VPFATALDELAYEDEXIT("usage:  listOff <filename>\n" );
           return(NULL);
     }
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
-   
-    lLib = lLibraryOpen( sFilename, OPENREADONLY ); 
+
+    lLib = lLibraryOpen( sFilename, OPENREADONLY );
     if ( lLib == NULL ) return(NULL);
 
-    VP0(( "Index of library: %s\n", sFilename )); 
+    VP0("Index of library: %s\n", sFilename );
 
     LibraryLoop( lLib );
     while ( (cPNext = sLibraryNext(lLib)) ) {
-        VP0(( "%s\n", cPNext ));
+        VP0("%s\n", cPNext );
     }
 
     LibraryClose( &lLib );
-    
+
     return(NULL);
 }
-
-
-
-
 
 
 
@@ -5209,25 +5558,25 @@ STRING          sEntry;
 char            *sCmd = "deleteOffLibEntry";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  deleteOffLibEntry <filename> <entry>\n" ));
+          VPFATALDELAYEDEXIT("usage:  deleteOffLibEntry <filename> <entry>\n" );
           return(NULL);
     }
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
     strcpy( sEntry, sOString(oAssocObject(aaArgs[1])) );
-   
-    lLib = lLibraryOpen( sFilename, OPENREADWRITE ); 
+
+    lLib = lLibraryOpen( sFilename, OPENREADWRITE );
     if ( lLib == NULL ) return(NULL);
 
     bRemoved = bLibraryRemove( lLib, sEntry );
 
     if ( !bRemoved ) {
-        VPFATALEXIT(( "%s: %s was not found.\n", sCmd, sEntry ));
+        VPFATALEXIT("%s: %s was not found.\n", sCmd, sEntry );
     } else {
-        VP0(( "%s was removed.\n", sEntry ));
+        VP0("%s was removed.\n", sEntry );
     }
 
     LibraryClose(&lLib);
-    
+
     return(NULL);
 }
 
@@ -5256,7 +5605,7 @@ int             i, iNext;
 char            *sCmd = "mutate";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n r" ) ) {
-          VPFATALDELAYEDEXIT(( "usage:  mutate <unit> <number> <residue>\n" ));
+          VPFATALDELAYEDEXIT("usage:  mutate <unit> <number> <residue>\n" );
           return(NULL);
     }
     uUnit = (UNIT)oAssocObject( aaArgs[0] );
@@ -5267,11 +5616,11 @@ char            *sCmd = "mutate";
 
     iSeqNum = (int)dODouble(odSeqNum);
 
-    rOld = (RESIDUE)cContainerFindSequence( (CONTAINER) uUnit, 
+    rOld = (RESIDUE)cContainerFindSequence( (CONTAINER) uUnit,
                                                 RESIDUEid, iSeqNum );
     if ( rOld == NULL ) {
-        VPFATAL(( "%s: Could not find residue with sequence number: %d\n", 
-                                        sCmd, iSeqNum ));
+        VPFATAL("%s: Could not find residue with sequence number: %d\n",
+                                        sCmd, iSeqNum );
         goto FAIL;
     }
 
@@ -5282,8 +5631,8 @@ char            *sCmd = "mutate";
         for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
             aNeighbor = aAtomBondedNeighbor( aAtom, i );
             if ( rNew != (RESIDUE)cContainerWithin((CONTAINER) aNeighbor) ) {
-                VPFATAL(( "%s: The mutant residue cannot be bonded to anything.\n",
-                                                sCmd ));
+                VPFATAL("%s: The mutant residue cannot be bonded to anything.\n",
+                                                sCmd );
                 goto FAIL;
             }
         }
@@ -5303,7 +5652,7 @@ char            *sCmd = "mutate";
     bContainerRemove( (CONTAINER)uUnit, (OBJEKT)rOld );
     iNext = iContainerNextChildsSequence( (CONTAINER) uUnit );
     ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rCopy );
-    ContainerSetSequence( (CONTAINER) rCopy, 
+    ContainerSetSequence( (CONTAINER) rCopy,
                         iContainerSequence((CONTAINER) rOld) );
     ContainerSetNextChildsSequence( (CONTAINER) uUnit, iNext );
 
@@ -5313,7 +5662,7 @@ char            *sCmd = "mutate";
     goto RET;
 
 FAIL:
-    VPFATALDELAYEDEXIT(( "Mutation failed.\n" ));
+    VPFATALDELAYEDEXIT("Mutation failed.\n" );
 
 RET:
     DisplayerReleaseUpdates();
@@ -5386,6 +5735,7 @@ int             i, iCount;
         dmin2 = FLT_MAX;
         iCount = iVarArrayElementCount( vaSolvent );
         PrRes = PVAI( vaSolvent, RESIDUE, 0 );
+        PrClosest = PrRes;
         for (i=0; i<iCount; i++, PrRes++) {
                 if ( *PrRes == NULL ) /* already deleted */
                         continue;
@@ -5405,17 +5755,17 @@ int             i, iCount;
                 }
         }
         if ( dmin2 < 9 ) {  /* HACK test */
-                VP0(("(Replacing solvent molecule)\n"));
+                VP0("(Replacing solvent molecule)\n");
                 REF( *PrClosest );  /* bContainerRemove() needs this */
                 if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*PrClosest )) {
                         ContainerDestroy( (CONTAINER *) PrClosest );
                         *PrClosest = NULL;
                         *PvIon = vClosest;
                 } else
-                        VPFATALEXIT(( "solvent removal failed\n" ));
+                        VPFATALEXIT("solvent removal failed\n" );
                 DEREF( *PrClosest );  /* after bContainerRemove()/Add */
         } else
-                VP0(( "(No solvent overlap)\n"));
+                VP0("(No solvent overlap)\n");
         return;
 }
 
@@ -5431,24 +5781,24 @@ VECTOR          vNewPoint, vMaxPot, vMinPot;
 HELP            hTemp;
 LOOP            lAtoms;
 ATOM            aAtom;
-OCTREE          octTreeSolute; 
+OCTREE          octTreeSolute;
 VARARRAY        vaSolvent = NULL;
 char            *sCmd = "addIons";
 
-    VPTRACEENTER(( "oCmd_addIons" ));
-    VPTRACEMULTIPLEEXIT(( "oCmd_addIons" ));
+    VPTRACEENTER("oCmd_addIons" );
+    VPTRACEMULTIPLEEXIT("oCmd_addIons" );
     BasicsResetInterrupt();
-    
+
     /*
      *  Test args
      */
     ierr = 0;
     switch( iArgCount ) {
-        case 3: 
+        case 3:
           if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
                 ierr++;
           break;
-        case 5: 
+        case 5:
           if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" )) {
                 ierr++;
                 break;
@@ -5457,10 +5807,10 @@ char            *sCmd = "addIons";
            *  Translate the 2 extra args
            */
           uIon2 = (UNIT)oAssocObject( aaArgs[3] );
-          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] )); 
+          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           if ( uIon2  &&  iIon2 == 0 ) {
-              VPFATAL(( "%s: '0' is not allowed as the value for the second ion.\n",
-                                                sCmd ));
+              VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
+                                                sCmd );
               ierr++;
           }
           break;
@@ -5468,13 +5818,13 @@ char            *sCmd = "addIons";
           ierr++;
           break;
     } /* end of switch */
-    
+
     if ( ierr ) {
           hTemp = hHelp( "addions" );
           if ( hTemp == NULL ) {
-                VPFATALDELAYEDEXIT(( "No help available on addIons\n" ));
+                VPFATALDELAYEDEXIT("No help available on addIons\n" );
           } else {
-                VPFATALDELAYEDEXIT(( "\n%s\n", sHelpText(hTemp) ));
+                VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
           return(NULL);
     }
@@ -5491,29 +5841,29 @@ char            *sCmd = "addIons";
      */
     ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
     if ( !dCharge ) {
-        VP0(( "%s has a charge of 0.\n", sAssocName( aaArgs[1] )));
+        VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
         if ( iIon1 == 0 ) {
-                VP0(( "%s: Can't neutralize.\n", sCmd ));
+                VP0("%s: Can't neutralize.\n", sCmd );
                 return(NULL);
         }
-        VP0(( "Adding the ions anyway.\n"));
+        VP0("Adding the ions anyway.\n");
     } else
-        MESSAGE(( "dCharge:  %4.2lf\n", dCharge ));
-    
+        MESSAGE("dCharge:  %4.2lf\n", dCharge );
+
     /*
      *  Consider ion(s) charge
      */
     ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
-        VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[1] )));
+        VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+                sCmd, sAssocName( aaArgs[1] ));
         return(NULL);
     }
     if ( uIon2 ) {
         ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
-           VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[3] )));
+           VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+                sCmd, sAssocName( aaArgs[3] ));
            return(NULL);
         }
     }
@@ -5525,17 +5875,17 @@ char            *sCmd = "addIons";
         if ( (dICharge1 < 0  &&  dCharge < 0) ||
              (dICharge1 > 0  &&  dCharge > 0)) {
     /*
-     *  As a general rule it is poor floating point programming to compare 
+     *  As a general rule it is poor floating point programming to compare
      *  directly with 0; in practice this test can fail as in Run.parm7:
      *  > addions prot CL 0
      *  Trace: unit charge = -2.4869e-14; ion1 charge = -1
      */
-                VPTRACE(( "unit charge = %g; ion1 charge = %g\n",
-                          dCharge, dICharge1 ));
-                VPWARN(( "%s: 1st Ion & target unit have charges of the same "
+                VPTRACE("unit charge = %g; ion1 charge = %g\n",
+                          dCharge, dICharge1 );
+                VPWARN("%s: 1st Ion & target unit have charges of the same "
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 ));
+                         dCharge, dICharge1 );
                 return(NULL);
         }
         /*
@@ -5545,16 +5895,16 @@ char            *sCmd = "addIons";
          */
         iIon1 = (int)lrint( fabs(dCharge) / fabs(dICharge1) );
         if ( iIon1 == 0 )
-            VP0(( " %f %d %d %d\n", fabs( dCharge),
+            VP0(" %f %d %d %d\n", fabs( dCharge),
                 (int)fabs( dCharge), (int)fabs( dICharge1 ),
-                (int)(fabs( dCharge) / fabs( dICharge1 )) ));
+                (int)(fabs( dCharge) / fabs( dICharge1 )) );
         if ( uIon2 ) {
-                VP0(( "%s: Neutralization - can't do 2nd ion.\n", sCmd ));
+                VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
                 return(NULL);
         }
-        VP0(( "%d %s ion%s required to neutralize.\n", iIon1,
-                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") ));
-    } 
+        VP0("%d %s ion%s required to neutralize.\n", iIon1,
+                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
+    }
 
     /*
      *  Consider ion sizes and positions.
@@ -5564,20 +5914,20 @@ char            *sCmd = "addIons";
     lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
     for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
-                VP0(( "Using default radius %5.2f for ion %s\n",
-                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) ));
+                VP0("Using default radius %5.2f for ion %s\n",
+                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
         dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
         if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                 iUnknown++;
     }
     if ( i > 1 ) {
         if ( iUnknown ) {
-            VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-                sAssocName( aaArgs[1] ), iUnknown ));
+            VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+                sAssocName( aaArgs[1] ), iUnknown );
             return( NULL );
         }
-        VP0(( "Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
-                sAssocName( aaArgs[1] ), dIonSize1 ));
+        VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
+                sAssocName( aaArgs[1] ), dIonSize1 );
         dIonSize1 *= (double) i;
     } else if ( iUnknown ) {
         VECTOR          vPos;
@@ -5595,20 +5945,20 @@ char            *sCmd = "addIons";
         lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
         for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
-                        VP0(( "Using default radius %5.2f for ion %s\n",
-                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) ));
+                        VP0("Using default radius %5.2f for ion %s\n",
+                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
                 dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
                 if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                     iUnknown++;
         }
         if ( i > 1 ) {
             if ( iUnknown ) {
-                VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-                    sAssocName( aaArgs[1] ), iUnknown ));
+                VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+                    sAssocName( aaArgs[1] ), iUnknown );
                 return( NULL );
             }
-            VP0(( "Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
-                sAssocName( aaArgs[3] ), dIonSize2 ));
+            VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
+                sAssocName( aaArgs[3] ), dIonSize2 );
             dIonSize2 *= (double) i;
         } else if ( iUnknown ) {
             VECTOR              vPos;
@@ -5622,8 +5972,8 @@ char            *sCmd = "addIons";
         dMinSize = MIN( dIonSize1, dIonSize2 );
     }
 
-    VP0(( "Adding %d counter ions to \"%s\" using 1A grid\n", 
-                iIon1 + iIon2, sAssocName( aaArgs[0] )));
+    VP0("Adding %d counter ions to \"%s\" using 1A grid\n",
+                iIon1 + iIon2, sAssocName( aaArgs[0] ));
 
     if (iIon1 + iIon2 > 5) {
         const double xx = (double) (iIon1 + iIon2);
@@ -5638,23 +5988,23 @@ char            *sCmd = "addIons";
     /*
      *  Build grid and calc potential on it.
      */
-    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL, 
+    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL,
                                         GDefaults.dGridSpace, dMinSize, GDefaults.dShellExtent, 0 );
     if ( !octTreeSolute ) {
-        VP0(( "%s: No solute to add ions to\n", sCmd ));
+        VP0("%s: No solute to add ions to\n", sCmd );
         return(NULL);
     }
     vaSolvent = vaSolventResidues( uUnit );
-    
+
     if ( vaSolvent ) {
-        VP0(( "Solvent present: replacing closest with ion\n" ));
-        VP0(( "\t when steric overlaps occur\n" ));
+        VP0("Solvent present: replacing closest with ion\n" );
+        VP0("\t when steric overlaps occur\n" );
     } else
-        VP0((" (no solvent present)\n" ));
+        VP0(" (no solvent present)\n" );
 
     TurnOffDisplayerUpdates();
-    
-    OctTreeInitCharges( octTreeSolute, AT_OCTREE, GDefaults.iDielectricFlag, 
+
+    OctTreeInitCharges( octTreeSolute, AT_OCTREE, GDefaults.iDielectricFlag,
                                         dIonSize1, &vMinPot, &vMaxPot );
 /*
 OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
@@ -5680,18 +6030,18 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP0(( "Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", 
+                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
                         sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ),
-                        dVX(&(vNewPoint)), 
-                        dVY(&(vNewPoint)), 
-                        dVZ(&(vNewPoint))));
+                        dVX(&(vNewPoint)),
+                        dVY(&(vNewPoint)),
+                        dVZ(&(vNewPoint)));
                 /*
                  *  Delete ion from grid (allowing clearance to most likely
                  *      future adjacent ion) and update esp.
                  */
-                OctTreeDeleteSphere( octTreeSolute, &vNewPoint, 
+                OctTreeDeleteSphere( octTreeSolute, &vNewPoint,
                                 dIonSize1 + (iIon2 ? dIonSize2 : dIonSize1) );
-                OctTreeUpdateCharge( octTreeSolute, &vNewPoint, 
+                OctTreeUpdateCharge( octTreeSolute, &vNewPoint,
                         (float)dICharge1, (iIon2 ? dIonSize2 : dIonSize1),
                         &vMaxPot, &vMinPot );
                 iIon1--;
@@ -5701,7 +6051,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                         vNewPoint = vMaxPot;
                 else
                         vNewPoint = vMinPot;
-                if ( vaSolvent ) 
+                if ( vaSolvent )
                         CheckSolvent( uUnit, vaSolvent, uIon2, &vNewPoint );
 
                 /*
@@ -5714,18 +6064,18 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP0(( "Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", 
+                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
                         sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ),
-                        dVX(&(vNewPoint)), 
-                        dVY(&(vNewPoint)), 
-                        dVZ(&(vNewPoint))));
+                        dVX(&(vNewPoint)),
+                        dVY(&(vNewPoint)),
+                        dVZ(&(vNewPoint)));
                 /*
                  *  Delete ion from grid (allowing clearance to most likely
                  *      future adjacent ion) and update esp.
                  */
-                OctTreeDeleteSphere( octTreeSolute, &vNewPoint, 
+                OctTreeDeleteSphere( octTreeSolute, &vNewPoint,
                                 dIonSize2 + (iIon1 ? dIonSize1 : dIonSize2) );
-                OctTreeUpdateCharge( octTreeSolute, &vNewPoint, 
+                OctTreeUpdateCharge( octTreeSolute, &vNewPoint,
                         (float)dICharge2, (iIon1 ? dIonSize1 : dIonSize2),
                         &vMaxPot, &vMinPot );
                 iIon2--;
@@ -5734,7 +6084,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
 /*
 OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
 */
-    VP0(( "\nDone adding ions.\n" ));
+    VP0("\nDone adding ions.\n" );
     OctTreeDestroy( &octTreeSolute );
     if ( vaSolvent )
         VarArrayDestroy( &vaSolvent );
@@ -5744,10 +6094,10 @@ OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
 
 CANCEL:
 
-    VP0(( "\n%s: Interrupted.\n", sCmd ));
+    VP0("\n%s: Interrupted.\n", sCmd );
     BasicsResetInterrupt();
     if ( octTreeSolute )
-        OctTreeDestroy( &octTreeSolute );    
+        OctTreeDestroy( &octTreeSolute );
     if ( vaSolvent )
         VarArrayDestroy( &vaSolvent );
     DisplayerReleaseUpdates();
@@ -5766,21 +6116,21 @@ VECTOR          vNewPoint, vMaxPot, vMinPot;
 HELP            hTemp;
 LOOP            lAtoms;
 ATOM            aAtom;
-OCTREE          octTreeSolute; 
+OCTREE          octTreeSolute;
 char            *sCmd = "addIons";
 
     BasicsResetInterrupt();
-    
+
     /*
      *  Test args
      */
     ierr = 0;
     switch( iArgCount ) {
-        case 3: 
+        case 3:
           if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
                 ierr++;
           break;
-        case 5: 
+        case 5:
           if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" )) {
                 ierr++;
                 break;
@@ -5789,10 +6139,10 @@ char            *sCmd = "addIons";
            *  Translate the 2 extra args
            */
           uIon2 = (UNIT)oAssocObject( aaArgs[3] );
-          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] )); 
+          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           if ( uIon2  &&  iIon2 == 0 ) {
-              VPFATAL(( "%s: '0' is not allowed as the value for the second ion.\n",
-                                                sCmd ));
+              VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
+                                                sCmd );
               ierr++;
           }
           break;
@@ -5800,13 +6150,13 @@ char            *sCmd = "addIons";
           ierr++;
           break;
     } /* end of switch */
-    
+
     if ( ierr ) {
           hTemp = hHelp( "addions" );
           if ( hTemp == NULL ) {
-                VPFATALDELAYEDEXIT(( "No help available on addIons\n" ));
+                VPFATALDELAYEDEXIT("No help available on addIons\n" );
           } else {
-                VPFATALDELAYEDEXIT(( "\n%s\n", sHelpText(hTemp) ));
+                VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
           return(NULL);
     }
@@ -5823,29 +6173,29 @@ char            *sCmd = "addIons";
      */
     ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
     if ( !dCharge ) {
-        VP0(( "%s has a charge of 0.\n", sAssocName( aaArgs[1] )));
+        VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
         if ( iIon1 == 0 ) {
-                VP0(( "%s: Can't neutralize.\n", sCmd ));
+                VP0("%s: Can't neutralize.\n", sCmd );
                 return(NULL);
         }
-        VP0(( "Adding the ions anyway.\n"));
+        VP0("Adding the ions anyway.\n");
     } else
-        MESSAGE(( "dCharge:  %4.2lf\n", dCharge ));
-    
+        MESSAGE("dCharge:  %4.2lf\n", dCharge );
+
     /*
      *  Consider ion(s) charge
      */
     ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
-        VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[1] )));
+        VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+                sCmd, sAssocName( aaArgs[1] ));
         return(NULL);
     }
     if ( uIon2 ) {
         ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
-           VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[3] )));
+           VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+                sCmd, sAssocName( aaArgs[3] ));
            return(NULL);
         }
     }
@@ -5856,10 +6206,10 @@ char            *sCmd = "addIons";
     if ( iIon1 == 0 ) {
         if ( (dICharge1 < 0  &&  dCharge < 0) ||
              (dICharge1 > 0  &&  dCharge > 0)) {
-                VPWARN(( "%s: 1st Ion & target unit have charges of the same "
+                VPWARN("%s: 1st Ion & target unit have charges of the same "
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 ));
+                         dCharge, dICharge1 );
                 return(NULL);
         }
         /*
@@ -5869,16 +6219,16 @@ char            *sCmd = "addIons";
          */
         iIon1 = (int)lrint( fabs(dCharge) / fabs(dICharge1) );
         if ( iIon1 == 0 )
-            VP0(( " %f %d %d %d\n", fabs( dCharge),
+            VP0(" %f %d %d %d\n", fabs( dCharge),
                 (int)fabs( dCharge), (int)fabs( dICharge1 ),
-                (int)(fabs( dCharge) / fabs( dICharge1 )) ));
+                (int)(fabs( dCharge) / fabs( dICharge1 )) );
         if ( uIon2 ) {
-                VP0(( "%s: Neutralization - can't do 2nd ion.\n", sCmd ));
+                VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
                 return(NULL);
         }
-        VP0(( "%d %s ion%s required to neutralize.\n", iIon1,
-                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") ));
-    } 
+        VP0("%d %s ion%s required to neutralize.\n", iIon1,
+                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
+    }
 
     /*
      *  Consider ion sizes and positions.
@@ -5888,20 +6238,20 @@ char            *sCmd = "addIons";
     lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
     for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
-                VP0(( "Using default radius %5.2f for ion %s\n",
-                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) ));
+                VP0("Using default radius %5.2f for ion %s\n",
+                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
         dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
         if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                 iUnknown++;
     }
     if ( i > 1 ) {
         if ( iUnknown ) {
-            VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-                sAssocName( aaArgs[1] ), iUnknown ));
+            VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+                sAssocName( aaArgs[1] ), iUnknown );
             return( NULL );
         }
-        VP0(( "Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
-                sAssocName( aaArgs[1] ), dIonSize1 ));
+        VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
+                sAssocName( aaArgs[1] ), dIonSize1 );
         dIonSize1 *= (double) i;
     } else if ( iUnknown ) {
         VECTOR          vPos;
@@ -5913,26 +6263,26 @@ char            *sCmd = "addIons";
         AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
     }
     dMinSize = dIonSize1;
+    dIonSize2 = 0.0;
     if ( uIon2 ) {
-        dIonSize2 = 0.0;
         iUnknown = 0;
         lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
         for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
-                        VP0(( "Using default radius %5.2f for ion %s\n",
-                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) ));
+                        VP0("Using default radius %5.2f for ion %s\n",
+                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
                 dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
                 if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                     iUnknown++;
         }
         if ( i > 1 ) {
             if ( iUnknown ) {
-                VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-                    sAssocName( aaArgs[1] ), iUnknown ));
+                VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+                    sAssocName( aaArgs[1] ), iUnknown );
                 return( NULL );
             }
-            VP0(( "Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
-                sAssocName( aaArgs[3] ), dIonSize2 ));
+            VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
+                sAssocName( aaArgs[3] ), dIonSize2 );
             dIonSize2 *= (double) i;
         } else if ( iUnknown ) {
             VECTOR              vPos;
@@ -5946,8 +6296,8 @@ char            *sCmd = "addIons";
         dMinSize = MIN( dIonSize1, dIonSize2 );
     }
 
-    VP0(( "Adding %d counter ions to \"%s\" using 1A grid\n", 
-                iIon1 + iIon2, sAssocName( aaArgs[0] )));
+    VP0("Adding %d counter ions to \"%s\" using 1A grid\n",
+                iIon1 + iIon2, sAssocName( aaArgs[0] ));
 
     if ( iIon1 + iIon2 == 0 )
         return(NULL);
@@ -5955,17 +6305,17 @@ char            *sCmd = "addIons";
     /*
      *  Build grid and calc potential on it.
      */
-    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL, 
+    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL,
                                         GDefaults.dGridSpace, dMinSize, GDefaults.dShellExtent, 1 );
     if ( !octTreeSolute ) {
-        VP0(( "%s: No atoms to add ions to\n", sCmd ));
+        VP0("%s: No atoms to add ions to\n", sCmd );
         return(NULL);
     }
-    
+
 
     TurnOffDisplayerUpdates();
-    
-    OctTreeInitCharges( octTreeSolute, AT_OCTREE, GDefaults.iDielectricFlag, 
+
+    OctTreeInitCharges( octTreeSolute, AT_OCTREE, GDefaults.iDielectricFlag,
                                         dIonSize1, &vMinPot, &vMaxPot );
 /*
 OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
@@ -5989,18 +6339,18 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP0(( "Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", 
+                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
                         sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ),
-                        dVX(&(vNewPoint)), 
-                        dVY(&(vNewPoint)), 
-                        dVZ(&(vNewPoint))));
+                        dVX(&(vNewPoint)),
+                        dVY(&(vNewPoint)),
+                        dVZ(&(vNewPoint)));
                 /*
                  *  Delete ion from grid (allowing clearance to most likely
                  *      future adjacent ion) and update esp.
                  */
-                OctTreeDeleteSphere( octTreeSolute, &vNewPoint, 
+                OctTreeDeleteSphere( octTreeSolute, &vNewPoint,
                                 dIonSize1 + (iIon2 ? dIonSize2 : dIonSize1) );
-                OctTreeUpdateCharge( octTreeSolute, &vNewPoint, 
+                OctTreeUpdateCharge( octTreeSolute, &vNewPoint,
                         (float)dICharge1, (iIon2 ? dIonSize2 : dIonSize1),
                         &vMaxPot, &vMinPot );
                 iIon1--;
@@ -6021,18 +6371,18 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP0(( "Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", 
+                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
                         sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ),
-                        dVX(&(vNewPoint)), 
-                        dVY(&(vNewPoint)), 
-                        dVZ(&(vNewPoint))));
+                        dVX(&(vNewPoint)),
+                        dVY(&(vNewPoint)),
+                        dVZ(&(vNewPoint)));
                 /*
                  *  Delete ion from grid (allowing clearance to most likely
                  *      future adjacent ion) and update esp.
                  */
-                OctTreeDeleteSphere( octTreeSolute, &vNewPoint, 
+                OctTreeDeleteSphere( octTreeSolute, &vNewPoint,
                                 dIonSize2 + (iIon1 ? dIonSize1 : dIonSize2) );
-                OctTreeUpdateCharge( octTreeSolute, &vNewPoint, 
+                OctTreeUpdateCharge( octTreeSolute, &vNewPoint,
                         (float)dICharge2, (iIon1 ? dIonSize1 : dIonSize2),
                         &vMaxPot, &vMinPot );
                 iIon2--;
@@ -6041,7 +6391,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
 /*
 OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
 */
-    VP0(( "\nDone adding ions.\n" ));
+    VP0("\nDone adding ions.\n" );
     OctTreeDestroy( &octTreeSolute );
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate( (CONTAINER) uUnit );
@@ -6049,10 +6399,10 @@ OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
 
 CANCEL:
 
-    VP0(( "\n%s: Interrupted.\n", sCmd ));
+    VP0("\n%s: Interrupted.\n", sCmd );
     BasicsResetInterrupt();
     if ( octTreeSolute )
-        OctTreeDestroy( &octTreeSolute );    
+        OctTreeDestroy( &octTreeSolute );
     DisplayerReleaseUpdates();
     return(NULL);
 }
@@ -6072,17 +6422,17 @@ VARARRAY        vaSolvent;
 char            *sCmd = "addIonSolv";
 
     BasicsResetInterrupt();
-    
+
     /*
      *  Test args
      */
     ierr = 0;
     switch( iArgCount ) {
-        case 3: 
+        case 3:
           if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
                 ierr++;
           break;
-        case 5: 
+        case 5:
           if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" )) {
                 ierr++;
                 break;
@@ -6091,10 +6441,10 @@ char            *sCmd = "addIonSolv";
            *  Translate the 2 extra args
            */
           uIon2 = (UNIT)oAssocObject( aaArgs[3] );
-          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] )); 
+          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           if ( uIon2  &&  iIon2 == 0 ) {
-              VPFATAL(( "%s: '0' is not allowed as the value for the second ion.\n",
-                                                sCmd ));
+              VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
+                                                sCmd );
               ierr++;
           }
           break;
@@ -6102,13 +6452,13 @@ char            *sCmd = "addIonSolv";
           ierr++;
           break;
     } /* end of switch */
-    
+
     if ( ierr ) {
           hTemp = hHelp( "addionsolv" );
           if ( hTemp == NULL ) {
-                VPFATALDELAYEDEXIT(( "No help available on addIonSolv\n" ));
+                VPFATALDELAYEDEXIT("No help available on addIonSolv\n" );
           } else {
-                VPFATALDELAYEDEXIT(( "\n%s\n", sHelpText(hTemp) ));
+                VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
           return(NULL);
     }
@@ -6125,7 +6475,7 @@ char            *sCmd = "addIonSolv";
      */
     vaSolvent = vaSolventResidues( uUnit );
     if ( vaSolvent == NULL ) {
-        VPFATALEXIT(( "No solvent present: solvate 1st or use addIons\n" ));
+        VPFATALEXIT("No solvent present: solvate 1st or use addIons\n" );
         return(NULL);
     }
 
@@ -6134,29 +6484,29 @@ char            *sCmd = "addIonSolv";
      */
     ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
     if ( !dCharge ) {
-        VP0(( "%s has a charge of 0.\n", sAssocName( aaArgs[1] )));
+        VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
         if ( iIon1 == 0 ) {
-                VP0(( "%s: Can't neutralize.\n", sCmd ));
+                VP0("%s: Can't neutralize.\n", sCmd );
                 return(NULL);
         }
-        VP0(( "Adding the ions anyway.\n"));
+        VP0("Adding the ions anyway.\n");
     } else
-        MESSAGE(( "dCharge:  %4.2lf\n", dCharge ));
-    
+        MESSAGE("dCharge:  %4.2lf\n", dCharge );
+
     /*
      *  Consider ion(s) charge
      */
     ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
-        VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[1] )));
+        VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+                sCmd, sAssocName( aaArgs[1] ));
         return(NULL);
     }
     if ( uIon2 ) {
         ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
-           VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[3] )));
+           VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+                sCmd, sAssocName( aaArgs[3] ));
            return(NULL);
         }
     }
@@ -6167,10 +6517,10 @@ char            *sCmd = "addIonSolv";
     if ( iIon1 == 0 ) {
         if ( (dICharge1 < 0  &&  dCharge < 0) ||
              (dICharge1 > 0  &&  dCharge > 0)) {
-                VPWARN(( "%s: 1st Ion & target unit have charges of the same "
+                VPWARN("%s: 1st Ion & target unit have charges of the same "
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 ));
+                         dCharge, dICharge1 );
                 return(NULL);
         }
         /*
@@ -6180,16 +6530,16 @@ char            *sCmd = "addIonSolv";
          */
         iIon1 = (int)lrint( fabs(dCharge) / fabs(dICharge1) );
         if ( iIon1 == 0 )
-            VP0(( " %f %d %d %d\n", fabs( dCharge),
+            VP0(" %f %d %d %d\n", fabs( dCharge),
                 (int)fabs( dCharge), (int)fabs( dICharge1 ),
-                (int)(fabs( dCharge) / fabs( dICharge1 )) ));
+                (int)(fabs( dCharge) / fabs( dICharge1 )) );
         if ( uIon2 ) {
-                VP0(( "%s: Neutralization - can't do 2nd ion.\n", sCmd ));
+                VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
                 return(NULL);
         }
-        VP0(( "%d %s ion%s required to neutralize.\n", iIon1,
-                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") ));
-    } 
+        VP0("%d %s ion%s required to neutralize.\n", iIon1,
+                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
+    }
 
     /*
      *  Consider ion sizes and positions.
@@ -6199,20 +6549,20 @@ char            *sCmd = "addIonSolv";
     lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
     for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
-                VP0(( "Using default radius %5.2f for ion %s\n",
-                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) ));
+                VP0("Using default radius %5.2f for ion %s\n",
+                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
         dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
         if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                 iUnknown++;
     }
     if ( i > 1 ) {
         if ( iUnknown ) {
-            VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-                sAssocName( aaArgs[1] ), iUnknown ));
+            VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+                sAssocName( aaArgs[1] ), iUnknown );
             return( NULL );
         }
-        VP0(( "Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
-                sAssocName( aaArgs[1] ), dIonSize1 ));
+        VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
+                sAssocName( aaArgs[1] ), dIonSize1 );
         dIonSize1 *= (double) i;
     } else if ( iUnknown ) {
         VECTOR          vPos;
@@ -6229,20 +6579,20 @@ char            *sCmd = "addIonSolv";
         lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
         for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
-                        VP0(( "Using default radius %5.2f for ion %s\n",
-                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) ));
+                        VP0("Using default radius %5.2f for ion %s\n",
+                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
                 dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
                 if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                     iUnknown++;
         }
         if ( i > 1 ) {
             if ( iUnknown ) {
-                VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-                    sAssocName( aaArgs[1] ), iUnknown ));
+                VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+                    sAssocName( aaArgs[1] ), iUnknown );
                 return( NULL );
             }
-            VP0(( "Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
-                sAssocName( aaArgs[3] ), dIonSize2 ));
+            VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
+                sAssocName( aaArgs[3] ), dIonSize2 );
             dIonSize2 *= (double) i;
         } else if ( iUnknown ) {
             VECTOR              vPos;
@@ -6255,8 +6605,8 @@ char            *sCmd = "addIonSolv";
         }
     }
 
-    VP0(( "Adding %d counter ions to \"%s\", substituting solvent\n", 
-                        iIon1 + iIon2, sAssocName( aaArgs[0] )));
+    VP0("Adding %d counter ions to \"%s\", substituting solvent\n",
+                        iIon1 + iIon2, sAssocName( aaArgs[0] ));
 
     if ( iIon1 + iIon2 == 0 ) {
         VarArrayDestroy( &vaSolvent );
@@ -6265,17 +6615,17 @@ char            *sCmd = "addIonSolv";
 
     if ( iIon1 + iIon2 > iVarArrayElementCount( vaSolvent ) ) {
         VarArrayDestroy( &vaSolvent );
-        VPFATALEXIT(( "Can't do it - more ions than solvent\n" ));
+        VPFATALEXIT("Can't do it - more ions than solvent\n" );
         return(NULL);
     }
 
     /*
      *  calc potential on solvent centers.
      */
-    VP0(("calculating initial potential at 1st atom in each solvent res..\n"));
+    VP0("calculating initial potential at 1st atom in each solvent res..\n");
     ToolInitSolventPotential( uUnit, vaSolvent, &iMinPotRes, &iMaxPotRes );
 
-    VP0(( "placing ions..\n" ));
+    VP0("placing ions..\n" );
     TurnOffDisplayerUpdates();
     while ( iIon1 || iIon2 ) {
         if ( bBasicsInterrupt() ) goto CANCEL;
@@ -6284,11 +6634,11 @@ char            *sCmd = "addIonSolv";
                         iReplace = iMaxPotRes;
                 else
                         iReplace = iMinPotRes;
-                ToolReplaceSolvent( uUnit, vaSolvent, 
+                ToolReplaceSolvent( uUnit, vaSolvent,
                                         iReplace, uIon1, dICharge1,
                                         &iMinPotRes, &iMaxPotRes );
-                VP0(( "Placed %s in %s.\n", 
-                        sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ) ));
+                VP0("Placed %s in %s.\n",
+                        sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ) );
 
                 iIon1--;
         }
@@ -6298,15 +6648,15 @@ char            *sCmd = "addIonSolv";
                 else
                         iReplace = iMinPotRes;
 
-                ToolReplaceSolvent( uUnit, vaSolvent, 
+                ToolReplaceSolvent( uUnit, vaSolvent,
                                         iReplace, uIon2, dICharge2,
                                         &iMinPotRes, &iMaxPotRes );
-                VP0(( "Placed %s in %s.\n", 
-                        sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ) ));
+                VP0("Placed %s in %s.\n",
+                        sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ) );
                 iIon2--;
         }
     }
-    VP0(( "\nDone adding ions.\n" ));
+    VP0("\nDone adding ions.\n" );
     VarArrayDestroy( &vaSolvent );
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate( (CONTAINER) uUnit );
@@ -6314,7 +6664,7 @@ char            *sCmd = "addIonSolv";
 
 CANCEL:
 
-    VP0(( "\n%s: Interrupted.\n", sCmd ));
+    VP0("\n%s: Interrupted.\n", sCmd );
     BasicsResetInterrupt();
     VarArrayDestroy( &vaSolvent );
     DisplayerReleaseUpdates();
@@ -6328,13 +6678,13 @@ CANCEL:
 OBJEKT
 oCmd_addIonsNear( int iArgCount, ASSOC aaArgs[] )
 {
-        VP0(( "Not implemented\n"));
+        VP0("Not implemented\n");
         return(NULL);
 }
 
 /*
  *     oCmd_addIonsRand
- * 
+ *
  *     Robin Betz (2011)
  */
 OBJEKT
@@ -6356,14 +6706,14 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   int             counter = 0;
   int             iFailCounter = 0;
   double dIonDist;
-  
+
   VECTOR vPoint;
   char            *sCmd = "addIonsRand";
-  
+
   // Setup
   BasicsResetInterrupt();
   srand(time(NULL));
-  
+
   // Test arguments
   ierr = 0;
   switch( iArgCount )
@@ -6382,11 +6732,11 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       dMinSeparation = dODouble( oAssocObject( aaArgs[3] ));
       if (dMinSeparation < 0.0)
       {
-        VPFATAL(( "%s: %d is not a valid minimum distance between ions.\n",
-              sCmd, dMinSeparation ));
+        VPFATAL("%s: %d is not a valid minimum distance between ions.\n",
+              sCmd, dMinSeparation );
         ++ierr;
       }
-        break;  
+        break;
     case 5: // Two ions and number of each of them
       if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" ))
       {
@@ -6395,15 +6745,15 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       }
       // Get the arguments for the second ion
       uIon2 = (UNIT)oAssocObject( aaArgs[3] );
-      iIon2 = (int)dODouble( oAssocObject( aaArgs[4] )); 
+      iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
       if ( uIon2  &&  iIon2 == 0 )
       {
-        VPFATAL(( "%s: '0' is not allowed as the value for the second ion.\n",
-              sCmd ));
+        VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
+              sCmd );
         ++ierr;
       }
       break;
-      
+
     case 6: // Two ions and number of each of them and minimum separation
       if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n n" ))
       {
@@ -6412,86 +6762,86 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       }
       // Get the arguments for the second ion
       uIon2 = (UNIT)oAssocObject( aaArgs[3] );
-      iIon2 = (int)dODouble( oAssocObject( aaArgs[4] )); 
+      iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
       if ( uIon2  &&  iIon2 == 0 )
       {
-        VPFATAL(( "%s: '0' is not allowed as the value for the second ion.\n",
-              sCmd ));
+        VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
+              sCmd );
         ++ierr;
       }
       // Get the minimum separation
       dMinSeparation = dODouble( oAssocObject( aaArgs[3] ));
       if (dMinSeparation < 0.0)
       {
-        VPFATAL(( "%s: %d is not a valid minimum distance between ions.\n",
-              sCmd, dMinSeparation ));
+        VPFATAL("%s: %d is not a valid minimum distance between ions.\n",
+              sCmd, dMinSeparation );
         ++ierr;
       }
       break;
-      
+
     default:
       ++ierr;
       break;
   }
-  
+
   // Display help if command is malformed
   if ( ierr )
   {
     hTemp = hHelp( "addionsrand" );
     if ( hTemp == NULL )
-      VPFATALDELAYEDEXIT(( "No help available on addIons\n" ));
+      VPFATALDELAYEDEXIT("No help available on addIons\n" );
     else
-      VPFATALDELAYEDEXIT(( "\n%s\n", sHelpText(hTemp) ));
+      VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
     return(NULL);
   }
-  
+
   // Translate unit, ion, and charge arguments
   uUnit = (UNIT)oAssocObject( aaArgs[0] );
   uIon1 = (UNIT)oAssocObject( aaArgs[1] );
   iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
-  
+
   // Check the unit's validity
   ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
-  if ( !dCharge ) 
+  if ( !dCharge )
   {
-    VP0(( "%s has a charge of 0.\n", sAssocName( aaArgs[1] )));
+    VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
     if ( iIon1 == 0 )
     {
-      VP0(( "%s: Can't neutralize.\n", sCmd ));
+      VP0("%s: Can't neutralize.\n", sCmd );
       return(NULL);
     }
-    VP0(( "Adding the ions anyway.\n"));
-  } 
+    VP0("Adding the ions anyway.\n");
+  }
   else
-    MESSAGE(( "dCharge:  %4.2lf\n", dCharge ));
-  
+    MESSAGE("dCharge:  %4.2lf\n", dCharge );
+
   // Make sure the ions are actually ions
   ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
-  if ( !dICharge1 ) 
+  if ( !dICharge1 )
   {
-    VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-          sCmd, sAssocName( aaArgs[1] )));
+    VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+          sCmd, sAssocName( aaArgs[1] ));
     return(NULL);
   }
-  if ( uIon2 ) 
+  if ( uIon2 )
   {
     ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
-    if ( !dICharge2 ) 
+    if ( !dICharge2 )
     {
-      VPFATALEXIT(( "%s: %s is not an ion and is not appropriate for placement.\n",
-            sCmd, sAssocName( aaArgs[3] )));
+      VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
+            sCmd, sAssocName( aaArgs[3] ));
       return(NULL);
     }
   }
-  
+
   // Check validity of neutralization
   if ( iIon1 == 0 ) {
     if ( (dICharge1 < 0  &&  dCharge < 0) ||
       (dICharge1 > 0  &&  dCharge > 0)) {
-                VPWARN(( "%s: 1st Ion & target unit have charges of the same "
+                VPWARN("%s: 1st Ion & target unit have charges of the same "
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 ));
+                         dCharge, dICharge1 );
       return(NULL);
     }
     /*
@@ -6501,37 +6851,37 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
      */
     iIon1 = (int)lrint( fabs(dCharge) / fabs(dICharge1) );
     if ( iIon1 == 0 ) {
-      VP0(( " %f %d %d %d\n", fabs( dCharge),
+      VP0(" %f %d %d %d\n", fabs( dCharge),
             (int)fabs( dCharge), (int)fabs( dICharge1 ),
-            (int)(fabs( dCharge) / fabs( dICharge1 )) ));
+            (int)(fabs( dCharge) / fabs( dICharge1 )) );
     }
     if ( uIon2 ) {
-        VP0(( "%s: Neutralization - can't do 2nd ion.\n", sCmd ));
+        VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
         return(NULL);
     }
-    VP0(( "%d %s ion%s required to neutralize.\n", iIon1,
-          sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") ));
-  } 
-  
+    VP0("%d %s ion%s required to neutralize.\n", iIon1,
+          sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
+  }
+
   // Check ion size and position
   iUnknown = 0;
   lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
   for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
     if ( iAtomSetTmpRadius( aAtom ) )
-      VP0(( "Using default radius %5.2f for ion %s\n",
-            ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) ));
+      VP0("Using default radius %5.2f for ion %s\n",
+            ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
     if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
       iUnknown++;
   }
   if ( i > 1 ) {
     if ( iUnknown ) {
-      VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-            sAssocName( aaArgs[1] ), iUnknown ));
+      VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+            sAssocName( aaArgs[1] ), iUnknown );
       return( NULL );
     }
   } else if ( iUnknown ) {
     VECTOR          vPos;
-    
+
     VectorDef( &vPos, 0.0, 0.0, 0.0 );
     lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
     aAtom = (ATOM)oNext(&lAtoms);
@@ -6543,15 +6893,15 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
     lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
     for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
       if ( iAtomSetTmpRadius( aAtom ) )
-        VP0(( "Using default radius %5.2f for ion %s\n",
-              ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) ));
+        VP0("Using default radius %5.2f for ion %s\n",
+              ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
       if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
         iUnknown++;
     }
     if ( i > 1 ) {
       if ( iUnknown ) {
-        VPFATALEXIT(( "Ion %s is polyatomic and has %d atoms w/ no position\n",
-              sAssocName( aaArgs[1] ), iUnknown ));
+        VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
+              sAssocName( aaArgs[1] ), iUnknown );
         return( NULL );
       }
     } else if ( iUnknown ) {
@@ -6563,42 +6913,42 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
     }
   }
-  
+
   vaSolvent = vaSolventResidues( uUnit );
   if ( !vaSolvent )
   {
-    VPFATALEXIT(( "No solvent present. Add solvent first.\n"));
+    VPFATALEXIT("No solvent present. Add solvent first.\n");
     return(NULL);
   }
   if ( iIon1 + iIon2 == 0 )
     return(NULL);
   if ( iVarArrayElementCount(vaSolvent)-iIon1-iIon2 <= 0)
   {
-    VPFATALEXIT(( "Too few solvent molecules to add ions.\n" ));
+    VPFATALEXIT("Too few solvent molecules to add ions.\n" );
     return(NULL);
   }
-  VP0(( "Adding %d counter ions to \"%s\". %d solvent molecules will remain.\n", 
-        iIon1 + iIon2, sAssocName( aaArgs[0] ), iVarArrayElementCount(vaSolvent)-iIon1-iIon2));
-  
+  VP0("Adding %d counter ions to \"%s\". %d solvent molecules will remain.\n",
+        iIon1 + iIon2, sAssocName( aaArgs[0] ), iVarArrayElementCount(vaSolvent)-iIon1-iIon2);
+
   TurnOffDisplayerUpdates();
   if( dMinSeparation )
     MALLOC(aIons, ATOM*, (iIon1+iIon2)*sizeof(ATOM));
-  
+
   // now actually add the ions
-  while ( iIon1 || iIon2 ) 
+  while ( iIon1 || iIon2 )
   {
     if ( bBasicsInterrupt() ) goto CANCEL;
-    if ( iIon1 ) 
+    if ( iIon1 )
     {
       // Pick random solvent molecule to replace
       random = rand() % iVarArrayElementCount( vaSolvent );
-      
+
       // Get position of solvent residue atom
       rPRes = (RESIDUE*)PVarArrayIndex ( vaSolvent, random );
       lAtoms = lLoop( (OBJEKT)*rPRes, ATOMS);
       aAtom = (ATOM)oNext(&lAtoms);
       vNewPoint = vAtomPosition( aAtom );
-      
+
       // Check that new point isn't too close to other ions
       bPlaceIon = TRUE;
       for (i=0; i<counter; ++i)
@@ -6613,15 +6963,15 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
           break;
         }
       }
-      
+
       if ( bPlaceIon )
       {
-        VP0(( "%d: Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", counter,
+        VP0("%d: Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", counter,
               sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ),
-              dVX(&(vNewPoint)), 
-              dVY(&(vNewPoint)), 
-              dVZ(&(vNewPoint))));
-        
+              dVX(&(vNewPoint)),
+              dVY(&(vNewPoint)),
+              dVZ(&(vNewPoint)));
+
         // Save this ion's position if desired
         uPlace = (UNIT) oCopy( (OBJEKT)uIon1 );
         ContainerCenterAt((CONTAINER) uPlace, vNewPoint );
@@ -6632,37 +6982,37 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         }
         // Copy ion unit, position, and add it to the unit
         UnitJoin( uUnit, uPlace );
-        
+
         // Delete the solvent residue that was replaced
         REF( *rPRes );  /* bContainerRemove() needs this */
         ResidueYouAreBeingRemoved( *rPRes );
         if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*rPRes ) == FALSE)
-          DFATAL(( "rmv solv %d failed\n", random ));
+          DFATAL("rmv solv %d failed\n", random );
         ContainerDestroy((CONTAINER *) rPRes );
         rPRes = NULL;
         VarArrayDelete(vaSolvent, random);
-        
+
         --iIon1;
       }
       if ( iFailCounter > 100 )
       {
         VarArrayDelete(vaSolvent, random);
         FREE( aIons );
-        DFATAL(( "Impossible to place %d ions with minimum separation of %f.\n",
-                 iIon1 + iIon2, dMinSeparation ));
+        DFATAL("Impossible to place %d ions with minimum separation of %f.\n",
+                 iIon1 + iIon2, dMinSeparation );
       }
     }
-    if ( iIon2 ) 
+    if ( iIon2 )
     {
       // Pick random solvent molecule to replace
       random = rand() % iVarArrayElementCount( vaSolvent );
-      
+
       // Get position of solvent residue atom
       rPRes = PVAI( vaSolvent, RESIDUE, random );
       lAtoms = lLoop( (OBJEKT)*rPRes, ATOMS);
       aAtom = (ATOM)oNext(&lAtoms);
       vNewPoint = vAtomPosition( aAtom );
-      
+
       // Check that new point isn't too close to other ions
       bPlaceIon = TRUE;
       for (i=0; i<counter; ++i)
@@ -6677,15 +7027,15 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
           break;
         }
       }
-      
+
       if ( bPlaceIon )
       {
-        VP0(( "Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", 
+        VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
               sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ),
-              dVX(&(vNewPoint)), 
-              dVY(&(vNewPoint)), 
-              dVZ(&(vNewPoint))));
-        
+              dVX(&(vNewPoint)),
+              dVY(&(vNewPoint)),
+              dVZ(&(vNewPoint)));
+
         // Save this ion's position
         uPlace = (UNIT) oCopy( (OBJEKT)uIon2 );
         ContainerCenterAt((CONTAINER) uPlace, vNewPoint );
@@ -6696,28 +7046,28 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         }
         // Copy ion unit, position, and add it to the unit
         UnitJoin( uUnit, uPlace );
-        
+
         // Delete the solvent residue that was replaced
         REF( *rPRes );  /* bContainerRemove() needs this */
         ResidueYouAreBeingRemoved( *rPRes );
         if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*rPRes ) == FALSE)
-          DFATAL(( "rmv solv %d failed\n", random ));
+          DFATAL("rmv solv %d failed\n", random );
         ContainerDestroy((CONTAINER *) rPRes );
         rPRes = NULL;
         VarArrayDelete(vaSolvent, random);
-        
+
         iIon2--;
       }
       if ( iFailCounter > 100 )
       {
         VarArrayDelete(vaSolvent, random);
         FREE( aIons );
-        DFATAL(( "Impossible to place %d ions with minimum separation of %f.\n",
-                 iIon1 + iIon2, dMinSeparation ));
+        DFATAL("Impossible to place %d ions with minimum separation of %f.\n",
+                 iIon1 + iIon2, dMinSeparation );
       }
     }
   }
-  
+
   // cleanup
   if ( vaSolvent )
     VarArrayDestroy( &vaSolvent );
@@ -6726,12 +7076,12 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   TurnOnDisplayerUpdates();
   ContainerDisplayerUpdate( (CONTAINER) uUnit );
   return(NULL);
-  
+
   // Error handling
   CANCEL:
-  
-  VP0(( "\n%s: Interrupted.\n", sCmd ));
-  BasicsResetInterrupt();  
+
+  VP0("\n%s: Interrupted.\n", sCmd );
+  BasicsResetInterrupt();
   if ( vaSolvent )
     VarArrayDestroy( &vaSolvent );
   DisplayerReleaseUpdates();
@@ -6756,7 +7106,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
  *      optional[1] - OSTRING string is the original command word
  *
  */
- 
+
 VARARRAY GvaAlias;
 
 
@@ -6774,18 +7124,18 @@ char    *sCmd = "alias";
 
     switch ( iArgCount) {
         case 2 : /* Adds an alias */
-                MESSAGE(( "Test:  %x, %s\n", 
-                        oAssocObject(aaArgs[0]), 
-                        sObjectType( oAssocObject(aaArgs[1]))));
+                MESSAGE("Add alias:  %p, %s\n",
+                        oAssocObject(aaArgs[0]),
+                        sObjectType( oAssocObject(aaArgs[1])));
                 if ( bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s" )) {
                     strcpy( sAlias, sOString( oAssocObject( aaArgs[0] )));
                     strcpy( sCommand, sOString( oAssocObject( aaArgs[1] )));
                 } else {
                     hTemp = hHelp( "alias" );
                     if ( hTemp == NULL ) {
-                        VPFATALDELAYEDEXIT(( "No help available on \"alias\".\n" ));
+                        VPFATALDELAYEDEXIT("No help available on \"alias\".\n" );
                     } else {
-                        VPFATALDELAYEDEXIT(( "\n%s\n", sHelpText(hTemp) ));
+                        VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
                     }
                     return(NULL);
                 }
@@ -6803,11 +7153,11 @@ char    *sCmd = "alias";
                         }
                 }
                 if ( bOK == FALSE ) {
-                    VPFATALEXIT(( "%s: '%s' is not a command.\n"
-                        "Please check the spelling and try again.\n", sCmd, sCommand ));
+                    VPFATALEXIT("%s: '%s' is not a command.\n"
+                        "Please check the spelling and try again.\n", sCmd, sCommand );
                     return( NULL );
                 }
-        
+
                 /* Make sure that the alias is not an existing command */
                 /* Make sure that sAlias is not a command */
                 for ( i=0; strlen(cCommands[i].sName) != 0; i++ ) {
@@ -6819,18 +7169,18 @@ char    *sCmd = "alias";
                     }
                 }
                 if ( bOK == FALSE ) {
-                    VPFATALEXIT(( "%s: '%s' is already one of the commands.\n"
-                        "Please try something different.\n", sCmd, sAlias ));
+                    VPFATALEXIT("%s: '%s' is already one of the commands.\n"
+                        "Please try something different.\n", sCmd, sAlias );
                     return( NULL );
-                }       
+                }
 
                 if ( GvaAlias == 0 ) {
-                    MESSAGE(( "Creating a new Global Alias Structure.\n" ));
+                    MESSAGE("Creating a new Global Alias Structure.\n" );
                     GvaAlias = vaVarArrayCreate( sizeof( ALIASt ));
                 }
-                /* 
-                 *  Make sure that the alias does not already exist, 
-                 *      if so, replace it 
+                /*
+                 *  Make sure that the alias does not already exist,
+                 *      if so, replace it
                  */
                 bOK = FALSE;
                 iAliases = iVarArrayElementCount( GvaAlias );
@@ -6851,7 +7201,7 @@ char    *sCmd = "alias";
                     VarArrayAdd( GvaAlias, (GENP)&aAlias );
                 }
                 break;
-                
+
         case 1 : /* Remove an alias from the list */
                 if ( bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s" )) {
                     strcpy( sAlias, sOString( oAssocObject( aaArgs[0] )));
@@ -6860,16 +7210,16 @@ char    *sCmd = "alias";
                 } else {
                     hTemp = hHelp( "alias" );
                     if ( hTemp == NULL ) {
-                        VPFATALDELAYEDEXIT(( "No help available on \"alias\".\n" ));
+                        VPFATALDELAYEDEXIT("No help available on \"alias\".\n" );
                     } else {
-                        VPFATALDELAYEDEXIT(( "\n%s\n", sHelpText(hTemp) ));
+                        VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
                     }
                     return(NULL);
                 }
                 StringLower( sAlias );
                 iAliases = iVarArrayElementCount( GvaAlias );
                 if ( !iAliases ) {
-                    VPWARN(( "%s: There are no aliases loaded.\n", sCmd ));
+                    VPWARN("%s: There are no aliases loaded.\n", sCmd );
                     return(NULL);
                 }
                 PaAlias = PVAI( GvaAlias, ALIASt, 0 );
@@ -6883,34 +7233,34 @@ char    *sCmd = "alias";
         case 0 : /*  List all the aliases */
                 iAliases = iVarArrayElementCount( GvaAlias );
                 if ( !iAliases ) {
-                    VPWARN(( "There are no aliases loaded.\n" ));
+                    VPWARN("There are no aliases loaded.\n" );
                     return(NULL);
                 }
-                VP0(( "Current Aliases  [alias....command]\n" ));
+                VP0("Current Aliases  [alias....command]\n" );
                 for ( i = 0; i < iAliases; i++ ) {
                     aAlias = *PVAI( GvaAlias, ALIASt, i );
                     if (( i % 2 ) == 0 ) { /* An odd entry */
-                        VP0(( "%-10s..%-24s", 
-                                aAlias.sName, aAlias.sCommand ));
+                        VP0("%-10s..%-24s",
+                                aAlias.sName, aAlias.sCommand );
                     } else {
-                        VP0(( "%-10s..%-10s\n", 
-                                aAlias.sName, aAlias.sCommand ));
+                        VP0("%-10s..%-10s\n",
+                                aAlias.sName, aAlias.sCommand );
                     }
                 }
-                if (( i % 2 ) == 1 ) { 
+                if (( i % 2 ) == 1 ) {
                     /* Left over entry (odd number of entries) */
-                    VP0(( "\n" ));
+                    VP0("\n" );
                 }
                 break;
-                
+
         default: hTemp = hHelp( "alias" );
                 if ( hTemp == NULL ) {
-                    VPFATALEXIT(( "No help available on alias.\n" ));
+                    VPFATALEXIT("No help available on alias.\n" );
                 } else {
-                    VPFATALEXIT(( "\n%s\n", sHelpText(hTemp) ));
+                    VPFATALEXIT("\n%s\n", sHelpText(hTemp) );
                 }
                 break;
-                
+
    } /* end of switch */
    return(NULL);
 }
@@ -6922,7 +7272,7 @@ char    *sCmd = "alias";
  *
  *      Author: David A. Rivkin (1993)
  *
- *      Scans a UNIT for any residue that is different from 
+ *      Scans a UNIT for any residue that is different from
  *      the residues in the UNIT and changes them to that residue.
  *      OR
  *      Checks a particular residue in a unit to see if the template
@@ -6946,26 +7296,26 @@ DICTLOOP        dlLoop;
 char            *sCmd = "update";
 
     if ( iArgCount != 1 ) {
-        VPFATAL(( "Illegal number of arguments.\n" ));
+        VPFATAL("Invalid number of arguments.\n" );
         hTemp = hHelp( "update" );
         if ( hTemp == NULL ) {
-            VPFATALDELAYEDEXIT(( "No help available on update.\n" ));
+            VPFATALDELAYEDEXIT("No help available on update.\n" );
         } else {
-            VPFATALDELAYEDEXIT(( "%s\n", sHelpText(hTemp) ));
+            VPFATALDELAYEDEXIT("%s\n", sHelpText(hTemp) );
         }
         return(NULL);
     }
     if (! bCmdGoodArguments( sCmd, iArgCount, aaArgs, "ru" )) {
         hTemp = hHelp( "update" );
         if ( hTemp == NULL ) {
-            VPFATALDELAYEDEXIT(( "No help available on update.\n" ));
+            VPFATALDELAYEDEXIT("No help available on update.\n" );
         } else {
-            VPFATALDELAYEDEXIT(( "%s\n", sHelpText(hTemp) ));
+            VPFATALDELAYEDEXIT("%s\n", sHelpText(hTemp) );
         }
         return(NULL);
     }
     switch ( iObjectType(oAssocObject( aaArgs[0] ))) {
-        case    UNITid: 
+        case    UNITid:
             DisplayerAccumulateUpdates();
             uUnit = (UNIT)oAssocObject( aaArgs[0] );
             lResidue = lLoop( (OBJEKT)uUnit, RESIDUES );
@@ -6976,20 +7326,22 @@ char            *sCmd = "update";
                     sResName[i] = sTemp[i];
                 }
                 sResName[i] = '\0';
+                // FIXME, bad code, do this:
+                //  rNew =  (RESIDUE)yPDictionaryFind( GdVariables, sResName)
                 dlLoop = ydlDictionaryLoop(GdVariables);
                 while ( yPDictionaryNext( GdVariables, &dlLoop )) {
                     if (!strcmp(sResName, sDictLoopKey(dlLoop))) {
                         iResidues = 0;
                         lRes = lLoop( (OBJEKT)PDictLoopData( dlLoop ), RESIDUES);
+                        rNew = rCopy = NULL;
                         while ((rNew = (RESIDUE)oNext( &lRes ))) {
                             iResidues++;
-                                /* Make sure that there are not more than 
+                                /* Make sure that there are not more than
                                         1 residue in the unit */
                             if ( iResidues > 1 ) {
-                                MESSAGE(( 
-                             "Unit name matches but has more than 1 residue.\n"
-                                ));
-                                goto NEXTRES1;
+                                MESSAGE("Unit name matches but has more than 1 residue.\n"
+                                );
+                                goto NEXTRES1; // FIXME: Dictionary can never match twice! this is a waste JMK
                             }
                             rCopy = (RESIDUE)oCopy((OBJEKT)rNew );
                         }
@@ -7008,7 +7360,7 @@ char            *sCmd = "update";
 
                         DEREF( rOld );
 
-                        VP0(( "Updating residue %s.\n", sResName ));
+                        VP0("Updating residue %s.\n", sResName );
                         goto NEXTSEQ;
                     }
 NEXTRES1:       ;
@@ -7017,32 +7369,34 @@ NEXTSEQ:        ;
             }
             DisplayerReleaseUpdates();
             break;
-            
-        case    RESIDUEid: 
+
+        case    RESIDUEid:
             DisplayerAccumulateUpdates();
             rOld = (RESIDUE)oAssocObject( aaArgs[0] );
             uUnit = (UNIT)cContainerWithin((CONTAINER)rOld );
-            strcpy( sTemp, sContainerName((CONTAINER)rOld )); 
+            strcpy( sTemp, sContainerName((CONTAINER)rOld ));
             for ( i = 0; i < strlen(sTemp); i++){
                 if ( sTemp[i] == ' ') break;
                     sResName[i] = sTemp[i];
             }
-            sResName[i] = '\0';                 
-            
+            sResName[i] = '\0';
+
             dlLoop = ydlDictionaryLoop(GdVariables);
+            // FIXME, bad code, do this:
+            //  rNew =  (RESIDUE)yPDictionaryFind( GdVariables, sResName)
             while ( yPDictionaryNext( GdVariables, &dlLoop )) {
                 if (!strcmp(sResName, sDictLoopKey(dlLoop))) {
                     iResidues = 0;
                     lRes = lLoop( (OBJEKT)PDictLoopData( dlLoop ), RESIDUES);
+                    rNew = NULL;
                     while ( (rTemp = (RESIDUE)oNext( &lRes)) ) {
                         rNew = rTemp;
                         iResidues++;
                     }
-                        /* Make sure that there are not more than 
+                        /* Make sure that there are not more than
                                 1 residue in the unit */
                     if ( iResidues > 1 ) {
-                        MESSAGE(( 
-                          "Unit name matches but has more than 1 residue.\n" ));
+                        MESSAGE("Unit name matches but has more than 1 residue.\n" );
                         goto NEXTRES2;
                     }
 
@@ -7062,15 +7416,15 @@ NEXTSEQ:        ;
 
                     DEREF( rOld );
 
-                    VP0(( "Updating residue %s.\n", sResName ));
+                    VP0("Updating residue %s.\n", sResName );
                     goto NEXTRES2;
                 }
 NEXTRES2:       ;
             }
             DisplayerReleaseUpdates();
             break;
-        default:        
-            DFATAL(( "Impossible control flow.\n" ));
+        default:
+            DFATAL("Impossible control flow.\n" );
             break;
     }
     return(NULL);
@@ -7081,7 +7435,7 @@ NEXTRES2:       ;
  *      oCmd_flip
  *      Based on XAUESelectedAtomsFlipChirality in xaUnitEditor.c (xleap source code)
  *      Author: Christine cezard (2007)
- *      Universite de Picardie - Jules Verne, Amiens 
+ *      Universite de Picardie - Jules Verne, Amiens
  *      http://q4md-forcefieldtools.org
  *
  */
@@ -7101,7 +7455,7 @@ ATOM        aAtom;
             bBuildFlipChiralityFor((CONTAINER) uUnit, aAtom );
         }
     }
-  
+
 
     return(NULL);
 }
@@ -7119,10 +7473,10 @@ oCmd_relax(int iArgCount, ASSOC aaArgs[])
 {
 MINIMIZER       mStrain;
 UNIT            uUnit;
-    
+
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
     if ( uUnit == NULL ) return(NULL);
-    
+
         /* Setup a MINIMIZER and give it a callback to use */
         /* to update the display every step of the minimization */
 
@@ -7140,7 +7494,7 @@ UNIT            uUnit;
  *      oCmd_addH
  *      Based on Based on XAUEAddHydrogensBuildExternals in xaUnitEditor.c (xleap source code)
  *      Author: D. Roe (2011)
- *      Rutgers University 
+ *      Rutgers University
  *
  */
 OBJEKT
@@ -7254,16 +7608,20 @@ COMMANDt        cCommands[] = {
         { "displayPdbResMap",   oCmd_displayPdbResMap },
         { "edit",               oCmd_edit },
         { "flip",               oCmd_flip },
+        { "get",                oCmd_get },
         { "groupSelectedAtoms", oCmd_groupSelectedAtoms },
         { "help",               oCmd_help },
         { "impose",             oCmd_impose },
         { "list",               oCmd_list },
         { "listOff",            oCmd_listOff },
+        { "listParmSets",       oCmd_listParmSets },
+        { "listResidues",       oCmd_listResidues },
         { "loadAmberParams",    oCmd_loadAmberParams },
         { "loadAmberPrep",      oCmd_loadAmberPrep },
         { "loadOff",            oCmd_loadOff },
         { "loadMol2",           oCmd_loadMol2 },
         { "loadMol3",           oCmd_loadMol3 },
+        { "loadCif",            oCmd_loadCif },
         { "loadPdb",            oCmd_loadPdb },
         { "loadPdbUsingSeq",    oCmd_loadPdbUsingSeq },
         { "logFile",            oCmd_logFile },
@@ -7292,8 +7650,10 @@ COMMANDt        cCommands[] = {
         { "sequence",           oCmd_sequence },
         { "set",                oCmd_set },
         { "setBox",             oCmd_setBox},
+        { "setCell",            oCmd_setCell},
         { "showdefault",        oCmd_showDefault},
         { "solvateBox",         oCmd_solvateBox },
+        { "solvateCell",        oCmd_solvateCell },
         { "solvateCap",         oCmd_solvateCap },
         { "solvateDontClip",    oCmd_solvateDontClip },
         { "solvateOct",         oCmd_solvateOct },
@@ -7305,5 +7665,5 @@ COMMANDt        cCommands[] = {
         { "verbosity",          oCmd_verbosity },
         { "zMatrix",            oCmd_zMatrix },
 /* The last command must be blank */
-        { "", NULL } 
+        { "", NULL }
 };

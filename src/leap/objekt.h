@@ -189,15 +189,15 @@ extern OBJEKT	oObjectDuplicate(OBJEKT oOld);
 #ifdef  DEBUG
 #define VERIFYOBJEKT( O, Oid ) {\
     if ( iObjectType(O) != Oid ) {\
-        MESSAGE(( "ERROR, Object of type: %c should be type: %c\n",\
-                iObjectType(O), Oid ));\
-        MESSAGE(( "In file: %s   line: %d\n", __FILE__, __LINE__ ));\
+        MESSAGE( "ERROR, Object of type: %c should be type: %c\n",\
+                iObjectType(O), Oid );\
+        MESSAGE( "In file: %s   line: %d\n", __FILE__, __LINE__ );\
     }}
 #define BADOBJEKT( O ) {\
     if ( iObjectType(O) != Oid ) {\
-        MESSAGE(( "ERROR, Bad object of type: %c\n",\
-                iObjectType(O) ));\
-        MESSAGE(( "In file: %s   line: %d\n", __FILE__, __LINE__ ));\
+        MESSAGE( "ERROR, Bad object of type: %c\n",\
+                iObjectType(O) );\
+        MESSAGE( "In file: %s   line: %d\n", __FILE__, __LINE__ );\
     }}
 #else
 #define VERIFYOBJEKT( O, Oid )

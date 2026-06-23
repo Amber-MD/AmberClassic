@@ -43,12 +43,6 @@ typedef struct  {
 } VECTOR;
 
 
-typedef	double	VECTORASARRAY[3];	/* Must have same number */
-					/* of elements as VECTOR */
-		
-typedef	double	*VECTORASPTR;
-
-
 /*
  *      vector.c messages
  */

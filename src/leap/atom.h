@@ -28,7 +28,7 @@
  *     VERSION: 1.0                                                     *
  *     Programmers:                                                     *
  *             Christian Schafmeister                                   *
- *             David A. Rivkin                                             *
+ *             David A. Rivkin                                          *
  *                                                                      *
  *     Principal Investigator: Peter A. Kollman                         *
  *                                                                      *
@@ -44,6 +44,7 @@
  *              Atoms can contain anything.
  */
  
+#include        "basics.h"
 #include        "container.h"
 #include        "vector.h"
 
@@ -52,7 +53,7 @@
                         /* 5 characters to represent the type */
 #define ATOMTYPELEN     5
                         /* 10 characters to represent the name */
-#define NAMELEN         10
+#define ATOMNAMELEN     10
                         /* maximum 8 bonds out of each atom */
 #define MAXBONDS        8
                         // assume an atom can have mostly 8 C4
@@ -67,7 +68,6 @@
         Object typedef MUST include the superclass object as
         its first structure element.
 */
-
 
 #include        "elements.h"
 //#include        "unitio.h" //New
@@ -120,7 +120,9 @@ typedef struct  ATOMSTRUCT {
 	double                  daC4Pairwise[MAXC4Pairwise]; // New
         double                  dTemp;
         GENP                    PTemp;
-                /* Spanning tree stuff */
+
+        /* Spanning tree stuff */
+        /* Used for LOOPing over SPANNINGTREE */
         struct ATOMSTRUCT       *aNextSpan;
         struct ATOMSTRUCT       *aBackSpan;
         int                     iSeenId;
@@ -152,6 +154,7 @@ typedef ATOMt   *ATOM;
 #define ATOMPERTURB             0x00000002
 #define ATOMNOTDISPLAYED        0x00000004
 #define RESIDUEIMAGEATOM        0x00000010      /* not used (so far) */
+#define ATOMBULKSOLVENT         0x00000020
 
 #define ATOMTEMPORARYFLAGS      0xFFFF0000
         
@@ -278,7 +281,7 @@ typedef ATOMt   *ATOM;
 
 /*  atom.c  */
 
-extern ATOM             aAtomCreate();
+extern ATOM             aAtomCreate(void);
 extern void             AtomDestroy( ATOM *aPAtom );
 extern void             AtomDescribe( ATOM aAtom );
 extern void             AtomDescStr( ATOM aA, BOOL bResNum, char *cPDesc );
@@ -301,6 +304,7 @@ extern void             AtomYouAreBeingRemoved( ATOM aAtom );
 extern void             AtomIAmBeingRemoved( ATOM aAtom, CONTAINER cRemoved );
 extern void             AtomSetAttribute( ATOM aAtom, STRING sAttr, 
                                 OBJEKT oAttr );
+extern OBJEKT           oAtomGetAttribute( ATOM aAtom, STRING sAttr );
 extern int              iAtomHybridization( ATOM aAtom );
 extern int              iAtomBondOrderFromName( char *sName );
 extern BOOL             bAtomSpaceConflict( ATOM aAtom1, ATOM aAtom2 );

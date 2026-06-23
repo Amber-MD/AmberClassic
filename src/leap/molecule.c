@@ -31,6 +31,13 @@
  *                                                                      *
  ************************************************************************
  *
+ *
+ *      NOTE: MOLECULE class is only unused for finding molecule groups
+ *            for SOLVENT_POINTERS and ATOMS_PER_MOLECULE. There was a
+ *            concept of UNIT -> MOLECULE -> RESIDUE -> ATOM (see
+ *            build.c:BuildHierarcy() which is unused) Normally, the
+ *            molecule level is not used.
+ *
  *      Class:
  *              MOLECULE
  *      Superclass:
@@ -125,18 +132,18 @@ LOOP    lContents;
 OBJEKT  oObj;
 STRING  sTemp;
 
-    VP0(( "MOLECULE name: %s\n", mMolecule->cHeader.sName ));
-    VP0(( "MOLECULE sequence number: %d\n", 
-                        iContainerSequence(mMolecule) ));
-    VP0(( "Contents: \n" ));
+    VP0("MOLECULE name: %s\n", mMolecule->cHeader.sName );
+    VP0("MOLECULE sequence number: %d\n", 
+                        iContainerSequence(mMolecule) );
+    VP0("Contents: \n" );
 
     BasicsResetInterrupt();
     lContents = lLoop( (OBJEKT)mMolecule, DIRECTCONTENTS );
     while ( (oObj = oNext(&lContents )) ) {
-        VP0(( "%s\n", sContainerDescriptor( (CONTAINER)oObj, sTemp ) ));
+        VP0("%s\n", sContainerDescriptor( (CONTAINER)oObj, sTemp ) );
 	if ( bBasicsInterrupt() ) {
 	    BasicsResetInterrupt();
-	    VP0(( "Interrupted\n" ));
+	    VP0("Interrupted\n" );
 	    break;
 	}
     }   
@@ -286,8 +293,8 @@ MoleculeSetAttribute( MOLECULE mMol, STRING sAttr, OBJEKT oAttr )
 	ContainerSetName( mMol, sOString(oAttr) );
 	return;
     }
-    VP0(( "%s: non-existent attribute for a molecule.\n", sAttr ));
-    VP0(( "\tMolecule attributes: name\n" ));
+    VP0("%s: non-existent attribute for a molecule.\n", sAttr );
+    VP0("\tMolecule attributes: name\n" );
     
 }
 

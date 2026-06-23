@@ -180,15 +180,15 @@ int             i, iMax;
 NVECTOR         nvPosition;
 VECTOR          vPos;
 
-    MESSAGE(( "|||Before defining nvPosition\n" ));
+    MESSAGE("|||Before defining nvPosition\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
     
     iMax = iVarArrayElementCount(mMinimizer->vaAtoms);
     nvPosition = nvNVectorCreate( iMax * 3 );
-    MESSAGE(( "|||After defining nvPosition\n" ));
+    MESSAGE("|||After defining nvPosition\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
     
                 /* Loop over all atoms and obtain the positions */
     if ( iMax ) {
@@ -202,9 +202,9 @@ VECTOR          vPos;
         
     	}
     }
-    MESSAGE(( "|||After filling nvPosition\n" ));
+    MESSAGE("|||After filling nvPosition\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
     return(nvPosition);
 }
 
@@ -295,9 +295,9 @@ double          e, Kb, R0;
         aAtom2 = eaPAtom2->aAtom;
 
 #ifdef	DEBUGBOND
-        MESSAGE(( "Bond interaction %s - %s  Kb=%lf  R0=%lf\n",
+        MESSAGE("Bond interaction %s - %s  Kb=%lf  R0=%lf\n",
                         sContainerName(aAtom1), sContainerName(aAtom2),
-                        Kb, R0 ));
+                        Kb, R0 );
 #endif
 
 	bMove1 = bAtomFlagsSet( aAtom1, ATOMNEEDSMINIMIZER );
@@ -336,20 +336,20 @@ double          e, Kb, R0;
         dz2 = -vv14*vv6 ;
 
 #ifdef	DEBUGBOND
-        MESSAGE(( "x1 = %lf\n", x1 ));
-        MESSAGE(( "y1 = %lf\n", y1 ));
-        MESSAGE(( "z1 = %lf\n", z1 ));
-        MESSAGE(( "x2 = %lf\n", x2 ));
-        MESSAGE(( "y2 = %lf\n", y2 ));
-        MESSAGE(( "z2 = %lf\n", z2 ));
+        MESSAGE("x1 = %lf\n", x1 );
+        MESSAGE("y1 = %lf\n", y1 );
+        MESSAGE("z1 = %lf\n", z1 );
+        MESSAGE("x2 = %lf\n", x2 );
+        MESSAGE("y2 = %lf\n", y2 );
+        MESSAGE("z2 = %lf\n", z2 );
 
-        MESSAGE(( "Energy = %lf\n", e ));
-        MESSAGE(( "dx1 = %lf\n", dx1 ));
-        MESSAGE(( "dy1 = %lf\n", dy1 ));
-        MESSAGE(( "dz1 = %lf\n", dz1 ));
-        MESSAGE(( "dx2 = %lf\n", dx2 ));
-        MESSAGE(( "dy2 = %lf\n", dy2 ));
-        MESSAGE(( "dz2 = %lf\n", dz2 ));
+        MESSAGE("Energy = %lf\n", e );
+        MESSAGE("dx1 = %lf\n", dx1 );
+        MESSAGE("dy1 = %lf\n", dy1 );
+        MESSAGE("dz1 = %lf\n", dz1 );
+        MESSAGE("dx2 = %lf\n", dx2 );
+        MESSAGE("dy2 = %lf\n", dy2 );
+        MESSAGE("dz2 = %lf\n", dz2 );
 #endif
                 /* Add the forces */
 
@@ -433,10 +433,10 @@ double          e;
         aAtom3 = eaPAtom3->aAtom;
         
 #ifdef	DEBUGANGLE
-        MESSAGE(( "Angle interaction %s - %s - %s Kt=%lf  T0=%lf\n",
+        MESSAGE("Angle interaction %s - %s - %s Kt=%lf  T0=%lf\n",
                         sContainerName(aAtom1), sContainerName(aAtom2),
                         sContainerName(aAtom3),
-                        Kt, T0 ));
+                        Kt, T0 );
 #endif
         
         bMove1 = bAtomFlagsSet( aAtom1, ATOMNEEDSMINIMIZER );
@@ -508,26 +508,26 @@ double          e;
         dz3 = -vv35*(vv24*vv28*vv8 - vv20*vv24*vv26*vv9) ;
 
 #ifdef	DEBUGANGLE
-        MESSAGE(( "x1 = %lf\n", x1 ));
-        MESSAGE(( "y1 = %lf\n", y1 ));
-        MESSAGE(( "z1 = %lf\n", z1 ));
-        MESSAGE(( "x2 = %lf\n", x2 ));
-        MESSAGE(( "y2 = %lf\n", y2 ));
-        MESSAGE(( "z2 = %lf\n", z2 ));
-        MESSAGE(( "x3 = %lf\n", x3 ));
-        MESSAGE(( "y3 = %lf\n", y3 ));
-        MESSAGE(( "z3 = %lf\n", z3 ));
+        MESSAGE("x1 = %lf\n", x1 );
+        MESSAGE("y1 = %lf\n", y1 );
+        MESSAGE("z1 = %lf\n", z1 );
+        MESSAGE("x2 = %lf\n", x2 );
+        MESSAGE("y2 = %lf\n", y2 );
+        MESSAGE("z2 = %lf\n", z2 );
+        MESSAGE("x3 = %lf\n", x3 );
+        MESSAGE("y3 = %lf\n", y3 );
+        MESSAGE("z3 = %lf\n", z3 );
 
-        MESSAGE(( "Energy = %lf\n", e ));
-        MESSAGE(( "dx1 = %lf\n", dx1 ));
-        MESSAGE(( "dy1 = %lf\n", dy1 ));
-        MESSAGE(( "dz1 = %lf\n", dz1 ));
-        MESSAGE(( "dx2 = %lf\n", dx2 ));
-        MESSAGE(( "dy2 = %lf\n", dy2 ));
-        MESSAGE(( "dz2 = %lf\n", dz2 ));
-        MESSAGE(( "dx3 = %lf\n", dx3 ));
-        MESSAGE(( "dy3 = %lf\n", dy3 ));
-        MESSAGE(( "dz3 = %lf\n", dz3 ));
+        MESSAGE("Energy = %lf\n", e );
+        MESSAGE("dx1 = %lf\n", dx1 );
+        MESSAGE("dy1 = %lf\n", dy1 );
+        MESSAGE("dz1 = %lf\n", dz1 );
+        MESSAGE("dx2 = %lf\n", dx2 );
+        MESSAGE("dy2 = %lf\n", dy2 );
+        MESSAGE("dz2 = %lf\n", dz2 );
+        MESSAGE("dx3 = %lf\n", dx3 );
+        MESSAGE("dy3 = %lf\n", dy3 );
+        MESSAGE("dz3 = %lf\n", dz3 );
 #endif
                 /* Add the forces */
 
@@ -633,10 +633,10 @@ double          dx1,dy1,dz1, dx2,dy2,dz2, dx3,dy3,dz3, dx4,dy4,dz4;
         aAtom4 = eaPAtom4->aAtom;
 
 #ifdef	DEBUGTORSION
-        MESSAGE(( "Torsion interaction %s - %s - %s - %s Kp=%lf  N=%lf\n",
+        MESSAGE("Torsion interaction %s - %s - %s - %s Kp=%lf  N=%lf\n",
                         sContainerName(aAtom1), sContainerName(aAtom2),
                         sContainerName(aAtom3), sContainerName(aAtom4),
-                        Kp, N ));
+                        Kp, N );
 #endif
         
         bMove1 = bAtomFlagsSet( aAtom1, ATOMNEEDSMINIMIZER );
@@ -798,32 +798,32 @@ ZERODERIV:
 
 #ifdef	DEBUGTORSION
 
-        MESSAGE(( "x1 = %lf\n", x1 ));
-        MESSAGE(( "y1 = %lf\n", y1 ));
-        MESSAGE(( "z1 = %lf\n", z1 ));
-        MESSAGE(( "x2 = %lf\n", x2 ));
-        MESSAGE(( "y2 = %lf\n", y2 ));
-        MESSAGE(( "z2 = %lf\n", z2 ));
-        MESSAGE(( "x3 = %lf\n", x3 ));
-        MESSAGE(( "y3 = %lf\n", y3 ));
-        MESSAGE(( "z3 = %lf\n", z3 ));
-        MESSAGE(( "x4 = %lf\n", x4 ));
-        MESSAGE(( "y4 = %lf\n", y4 ));
-        MESSAGE(( "z4 = %lf\n", z4 ));
+        MESSAGE("x1 = %lf\n", x1 );
+        MESSAGE("y1 = %lf\n", y1 );
+        MESSAGE("z1 = %lf\n", z1 );
+        MESSAGE("x2 = %lf\n", x2 );
+        MESSAGE("y2 = %lf\n", y2 );
+        MESSAGE("z2 = %lf\n", z2 );
+        MESSAGE("x3 = %lf\n", x3 );
+        MESSAGE("y3 = %lf\n", y3 );
+        MESSAGE("z3 = %lf\n", z3 );
+        MESSAGE("x4 = %lf\n", x4 );
+        MESSAGE("y4 = %lf\n", y4 );
+        MESSAGE("z4 = %lf\n", z4 );
 
-        MESSAGE(( "Energy = %lf\n", e ));
-        MESSAGE(( "dx1 = %lf\n", dx1 ));
-        MESSAGE(( "dy1 = %lf\n", dy1 ));
-        MESSAGE(( "dz1 = %lf\n", dz1 ));
-        MESSAGE(( "dx2 = %lf\n", dx2 ));
-        MESSAGE(( "dy2 = %lf\n", dy2 ));
-        MESSAGE(( "dz2 = %lf\n", dz2 ));
-        MESSAGE(( "dx3 = %lf\n", dx3 ));
-        MESSAGE(( "dy3 = %lf\n", dy3 ));
-        MESSAGE(( "dz3 = %lf\n", dz3 ));
-        MESSAGE(( "dx4 = %lf\n", dx4 ));
-        MESSAGE(( "dy4 = %lf\n", dy4 ));
-        MESSAGE(( "dz4 = %lf\n", dz4 ));
+        MESSAGE("Energy = %lf\n", e );
+        MESSAGE("dx1 = %lf\n", dx1 );
+        MESSAGE("dy1 = %lf\n", dy1 );
+        MESSAGE("dz1 = %lf\n", dz1 );
+        MESSAGE("dx2 = %lf\n", dx2 );
+        MESSAGE("dy2 = %lf\n", dy2 );
+        MESSAGE("dz2 = %lf\n", dz2 );
+        MESSAGE("dx3 = %lf\n", dx3 );
+        MESSAGE("dy3 = %lf\n", dy3 );
+        MESSAGE("dz3 = %lf\n", dz3 );
+        MESSAGE("dx4 = %lf\n", dx4 );
+        MESSAGE("dy4 = %lf\n", dy4 );
+        MESSAGE("dz4 = %lf\n", dz4 );
 #endif
                 /* Add the forces */
 
@@ -888,9 +888,9 @@ double          dEnergy;
     dBond    = dBondMinimizer( mMinimizer, nvPos, nvDerivative );
     dAngle   = dAngleMinimizer( mMinimizer, nvPos, nvDerivative );
     dTorsion = dTorsionMinimizer( mMinimizer, nvPos, nvDerivative );
-MESSAGE(( "dBond    = %lf\n", dBond ));
-MESSAGE(( "dAngle   = %lf\n", dAngle ));
-MESSAGE(( "dTorsion = %lf\n", dTorsion ));
+MESSAGE("dBond    = %lf\n", dBond );
+MESSAGE("dAngle   = %lf\n", dAngle );
+MESSAGE("dTorsion = %lf\n", dTorsion );
 
     dEnergy = dBond + dAngle + dTorsion;
     return(dEnergy);
@@ -920,8 +920,8 @@ dLineSearch( MINIMIZER mMinimizer, double *dPF0, double *dPD0,
                                                 
 double          dAcur, dFcur, dDcur;
 double          dApre, dFpre, dDpre;
-double          dAmin, dFmin, dDmin;
-double          dTest;
+//double          dAmin, dFmin, dDmin;
+double          dTest = 0;
 double          dF0, dD0;
 int             iFunctionEvaluationCount;
 double          dStart;
@@ -936,9 +936,9 @@ double          dStart;
     dFpre = dF0;
     dDpre = dD0;
 
-    dAmin = 0.0;
-    dFmin = dF0;
-    dDmin = dD0;
+//    dAmin = 0.0;
+//    dFmin = dF0;
+//    dDmin = dD0;
     
     dAcur = dStart*fabs(dD0);
 
@@ -965,11 +965,11 @@ double          dStart;
                 /* of the line */
 
         dDcur = dNVectorDot( nvNewDeriv, nvDir )/dD0;
-
-MESSAGE(( "    ZERO       @%lf  F= %lf D= %lf\n", 0.0, dF0, dD0 ));
-MESSAGE(( "    PREVIOUS   @%lf  F= %lf D= %lf\n", dApre, dFpre, dDpre ));
-MESSAGE(( "    Evaluation @%lf  F= %lf D= %lf\n", dAcur, dFcur, dDcur ));
-
+        
+MESSAGE("    ZERO       @%lf  F= %lf D= %lf\n", 0.0, dF0, dD0 );
+MESSAGE("    PREVIOUS   @%lf  F= %lf D= %lf\n", dApre, dFpre, dDpre );
+MESSAGE("    Evaluation @%lf  F= %lf D= %lf\n", dAcur, dFcur, dDcur );
+UNUSED(dFpre);
 #if 0
                 /* Keep track of the minimum value seen */
         if ( dFmin > dFcur ) {
@@ -988,7 +988,7 @@ MESSAGE(( "    Evaluation @%lf  F= %lf D= %lf\n", dAcur, dFcur, dDcur ));
 
         iFunctionEvaluationCount++;
         if ( iFunctionEvaluationCount > FUNCTIONEVALUATIONMAX ) {
-            MESSAGE(( "Warning: Evaluated function MAX number of times!\n" ));
+            MESSAGE("Warning: Evaluated function MAX number of times!\n" );
             goto DONE;
         }
 
@@ -1002,7 +1002,7 @@ MESSAGE(( "    Evaluation @%lf  F= %lf D= %lf\n", dAcur, dFcur, dDcur ));
 
         if ( (dFcur > dF0) && (dDcur < 0.0) ) {
 
-MESSAGE(( "Passed through a local maximum, moving back\n" ));
+MESSAGE("Passed through a local maximum, moving back\n" );
             if ( dTest > 0.0 ) {
                         /* Reduce dAcur and restart */
 
@@ -1016,16 +1016,16 @@ MESSAGE(( "Passed through a local maximum, moving back\n" ));
                 /* Goldstein test followed by Wolfe test */
 
         if ( dFcur > ( dF0 + 0.0001*dAcur*dD0 ) ) {
-MESSAGE(( "Failed value too large test!\n" ));
+MESSAGE("Failed value too large test!\n" );
             goto INTERPOLATE;
         }
         if ( fabs(dDcur/dD0) > 0.9 ) {
-MESSAGE(( "Failed slope too steep test!\n" ));
-MESSAGE(( "dDcur = %lf dD0 = %lf\n", dDcur, dD0 ));
+MESSAGE("Failed slope too steep test!\n" );
+MESSAGE("dDcur = %lf dD0 = %lf\n", dDcur, dD0 );
             goto INTERPOLATE;
         }
 
-MESSAGE(( "Passed steplength test\n" ));
+MESSAGE("Passed steplength test\n" );
 
                 /* If the criteria has been satisfied then check */
                 /* if the true line minimum has been found */
@@ -1038,7 +1038,7 @@ MESSAGE(( "Passed steplength test\n" ));
 INTERPOLATE:
                 /* CUBIC interpolation */
 
-MESSAGE(( "Performing CUBIC interpolation\n" ));
+MESSAGE("Performing CUBIC interpolation\n" );
 #if 0
         u1 = dDpre + dDcur - 3*( dFpre - dFcur )/( dApre - dAcur );
         u2 = sqrt( u1*u1 - dDpre*dDcur );
@@ -1047,20 +1047,20 @@ MESSAGE(( "Performing CUBIC interpolation\n" ));
 #endif
         dTest = dAcur - dDcur * ( dApre - dAcur ) / ( dDpre - dDcur );
 
-MESSAGE(( "    dTest= %lf\n", dTest ));
+MESSAGE("    dTest= %lf\n", dTest );
                 /* Test if the minimum has been bracketed */
                 /* If the product of the current and previous derivatives */
                 /* is < 0 then it has */
 
         if (  ( dDcur / dDpre ) < 0.0 ) {
 
-MESSAGE(( "The minimum is bracketed\n" ));
+MESSAGE("The minimum is bracketed\n" );
 
                 /* Test if the point is sufficiently within the interval */
 
             if ( (dTest < ( 1.01 * MIN( dAcur, dApre ))) ||
                  (dTest > ( 0.99 * MAX( dAcur, dApre ))) ) {
-MESSAGE(( "Moving to halfway into the bracket\n" ));
+MESSAGE("Moving to halfway into the bracket\n" );
                 dTest = ( dAcur + dApre ) / 2.0;
             }
 
@@ -1074,7 +1074,7 @@ MESSAGE(( "Moving to halfway into the bracket\n" ));
         if ( (dDcur > 0.0) &&
              (0.0 < dTest) &&
              ( dTest < ( 0.9999 * MIN(dAcur, dApre) ) ) ) {
-MESSAGE(( "Both points are greator than the minimum\n" ));
+MESSAGE("Both points are greator than the minimum\n" );
                     goto CONTINUE;
         }
 
@@ -1083,7 +1083,7 @@ MESSAGE(( "Both points are greator than the minimum\n" ));
 
         if ( (dDcur < 0.0) &&
              ( dTest > ( 1.0001 * MAX(dApre,dAcur) ) ) ) {
-MESSAGE(( "Both points are less than the minimum and dTest is large enough\n" ));
+MESSAGE("Both points are less than the minimum and dTest is large enough\n" );
             goto CONTINUE;
         }
 
@@ -1091,7 +1091,7 @@ MESSAGE(( "Both points are less than the minimum and dTest is large enough\n" ))
                 /* the largest prior point */
 
         if ( dDcur < 0.0 ) {
-MESSAGE(( "Doubling the test point\n" ));
+MESSAGE("Doubling the test point\n" );
             dTest = 2.0 * MAX(dApre,dAcur);
         }
 
@@ -1099,7 +1099,7 @@ MESSAGE(( "Doubling the test point\n" ));
                 /* the smallest prior point */
 
         if ( dDcur > 0.0 ) {
-MESSAGE(( "Halving the test point\n" ));
+MESSAGE("Halving the test point\n" );
             dTest = MIN(dApre,dAcur) / 2.0;
         }
 
@@ -1107,7 +1107,7 @@ MESSAGE(( "Halving the test point\n" ));
 
                 /* Set dApre = dAcur, dAcur = dTest and continue */
 CONTINUE:
-MESSAGE(( "Continuing!\n" ));
+MESSAGE("Continuing!\n" );
             dApre = dAcur;
             dFpre = dFcur;
             dDpre = dDcur;
@@ -1132,8 +1132,8 @@ DONE:
         NVectorCopy( nvNewDeriv, nvTempDeriv );
     }
 
-MESSAGE(( "^^^^^^ Returning dA= %lf   dF= %lf   dD= %lf\n",
-                dAmin, dFmin, dDmin ));
+MESSAGE("^^^^^^ Returning dA= %lf   dF= %lf   dD= %lf\n",
+                dAmin, dFmin, dDmin );
 
     return(dAmin);
 #endif
@@ -1159,7 +1159,7 @@ ConjugateGradient( MINIMIZER mMinimizer, NVECTOR nvPos )
 #define MINCHANGE       0.01
 
 NVECTOR         nvDir, nvNewPos, nvNewDeriv, nvTempPos, nvTempDeriv;
-double          dX, dLastEnergy, dBeta, dDcur, dDdotpre, dDdotcur, dEnergy;
+double          dX, /*dLastEnergy,*/ dBeta, dDcur, dDdotpre, dDdotcur, dEnergy;
 int             iK, iRestartSteps, iCount;
 
     iCount = 0;
@@ -1198,11 +1198,11 @@ int             iK, iRestartSteps, iCount;
                 /* Find the length of the current direction vector */
 
             dDcur = -dNVectorLen(nvDir);
-	    MESSAGE(( "The starting derivative is %lf\n", dDcur ));
+	    MESSAGE("The starting derivative is %lf\n", dDcur );
 
                 /* Evaluate the energy and derivative at nvPos */
 
-            dLastEnergy = dEnergy;
+            //dLastEnergy = dEnergy;
             dX = dLineSearch( mMinimizer, &dEnergy, &dDcur, 
                                 nvPos, nvDir, 
                                 nvNewPos, nvNewDeriv, 
@@ -1210,12 +1210,12 @@ int             iK, iRestartSteps, iCount;
 
                         /* Test to see if done */
         
-	    MESSAGE( ("---LineSearch step=%lf\n", dX ) );
+	    MESSAGE("---LineSearch step=%lf\n", dX );
 
                 /* If the line search did not work then stop */
 
             if ( fabs(dX) < VERYSMALL ) {
-	        MESSAGE(( "ERROR, the linesearch produced nothing\n" ));
+	        MESSAGE( "ERROR, the linesearch produced nothing\n" );
                 goto DONE;
             } else {
 	    	NVectorCopy( nvPos, nvNewPos );
@@ -1229,7 +1229,7 @@ int             iK, iRestartSteps, iCount;
 
             if ( dDdotcur/(double)iRestartSteps < 
                         mMinimizer->dMinRmsGradientSquared ) {
-VP1(( "Search terminated when RMS gradient became small enough!\n" ));
+VP1("Search terminated when RMS gradient became small enough!\n" );
                 goto DONE;
             }
 
@@ -1239,9 +1239,9 @@ VP1(( "Search terminated when RMS gradient became small enough!\n" ));
 		mMinimizer->dRmsGradient =
 			sqrt(dDdotcur/(double)iRestartSteps);
 		SetAtomCoordinates( mMinimizer, nvPos );
-MESSAGE(( "Displaying UNIT\n" ));
+MESSAGE("Displaying UNIT\n" );
 		if ( !mMinimizer->bFCallback(mMinimizer->PCallbackData) ) {
-		    VP0(( "Interrupted!\n" ));
+		    VP0("Interrupted!\n" );
 		    goto DONE;
 		}
 	    }
@@ -1251,7 +1251,7 @@ MESSAGE(( "Displaying UNIT\n" ));
                 /* Make the direction vector a unit vector */
 
             if ( iCount % 10 == 0 ) 
-                VP1(( "Gradient RMS=%lf\n", dDdotcur/(double)iRestartSteps ));
+                VP1("Gradient RMS=%lf\n", dDdotcur/(double)iRestartSteps );
 
                 /* If we dont have to restart this step calculate the new */
                 /* conjugate gradient direction */
@@ -1268,10 +1268,10 @@ MESSAGE(( "Displaying UNIT\n" ));
 
 DONE:
     if ( iCount >= MAXCONJUGATEGRADIENTSTEPS ) {
-        VP1(( "Search terminated when max number of steps were taken!\n" ));
+        VP1("Search terminated when max number of steps were taken!\n" );
     }
 
-    VP1(( "Number of conjugate gradient steps taken: %d\n", iCount ));
+    VP1("Number of conjugate gradient steps taken: %d\n", iCount );
 
     NVectorDestroy( &nvDir );
     NVectorDestroy( &nvNewPos );
@@ -1330,13 +1330,13 @@ int             iCount;
 
                 /* If the derivative is very small then stop */
 
-        VP1(( "Energy = %12.5lf\n", dEnergy ));
-        VP1(( "   Gradient RMS^2= %12.5lf    Goal: %12.5lf\n",
-                dRms, mMinimizer->dMinRmsGradientSquared ));
+        VP1("Energy = %12.5lf\n", dEnergy );
+        VP1("   Gradient RMS^2= %12.5lf    Goal: %12.5lf\n",
+                dRms, mMinimizer->dMinRmsGradientSquared );
         dDeriv = -dNVectorLen( nvNewDeriv );
         dRms = dDeriv*dDeriv/iNVectorSize(nvPos);
         if ( dRms < mMinimizer->dMinRmsGradientSquared ) {
-            VP1(( "RMS gradient is small enough!\n" ));
+            VP1("RMS gradient is small enough!\n" );
             goto DONE;
         }
 
@@ -1344,28 +1344,28 @@ int             iCount;
 	    mMinimizer->dEnergy = dEnergy;
 	    mMinimizer->dRmsGradient = sqrt(dRms);
 	    SetAtomCoordinates( mMinimizer, nvPos );
-MESSAGE(( "Displaying UNIT\n" ));
+MESSAGE("Displaying UNIT\n" );
 	    if ( !mMinimizer->bFCallback(mMinimizer->PCallbackData) ) {
-		VP0(( "Interrupted!\n" ));
+		VP0("Interrupted!\n" );
 		goto DONE;
 	    }
 	}
 
                 /* Make the direction vector a unit vector */
 
-MESSAGE(( "The starting derivative is %lf\n", dDeriv ));
+MESSAGE("The starting derivative is %lf\n", dDeriv );
         dLastEnergy = dEnergy;
         NVectorCopy( nvDir, nvNewDeriv );
         dX = dLineSearch( mMinimizer, &dEnergy, &dDeriv, nvPos, nvDir, 
                                 nvNewPos, nvNewDeriv, 
                                 nvTempPos, nvTempDeriv );
         
-        MESSAGE( ("---LineSearch step=%lf\n", dX ) );
+        MESSAGE("---LineSearch step=%lf\n", dX ) );
 
                 /* If the line search did not work then stop */
 
         if ( fabs(dX) < VERYSMALL ) {
-            VP1(( "Linesearch step was too small\n" ));
+            VP1("Linesearch step was too small\n" );
             break;
         }
 
@@ -1377,7 +1377,7 @@ MESSAGE(( "The starting derivative is %lf\n", dDeriv ));
 
     } while ( iCount < MAXSTEEPESTDESCENTSTEPS );
 
-    VP1(( "Exceeded maximum number of steps\n" ));
+    VP1("Exceeded maximum number of steps\n" );
 
 DONE:
     NVectorDestroy( &nvDir );
@@ -1478,7 +1478,7 @@ int             iAtom;
 
                 /* Add the atom */
 
-    MESSAGE(( "Adding atom to MINIMIZER: %s\n", sContainerName(aAtom) ));
+    MESSAGE( "Adding atom to MINIMIZER: %s\n", sContainerName(aAtom) );
     
     eaAtom.aAtom = aAtom;
     VarArrayAdd( mMinimizer->vaAtoms, (GENP)&eaAtom );
@@ -1516,9 +1516,9 @@ int             iAtom;
     ebBond.dKb = dKb;
     ebBond.dR0 = dR0;
     
-    MESSAGE(( "Adding bond to MINIMIZER: %s - %s  Kb=%lf  R0=%lf\n",
+    MESSAGE("Adding bond to MINIMIZER: %s - %s  Kb=%lf  R0=%lf\n",
                 sContainerName(aAtom1), sContainerName(aAtom2),
-                        dKb, dR0 ));
+                        dKb, dR0 );
     
         /* Add the bond */
     VarArrayAdd( (mMinimizer->vaBonds), (GENP)&ebBond );
@@ -1563,9 +1563,9 @@ int             iAtom;
     eaAngle.dKt = dKt;
     eaAngle.dT0 = dT0;
     
-    MESSAGE(( "Adding angle to MINIMIZER: %s - %s - %s Kt=%lf  T0=%lf\n",
+    MESSAGE("Adding angle to MINIMIZER: %s - %s - %s Kt=%lf  T0=%lf\n",
                 sContainerName(aAtom1), sContainerName(aAtom2),
-                sContainerName(aAtom3), dKt, dT0/DEGTORAD ));
+                sContainerName(aAtom3), dKt, dT0/DEGTORAD );
     
         /* Add the angle */
     VarArrayAdd( (mMinimizer->vaAngles), (GENP)&eaAngle );
@@ -1619,9 +1619,9 @@ int             iAtom;
     }
 
     
-    MESSAGE(( "Adding torsion to MINIMIZER: %s - %s - %s - %s Kp=%lf N=%lf\n",
+    MESSAGE("Adding torsion to MINIMIZER: %s - %s - %s - %s Kp=%lf N=%lf\n",
                 sContainerName(aAtom1), sContainerName(aAtom2),
-                sContainerName(aAtom3), sContainerName(aAtom4), dKp, dN ));
+                sContainerName(aAtom3), sContainerName(aAtom4), dKp, dN );
     
         /* Add the torsion */
     VarArrayAdd( (mMinimizer->vaTorsions), (GENP)&etTorsion );

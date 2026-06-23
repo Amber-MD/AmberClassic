@@ -83,7 +83,7 @@ typedef struct  CONTAINERSTRUCT {
         DISPLAYER               dDisp;
         int                     iTempInt;
         int                     iSequence;
-        struct CONTAINERSTRUCT  *cLoopNext;     /* Used for LOOPing */
+        struct CONTAINERSTRUCT  *cLoopNext;     /* Used for LOOPing over DIRECTCONTENTSBYSEQNUM */
         OBJEKT                  lContents;
 } CONTAINERt;
 
@@ -114,6 +114,9 @@ typedef CONTAINERt      *CONTAINER;
 #define ContainerSetWithin( c, w ) (((CONTAINER)c)->cContainedBy = w,CDU(c) )
 #define cContainerContents( c )    (((CONTAINER)c)->lContents)
 #define iContainerNumberOfChildren(c) (iListSize(cContainerContents(c)))
+// Convenience speed-up to grab the first object in a single-element container // JMK
+#define oContainerFirstObject( c ) (((LIST) cContainerContents(c))->nPFirstNode->PObject)
+#define oContainerLastObject( c ) (((LIST) cContainerContents(c))->nPLastNode->PObject)
 
 
                 /* If the copy is NULL then return the original */
@@ -153,7 +156,7 @@ extern void             ContainerResetPointers( CONTAINER cContainer );
 extern CONTAINER        cContainerFindSequence( CONTAINER cCont, 
                                 int iContainerType, int iSeq );
 extern CONTAINER        cContainerFindName( CONTAINER cCont, 
-                                int iContainerType, char *sName );
+                                int iContainerType, const char *sName );
 extern VECTOR           vContainerGeometricCenter( CONTAINER cCont );
 extern void             ContainerBoundingBox( CONTAINER cCont, 
                                 VECTOR *vPMin, VECTOR *vPMax );
@@ -184,6 +187,8 @@ extern void             ContainerIAmBeingRemoved( CONTAINER cCont,
                                 CONTAINER cRemoved );
 extern void             ContainerSetAttribute( CONTAINER cCont, 
                                 STRINGref sAttribute, OBJEKT oValue );
+extern OBJEKT           oContainerGetAttribute( CONTAINER cCont,
+                                STRINGref sAttribute );
 extern void             ContainerTotalCharge( CONTAINER cCont, 
                                 double *dPCharge, double *dPPertCharge );
 extern void             ContainerDisplayerUpdate( CONTAINER cCont );

@@ -105,7 +105,7 @@ int		i, iNum;
 
     iNum = sizeof(ScaConnectNames)/sizeof(ScaConnectNames[0]);
     for ( i=0; i<iNum; i++ ) {
-	if ( strcmp( sName, ScaConnectNames[i].sName ) == 0 ) {
+	if ( strcasecmp( sName, ScaConnectNames[i].sName ) == 0 ) {
 	    return(ScaConnectNames[i].iConnect);
 	}
     }
@@ -143,6 +143,7 @@ int     i;
     ResidueSetImagingAtom( m, NULL );
     ResidueSetPdbSequence( m, 0 );
     ResidueSetChainId( m, "  " );
+    m->cICode = ' ';
     return(m);
 }
 
@@ -197,46 +198,52 @@ LOOP            lContents;
 OBJEKT          oObj;
 STRING          sTemp;
 
-    VP0(( "RESIDUE name: %s\n", rResidue->cHeader.sName ));
+    VP0("RESIDUE name: %s\n", rResidue->cHeader.sName );
     if ( bResidueFlagsSet( rResidue, RESIDUEUNKNOWN ) ){ 
-        VPWARN(( "!!!This is an unknown residue!\n" ));
+        VPWARN("!!!This is an unknown residue!\n" );
     }
-    VP0(( "RESIDUE sequence number: %d\n", 
-                        iContainerSequence(rResidue) ));
-    VP0(( "RESIDUE PDB chainId: %s\n", rResidue->sChainId));
-    VP0(( "RESIDUE PDB sequence number: %d\n",
-			iResiduePdbSequence(rResidue) ));
-    VP0(( "Type: %s\n", 
-	  sResidueTypeNameFromChar(cResidueType(rResidue)) ));
+    VP0("RESIDUE sequence number: %d\n", 
+                        iContainerSequence(rResidue) );
+    VP0("RESIDUE PDB chainId: %s\n", rResidue->sChainId);
+    VP0("RESIDUE PDB sequence number: %d\n",
+			iResiduePdbSequence(rResidue) );
+    double dSum = 0.0;
+    ATOM aAtom;
+    LOOP lAtoms = lLoop( (OBJEKT)rResidue, ATOMS );
+    while ( (aAtom = (ATOM)oNext(&lAtoms)) )
+        dSum += aAtom->dCharge;
+    VP0("Charge: %g\n",dSum); 
+    VP0("Type: %s\n", 
+	  sResidueTypeNameFromChar(cResidueType(rResidue)) );
     if ( cResidueType(rResidue) == RESTYPESOLVENT ) {
-	VP0(( "Solvent imaging atom: " ));
+	VP0("Solvent imaging atom: " );
 	if ( aResidueImagingAtom(rResidue) == NULL ) {
-	    VP0(( "None.\n" ));
+	    VP0("None.\n" );
 	} else {
-	    VP0(( "%s\n", 
-		sContainerDescriptor((CONTAINER)aResidueImagingAtom(rResidue),sTemp) ));
+	    VP0("%s\n", 
+		sContainerDescriptor((CONTAINER)aResidueImagingAtom(rResidue),sTemp) );
 	}
     }	
-    VP0(( "Connection atoms:\n" ));
+    VP0("Connection atoms:\n" );
      for ( i=0; i<MAXCONNECT; i++ ) {
         if ( bResidueConnectUsed(rResidue,i) ) {
-            VP0(( " Connect atom %d: %s\n", i, 
-                sContainerDescriptor( (CONTAINER)rResidue->aaConnect[i], sTemp ) ));
+            VP0(" Connect atom %d: %s\n", i, 
+                sContainerDescriptor( (CONTAINER)rResidue->aaConnect[i], sTemp ) );
         }
     }
     if ( rResidue->vaImpropers ) {
-	VP0(( "No improper torsions\n" ));
+	VP0("No improper torsions\n" );
     } else {
-	VP0(( "Improper torsions:\n" ));
+	VP0("Improper torsions:\n" );
     }
     BasicsResetInterrupt();
-    VP0(( "Contents: \n" ));
+    VP0("Contents: \n" );
     lContents = lLoop( (OBJEKT)rResidue, DIRECTCONTENTS );
     while ( (oObj = oNext(&lContents )) ) {
-        VP0(( "%s\n", sContainerDescriptor( (CONTAINER)oObj, sTemp ) ));
+        VP0("%s\n", sContainerDescriptor( (CONTAINER)oObj, sTemp ) );
 	if ( bBasicsInterrupt() ) {
 	    BasicsResetInterrupt();
-	    VP0(( "Interrupted\n" ));
+	    VP0("Interrupted\n" );
 	    break;
 	}
     }
@@ -332,9 +339,9 @@ ResidueConnect( RESIDUE rResA, int iConnectA, RESIDUE rResB, int iConnectB )
 {
 
     if ( !bResidueConnectUsed(rResA,iConnectA) )
-        DFATAL( ("Connection %d is not used", iConnectA ) );
+        DFATAL("Connection %d is not used", iConnectA );
     if ( !bResidueConnectUsed(rResB,iConnectB) )
-        DFATAL( ("Connection %d is not used", iConnectB ) );
+        DFATAL("Connection %d is not used", iConnectB );
         
     AtomBondTo( (ATOM) rResA->aaConnect[iConnectA],
                 (ATOM) rResB->aaConnect[iConnectB] );
@@ -367,8 +374,8 @@ STRING          sTemp;
 
     if ( bResidueFlagsSet( rRes, RESIDUEUNKNOWN ) ) {
         (*iPWarnings)++;
-        VPWARN(( "Unknown residue: %s\n", 
-                sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) ));
+        VPWARN("Unknown residue: %s\n", 
+                sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) );
     }
 
     lContents = lLoop( (OBJEKT)rRes, DIRECTCONTENTS );
@@ -405,8 +412,8 @@ STRING          sTemp, sSpan;
 int             i, iDum;
 FLAGS		fBondFlags;
 
-    MESSAGE(( "Mutating: %s to: %s\n", sContainerName( rOld ),
-                sContainerName(rNew) ));
+    MESSAGE("Mutating: %s to: %s\n", sContainerName( rOld ),
+                sContainerName(rNew) );
 
                 /* Build internal coordinates for the new RESIDUE */
 
@@ -425,8 +432,8 @@ FLAGS		fBondFlags;
 
     lAtoms = lLoop( (OBJEKT)rOld, ATOMS );
     FOREACH( aOld, ATOM, lAtoms ) {
-        MESSAGE(( "Searching for atom in new residue with name: %s\n",
-                        sContainerName(aOld) ));
+        MESSAGE("Searching for atom in new residue with name: %s\n",
+                        sContainerName(aOld) );
         aNew = (ATOM)cContainerFindName( (CONTAINER)rNew, ATOMid,
                                              sContainerName(aOld) );
                                              
@@ -434,32 +441,32 @@ FLAGS		fBondFlags;
                 /* then define its flags and coordinates */
                 
         if ( aNew != NULL ) {
-            MESSAGE(( "--- Found one\n" ));
+            MESSAGE("--- Found one\n" );
             AtomSetPosition( aNew, vAtomPosition(aOld) );
             AtomDefineFlags( aNew, fAtomFlags(aOld) );
         } else {
-            MESSAGE(( "--- No atom found\n" ));
+            MESSAGE("--- No atom found\n" );
         }
 
                 /* Search for bonds out of the old RESIDUE */
         
         for ( i=0; i<iAtomCoordination(aOld); i++ ) {
             aNeighbor = aAtomBondedNeighbor( aOld, i );
-	    MESSAGE(( "--- Looking at neighbor: %s\n",
-			sContainerFullDescriptor( (CONTAINER)aNeighbor, sTemp ) ));
+	    MESSAGE("--- Looking at neighbor: %s\n",
+			sContainerFullDescriptor( (CONTAINER)aNeighbor, sTemp ) );
             if ( rOld != (RESIDUE)cContainerWithin(aNeighbor) ) {
                 fBondFlags = fAtomBondFlags( aOld, i );
                 AtomRemoveBond( aOld, aNeighbor );
-                MESSAGE(( "Removing a bond to: %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aNeighbor, sTemp ) ));
+                MESSAGE("Removing a bond to: %s\n",
+                        sContainerFullDescriptor( (CONTAINER)aNeighbor, sTemp ) );
                 if ( aNew != NULL ) {
-                    MESSAGE(( "--- And rejoining it to: %s\n",
-                                sContainerFullDescriptor( (CONTAINER)aNew, sTemp ) ));
+                    MESSAGE("--- And rejoining it to: %s\n",
+                                sContainerFullDescriptor( (CONTAINER)aNew, sTemp ) );
                     AtomBondToFlags( aNew, aNeighbor, fBondFlags );
                 } else {
-                    MESSAGE(( "--- Not rejoining it to anything.\n" ));
-        VP1(( "There is no atom in residue: %s with the name: %s.\n" ));
-        VP1(( "--- No bond could be made to the missing atom.\n" ));
+                    MESSAGE("--- Not rejoining it to anything.\n" );
+        VP1("There is no atom in residue: %s with the name: %s.\n" );
+        VP1("--- No bond could be made to the missing atom.\n" );
                 }
             }
         }
@@ -490,8 +497,8 @@ FLAGS		fBondFlags;
                 }
             }
 
-            MESSAGE(( "Building externals from: %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aSpan, sSpan ) ));
+            MESSAGE("Building externals from: %s\n",
+                        sContainerFullDescriptor( (CONTAINER)aSpan, sSpan ) );
 
                         /* Build external coordinates */
             lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
@@ -531,7 +538,7 @@ int		i;
 
     for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
 	if ( (RESIDUE)cContainerWithin(aAtomBondedNeighbor(aAtom,i)) != rRes )
-	    return((RESIDUE)cContainerWithin(aAtomBondedNeighbor(aAtom,i)));
+	    return (RESIDUE)cContainerWithin(aAtomBondedNeighbor(aAtom,i));
     }
     return(NULL);
 }
@@ -557,10 +564,12 @@ sResidueTypeNameFromChar( char c )
 	case RESTYPEPROTEIN	: return("protein");
 	case RESTYPENUCLEIC	: return("nucleic");
 	case RESTYPESACCHARIDE	: return("saccharide");
-	default:
-	    return("UNKNOWN RESIDUE TYPE NAME!");
+	case RESTYPEION	        : return("ion");
+	case RESTYPELIGAND	: return("ligand");
+	case RESTYPEOTHER     	: return("other");
+	default: break;
     }
-    return("UNKNOWN RESIDUE TYPE NAME!");	/* for lint */
+    return("UNKNOWN RESIDUE TYPE NAME!");
 }
 
 
@@ -622,15 +631,15 @@ int		i;
 	for ( i=0; i<MAXCONNECT; i++ ) {
 	    if ( rRes->aaConnect[i] == (OBJEKT)cRemoved ) {
 		rRes->aaConnect[i] = NULL;
-		VP1(( "Reseting connect#%d in %s\n", i,
-			sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) ));
+		VP1("Reseting connect#%d in %s\n", i,
+			sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) );
 	    }
 	}
 	if ( aResidueImagingAtom(rRes) == (ATOM)cRemoved ) {
 	    ResidueSetImagingAtom( rRes, NULL );
 	}
     } else {
-	DFATAL(( "The only thing that can be removed is ATOMs" ));
+	DFATAL("The only thing that can be removed is ATOMs" );
     }
 
 	/* Pass the message up the hierarchy */
@@ -658,12 +667,12 @@ STRING          sTemp;
     aA = aResidueConnectAtom( rA, iConnectA );
     if ( aA == NULL ){
            sContainerDescriptor( (CONTAINER)rA, sTemp );
-	   VPFATALEXIT(( " %s: no such connect atom\n", sTemp));
+	   VPFATALEXIT(" %s: no such connect atom\n", sTemp);
     }
     aB = aResidueConnectAtom( rB, iConnectB );
     if ( aB == NULL ){
            sContainerDescriptor( (CONTAINER)rB, sTemp );
-	   VPFATALEXIT(( " %s: no such connect atom\n", sTemp));
+	   VPFATALEXIT(" %s: no such connect atom\n", sTemp);
     }
     if ( aA == NULL || aB == NULL ) {
 	return(FALSE);
@@ -694,18 +703,18 @@ zSetResidueConnect( RESIDUE rRes, int iConnect, ATOM aAtom )
 STRING          sTemp, sTemp1;
 
     if (iObjectType(rRes) != RESIDUEid) {
-	VPFATALEXIT(("SetResidueConnect: not a residue\n"));
+	VPFATALEXIT("SetResidueConnect: not a residue\n");
 	return;
     }
     if ( aAtom != NULL ) {
         if (iObjectType(aAtom) != ATOMid) {
-	    VPFATALEXIT(("SetResidueConnect: not an atom\n"));
+	    VPFATALEXIT("SetResidueConnect: not an atom\n");
 	    return;
 	}
         if ( !bContainerContainedBy( (CONTAINER)aAtom, (CONTAINER)rRes ) ) {
-            VPFATALEXIT(( "%s must contain %s.\n",
+            VPFATALEXIT("%s must contain %s.\n",
                 sContainerFullDescriptor( (CONTAINER)rRes, sTemp ),
-                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp1 ) ));
+                sContainerFullDescriptor( (CONTAINER)aAtom, sTemp1 ) );
             return;
         }
     }
@@ -729,7 +738,7 @@ zSetResidueType( RESIDUE rRes, OBJEKT oObj )
 STRING		sType;
 
     if ( iObjectType(oObj) != OSTRINGid ) {
-	VPFATALEXIT(( "The residue type must be a string.\n" ));
+	VPFATALEXIT("The residue type must be a string.\n" );
 	return;
     }
     strcpy( sType, sOString(oObj) );
@@ -743,8 +752,16 @@ STRING		sType;
 	ResidueSetType( rRes, RESTYPEPROTEIN );
     } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPESACCHARIDE) )==0){
 	ResidueSetType( rRes, RESTYPESACCHARIDE );
+    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPEION) )==0){
+	ResidueSetType( rRes, RESTYPEION );
+    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPELIGAND) )==0){
+	ResidueSetType( rRes, RESTYPELIGAND );
+    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPEOTHER) )==0){
+	ResidueSetType( rRes, RESTYPEOTHER );
     } else {
-	VPFATALEXIT(( "Illegal residue type (%s).\n", sType ));
+	VPFATALEXIT("Invalid residue type (%s).\n"
+                       "Supported types: undefined, solvent, nucleic, protein,"
+                       " saccharide, ion, ligand, other\n", sType );
     }
 }
 
@@ -793,14 +810,73 @@ int		iConnect;
 	ResidueSetPdbSequence( rRes, dODouble(oAttr) );
 	goto DONE;
     }
-    VPFATALEXIT(( "%s: non-existent attribute for a residue.\n", sAttr ));
-    VP0(( "\tResidue attributes: restype, name, imagingAtom, chainid, pdbSeq (resId)\n" ));
+    VPFATALEXIT("%s: non-existent attribute for a residue.\n", sAttr );
+    VP0("\tResidue attributes: restype, name, imagingAtom, chainid, pdbSeq (resId)\n" );
     return;
 
 DONE:
     CDU(rRes);
 
 }
+
+
+
+
+/*
+ *	oResidueGetAttribute
+ *
+ *	Author:	Juno Krahn
+ *
+ *	Get the named attribute of the RESIDUE.
+ */
+OBJEKT
+oResidueGetAttribute( RESIDUE rRes, STRING sAttr )
+{
+int		iConnect;
+OBJEKT		oResult = NULL;
+
+    if ( (iConnect = iResidueConnectFromName(sAttr)) != NOEND ) {
+        oResult = (OBJEKT) aResidueConnectAtom(rRes, iConnect);
+    } else if ( strcasecmp( sAttr, "restype" ) == 0 ) {
+        oResult = (OBJEKT) oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sResidueTypeNameFromChar(cResidueType(rRes)));
+    } else if ( strcasecmp( sAttr, "name" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sContainerName( rRes ) );
+    } else if ( strcasecmp( sAttr, "imagingAtom" ) == 0 ) {
+	oResult = (OBJEKT) aResidueImagingAtom( rRes );
+    } else if ( strcasecmp( sAttr, "chainid" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(OSTRINGid);
+        OStringDefine( (OSTRING)oResult, sResidueChainId( rRes ) );
+    } else if ( strcasecmp( sAttr, "pdbseq" ) == 0 ||
+                strcasecmp( sAttr, "resid" ) == 0 ) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet( (ODOUBLE)oResult, (double) iResiduePdbSequence(rRes));
+    } else if ( strcasecmp( sAttr, "seq" ) == 0) {
+        oResult = (OBJEKT)oCreate(ODOUBLEid);
+        ODoubleSet( (ODOUBLE)oResult, (double) iContainerSequence(rRes));
+    } else if ( strcasecmp( sAttr, "pertcharge" ) == 0) {
+        double dCharge, dPertCharge;
+        ContainerTotalCharge((CONTAINER)rRes, &dCharge, &dPertCharge );
+        ODoubleSet( (ODOUBLE)oResult, dPertCharge);
+    } else if ( strcasecmp( sAttr, "charge" ) == 0) {
+        double dCharge, dPertCharge;
+        ContainerTotalCharge((CONTAINER)rRes, &dCharge, &dPertCharge );
+        ODoubleSet( (ODOUBLE)oResult, dCharge);
+    } else if ( strcasecmp( sAttr, "parent" ) == 0 ) {
+        oResult = (OBJEKT)cContainerWithin( rRes );
+        REF(oResult);
+    } else {
+        VPFATALEXIT("%s: non-existent attribute for a residue.\n", sAttr );
+        VP0("\tResidue attributes: restype, name, imagingAtom, chainid,\n"
+              "\t\tpdbSeq (resId), seq, charge, parent\n");
+    }
+    return oResult;
+}
+
+
+
+
 
 /*
  *  OrderResidues() - make sure that if residues are in separate

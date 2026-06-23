@@ -53,16 +53,16 @@ extern void	FortranWriteInt(int iVal);
 extern void	FortranWriteDouble(double dVal);
 extern void	FortranWriteString(char *sVal);
 
-extern void	FortranEndLine();
+extern void	FortranEndLine(void);
 
 extern char	*sFortranReadString( char *sString );
 extern char	*sFortranReadLabel( char *sString );
 
-extern int	iFortranReadInt();
-extern double	dFortranReadDouble();
-extern void	FortranSkipLine();
+extern int	iFortranReadInt(void);
+extern double	dFortranReadDouble(void);
+extern void	FortranSkipLine(void);
 
-extern void	FortranDebugOn();
+extern void	FortranDebugOn(void);
 extern void	FortranDebug(char *sStr);	
 
 extern STRING	GsFortranDebug;

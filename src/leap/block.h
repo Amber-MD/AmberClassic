@@ -88,7 +88,7 @@ typedef	BLOCKt	*BLOCK;
 
 /*  block.c  */
 
-extern BLOCK		bBlockCreate();
+extern BLOCK		bBlockCreate(void);
 extern BOOL		bBlockRemoveChar( BLOCK bBlock );
 extern void		BlockEmpty( BLOCK bBlock );
 extern void		BlockDestroy( BLOCK *bPBlock );

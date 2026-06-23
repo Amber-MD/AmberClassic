@@ -109,7 +109,7 @@ typedef	RESTRAINTt	*RESTRAINT;
 
 
 
-extern RESTRAINT	rRestraintCreate();
+extern RESTRAINT	rRestraintCreate(void);
 extern void		RestraintDestroy(RESTRAINT *rPRes);
 
 extern BOOL	bRestraintBondMatchAtoms(RESTRAINT rRes, 

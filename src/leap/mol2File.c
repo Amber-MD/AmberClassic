@@ -42,6 +42,7 @@
  */
 
 #include        <limits.h>
+#include        <stdio.h>
 
 #include        "basics.h"
 
@@ -59,7 +60,6 @@
 #include        "defaults.h"
 #include        "atom.h"
 #include        "tripos.h"
-#include        <stdio.h>
 #include        "parmLib.h"
 #include        "unitio.h"
 
@@ -73,31 +73,12 @@ typedef struct {
     int iResidueSeq;
     STRING sResidueName;
 } MOL2WRITEt;
-
-typedef struct {
-    char sName[10];
-    int iTerminator;
-    int iPdbSequence;
-} RESIDUENAMEt;
-
-typedef struct {
-    BOOL bUsed;
-    MATRIX mTransform;
-} PDBMATRIXt;
-
+/*
 typedef struct {
     int iAtom1;
     int iAtom2;
     FLAGS fFlags;
 } SAVECONNECTIVITYt;
-
-typedef struct {
-    int iAtom1;
-    int iAtom2;
-    int iParmIndex;
-    int iPertParmIndex;
-    FLAGS fFlags;
-} SAVEBONDt;
 
 typedef struct {
     CONTAINERNAMEt sName;
@@ -117,37 +98,7 @@ typedef struct {
     FLAGS fFlags;
     ATOM aAtom;
 } SAVEATOMt;
-
-typedef struct {
-    FILE *fPdbFile;
-    VARARRAY vaUnits;
-    VARARRAY vaResidues;
-    VARARRAY vaResidueSeq;
-    VARARRAY vaAtoms;
-    VARARRAY vaMatrices;
-    UNIT uUnit;
-    RESIDUE rRes;
-    int iPdbSequence;
-    int iNextUnit;
-    int iMaxSerialNum;
-} PDBREADt;
-
-
-/*
-----------------------------------------------------------------------
-
-        Static variables
-        
 */
-
-//static  DICTIONARY      SdResidueNameMap = NULL;
-//static  DICTIONARY      SdAtomNameMap = NULL;
-
-
-
-#define SEQUENCE_NUMBER_STEPS   10000
-
-extern int zUnitIOAmberOrderResidues(UNIT);
 
 static void zMol2FileBegin(MOL2WRITEt * pwPFile, FILE * fOut)
 {
@@ -182,7 +133,7 @@ void zMol2FileWriteAtomRecord(MOL2WRITEt * pwPFile, ATOM aAtom, int choice)
 
     strcpy(p.pdb.atom.name, sTemp);
 
-    MESSAGE(("Element: |%s|   pdb_name=|%s|\n", sElement, sName));
+    MESSAGE("Element: |%s|   pdb_name=|%s|\n", sElement, sName);
 
     memcpy(p.pdb.atom.residue.chain_id,"  ",2);
     p.pdb.atom.residue.seq_num = pwPFile->iResidueSeq;
@@ -194,7 +145,7 @@ void zMol2FileWriteAtomRecord(MOL2WRITEt * pwPFile, ATOM aAtom, int choice)
     p.pdb.atom.occupancy = 1.0;
     p.pdb.atom.temp_factor = dAtomCharge(aAtom);
     p.record_type = MOL2_ATOM;
-    pdb_write_record(pwPFile->fPdbFile, &p, NULL, 0);
+    pdb_write_record(pwPFile->fPdbFile, &p);
 
 }
 
@@ -214,8 +165,8 @@ static void zMol2FileWriteContainer(MOL2WRITEt * pwPFile, CONTAINER cCont,
 
     pwPFile->sResidueName[RESIDUE_NAME_LENGTH] = '\0';
     if (strlen(cPTemp) > RESIDUE_NAME_LENGTH) {
-        VP0((" Truncating residue name for PDB format: %s -> %s\n",
-             sContainerName(cCont), pwPFile->sResidueName));
+        VP0(" Truncating residue name for PDB format: %s -> %s\n",
+             sContainerName(cCont), pwPFile->sResidueName);
     }
     /*   } 
      */
@@ -254,8 +205,8 @@ static char *zMol2FileWriteResidueContainer(MOL2WRITEt * pwPFile,
     /* The intentional side effect is to truncate long names. */
     pwPFile->sResidueName[RESIDUE_NAME_LENGTH] = '\0';
     if (strlen(cPTemp) > RESIDUE_NAME_LENGTH) {
-        VP0((" Truncating residue name for PDB format: %s -> %s\n",
-             sContainerName(cCont), pwPFile->sResidueName));
+        VP0(" Truncating residue name for PDB format: %s -> %s\n",
+             sContainerName(cCont), pwPFile->sResidueName);
     }
 
     return (sContainerName(cCont));

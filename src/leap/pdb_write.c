@@ -15,6 +15,7 @@
 
 # include       <stdio.h>
 # include       <ctype.h>
+# include       <assert.h>
 # include       "pdb_int.h"
 # include       "unit.h"
 # include       "defaults.h"
@@ -27,13 +28,9 @@
  *      followed by blank padding to 72 characters, followed by
  *      8 characters of file and line information.
  */
-/*
-        char            *name;          if NULL, don't print 
-        int             line_num;       if name == NULL, don't print 
-*/
 
 void
-pdb_write_record(FILE *f, pdb_record *r, char *name, int line_num)
+pdb_write_record(FILE *f, pdb_record *r)
 {
         char            buffer[PDB_BUFSIZ];
         char            *fmt;
@@ -41,7 +38,7 @@ pdb_write_record(FILE *f, pdb_record *r, char *name, int line_num)
         register pdb_residue    *shr0, *shr1, *sha0, *sha1;
 
         /* convert C structure to pdb record */
-
+        assert(r->record_type <= PDB_NUM_R + 1 );
         fmt = pdb_record_format[r->record_type].print_format;
         switch (r->record_type) {
 
@@ -171,6 +168,16 @@ ATOM  A3AEA  N   TYRBP -45     351.130 172.789 312.980  1.00 43.62           N
                         r->pdb.het.text);
                 break;
 
+        case PDB_HETNAM:
+                pdb_sprintf(buffer, fmt, r->pdb.hetnam.serial_num, r->pdb.hetnam.het_id,
+                        r->pdb.hetnam.desc, r->pdb.hetnam.extra);
+                break;
+
+        case PDB_HETSYN:
+                pdb_sprintf(buffer, fmt, r->pdb.hetsyn.serial_num, r->pdb.hetsyn.het_id,
+                        r->pdb.hetsyn.desc,"");
+                break;
+
         case PDB_MASTER:
                 pdb_sprintf(buffer, fmt, r->pdb.master.num_remark,
                         r->pdb.master.num_ftnote, r->pdb.master.num_het,
@@ -287,7 +294,28 @@ ATOM  A3AEA  N   TYRBP -45     351.130 172.789 312.980  1.00 43.62           N
                         r->pdb.ssbond.residues[1].chain_id,
                         r->pdb.ssbond.residues[1].seq_num,
                         r->pdb.ssbond.residues[1].insert_code,
-                        r->pdb.ssbond.comment);
+                        r->pdb.ssbond.symop[0],
+                        r->pdb.ssbond.symop[1],
+                        r->pdb.ssbond.distance);
+                break;
+
+        case PDB_LINK:
+                pdb_sprintf(buffer, fmt, 
+                        r->pdb.link.name[0],
+                        r->pdb.link.alt_loc[0],
+                        r->pdb.link.residues[0].name,
+                        r->pdb.link.residues[0].chain_id,
+                        r->pdb.link.residues[0].seq_num,
+                        r->pdb.link.residues[0].insert_code,
+                        r->pdb.link.name[1],
+                        r->pdb.link.alt_loc[1],
+                        r->pdb.link.residues[1].name,
+                        r->pdb.link.residues[1].chain_id,
+                        r->pdb.link.residues[1].seq_num,
+                        r->pdb.link.residues[1].insert_code,
+                        r->pdb.link.symop[0],
+                        r->pdb.link.symop[1],
+                        r->pdb.link.distance);
                 break;
 
         case PDB_TER: {
@@ -368,28 +396,102 @@ TER   150016      WAT  35296
                                                                 r->record_type);
                 break;
         }
-        if (name != NULL) {
-                if (line_num >= 10000)
-                        (void) fprintf(f, "%-72.72s%-4.4s%04d\n", buffer, name,
-                                                        line_num % 10000);
-                else
-                        (void) fprintf(f, "%-72.72s%-4.4s%4d\n", buffer, name,
-                                                                line_num);
-        } else {
-                register        char    *s, *t;
-                /* Do not shorten TER/END cards */
-                if (r->record_type == PDB_TER || r->record_type == PDB_END)
-                        (void) fprintf(f, "%s\n", buffer);
-                else {
-                        /* find last non-blank in buffer, and shorten it */
-                        t = NULL;
-                        for (s = buffer; *s != '\0'; s++)
-                                if (!isspace(*s))
-                                        t = s + 1;
-                        if (t == NULL)  /* this should never happen, but ... */
-                                t = buffer;
-                        *t = '\0';
-                        (void) fprintf(f, "%s\n", buffer);
-                }
+
+        register        char    *s, *t;
+        /* Do not shorten TER/END cards */
+        if (r->record_type == PDB_TER || r->record_type == PDB_END)
+                (void) fprintf(f, "%s\n", buffer);
+        else {
+                /* find last non-blank in buffer, and shorten it */
+                t = NULL;
+                for (s = buffer; *s != '\0'; s++)
+                        if (!isspace(*s))
+                                t = s + 1;
+                if (t == NULL)  /* this should never happen, but ... */
+                        t = buffer;
+                *t = '\0';
+                (void) fprintf(f, "%s\n", buffer);
         }
+}
+
+
+#include <string.h>
+#include <stdlib.h>
+
+/*
+ * pdb_write_multiline()
+ *
+ * Splits content on semicolons (and within segments if needed) into
+ * chunks of at most field_len chars, writing each as a separate record.
+ * Calls pdb_write_record(f, r) to emit each line; that routine knows
+ * the full struct layout. We only touch field[] and *serial_num.
+ *
+ * Split priority for oversized segments:
+ *   1. Last space  (split before it)
+ *   2. Last dash   (split after it)
+ *   3. Hard cut at field_len
+ */
+
+/* Forward declaration: implemented elsewhere, knows the full struct layout. */
+void pdb_write_record(FILE *f, pdb_record *r);
+
+static int best_split(const char *s, int max)
+{
+    int i, last_space = -1, last_dash = -1;
+    for (i = 0; i < max; i++) {
+        if (s[i] == ' ') last_space = i;
+        if (s[i] == '-') last_dash  = i;
+    }
+    if (last_space > 0) return last_space;
+    if (last_dash  > 0) return last_dash + 1;
+    return max;
+}
+
+void pdb_write_multiline(FILE *f, pdb_record *r, int *serial_num,
+                         char *field, size_t field_len,
+                         const char *content)
+{
+    int flen = 0;
+    field[0] = '\0';
+    const char *seg = content;
+    while (seg && *seg) {
+        /* Trim leading spaces at the start of a line */
+        if (flen == 0) while (*seg == ' ') seg++;
+        if (!*seg) break;
+
+        /* Find end of current semicolon segment */
+        const char *semi = strchr(seg, ';');
+        int slen = semi ? (int)(semi - seg + 1)  /* include ';' */
+                        : (int)strlen(seg);
+
+        if (flen + slen <= field_len) {
+            /* Whole segment fits — append and advance */
+            memcpy(field + flen, seg, slen);
+            flen += slen;
+            field[flen] = '\0';
+            seg = semi ? semi + 1 : NULL;
+        } else if (flen > 0) {
+            /* Doesn't fit and line has content — flush and retry same seg */
+            pdb_write_record(f, r);
+            (*serial_num)++;
+            flen = 0;
+            field[0] = '\0';
+            /* (seg unchanged — retry from same position) */
+        } else {
+            /* Line is empty but segment is still too long — must split */
+            int cut = best_split(seg, field_len);
+            memcpy(field, seg, cut);
+            flen = cut;
+            field[flen] = '\0';
+            pdb_write_record(f, r);
+            (*serial_num)++;
+            flen = 0;
+            field[0] = '\0';
+            seg += cut;
+            /* Don't advance past semi — remainder of segment loops back */
+        }
+    }
+
+    /* Flush any remaining content */
+    if (flen > 0) pdb_write_record(f, r);
 }

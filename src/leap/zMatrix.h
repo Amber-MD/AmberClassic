@@ -42,7 +42,7 @@
 
 #include	"vector.h"
 
-extern void	zMatrixInit();
+extern void	zMatrixInit(void);
 
 extern void	ZMatrixBondAngleTorsion( VECTOR *vPPos, VECTOR *vPBond, 
 			VECTOR *vPAngle, VECTOR *vPTorsion,

@@ -96,7 +96,7 @@ extern void	OctTreeDestroy( OCTREE *PoctTree );
 extern void	OctTreeInitCharges(OCTREE octTree, int iAtomOption, int iDielectric, 
 			double dCutDist, VECTOR *PvMin, VECTOR *PvMax);	
 
-extern void	OctTreeDescribe();	/* ( OCTREE ) */
+extern void	OctTreeDescribe(void);	/* ( OCTREE ) */
 extern void	OctTreeDeleteSphere(OCTREE octTree, VECTOR *PvPoint, double dRadius);
 extern void	OctTreeUpdateCharge(OCTREE octTree, VECTOR *PvNewPoint, 
 			float fCharge, double dCutDist, VECTOR *PvMax, VECTOR *PvMin);

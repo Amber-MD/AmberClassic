@@ -125,7 +125,7 @@ int	GiDBLastError = DB_ERROR_NONE;
 
 
 #define	DB_CHECK_ACCESS(db,a) {if (db->iAccessMode!=a) {\
-DFATAL(( "The DATABASE has the wrong access mode." ));}}
+DFATAL("The DATABASE has the wrong access mode." );}}
 
 
 /*
@@ -173,8 +173,8 @@ STRING          sTemp;
 static void
 ReportError( DATABASE db, char *sError )
 {
-    VPFATALEXIT(( "An error occured in line: %d\n" "Message: %s\n",
-                    db->iCurrentLine, sError ));
+    VPFATALEXIT("An error occured in line: %d\n" "Message: %s\n",
+                    db->iCurrentLine, sError );
 }
 
 
@@ -428,8 +428,8 @@ STRING		sModifier, sType;
 	*iPType = iType;
 
     } else {
-	DFATAL(( "Tried to parse:%s: as a header",
-		sRawLine ));
+	DFATAL("Tried to parse:%s: as a header",
+		sRawLine );
     }
     return(TRUE);
 }
@@ -498,7 +498,7 @@ ENTRY           eEntry;
 		DictionaryAdd( db->dEntries, sName, (GENP)eEntry );
             } else {
 
-		ALWAYS(( "Nonunique entry in database: %s found\n", sName ));
+		ALWAYS("Nonunique entry in database: %s found\n", sName );
 
 			/* Update the entry */
 
@@ -651,8 +651,8 @@ double		dAbs;
 
 #if 0
     if ( *dPVal > 10000000000.0 ) {
-	DFATAL(( "Number: %lf is too big to write to DATABASE",
-			*dPVal ));
+	DFATAL("Number: %lf is too big to write to DATABASE",
+			*dPVal );
     }
 #endif
 
@@ -735,7 +735,7 @@ STRING          sLine;
                     zbDBReadDataLine( db, sLine );
                     break;
                 default:
-                    DFATAL(( "Unknown value type: %d\n", iType ));
+                    DFATAL("Unknown value type: %d\n", iType );
                     break;
             }
 	    *iPLines = 1;
@@ -807,7 +807,7 @@ char            sLine[MAXDATALINELEN];
                     WriteDataLine( db, sLine );
                     break;
                 default:
-                    DFATAL( ("Unknown value type: %d\n", iType) );
+                    DFATAL("Unknown value type: %d\n", iType );
                     break;
             }
             break;
@@ -818,7 +818,7 @@ char            sLine[MAXDATALINELEN];
                         strcpy( sLine, "" );
                         ConcatInteger( sLine, (int*)PBuffer );
                         WriteDataLine( db, sLine );
-                        PBuffer += iBufferInc;
+                        PBuffer = (char *)PBuffer + iBufferInc;
                     }
                     break;
                 case ENTRYDOUBLE:
@@ -826,7 +826,7 @@ char            sLine[MAXDATALINELEN];
                         strcpy( sLine, "" );
                         ConcatDouble( sLine, (double*)PBuffer );
                         WriteDataLine( db, sLine );
-                        PBuffer += iBufferInc;
+                        PBuffer = (char *)PBuffer + iBufferInc;
                     }
                     break;
                 case ENTRYSTRING:
@@ -834,7 +834,7 @@ char            sLine[MAXDATALINELEN];
                         strcpy( sLine, "" );
                         ConcatString( sLine, (char*)PBuffer );
                         WriteDataLine( db, sLine );
-                        PBuffer += iBufferInc;
+                        PBuffer = (char *)PBuffer + iBufferInc;
                     }
                     break;
             }
@@ -909,23 +909,21 @@ DICTLOOP        dlLoop;
 ENTRY           eEntry;
 
 
-    MESSAGE(( "Compacting database\n" ));
+    MESSAGE("Compacting database\n" );
     
     /* 
      *  create a scratch file for compaction in same filesystem
      *	as db->sFileName
-TODO - add string length protection
      */
 
-    if (strlen(db->sFileName)+10 > sizeof(sNewName)) fNew = NULL;
-    else {
+    int len;
 #ifdef WIN32
-        sprintf( sNewName, "%s.%d", db->sFileName, GetCurrentProcessId() );
+    len = snprintf( sNewName, sizeof(sNewName), "%s.%d", db->sFileName, GetCurrentProcessId() );
 #else
-        sprintf( sNewName, "%s.%d", db->sFileName, getpid() );
+    len = snprintf( sNewName, sizeof(sNewName), "%s.%d", db->sFileName, getpid() );
 #endif
-        fNew = FOPENCOMPLAIN( sNewName, "w" );
-    }
+    if ( len >= sizeof(sNewName) ) fNew = NULL;
+    else fNew = FOPENCOMPLAIN( sNewName, "w" );
     if ( fNew == NULL ) {
 	ReportError( db, "Could not open scratch file" );
 	return;
@@ -949,16 +947,16 @@ TODO - add string length protection
                 /* and set it as the current database file */
     fclose(fNew);
     if ( rename( sNewName, db->sFileName ) == -1 ) {
-	VP0(( "\tDatabase compaction failed: renaming %s to %s: %s\n",
-				sNewName, db->sFileName, strerror(errno) ));
+	VP0("\tDatabase compaction failed: renaming %s to %s: %s\n",
+				sNewName, db->sFileName, strerror(errno) );
 	return;
     }
     db->fDataBase = FOPENCOMPLAIN( db->sFileName, "r+" );
     if ( db->fDataBase == NULL ) 
-	VP0(( "\tDatabase compaction failed\n" ));
+	VP0("\tDatabase compaction failed\n" );
     db->bCompactFileAtClose = FALSE;
     
-    MESSAGE(( "Compacting DONE!!!!!\n" ));
+    MESSAGE("Compacting DONE!!!!!\n" );
 }
 
 
@@ -994,7 +992,7 @@ ENTRY           eEntry;
         eEntry = eEntryCreate( sEntry, iType, lOffset );
         eEntry->iRows = iRows;
         DictionaryAdd( db->dEntries, sEntry, (GENP)eEntry );
-	MESSAGE(( "Added NEW entry: %s\n", sEntry ));
+	MESSAGE("Added NEW entry: %s\n", sEntry );
     } else {
                 /* Update the old entry */
         eEntry->iType   = iType;
@@ -1002,7 +1000,7 @@ ENTRY           eEntry;
         eEntry->lFileOffset = lOffset;
 
         db->bCompactFileAtClose = TRUE;
-	MESSAGE(( "Updated existing entry: %s\n", sEntry ));
+	MESSAGE("Updated existing entry: %s\n", sEntry );
     }
     return(eEntry);
 }
@@ -1066,9 +1064,9 @@ char		cFirst;
 	    } 
 	    if ( db->fDataBase == NULL ) {
 		if ( errno != ENOENT ) {
-		    VPFATALEXIT(( "%s: %s\n", sFileName, strerror(errno) ));
+		    VPFATALEXIT("%s: %s\n", sFileName, strerror(errno) );
 		} else {
-		    VP0((" Creating %s\n", sFileName ));
+		    VP0(" Creating %s\n", sFileName );
 		    db->fDataBase = FOPENCOMPLAIN( sFileName, "w+" );
 		}
 		if ( !db->fDataBase ) {
@@ -1079,7 +1077,7 @@ char		cFirst;
 	    }
 	    break;
 	default:
-	    DFATAL(( "Illegal database open mode\n" ));
+	    DFATAL( "Invalid database open mode\n" );
 	    break;
     }
 
@@ -1142,7 +1140,7 @@ STRING          sEntry;
     DB_CHECK_ACCESS( db, DB_RANDOM_ACCESS );
 
     if ( db->iOpenMode == OPENREADONLY ) {
-	DFATAL(( "DATABASE is read-only!" ));
+	DFATAL("DATABASE is read-only!" );
     }
 
     sDataBaseName( db, sOrgEntry, sEntry );
@@ -1236,7 +1234,7 @@ DATABASE        db;
 	    }
 	    break;
 	default:
-	    DFATAL(( "Illegal database open mode\n" ));
+	    DFATAL("Invalid database open mode\n" );
 	    break;
     }
 
@@ -1379,11 +1377,11 @@ bDBGetType( DATABASE db, char *sOrgEntry, int *iPType, int *iPLength )
 ENTRY           eEntry;
 STRING          sEntry;
 
-    MESSAGE(( "Getting value type\n" ));
+    MESSAGE("Getting value type\n" );
 
     if ( db->iAccessMode == DB_SEQUENTIAL_ACCESS ) {
 	if ( db->iLastSequentialOperation != DB_READ ) {
-	    DFATAL(( "Illegal read of sequential file after a write" ));
+	    DFATAL("Invalid read of sequential file after a write" );
 	}
 	if ( !feof(db->fDataBase) ) {
 	    zbDBParseSimpleHeader( db, db->sLookAhead, sOrgEntry, iPType );
@@ -1436,7 +1434,7 @@ char            sHeader[MAXDATALINELEN];
 STRING          sEntry;
 int		iType;
 
-    MESSAGE(( "Getting value\n" ));
+    MESSAGE("Getting value\n" );
 
     if ( dbData->iAccessMode == DB_SEQUENTIAL_ACCESS ) {
 	zbDBParseSimpleHeader( dbData, dbData->sLookAhead,
@@ -1489,13 +1487,13 @@ char		sLine[MAXDATALINELEN];
 
 
     if ( db->iOpenMode == OPENREADONLY ) {
-	DFATAL(( "DATABASE is read-only!" ));
+	DFATAL("DATABASE is read-only!" );
     }
 
     if ( (iType & ENTRYMODIFIER) == 0 ) 
-        DFATAL(( "When PUTing into a DATABASE there must be a MODIFIER!" )); 
+        DFATAL("When PUTing into a DATABASE there must be a MODIFIER!" ); 
     if ( (iType & ENTRYTYPE) == 0 ) 
-        DFATAL(( "When PUTing into a DATABASE there must be a TYPE!" )); 
+        DFATAL("When PUTing into a DATABASE there must be a TYPE!" ); 
 
     sDataBaseName( db, sOrgEntry, sEntry );
 
@@ -1570,7 +1568,7 @@ char            sLine[MAXDATALINELEN];
 ENTRY           eEntry;
 int             iIntCol, iDoubleCol, iStringCol, iColumn, iType;
 
-    MESSAGE(( "Getting table types\n" ));
+    MESSAGE("Getting table types\n" );
 
 		/* Copy the line to parse into sLine */
 
@@ -1730,7 +1728,7 @@ int             iIntCol, iDoubleCol, iStringCol, iColumn, iType;
             }
             iStringCol++;
         } else {
-            ReportError( db, "Illegal table type!" );
+            ReportError( db, "Invalid table type!" );
         }
         iColumn++;
     }
@@ -1779,7 +1777,7 @@ char            sLine[MAXDATALINELEN];
 ENTRY           eEntry;
 int             iColumn, iType;
 
-    MESSAGE(( "Getting table\n" ));
+    MESSAGE("Getting table\n" );
 
     *iPLength = 0;
 
@@ -1929,10 +1927,10 @@ int		iError;
 
 
     if ( db->iOpenMode == OPENREADONLY ) {
-	DFATAL(( "DATABASE is read-only!" ));
+	DFATAL("DATABASE is read-only!" );
     }
 
-    MESSAGE(( "Putting table\n" ));
+    MESSAGE("Putting table\n" );
 
     sDataBaseName( db, sOrgEntry, sEntry );
 
@@ -1940,7 +1938,8 @@ int		iError;
 
 		/* Jump to the end */
 	iError = fseek( db->fDataBase, 0L, 2 );
-	MESSAGE(( "fseek returned = %d\n", iError ));
+	MESSAGE("fseek returned = %d\n", iError );
+        UNUSED(iError);
     } else {
 	(void)ePrepareDatabaseForEntry( db, sEntry, ENTRYTABLE, iLines );
     }
@@ -2093,7 +2092,7 @@ ENTRY		eCur;
 
         dlEntries = ydlDictionaryLoop((*Pdb)->dEntries);
         while ( (eCur = (ENTRY)yPDictionaryNext( ((*Pdb)->dEntries), &dlEntries )) ){
-	    MESSAGE(( "Freeing entry: %s\n", eCur->sName ));
+	    MESSAGE("Freeing entry: %s\n", eCur->sName );
 	    FREE(eCur);
         }
         DictionaryDestroy( &((*Pdb)->dEntries) );
@@ -2125,7 +2124,7 @@ STRING          sPrefix;
 
     sDataBaseName( db, sStr, sPrefix );
     db->iPrefix++;
-    if ( db->iPrefix >= MAXPREFIXSTACK ) DFATAL(("Too many prefixes on stack"));
+    if ( db->iPrefix >= MAXPREFIXSTACK ) DFATAL("Too many prefixes on stack");
     strcpy( db->saPrefixStack[db->iPrefix], sPrefix );
 }
 
@@ -2144,7 +2143,7 @@ void
 DBPopPrefix( DATABASE db )
 {
     db->iPrefix--;
-    if ( db->iPrefix < 0 ) DFATAL(("Too many POPs from prefix stack"));
+    if ( db->iPrefix < 0 ) DFATAL("Too many POPs from prefix stack");
 }
 
 
@@ -2178,7 +2177,7 @@ void
 DBPushZeroPrefix( DATABASE db, char *sStr )
 {
     db->iPrefix++;
-    if ( db->iPrefix >= MAXPREFIXSTACK ) DFATAL(("Too many prefixes on stack"));
+    if ( db->iPrefix >= MAXPREFIXSTACK ) DFATAL("Too many prefixes on stack");
     strcpy( db->saPrefixStack[db->iPrefix], sStr );
 }
 

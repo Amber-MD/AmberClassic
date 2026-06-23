@@ -122,7 +122,7 @@ FUNCTIONt	*fPFunc;
 	}
 	fPFunc++;
     }
-    DFATAL(( "Cannot find function: %s\n", sFunction ));
+    DFATAL("Cannot find function: %s\n", sFunction );
 }
 
 

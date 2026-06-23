@@ -107,7 +107,7 @@ extern STRING		GsProgramName;
 
 extern int	GiInputFileStackPos;
 extern FILE	*GfaInputFileStack[MAXINPUTFILES];
-extern FILE	*fINPUTFILE();
+extern FILE	*fINPUTFILE(void);
 
 
 #define INPUTPUSHFILE( f )      ( GfaInputFileStack[++GiInputFileStackPos] = f )

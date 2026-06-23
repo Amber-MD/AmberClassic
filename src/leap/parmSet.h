@@ -61,16 +61,17 @@
 
 typedef struct {
         OBJEKTt         oSuper;
-        STRING                sFname;
+        STRING          sFname;
+        STRING          sTitle;
         VARARRAY        vaAtoms;
         VARARRAY        vaBonds;
-	VARARRAY        vaC4Pairwise; //New
+        VARARRAY        vaC4Pairwise; //New
         VARARRAY        vaAngles;
         VARARRAY        vaTorsions;
         VARARRAY        vaImpropers;
         VARARRAY        vaHBonds;
         VARARRAY        vaNBEdits;
-        BOOL                bBeingEdited;
+        BOOL            bBeingEdited;
 } PARMSETt;
 
 typedef PARMSETt        *PARMSET;
@@ -137,7 +138,7 @@ typedef        VARARRAY        TORSION;
  *        PARMSETs
  */
  
-extern PARMSET        psParmSetCreate();
+extern PARMSET        psParmSetCreate(void);
 extern PARMSET        psParmSetDuplicate(PARMSET psOld);
 extern void        ParmSetDestroy(PARMSET *psPLib);
 extern void        ParmSetDescribe(PARMSET psLib);
@@ -211,7 +212,7 @@ extern int        iParmSetFindNBEdit(PARMSET psLib, char *sType1, char *sType2);
 #define PROPER                0
 #define IMPROPER        1
 
-extern TORSION        tParmSetTORSIONCreate();
+extern TORSION        tParmSetTORSIONCreate(void);
 
 #define iParmSetTORSIONTermCount( tTorsion ) \
                 ( iVarArrayElementCount( (tTorsion) ) )
@@ -233,7 +234,7 @@ extern BOOL        bParmSetTORSIONAddImproperTerm(TORSION tTorsion,
                         char *cPType3, char *cPType4,
                         int iN, double dKp, double dP0, double dScEE,
                         double dScNB, char *sDesc);
-extern void        ParmSetTORSIONOrderAtoms();        
+extern void        ParmSetTORSIONOrderAtoms(void);        
 extern void        ParmSetImproperOrderAtoms( TORSION tTorsion, int iTorsionIndex,
                         char *cPaTypes[4], int iaIndexes[4] );
 extern BOOL        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
@@ -261,7 +262,7 @@ extern BOOL        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
 #define iParmSetTotalNBEdits( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaNBEdits )
 
-extern  BOOL    bParmSetCapableofHBonding();    /* ( PARMSET, char* ) */
+extern  BOOL    bParmSetCapableofHBonding(void);    /* ( PARMSET, char* ) */
 
 
 /*

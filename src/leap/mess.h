@@ -57,7 +57,7 @@ extern MESS	GmMesss;
 extern MESS	GmLastMess;
 
 extern MESS	mMessAdd(char *sText);
-extern MESS	mMessLoop();
+extern MESS	mMessLoop(void);
 extern MESS	mMessNext(MESS *mPMess);
 
 #define	sMessText(m)		(m->cPText)

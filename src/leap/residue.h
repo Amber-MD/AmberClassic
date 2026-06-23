@@ -79,27 +79,38 @@
 #define CEND            LASTEND         /* C terminus */
 #define SEND            CONNECT2	/* Disulphide bridges */
 
-		/* Residue types */
+		/* Residue types       related PDB class */
 
 #define	RESTYPEUNDEFINED	'?'
-#define	RESTYPESOLVENT		'w'
-#define	RESTYPEPROTEIN		'p'
-#define	RESTYPENUCLEIC		'n'
-#define	RESTYPESACCHARIDE	's'
+#define	RESTYPESOLVENT		'w'    // HETAS
+#define	RESTYPEPROTEIN		'p'    // ATOMP
+#define	RESTYPENUCLEIC		'n'    // ATOMN
+#define	RESTYPESACCHARIDE	's'    // ATOMS
+#define	RESTYPEION              'i'    // HETAI
+#define	RESTYPELIGAND           'l'    // HETAD=drug,HETAIN=inhibitor,HETAC=coenzyme
+#define	RESTYPEOTHER            'o'    // non-standard polymer, anything else
+#define RESTYPECLASSPOLYMER  "nops"
+#define RESTYPECLASSNONPOLYMER  "ilw"
 
                 /* Residue flags */
 
 #define	RESIDUEPERM	0x0000FFFF
 #define RESIDUEUNKNOWN  0x00000001
+#define RESIDUEBULKSOLVENT 0x00000002
+
+// These are not used in residue, for fGetPdbResMapped()
+#define RESIDUENOEND    0x00000008
+#define RESIDUEFIRSTEND 0x00000010
+#define RESIDUELASTEND  0x00000020
 
 #define	RESIDUETEMP	0xFFFF0000
 #define	RESIDUEINCAP	0x00010000
 
 typedef struct {
-	char	sName1[NAMELEN];
-	char	sName2[NAMELEN];
-	char	sName3[NAMELEN];
-	char	sName4[NAMELEN];
+	char	sName1[ATOMNAMELEN];
+	char	sName2[ATOMNAMELEN];
+	char	sName3[ATOMNAMELEN];
+	char	sName4[ATOMNAMELEN];
 } IMPROPERt;
 
 typedef struct  {
@@ -147,7 +158,7 @@ typedef struct {
 
 /*      Define Create, Destroy, Describe methods */
 
-extern RESIDUE		rResidueCreate();
+extern RESIDUE		rResidueCreate(void);
 extern void		ResidueDelete(RESIDUE *rPResidue);
 extern void		ResidueDescribe(RESIDUE rResidue);
 extern void             ResidueDestroy(RESIDUE *rPResidue);
@@ -162,6 +173,8 @@ extern RESIDUE		rResidueConnected(RESIDUE rRes, int iConnect);
 extern int		iResidueConnectFromName(char *sName);
 extern void		ResidueSetAttribute( RESIDUE rRes, 
 				STRING sAttr, OBJEKT oAttr );
+extern OBJEKT		oResidueGetAttribute( RESIDUE rRes,
+				STRING sAttr);
 
 extern BOOL	bResidueCrossLink(RESIDUE rA, int iConnectA,
 			RESIDUE rB, int iConnectB, int iOrder);
@@ -186,9 +199,11 @@ extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);
 #define aResidueImagingAtom(r)     (ATOM)(((RESIDUE)r)->aSolventImagingAtom)
 #define	iResiduePdbSequence(r)	(((RESIDUE)r)->iPdbResSeq)
 #define	ResidueSetPdbSequence(r,i) (((RESIDUE)r)->iPdbResSeq=(i))
+#define	sResidueChainId(r) (((RESIDUE)r)->sChainId)
 #define	ResidueSetChainId(r,s) do { \
-        strncpy(((RESIDUE)(r))->sChainId,s,2); \
+        memcpy(((RESIDUE)(r))->sChainId,s,2); \
         ((RESIDUE)(r))->sChainId[2]=0; \
      } while (0);
+#define	sResidueChainId(r)      (((RESIDUE)r)->sChainId)
 
 #endif /* RESIDUE_H */

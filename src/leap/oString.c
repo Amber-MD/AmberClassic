@@ -133,7 +133,7 @@ OStringDestroy( OSTRING *osPStr )
 void
 OStringDescribe( OSTRING osStr )
 {
-    VP0(( "STRING (with no reference): '%s'\n", sOString(osStr) ));
+    VP0("STRING (with no reference): '%s'\n", sOString(osStr) );
 }
 
 

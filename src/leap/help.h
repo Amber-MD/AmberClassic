@@ -57,11 +57,11 @@ typedef HELPt*  HELP;
  *      Functions
  */
 
-extern void	HelpInitialize();
-extern void	HelpShutdown();
-extern void     HTInit();
-extern void	HelpLoop();
-extern HELP	hHelpNext();
+extern void	HelpInitialize(void);
+extern void	HelpShutdown(void);
+extern void     HTInit(void);
+extern void	HelpLoop(void);
+extern HELP	hHelpNext(void);
 
                 /* sHelpText returns pointers to VERY VERY LONG STRINGS */
 

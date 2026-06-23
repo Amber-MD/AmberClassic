@@ -87,14 +87,15 @@ extern	KLASSt	GkTDictionary;
         PUBLIC methods.
 */
 
-extern DICTIONARY	dDictionaryCreate();    
+extern DICTIONARY	dDictionaryCreate(void);    
 extern void		DictionaryDestroy(DICTIONARY *dPDict);
-extern void		DictionaryAdd(DICTIONARY dDict, char *sKey, GENP PData);
-extern GENP		yPDictionaryFind(DICTIONARY dDict, char *sKey);
-extern GENP		yPDictionaryDelete(DICTIONARY dDict, char *sKey);
+extern void		DictionaryAdd(DICTIONARY dDict, const char *sKey, GENP PData);
+extern GENP		yPDictionaryFind(DICTIONARY dDict, const char *sKey);
+extern GENP		yPDictionaryDelete(DICTIONARY dDict, const char *sKey);
 extern DICTLOOP		ydlDictionaryLoop(DICTIONARY dDict);
 extern GENP		yPDictionaryNext(DICTIONARY dDict, DICTLOOP *dlPLoop);
 extern void		yDictionaryDescribe(DICTIONARY dDict);
+extern void		DictionaryDestroyDict(DICTIONARY *dPDict);
 
 /* TODO: Implement a dlDictonaryFastLoop/PDictionaryFastNext that does */
 /* TODO: NOT sort the list */

@@ -111,7 +111,7 @@ zFortranGetInputLine()
 	fgets( SsInput, sizeof(SsInput), SfFile );
 	if ( SsInput[0] == FORTRAN_DEBUG_COMMENT_CHAR ) {
 	    strcpy( GsFortranDebug, &(SsInput[1]) );
-	    MESSAGE(( "FORTRAN DEBUG:%s", GsFortranDebug ));
+	    MESSAGE("FORTRAN DEBUG:%s", GsFortranDebug );
 	    continue;
 	}
 	break;

@@ -60,22 +60,22 @@ NVECTOR nvNew;
                 /* one integer to store the number of elements */
 
 
-    MESSAGE(( "|||About to MALLOC nvNew\n" ));
+    MESSAGE("|||About to MALLOC nvNew\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
     MALLOC( nvNew, NVECTOR, sizeof(NVECTORt) + sizeof(double)*iElements-1 );
-    MESSAGE(( "|||Just MALLOC nvNew\n" ));
+    MESSAGE("|||Just MALLOC nvNew\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
 
     nvNew->iSize = iElements;
-    MESSAGE(( "|||Just set number of elements\n" ));
+    MESSAGE("|||Just set number of elements\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
     NVectorZero(nvNew);
-    MESSAGE(( "|||Just NVectorZero\n" ));
+    MESSAGE("|||Just NVectorZero\n" );
     TESTMEMORY();
-    MESSAGE(( "|||Passed\n" ));
+    MESSAGE("|||Passed\n" );
     return(nvNew);
 }
 
@@ -182,10 +182,10 @@ NVectorDescribe( NVECTOR nvVector )
 {
 int             i;
 
-    PRINTF(( "NVECTOR length=%d\n", iNVectorSize(nvVector) ));
+    PRINTF("NVECTOR length=%d\n", iNVectorSize(nvVector) );
     for ( i=0; i<iNVectorSize(nvVector); i++ ) 
-        PRINTF_NO_PREFIX(( "---[%d] = %lf\n", i, dNVectorElement(nvVector,i) ));
-    PRINTF_NO_PREFIX(( "\n" ));
+        PRINTF_NO_PREFIX("---[%d] = %lf\n", i, dNVectorElement(nvVector,i) );
+    PRINTF_NO_PREFIX("\n" );
 }
 
 

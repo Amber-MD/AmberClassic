@@ -96,8 +96,8 @@ int		iScanned, iFunction;
 	case PRINT_TRACE:
 	    iScanned = sscanf( sText, "%c%s %d", &cType, sFile, &iLine );
 	    if ( iScanned != 3 ) {
-		DFATAL(( "Illegal (file:line number) combination in message: |%s|\n",
-			sText ));
+		DFATAL("Invalid (file:line number) combination in message: |%s|\n",
+			sText );
 	    }
 	    iFunction = iFunctionFindWithFilenameLine( sFile, iLine );
 	    break;

@@ -138,15 +138,15 @@ STRING		s1, s2, s3, s4;
     dAngle = dInternalValue(iAngle);
     dTorsion = dInternalValue(iTorsion);
  
-    MESSAGE(( "Building atom %s using torsion/angle/bond\n",
-		sContainerFullDescriptor((CONTAINER)aAtom,s1) ));
-    MESSAGE(( "Using - %s - %s - %s\n",
+    MESSAGE("Building atom %s using torsion/angle/bond\n",
+		sContainerFullDescriptor((CONTAINER)aAtom,s1) );
+    MESSAGE("Using - %s - %s - %s\n",
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
                 sContainerFullDescriptor((CONTAINER)aAtom3,s3), 
-		sContainerFullDescriptor((CONTAINER)aAtom4,s4) ));
-    MESSAGE(( "Torsion = %lf\n", dTorsion/DEGTORAD ));
-    MESSAGE(( "Angle   = %lf\n", dAngle/DEGTORAD ));
-    MESSAGE(( "Bond    = %lf\n", dRadius ));
+		sContainerFullDescriptor((CONTAINER)aAtom4,s4) );
+    MESSAGE("Torsion = %lf\n", dTorsion/DEGTORAD );
+    MESSAGE("Angle   = %lf\n", dAngle/DEGTORAD );
+    MESSAGE("Bond    = %lf\n", dRadius );
 
     ZMatrixBondAngleTorsion( &vNew, &vAtom2, &vAtom3, &vAtom4, 
                                 dRadius, dAngle, dTorsion );
@@ -226,12 +226,12 @@ STRING		s1, s2, s3;
     if ( aAtom == aInternalAtom1(iAngleB)) aAtomB = aInternalAtom3(iAngleB);
     else                                   aAtomB = aInternalAtom1(iAngleB);
 
-    MESSAGE(( "Building atom %s using two angles\n",
-		sContainerFullDescriptor((CONTAINER)aAtom,s1) ));
-    MESSAGE(( "Using first-center-second %s - %s - %s\n",
+    MESSAGE("Building atom %s using two angles\n",
+		sContainerFullDescriptor((CONTAINER)aAtom,s1) );
+    MESSAGE("Using first-center-second %s - %s - %s\n",
                 sContainerFullDescriptor((CONTAINER)aAtomA,s1), 
 		sContainerFullDescriptor((CONTAINER)aAtomC,s2),
-                sContainerFullDescriptor((CONTAINER)aAtomB,s3) ));
+                sContainerFullDescriptor((CONTAINER)aAtomB,s3) );
 
     vAtomC = vAtomPosition(aAtomC);
     vAtomA = vAtomPosition(aAtomA);
@@ -239,9 +239,9 @@ STRING		s1, s2, s3;
     dBond = dInternalValue(iBond);
     dAngleA = dInternalValue(iAngleA);
     dAngleB = dInternalValue(iAngleB);
-    MESSAGE(( "AngleA  = %lf\n", dAngleA/DEGTORAD ));
-    MESSAGE(( "AngleB  = %lf\n", dAngleB/DEGTORAD ));
-    MESSAGE(( "Bond    = %lf\n", dBond ));
+    MESSAGE("AngleA  = %lf\n", dAngleA/DEGTORAD );
+    MESSAGE("AngleB  = %lf\n", dAngleB/DEGTORAD );
+    MESSAGE("Bond    = %lf\n", dBond );
     
                 /* Calculate the chirality of aAtomC */
                 /* If it already has a chirality then make sure the new */
@@ -251,7 +251,7 @@ STRING		s1, s2, s3;
     
     dChirality = dChiralityForAtom( aAtomC );
     if ( dChirality != 0.0 ) {
-	MESSAGE(( "Got EXTERNAL chirality: %lf\n", dChirality ));
+	MESSAGE("Got EXTERNAL chirality: %lf\n", dChirality );
         dOrient = zdBuildCalculateOrientation( aAtomC, aAtom, dChirality );
     } else {
 	dChirality = 1.0;
@@ -261,8 +261,8 @@ STRING		s1, s2, s3;
         while ( (iChirality = (INTERNAL)oNext(&lInternals)) ) {
             if ( iInternalType(iChirality) == INTERNALCHIRALITY ) {
                 dChirality = dInternalValue(iChirality);
-		MESSAGE(( "Got INTERNAL chirality: %lf\n", 
-				dChirality ));
+		MESSAGE("Got INTERNAL chirality: %lf\n", 
+				dChirality );
 	    }
         }
     }
@@ -273,8 +273,8 @@ STRING		s1, s2, s3;
     dOrient = dChiralityToOrientation( dChirality, aAtomC, aAtomA, aAtomB,
 						aAtom, NULL );
 
-    MESSAGE(( "The chirality of the ATOM to build is: %lf\n", dChirality ));
-    MESSAGE(( "The orientation of the atom to build is: %lf\n", dOrient ));
+    MESSAGE("The chirality of the ATOM to build is: %lf\n", dChirality );
+    MESSAGE("The orientation of the atom to build is: %lf\n", dOrient );
 
                 /* Now that the orientation is calculated calculate the */
                 /* coordinate */
@@ -321,19 +321,19 @@ STRING		s1, s2, s3;
     else
 	aAtom3 = aInternalAtom1(iAngle);
 
-    MESSAGE(( "Building atom %s using angle/bond\n",
-		sContainerFullDescriptor((CONTAINER)aAtom,s1) ));
-    MESSAGE(( "Using - %s - %s\n",
+    MESSAGE("Building atom %s using angle/bond\n",
+		sContainerFullDescriptor((CONTAINER)aAtom,s1) );
+    MESSAGE("Using - %s - %s\n",
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
-                sContainerFullDescriptor((CONTAINER)aAtom3,s3) ));
+                sContainerFullDescriptor((CONTAINER)aAtom3,s3) );
 
     vAtom2 = vAtomPosition(aAtom2);
     vAtom3 = vAtomPosition(aAtom3);
     dRadius = dInternalValue(iBond);
     dAngle = dInternalValue(iAngle);
 
-    MESSAGE(( "Angle    = %lf\n", dAngle/DEGTORAD ));
-    MESSAGE(( "Bond     = %lf\n", dRadius ));
+    MESSAGE("Angle    = %lf\n", dAngle/DEGTORAD );
+    MESSAGE("Bond     = %lf\n", dRadius );
 
     ZMatrixBondAngle( &vNew, &vAtom2, &vAtom3, dRadius, dAngle );
     AtomSetPosition( aAtom, vNew );
@@ -367,15 +367,15 @@ STRING		s1, s2;
     if ( aAtom == aInternalAtom1(iBond)  ) aAtom2 = aInternalAtom2(iBond);
     else                                   aAtom2 = aInternalAtom1(iBond);
 
-    MESSAGE(( "Building atom %s using bond\n",
-		sContainerFullDescriptor((CONTAINER)aAtom,s1) ));
-    MESSAGE(( "Using - %s\n",
-		sContainerFullDescriptor((CONTAINER)aAtom2,s2) ));
+    MESSAGE("Building atom %s using bond\n",
+		sContainerFullDescriptor((CONTAINER)aAtom,s1) );
+    MESSAGE("Using - %s\n",
+		sContainerFullDescriptor((CONTAINER)aAtom2,s2) );
 
     vAtom2 = vAtomPosition(aAtom2);
     dBond = dInternalValue(iBond);
 
-    MESSAGE(( "Bond     = %lf\n", dBond ));
+    MESSAGE("Bond     = %lf\n", dBond );
 
     ZMatrixBond( &vNew, &vAtom2, dBond );
     AtomSetPosition( aAtom, vNew );
@@ -408,8 +408,8 @@ int		i, j, iTorsions, iShouldBe;
 double		dValue;
 LOOP		lTemp;
 
-    MESSAGE(( "Building internals for: %s\n", 
-		sContainerFullDescriptor((CONTAINER)aAtom,sTemp) ));
+    MESSAGE("Building internals for: %s\n", 
+		sContainerFullDescriptor((CONTAINER)aAtom,sTemp) );
 
                 /* Build torsion angles */
 		/* These have to be built a special way, because */
@@ -423,10 +423,10 @@ LOOP		lTemp;
 	for ( j=0; j<iAtomCoordination(aB); j++ ) {
 	    aC = aAtomBondedNeighbor( aB, j );
 	    if ( aC == aAtom ) continue;
-	    MESSAGE(( "Building torsion INTERNALs for: %s  around: %s - %s\n",
+	    MESSAGE("Building torsion INTERNALs for: %s  around: %s - %s\n",
 			sContainerFullDescriptor((CONTAINER)aAtom,s1),
 			sContainerFullDescriptor((CONTAINER)aB,s2),
-			sContainerFullDescriptor((CONTAINER)aC,s3) ));
+			sContainerFullDescriptor((CONTAINER)aC,s3) );
 	    if ( aC==aAtom ) continue;
 	    iTorsions = iInternalFindAllTorsionInternalsAround( 
 					aB, aC, iaTorsions );
@@ -440,10 +440,10 @@ LOOP		lTemp;
 
     LOOPOVERALL( aAtom, ANGLES|ALLOWDUPLICATES, aTemp, ATOM, lTemp ) {
 	LoopGetAngle( &lTemp, &a1, &a2, &a3 );
-	MESSAGE(( "Building angle INTERNAL for: %s - %s - %s\n",
+	MESSAGE("Building angle INTERNAL for: %s - %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
 			sContainerFullDescriptor( (CONTAINER)a2, s2 ),
-			sContainerFullDescriptor( (CONTAINER)a3, s3 ) ));
+			sContainerFullDescriptor( (CONTAINER)a3, s3 ) );
 	if ( !iInternalFindAngle( a1, a2, a3 ) ) {
 	    if ( bAtomFlagsSet( a1, ATOMPOSITIONKNOWN ) &&
 		 bAtomFlagsSet( a2, ATOMPOSITIONKNOWN ) &&
@@ -451,19 +451,19 @@ LOOP		lTemp;
 		dValue = dVectorAtomAngle( &vAtomPosition(a1),
 					   &vAtomPosition(a2),
 					   &vAtomPosition(a3) );
-		MESSAGE(( "Got bond angle from externals\n" ));
+		MESSAGE("Got bond angle from externals\n" );
 	    } else {
 		dValue = dModelBondAngle( a1, a2, a3 );
-		MESSAGE(( "Got bond angle from model builder\n" ));
+		MESSAGE("Got bond angle from model builder\n" );
 	    }
-	    MESSAGE(( "++++Angle INTERNAL: %lf  for %s - %s - %s\n", 
+	    MESSAGE("++++Angle INTERNAL: %lf  for %s - %s - %s\n", 
 		dValue/DEGTORAD,
 		sContainerFullDescriptor((CONTAINER)a1,s1),
 		sContainerFullDescriptor((CONTAINER)a2,s2),
-		sContainerFullDescriptor((CONTAINER)a3,s3) ));
+		sContainerFullDescriptor((CONTAINER)a3,s3) );
 	    iInternalAngle( a1, a2, a3, dValue );
 	} else {
-	    MESSAGE(( "Angle INTERNAL was already defined\n" ));
+	    MESSAGE("Angle INTERNAL was already defined\n" );
 	}
     }
 
@@ -471,26 +471,26 @@ LOOP		lTemp;
 
     LOOPOVERALL( aAtom, BONDS|ALLOWDUPLICATES, aTemp, ATOM, lTemp ) {
 	LoopGetBond( &lTemp, &a1, &a2 );
-	MESSAGE(( "Building bond INTERNAL for: %s - %s\n",
+	MESSAGE("Building bond INTERNAL for: %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
-			sContainerFullDescriptor( (CONTAINER)a2, s2 ) ));
+			sContainerFullDescriptor( (CONTAINER)a2, s2 ) );
 	if ( !iInternalFindBond( a1, a2 ) ) {
             if ( bAtomFlagsSet( a1, ATOMPOSITIONKNOWN ) &&
                  bAtomFlagsSet( a2, ATOMPOSITIONKNOWN ) ) {
 		dValue = dVectorAtomLength( &vAtomPosition(a1),
 					    &vAtomPosition(a2) );
-	        MESSAGE(( "Got bond length from externals\n" ));
+	        MESSAGE("Got bond length from externals\n" );
 	    } else {
                 dValue = dModelBondLength( a1, a2 );
-		MESSAGE(( "Got bond length from the model builder\n" ));
+		MESSAGE("Got bond length from the model builder\n" );
 	    }
             iInternalBond( a1, a2, dValue );
-	    MESSAGE(( "++++Bond INTERNAL: %lf  for %s - %s\n", 
+	    MESSAGE("++++Bond INTERNAL: %lf  for %s - %s\n", 
 		dValue,
 		sContainerFullDescriptor((CONTAINER)a1,s1),
-		sContainerFullDescriptor((CONTAINER)a2,s2) ));
+		sContainerFullDescriptor((CONTAINER)a2,s2) );
 	} else {
-	    MESSAGE(( "Bond length INTERNAL already defined\n" ));
+	    MESSAGE("Bond length INTERNAL already defined\n" );
 	}
     }
 
@@ -503,15 +503,15 @@ LOOP		lTemp;
 	dValue = dChiralityForAtom(aAtom);
 	if ( dValue != 0.0 ) {
 	    iInternalChirality( aAtom, dValue );
-	    MESSAGE(( "Got chirality from external coordinates\n" ));
-	    MESSAGE(( "++++Chirality INTERNAL: %lf  for %s\n", 
+	    MESSAGE("Got chirality from external coordinates\n" );
+	    MESSAGE("++++Chirality INTERNAL: %lf  for %s\n", 
 		dValue,
-		sContainerFullDescriptor((CONTAINER)a1,s1) ));
+		sContainerFullDescriptor((CONTAINER)a1,s1) );
 	} else {
-	    MESSAGE(( "Left chirality undefined\n" ));
+	    MESSAGE("Left chirality undefined\n" );
 	}
     } else {
-	MESSAGE(( "Chirality is already defined\n" ));
+	MESSAGE("Chirality is already defined\n" );
     }
 }
 
@@ -545,7 +545,7 @@ STRING		s1;
 #endif
 
     if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONFIXED ) ) {
-	MESSAGE(( "Building one atom\n" ));
+	MESSAGE("Building one atom\n" );
         iBond = NULL;
         iAngle = NULL;
         iAngle1 = NULL;
@@ -625,8 +625,8 @@ STRING		s1;
                 /* No internal coordinates can be used to determine the */
                 /* external coordinate for this atom, so by default */
                 /* place it at the origin */
-        MESSAGE(( "--Building with nothing, placing %s at origin\n",
-			sContainerFullDescriptor( (CONTAINER)aAtom, s1 ) ));
+        MESSAGE("--Building with nothing, placing %s at origin\n",
+			sContainerFullDescriptor( (CONTAINER)aAtom, s1 ) );
 
         ZMatrixNothing( &vPos );
         AtomSetPosition( aAtom, vPos );
@@ -672,10 +672,10 @@ ATOM		aAtom;
 		   aInternalAtom2(iInt) == a2 ) ) iCount++;
 	}
 	if ( iCount != 1 ) {
-	    MESSAGE(( "!!!! %d INTERNALBONDs between: %s - %s\n",
+	    MESSAGE("!!!! %d INTERNALBONDs between: %s - %s\n",
 			iCount,
 			sContainerFullDescriptor((CONTAINER)a1,s1),
-			sContainerFullDescriptor((CONTAINER)a2,s2) ));
+			sContainerFullDescriptor((CONTAINER)a2,s2) );
 	}
     }
 
@@ -693,11 +693,11 @@ ATOM		aAtom;
 		  aInternalAtom3(iInt) == a3 ) ) iCount++;
 	}
 	if ( iCount != 1 ) {
-	    MESSAGE(( "!!!! %d INTERNALANGLEs between: %s-%s-%s\n",
+	    MESSAGE("!!!! %d INTERNALANGLEs between: %s-%s-%s\n",
 			iCount,
 			sContainerFullDescriptor((CONTAINER)a1,s1),
 			sContainerFullDescriptor((CONTAINER)a2,s2),
-			sContainerFullDescriptor((CONTAINER)a3,s3) ));
+			sContainerFullDescriptor((CONTAINER)a3,s3) );
 	}
     }
 
@@ -718,12 +718,12 @@ ATOM		aAtom;
 		    aInternalAtom1(iInt) == a4 ) ) ) iCount++; 
 	}
 	if ( iCount != 1 ) {
-	    MESSAGE(( "!!!! %d INTERNALTORSIONs between: %s-%s-%s-%s\n",
+	    MESSAGE("!!!! %d INTERNALTORSIONs between: %s-%s-%s-%s\n",
 			iCount,
 			sContainerFullDescriptor((CONTAINER)a1,s1),
 			sContainerFullDescriptor((CONTAINER)a2,s2),
 			sContainerFullDescriptor((CONTAINER)a3,s3),
-			sContainerFullDescriptor((CONTAINER)a4,s4) ));
+			sContainerFullDescriptor((CONTAINER)a4,s4) );
 	}
     }
   }
@@ -773,7 +773,7 @@ INTERNAL	iRing;
 
     InternalRingLoopAtoms(iRing);
     while ( (aAtom = aInternalRingNextAtom(iRing)) ) {
-	MESSAGE(( "Looking at atom: %s\n", sContainerName(aAtom) ));
+	MESSAGE("Looking at atom: %s\n", sContainerName(aAtom) );
 	aaA[i] = aAtom;
 	i++;
 	if ( iHybridization == HUNDEFINED ) {
@@ -790,7 +790,7 @@ INTERNAL	iRing;
 		/* If SP2 ring then create INTERNALs for a BENZENE skeleton */
 
     if ( iHybridization == HSP2 ) {
-	MESSAGE(( "Building BENZENE skeleton\n" ));
+	MESSAGE("Building BENZENE skeleton\n" );
 	iInternalTorsion( aaA[0], aaA[1], aaA[2], aaA[3], 0.0 );
 	iInternalTorsion( aaA[1], aaA[2], aaA[3], aaA[4], 0.0 );
 	iInternalTorsion( aaA[2], aaA[3], aaA[4], aaA[5], 0.0 );
@@ -804,7 +804,7 @@ INTERNAL	iRing;
 		/* If SP3 ring then create INTERNALs for a CYCLOHEXANE */
 
     if ( iHybridization == HSP3 ) {
-	MESSAGE(( "Building CYCLOHEXANE skeleton\n" ));
+	MESSAGE("Building CYCLOHEXANE skeleton\n" );
 
 	iInternalTorsion( aaA[0], aaA[1], aaA[2], aaA[3],  60.0*DEGTORAD );
 	iInternalTorsion( aaA[1], aaA[2], aaA[3], aaA[4], -60.0*DEGTORAD );
@@ -927,8 +927,9 @@ STRING	sTemp;
 	    else {
 		(*iPAddHeavy)++;
 		if ( bMsg )
-		    VP0(("  Added missing heavy atom: %s\n",
-			sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) ));
+		    //VP0("  Added missing heavy atom: %s\n",
+		    VP0("  Coordinates built for heavy atom: %s\n",
+			sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) );
 	    }
 	}
     }
@@ -939,8 +940,8 @@ STRING	sTemp;
     while ( (aAtom=(ATOM)oNext(lPLoop)) ) {
 	if ( bAtomFlagsSet( aAtom, fForSet ) &&
 		bAtomFlagsReset( aAtom, fForReset ) ) {
-	    MESSAGE(( "Updating flags for: %s\n",
-			sContainerFullDescriptor((CONTAINER)aAtom,sTemp) ));
+	    MESSAGE("Updating flags for: %s\n",
+			sContainerFullDescriptor((CONTAINER)aAtom,sTemp) );
 	    AtomSetFlags( aAtom, fSetFlags );
 	    AtomResetFlags( aAtom, fResetFlags );
 	}
@@ -977,8 +978,8 @@ STRING		s1, s2, s3;
 #endif
 double		dValue;
 
-    MESSAGE(( "Building internals for: %s\n", 
-		sContainerName(cCont) ));
+    MESSAGE("Building internals for: %s\n", 
+		sContainerName(cCont) );
 
                 /* Build torsion angles */
 		/* These have to be built a special way, because */
@@ -994,9 +995,9 @@ double		dValue;
 
 		/* Assign INTERNALs for ALL torsions around (a2), (a3) */
 
-	MESSAGE(( "Building torsion INTERNALs around: %s - %s\n",
+	MESSAGE("Building torsion INTERNALs around: %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a2, s2 ),
-			sContainerFullDescriptor( (CONTAINER)a3, s3 ) ));
+			sContainerFullDescriptor( (CONTAINER)a3, s3 ) );
 
 	ModelAssignTorsionsAround( a2, a3, NULL );
 
@@ -1005,26 +1006,26 @@ double		dValue;
 
     LOOPOVERALL( cCont, ANGLES, aTemp, ATOM, lTemp ) {
 	LoopGetAngle( &lTemp, &a1, &a2, &a3 );
-	MESSAGE(( "Building angle INTERNAL for: %s - %s - %s\n",
+	MESSAGE("Building angle INTERNAL for: %s - %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
 			sContainerFullDescriptor( (CONTAINER)a2, s2 ),
-			sContainerFullDescriptor( (CONTAINER)a3, s3 ) ));
+			sContainerFullDescriptor( (CONTAINER)a3, s3 ) );
 	if ( bAtomFlagsSet( a1, ATOMPOSITIONKNOWN ) &&
 	     bAtomFlagsSet( a2, ATOMPOSITIONKNOWN ) &&
 	     bAtomFlagsSet( a3, ATOMPOSITIONKNOWN ) ) {
 	    dValue = dVectorAtomAngle( &vAtomPosition(a1),
 					   &vAtomPosition(a2),
 					   &vAtomPosition(a3) );
-	    MESSAGE(( "Got bond angle from externals\n" ));
+	    MESSAGE("Got bond angle from externals\n" );
 	} else {
 	    dValue = dModelBondAngle( a1, a2, a3 );
-	    MESSAGE(( "Got bond angle from model builder\n" ));
+	    MESSAGE("Got bond angle from model builder\n" );
 	}
-	MESSAGE(( "++++Angle INTERNAL: %lf  for %s - %s - %s\n", 
+	MESSAGE("++++Angle INTERNAL: %lf  for %s - %s - %s\n", 
 		dValue/DEGTORAD,
 		sContainerFullDescriptor((CONTAINER)a1,s1),
 		sContainerFullDescriptor((CONTAINER)a2,s2),
-		sContainerFullDescriptor((CONTAINER)a3,s3) ));
+		sContainerFullDescriptor((CONTAINER)a3,s3) );
 	iInternalAngle( a1, a2, a3, dValue );
     }
 
@@ -1032,23 +1033,23 @@ double		dValue;
 
     LOOPOVERALL( cCont, BONDS, aTemp, ATOM, lTemp ) {
 	LoopGetBond( &lTemp, &a1, &a2 );
-	MESSAGE(( "Building bond INTERNAL for: %s - %s\n",
+	MESSAGE("Building bond INTERNAL for: %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
-			sContainerFullDescriptor( (CONTAINER)a2, s2 ) ));
+			sContainerFullDescriptor( (CONTAINER)a2, s2 ) );
         if ( bAtomFlagsSet( a1, ATOMPOSITIONKNOWN ) &&
             bAtomFlagsSet( a2, ATOMPOSITIONKNOWN ) ) {
 	    dValue = dVectorAtomLength( &vAtomPosition(a1),
 					    &vAtomPosition(a2) );
-	    MESSAGE(( "Got bond length from externals\n" ));
+	    MESSAGE("Got bond length from externals\n" );
 	} else {
             dValue = dModelBondLength( a1, a2 );
-	    MESSAGE(( "Got bond length from the model builder\n" ));
+	    MESSAGE("Got bond length from the model builder\n" );
 	}
         iInternalBond( a1, a2, dValue );
-	MESSAGE(( "++++Bond INTERNAL: %lf  for %s - %s\n", 
+	MESSAGE("++++Bond INTERNAL: %lf  for %s - %s\n", 
 		dValue,
 		sContainerFullDescriptor((CONTAINER)a1,s1),
-		sContainerFullDescriptor((CONTAINER)a2,s2) ));
+		sContainerFullDescriptor((CONTAINER)a2,s2) );
     }
 
                 /* Build chirality */
@@ -1063,12 +1064,12 @@ double		dValue;
 	AtomResetFlags( aTemp, fReset );
 	if ( dValue != 0.0 ) {
 	    iInternalChirality( aTemp, dValue );
-	    MESSAGE(( "Got chirality from external coordinates\n" ));
-	    MESSAGE(( "++++Chirality INTERNAL: %lf  for %s\n", 
+	    MESSAGE("Got chirality from external coordinates\n" );
+	    MESSAGE("++++Chirality INTERNAL: %lf  for %s\n", 
 		dValue,
-		sContainerFullDescriptor((CONTAINER)aTemp,s1) ));
+		sContainerFullDescriptor((CONTAINER)aTemp,s1) );
 	} else {
-	    MESSAGE(( "Left chirality undefined\n" ));
+	    MESSAGE("Left chirality undefined\n" );
 	}
     }
 }
@@ -1099,21 +1100,21 @@ ATOM            aAtom;
 STRING		sTemp;
 #endif
 
-    MESSAGE(( "Destroying all INTERNALs in the LOOP\n" ));
+    MESSAGE("Destroying all INTERNALs in the LOOP\n" );
     while ( ( aAtom=(ATOM)oNext(lPLoop) ) != NULL ) {
-	MESSAGE(( "Destroying INTERNALs on: %s\n",
-			sContainerFullDescriptor((CONTAINER)aAtom,sTemp) ));
+	MESSAGE("Destroying INTERNALs on: %s\n",
+			sContainerFullDescriptor((CONTAINER)aAtom,sTemp) );
         lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
 #ifdef DEBUG
 	while ( ( iInt=(INTERNAL)oNext(&lInternals) ) != NULL ) {
-	    MESSAGE(( "    Internal type = %c  at: %p\n",
-			iInternalType(iInt), iInt ));
+	    MESSAGE("    Internal type = %c  at: %p\n",
+			iInternalType(iInt), iInt );
 	}
 #endif
 	lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
         while ( ( iInt=(INTERNAL)oNext(&lInternals) ) != NULL ) {
-	    MESSAGE(( "    destroying    = %c  at: %p\n",
-			iInternalType(iInt), iInt ));
+	    MESSAGE("    destroying    = %c  at: %p\n",
+			iInternalType(iInt), iInt );
             Destroy( (OBJEKT *)&iInt );
         }
     }
@@ -1158,7 +1159,7 @@ double          dSub, dNew;
 STRING		sAtom1, sAtom2, sAtom3, sAtom4;
 #endif
 
-    MESSAGE(( "In BuildFixInternals -----------\n" ));
+    MESSAGE("In BuildFixInternals -----------\n" );
 
                 /* Loop over all bonds */
                 /* looking for torsions */
@@ -1166,9 +1167,9 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
     lBonds = lLoop( (OBJEKT)uUnit, BONDS );
     while ( oNext(&lBonds) != NULL ) {
         LoopGetBond( &lBonds, &aAtom2, &aAtom3 );
-	MESSAGE(( "Looking at torsions around: %s - %s\n",
+	MESSAGE("Looking at torsions around: %s - %s\n",
 		sContainerFullDescriptor((CONTAINER)aAtom2,sAtom2),
-		sContainerFullDescriptor((CONTAINER)aAtom3,sAtom3) ));
+		sContainerFullDescriptor((CONTAINER)aAtom3,sAtom3) );
         
                 /* Look at all the INTERNALs of aAtom2 */
                 /* looking for torsions which have aAtom2 and */
@@ -1185,11 +1186,11 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
         bFoundOne = FALSE;
         for ( i=0; i<iNextTorsion; i++ ) {
             iInt = iaTorsions[i];
-	    MESSAGE(( "Measuring torsion of fixed atoms: %s - %s - %s - %s\n",
+	    MESSAGE("Measuring torsion of fixed atoms: %s - %s - %s - %s\n",
 		sContainerFullDescriptor((CONTAINER)aInternalAtom1(iInt),sAtom1),
 		sContainerFullDescriptor((CONTAINER)aInternalAtom2(iInt),sAtom2),
 		sContainerFullDescriptor((CONTAINER)aInternalAtom3(iInt),sAtom3),
-		sContainerFullDescriptor((CONTAINER)aInternalAtom4(iInt),sAtom4)));
+		sContainerFullDescriptor((CONTAINER)aInternalAtom4(iInt),sAtom4));
 
             if ( !bAtomFlagsSet(aInternalAtom1(iInt),ATOMPOSITIONKNOWN) ) 
                 continue;
@@ -1213,20 +1214,20 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
                 /* If a difference was found the modify ALL of the INTERNALS */
 
         if ( bFoundOne ) {
-            MESSAGE(( "Twisting torsions centered on %s - %s by %lf degrees\n",
+            MESSAGE("Twisting torsions centered on %s - %s by %lf degrees\n",
                         sContainerFullDescriptor((CONTAINER)aAtom2,sAtom2), 
                         sContainerFullDescriptor((CONTAINER)aAtom3,sAtom3), 
-			dSub/DEGTORAD ));
+			dSub/DEGTORAD );
             for ( i=0; i<iNextTorsion; i++ ) {
                 dNew = dInternalValue(iaTorsions[i]) + dSub;
-	        MESSAGE(( "Twisting torsion for atoms: %s-%s-%s-%s\n",
+	        MESSAGE("Twisting torsion for atoms: %s-%s-%s-%s\n",
 			sContainerName(aInternalAtom1(iaTorsions[i])),
 			sContainerName(aInternalAtom2(iaTorsions[i])),
 			sContainerName(aInternalAtom3(iaTorsions[i])),
-			sContainerName(aInternalAtom4(iaTorsions[i])) ));
-                MESSAGE(( "------- From %lf to %lf\n", 
+			sContainerName(aInternalAtom4(iaTorsions[i])) );
+                MESSAGE("------- From %lf to %lf\n", 
                          dInternalValue(iaTorsions[i])/DEGTORAD, 
-			 dNew/DEGTORAD ));
+			 dNew/DEGTORAD );
 		
                 InternalSetValue( iaTorsions[i], dNew );
             }
@@ -1530,19 +1531,19 @@ STRING		s1, s2, s3, s4;
 		/* Find the INTERNAL for the ATOMs */
 
     iInt = iInternalFindTorsion( aAtom1, aAtom2, aAtom3, aAtom4 );
-    MESSAGE(( "Currently the internal between: %s-%s-%s-%s is: %lf\n",
+    MESSAGE("Currently the internal between: %s-%s-%s-%s is: %lf\n",
 		sContainerFullDescriptor((CONTAINER)aAtom1,s1),
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
 		sContainerFullDescriptor((CONTAINER)aAtom3,s3),
 		sContainerFullDescriptor((CONTAINER)aAtom4,s4),
-		dInternalValue(iInt)/DEGTORAD ));
+		dInternalValue(iInt)/DEGTORAD );
 
 		/* Find the amount we have to twist all the other torsions */
 
     dAdd = dValue - dInternalValue( iInt );
-    MESSAGE(( "Going to twist all torsions around: %s - %s by %lf\n",
+    MESSAGE("Going to twist all torsions around: %s - %s by %lf\n",
 		sContainerName(aAtom2), sContainerName(aAtom3),
-		dAdd/DEGTORAD ));
+		dAdd/DEGTORAD );
 
 		/* Get all of the torsions around the center pair of atoms */
 
@@ -1601,7 +1602,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
                 /* minimization to the MINIMIZER object */
 
     bOneMinimizedAtom = FALSE;
-    MESSAGE(( "^^^Looping over atoms to add to MINIMIZER\n" ));
+    MESSAGE("^^^Looping over atoms to add to MINIMIZER\n" );
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
     LoopDefineVisibleAtoms( &lAtoms, ATOMNEEDSMINIMIZER );
     while ( ( aAtom=(ATOM)oNext(&lAtoms) ) != NULL ) {
@@ -1620,7 +1621,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
                 /* Add atoms that have fixed coordinates to the */
                 /* MINIMIZER object first */
 
-    MESSAGE(( "^^^Looping over bonds to add to MINIMIZER\n" ));
+    MESSAGE("^^^Looping over bonds to add to MINIMIZER\n" );
     iDefaults = 0;
     lTemp = lLoop( (OBJEKT)uUnit, BONDS );
     while ( oNext(&lTemp) != NULL ) {
@@ -1657,11 +1658,11 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
 		iDefaults++;
 	}
         if ( !bMinimizerAddBond( mStrain, aAtom1, aAtom2, dKb, dR0 ) ) {
-                DFATAL(( "Could not add bond to MINIMIZER" ));
+                DFATAL("Could not add bond to MINIMIZER" );
         }
     }
     if ( iDefaults )
-	VP0(( " (used %d default bond params)\n", iDefaults ));
+	VP0(" (used %d default bond params)\n", iDefaults );
 
 
                 /* Loop over all angles, adding those that contain */
@@ -1670,7 +1671,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
                 /* Add atoms that have fixed coordinates to the */
                 /* MINIMIZER object first */
 
-    MESSAGE(( "^^^Looping over angles to add to MINIMIZER\n" ));
+    MESSAGE("^^^Looping over angles to add to MINIMIZER\n" );
     iDefaults = 0;
     lTemp = lLoop( (OBJEKT)uUnit, ANGLES );
     while ( oNext(&lTemp) != NULL ) {
@@ -1712,12 +1713,12 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
 	    	ModelAngleParm( aAtom1, aAtom2, aAtom3, &dKt, &dT0 );
 	}
 	if (!bMinimizerAddAngle( mStrain, aAtom1, aAtom2, aAtom3, dKt, dT0 )) {
-                DFATAL(( "Could not add angle to MINIMIZER" ));
+                DFATAL("Could not add angle to MINIMIZER" );
         }
     }
 
     if ( iDefaults )
-	VP0(( " (used %d default angle params)\n", iDefaults ));
+	VP0(" (used %d default angle params)\n", iDefaults );
 
 
                 /* Loop over all torsions, adding those that contain */
@@ -1726,7 +1727,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
                 /* Add atoms that have fixed coordinates to the */
                 /* MINIMIZER object first */
 
-    MESSAGE(( "^^^Looping over torsions to add to MINIMIZER\n" ));
+    MESSAGE("^^^Looping over torsions to add to MINIMIZER\n" );
     iDefaults = 0;
     lTemp = lLoop( (OBJEKT)uUnit, PROPERS );
     while ( oNext(&lTemp) != NULL ) {
@@ -1776,14 +1777,14 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
 	    if ( !bMinimizerAddTorsion( mStrain, 
 	    				aAtom1, aAtom2, aAtom3, aAtom4,
 					(double)iN, dKp, dP0 )) {
-		DFATAL(( "Could not add proper to MINIMIZER" ));
+		DFATAL("Could not add proper to MINIMIZER" );
 	    }
 	}
         ParmSetTORSIONDestroy( &tTorsion );
     }
 
     if ( iDefaults )
-	VP0(( " (used %d default torsion params)\n", iDefaults ));
+	VP0(" (used %d default torsion params)\n", iDefaults );
 
     MinimizerMinimize( mStrain );
 }
@@ -1817,8 +1818,8 @@ int		j;
     MatrixRotateAround( mTransform, &vAtomPosition(aStart),
 			&vAtomPosition(aInv), dRotate );
 
-    MESSAGE(( "Rotating torsion around %s -> %s   inRing: %s\n",
-		sAtomName(aInv), sAtomName(aStart), sBOOL(bInRing) ));
+    MESSAGE("Rotating torsion around %s -> %s   inRing: %s\n",
+		sAtomName(aInv), sAtomName(aStart), sBOOL(bInRing) );
 
 	/* If the bond to be rotated around is not within a ring */
 	/* then just rotate, otherwise do something different */
@@ -1895,9 +1896,9 @@ BOOL		bPartOfRing;
     if ( iAtomCoordination(aFlip) < 3 ||
 	 iAtomCoordination(aFlip) > 4 ) return;
 
-    MESSAGE(( "The coordination of the ATOM to flip is: %d\n",
-			iAtomCoordination(aFlip) ));
-    MESSAGE(( "About to flip: %s\n", sAtomName(aFlip) ));
+    MESSAGE("The coordination of the ATOM to flip is: %d\n",
+			iAtomCoordination(aFlip) );
+    MESSAGE("About to flip: %s\n", sAtomName(aFlip) );
 
 	/* Find the two side chains with the least number of ATOMs */
 
@@ -1936,7 +1937,7 @@ BOOL		bPartOfRing;
     if ( iCountRings > 1 ) {
 	lAtoms = lLoop( (OBJEKT)cContainer, ATOMS );
 	BuildDestroyInternals( &lAtoms );
-	MESSAGE(( "Cannot flip!  There is more than one ring\n" ));
+	MESSAGE("Cannot flip!  There is more than one ring\n" );
 	return;
     }
 
@@ -1945,7 +1946,7 @@ BOOL		bPartOfRing;
 	/* And put the ATOMs that are in the ring in aFixA, aFixB */
 
     if ( iCountRings == 1 ) {
-	MESSAGE(( "Atom to flip is in a ring\n" ));
+	MESSAGE("Atom to flip is in a ring\n" );
 	aA = NULL;
 	aB = NULL;
 	aFixA = NULL;
@@ -1984,11 +1985,11 @@ BOOL		bPartOfRing;
 	    aFixB = caaCount[3].aAtom;
 	}
     }
-    MESSAGE(( "Fixed atoms: %s and %s\n", 
-		sAtomName(aFixA), sAtomName(aFixB) ));
-    MESSAGE(( "Moving atom: %s\n", sAtomName(aA) ));
+    MESSAGE("Fixed atoms: %s and %s\n", 
+		sAtomName(aFixA), sAtomName(aFixB) );
+    MESSAGE("Moving atom: %s\n", sAtomName(aA) );
     if ( aB != NULL ) {
-	MESSAGE(( "Moving atom: %s\n", sAtomName(aB) ));
+	MESSAGE("Moving atom: %s\n", sAtomName(aB) );
     }
 
 		/* Now destroy all of the ring INTERNALs */
@@ -2128,7 +2129,7 @@ BuildInternalsBetweenUnitsUsingFlags( UNIT uFirst, UNIT uSecond,
 ATOM		aLast, aFirst;
 LOOP		lSpan;
 
-    MESSAGE(( "&   BuildInternalsBetweenUnitsUsingFlags\n" ));
+    MESSAGE("&   BuildInternalsBetweenUnitsUsingFlags\n" );
 
     if ( uFirst != NULL && uSecond != NULL &&
 	 bUnitHeadUsed(uSecond) &&
@@ -2141,7 +2142,7 @@ LOOP		lSpan;
 		/* build a spanning tree across a junction */
 
 	if ( AtomTmpBondTo( aFirst, aLast ) == FALSE ) {
-		VP0(("Skipping generating internals - effect unknown\n"));
+		VP0("Skipping generating internals - effect unknown\n");
 		return;
 	}
 

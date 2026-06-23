@@ -199,6 +199,34 @@ int             i;
 
 
 
+/*
+ *       iPdbElement
+ *
+ *       Author: Juno Krahn (2025)
+ *
+ *       Version fo the above for fixed-width, right-justified, case-insensitive second letter
+ */
+int
+iPdbElementNumber(const char *sName) {
+int            i;
+    if (sName[0]==0) return 0;
+    if (sName[0]==' ') {
+        for (i=0; GeaElements[i].iNumber != NOELEMENT; i++) {
+            if ( GeaElements[i].sName[1] == 0 && GeaElements[i].sName[0] == sName[1])
+                return(GeaElements[i].iNumber);
+        }
+    } else {
+        for (i=0; GeaElements[i].iNumber != NOELEMENT; i++) {
+            if ( GeaElements[i].sName[0] == sName[0] &&
+                 GeaElements[i].sName[1] == (sName[0] | 0x20)) // force 2nd char to lower case
+                return(GeaElements[i].iNumber);
+        }
+    }
+    return 0;
+}
+
+
+
 
 /*
  *      sElementName

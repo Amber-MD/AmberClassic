@@ -205,7 +205,7 @@ gl_char_init()			/* turn off input echo */
 }
 
 static void
-gl_char_cleanup()		/* undo effects of gl_char_init */
+gl_char_cleanup(void)		/* undo effects of gl_char_init */
 {
 #ifdef unix
 #ifdef POSIX 
@@ -241,7 +241,7 @@ pc_keymap(int c)
 #endif /* MSDOS || __EMCX__ */
 
 static int
-gl_getc()
+gl_getc(void)
 /* get a character without echoing it to screen */
 {
     int             c;
@@ -315,7 +315,7 @@ gl_error(char *buf)
 }
 
 static void
-gl_init()
+gl_init(void)
 /* set up variables and terminal */
 {
     if (gl_init_done < 0) {		/* -1 only on startup */
@@ -329,7 +329,7 @@ gl_init()
 }
 
 static void
-gl_cleanup()
+gl_cleanup(void)
 /* undo effects of gl_init, as necessary */
 {
     if (gl_init_done > 0)
@@ -529,7 +529,7 @@ gl_addchar(int c)
 }
 
 static void
-gl_yank()
+gl_yank(void)
 /* adds the kill buffer to the input buffer at current location */
 {
     int  i, len;
@@ -560,7 +560,7 @@ gl_yank()
 }
 
 static void
-gl_transpose()
+gl_transpose(void)
 /* switch character under cursor and to left of cursor */
 {
     int    c;
@@ -576,7 +576,7 @@ gl_transpose()
 }
 
 static void
-gl_newline()
+gl_newline(void)
 /*
  * Cleans up entire line before returning to caller. A \n is appended.
  * If line longer than screen, we redraw starting at beginning
@@ -655,7 +655,7 @@ gl_word(int direction)
 }
 
 static void
-gl_redraw()
+gl_redraw(void)
 /* emit a newline, reset and redraw prompt and current input line */
 {
     if (gl_init_done > 0) {
@@ -822,7 +822,7 @@ static int      hist_pos = 0, hist_last = 0;
 static char    *hist_buf[HIST_SIZE];
 
 static void
-hist_init()
+hist_init(void)
 {
     int i;
 
@@ -864,7 +864,7 @@ gl_histadd(char *buf)
 }
 
 static char *
-hist_prev()
+hist_prev(void)
 /* loads previous hist entry into input buffer, sticks on first */
 {
     char *p = 0;
@@ -882,7 +882,7 @@ hist_prev()
 }
 
 static char *
-hist_next()
+hist_next(void)
 /* loads next hist entry into input buffer, clears on last */
 {
     char *p = 0;
@@ -989,7 +989,7 @@ search_addchar(int c)
 }
 
 static void     
-search_term()
+search_term(void)
 {
     gl_search_mode = 0;
     if (gl_buf[0] == 0)		/* not found, reset hist list */

@@ -126,7 +126,7 @@ typedef INTERNALt	*INTERNAL;
 
 /*      Define Create, Destroy, Describe methods */
 
-extern INTERNAL		iInternalCreate();
+extern INTERNAL		iInternalCreate(void);
 extern void		InternalDestroy(INTERNAL *iPInt);
 extern void		InternalDescribe(INTERNAL iInt);
 
@@ -136,7 +136,7 @@ extern INTERNAL		iInternalAngle(ATOM aAtom1, ATOM aAtom2, ATOM aAtom3,
 				double dValue);
 extern INTERNAL		iInternalTorsion(ATOM aAtom1, ATOM aAtom2, 
 				ATOM aAtom3, ATOM aAtom4, double dValue);
-extern INTERNAL		iInternalRing();
+extern INTERNAL		iInternalRing(void);
 
 extern void		InternalRingAddAtomAfter(INTERNAL iRing, ATOM aAtom, 
 				ATOM aPrev);

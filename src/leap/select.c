@@ -169,7 +169,7 @@ SelectEverything( UNIT uUnit, BOOL bOn )
 LOOP		lAtoms;
 ATOM		aAtom;
 
-    MESSAGE(( "Selecting everything.  Select=%s\n", sBOOL(bOn) ));
+    MESSAGE("Selecting everything.  Select=%s\n", sBOOL(bOn) );
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
     while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
 	if ( bOn ) AtomSetFlags( aAtom, ATOMSELECTED );

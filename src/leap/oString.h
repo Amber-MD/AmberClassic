@@ -88,7 +88,7 @@ typedef OSTRINGt	*OSTRING;
 /*      Define Create, Destroy, Describe methods */
 
 
-extern OSTRING	osOStringCreate();
+extern OSTRING	osOStringCreate(void);
 extern void	OStringDestroy(OSTRING *osPStr);
 extern void	OStringDescribe(OSTRING osStr);
 

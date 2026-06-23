@@ -105,11 +105,20 @@ pdb_read_record(FILE *f)
                         r.record_type = PDB_HET;
                 else if (STREQN(buffer + 1, "eli", 3))
                         r.record_type = PDB_HELIX;
+                else if (STREQN(buffer + 1, "etn", 3))
+                        r.record_type = PDB_HETNAM;
+                else if (STREQN(buffer + 1, "ets", 3))
+                        r.record_type = PDB_HETSYN;
                 break;
 
         case 'j':
                 if (STREQN(buffer + 1, "rnl", 3))
                         r.record_type = PDB_JRNL;
+                break;
+
+        case 'l':
+                if (STREQN(buffer + 1, "ink", 3))
+                        r.record_type = PDB_LINK;
                 break;
 
         case 'm':
@@ -319,6 +328,12 @@ ATOM  33998  CG  LYSag 338     210.492 325.105 205.495  1.00 43.06           C
                         r.pdb.het.text);
                 break;
 
+        case PDB_HETNAM:
+        case PDB_HETSYN:
+                pdb_sscanf(buffer, fmt, &r.pdb.hetnam.serial_num,
+                        r.pdb.hetnam.het_id,r.pdb.hetnam.desc,r.pdb.hetnam.extra);
+                break;
+
         case PDB_MASTER:
                 pdb_sscanf(buffer, fmt, &r.pdb.master.num_remark,
                         &r.pdb.master.num_ftnote, &r.pdb.master.num_het,
@@ -427,14 +442,35 @@ ATOM  33998  CG  LYSag 338     210.492 325.105 205.495  1.00 43.06           C
         case PDB_SSBOND:
                 pdb_sscanf(buffer, fmt, &r.pdb.ssbond.seq_num,
                         r.pdb.ssbond.residues[0].name,
-                        &r.pdb.ssbond.residues[0].chain_id,
+                        r.pdb.ssbond.residues[0].chain_id,
                         &r.pdb.ssbond.residues[0].seq_num,
                         &r.pdb.ssbond.residues[0].insert_code,
                         r.pdb.ssbond.residues[1].name,
-                        &r.pdb.ssbond.residues[1].chain_id,
+                        r.pdb.ssbond.residues[1].chain_id,
                         &r.pdb.ssbond.residues[1].seq_num,
                         &r.pdb.ssbond.residues[1].insert_code,
-                        r.pdb.ssbond.comment);
+                        r.pdb.link.symop[0],
+                        r.pdb.link.symop[1],
+                        &r.pdb.link.distance);
+                break;
+
+        case PDB_LINK:
+                pdb_sscanf(buffer, fmt,
+                        r.pdb.link.name[0],
+                        &r.pdb.link.alt_loc[0],
+                        r.pdb.link.residues[0].name,
+                        r.pdb.link.residues[0].chain_id,
+                        &r.pdb.link.residues[0].seq_num,
+                        &r.pdb.link.residues[0].insert_code,
+                        r.pdb.link.name[1],
+                        &r.pdb.link.alt_loc[1],
+                        r.pdb.link.residues[1].name,
+                        r.pdb.link.residues[1].chain_id,
+                        &r.pdb.link.residues[1].seq_num,
+                        &r.pdb.link.residues[1].insert_code,
+                        r.pdb.link.symop[0],
+                        r.pdb.link.symop[1],
+                        &r.pdb.link.distance);
                 break;
 
         case PDB_TER:

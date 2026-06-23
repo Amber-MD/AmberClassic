@@ -49,7 +49,7 @@
 #include	"varArray.h"
 #endif
 
-typedef OBJEKT  (*FUNCTION)();
+typedef OBJEKT  (*FUNCTION)(int iArgCount, ASSOC aaArgs[]);
 
 typedef struct {
         STRING          sName;

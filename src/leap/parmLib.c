@@ -74,7 +74,7 @@ BOOL		bOk;
     bOk = ( pl != NULL );
 #if 0
     if ( !bOk ) {
-	VP0(( "There are no PARMSETs loaded!\n" ));
+	VP0("There are no PARMSETs loaded!\n" );
     }
 #endif
     return(bOk);

@@ -204,7 +204,7 @@ RINGNODEt	*rnPCur, *rnPNew;
     } else {
 	rnPCur = zrnPRingFind( rRing, PAfter );
 	if ( rnPCur == NULL )
-		DFATAL(( "RingAfterAdd() no PAfter\n" ));
+		DFATAL("RingAfterAdd() no PAfter\n" );
 
 	rnPNew->rnPPrev = rnPCur;
 	rnPNew->rnPNext = rnPCur->rnPNext;
@@ -243,7 +243,7 @@ RINGNODEt	*rnPCur, *rnPNew;
     } else {
 	rnPCur = zrnPRingFind( rRing, PBefore );
 	if ( rnPCur == NULL )
-		DFATAL(( "RingAfterAdd() no PBefore\n" ));
+		DFATAL("RingAfterAdd() no PBefore\n" );
 
 	rnPNew->rnPNext = rnPCur;
 	rnPNew->rnPPrev = rnPCur->rnPPrev;

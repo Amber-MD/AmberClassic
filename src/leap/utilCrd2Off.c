@@ -228,7 +228,7 @@ int             i;
 LABELTYPE       lTemp;
 
 
-    MESSAGE(( "FillLabel #elements=%d\n", iElements ));
+    MESSAGE("FillLabel #elements=%d\n", iElements );
     *vaPArray = vaVarArrayCreate( sizeof(LABELTYPE) );
     VarArraySetSize( (*vaPArray), iElements );
     cPCur = PVAI( *vaPArray, char, 0 );
@@ -273,7 +273,7 @@ STRING		sTemp1, sTemp2;
         strcpy( sCoords, argv[2] );
         strcpy( sOff, argv[3] );
     } else {
-        fprintf( stderr, "Illegal number of arguments.\n" );
+        fprintf( stderr, "Invalid number of arguments.\n" );
         exit(1);
     }
 

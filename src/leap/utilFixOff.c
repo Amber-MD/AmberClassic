@@ -75,7 +75,7 @@ int	iFirst, iSecond;
 	if ( cPHeader[iSecond] == '.' ) break;
     }
     if ( iSecond == strlen(cPHeader) ) {
-	printf( "Illegal header: %s\n", cPHeader );
+	printf( "Invalid header: %s\n", cPHeader );
 	exit(1);
     }
 

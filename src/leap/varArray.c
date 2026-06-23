@@ -100,7 +100,7 @@ static inline int check_size_overflow(size_t size, int count, size_t *result)
 int iVarArrayPointerToIndex(VARARRAY header, char *data)
 {
     if (header == NULL || data == NULL) {
-        DFATAL((" iVarArrayPointerToIndex: VARARRAY or Data is NULL"));
+        DFATAL(" iVarArrayPointerToIndex: VARARRAY or Data is NULL");
     }
     return ((data - header->data) / header->size);
 }
@@ -113,7 +113,7 @@ int iVarArrayPointerToIndex(VARARRAY header, char *data)
 int iVarArrayElementSize(VARARRAY header)
 {
     if (header == NULL) {
-        DFATAL((" iVarArrayElementSize: VARARRAY is NULL"));
+        DFATAL(" iVarArrayElementSize: VARARRAY is NULL");
     }
     return (header->size);
 }
@@ -136,7 +136,7 @@ int iVarArrayElementCount(VARARRAY header)
 char *PVarArrayIndex(VARARRAY header, int pos)
 {
     if (header == NULL) {
-        DFATAL((" PVarArrayIndex: VARARRAY is NULL"));
+        DFATAL(" PVarArrayIndex: VARARRAY is NULL");
     }
     return (element(header, pos));
 
@@ -159,18 +159,18 @@ VARARRAY vaVarArrayCreate(int size)
     MALLOC(new, VARARRAY, sizeof(HeaderStruct));
 
     if (new == NULL) {
-        DFATAL(("vaVarArrayCreate: not enough memory "));
+        DFATAL("vaVarArrayCreate: not enough memory ");
     }
     
     if (check_size_overflow(size, PORTION, &alloc_size)) {
-        DFATAL(("vaVarArrayCreate: element size too large (%d bytes)", size));
+        DFATAL("vaVarArrayCreate: element size too large (%d bytes)", size);
     }
     
     MALLOC(new->data, char *, alloc_size);
 
     if (new->data == NULL) {
         FREE(new);
-        DFATAL(("vaVarArrayCreate: not enough memory "));
+        DFATAL("vaVarArrayCreate: not enough memory ");
     }
     new->count = 0;
     new->size = size;
@@ -194,7 +194,7 @@ void VarArrayDestroy(VARARRAY *header)
 {
 
     if (*header == NULL) {
-        DFATAL((" VarArrayDestroy: VARARRAY is NULL"));
+        DFATAL(" VarArrayDestroy: VARARRAY is NULL");
     }
     
     VARARRAY_LOG("Destroying VARARRAY: count=%d, slots=%d",
@@ -225,7 +225,7 @@ void VarArrayAdd(VARARRAY header, GENP data)
     size_t new_alloc_size;
     
     if (header == NULL) {
-        DFATAL((" VarArrayAdd: VARARRAY is NULL"));
+        DFATAL(" VarArrayAdd: VARARRAY is NULL");
     }
     
     if (header->count == header->slot) {
@@ -243,12 +243,12 @@ void VarArrayAdd(VARARRAY header, GENP data)
         }
         
         if (new_slot < header->slot) {
-            DFATAL((" VarArrayAdd: slot count overflow"));
+            DFATAL(" VarArrayAdd: slot count overflow");
         }
         
         if (check_size_overflow(header->size, new_slot, &new_alloc_size)) {
-            DFATAL((" VarArrayAdd: allocation size overflow (would need %d elements of %d bytes)",
-                    new_slot, header->size));
+            DFATAL(" VarArrayAdd: allocation size overflow (would need %d elements of %d bytes)",
+                    new_slot, header->size);
         }
         
         VARARRAY_LOG("Growing VARARRAY: %d -> %d slots, %zu bytes",
@@ -257,7 +257,7 @@ void VarArrayAdd(VARARRAY header, GENP data)
         REALLOC(header->data, char *, header->data, new_alloc_size);
         
         if (header->data == NULL) {
-            DFATAL((" VarArrayAdd: realloc failed for %zu bytes", new_alloc_size));
+            DFATAL(" VarArrayAdd: realloc failed for %zu bytes", new_alloc_size);
         }
         
         header->slot = new_slot;
@@ -279,12 +279,12 @@ VARARRAY vaVarArrayCopy(VARARRAY header)
     size_t alloc_size;
 
     if (header == NULL) {
-        DFATAL((" vaVarArrayCopy: VARARRAY is NULL"));
+        DFATAL(" vaVarArrayCopy: VARARRAY is NULL");
     }
 
     MALLOC(new, VARARRAY, sizeof(HeaderStruct));
     if (new == NULL) {
-        DFATAL((" vaVarArrayCopy: cannot allocate header"));
+        DFATAL(" vaVarArrayCopy: cannot allocate header");
     }
 
     new->size = header->size;
@@ -293,13 +293,13 @@ VARARRAY vaVarArrayCopy(VARARRAY header)
 
     if (check_size_overflow(new->size, header->slot, &alloc_size)) {
         FREE(new);
-        DFATAL((" vaVarArrayCopy: allocation size overflow"));
+        DFATAL(" vaVarArrayCopy: allocation size overflow");
     }
 
     MALLOC(new->data, char *, alloc_size);
     if (new->data == NULL) {
         FREE(new);
-        DFATAL((" vaVarArrayCopy: cannot allocate %zu bytes", alloc_size));
+        DFATAL(" vaVarArrayCopy: cannot allocate %zu bytes", alloc_size);
     }
 
     memcpy(new->data, header->data, alloc_size);
@@ -320,19 +320,19 @@ VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
     int total_count;
 
     if (header1 == NULL || header2 == NULL) {
-        DFATAL((" vaVarArrayCopy2: VARARRAY is NULL"));
+        DFATAL(" vaVarArrayCopy2: VARARRAY is NULL");
     }
     if (header1->size != header2->size)
-        DFATAL((" vaVarArrayCopy2: header sizes different\n"));
+        DFATAL(" vaVarArrayCopy2: header sizes different\n");
 
     if (header1->count > INT_MAX - header2->count) {
-        DFATAL((" vaVarArrayCopy2: combined count overflow"));
+        DFATAL(" vaVarArrayCopy2: combined count overflow");
     }
     total_count = header1->count + header2->count;
 
     MALLOC(new, VARARRAY, sizeof(HeaderStruct));
     if (new == NULL) {
-        DFATAL((" vaVarArrayCopy2: cannot allocate header"));
+        DFATAL(" vaVarArrayCopy2: cannot allocate header");
     }
 
     new->size = header1->size;
@@ -341,13 +341,13 @@ VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
 
     if (check_size_overflow(new->size, new->slot, &alloc_size)) {
         FREE(new);
-        DFATAL((" vaVarArrayCopy2: allocation size overflow"));
+        DFATAL(" vaVarArrayCopy2: allocation size overflow");
     }
 
     MALLOC(new->data, char *, alloc_size);
     if (new->data == NULL) {
         FREE(new);
-        DFATAL((" vaVarArrayCopy2: cannot allocate %zu bytes", alloc_size));
+        DFATAL(" vaVarArrayCopy2: cannot allocate %zu bytes", alloc_size);
     }
 
     copysize = (size_t)new->size * header1->count;
@@ -367,26 +367,26 @@ void VarArrayInsertBeforeMore(VARARRAY header, int pos, int num)
     char *h;
 
     if (header == NULL)
-        DFATAL((" VarArrayInsertBeforeMore: VARARRAY is NULL"));
+        DFATAL(" VarArrayInsertBeforeMore: VARARRAY is NULL");
 
     if ((pos >= header->count) && (pos < 0))
-        DFATAL((" VarArrayInsertBeforeMore: position=%d", pos));
+        DFATAL(" VarArrayInsertBeforeMore: position=%d", pos);
 
     if (header->count > INT_MAX - num)
-        DFATAL((" VarArrayInsertBeforeMore: count overflow"));
+        DFATAL(" VarArrayInsertBeforeMore: count overflow");
 
     nslot = SLOT_FOR_COUNT(header->count + num);
 
     if (header->slot != nslot) {
         if (check_size_overflow(header->size, nslot, &alloc_size)) {
-            DFATAL((" VarArrayInsertBeforeMore: allocation size overflow"));
+            DFATAL(" VarArrayInsertBeforeMore: allocation size overflow");
         }
         
         VARARRAY_LOG("Growing for insert: %d -> %d slots", header->slot, nslot);
         
         REALLOC(header->data, char *, header->data, alloc_size);
         if (header->data == NULL) {
-            DFATAL((" VarArrayInsertBeforeMore: realloc failed"));
+            DFATAL(" VarArrayInsertBeforeMore: realloc failed");
         }
         header->slot = nslot;
     }
@@ -436,11 +436,11 @@ void VarArrayDeleteMore(VARARRAY header, int pos, int num)
     char *h;
 
     if (header == NULL) {
-        DFATAL((" VarArrayDelete: VARARRAY is NULL"));
+        DFATAL(" VarArrayDelete: VARARRAY is NULL");
     }
     if (((pos + num) > header->count) || (pos < 0) || (num < 1)) {
-        DFATAL((" VarArrayDelete: position=%-5d num=%-5d count=%-5d", pos, num,
-                header->count));
+        DFATAL(" VarArrayDelete: position=%-5d num=%-5d count=%-5d", pos, num,
+                header->count);
     }
     header->count -= num;
 
@@ -462,7 +462,7 @@ void VarArrayDeleteMore(VARARRAY header, int pos, int num)
             
             REALLOC(header->data, char *, header->data, alloc_size);
             if (header->data == NULL) {
-                DFATAL((" VarArrayDelete: realloc failed during shrink"));
+                DFATAL(" VarArrayDelete: realloc failed during shrink");
             }
             header->slot = nslot;
         }
@@ -484,11 +484,11 @@ void VarArraySetSize(VARARRAY header, int ncount)
     size_t alloc_size;
 
     if (header == NULL) {
-        DFATAL((" VarArraySetSize: VARARRAY is NULL"));
+        DFATAL(" VarArraySetSize: VARARRAY is NULL");
     }
 
     if (ncount < 0) {
-        DFATAL((" VarArraySetSize: elements=%5d", ncount));
+        DFATAL(" VarArraySetSize: elements=%5d", ncount);
     }
     
     nslot = SLOT_FOR_COUNT(ncount);
@@ -496,8 +496,8 @@ void VarArraySetSize(VARARRAY header, int ncount)
 
     if (nslot != header->slot) {
         if (check_size_overflow(header->size, nslot, &alloc_size)) {
-            DFATAL((" VarArraySetSize: allocation size overflow (need %d elements of %d bytes each)",
-                    nslot, header->size));
+            DFATAL(" VarArraySetSize: allocation size overflow (need %d elements of %d bytes each)",
+                    nslot, header->size);
         }
         
         VARARRAY_LOG("Resizing VARARRAY: %d -> %d elements, %d -> %d slots, %zu bytes",
@@ -505,7 +505,7 @@ void VarArraySetSize(VARARRAY header, int ncount)
         
         REALLOC(header->data, char *, header->data, alloc_size);
         if (header->data == NULL) {
-            DFATAL((" VarArraySetSize: realloc failed for %zu bytes", alloc_size));
+            DFATAL(" VarArraySetSize: realloc failed for %zu bytes", alloc_size);
         }
         header->slot = nslot;
     }
@@ -523,16 +523,16 @@ void VarArraySetSize(VARARRAY header, int ncount)
 GENP PVarArrayDebugIndex(VARARRAY header, int pos, char *file, int line)
 {
     if (header == NULL) {
-        DFATAL(("Attempting to access an invalid VARARRAY (%s line %d).", file,
-                line));
+        DFATAL("Attempting to access an invalid VARARRAY (%s line %d).", file,
+                line);
     }
     if (header->count == 0) {
-        DFATAL(("Attempting to access a no-data VARARRAY (%s line %d).", file,
-                line));
+        DFATAL("Attempting to access a no-data VARARRAY (%s line %d).", file,
+                line);
     }
     if (pos < 0 || pos >= header->count) {
-        DFATAL(("Attempted to access element: %d in a VARARRAY of size: %d",
-                pos, header->count));
+        DFATAL("Attempted to access element: %d in a VARARRAY of size: %d",
+                pos, header->count);
     }
     return (element(header, pos));
 }

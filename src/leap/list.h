@@ -69,7 +69,7 @@ typedef LISTt	*LIST;
         
 */
 
-extern LIST		lListCreate();
+extern LIST		lListCreate(void);
 extern void		ListDestroy(LIST *lPList);
 extern void		ListDescribe(LIST lList);
 

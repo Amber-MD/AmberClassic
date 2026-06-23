@@ -27,8 +27,6 @@
  *      http://q4md-forcefieldtools.org
  *
  *      added # define        MOL2_ATOM       36
- *      the value of PDB_NUM_R  is now  37
- *      added lines 86 and 120 
 */
  
 # ifndef PDB_H
@@ -75,12 +73,26 @@
 # define        PDB_TER         30
 # define        PDB_TURN        31
 # define        PDB_TVECT       32
+
 # define        PDB_USER        33
 # define        PDB_MODEL       34
 # define        PDB_ENDMDL      35
-# define        MOL2_ATOM       36
 
-# define        PDB_NUM_R       37
+# define        PDB_CAVEAT      36 //  common mark = only define exists
+# define        PDB_CISPEP      37 //
+# define        PDB_DBREF       38 //
+# define        PDB_HETNAM      39
+# define        PDB_HETSYN      40
+# define        PDB_KEYWDS      41 //
+# define        PDB_LINK        42
+# define        PDB_MDLTYP      43 //
+# define        PDB_NUMMDL      44 //
+# define        PDB_SEQADV      45 //
+# define        PDB_SPLIT       46 //
+# define        PDB_TITLE       47
+
+# define        MOL2_ATOM       48
+# define        PDB_NUM_R       49
 
 
 typedef char    mol2_atom[3];
@@ -88,7 +100,7 @@ typedef char    pdb_date[10];
 typedef char    pdb_aname[5];           /* atom name - NO2* */
 typedef char    pdb_rname[4];           /* residue name - ALA */
 typedef char    pdb_pname[5];           /* pdb name - 9lyz */
-typedef char    pdb_id[4];              /* generic short id field */
+typedef char    pdb_id[4];              /* generic short id field (3-letter code) */
 typedef double  pdb_float;              /* size of floating point */
 
 typedef struct  {                       /* residue info */
@@ -121,7 +133,7 @@ struct  pdb_atom                {
         pdb_float       x, y, z;
         pdb_float       occupancy, temp_factor;
         char            element[3],fcharge[3];
-        int             leap_expanded; // flag for Leap expanded serial, resid detected
+        int             leap_expanded; // flag to mark Leap expanded columns detected
 };
 struct  pdb_author      {
         char    data[61];
@@ -159,6 +171,10 @@ struct  pdb_header      {
         pdb_date        date;
         pdb_pname       id;
 };
+struct  pdb_title      {
+        int             continuation;
+        char            title[71];
+};
 struct  pdb_helix               {
         int             serial_num;
         pdb_id          id;
@@ -171,6 +187,13 @@ struct  pdb_het         {
         int             num_atoms;
         char            text[41];
 };
+struct  pdb_hetnam      {
+        int             serial_num;
+        pdb_rname       het_id;
+        char            desc[55];
+        char            extra[11];
+};
+# define        pdb_hetsyn      pdb_hetnam
 # define        pdb_hetatm      pdb_atom
 # define        pdb_jrnl        pdb_author
 struct  pdb_master      {
@@ -248,10 +271,19 @@ struct  pdb_sprsde      {
         pdb_pname       id;
         pdb_pname       supersede[8];
 };
+// pdb_ssbond and pdb_link are orderd to share the common elements first
 struct  pdb_ssbond      {
-        int             seq_num;
         pdb_residue     residues[2];
-        char            comment[31];
+        char            symop[2][7];
+        double          distance;
+        int             seq_num;
+};
+struct  pdb_link      {
+        pdb_residue     residues[2];
+        char            symop[2][7];
+        double          distance;
+        pdb_aname       name[2];
+        char            alt_loc[2];
 };
 struct  pdb_ter         {
         int             serial_num;
@@ -295,8 +327,11 @@ typedef struct  pdb_record      {
                 struct  pdb_formul      formul;
                 struct  pdb_ftnote      ftnote;
                 struct  pdb_header      header;
+                struct  pdb_title       title;
                 struct  pdb_helix       helix;
                 struct  pdb_het         het;
+                struct  pdb_hetnam      hetnam;
+                struct  pdb_hetsyn      hetsyn;
                 struct  pdb_hetatm      hetatm;
                 struct  pdb_jrnl        jrnl;
                 struct  pdb_master      master;
@@ -314,6 +349,7 @@ typedef struct  pdb_record      {
                 struct  pdb_source      source;
                 struct  pdb_sprsde      sprsde;
                 struct  pdb_ssbond      ssbond;
+                struct  pdb_link        link;
                 struct  pdb_ter         ter;
                 struct  pdb_turn        turn;
                 struct  pdb_tvect       tvect;
@@ -329,7 +365,8 @@ typedef struct  pdb_record      {
 #endif
 
 extern pdb_record      pdb_read_record(FILE *);
-extern void            pdb_write_record(FILE *, pdb_record *, char *, int);
-extern void            mol2_write_record(FILE *, pdb_record *, char *, int);
+extern void            pdb_write_record(FILE *, pdb_record *);
+extern void            pdb_write_multiline(FILE *f, pdb_record *r, int *serial_num,
+                         char *field, size_t field_len, const char *content);
 
 # endif /* PDB_H */

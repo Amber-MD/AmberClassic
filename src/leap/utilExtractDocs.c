@@ -87,7 +87,7 @@ LINE		lNew;
 	hPHelp->lLast->lNext = lNew;
 	hPHelp->lLast = lNew;
     }
-    MESSAGE(( "Appending: %s\n", sLine ));
+    MESSAGE("Appending: %s\n", sLine );
 }
 
 
@@ -137,15 +137,15 @@ if ( s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }
     fOut = fopen( argv[2], "w" );
     iKeyword = 0; 
     iLine = 0;
-    MESSAGE(( "Source file: %s\n", argv[1] ));
-    MESSAGE(( "TeX file   : %s\n", argv[2] ));
+    MESSAGE("Source file: %s\n", argv[1] );
+    MESSAGE("TeX file   : %s\n", argv[2] );
     while ( !feof(fIn) ) { 
         strcpy( sLine, "" ); 
         FGETS( sLine, sizeof(STRING), fIn ); 
-	MESSAGE(( "Line: %s\n", sLine ));
-	MESSAGE(( "CMP : %s\n", CMDBEGIN ));
+	MESSAGE("Line: %s\n", sLine );
+	MESSAGE("CMP : %s\n", CMDBEGIN );
 	if ( strncmp( sLine, CMDBEGIN, strlen(CMDBEGIN) ) == 0 ) { 
-	    MESSAGE(( "Starting help\n" ));
+	    MESSAGE("Starting help\n" );
 	    haHelp[iKeyword].lLast = NULL; 
 	    haHelp[iKeyword].lFirst = NULL;
 	    haHelp[iKeyword].iLine = ++iLine;
@@ -166,8 +166,8 @@ if ( s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }
 		}
 	    }
 	    if ( feof(fIn) ) {
-		DFATAL(( "Missing closing docs starting on line: %d\n",
-				haHelp[iKeyword].iLine ));
+		DFATAL("Missing closing docs starting on line: %d\n",
+				haHelp[iKeyword].iLine );
 	    }
 	    iKeyword++;
 	}

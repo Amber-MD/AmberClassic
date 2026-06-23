@@ -109,10 +109,10 @@ DATABASE	dbDatabase;
     dbDatabase = dbDBRndOpen( sName, iOpenMode );
     if ( !dbDatabase ) {
 	if ( iDBLastError() == DB_ERROR_INVALID_FILE ) {
-	    VPFATALEXIT(( "Could not open database: %s\n", sName ));
+	    VPFATALEXIT("Could not open database: %s\n", sName );
 	} else if ( iDBLastError() == DB_ERROR_INVALID_DATABASE ) {
-	    VPFATALEXIT(( "File (%s) is not a valid database.\n",
-	            GsBasicsFullName ));
+	    VPFATALEXIT("File (%s) is not a valid database.\n",
+	            GsBasicsFullName );
 	}
 	return(NULL);
     }
@@ -178,7 +178,7 @@ OBJEKT          oObj;
 	goto DONE;
     oObj = (OBJEKT)psParmSetLoad( ul->dbLibrary );
     if ( oObj == NULL){
-	   VPWARN(( "%s: nothing loaded\n", sName ));
+	   VPWARN("%s: nothing loaded\n", sName );
     }
 
 DONE:

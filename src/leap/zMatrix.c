@@ -82,8 +82,8 @@ MATRIX          mT;
 double          dAngleX, dAngleY, dAngleZ;
 VECTOR          vTrans, vTemp32, vTemp43, vTempXZ, vNew;
 
-    MESSAGE(( "Bond: %lf   Angle: %lf    Torsion: %lf\n",
-                dBond, dAngle, dTorsion ));
+    MESSAGE("Bond: %lf   Angle: %lf    Torsion: %lf\n",
+                dBond, dAngle, dTorsion );
                    
                 /* The procedure for finding the the coordinate is: */
                 /* Translate vAtom2 to the origin -> 3'-2' */
@@ -151,8 +151,8 @@ VECTOR          vTrans, vTemp32, vTemp43, vTempXZ, vNew;
     MatrixTranslate( mT, dVX(&vTrans), dVY(&vTrans), dVZ(&vTrans) );
     MatrixTimesVector( vNew, mT, vNew );
     *vPPos = vNew;
-    MESSAGE(( "ZMatrixAll:  %lf,%lf,%lf\n", 
-			dVX(vPPos), dVY(vPPos), dVZ(vPPos) ));
+    MESSAGE("ZMatrixAll:  %lf,%lf,%lf\n", 
+			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
 
 
@@ -213,12 +213,12 @@ VECTOR		vNew;
 		   (-dCosB + dCosA*dCosC + dCosX*dSinA*dSinC) + 
 		  2.0*dSinA*dSinA*dSinC*dSinC*dSinX*dSinX;
 
-        MESSAGE( ( "Iteration %d dF1=%lf  dF2=%lf  dB=%lf\n",
-                         iCount, dF1, dF2, dX ) );
+        MESSAGE("Iteration %d dF1=%lf  dF2=%lf  dB=%lf\n",
+                         iCount, dF1, dF2, dX );
         if ( fabs(dF1) < VERYSMALL*10.0 ) break;
         if ( fabs(dF2) < VERYSMALL ) {
-DFATAL(( "Could not optimize! dF1 = %lf, dF2 = %lfdX = %lf steps=%d", 
-		dF1, dF2, dX, iCount ));
+             DFATAL( "Could not optimize! dF1 = %lf, dF2 = %lfdX = %lf steps=%d", 
+		dF1, dF2, dX, iCount );
 	}
         dXNew = dX - dF1/dF2;
         if ( fabs(dXNew - dX) < VERYSMALL ) break;
@@ -228,8 +228,8 @@ DFATAL(( "Could not optimize! dF1 = %lf, dF2 = %lfdX = %lf steps=%d",
    
 #ifdef  DEBUG 
     if ( iCount > MAXNEWTONSTEPS ) 
-        DDEBUG( ("Exceeded maximum number of Newton Raphson steps: %d\n",
-                        MAXNEWTONSTEPS) );
+        DDEBUG("Exceeded maximum number of Newton Raphson steps: %d\n",
+                        MAXNEWTONSTEPS);
 #endif
 
                 /* Generate new coordinate */
@@ -284,10 +284,10 @@ VECTOR          vTrans, vTempAC, vTempBC, vTempXZ, vNew, vLab;
     vTrans = *vPAtomC;
     vTempAC = vVectorSub( vPAtomA, vPAtomC );
     vTempBC = vVectorSub( vPAtomB, vPAtomC );
-MESSAGE(( "AC= %lf, %lf, %lf\n", 
-        dVX(&vTempAC), dVY(&vTempAC), dVZ(&vTempAC) ));
-MESSAGE(( "BC= %lf, %lf, %lf\n", 
-        dVX(&vTempBC), dVY(&vTempBC), dVZ(&vTempBC) ));
+MESSAGE("AC= %lf, %lf, %lf\n", 
+        dVX(&vTempAC), dVY(&vTempAC), dVZ(&vTempAC) );
+MESSAGE("BC= %lf, %lf, %lf\n", 
+        dVX(&vTempBC), dVY(&vTempBC), dVZ(&vTempBC) );
     vTempXZ = vTempAC;
     VectorSetY( &vTempXZ, 0.0 );
     if ( dVectorLen(&vTempXZ) != 0.0 ) {
@@ -297,11 +297,11 @@ MESSAGE(( "BC= %lf, %lf, %lf\n",
     MatrixYRotate( mT, -dAngleY );
     MatrixTimesVector( vTempAC, mT, vTempAC );
     MatrixTimesVector( vTempBC, mT, vTempBC );
-MESSAGE(( "Rotated around Y\n" ));
-MESSAGE(( "New AC= %lf, %lf, %lf\n", 
-        dVX(&vTempAC), dVY(&vTempAC), dVZ(&vTempAC) ));
-MESSAGE(( "New BC= %lf, %lf, %lf\n", 
-        dVX(&vTempBC), dVY(&vTempBC), dVZ(&vTempBC) ));
+MESSAGE("Rotated around Y\n" );
+MESSAGE("New AC= %lf, %lf, %lf\n", 
+        dVX(&vTempAC), dVY(&vTempAC), dVZ(&vTempAC) );
+MESSAGE("New BC= %lf, %lf, %lf\n", 
+        dVX(&vTempBC), dVY(&vTempBC), dVZ(&vTempBC) );
 
     dAngleZ = dVectorAbsAngle( &vTempAC, &vXAxis, &vZAxis );
     MatrixZRotate( mT, -dAngleZ );
@@ -309,11 +309,11 @@ MESSAGE(( "New BC= %lf, %lf, %lf\n",
 #ifdef DEBUG
     MatrixTimesVector( vTempAC, mT, vTempAC );
 #endif
-MESSAGE(( "Rotated around Z\n" ));
-MESSAGE(( "New AC= %lf, %lf, %lf\n", 
-        dVX(&vTempAC), dVY(&vTempAC), dVZ(&vTempAC) ));
-MESSAGE(( "New BC= %lf, %lf, %lf\n", 
-        dVX(&vTempBC), dVY(&vTempBC), dVZ(&vTempBC) ));
+MESSAGE("Rotated around Z\n" );
+MESSAGE("New AC= %lf, %lf, %lf\n", 
+        dVX(&vTempAC), dVY(&vTempAC), dVZ(&vTempAC) );
+MESSAGE("New BC= %lf, %lf, %lf\n", 
+        dVX(&vTempBC), dVY(&vTempBC), dVZ(&vTempBC) );
         
     VectorSetX( &vTempBC, 0.0 );
 
@@ -344,8 +344,8 @@ MESSAGE(( "New BC= %lf, %lf, %lf\n",
         
     MatrixTimesVector( vNew, mT, vLab );
     *vPPos = vNew;
-    MESSAGE(( "ZMatrix2Angle:  %lf,%lf,%lf\n", 
-			dVX(vPPos), dVY(vPPos), dVZ(vPPos) ));
+    MESSAGE("ZMatrix2Angle:  %lf,%lf,%lf\n", 
+			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
 
 
@@ -392,24 +392,24 @@ VECTOR          vTrans, vTempX, vTempXZ, vNew;
         dAngleY = dVectorAbsAngle( &vTempXZ, &vXAxis, &vYAxis );
     } else dAngleY = 0.0;
    
-    MESSAGE(( "Angle around Y=%lf\n", dAngleY ));
+    MESSAGE("Angle around Y=%lf\n", dAngleY );
  
     MatrixYRotate( mT, -dAngleY );
     MatrixTimesVector( vTempX, mT, vTempX );
 
-MESSAGE(( "Rotated around Y = %lf, %lf, %lf\n",
-                dVX(&vTempX), dVY(&vTempX), dVZ(&vTempX) ));
+MESSAGE("Rotated around Y = %lf, %lf, %lf\n",
+                dVX(&vTempX), dVY(&vTempX), dVZ(&vTempX) );
     
     dAngleZ = dVectorAbsAngle( &vTempX, &vXAxis, &vZAxis );
 
 #ifdef  DEBUG  
 MatrixZRotate( mT, -dAngleZ );
 MatrixTimesVector( vTempX, mT, vTempX );
-MESSAGE(( "Rotated around Z = %lf, %lf, %lf\n",
-                dVX(&vTempX), dVY(&vTempX), dVZ(&vTempX) ));
+MESSAGE("Rotated around Z = %lf, %lf, %lf\n",
+                dVX(&vTempX), dVY(&vTempX), dVZ(&vTempX) );
 #endif
  
-    MESSAGE(( "Angle around Z=%lf\n", dAngleZ ));
+    MESSAGE("Angle around Z=%lf\n", dAngleZ );
  
     VectorDef( &vNew, dBond*cos(dAngle), dBond*sin(dAngle), 0.0 );
     MatrixZRotate( mT, dAngleZ );
@@ -419,8 +419,8 @@ MESSAGE(( "Rotated around Z = %lf, %lf, %lf\n",
     MatrixTranslate( mT, dVX(&vTrans), dVY(&vTrans), dVZ(&vTrans) );
     MatrixTimesVector( vNew, mT, vNew );
     *vPPos = vNew;
-    MESSAGE(( "ZMatrixBondAngle:  %lf,%lf,%lf\n", 
-			dVX(vPPos), dVY(vPPos), dVZ(vPPos) ));
+    MESSAGE("ZMatrixBondAngle:  %lf,%lf,%lf\n", 
+			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
 
 
@@ -445,8 +445,8 @@ VECTOR          vNew;
     VectorDef( &vNew, dBond, 0.0, 0.0 );
     vNew = vVectorAdd( &vNew, vPAtom2 );
     *vPPos = vNew;
-    MESSAGE(( "ZMatrixBond:  %lf,%lf,%lf\n", 
-			dVX(vPPos), dVY(vPPos), dVZ(vPPos) ));
+    MESSAGE("ZMatrixBond:  %lf,%lf,%lf\n", 
+			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
 
 
@@ -467,8 +467,8 @@ void
 ZMatrixNothing( VECTOR *vPPos )
 {
     VectorDef( vPPos, 0.0, 0.0, 0.0 );
-    MESSAGE(( "ZMatrixNothing:  %lf,%lf,%lf\n", 
-			dVX(vPPos), dVY(vPPos), dVZ(vPPos) ));
+    MESSAGE("ZMatrixNothing:  %lf,%lf,%lf\n", 
+			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
 
 

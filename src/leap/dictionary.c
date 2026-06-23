@@ -212,6 +212,28 @@ DictionaryDestroy( DICTIONARY *dPDict )
 
 }
 
+/*
+ *	DictionaryDestroyDict
+ *
+ *	Author:	Juno Krahn (2026)
+ *
+ *	Destroy the DICTIONARY but not the data!.
+ */
+void
+DictionaryDestroyDict( DICTIONARY *dPDict )
+{
+
+    zDictionarySortCleanup(*dPDict);
+
+                /* Destroy the HASH_TABLE */
+    HTDestroy( &((*dPDict)->htEntries) );
+
+    (*dPDict)->PKlass = NULL;
+    FREE((*dPDict));
+    *dPDict = NULL;
+
+}
+
 
 
 /*
@@ -222,14 +244,14 @@ DictionaryDestroy( DICTIONARY *dPDict )
  *	Add an entry to the DICTIONARY.
  */
 void
-DictionaryAdd( DICTIONARY dDict, char *sKey, GENP PData )
+DictionaryAdd( DICTIONARY dDict, const char *sKey, GENP PData )
 {
 int		iLen;
 char		*cPKey;
 
     zDictionarySortCleanup(dDict);
 
-		/* Allocate memory for the key */
+		/* Allocate memory for the key  -- strdup() */
 
     iLen = strlen(sKey);
     MALLOC( cPKey, char*, iLen+1 );
@@ -248,13 +270,14 @@ char		*cPKey;
  *	Return the data associated with the key.
  */
 GENP
-yPDictionaryFind( DICTIONARY dDict, char *sKey )
+yPDictionaryFind( DICTIONARY dDict, const char *sKey )
 {
 		/* Dont try to clean up the sort arrays */
 		/* because we need SPEED!!! */
 
     return( PHTFind( dDict->htEntries, sKey ) );
 }
+
 
 
 /*
@@ -266,7 +289,7 @@ yPDictionaryFind( DICTIONARY dDict, char *sKey )
  *	the data that was associated with the entry.
  */
 GENP
-yPDictionaryDelete( DICTIONARY dDict, char *sKey )
+yPDictionaryDelete( DICTIONARY dDict, const char *sKey )
 {
 char		*cPKey;
 GENP		PData;
@@ -373,13 +396,13 @@ DictionaryDescribe( DICTIONARY dDict )
 {
 DICTLOOP	dlLoop;
 
-    VP0(( "Dictionary with %d elements.\n", 
-		iDictionaryElementCount(dDict) ));
+    VP0("Dictionary with %d elements.\n", 
+		iDictionaryElementCount(dDict) );
     dlLoop = ydlDictionaryLoop(dDict);
     while ( yPDictionaryNext( dDict, &dlLoop ) ) {
-	VP0(( "%40s = %p\n", 
+	VP0("%40s = %p\n", 
 		sDictLoopKey(dlLoop), 
-		PDictLoopData(dlLoop) ));
+		PDictLoopData(dlLoop) );
     }
 }
 

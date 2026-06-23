@@ -98,7 +98,7 @@ OIntegerDestroy( OINTEGER *oiPInt )
 void
 OIntegerDescribe( OINTEGER oiInt )
 {
-    VP0(( "%d\n", iOInteger(oiInt) ));
+    VP0("%d\n", iOInteger(oiInt) );
 }
 
 

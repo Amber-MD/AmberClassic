@@ -474,7 +474,7 @@ OCTNODEt	*PonChildren;
 		    case OCT_PARTIAL:
 			break;
 		    default: 
-			assert( (VP0(( "bad type\n" )), 0) );
+			assert( (VP0("bad type\n" ), 0) );
 		}
 	}
 
@@ -637,7 +637,7 @@ OCTNODEt	*PonChildren;
 			iExcluded++;
 			break;
 		  default: 
-			assert( (VP0(( "bad type\n" )), 0) );
+			assert( (VP0("bad type\n"), 0) );
 		}
 	}
 
@@ -733,8 +733,8 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 					i++;
 				}
 				if ( i > 3  &&  nowarning ) {
-					VPWARN(( "Non-water solvent may "
-						"lead to steric problems\n" ));
+					VPWARN("Non-water solvent may "
+						"lead to steric problems\n" );
 					nowarning = 0;
 				}
 	    		}
@@ -742,7 +742,7 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 		}
 		break;
 	    default:
-		assert( (VP0(( "Octree type not implemented\n" )), 0) );
+		assert( (VP0("Octree type not implemented\n" ), 0) );
 	}
 
 	/*
@@ -750,7 +750,7 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 	 */
 	iAtoms = iVarArrayElementCount( vaAtoms );
 /*
-VP0(("atoms: %d\n", iAtoms));
+VP0(("atoms: %d\n", iAtoms);
 dTmax = 20.0;
 for (dTmp=dTmax, iMaxDepth=0; dTmp>dGridSize; iMaxDepth++, dTmp/=2.0);
 octTree->iMaxDepth = iMaxDepth;
@@ -770,8 +770,8 @@ return(octTree);
 	octTree->vaAtoms = vaAtoms;
 
 	if ( iDefaultedRadius )
-		VP0(( "Used default radius %5.2f for %d atoms\n", 
-				ATOM_DEFAULT_RADIUS, iDefaultedRadius ));
+		VP0("Used default radius %5.2f for %d atoms\n", 
+				ATOM_DEFAULT_RADIUS, iDefaultedRadius );
 
 	/*
 	 *  Find bounding box of atom centers and max radius, while
@@ -837,17 +837,17 @@ return(octTree);
 		vMaxCorner.dZ += dMaxRadius;
 		break;
 	    default:
-		assert( (VP0(( "Octree type not implemented\n" )), 0) );
+		assert( (VP0("Octree type not implemented\n"), 0) );
 	}
-	VP1(( "Total solute charge:  %5.2f  Max atom radius:  %5.2f\n", 
-					dCharge, dMaxRadius ));
+	VP1( "Total solute charge:  %5.2f  Max atom radius:  %5.2f\n", 
+					dCharge, dMaxRadius );
 	if ( iType == OCT_SHELL )
-		VP0(( "Grid extends from solute vdw + %.2f  to  %.2f\n",
-				dAddExtent, dShellRadius ));
-	VP1(( "Box:\n" ));
-	VP1(( "   enclosing:  %5.2f %5.2f %5.2f   %5.2f %5.2f %5.2f\n",
+		VP0("Grid extends from solute vdw + %.2f  to  %.2f\n",
+				dAddExtent, dShellRadius );
+	VP1("Box:\n" );
+	VP1("   enclosing:  %5.2f %5.2f %5.2f   %5.2f %5.2f %5.2f\n",
 				vMinCorner.dX, vMinCorner.dY, vMinCorner.dZ,
-				vMaxCorner.dX, vMaxCorner.dY, vMaxCorner.dZ));
+				vMaxCorner.dX, vMaxCorner.dY, vMaxCorner.dZ);
 
 	/*  
 	 *  Find longest edge of box
@@ -903,11 +903,11 @@ return(octTree);
 	for (i=iMaxDepth, j=1; i>-1; i--, j*=8)
 		PiDensities[i] = j;
 
-	VP1(( "   sized:\t\t\t      %5.2f %5.2f %5.2f\n",
-			vMaxCorner.dX, vMaxCorner.dY, vMaxCorner.dZ));
-	VP1(( "   edge:        %5.2f\n", dTmax ));
-	VP0(( "Resolution:     %5.2f Angstrom.\n", dGridSize ));
-	VP1(( "Tree depth: %d\n", iMaxDepth));
+	VP1("   sized:\t\t\t      %5.2f %5.2f %5.2f\n",
+			vMaxCorner.dX, vMaxCorner.dY, vMaxCorner.dZ);
+	VP1("   edge:        %5.2f\n", dTmax );
+	VP0("Resolution:     %5.2f Angstrom.\n", dGridSize );
+	VP1("Tree depth: %d\n", iMaxDepth);
 
 	/*
 	 *  Build head node w/ all atoms in list.
@@ -941,14 +941,14 @@ return(octTree);
 		iBuildInteriorOctant( &octTree->onHead, iAtoms, PaAtoms );
 		break;
 	  default:
-		assert( (VP0(( "bad switch\n" )), 0) );
+		assert( (VP0("bad switch\n" ), 0) );
 	}
 	octTree->iTreePoints = iTreeGridPoints;	/* global */
 
-	MESSAGE(( "grid build: %ld sec\n", time((time_t *)0) - time_start ));
-	VP1(( "Volume = %5.2f%% of box, grid points %d\n", 
+	MESSAGE( "grid build: %ld sec\n", time((time_t *)0) - time_start );
+	VP1("Volume = %5.2f%% of box, grid points %d\n", 
 			100 * fVolume / ( dTmax * dTmax * dTmax ),
-			iTreeGridPoints ));
+			iTreeGridPoints );
 #ifdef OCTDEBUG
 	fprintf(stderr, "depth  r_inc   r_inex  r_out  multin  multout \n");
 	for (i=0;i<=iMaxDepth; i++) {
@@ -1106,12 +1106,12 @@ int	i;
 ATOM	*PaAtom;
 
 	if ( octTree->iType != OCT_SHELL ) {
-		assert( (VP0(( "InitCharges: wrong tree type\n" )), 0) );
+		assert( (VP0("InitCharges: wrong tree type\n" ), 0) );
 	}
 	if ( !octTree->iTreePoints ) {
-		assert( (VP0(( "InitCharges: no grid (?)\n" )), 0) );
+		assert( (VP0( "InitCharges: no grid (?)\n" ), 0) );
 	}
-	VP0(( "Calculating grid charges\n" ));
+	VP0( "Calculating grid charges\n" );
         time_start = time((time_t *) 0);
 
 	/*
@@ -1174,7 +1174,7 @@ ATOM	*PaAtom;
 		for (i=0; i<iChargeAtoms; i++, PaAtom++)
 			AtomTempDoubleIncrement( *PaAtom, -dCutDist );
 	}
-	MESSAGE(( "charges: %ld sec\n", time((time_t *) 0) - time_start));
+	MESSAGE( "charges: %ld sec\n", time((time_t *) 0) - time_start);
 	return;
 }
 
@@ -1256,7 +1256,7 @@ void
 OctTreePrintGrid( OCTREE octTree, char *sFileName, int iColor )
 {
 	if ( iColor != COLOR_DEPTH  &&  !octTree->PfCharges ) {
-		VP0(( "charge coloring but no charges\n" ));
+		VP0("charge coloring but no charges\n" );
 		return;
 	}
 	fChargeFile = FOPENCOMPLAIN(sFileName, "w");
@@ -1279,7 +1279,7 @@ OctTreePrintGrid( OCTREE octTree, char *sFileName, int iColor )
 
 	OctNodePrintGrid( &octTree->onHead );
 
-	VP1(( "total nodes in octree %d\n", iNodeCount ));
+	VP1("total nodes in octree %d\n", iNodeCount );
 	fclose( fChargeFile );
 	return;
 }
@@ -1300,7 +1300,7 @@ float		*PfTmpCharges, *PfCharge;
 OCTNODEt	*PonChildren;
 
 	if ( PonNode->PonChildren != NULL )
-		DFATAL(( "Programming error\n" ));
+		DFATAL("Programming error\n" );
 
 	/*
 	 *  Subdivide this node: set up children array
@@ -1494,7 +1494,7 @@ VECTOR		vCenter;
 		    case OCT_PARTIAL:
 			break;
 		    default: 
-			assert( (VP0(( "bad type\n" )), 0) );
+			assert( (VP0("bad type\n" ), 0) );
 		}
 	}
 	if ( iExcluded == 8 ) {
@@ -1643,10 +1643,10 @@ ATOM	*PaAtom;
 int	i;
 
 	if ( octTree->iType != OCT_SHELL ) {
-		assert( (VP0(( "UpdateCharge: wrong tree type\n" )), 0) );
+		assert( (VP0( "UpdateCharge: wrong tree type\n" ), 0) );
 	}
 	if ( !octTree->PfCharges ) {
-		assert( (VP0(( "UpdateCharge: charges not initted\n" )), 0) );
+		assert( (VP0( "UpdateCharge: charges not initted\n" ), 0) );
 	}
 
 	/*
@@ -1738,21 +1738,21 @@ PonNode->vCorner.dY,
 PonNode->vCorner.dZ,
 PonNode->vCorner.dX + 2 * PdHalfEdges[PonNode->iDepth],
 PonNode->vCorner.dY + 2 * PdHalfEdges[PonNode->iDepth],
-PonNode->vCorner.dZ + 2 * PdHalfEdges[PonNode->iDepth]));
+PonNode->vCorner.dZ + 2 * PdHalfEdges[PonNode->iDepth]);
 */
 	/*
 	 *  If at last depth w/ atomlist, check them.
 	 */
 	if ( PonNode->PonChildren == NULL ) {
 /*
-VP0(("final? \n"));
+VP0("final? \n");
 */
 		PaAtom = PonNode->PaAtomList;
 		for (i=0; i<PonNode->iAtoms; i++, PaAtom++) {
 			d = dDistanceSq( &vNewPoint,
 					&vAtomPosition( *PaAtom ) );
 /*
-VP0(("d= %f \n", d));
+VP0("d= %f \n", d);
 */
 			if ( d < dClosestDistance ) {
 				aClosestAtom = *PaAtom;
@@ -1779,7 +1779,7 @@ rOctTreeCheckSolvent( OCTREE octTree, VECTOR *PvPoint )
 {
 ATOM	*PaAtom;
 	if ( octTree->iType != OCT_INTERIOR_SOLVENT ) {
-		assert( (VP0(( "CheckSolvent: wrong octree type\n" )), 0) );
+		assert( (VP0("CheckSolvent: wrong octree type\n" ), 0) );
 	}
 	/*
 	 *  Set up globals for octree.
@@ -1801,7 +1801,7 @@ ATOM	*PaAtom;
 	 *  Descend octree.
 	 */
 	if (!OctNodeCheckSolvent( &octTree->onHead ) ) {
-		VP0(("Completely out of solvent bounding area\n"));
+		VP0("Completely out of solvent bounding area\n");
 		return(NULL);
 	}
 
@@ -1812,7 +1812,7 @@ ATOM	*PaAtom;
 		*PvPoint = vNewPoint;
 		return( (RESIDUE) cContainerWithin( aClosestAtom ) );
 	}
-	VP0(("No overlap w/ solvent\n"));
+	VP0("No overlap w/ solvent\n");
 	return(NULL);
 }
 
