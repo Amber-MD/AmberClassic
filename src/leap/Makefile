@@ -1,9 +1,11 @@
 include ../../config.h
-LOCALFLAGS=-Wno-unused-value
+
+CIFPARSEINC = -I../cifparse
+CIFPARSE = -l cifparse
 
 .c.o:
-	@echo "[TLEAP] CC $<"
-	$(VB)$(CC) -c -I$(XHOME)/include $(NETCDFINC) $(CFLAGS) $(AMBERCFLAGS) -o $@ $<
+	@echo "[TLEAP]  CC $<"
+	$(VB)$(CC) -c -I$(XHOME)/include $(NETCDFINC) $(CIFPARSEINC) $(CFLAGS) $(AMBERCFLAGS) -o $@ $<
 
 # 
 #  Absolutely necessary routines
@@ -16,7 +18,7 @@ OA = $(OA1)
 #  General tools
 # 
 
-OG1= pdb_format.o pdb_read.o pdb_sprntf.o hybrid36.o
+OG1= pdb_format.o pdb_read.o pdb_sprntf.o hybrid36.o neighbors.o
 OG2= pdb_sscanf.o pdb_write.o
 OG3= vector.o zMatrix.o sort.o bag.o hash.o 
 OG4= dictionary.o database.o nVector.o ring.o matrix.o
@@ -53,7 +55,6 @@ OL = $(OL1) $(OL2) $(OL3) $(OL4)
 OC1= tLeap.o
 OC  = $(OC1)
 
-
 #  utilities specifics
 # 
 #        OXUMF:  xaUtilMessageFilter
@@ -64,6 +65,7 @@ OC  = $(OC1)
 #        OUT:	mol2_to_off
 # 
 
+OXUMF= mess.o function.o
 OUCWB= utilConvertWaterBox.o
 OUDT= utilDescribeTopology.o
 OUT= mol2_to_off.o
@@ -78,6 +80,9 @@ OUL2P= utilLib2Pdb.o
 OBJ = $(OA) $(OG) $(OO) $(OL)
 
 TLEAP_OBJ = $(OA) $(OG) $(OO) $(OL) $(OC)
+
+XALEAP_OBJ = $(OA) $(OG) $(OO) $(OL) $(OXT) $(OXAW)
+XALEAP_DEP = $(XBITMAPS) $(ADDDEPS)
 
 UMF_OBJ = $(OA) $(OXUMF)
 UMH_OBJ = $(OUMH)
@@ -96,18 +101,15 @@ UTILPROGS = utilMakeHelp$(SFX) utilDescribeTopology$(SFX) utilCrd2Off$(SFX) mol2
 LEAPPROGS = teLeap$(SFX)
 PROGS = $(LEAPPROGS) $(UTILPROGS)
 
+# SRCS= StrToPmap.c amber.c assoc.c atom.c bag.c basics.c block.c build.c byteArray.c chirality.c collection.c commands.c container.c database.c dictionary.c displayer.c elements.c fortran.c function.c getline.c avl.c graphUtil.c hash.c help.c hybrid.c internal.c library.c list.c loop.c mathop.c matrix.c mess.c minimizer.c model.c molecule.c nVector.c oDouble.c oInteger.c oString.c objekt.c octree.c parmLib.c parmSet.c pdbFile.c mol2File.c mol3File.c pdb_format.c pdb_read.c pdb_sprntf.c pdb_sscanf.c pdb_write.c residue.c restraint.c ring.c select.c sort.c stringExtra.c sysdepend.c tLeap.c test_dataBase.c test_parmSet.c tools.c tripos.c unit.c unitio.c utilConvertWaterBox.c utilCrd2Off.c utilDescribeTopology.c utilFixOff.c utilLib2Pdb.c utilMakeHelp.c mol2_to_off.c utilWrapRes.c varArray.c variables.c vector.c x3d.c xAction.c xBasics.c xTank.c xaAngleParmTable.c xaAtomParmTable.c xaAtomTable.c xaBondParmTable.c xaCommand.c xaHBondParmTable.c xaImproperParmTable.c xaLeapc.c xaParmEditor.c xaTable.c xaTools.c xaTorsionParmTable.c xaUnitEditor.c xaUtilMessageFilter.c XrawRegistr.c zMatrix.c
+
+# HEADERS = amber.h assoc.h atom.h bag.h basics.h block.h build.h byteArray.h chirality.h classes.h collection.h commands.h config.h container.h database.h defaults.h dictionary.h displayer.h elements.h fortran.h function.h getline.h avl.h avl2.h graphUtil.h hash.h help.h hybrid.h internal.h leap.h library.h list.h loop.h machine.h mathop.h matrix.h mess.h minimizer.h model.h molecule.h nVector.h oDouble.h oInteger.h oString.h objekt.h octree.h parmLib.h parmSet.h parser.h pdb.h pdbFile.h mol2File.h mol3File.h pdb_int.h residue.h restraint.h ring.h select.h sort.h stringExtra.h sysdepend.h threed.h tools.h tripos.h unit.h unitio.h varArray.h vector.h x3d.h xAction.h xDisplayList.h xTank.h xTankP.h xaAngleParmTable.h xaAtomParmTable.h xaAtomTable.h xaBondParmTable.h xaCommand.h xaHBondParmTable.h xaLeap.h xaResources.h xaTable.h xaTools.h xaTorsionParmTable.h xaUnitEditor.h XrawRegistr.h zMatrix.h
+
 # ##############################################################
 #
-#  "make all" makes EVERYTHING, Wcl libraries, teLeap, xaLeap, util progs.
-#  "make t" makes teLeap only
-#  "make x" makes x windows stuff only
-#  "make util" makes utility programs
-#
-#  "make all" must be used when the system is first ported to a
-#           machine to make Wcl stuff.
-#
-
 util:   $(UTILPROGS)
+
+obj:	$(OBJ)
 
 leap: $(BINDIR)/teLeap$(SFX) $(BINDIR)/tleap
 
@@ -115,44 +117,55 @@ uninstall: clean
 	-rm -f $(BINDIR)/teLeap$(SFX) $(BINDIR)/tleap
 
 $(BINDIR)/teLeap$(SFX): $(TLEAP_OBJ)
-	@echo "[TLEAP] CC $@"
-	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(TLEAP_OBJ) $(LM) $(NETCDFLIB)
+	@echo "[TLEAP]  CC $@"
+	$(VB)$(CC) $(CFLAGS) $(AMBERCFLAGS) $(LDFLAGS) $(AMBERLDFLAGS) \
+	      -o $@ $(TLEAP_OBJ) $(LM) $(NETCDFLIB) $(CIFPARSE)
 
 $(BINDIR)/tleap: tleap
 	cp tleap $(BINDIR)
 
 utilMakeHelp$(SFX): $(UMH_OBJ)
-	@echo "[TLEAP] CC $<"
+	@echo "[TLEAP]  CC $@"
 	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UMH_OBJ) $(LM)
 
 utilConvertWaterBox$(SFX): $(UCWB_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UCWB_OBJ) $(LM)
+	@echo "[TEAP]  CC $@"
+	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UCWB_OBJ) $(LM)
 
 utilDescribeTopology$(SFX): $(UDT_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UDT_OBJ) $(LM)
+	@echo "[TLEAP]  CC $@"
+	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UDT_OBJ) $(LM)
 
 utilCrd2Off$(SFX): $(UC2O_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UC2O_OBJ) $(LM)
+	@echo "[TLEAP]  CC $@"
+	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UC2O_OBJ) $(LM)
 
 mol2_to_off$(SFX): $(UT_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UT_OBJ) $(LM)
+	@echo "[TLEAP]  CC $@"
+	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UT_OBJ) $(LM)
 
 utilLib2Pdb$(SFX): $(UL2P_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UL2P_OBJ) $(LM)
+	@echo "[TLEAP]  CC $@"
+	$(VB)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(UL2P_OBJ) $(LM)
 
 clean::
-	-rm -f *.o 
+	-rm -f *.o $(PROGS) *\~
 	-rm -f helptext.c parser.c
 
-parser.c:       parser.y parser.h
-	@echo "[TLEAP] BISON $@"
-	$(VB)$(BISON) parser.y
-#	@echo "(The warning 'conflicts: 6 shift/reduce' is normal)"
-	$(VB)/bin/rm -f parser.c
-	@mv parser.tab.c parser.c
+parser.o:       parser.y parser.h
+	$(YACC) parser.y
+	@echo "(The warning 'conflicts: 6 shift/reduce' is normal)"
+	@/bin/rm -f parser.c
+	@mv y.tab.c parser.c
+	@echo "[TLEAP]  CC parser.c"
+	$(VB)$(CC) -c -I$(XHOME)/include $(NETCDFINC) -DYYERROR_VERBOSE \
+	      $(CFLAGS) $(LDFLAGS) -o $@ parser.c
 
 helptext.c: helptext.text utilMakeHelp$(SFX)
 	$(VB)./utilMakeHelp$(SFX) helptext.text helptext.c
+
+# depend::
+#	./makedepend > depend
 
 depend: $(TLEAP_OBJ:.o=.c)
 	@echo "[TLEAP] make depend"
