@@ -232,7 +232,7 @@ perl -f ./select_alts $seed ${id}_${nabc}uc.pdb > $idalt.pdb
 #  if needed, set up sslinks (should go away with updated tleap):
 #-----------------------------------------------------------------------
 
-if true; then
+if false; then
 
 cat << EOF > make_sslinks
 \$rpc = $residuesperchain;
@@ -256,19 +256,18 @@ fi
 #-----------------------------------------------------------------------
 
 cat <<EOF > tleap.in
-set default nocenter on
-set default reorder_residues off
+set nocenter on
+set reorder_residues off
 source leaprc.protein.ff19SB
 source leaprc.water.spce
 source leaprc.gaff2
 x = loadPdb $idalt.pdb
-source sslinks
 set x box { $a $b $c }
 saveAmberParm x $idalt.parm7 foo.rst7
 quit
 EOF
 
-tleap -f tleap.in > tleap.out \
+$AMBERCLASSICHOME/bin/tleap -f tleap.in > tleap.out \
    || { echo "  tleap:  Program error"; exit 1; }
 /bin/rm tleap.in
 
