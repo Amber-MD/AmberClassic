@@ -10,6 +10,7 @@ serial:
 	@cd msander && $(MAKE) msander.LES
 	@cd xray && $(MAKE) xray
 	@cd addles && $(MAKE) addles
+	@cd cifparse && $(MAKE) libcifparse
 	@cd leap && $(MAKE) leap
 	@cd sff && $(MAKE) libsff
 	@cd nabc && $(MAKE) nabc

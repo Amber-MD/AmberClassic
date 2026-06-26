@@ -34,7 +34,7 @@ lex.cifp.c: cifparse.l
 	@echo "[CIFPARSE]  FLEX $<"
 	$(VB)flex -Pcifp cifparse.l
 
-install:  $(LIBDIR)/libcifparse.a
+libcifparse:  $(LIBDIR)/libcifparse.a
 
 clean:
 	/bin/rm -f *.o  cifp.output
