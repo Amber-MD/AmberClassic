@@ -13,13 +13,13 @@ typedef struct _CIFCATEGORY {
     NdbCifCategoryFormat *pCategory; // lookup
     struct {
         char *name, *alt_name;
-        BOOL bOptional;
+        bool bOptional;
         int iColumn;                 // lookup
     } field[CIF_MAXCOLUMNS];
 } CIFCATEGORYt;
 
-static BOOL
-zbCifLookup(CIFCATEGORYt *cifCat, int iBlock, BOOL bAltAtomName) {
+static bool
+zbCifLookup(CIFCATEGORYt *cifCat, int iBlock, bool bAltAtomName) {
     int iCategory = get_category_index(iBlock, cifCat->sName);
     if (iCategory < 0) {
         VPFATAL("CIF data block %s does not contain data category %s\n",
@@ -53,8 +53,8 @@ void
 CifReadFile( PDBREADt *prPRead )
 {
 int             iPdbSequence; // previous resSeq
-BOOL            bLastReadPdbRecordWasTer = FALSE;
-BOOL            bNewChain = TRUE, bNewRes;
+bool            bLastReadPdbRecordWasTer = FALSE;
+bool            bNewChain = TRUE, bNewRes;
 RESIDUENAMEt    rnName;
 ATOMNAMEt       anAtom;
 int             iTerm, iLast, iSerialNumMax=0;
@@ -181,9 +181,12 @@ CIFCATEGORYt cifAtoms = {
         if (iCurrentModel) {
             if (!GDefaults.iPdbReadModel) GDefaults.iPdbReadModel = iCurrentModel;
             if (GDefaults.iPdbReadModel > 0 && GDefaults.iPdbReadModel != iCurrentModel) continue;
-            if (GDefaults.iPdbReadModel < 0 && c2ChainID[0]==' ') { // FIXME alternate chainId method?
-                int j = iCurrentModel-1;
-                if (j < CHAINID_LIST_LEN) c2ChainID[0] = GsChainIdList[j];
+            if (GDefaults.iPdbReadModel < 0) {
+                if (c2ChainID[0]==' ' && iCurrentModel <= CHAINID_LIST_LEN) {
+                    c2ChainID[0] = GsChainIdList[iCurrentModel-1];
+                } else {
+                    VPFATAL("iPDB_Read_Model < 0: Unable to relabel MODEL=%d ChainID='%s'\n",iCurrentModel, c2ChainID);
+                }
             }
         }
 

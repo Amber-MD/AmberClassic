@@ -65,11 +65,11 @@ typedef	struct	{
  *      Global variables
  */
 
-static	BOOL    SbIncludeAtomNumberInName = FALSE;
-static	BOOL    SbIncludeAtomTypeInName = FALSE;
-static	BOOL    SbPrintEnergy = FALSE;
-static	BOOL	SbIgnoreNonbonds = FALSE;
-static	BOOL	SbPrintNumbers = FALSE;
+static	bool    SbIncludeAtomNumberInName = FALSE;
+static	bool    SbIncludeAtomTypeInName = FALSE;
+static	bool    SbPrintEnergy = FALSE;
+static	bool	SbIgnoreNonbonds = FALSE;
+static	bool	SbPrintNumbers = FALSE;
 
 int             ntotat, ntypes, nbonh, nbona, ntheth, ntheta, nphih, nphia;
 int             jhparm, jparm, next, ntotrs, mbona, mtheta, mphia, mumbnd;

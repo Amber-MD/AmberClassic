@@ -55,14 +55,14 @@
 
 #define NOSHELL         999999.0
 
-extern BOOL     bToolGeometricCenter( OBJEKT oObjekt, VECTOR *vPCenter );
+extern bool     bToolGeometricCenter( OBJEKT oObjekt, VECTOR *vPCenter );
 extern int      iToolDistanceSearch( CONTAINER cCont, double dCloseness, 
-                        BOOL bAbsoluteDistance, int iOperation );
+                        bool bAbsoluteDistance, int iOperation );
 extern LIST     lToolListOfResidues( UNIT uUnit, LIST lResidues );
-extern void     ToolCenterUnitByRadii( UNIT uUnit, BOOL bOrient );
+extern void     ToolCenterUnitByRadii( UNIT uUnit, bool bOrient );
 extern void     ToolInitSolventPotential( UNIT uUnit, VARARRAY vaSolvent,
                         int *iPMinPotRes, int *iPMaxPotRes );
-extern void     ToolOctBoxCheck( UNIT uSolute, double *dPBuf, BOOL bMsg, BOOL bIsotropic );
+extern void     ToolOctBoxCheck( UNIT uSolute, double *dPBuf, bool bMsg, bool bIsotropic );
 extern void     ToolOrientPrincipleAxisAlongCoordinateAxis( UNIT uUnit );
 extern void     ToolReplaceSolvent( UNIT uUnit, VARARRAY vaSolvent, int iSolv,
                         UNIT uIon, double dCharge, 
@@ -71,8 +71,8 @@ extern void     ToolSanityCheckBox( UNIT uUnit );
 extern UNIT     zToolSetupSolvent( UNIT uSolvent );
 extern void     zToolSolvateAndShell( UNIT uSolute, UNIT uSolvent,
                         double dXW, double dYW, double dZW, double dCloseness,
-                        double dFarness, BOOL bShell, BOOL bClip, BOOL bOct,
-                        BOOL bIsotropic );
+                        double dFarness, bool bShell, bool bClip, bool bOct,
+                        bool bIsotropic );
 extern void     ToolSolvateCell( UNIT uSolute, UNIT uSolvent, double dCloseness);
 extern void     BuildFractionalTransforms( UNIT uUnit, MATRIX M, MATRIX Mi );
 

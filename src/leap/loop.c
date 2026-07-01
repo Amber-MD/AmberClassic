@@ -53,11 +53,12 @@
  *                     sort by solvent_category, molecule_number, Sequence
  *                     where solvent_category  0: non solvent, 1: RESTYPESOLVENT 2:RESIDUEINCAP
  *                     and molecule number stored in residue iTemp
+ *                     sort function: iLoopParmOrder()
  *
  *              MOLECULES, RESIDUES, ATOMS,
  *              CONTAINERS, INTERNALS = depth-first all matching objects
  *                                   
- *              BONDS, ANGLES, PROPERS, IMPROPERS, C4Pairwise = loops over 
+ *              BONDS, ANGLES, PROPERS, IMPROPERS = loops over 
  *                      these objects stored in atoms
  *
  *
@@ -119,7 +120,7 @@ if ( iObjectType(Ov) == LISTid ) \
  *      set as set in fVisibleFlagsOn and
  *      ALL the same flags reset as SET in fVisibleFlagsOff.
  */
-static BOOL
+static bool
 bLoopAtomVisible( LOOP *lPLoop, ATOM aAtom )
 {
 FLAGS           fFlags;
@@ -171,8 +172,8 @@ FLAGS           fFlags;
  *      has ALL of the same flags set as set in fVisibleFlagsOn and
  *      ALL the same flags reset as SET in fVisibleFlagsOff.
  */
-static BOOL
-bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, BOOL *bPSeenBefore )
+static bool
+bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, bool *bPSeenBefore )
 {
     *bPSeenBefore = FALSE;
     if ( iAtomSeenId(aAtom) == lPLoop->iSeenId ) {
@@ -201,7 +202,7 @@ bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, BOOL *bPSeenBefore )
  *
  *      Return TRUE if the loop is satisfied by the object.
  */
-static BOOL
+static bool
 bLoopSatisfiedBy( LOOP *lPLoop, OBJEKT oObject )
 {
 int             iGoal;
@@ -258,12 +259,12 @@ int             i;
  *      If there is such a thing then place information in the loop
  *      so that it may be found again.
  */
-static BOOL
+static bool
 bNextObjectInAtom( LOOP *lPLoop )
 {
 CONTAINER       cCont;
 ATOM            aAtom1, aAtom2, aAtom3;
-BOOL            bDone, bAllowDuplicates;
+bool            bDone, bAllowDuplicates;
 
     cCont = (CONTAINER)cCurLoopOver(lPLoop);
 
@@ -298,25 +299,6 @@ BOOL            bDone, bAllowDuplicates;
                     lPLoop->iIndex0++;
                 }
                 break;
-
-		/* New for C4Pairwise */
-	case C4Pairwise:
-                while ( lPLoop->iIndex0 < iAtomC4Pairwise(cCont) ) {
-                    if ( (iAtomId(cCont) <
-                iAtomId(aAtomC4Pairwise(cCont,lPLoop->iIndex0))) ||
-                          bAllowDuplicates ) {
-                        lPLoop->oaObj[0] = (OBJEKT)cCont;
-                        lPLoop->oaObj[1] = (OBJEKT)
-                                aAtomC4Pairwise(cCont,lPLoop->iIndex0);
-                        lPLoop->daC4Pairwise = 
-                                dAtomC4Pairwise(cCont, lPLoop->iIndex0); 
-                        lPLoop->iIndex0++;
-                        return(TRUE);
-                    }
-                    lPLoop->iIndex0++;
-                }
-                break;
-
 
 			/* When LOOPing over ANGLES, use iIndex0 and    */
                         /* iIndex1 as the bond angle indices.           */
@@ -519,8 +501,8 @@ iLoopParmOrder(const void *A, const void *B)
         ATOM aA = (ATOM)oA;
         ATOM aB = (ATOM)oB;
         // Check if imaging atom this way because RESIDUEIMAGEATOM flag never implemented
-        BOOL bImagingA = aResidueImagingAtom(cContainerWithin(aA)) == aA;
-        BOOL bImagingB = aResidueImagingAtom(cContainerWithin(aB)) == aB;
+        bool bImagingA = aResidueImagingAtom(cContainerWithin(aA)) == aA;
+        bool bImagingB = aResidueImagingAtom(cContainerWithin(aB)) == aB;
         if (bImagingA && !bImagingB) return -1;
         if (bImagingB && !bImagingA) return 1;
     } else if (iObjectType(oA) == RESIDUEid) {
@@ -533,9 +515,9 @@ iLoopParmOrder(const void *A, const void *B)
                 ((cResidueType(rB) == RESTYPESOLVENT) ? 1 : 0);
         if (iSolA < iSolB) return -1;
         else if (iSolA > iSolB) return 1;
-        // RESIDUE.iTemp MUST BE labelled with the molecule number
-        if (rA->iTemp < rB->iTemp) return -1;
-        if (rA->iTemp > rB->iTemp) return 1;
+        // RESIDUE.iMolecule MUST BE labelled with the molecule number
+        if (rA->iMolecule < rB->iMolecule) return -1;
+        if (rA->iMolecule > rB->iMolecule) return 1;
     } else if (iObjectType(oA) == UNITid) {
         // non-residues come last
         return 1;
@@ -657,7 +639,7 @@ CONTAINER	cTemp;
 	    TESTMEMORY();
             if ( iGoal == DIRECTCONTENTSBYSEQNUM )
                 qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER), iLoopContainerMatch );
-            else
+            else /* DIRECTCONTENTSPARMORDER */
                 qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER), iLoopParmOrder );
 	    TESTMEMORY();
                 /* Create the sorted linked list */
@@ -709,7 +691,7 @@ oNext( LOOP *lPLoop )
 OBJEKT                  oObject;
 int                     iGoal, i;
 LISTLOOP                llPLoop;
-BOOL                    bSeenBefore;
+bool                    bSeenBefore;
 ATOM                    aPrev, aBond;
 
 		/* At the end of the function, there is code */

@@ -1,5 +1,6 @@
 #ifndef DEFAULTS_H
 # define DEFAULTS_H
+#include "objekt.h"
 
 typedef struct {
 	double	dDSearchDistance;
@@ -35,21 +36,36 @@ typedef struct {
         int     iPdbIgnoreNonConnect;
         int     iPdbReadModel;
         int     iPdbConvertResName;
-        BOOL    bPdbAutoMatch;
-        BOOL    bPdbAutoLink;
-        BOOL    bPdbAutoLoadRes;
-        BOOL    bPdbUseLinkRecords;
-        BOOL    bPdbUseConect;
-        BOOL    bPdbLinkIons;
-        BOOL    bPdbResetChainID;
-        BOOL    bPdbExpandBioMt;
-        BOOL    bPdbExpandNCSMt;
-        BOOL    bPdbExpandSymm;
-        BOOL    bCIFReadAuth;
+        bool    bPrmtopNetcdf;
+        bool    bPdbAutoMatch;
+        bool    bPdbAutoLink;
+        bool    bPdbAutoLoadRes;
+        bool    bPdbUseLinkRecords;
+        bool    bPdbUseConect;
+        bool    bPdbLinkIons;
+        bool    bPdbResetChainID;
+        bool    bPdbExpandBioMt;
+        bool    bPdbExpandNCSMt;
+        bool    bPdbExpandSymm;
+        bool    bCIFReadAuth;
         char    cPdbAltLocSelect;
         STRING  sPdbPatchFilename;
 } defaultstruct ;
 
 extern defaultstruct GDefaults;
+
+extern void InitializeDefaults(void);
+extern OBJEKT SetDefault(char *sParam, OBJEKT oValue);
+extern void PrintDefaultSettings(char *cPParam);
+
+extern char *PBRadii_options[], *PBRadii_optionDesc[];
+
+#define GBPARM_BONDII 0
+#define GBPARM_AMBER6 1
+#define GBPARM_MBONDI 2
+#define GBPARM_MBONDI2 6
+#define GBPARM_PARSE 7
+#define GBPARM_MBONDI3 8
+
 
 #endif

@@ -129,13 +129,9 @@
 #include        "elements.h"
 
 int     iMemDebug = 0;
-int     iC4count = 0; //NewT
-double  daC4Type[16]; //NewT
-char    sA[8][16], sB[8][16]; //NewT
 
 extern DICTIONARY       GdVariables;
-extern BOOL             bCmdDeleteObj;
-
+extern bool             bCmdDeleteObj;
 
 #define ATOMSINBOND     2
 #define ATOMSINANGLE    3
@@ -175,7 +171,7 @@ void SelectRelaxInFramework(UNIT uUnit, MINIMIZER mMinimizer);
  *
  *      See 'bCmdGoodArguments' for a description of the type characters.
  */
-static  BOOL
+static  bool
 bCmdMatchTypes( OBJEKT oObj, char **sPTypes, char *sNeedType, int *iPCount )
 {
 char    *sTemp;
@@ -294,7 +290,7 @@ char    *sTemp;
  *      allowed option sets, or possibly have a marker in sTypes
  *      to indicate "option liat allowed to end here"
  */
-static  BOOL
+static  bool
 bCmdGoodArguments( char *sCmd, int iArgCount, ASSOC aaArgs[], char *sTypes )
 {
 int             i;
@@ -1351,87 +1347,6 @@ DONE:
 }
 
 
-
-/*
- *      oCmd_addC4Pairwise
- *
- *      Newly Added Commands for Pairwise C4 (2020)
- *
- *      Create a pairwise C4 interaction between two atoms.
- *
- *      Arguments:
- *              [1]     - ATOM aA
- *              [2]     - ATOM aB
- *      option  [3]     - float C4 parameter between atoms.
- * *
- *
- *
-*/
-
-OBJEKT
-oCmd_addC4Pairwise( int iArgCount, ASSOC aaArgs[] )
-{
-  ATOM            aA, aB;
-  double          daC4Pairwise;
-  //char            *sCmd = "addC4Pairwise";
-
-  aA = (ATOM)oAssocObject(aaArgs[0]);
-  aB = (ATOM)oAssocObject(aaArgs[1]);
-  daC4Pairwise = dODouble( oAssocObject(aaArgs[2]) ) ;
-
-  // Find the command that adds 12-6
-  // Probably from atom.c, need to modify atom class
-  // add something similar to aaBond to atom class
-  AtomAddC4Pairwise( aA, aB, daC4Pairwise );
-  return(NULL);
-}
-
-
-/*      NewT
- *
- *      oCmd_addC4Type
- *
- *      Newly Added Commands for Atom-type-speific C4 (2021)
- *
- *      Create C4 interactions between two atom types.
- *
- *      Arguments:
-                [1]     - UNIT uUnit
- *              [2]     - char *sA
- *              [3]     - char *sB
- *      option  [4]     - float C4 parameter between two types.
- * *
- *
- *
-*/
-
-// FIXME: this routine does nothing -- JMK
-OBJEKT
-oCmd_addC4Type( int iArgCount, ASSOC aaArgs[] )
-{
-#if 0 // FIXME: dead code
-  UNIT            uUnit;
-  char            *sCmd = "addC4Type";
-  if (iObjectType( oAssocObject( aaArgs[0] )) == UNITid)
-  {
-    uUnit = (UNIT)oAssocObject(aaArgs[0]); // This should be the final one
-    //sA[iC4count] = sOString( oAssocObject(aaArgs[1]) );
-    strcpy(sA[iC4count], sOString(oAssocObject(aaArgs[1])) );
-    //sB[iC4count] = sOString( oAssocObject(aaArgs[2]) );
-    strcpy(sB[iC4count], sOString(oAssocObject(aaArgs[2])) );
-    daC4Type[iC4count] = dODouble( oAssocObject(aaArgs[3]) ) ;
-    iC4count++;
-    // VP0("sA first is %s\n", sA[0]); // C4TypeDebug
-    // Need to think about how this function will work
-    //VP0("%s %s %f\n", sA, sB, daC4Type); // just for testing
-    //UnitSaveC4Type( uUnit, sA, sB, daC4Type ); // Define this in unit
-    //UnitIOSaveC4Type( uUnit, sA, sB, daC4Type );
-    return(NULL);
-  }
-#endif
-  return(NULL);
-}
-
 /*
  *      oCmd_deleteBond
  *
@@ -1728,20 +1643,6 @@ char            *sCmd = "loadAmberPrep";
     return(NULL);
 }
 
-static BOOL
-zbMatchesParmNNDat(const char *s) {
-    size_t len = strlen(s);
-    // Minimum length: "parm" (4) + 2 digits + ".dat" (4) = 9
-    if (len < 9) return FALSE;
-    // Check prefix "parm"
-    if (strncmp(s, "parm", 4) != 0) return FALSE;
-    // Check next two characters are digits
-    if (!isdigit((unsigned char)s[4]) || !isdigit((unsigned char)s[5])) return FALSE;
-    // Check suffix "dat"
-    if (strcmp(s + len - 4, ".dat") != 0) return FALSE;
-    return TRUE;
-}
-
 /*
  *      oCmd_loadAmberParams
  *
@@ -1760,41 +1661,64 @@ OBJEKT
 oCmd_loadAmberParams( int iArgCount, ASSOC aaArgs[] )
 {
 PARMSET         psParms;
-char            *sFile;
+STRING          sFile;
 FILE            *fIn;
 char            *sUsage =
                   "usage:  <variable> = loadAmberParams <filename> \n";
 
 
+/*
+ *   nasty, special kludge to prevent loading parm10 more than once;
+ *      This is not generalizable....
+ */
+static          int parm10_loaded = 0;
+static          int parm99_loaded = 0;
+static          int parm15_loaded = 0;
+static          char parm10[] = "parm10.dat";
+static          char parm99[] = "parm99.dat";
+static          char parm15[] = "parm15";
+
     if ( !bCmdGoodArguments( "loadAmberParams", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT("%s",sUsage );
+        VPFATALDELAYEDEXIT( sUsage );
         return(NULL);
     }
-    sFile = sOString(oAssocObject(aaArgs[0]));
-    char *start1 = strchr(sFile,'/');
-    if (!start1) start1 = sFile;
-    char *cPParmNNFilename = NULL;
-    PARMLIB_DEFAULT_LOOP_ALL( psParms ) {
-        char *start2 = strchr(psParms->sFname,'/');
-        if (!start2) start2 = psParms->sFname;
-        if (!strcmp(start1,start2)) {
-            VPNOTE("Skipping %s: already loaded\n", sFile );
+    strcpy( sFile, sOString(oAssocObject(aaArgs[0])) );
+
+    if( strstr( sFile, parm10 ) ) {
+        parm10_loaded += 1;
+        if( parm10_loaded > 1 ){
+            VPNOTE( "Skipping %s: already loaded\n", sFile );
+            parm10_loaded -= 1;
             return(NULL);
         }
-        if (zbMatchesParmNNDat(start2)) {
-            cPParmNNFilename = psParms->sFname;
+    }
+    if( strstr( sFile, parm99 ) ) {
+        parm99_loaded += 1;
+        if( parm99_loaded > 1 ){
+            VPNOTE( "Skipping %s: already loaded\n", sFile );
+            parm99_loaded -= 1;
+            return(NULL);
         }
     }
-    if (zbMatchesParmNNDat(start1) && cPParmNNFilename) {
-        VPNOTE("Refusing to load %s because %s is already loaded\n", sFile, cPParmNNFilename );
-        VPFATALEXIT("Cannot load more than one parmset in the form: parmNN*.dat\n"
-                "Attempted to load: %s\n"
-                "Aready loaded: %s\n", sFile, cPParmNNFilename );
+    if( strstr( sFile, parm15 ) ) {
+        parm15_loaded += 1;
+        if( parm15_loaded > 1 ){
+            VPNOTE( "Skipping %s: already loaded\n", sFile );
+            parm15_loaded -= 1;
+            return(NULL);
+        }
     }
 
     fIn = FOPENCOMPLAIN( sFile, "r" );
-    if ( fIn == NULL )
+    if ( fIn == NULL ) 
         return(NULL);
+
+    if( parm99_loaded + parm15_loaded + parm10_loaded > 1 ){
+        VPFATALEXIT( "Cannot load more than one of parm99/10/15.dat\n"
+                "If you are running interactively then you should save your work,"
+                "\nquit LEaP, and retry being careful to load only one parm of"
+                " above.\n" );
+    }
 
     VP0("Loading parameters: %s\n", GsBasicsFullName );
     psParms = psAmberReadParmSet( fIn, sFile );
@@ -1803,11 +1727,10 @@ char            *sUsage =
         ParmLibAddParmSet( GplAllParameters, psParms );
         ParmLibDefineDefault( GplAllParameters );
     } else
-        VPNOTE("-- no parameters loaded" );
+        VPNOTE( "-- no parameters loaded" );
 
     return((OBJEKT)psParms);
 }
-
 
 
 /*
@@ -1957,7 +1880,7 @@ double          dCloseness = 1.0, daBuffer[3];
 ASSOC           aAss;
 LISTLOOP        llNumbers;
 int             i, iInitialSize, iFinalSize;
-BOOL            bIsotropic = FALSE;
+bool            bIsotropic = FALSE;
 char            *sCmd = "solvateBox";
 char            *sUsage =
                  "usage:  solvateBox <solute> <solvent> <buffer> [iso] [closeness]\n";
@@ -2097,21 +2020,14 @@ char            *sUsage =
 /*
  *      oCmd_solvateBox
  *
- *      Author: Christian Schafmeister (1991)
+ *      Author: Juno Krahn (2026)
  *
  *      Solvate the UNIT [0] within copies of a box of SOLVENT.
  *
  *      Arguments:
  *              [0] -   Unit to add solvent to.
  *              [1] -   Unit with solvent.
- *              [2] -   LIST with ( x, y, z ) distances or
- *                      xyz, the closest the wall of the solvent box
- *                      can come to the smallest box which contains
- *                      the entire unit that is centered on the
- *                      origin.  This is called the BufferZone.
- *                      Or a single ODOUBLE when x,y,z distances are the
- *                      same.
- *      Option  [3] -   ODOUBLE with closeness parameter.
+ *      Option  [2] -   ODOUBLE with closeness parameter.
  */
 OBJEKT
 oCmd_solvateCell( int iArgCount, ASSOC aaArgs[] )
@@ -2119,10 +2035,10 @@ oCmd_solvateCell( int iArgCount, ASSOC aaArgs[] )
 UNIT            uSolvent, uSolute;
 double          dCloseness = 1.0;
 int             iInitialSize, iFinalSize;
-BOOL            bUsage;
-char            *sCmd = "solvateBox";
+bool            bUsage;
+char            *sCmd = "solvateCell";
 char            *sUsage =
-                 "usage:  solvateBox <solute> <solvent> [closeness]\n";
+                 "usage:  \n";
 
     if (iArgCount == 2)
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u" );
@@ -2203,7 +2119,7 @@ double          dCloseness = 1.0, daBuffer[4];
 ASSOC           aAss;
 LISTLOOP        llNumbers;
 int             i, iInitialSize, iFinalSize;
-BOOL            bIsotropic = TRUE;
+bool            bIsotropic = TRUE;
 char            *sCmd = "solvateOct";
 char            *sUsage =
                  "usage:  solvateOct <solute> <solvent> <buffer> [aniso] [closeness]\n";
@@ -2392,7 +2308,7 @@ double          dCloseness = 1.0, daBuffer[3];
 ASSOC           aAss;
 LISTLOOP        llNumbers;
 int             i, iInitialSize, iFinalSize;
-BOOL            bIsotropic = FALSE;
+bool            bIsotropic = FALSE;
 char            *sCmd = "solvateDontClip";
 char            *sUsage =
                  "usage:  solvateDontClip <solute> <solvent> <buffer> [closeness]\n";
@@ -2787,7 +2703,7 @@ UNIT            uUnit;
 PARMSET         psParmSet;
 char            *sCmd = "check";
 double          dCloseness = 1.5;
-BOOL            bAbsoluteDist = TRUE;
+bool            bAbsoluteDist = TRUE;
     switch ( iArgCount ) {
         case 1:
             if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umra" )) {
@@ -2838,7 +2754,6 @@ BOOL            bAbsoluteDist = TRUE;
     if ( iObjectType( oAssocObject( aaArgs[0] )) == UNITid ) {
         VP0("Checking parameters for unit '%s'.\n", sAssocName( aaArgs[0] ));
         uUnit = (UNIT)oAssocObject( aaArgs[0] );
-        //UnitSaveC4Type( uUnit, "sA", "sB", 0.1 ); //NewTdebug
         if ( iArgCount == 2 ) {
             if ( iObjectType(oAssocObject( aaArgs[1] )) == OSTRINGid ) {
                 VP0("Creating empty parmset %s\n", sAssocName( aaArgs[1] ) );
@@ -2908,106 +2823,6 @@ char            *sCmd = "get";
  *              [1] -  OSTRING with attribute to modify.
  *              [2] -  OBJEKT new value of attribute.
  */
-typedef struct {
-    int  iType; // B=bool, D=double, I=integer, S=string-enum
-    char *sNameLower, *sName;
-    void *pValue;
-    union {
-        double real;
-        int integer;
-    } defval; // integer for boolean, character, and string-enum types as well
-    // direct string default (currently) is always empty. If this changes, may need: char *defval.string
-    char **options;    // setting tokens
-    char **optionDesc; // full descriptive name
-} DefaultSetting;
-
-static char opt_null[]="null";
-static char *PBRadii_options[] =
-     {"bondi", "amber6", "mbondi", opt_null /*"pbamber"*/ ,opt_null,opt_null, "mbondi2", "parse", "mbondi3", NULL};
-static char *PBRadii_optionDesc[] =
-     {"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii","","","",
-       "H(N)-modified Bondi radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
-static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
-static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
-static char *PdbConvertResname_options[] = {"none","keep","variant","standard",NULL};
-static char *PdbConvertResname_optionDesc[] = {"PdbResMap","Retain all names",
-                                      "Variant names","Standard names",NULL };
-
-// NOTE: uninitialzed values get zero, and most defaults are zero
-static DefaultSetting
-zSDefaultSettings[] = {
-    { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
-    { 'B', "nocenter", "NoCenter", &GDefaults.nocenter },
-    { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.reorder_residues, .defval.integer = 1 },
-    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.reverse_lists },
-    //{ 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.iOldPrmtopFormat },
-    { 'B', "gibbs", "Gibbs", &GDefaults.iGibbs },
-    { 'B', "hybrid36", "Hybrid36", &GDefaults.bPdbHybrid36, .defval.integer=1 },
-    { 'B', "keep_chainid", "Keep_chainId", &GDefaults.bPdbKeepChainId },
-    { 'I', "pdbreadbiomt", "PdbReadBioMT", &GDefaults.iPdbReadBioMT },
-    { 'B', "charmm", "Charmm", &GDefaults.iCharmm },
-    { 'B', "flexiblewater", "FlexibleWater", &GDefaults.iFlexibleWater },
-    { 'B', "deleteextrapointangles", "DeleteExtraPointAngles", &GDefaults.iDeleteExtraPointAngles, .defval.integer=1 },
-    { 'S', "pbradii", "PB Radii", &GDefaults.iGBparm, .defval.integer=2,
-                .options = PBRadii_options, .optionDesc = PBRadii_optionDesc },
-    { 'D', "searchdistance", "SearchDistance", &GDefaults.dDSearchDistance, .defval.real=DEFAULT_DISTANCE_SEARCH },
-    { 'D', "gridspace", "GridSpace", &GDefaults.dGridSpace, .defval.real=1.0 },
-    { 'D', "shellextent", "ShellExtent", &GDefaults.dShellExtent, .defval.real=4.0 },
-    { 'D', "dipole_damp_factor", "Dipole Damping Factor", &GDefaults.dDipoleDampFactor },
-    { 'D', "scee", "SCEE 1-4 Scale Factor", &GDefaults.dSceeScaleFactor, .defval.real=1.2 },
-    { 'D', "scnb", "SCNB 1-4 Scale Factor", &GDefaults.dScnbScaleFactor, .defval.real=2.0 },
-    { 'B', "cmap", "CMAP", &GDefaults.iCMAP },
-    { 'I', "ipol", "IPOL", &GDefaults.iIPOL },
-    { 'S', "dielectric", "Dielectric", &GDefaults.iDielectricFlag, .defval.integer=DIEL_R2,
-               .options = Dielectric_options, .optionDesc = Dielectric_optionDesc },
-    { 'B', "residueimpropers", "ResidueImpropers", &GDefaults.iResidueImpropers },
-    { 'B', "pdb_auto_match","PDB_Auto_Match", &GDefaults.bPdbAutoMatch },
-    { 'B', "pdb_auto_link","PDB_Auto_Link", &GDefaults.bPdbAutoLink },
-    { 'D', "pdb_link_cutoff","PDB_Link_Cutoff", &GDefaults.dPdbLinkCovalentCutoff, .defval.real=1.2 },
-    { 'D', "pdb_crosslink_cutoff","PDB_CrossLink_Cutoff", &GDefaults.dPdbCrosslinkCovalentCutoff, .defval.real=1.1 },
-    { 'B', "pdb_auto_load","PDB_Auto_Load", &GDefaults.bPdbAutoLoadRes },
-    { 'C', "pdb_altloc","PDB_AltLoc", &GDefaults.cPdbAltLocSelect, .defval.integer = 'A' },
-    { 'B', "pdb_use_link","PDB_Use_LINK", &GDefaults.bPdbUseLinkRecords },
-    { 'B', "pdb_use_conect","PDB_Use_CONECT", &GDefaults.bPdbUseConect },
-    { 'B', "pdb_link_ions","PDB_Link_Ions", &GDefaults.bPdbLinkIons },
-    { 'B', "pdb_reset_chainids","PDB_Reset_ChainIds", &GDefaults.bPdbResetChainID },
-    { 'S', "pdb_convert_resname","PDB_Convert_ResName", &GDefaults.iPdbConvertResName,
-                                  .options = PdbConvertResname_options, .optionDesc = PdbConvertResname_optionDesc  },
-    { 'B', "pdb_ignore_nonconnect","PDB_Ignore_NonConnect", &GDefaults.iPdbIgnoreNonConnect },
-    { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
-    { 'B', "pdb_expand_biomt","PDB_Expand_BioMT", &GDefaults.bPdbExpandBioMt },
-    { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
-    { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },
-    { 'B', "cif_read_auth","CIF_Read_auth", &GDefaults.bCIFReadAuth, .defval.integer=1 },
-    { 'S', "pdb_patch_file","PDB_Patch_File", &GDefaults.sPdbPatchFilename },
-    { 0 }
-};
-
-void InitializeDefaults(void) {
-    for (int i=0; zSDefaultSettings[i].sName; i++) {
-        switch (zSDefaultSettings[i].iType) {
-            case 'B':
-                *((BOOL*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
-                break;
-            case 'I':
-                *((int*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
-                break;
-            case 'C':
-                *((char*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
-                break;
-            case 'D':
-                *((double*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.real;
-                break;
-            case 'S':
-                if (zSDefaultSettings[i].options)
-                    *((int*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
-                else
-                    (*((STRING*)zSDefaultSettings[i].pValue))[0] = 0;
-                break;
-        }
-    }
-}
-
 static void
 setUsage()
 {
@@ -3020,7 +2835,6 @@ oCmd_set( int iArgCount, ASSOC aaArgs[] )
 {
 LISTLOOP        llElements;
 ASSOC           aAssoc;
-int             iType, iOptIndex;
 char            *sString;
 char            *sCmd = "set";
 
@@ -3030,190 +2844,35 @@ char            *sCmd = "set";
         return(NULL);
     }
 
-    if ( iArgCount == 2 || iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
-        char *sParam;
-        STRING sParamLower;
-        OBJEKT oValue;
-        if (iArgCount == 2) {
-            sParam = sOString(oAssocObject(aaArgs[0]));
-            oValue = oAssocObject(aaArgs[1]);
-        } else {
-            /*
-             *  setting an 'environmental' default;
-             *      catch user attempt to reference non-existent unit
-             */
-            sString = sOString(oAssocObject(aaArgs[0]));
-            if (strchr(sString, '.')) {
-                    VPFATAL("%s: not a container (e.g. residue)\n", sString );
-                    setUsage();
-                    return(NULL);
-            }
-            StringLower( sString );
-            if ( strcmp( sString, "default" )) {
-                    VPFATAL("%s: expected 'default'\n", sString );
-                    setUsage();
-                    return(NULL);
-            }
-            /*
-            **  handle the default
-            */
-            if ( iObjectType(oAssocObject(aaArgs[1])) != OSTRINGid ) {
-                VPFATAL("%s: expected 'default <type> <value>'\n", sString );
+    if ( iArgCount == 2 ) {
+        return SetDefault(sOString(oAssocObject(aaArgs[0])), oAssocObject(aaArgs[1]));
+    } else if (iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
+        /*
+         *  setting an 'environmental' default;
+         *      catch user attempt to reference non-existent unit
+         */
+        sString = sOString(oAssocObject(aaArgs[0]));
+        if (strchr(sString, '.')) {
+                VPFATAL("%s: not a container (e.g. residue)\n", sString );
                 setUsage();
                 return(NULL);
-            }
-            sParam = sOString(oAssocObject(aaArgs[1]));
-            oValue = oAssocObject(aaArgs[2]);
         }
-        strcpy(sParamLower,sParam);
-        StringLower(sParamLower);
-        iOptIndex = -1;
-        for (int i=0; zSDefaultSettings[i].sName; i++) {
-            if (!strcmp(zSDefaultSettings[i].sNameLower,sParamLower) ||
-                // special case for scee, scnb
-                (sParamLower[0]=='s' && sParamLower[1]=='c' && !strncmp(zSDefaultSettings[i].sNameLower,sParamLower,4))) {
-                iOptIndex=i;
-                break;
-            }
+        StringLower( sString );
+        if ( strcmp( sString, "default" )) {
+                VPFATAL("%s: expected 'default'\n", sString );
+                setUsage();
+                return(NULL);
         }
-        if (iOptIndex < 0) {
-            VPFATAL("Default setting \"%s\" not found.\n",sParam);
-            return NULL;
-        }
-        iType = iObjectType(oValue);
-        double dValue = ( iType == ODOUBLEid ) ? dODouble(oValue) : 0.0;
-        double intpart;
-        modf(dValue, &intpart);
-        int iValue = (int)intpart;
-        int iOptionValue = -1;
-        char *sValue = NULL;
-        BOOL bValue = FALSE;
-        if (iType == OSTRINGid) {
-            sValue = sOString(oValue);
-            if (!strcmp("?",sValue)) {
-                OBJEKT oResult;
-                switch (zSDefaultSettings[iOptIndex].iType) {
-                case 'B':
-                    dValue = (double) *((BOOL*)zSDefaultSettings[iOptIndex].pValue);
-                    break;
-                case 'I':
-                    dValue = (double) *((int*)zSDefaultSettings[iOptIndex].pValue);
-                    break;
-                case 'D':
-                    dValue = *((double*)zSDefaultSettings[iOptIndex].pValue);
-                    break;
-                case 'C':
-                    oResult = (OBJEKT) oCreate(OSTRINGid);
-                    {
-                        char str[2];
-                        str[0] = *((char*)zSDefaultSettings[iOptIndex].pValue);
-                        str[1] = 0;
-                        OStringDefine( (OSTRING)oResult, strdup(str) );
-                    }
-                    return oResult;
-                    break;
-                case 'S':
-                    iValue = *((int*)zSDefaultSettings[iOptIndex].pValue);
-                    oResult = (OBJEKT) oCreate(OSTRINGid);
-                    OStringDefine( (OSTRING)oResult, zSDefaultSettings[iOptIndex].options[iValue] );
-                    return oResult;
-                    break;
-                }
-                oResult = (OBJEKT) oCreate(ODOUBLEid);
-                ODoubleSet( (ODOUBLE)oResult, dValue );
-                return oResult;
-            }
-        }
-
-        // Special case: IPOL can only be set once
-        if ( !strcmp( sParamLower,"ipol") && GDefaults.iIPOLset > 0 ) {
-            VPWARN("IPOL has already been set to %i in frcmod/parm.dat.\n",
-                            GDefaults.iIPOL);
-            VP0("Please change the setting in frcmod/parm.dat.\n");
+        /*
+        **  handle the default
+        */
+        if ( iObjectType(oAssocObject(aaArgs[1])) != OSTRINGid ) {
+            VPFATAL("%s: expected 'default <type> <value>'\n", sString );
+                setUsage();
             return(NULL);
         }
-
-
-        switch (zSDefaultSettings[iOptIndex].iType) {
-        case 'B':
-            if ( iType == OSTRINGid && (!strcasecmp( sValue, "on" ) || !strcasecmp(sValue,"true")))
-                bValue = TRUE;
-            else if ( iType == OSTRINGid && (!strcasecmp( sValue, "off" ) || !strcasecmp(sValue,"false")))
-                bValue = FALSE;
-            else if ( iType == ODOUBLEid && dValue != 0.0 )
-                bValue = TRUE;
-            else if ( iType == ODOUBLEid && dValue == 0.0 )
-                bValue = FALSE;
-            else {
-                VPFATAL("Set %s: value must be 'on'/'true'/1 or 'off'/'false'/0\n",zSDefaultSettings[iOptIndex].sName);
-                return NULL;
-            }
-            *((BOOL*)zSDefaultSettings[iOptIndex].pValue) = bValue;
-            break;
-        case 'D':
-            if ( iType != ODOUBLEid ) {
-                VPFATAL("Set %s: value must be a number\n",zSDefaultSettings[iOptIndex].sName);
-                return NULL;
-            }
-            if (dValue < 0.0) {
-                dValue = zSDefaultSettings[iOptIndex].defval.real;
-                VPWARN("%s: %s value must be greater than 0; resetting to %g\n", sCmd,
-                       zSDefaultSettings[iOptIndex].sName, dValue);
-            }
-            printf("Set value = %g\n",dValue);
-            *((double*)zSDefaultSettings[iOptIndex].pValue) = dValue;
-            break;
-        case 'I':
-            if ( iType != ODOUBLEid || dValue != (double)iValue ) {
-                VPFATAL("Set %s: value must be an integer\n",zSDefaultSettings[iOptIndex].sName);
-                return NULL;
-            }
-            if ( !strcmp( sParamLower, "ipol") && ( iValue < 0 || iValue > 4 ) ) {
-                 iValue = zSDefaultSettings[iOptIndex].defval.integer;
-                 VPWARN("Only IPOL = 0 to 4 is supported; resetting IPOL to %d.\n",iValue);
-            }
-            *((int*)zSDefaultSettings[iOptIndex].pValue) = iValue;
-            break;
-        case 'C':
-            if ( iType != OSTRINGid || (iType == OSTRINGid && strlen(sValue) != 1) ) {
-                VPFATAL("Set %s: value must be a single character\n",zSDefaultSettings[iOptIndex].sName);
-                return NULL;
-            }
-            *((char*)zSDefaultSettings[iOptIndex].pValue) = sValue[0];
-            break;
-        case 'S':
-            if ( iType != OSTRINGid) {
-                VPFATAL("Set %s: value must be an string\n",zSDefaultSettings[iOptIndex].sName);
-                return NULL;
-            }
-            // Can be raw string or named enum
-            if (zSDefaultSettings[iOptIndex].options) {
-                for (int i=0;zSDefaultSettings[iOptIndex].options[i];i++) {
-                    if (!strcasecmp(zSDefaultSettings[iOptIndex].options[i],sValue)) {
-                        iOptionValue = i;
-                        break;
-                    }
-                }
-                if (iOptionValue < 0) {
-                    STRING sLine;
-                    sprintf(sLine,"Set %s: value must be one of '%s'",
-                            zSDefaultSettings[iOptIndex].sName, zSDefaultSettings[iOptIndex].options[0]);
-                    for (int i=1;zSDefaultSettings[iOptIndex].options[i];i++) {
-                        sprintf(sLine+strlen(sLine),", '%s'",zSDefaultSettings[iOptIndex].options[i]);
-                    }
-                    VPFATAL("%s",sLine);
-                    return NULL;
-                }
-                *((int*)zSDefaultSettings[iOptIndex].pValue) = iOptionValue;
-                VP0("%s: Using %s\n", zSDefaultSettings[iOptIndex].sName,
-                        zSDefaultSettings[iOptIndex].optionDesc[iOptionValue]);
-            } else {
-                strcpy(*((STRING*)zSDefaultSettings[iOptIndex].pValue), sValue);
-            }
-            break;
-        }
-        return(NULL);
-    } // End of set default
+        return SetDefault(sOString(oAssocObject(aaArgs[1])), oAssocObject(aaArgs[2]));
+    }
 
     DisplayerAccumulateUpdates();
     if ( iObjectType(oAssocObject(aaArgs[0])) == LISTid ) {
@@ -3262,11 +2921,11 @@ oCmd_setBox( int iArgCount, ASSOC aaArgs[] )
 UNIT    uUnit;
 double  dX, dY, dZ, daBuffer[3];
 int     i;
-BOOL    bUsage;
+bool    bUsage;
 char    *sCmd = "setBox";
 char    *sUsage = "usage:  setBox <unit> vdw|centers [ clearance | <clearance_xyz_list> ]\n";
 char    *sOpt;
-BOOL    bVdw;
+bool    bVdw;
 
     if ( iArgCount == 2 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" );
@@ -3392,7 +3051,7 @@ OBJEKT
 oCmd_setCell( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
-BOOL    bUsage;
+bool    bUsage;
 char    *sCmd = "setCell";
 char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> | <beta> ]\n";
 
@@ -3425,37 +3084,6 @@ char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> |
     return(NULL);
 }
 
-
-void
-zPrintDefaultSetting(int index) {
-    VP0("%25s :    ",zSDefaultSettings[index].sName);
-    if (zSDefaultSettings[index].iType == 'B') {
-        VP0("%s\n", *((BOOL*)zSDefaultSettings[index].pValue) ?  "on/true" : "off/false");
-    } else if (zSDefaultSettings[index].iType == 'I') {
-        VP0("%i\n",*((int*)zSDefaultSettings[index].pValue));
-    } else if (zSDefaultSettings[index].iType == 'S') {
-        if (!zSDefaultSettings[index].optionDesc) {
-            VP0("\"%s\"\n", (char*)zSDefaultSettings[index].pValue);
-            return;
-        }
-        int ioption = *((int*)zSDefaultSettings[index].pValue);
-        // We loop only because list length is defined by NULL
-        for (int i=0;zSDefaultSettings[index].optionDesc[i]; i++) {
-            if (ioption == i) {
-                VP0("%s\n",zSDefaultSettings[index].optionDesc[ioption] );
-                return;
-            }
-        }
-        VP0("ERROR: Undfined otion index: %d\n",ioption );
-    } else if (zSDefaultSettings[index].iType == 'D') {
-        VP0("%lf\n",*((double*)zSDefaultSettings[index].pValue) );
-    } else if (zSDefaultSettings[index].iType == 'C') {
-        char c = *((char*)zSDefaultSettings[index].pValue);
-        if (c) VP0("'%c'\n",*((char*)zSDefaultSettings[index].pValue) );
-        else VP0("''\n");
-    }
-}
-
 /*
  * Show default variables
  *      Author: Yong Duan
@@ -3469,19 +3097,8 @@ char    *sCmd = "showDefault";
         VPFATALDELAYEDEXIT("usage:  showDefault [<parameter_name>]\n" );
         return(NULL);
     }
-    if ( iArgCount == 1 ) {
-        char *cPString = sOString(oAssocObject(aaArgs[0]));
-        for (int i=0;zSDefaultSettings[i].sName;i++) {
-            if (!strcasecmp(zSDefaultSettings[i].sName,cPString)) {
-                zPrintDefaultSetting(i);
-                return NULL;
-            }
-        }
-        VPWARN("Default parameter %s not found\n", cPString );
-    } else {
-        for (int i=0;zSDefaultSettings[i].sName;i++)
-            zPrintDefaultSetting(i);
-    }
+    if ( iArgCount == 1 ) PrintDefaultSettings(sOString(oAssocObject(aaArgs[0])));
+    else PrintDefaultSettings(NULL);
     return(NULL);
 }
 
@@ -3572,7 +3189,6 @@ OBJEKT
 oCmd_saveAmberParm( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
-FILE    *fOut;
 char    *sCmd = "saveAmberParm";
 
     VPTRACEENTER("oCmd_saveAmberParm" );
@@ -3581,25 +3197,16 @@ char    *sCmd = "saveAmberParm";
         VPFATALDELAYEDEXIT("usage:  saveAmberParm <unit> <topologyfile> <coordfile> \n" );
         return(NULL);
     }
-
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
-    if ( fOut == NULL ) {
-        VPFATALEXIT("%s: Could not open file: %s\n",
-                sCmd, sOString(oAssocObject(aaArgs[1])));
-        return(NULL);
-    }
     TurnOffDisplayerUpdates();
-    // VP0("sA first is %s\n", sA[0]); // C4TypeDebug
-    UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, FALSE, FALSE, FALSE, sA, sB, daC4Type, iC4count );   //NewT
+    UnitSaveAmberParmFile(uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
+                GplAllParameters, FALSE, FALSE, FALSE);
     TurnOnDisplayerUpdates();
 
-    fclose( fOut );
     return(NULL);
 }
 
@@ -3618,7 +3225,6 @@ OBJEKT
 oCmd_saveAmberParmNetCDF( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
-FILE    *fOut;
 char    *sCmd = "saveAmberParmNetCDF";
 
     VPTRACEENTER("oCmd_saveAmberParmNetCDF" );
@@ -3634,19 +3240,11 @@ char    *sCmd = "saveAmberParmNetCDF";
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
-    if ( fOut == NULL ) {
-        VPFATALEXIT("%s: Could not open file: %s\n",
-                sCmd, sOString(oAssocObject(aaArgs[1])));
-        return(NULL);
-    }
     TurnOffDisplayerUpdates();
-    UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, FALSE, FALSE, TRUE, sA, sB, daC4Type, iC4count); //NewT
-    // UnitSaveAmberNetcdf( uUnit, sOString(oAssocObject(aaArgs[2])) );
+    UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
+                GplAllParameters, FALSE, FALSE, TRUE);
     TurnOnDisplayerUpdates();
 
-    fclose( fOut );
     return(NULL);
 }
 
@@ -3664,7 +3262,6 @@ OBJEKT
 oCmd_saveAmberParmPol( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
-FILE    *fOut;
 char    *sCmd = "saveAmberParmPol";
 
     VPTRACEENTER("oCmd_saveAmberParmPol" );
@@ -3680,19 +3277,10 @@ char    *sCmd = "saveAmberParmPol";
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
-    if ( fOut == NULL ) {
-        VPFATALEXIT("%s: Could not open file: %s\n",
-                sCmd, sOString(oAssocObject(aaArgs[1])));
-        return(NULL);
-    }
-
     TurnOffDisplayerUpdates();
-    UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, TRUE, FALSE, FALSE, sA, sB, daC4Type, iC4count);  //NewT
+    UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
+                GplAllParameters, TRUE, FALSE, FALSE);
     TurnOnDisplayerUpdates();
-
-    fclose( fOut );
     return(NULL);
 }
 
@@ -3712,7 +3300,6 @@ OBJEKT
 oCmd_saveAmberParmPert( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
-FILE    *fOut;
 char    *sCmd = "saveAmberParmPert";
 
     VPTRACEENTER("oCmd_saveAmberParmPert" );
@@ -3728,19 +3315,11 @@ char    *sCmd = "saveAmberParmPert";
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
-    if ( fOut == NULL ) {
-        VPFATALEXIT("%s: Could not open file: %s\n",
-                        sCmd, sOString(oAssocObject(aaArgs[1])));
-        return(NULL);
-    }
-
     TurnOffDisplayerUpdates();
-    UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[1])),
-                GplAllParameters, FALSE, TRUE, FALSE, sA, sB, daC4Type, iC4count); //NewT
+    UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[1])),
+                GplAllParameters, FALSE, TRUE, FALSE);
     TurnOnDisplayerUpdates();
 
-    fclose( fOut );
     return(NULL);
 }
 
@@ -3758,7 +3337,6 @@ OBJEKT
 oCmd_saveAmberParmPolPert( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
-FILE    *fOut;
 char    *sCmd = "saveAmberParmPert";
 
     VPTRACEENTER("oCmd_saveAmberParmPolPert" );
@@ -3774,19 +3352,10 @@ char    *sCmd = "saveAmberParmPert";
         return(NULL);
     }
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
-    if ( fOut == NULL ) {
-        VPFATALEXIT("%s: Could not open file: %s\n",
-                        sCmd, sOString(oAssocObject(aaArgs[1])));
-        return(NULL);
-    }
-
     TurnOffDisplayerUpdates();
-    UnitSaveAmberParmFile( uUnit, fOut, sOString(oAssocObject(aaArgs[2])),
-                GplAllParameters, TRUE, TRUE, FALSE, sA, sB, daC4Type, iC4count); //NewT
+    UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
+                GplAllParameters, TRUE, TRUE, FALSE);
     TurnOnDisplayerUpdates();
-
-    fclose( fOut );
     return(NULL);
 }
 
@@ -4057,6 +3626,52 @@ ATOM            aAtom;
     return(NULL);
 }
 
+#include "selection.h"
+OBJEKT
+oCmd_selectMask( int iArgCount, ASSOC aaArgs[] )
+{
+    printf("String=%s\n",sOString(oAssocObject(aaArgs[1])));
+    if ( !bCmdGoodArguments( "selectMask", iArgCount, aaArgs, "u s" ) ) {
+        VPFATALDELAYEDEXIT("usage:  selectMask <unit> <string>\n" );
+        return(NULL);
+    }
+    UNIT uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    SELNODE selNode = selParseAtomMask(sOString(oAssocObject(aaArgs[1])));
+    VARARRAY vaAtoms = vaUnitEvalSelection(selNode, uUnit);
+    SelFree(selNode);
+    ATOM *aPAtom = PVAI( vaAtoms, ATOM, 0 );
+    int iNumAtoms = iVarArrayElementCount(vaAtoms);
+    for (int i=0; i<iNumAtoms; i++, aPAtom++) {
+        AtomSetFlags( *aPAtom, ATOMSELECTED );
+        STRING sTemp;
+        printf("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+    }
+    VarArrayDestroy(&vaAtoms);
+    return(NULL);
+}
+
+OBJEKT
+oCmd_deSelectMask( int iArgCount, ASSOC aaArgs[] )
+{
+    if ( !bCmdGoodArguments( "deSelectMask", iArgCount, aaArgs, "u s" ) ) {
+        VPFATALDELAYEDEXIT("usage:  deSelectMask <unit> <string>\n" );
+        return(NULL);
+    }
+    UNIT uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    SELNODE selNode = selParseAtomMask(sOString(oAssocObject(aaArgs[1])));
+    VARARRAY vaAtoms = vaUnitEvalSelection(selNode, uUnit);
+    SelFree(selNode);
+    ATOM *aPAtom = PVAI( vaAtoms, ATOM, 0 );
+    int iNumAtoms = iVarArrayElementCount(vaAtoms);
+    for (int i=0; i<iNumAtoms; i++, aPAtom++) {
+        AtomResetFlags( *aPAtom, ATOMSELECTED );
+        STRING sTemp;
+        printf("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+    }
+    VarArrayDestroy(&vaAtoms);
+    return(NULL);
+}
+
 /*
  *      oCmd_scaleCharges
  *
@@ -4088,6 +3703,46 @@ double          dScale;
         /* HACK - resetting charge without marking for update */
         dAtomCharge( aAtom ) *= dScale;
         dAtomPertCharge( aAtom ) *= dScale;
+    }
+    return(NULL);
+}
+
+/*
+ *      oCmd_scaleCharges
+ *
+ *      scale charges; useful for polar setup
+ */
+OBJEKT
+oCmd_scaleCoor( int iArgCount, ASSOC aaArgs[] )
+{
+OBJEKT          oOver;
+LOOP            lAtoms;
+ATOM            aAtom;
+double          dScale;
+
+    if ( !bCmdGoodArguments( "scaleCoor", iArgCount, aaArgs, "umral n" ) ) {
+        VPFATALDELAYEDEXIT("usage:  scaleObject <object> <scale_factor>\n" );
+        return(NULL);
+    }
+
+    oOver = oAssocObject(aaArgs[0]);
+    dScale = dODouble(oAssocObject(aaArgs[1]));
+
+    if ( iObjectType(oOver) == UNITid ) {
+        UNIT uUnit = (UNIT)oOver;
+        uUnit->dXWidth *= dScale;
+        uUnit->dYWidth *= dScale;
+        uUnit->dZWidth *= dScale;
+    }
+
+    lAtoms = lLoop( oOver, ATOMS );
+    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+        VECTOR vNewPosition = {
+            aAtom->vPosition.dX * dScale,
+            aAtom->vPosition.dY * dScale,
+            aAtom->vPosition.dZ * dScale
+        };
+        AtomSetPosition(aAtom, vNewPosition);
     }
     return(NULL);
 }
@@ -4320,8 +3975,8 @@ int             i, iAtomCount;
 UNIT            uUnit;
 ATOM            aaAtoms[4];
 RESTRAINT       rRest;
-BOOL            bGotOne;
-BOOL            bFound;
+bool            bGotOne;
+bool            bFound;
 char            *sCmd = "deleteRestraint";
 
     if ( iArgCount == 3 ) {
@@ -4436,7 +4091,7 @@ LOOP            lAtoms, lSpanning;
 UNIT            uUnit;
 ASSOC           aInternal, aOne;
 LISTLOOP        llInternals;
-BOOL            bSkipSubList;
+bool            bSkipSubList;
 LIST            lOne;
 char            *sCmd = "impose";
 
@@ -5344,7 +4999,7 @@ PARMSET         psSet;
     }
 
     VPTRACEENTER(__func__ );
-    int sumAtoms=0, sumBonds=0, sumC4Pairwise=0, sumAngles=0;
+    int sumAtoms=0, sumBonds=0, sumAngles=0;
     int sumTorsions=0, sumImpropers=0, sumHBonds=0, sumNBEdits=0;
     int nParmSets=0;
     // XXX: what is the differnece between GplAllParameters and GplDefaultParmLib ?
@@ -5352,7 +5007,6 @@ PARMSET         psSet;
     while ( bParmLibNextParmSet(GplAllParameters, &psSet) ) {
         int nAtoms =     iVarArrayElementCount(psSet->vaAtoms);
         int nBonds =     iVarArrayElementCount(psSet->vaBonds);
-        int nC4Pairwise =iVarArrayElementCount(psSet->vaC4Pairwise);
         int nAngles =    iVarArrayElementCount(psSet->vaAngles);
         int nTorsions =  iVarArrayElementCount(psSet->vaTorsions);
         int nImpropers = iVarArrayElementCount(psSet->vaImpropers);
@@ -5361,11 +5015,10 @@ PARMSET         psSet;
         nParmSets++;
         VP0("\nFilename: %s\n",psSet->sFname);
         VP0("Title: %s\n",psSet->sTitle);
-        VP0("Atoms:%d Bonds:%d C4Pairs:%d Angles:%d Tors:%d Impr:%d HBnds:%d NBFix:%d\n",
-                nAtoms, nBonds, nC4Pairwise, nAngles, nTorsions, nImpropers, nHBonds, nNBEdits);
+        VP0("Atoms:%d Bonds:%d Angles:%d Tors:%d Impr:%d HBnds:%d NBFix:%d\n",
+                nAtoms, nBonds, nAngles, nTorsions, nImpropers, nHBonds, nNBEdits);
         sumAtoms += nAtoms;
         sumBonds += nBonds;
-        sumC4Pairwise += nC4Pairwise;
         sumAngles += nAngles;
         sumTorsions += nTorsions;
         sumImpropers += nImpropers;
@@ -5373,8 +5026,8 @@ PARMSET         psSet;
         sumNBEdits += nNBEdits;
     }
     VP0("\nTotal ParmSets: %d\n"
-         "Atoms:%d Bonds:%d C4Pairs:%d Angles:%d Tors:%d Impr:%d HBnds:%d NBFix:%d\n",
-                nParmSets, sumAtoms, sumBonds, sumC4Pairwise, sumAngles,
+         "Atoms:%d Bonds:%d Angles:%d Tors:%d Impr:%d HBnds:%d NBFix:%d\n",
+                nParmSets, sumAtoms, sumBonds, sumAngles,
                 sumTorsions, sumImpropers, sumHBonds, sumNBEdits);
     return NULL;
 }    
@@ -5427,7 +5080,7 @@ int             iCount=0, iErrorCount=0;
         ATOM aHead = (ATOM)uUnit->aHead;
         ATOM aTail = (ATOM)uUnit->aTail;
         ATOM aAtom;
-        BOOL bNonAtoms=FALSE, bLongAtomName=FALSE, bMissingElements=FALSE;
+        bool bNonAtoms=FALSE, bLongAtomName=FALSE, bMissingElements=FALSE;
         LOOP lContents = lLoop( (OBJEKT)rRes, DIRECTCONTENTSBYSEQNUM );
         while ( (aAtom = (ATOM)oNext(&lContents)) ) {
             char *cPAtomName = sContainerName(aAtom);
@@ -5444,7 +5097,7 @@ int             iCount=0, iErrorCount=0;
         }
         if (bNonAtoms) sprintf(sErrors,"Contains non-Atoms(%c), ",iObjectType(uUnit));
         else sErrors[0]=0;
-        BOOL bMissingConnect01 = iContainerNumberOfChildren(rRes) > 1 &&
+        bool bMissingConnect01 = iContainerNumberOfChildren(rRes) > 1 &&
                    !(bResidueConnectUsed(rRes,0) && bResidueConnectUsed(rRes,1));
         if (bMissingConnect01) strcat(sErrors,"Missing Connect01, ");
         if (strlen(sEndFlags)>1) strcat(sErrors,"Mixed END flags, ");
@@ -5553,7 +5206,7 @@ oCmd_deleteOffLibEntry( int iArgCount, ASSOC aaArgs[] )
 {
 STRING          sFilename;
 LIBRARY         lLib;
-BOOL            bRemoved;
+bool            bRemoved;
 STRING          sEntry;
 char            *sCmd = "deleteOffLibEntry";
 
@@ -6702,7 +6355,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   ATOM            aAtom;
   VARARRAY        vaSolvent = NULL;
   ATOM*           aIons = NULL;
-  BOOL            bPlaceIon;
+  bool            bPlaceIon;
   int             counter = 0;
   int             iFailCounter = 0;
   double dIonDist;
@@ -7116,7 +6769,7 @@ oCmd_alias( int iArgCount, ASSOC aaArgs[] )
 STRING  sCommand;
 STRING  sAlias;
 ALIASt  aAlias, *PaAlias;
-BOOL    bOK;
+bool    bOK;
 int     iAliases, i;
 STRING  sPossible;
 HELP    hTemp;
@@ -7266,7 +6919,7 @@ char    *sCmd = "alias";
 }
 
 
-
+#if 0
 /*
  *      oCmd_update
  *
@@ -7341,7 +6994,7 @@ char            *sCmd = "update";
                             if ( iResidues > 1 ) {
                                 MESSAGE("Unit name matches but has more than 1 residue.\n"
                                 );
-                                goto NEXTRES1; // FIXME: Dictionary can never match twice! this is a waste JMK
+                                goto NEXTRES1;
                             }
                             rCopy = (RESIDUE)oCopy((OBJEKT)rNew );
                         }
@@ -7429,7 +7082,7 @@ NEXTRES2:       ;
     }
     return(NULL);
 }
-
+#endif
 
 /*
  *      oCmd_flip
@@ -7569,8 +7222,6 @@ COMMANDt        cCommands[] = {
 
         { "add",                oCmd_add },
         { "addH",               oCmd_addH },
-	{ "addC4Pairwise",	oCmd_addC4Pairwise }, //New
-        { "addC4Type",          oCmd_addC4Type }, //NewT
         { "addIons",            oCmd_addIons },
         { "addIons2",           oCmd_addIons2 },
         { "addIonSolv",         oCmd_addIonSolv },
@@ -7604,6 +7255,7 @@ COMMANDt        cCommands[] = {
         { "deleteRestraint",    oCmd_deleteRestraint },
         { "desc",               oCmd_describe },
         { "deSelect",           oCmd_deSelect },
+        { "deSelectMask",       oCmd_deSelectMask },
         { "displayPdbAtomMap",  oCmd_displayPdbAtomMap },
         { "displayPdbResMap",   oCmd_displayPdbResMap },
         { "edit",               oCmd_edit },
@@ -7646,7 +7298,9 @@ COMMANDt        cCommands[] = {
         { "saveOffParm",        oCmd_saveOffParm },
         { "savePdb",            oCmd_savePdb },
         { "scaleCharges",       oCmd_scaleCharges },
+        { "scaleCoor",          oCmd_scaleCoor },
         { "select",             oCmd_select },
+        { "selectMask",         oCmd_selectMask },
         { "sequence",           oCmd_sequence },
         { "set",                oCmd_set },
         { "setBox",             oCmd_setBox},

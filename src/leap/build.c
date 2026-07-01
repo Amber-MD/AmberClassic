@@ -744,11 +744,11 @@ ATOM		aAtom;
  *	and all ATOMs are SP2 or SP3 then build
  *	INTERNAL torsions for BENZENE or CYCLOHEXANE.
  */
-static BOOL
+static bool
 zbBuildTorsionInternalsForRingGroupMaybe( LIST lRingGroup )
 {
 int		iHybridization, i;
-BOOL		bAllSame;
+bool		bAllSame;
 ATOM		aAtom;
 ATOM		aaA[6];
 int		iKnown;
@@ -907,7 +907,7 @@ void
 BuildExternalsUsingFlags( LOOP *lPLoop, FLAGS fForSet, FLAGS fForReset,
 					FLAGS fSetFlags, FLAGS fResetFlags,
 					int *iPAddH, int *iPAddHeavy, 
-					int *iPAddUnk, BOOL bMsg )
+					int *iPAddUnk, bool bMsg )
 {
 ATOM	aAtom;
 STRING	sTemp;
@@ -1150,7 +1150,7 @@ BuildFixInternals( UNIT uUnit )
 INTERNAL        iaTorsions[MAXTORSIONSAROUNDBOND], iInt;
 int             iNextTorsion;
 double          dTorsion;
-BOOL            bFoundOne;
+bool            bFoundOne;
 LOOP            lBonds;
 ATOM            aAtom2, aAtom3;
 int             i;
@@ -1402,7 +1402,7 @@ MOLECULE        mMol;
  *	contains all of the ATOMs and changes the value of
  *	the INTERNAL to what the caller specified.
  */
-BOOL
+bool
 bBuildChangeInternalBond( CONTAINER cCont, char *sAtom1, char *sAtom2, 
 			double dValue )
 {
@@ -1450,7 +1450,7 @@ INTERNAL	iInt;
  *	contains all of the ATOMs and changes the value of
  *	the INTERNAL to what the caller specified.
  */
-BOOL
+bool
 bBuildChangeInternalAngle( CONTAINER cCont, 
 	char *sAtom1, char *sAtom2, char *sAtom3, double dValue )
 {
@@ -1502,7 +1502,7 @@ INTERNAL	iInt;
  *	around the central pair of atoms to make the torsion
  *	the caller requested the correct value.
  */
-BOOL
+bool
 bBuildChangeInternalTorsion( CONTAINER cCont, char *sAtom1, char *sAtom2,
 				char *sAtom3, char *sAtom4, double dValue )
 {
@@ -1579,7 +1579,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
 {
   LOOP lAtoms, lTemp;
   ATOM aAtom, aAtom1, aAtom2, aAtom3, aAtom4;
-  BOOL bM1, bM2, bM3, bM4, bOneMinimizedAtom;
+  bool bM1, bM2, bM3, bM4, bOneMinimizedAtom;
   double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0,dKt, dT0, dTkub, dRkub, dKp, dP0;
   double dScEE, dScNB;
   STRING sAtom1, sAtom2, sAtom3, sAtom4, sDesc;
@@ -1805,7 +1805,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
  */
 void
 BuildRotateAroundBondFromTo( CONTAINER cCont, ATOM aInv, ATOM aStart, 
-		double dRotate, BOOL bInRing )
+		double dRotate, bool bInRing )
 {
 MATRIX		mTransform;
 LOOP		lSpan;
@@ -1889,7 +1889,7 @@ INTERNAL	iFlipRing;
 VECTOR		vNew, vA, vB;
 VECTOR		vNormal;
 MATRIX		mTransform;
-BOOL		bPartOfRing;
+bool		bPartOfRing;
 
 	/* The ATOM must have at least 3 bonds and no more than 4 */
 

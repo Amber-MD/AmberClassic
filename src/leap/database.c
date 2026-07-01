@@ -296,7 +296,7 @@ WriteDataLine( DATABASE db, char *sLine )
  *	which occurs if end of file is hit or a new
  *	header line is hit.
  */
-static BOOL
+static bool
 zbDBReadLine( DATABASE db, char *sLine )
 {
     if ( !feof(db->fDataBase) ) {
@@ -324,7 +324,7 @@ zbDBReadLine( DATABASE db, char *sLine )
  *	which occurs if end of file is hit or a new
  *	header line is hit.
  */
-static BOOL
+static bool
 zbDBReadDataLine( DATABASE db, char *sLine )
 {
     if ( zbDBReadLine( db, sLine ) ) {
@@ -375,7 +375,7 @@ ENTRY   eEntry;
  *	Dont try to parse the table information.
  *
  */
-static BOOL
+static bool
 zbDBParseSimpleHeader( DATABASE db, char *sRawLine, char *cPName, int *iPType )
 {
 char		sLine[MAXDATALINELEN];
@@ -447,7 +447,7 @@ STRING		sModifier, sType;
  *
  *	Return TRUE if everything went alright, otherwise FALSE.
  */
-static BOOL
+static bool
 bScanDataBase( DATABASE db )
 {
 char            sRawLine[MAXDATALINELEN];
@@ -709,7 +709,7 @@ STRING          sTemp;
  *      Read the value from the database.
  *      The data type is determined by what is in eEntry.
  */
-static BOOL
+static bool
 zbDBGetValue( DATABASE db, int iType, int *iPLines, char *PBuffer, 
 		int iBufferInc )
 {
@@ -1035,7 +1035,7 @@ DATABASE
 dbDBRndOpen( char *sFileName, int iOpenMode )
 {
 DATABASE        db;
-BOOL		bExists;
+bool		bExists;
 char		cFirst;
 
                 /* Create the database and open the file */
@@ -1128,7 +1128,7 @@ char		cFirst;
  *      The entry will be removed when the file is compressed at the end.
  *
  */
-BOOL
+bool
 bDBRndDeleteEntry( DATABASE db, char *sOrgEntry )
 {
 ENTRY           eEntry;
@@ -1180,7 +1180,7 @@ STRING          sEntry;
  *	Return the next entry with the required prefix.
  *	Return FALSE if there are no more.
  */
-BOOL
+bool
 bDBRndNextEntryWithPrefix( DATABASE db, char *sEntry )
 {
 size_t		iLen;
@@ -1371,7 +1371,7 @@ DBSeqGoto( DATABASE db, long lPos )
  *	the type will be returned in *iPType, *iPLength will
  *	be set to LENGTH_NOT_KNOWN.
  */
-BOOL
+bool
 bDBGetType( DATABASE db, char *sOrgEntry, int *iPType, int *iPLength )
 {
 ENTRY           eEntry;
@@ -1425,7 +1425,7 @@ STRING          sEntry;
  *	return the name of the entry in sOrgEntry, and
  *	the number of lines in *iPLength.
  */
-BOOL
+bool
 bDBGetValue( DATABASE dbData, char *sOrgEntry, int *iPLength, GENP PBuffer, 
 		int iBufferInc )
 {
@@ -1543,7 +1543,7 @@ char		sLine[MAXDATALINELEN];
  *	the type will be returned in *iPType.  *iPLength
  *	will be set to LENGTH_NOT_KNOWN.
  */
-BOOL    
+bool    
 bDBGetTableType( DATABASE db, char *sOrgEntry, int *iPType, int *iPLength,
                         int *iPInt1Column, char *sInt1Name,
                         int *iPInt2Column, char *sInt2Name,
@@ -1752,7 +1752,7 @@ int             iIntCol, iDoubleCol, iStringCol, iColumn, iType;
  *      Return the contents of a table.
  */
 	/*VARARGS0*/
-BOOL
+bool
 bDBGetTable( DATABASE db, char *sOrgEntry, int *iPLength,
 		int iInt1Column, char *PInt1, int iInt1Skip,
 		int iInt2Column, char *PInt2, int iInt2Skip,

@@ -149,7 +149,7 @@ extern CONTAINER        cContainerCreate( int iType );
 extern void             ContainerDestroy( CONTAINER *cPContainer );
 extern void             ContainerDescribe( CONTAINER cContainer  ) ;
 extern void             ContainerAdd( CONTAINER cContainer, OBJEKT oObject );
-extern BOOL             bContainerRemove( CONTAINER cContainer, 
+extern bool             bContainerRemove( CONTAINER cContainer, 
                                 OBJEKT oObject );
 extern CONTAINER        cContainerDuplicate( CONTAINER cOld );
 extern void             ContainerResetPointers( CONTAINER cContainer );
@@ -181,7 +181,7 @@ extern char             *sContainerFullDescriptor( CONTAINER cCont,
                                 char *sFullDesc );
 extern void             ContainerCheck( CONTAINER cCont, int *iPErrors, 
                                 int *iPWarnings );
-extern BOOL             bContainerContainedBy( CONTAINER cIn, CONTAINER cOut );
+extern bool             bContainerContainedBy( CONTAINER cIn, CONTAINER cOut );
 extern void             ContainerYouAreBeingRemoved( CONTAINER cCont ) ;
 extern void             ContainerIAmBeingRemoved( CONTAINER cCont, 
                                 CONTAINER cRemoved );
@@ -195,7 +195,7 @@ extern void             ContainerDisplayerUpdate( CONTAINER cCont );
 extern void             ContainerTreeMakeInsensitive( CONTAINER cCont );
 extern void             ContainerTreeMakeSensitive( CONTAINER cCont );
 extern void             ContainerResetAllCopyPointers( CONTAINER cTop );
-extern BOOL             bContainerSpaceConflict( CONTAINER cCont1, 
+extern bool             bContainerSpaceConflict( CONTAINER cCont1, 
                                 CONTAINER cCont2 );
 
 

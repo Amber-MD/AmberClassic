@@ -484,7 +484,7 @@ HASH_LISTt	**hlPPPre;
  *	Delete a key/data pair in the HASH_TABLE.
  *	Return the pointer to the data stored in that entry.
  */
-BOOL
+bool
 bHTDelete( HASH_TABLE htTable, const char *sKey, char **cPPKey, GENP *PPData )
 {
 int		iPos;

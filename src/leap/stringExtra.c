@@ -233,7 +233,7 @@ StringCopyMax( char *sDest, char *sSource, int iMax )
  *
  *
  */
-BOOL
+bool
 bStringMatchPattern( char *sString, char *sPattern )
 {
 

@@ -87,13 +87,13 @@ int		iStart, iStop, i;
  *	Read a single resource from the input file.
  *	Return FALSE if there are no more.
  */
-BOOL	bReadResource( fIn, sResource )
+bool	bReadResource( fIn, sResource )
 FILE*		fIn;
 LONGSTRING	sResource;
 {
 LONGSTRING	sLine;
 int		i, j;
-BOOL		bOnlySpaces;
+bool		bOnlySpaces;
 
 
     strcpy( sResource, "" );
@@ -151,7 +151,7 @@ char*		argv[];
 FILE*		fIn;
 FILE*		fOut;
 LONGSTRING	sResource;
-BOOL		bFirst;
+bool		bFirst;
 
 
     BasicsInitialize();

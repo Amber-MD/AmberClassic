@@ -62,7 +62,7 @@
 #include	"basics.h"
 #include	"displayer.h"
 
-extern BOOL	GbGraphicalEnvironment;
+extern bool	GbGraphicalEnvironment;
 
 extern int	GiUnitEditors;
 
@@ -185,7 +185,7 @@ DISPLAYERNODE	dnNew;
  *	Remove a callback function from the DISPLAYER list.
  *	Return TRUE if it was found.
  */
-BOOL
+bool
 bDisplayerRemove( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
 {
 DISPLAYERNODE	dnCur, dnPrev;

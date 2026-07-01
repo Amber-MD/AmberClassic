@@ -135,28 +135,25 @@
 // types
 // ---------------------------------------------------------------------
 
-#ifdef BOOL_IN_X11_XMD
-# include <X11/Xmd.h>
-#else
-# if HAVE_BOOL || defined(BOOL)
+#if defined(HAVE_STDBOOL_H)
 // do nothing
-# elif defined(HAVE__BOOL)
-typedef _Bool BOOL;
-# else
-typedef unsigned char   BOOL;
-# endif
+#elif defined(HAVE__BOOL)
+typedef _Bool bool;
+#else
+typedef unsigned char   bool;
 #endif
 
 #if defined(WIN32) && !defined(MAXPATHLEN)
 # define MAXPATHLEN MAX_PATH
 #endif
 
-
-#else /*CMAKE*/
+#else /* not CMAKE */
 // use creaky platform-name-based logic
 
 // headers
 // ---------------------------------------------------------------------
+// Just make stdbool.h mandatory
+#include <stdbool.h>
 
 #if (!defined WIN32)
 # include <pwd.h>
@@ -170,14 +167,14 @@ typedef unsigned char   BOOL;
 # include <dirent.h>
 # include <strings.h>
 #elif (defined SYSV || defined __i386__)
-# include        <dirent.h>
-# include        <string.h>
+# include <dirent.h>
+# include <string.h>
 #else
-# include		<sys/dir.h>
-# include        <strings.h>
+# include <sys/dir.h>
+# include <strings.h>
 #endif
 
-#include	<sys/time.h>
+#include <sys/time.h>
 
 #ifdef __APPLE__
   // for PATH_MAX
@@ -187,9 +184,8 @@ typedef unsigned char   BOOL;
 // types
 // ---------------------------------------------------------------------
 
-        /* BOOL is defined on NeXT appkit/appkit.h */
-#if !defined(APPKIT_H) && !defined(XtSpecificationRelease)
-typedef unsigned char   BOOL;
+#if !defined(bool) && !defined(APPKIT_H) && !defined(XtSpecificationRelease)
+typedef unsigned char   bool;
 #endif
 
 #ifndef MAXPATHLEN
@@ -282,15 +278,6 @@ typedef struct  {
 #define TOLERANCE       0.001           /* Used for comparing doubles */
 #define DEGTORAD        0.01745329251994329576 // Was 0.0174533
 
-
-extern  double  zzdS,zzdS6;
-
-#define pow2(x)         ( zzdS = x, zzdS*zzdS )
-#define pow6(x)         ( zzdS6 = pow2(x), zzdS6*zzdS6*zzdS6 )
-
-
-
-
 typedef void    GEN;
 typedef GEN*    GENP;
 
@@ -359,8 +346,7 @@ typedef KLASSt  *KLASS;
                         /*      if CONTROL-C has been hit */
                         /* BasicsResetInterrupt clears the interrupt */
                         /* BasicsInterrupt will set the interrupt */
-
-extern  BOOL    GbInterrupt;
+extern  bool    GbInterrupt;
 #define bBasicsInterrupt()      ( GbInterrupt )
 #define BasicsResetInterrupt()  ( GbInterrupt = FALSE )
 #define BasicsSetInterrupt()    ( GbInterrupt = TRUE )
@@ -426,7 +412,7 @@ extern  BOOL    GbInterrupt;
 
 typedef void            (*VFUNCTION)();
 
-extern BOOL             GbPrintPrefix;
+extern bool             GbPrintPrefix;
 extern VFUNCTION        GfPrintStringCallback;
 extern char             *GcPPrefix;
 extern GENP             GPData;
@@ -747,7 +733,7 @@ extern int      GiMemoryAllocated;
 
 extern STRING   GsLastMemOpFile;
 extern int      GiLastMemOpLine;
-extern BOOL     GbTestMemory;
+extern bool     GbTestMemory;
 
 
                         /* Turn my memory testing on/off */
@@ -924,8 +910,8 @@ extern void             SysdependCurrentWorkingDirectory(STRING sPath);
 extern double           myAcos( double d );
 extern double           myPow( double x, double y );
 extern int              iDoubleCompare( double dA, double dB );
-extern BOOL             bStringToDouble( char *cPData, double *dPData );
-extern BOOL             bStringToInt( char *cPData, int *iPData );
+extern bool             bStringToDouble( char *cPData, double *dPData );
+extern bool             bStringToInt( char *cPData, int *iPData );
 extern void             StringLower( char *sStr );
 extern void             StringUpper( char *sStr );
 extern void             StringTrim( char *sStr );
@@ -934,13 +920,13 @@ extern char             *DebugMalloc( long lSize, char *sFile, int iLine );
 extern char             *DebugRealloc( char *cPBlock, long lSize, char *sFile,
                                 int iLine );
 extern void             DebugFree( char *cPBlock, char *sFile, int iLine );
-extern BOOL             bMessageCheck( char *sFile );
+extern bool             bMessageCheck( char *sFile );
 extern void             MessageAddFile( char *sFile );
 extern void             MessageRemoveFile( char *sFile );
 extern void             MessageFileList(void);
 extern int              BasicsAddDirectory( STRING sDirectory, int bomb );
 extern FILE             *fBasicsMyFopen( char *sFilename, char *sAttributes,
-                                BOOL bComplain );
+                                bool bComplain );
 extern int              iCreatePrintSink( VFUNCTION fOutputCallback,
                                 char *sPrefix, GENP PData );
 extern void             DestroyPrintSink( int iHandle );

@@ -67,7 +67,7 @@ extern void		HTDescribe(HASH_TABLE htTable);
 
 extern void		HTAdd(HASH_TABLE htTable, char *sKey, GENP PData); // sKey becomes owned by the hash!!
 extern GENP		PHTFind(HASH_TABLE htTable, const char *sKey);
-extern BOOL		bHTDelete(HASH_TABLE htTable, const char *sKey, 
+extern bool		bHTDelete(HASH_TABLE htTable, const char *sKey, 
 				char **cPPKey, GENP *PPData);
 
 extern void		HTWalk(HASH_TABLE htTable, GENP PCallback, 

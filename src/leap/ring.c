@@ -305,7 +305,7 @@ PRingNext( RINGLOOP *rlPLoop )
  *
  *	Remove the node with the data PData from the RING.
  */
-BOOL
+bool
 bRingRemove( RING rRing, GENP PData )
 {
 RINGNODEt	*rnPNode;

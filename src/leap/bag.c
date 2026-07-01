@@ -245,7 +245,7 @@ BagDescribe( BAG bBag )
  *      Return:
  *              FALSE if the element is not in the bag.
  */
-BOOL
+bool
 bBagRemove( BAG bBag, GENP PPtr )
 {
 BNODEP   *bnPPPrev;
@@ -292,7 +292,7 @@ BNODEP   bnPNode;
  *      Return:
  *              FALSE if the element is not in the bag.
  */
-BOOL
+bool
 bBagContains( BAG bBag, GENP PPtr )
 {
 BNODEP   *bnPPPrev;

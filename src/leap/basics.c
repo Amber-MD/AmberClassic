@@ -42,19 +42,15 @@
 #include	"defaults.h"
 #include	"zMatrix.h"
 #include        "cmap.h"
-defaultstruct GDefaults;
 
 #include	<signal.h>
 #include	<stdarg.h>
 #include	<stdlib.h>
 
 
-           /* Globals for doing quick integer powers */
-double  zzdS, zzdS1, zzdS6; 
-
 STRING	GsBasicsFullName;
 
-BOOL	GbInterrupt = FALSE;
+bool	GbInterrupt = FALSE;
 
 int	GiUnitEditors = 0;
 
@@ -234,7 +230,7 @@ iDoubleCompare( double dA, double dB )
  *	value.  Only change the value of *dPData if the string
  *	completely represents a double precision value.
  */
-BOOL	
+bool	
 bStringToDouble( char *cPData, double *dPData )
 {
 	char	*cPEnd;
@@ -258,7 +254,7 @@ bStringToDouble( char *cPData, double *dPData )
  *	value.  Only change the value of *dPData if the string
  *	completely represents a integer value.
  */
-BOOL	
+bool	
 bStringToInt( char *cPData, int *iPData )
 {
 	char	*cp;
@@ -362,7 +358,7 @@ StringRTrim(char *sStr)
 STRING  GsLastMemOpFile;
 int     GiLastMemOpLine;
 int	GiMemoryAllocated;
-BOOL	GbTestMemory = FALSE;
+bool	GbTestMemory = FALSE;
 
 /*
  *      DebugCheckMemoryBlock
@@ -392,7 +388,7 @@ DebugCheckMemoryBlock( MEMHEADER *mPMem )
  *	block as it is checked to the LOG file.
  */
 static void
-DebugMemoryTest( char *sFile, int iLine, BOOL bReport )
+DebugMemoryTest( char *sFile, int iLine, bool bReport )
 {
 	MEMHEADER	*mPMem, *mPPreviousMem;
 	char		*sTrailer;
@@ -677,7 +673,7 @@ static  STRING  SsaMessageFiles[MAXMESSAGEFILES];
  *
  *      Check if a message should be printed.
  */
-BOOL    
+bool    
 bMessageCheck( char *sFile )
 {
 int     i;
@@ -982,7 +978,7 @@ FILESTATUSt	fsStatus;
  *	list of directories in SvaDirectories.
  */
 FILE *
-fBasicsMyFopen( char *sFilename, char *sAttributes, BOOL bComplain )
+fBasicsMyFopen( char *sFilename, char *sAttributes, bool bComplain )
 {
 FILE		*fFile;
 int		i, iExistErr;
@@ -1065,8 +1061,8 @@ int absolutePath;
 
 
 typedef	struct	{
-	BOOL		bSinkUsed;
-	BOOL		bPrintPrefix;
+	bool		bSinkUsed;
+	bool		bPrintPrefix;
 	STRING		sPrefix;
 	VFUNCTION	fCallback;
 	GENP		PData;
@@ -1102,7 +1098,7 @@ int
 iCreatePrintSink( VFUNCTION fOutputCallback, char *sPrefix, GENP PData )
 {
 int		i;
-BOOL		bFoundOne;
+bool		bFoundOne;
 
 	/* First check if there isn't a free sink */
 
@@ -1274,7 +1270,7 @@ FILE	*GfLog = NULL;
 int     GiTraceIndentationLevel = 0;
 int     GiVerbosityLevel = 0;
 int     GiVerbosity;                    /* This changes for every P# */
-BOOL	GbPrintPrefix = TRUE;
+bool	GbPrintPrefix = TRUE;
 char	*GcPPrefix = NULL;
 
 
@@ -1310,7 +1306,7 @@ myPrintString(const char *cPString, int iVerbosity)
     const char  *cPStart, *cPStop;
     char         sTempBuf[MAXCHARSPERPRINTF];
     char        *cPPrint;
-    BOOL         bPrintPrefix;
+    bool         bPrintPrefix;
     size_t       len;
 
     cPStart = cPString;
@@ -1369,55 +1365,7 @@ void
 BasicsInitialize(void)
 {
 	(void)zMatrixInit();
-
-/*   Defaults are now stireed in a defaults descriptor struct in commands.c   */
-        extern void InitializeDefaults(void);
         InitializeDefaults();
-#if 0
-	GDefaults.pdbwritecharges = 0;
-	GDefaults.dGridSpace = 1.0;
-	GDefaults.dShellExtent = 4.0;
-	GDefaults.dDipoleDampFactor = 0.0;
-	GDefaults.dSceeScaleFactor = 1.2;
-	GDefaults.dScnbScaleFactor = 2.0;
-#define DIEL_R2		1
-	GDefaults.iDielectricFlag = DIEL_R2;
-	GDefaults.iGBparm = 2;
-	GDefaults.iOldPrmtopFormat = 0;
-	GDefaults.iGibbs = 0;
-	GDefaults.iCharmm = 0;
-	GDefaults.iResidueImpropers = 0;
-	GDefaults.iDeleteExtraPointAngles = 1;
-	GDefaults.bPdbHybrid36 = TRUE;
-	GDefaults.bPdbKeepChainId = FALSE;
-	GDefaults.iPdbReadBioMT = 0;
-	GDefaults.iFlexibleWater = 0;
-	GDefaults.iCMAP = 0;
-	GDefaults.iIPOL = 0;
-	GDefaults.iIPOLset = 0;
-	GDefaults.nocenter = 0;
-        GDefaults.reorder_residues = 1;
-
-        GDefaults.reverse_lists = 0;
-        GDefaults.bPdbAutoMatch = 0;
-        GDefaults.bPdbAutoLink = 0;
-        GDefaults.dPdbLinkCovalentCutoff = 1.2;
-        GDefaults.dPdbCrosslinkCovalentCutoff = 1.1;
-        GDefaults.bPdbAutoLoadRes = 0;
-        GDefaults.cPdbAltLocSelect = 'A';
-        GDefaults.bPdbUseLinkRecords = 0;
-        GDefaults.bPdbUseConect = 0;
-        GDefaults.bPdbLinkIons = 0;
-        GDefaults.bPdbResetChainID = 0;
-        GDefaults.iPdbIgnoreNonConnect = 0;
-        GDefaults.iPdbReadModel = -1;
-        GDefaults.bPdbUseBioMt = 0;
-        GDefaults.bPdbUseNCSMt = 1;
-        GDefaults.iPdbConvertResName = 0;
-        GDefaults.bCIFReadAuth = 1;
-        GDefaults.sPdbPatchFilename[0]=0;
-#endif
-
 /*
     signal( SIGSEGV, zBasicsTrapSEGV );
     signal( SIGBUS, zBasicsTrapBUS );

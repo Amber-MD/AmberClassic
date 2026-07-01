@@ -112,14 +112,14 @@ typedef	RESTRAINTt	*RESTRAINT;
 extern RESTRAINT	rRestraintCreate(void);
 extern void		RestraintDestroy(RESTRAINT *rPRes);
 
-extern BOOL	bRestraintBondMatchAtoms(RESTRAINT rRes, 
+extern bool	bRestraintBondMatchAtoms(RESTRAINT rRes, 
 			ATOM aAtom1, ATOM aAtom2);
-extern BOOL	bRestraintAngleMatchAtoms(RESTRAINT rRes,
+extern bool	bRestraintAngleMatchAtoms(RESTRAINT rRes,
 			ATOM aAtom1, ATOM aAtom2, ATOM aAtom3);
-extern BOOL	bRestraintTorsionMatchAtoms(RESTRAINT rRes,
+extern bool	bRestraintTorsionMatchAtoms(RESTRAINT rRes,
 			ATOM aAtom1, ATOM aAtom2, ATOM aAtom3, ATOM aAtom4);
 
-extern BOOL	bRestraintContainsAtom(RESTRAINT rRes, ATOM aAtom);
+extern bool	bRestraintContainsAtom(RESTRAINT rRes, ATOM aAtom);
 
 
 #define	iRestraintType(r)		( (r)->iType )

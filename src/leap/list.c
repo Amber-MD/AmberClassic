@@ -356,7 +356,7 @@ LISTLOOP        llL;
  *      Return:
  *              FALSE if the element is not in the list.
  */
-BOOL
+bool
 bListRemove( LIST lList, GENP PPtr )
 {
 NODEP   *nPPPrev;
@@ -409,7 +409,7 @@ NODEP	nPPrevious;
  *      Return:
  *              FALSE if the element is not in the list.
  */
-BOOL
+bool
 bListContains( LIST lList, GENP PPtr )
 {
 NODEP   *nPPPrev;

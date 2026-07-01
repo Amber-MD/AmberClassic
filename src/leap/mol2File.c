@@ -228,7 +228,7 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
     char *sName;
     ATOM aAtom1, aAtom2;
     RESIDUE rRes1;
-    BOOL bPert, bFailedGeneratingParameters;
+    bool bPert, bFailedGeneratingParameters;
 //              STRING sAtom1, sAtom2, sDesc;
 
 
@@ -236,7 +236,7 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
 
 /* @<TRIPOS>MOLECULE Bloc */
     fprintf(fOut, "@<TRIPOS>MOLECULE\n");
-    iResidueCount = zUnitIOAmberOrderResidues(uUnit);
+    iResidueCount = UnitIOAmberOrderResidues(uUnit);
 
 
     strcpy(sTemp, sContainerName((CONTAINER) uUnit));
@@ -276,7 +276,7 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
     /* Now generate the connectivity table */
     /* Inspired by zUnitIOBuildTables in unitio.c */
 
-    /*zbUnitIOIndexBondParameters(plParameters, uUnit, bPert); */
+    /*bUnitIOIndexBondParameters(plParameters, uUnit, bPert); */
 
     iAtomCount = 0;
     lTemp = lLoop((OBJEKT) uUnit, ATOMS);
@@ -291,7 +291,7 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
 
         lResidues = lLoop((OBJEKT) uUnit, DIRECTCONTENTSBYSEQNUM);
         while ((rRes1 = (RESIDUE) oNext(&lResidues)) != NULL) {
-            zUnitDoAtoms(uUnit, NULL, rRes1, &i, &bFailedGeneratingParameters,
+            UnitDoAtoms(uUnit, NULL, rRes1, &i, &bFailedGeneratingParameters,
                          bPert);
         }
     }

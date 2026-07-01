@@ -46,6 +46,18 @@
 #include        "mathop.h"
 
 
+static inline double pow2(double x)
+{
+    return x * x;
+}
+
+static inline double pow6(double x)
+{
+    double x2 = x * x;
+    return x2 * x2 * x2;
+}
+
+
 /*
  *      MathOpConvertNonBondToAC
  *

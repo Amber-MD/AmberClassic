@@ -50,24 +50,24 @@ extern void		BuildExternalsUsingFlags( LOOP *lPLoop, FLAGS fForSet,
 				FLAGS fForReset, FLAGS fSetFlags, 
 				FLAGS fResetFlags,
 				int *iPAddH, int *iPAddHeavy, int *iPAddUnk,
-				BOOL bMsg );
+				bool bMsg );
 extern void		BuildInternalsForContainer( CONTAINER cCont, 
 				FLAGS fSet, FLAGS fReset );
 extern void		BuildDestroyInternals( LOOP *lPLoop );
 extern void		BuildFixInternals( UNIT uUnit );
 extern void		BuildHierarchy( UNIT uUnit );
-extern BOOL		bBuildChangeInternalBond( CONTAINER cCont, 
+extern bool		bBuildChangeInternalBond( CONTAINER cCont, 
 				char *sAtom1, char *sAtom2, double dValue );
-extern BOOL		bBuildChangeInternalAngle( CONTAINER cCont, 
+extern bool		bBuildChangeInternalAngle( CONTAINER cCont, 
 				char *sAtom1, char *sAtom2, char *sAtom3, 
 				double dValue );
-extern BOOL		bBuildChangeInternalTorsion( CONTAINER cCont, 
+extern bool		bBuildChangeInternalTorsion( CONTAINER cCont, 
 				char *sAtom1, char *sAtom2,
                                 char *sAtom3, char *sAtom4, double dValue );
 extern void		BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain );
 extern void		BuildRotateAroundBondFromTo( CONTAINER cCont, 
 				ATOM aInv, ATOM aStart,
-				double dRotate, BOOL bInRing );
+				double dRotate, bool bInRing );
 extern void		bBuildFlipChiralityFor( CONTAINER cContainer, 
 				ATOM aFlip );
 extern void		BuildInternalsBetweenUnitsUsingFlags( UNIT uFirst, 

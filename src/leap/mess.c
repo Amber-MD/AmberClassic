@@ -82,7 +82,7 @@ mMessAdd( char *sText )
 {
 STRING		sFile;
 int		iLine;
-BOOL		bPrint, bTrace;
+bool		bPrint, bTrace;
 MESS		mMess;
 char		*cPText;
 char		cType;

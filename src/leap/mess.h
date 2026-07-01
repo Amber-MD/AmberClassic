@@ -47,7 +47,7 @@ typedef	struct MESS_STRUCT	{
 	char			cType;
 	int			iFunction;
 	char			*cPText;
-	BOOL			bPrint;
+	bool			bPrint;
 } MESSt;
 
 typedef	MESSt	*MESS;

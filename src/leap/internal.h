@@ -145,7 +145,7 @@ extern void		InternalRingAddAtomBefore(INTERNAL iInt, ATOM aAtom,
 #define	iInternalRingSize(II) iRingSize(((INTERNAL)(II))->iType.riRing.rAtoms)
 extern void		InternalRingLoopAtoms(INTERNAL iInt);
 extern ATOM		aInternalRingNextAtom(INTERNAL iInt);
-extern BOOL		bInternalRingRemoveAtom(INTERNAL iInt, ATOM aAtom);
+extern bool		bInternalRingRemoveAtom(INTERNAL iInt, ATOM aAtom);
 #define	InternalRingSetTempInt(i,in)	\
 		((INTERNAL)(i)->iType.riRing.iTempInt = in )
 #define	iInternalRingTempInt(i)	((INTERNAL)(i)->iType.riRing.iTempInt)
@@ -158,15 +158,15 @@ extern INTERNAL		iInternalFindAngle(ATOM aAtom1, ATOM aAtom2,
 				ATOM aAtom3);
 extern INTERNAL		iInternalFindBond(ATOM aAtom1, ATOM aAtom2);
 
-extern BOOL		bInternalGoodTorsion(INTERNAL iInt, ATOM aAtom, 
+extern bool		bInternalGoodTorsion(INTERNAL iInt, ATOM aAtom, 
 				INTERNAL *iPTorsion, INTERNAL *iPAngle, 
 				INTERNAL *iPBond);
-extern BOOL		bInternalGoodAngle(INTERNAL iInt, ATOM aAtom, 
+extern bool		bInternalGoodAngle(INTERNAL iInt, ATOM aAtom, 
 				INTERNAL *iPAngle, INTERNAL *iPBond);
-extern BOOL		bInternalGoodPairOfAngles( INTERNAL iInt, ATOM aAtom,
+extern bool		bInternalGoodPairOfAngles( INTERNAL iInt, ATOM aAtom,
 				INTERNAL *iPAngle1, INTERNAL *iPAngle2, 
 				INTERNAL *iPBond); 
-extern BOOL		bInternalGoodBond(INTERNAL iInt, ATOM aAtom, 
+extern bool		bInternalGoodBond(INTERNAL iInt, ATOM aAtom, 
 				INTERNAL *iPBond);
 
 

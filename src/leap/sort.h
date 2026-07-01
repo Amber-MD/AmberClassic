@@ -44,13 +44,13 @@
 #define	SORT_DESCENDING		FALSE
 
 extern void	SortByInteger(GENP PStart, int iElements, int iSize, 
-			GENP PFirst, BOOL bAscending);
+			GENP PFirst, bool bAscending);
 extern void	SortByDouble( GENP PStart, int iElements, int iSize, 
-			GENP PFirst, BOOL bAscending);
+			GENP PFirst, bool bAscending);
 extern void	SortByString(GENP PStart, int iElements, int iSize,
-			GENP PFirst, BOOL bAscending);
+			GENP PFirst, bool bAscending);
 
-typedef BOOL	(*SIFTFUNCTION)(void*); 
+typedef bool	(*SIFTFUNCTION)(void*); 
 
 extern void	Sift(GENP PData, int iElementSize, int iElements, 
 			SIFTFUNCTION bFCriteria, int *iPFirstFalse);

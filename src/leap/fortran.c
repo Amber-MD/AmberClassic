@@ -81,12 +81,12 @@ static  STRING  SsFormat;
 static  FILE*   SfFile;
 static  int     SiPerLine;
 static  int     SiOnLine = 0;   /* Stores the # of entries already on line */
-static  BOOL    SbWroteNothing;
+static  bool    SbWroteNothing;
 
 static  STRING  SsInput;
-static  BOOL    SbNeedInput = TRUE;
+static  bool    SbNeedInput = TRUE;
 
-static	BOOL	SbFortranDebug = FALSE;
+static	bool	SbFortranDebug = FALSE;
 static	STRING	GsFortranDebug;
 
 
@@ -261,7 +261,7 @@ FortranEndLine()
 char *
 sFortranReadString( char *sString )
 {
-BOOL            bGotOne;
+bool            bGotOne;
 int             iLen;
 
     bGotOne = FALSE;
@@ -295,7 +295,7 @@ int             iLen;
 char *
 sFortranReadLabel( char *sString )
 {
-BOOL            bGotOne;
+bool            bGotOne;
 int             iLen;
 
     bGotOne = FALSE;

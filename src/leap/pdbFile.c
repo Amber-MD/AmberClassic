@@ -102,7 +102,7 @@ const char *GsChainIdList="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
  *
  *        Private routines
  */
-static BOOL
+static bool
 bAtomsBondedDist(int iElem1, int iElem2, float dist2, float cutoff) {
     if (iElem1 <= 0 || iElem1 >= iMaxCovalentElement) iElem1 = 0;
     if (iElem2 <= 0 || iElem2 >= iMaxCovalentElement) iElem2 = 0;
@@ -322,7 +322,7 @@ char            *cPData;
  *
  *      Print errors if the entries are not the right type.
  */
-static BOOL
+static bool
 zbPdbBuildResidueNameMapEntry( LIST lEntry, int iMap, char *sKey, char *sData )
 {
 STRING          sTempKey;
@@ -393,7 +393,7 @@ BADTYPE:
     return(FALSE);
 }
 
-static BOOL
+static bool
 zbPdbBuildAtomNameMapEntry( LIST lEntry, int iMap, char *sKey, char *sData )
 {
 STRING          sTempKey;
@@ -604,7 +604,7 @@ RESIDUENAMEt    *rnPName;
  *      a new chain.
  */
 static UNIT
-zuPdbGetNextUnit( PDBREADt *prPPdb, BOOL *bPStart, int iResNum )
+zuPdbGetNextUnit( PDBREADt *prPPdb, bool *bPStart, int iResNum )
 {
 int             iCurUnit, iTerm;
 UNIT            uOrig, uUnit;
@@ -746,31 +746,79 @@ STRING          sSpan;
 static void
 zPdbCreateSymmetryRelatedMonomers( PDBREADt *prPPdb )
 {
-int             iTransforms, iLast, i;
-VECTOR          vPos, vCen, vCenFrac, vCenWrap, vShift = {0,0,0};
+int             iTransforms, iLast;
+VECTOR          vPos, vCenOrig, vCen, vCenFrac, vCenWrap, vShift = {0,0,0};
 MATRIX          mTransform, M, Mi;
 UNIT            uOrig, uCopy;
 ATOM            aAtom;
 LOOP            lAtoms;
 
+    if (GDefaults.bPdbExpandSymm) {
+
+        /* --- build fractional transforms from the unit cell --- */
+        BuildFractionalTransforms( prPPdb->uUnit, M, Mi );
+
+        /* --- get center of original monomer once, before any transforms --- */
+        vCenOrig = vContainerGeometricCenter( (CONTAINER)prPPdb->uUnit );
+
+        MatrixCopy( mTransform,
+                    PVAI(prPPdb->vaMatrices,PDBMATRIXt,0)->mTransform );
+
+        MatrixTimesVector( vCen, mTransform, vCenOrig );
+        vCenFrac.dX = Mi[0][0]*vCen.dX + Mi[1][0]*vCen.dY + Mi[2][0]*vCen.dZ;
+        vCenFrac.dY = Mi[0][1]*vCen.dX + Mi[1][1]*vCen.dY + Mi[2][1]*vCen.dZ;
+        vCenFrac.dZ = Mi[0][2]*vCen.dX + Mi[1][2]*vCen.dY + Mi[2][2]*vCen.dZ;
+
+        vCenWrap.dX = vCenFrac.dX - floor(vCenFrac.dX);
+        vCenWrap.dY = vCenFrac.dY - floor(vCenFrac.dY);
+        vCenWrap.dZ = vCenFrac.dZ - floor(vCenFrac.dZ);
+
+        if (!GDefaults.nocenter) {
+            // Center primary UNIT if possible
+            bool bMono = fabs(prPPdb->uUnit->dAlpha - 90.0) < 1e-4 &&
+                   fabs(prPPdb->uUnit->dGamma - 90.0) < 1e-4;
+            bool bOrtho = bMono && fabs(prPPdb->uUnit->dBeta  - 90.0) < 1e-4;
+            if (!bOrtho) {
+                vCenWrap.dY = 0.5;
+                if (!bMono) {
+                    vCenWrap.dX = 0.5;
+                    vCenWrap.dZ = 0.5;
+                }
+            }
+        }
+
+        vShift.dX = M[0][0]*vCenWrap.dX + M[1][0]*vCenWrap.dY + M[2][0]*vCenWrap.dZ - vCen.dX;
+        vShift.dY = M[0][1]*vCenWrap.dX + M[1][1]*vCenWrap.dY + M[2][1]*vCenWrap.dZ - vCen.dY;
+        vShift.dZ = M[0][2]*vCenWrap.dX + M[1][2]*vCenWrap.dY + M[2][2]*vCenWrap.dZ - vCen.dZ;
+
+        /* --- apply wrapping shift to original */
+        lAtoms = lLoop( (OBJEKT)prPPdb->uUnit, ATOMS );
+        while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+            VECTOR vNewPosition = {
+                vAtomPosition(aAtom).dX + vShift.dX,
+                vAtomPosition(aAtom).dY + vShift.dY,
+                vAtomPosition(aAtom).dZ + vShift.dZ
+            };
+            AtomSetPosition(aAtom, vNewPosition);
+        }
+        vCenOrig.dX += vShift.dX;
+        vCenOrig.dY += vShift.dY;
+        vCenOrig.dZ += vShift.dZ;
+    }
+
     iTransforms = iVarArrayElementCount( prPPdb->vaMatrices );
     iLast = -1;
-    for ( i = 0; i < iTransforms; i++ ) {
+    for (int i = 0; i < iTransforms; i++ ) {
         if ( PVAI(prPPdb->vaMatrices,PDBMATRIXt,i)->bUsed )
             iLast = i;
     }
     if ( iLast == -1 ) return;
 
-    /* --- build fractional transforms from the unit cell --- */
-    BuildFractionalTransforms( prPPdb->uUnit, M, Mi );
-
-    /* --- get center of original monomer once, before any transforms --- */
-    vCen = vContainerGeometricCenter( (CONTAINER)prPPdb->uUnit );
-
     uOrig = (UNIT)oCopy((OBJEKT)prPPdb->uUnit);
 
-    for ( i = 0; i < iTransforms; i++ ) {
+    for (int i = 0; i < iTransforms; i++ ) {
         if ( !PVAI(prPPdb->vaMatrices,PDBMATRIXt,i)->bUsed ) continue;
+        VP1("Building %s symmetry related monomer %d.\n", i+1);
 
         MatrixCopy( mTransform,
                     PVAI(prPPdb->vaMatrices,PDBMATRIXt,i)->mTransform );
@@ -781,20 +829,19 @@ LOOP            lAtoms;
             uCopy = uOrig;
 
         if (GDefaults.bPdbExpandSymm) {
-        /* --- transform center, wrap into primary cell, compute shift --- */
-        MatrixTimesVector( vCen, mTransform, vCen );
+            /* --- transform center, wrap into primary cell, compute shift --- */
+            MatrixTimesVector( vCen, mTransform, vCenOrig );
+            vCenFrac.dX = Mi[0][0]*vCen.dX + Mi[1][0]*vCen.dY + Mi[2][0]*vCen.dZ;
+            vCenFrac.dY = Mi[0][1]*vCen.dX + Mi[1][1]*vCen.dY + Mi[2][1]*vCen.dZ;
+            vCenFrac.dZ = Mi[0][2]*vCen.dX + Mi[1][2]*vCen.dY + Mi[2][2]*vCen.dZ;
 
-        vCenFrac.dX = Mi[0][0]*vCen.dX + Mi[1][0]*vCen.dY + Mi[2][0]*vCen.dZ;
-        vCenFrac.dY = Mi[0][1]*vCen.dX + Mi[1][1]*vCen.dY + Mi[2][1]*vCen.dZ;
-        vCenFrac.dZ = Mi[0][2]*vCen.dX + Mi[1][2]*vCen.dY + Mi[2][2]*vCen.dZ;
+            vCenWrap.dX = vCenFrac.dX - floor(vCenFrac.dX);
+            vCenWrap.dY = vCenFrac.dY - floor(vCenFrac.dY);
+            vCenWrap.dZ = vCenFrac.dZ - floor(vCenFrac.dZ);
 
-        vCenWrap.dX = vCenFrac.dX - floor(vCenFrac.dX);
-        vCenWrap.dY = vCenFrac.dY - floor(vCenFrac.dY);
-        vCenWrap.dZ = vCenFrac.dZ - floor(vCenFrac.dZ);
-
-        vShift.dX = M[0][0]*vCenWrap.dX + M[1][0]*vCenWrap.dY + M[2][0]*vCenWrap.dZ - vCen.dX;
-        vShift.dY = M[0][1]*vCenWrap.dX + M[1][1]*vCenWrap.dY + M[2][1]*vCenWrap.dZ - vCen.dY;
-        vShift.dZ = M[0][2]*vCenWrap.dX + M[1][2]*vCenWrap.dY + M[2][2]*vCenWrap.dZ - vCen.dZ;
+            vShift.dX = M[0][0]*vCenWrap.dX + M[1][0]*vCenWrap.dY + M[2][0]*vCenWrap.dZ - vCen.dX;
+            vShift.dY = M[0][1]*vCenWrap.dX + M[1][1]*vCenWrap.dY + M[2][1]*vCenWrap.dZ - vCen.dY;
+            vShift.dZ = M[0][2]*vCenWrap.dX + M[1][2]*vCenWrap.dY + M[2][2]*vCenWrap.dZ - vCen.dZ;
         }
 
         /* --- transform all atoms and apply wrapping shift in one pass --- */
@@ -807,7 +854,6 @@ LOOP            lAtoms;
             AtomSetPosition( aAtom, vPos );
         }
 
-        VP1("Building symmetry related monomer %d.\n", i+1);
         UnitJoin( prPPdb->uUnit, uCopy );
     }
 }
@@ -917,7 +963,7 @@ pdb_record      p;
 
     strcpy( p.pdb.ter.residue.name, pwPFile->sResidueName );
 
-    memcpy(p.pdb.ter.residue.chain_id,"  ",2); // FIXME do real values?
+    memcpy(p.pdb.ter.residue.chain_id,"  ",2);
     p.pdb.ter.residue.seq_num = pwPFile->iResidueSeq;
     p.pdb.ter.residue.insert_code=' ';
     p.record_type = PDB_TER;
@@ -1064,7 +1110,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
         int             status;
 
         // Allocates unit->vaResidues
-        iResidueCount = zUnitIOAmberOrderResidues( uUnit );
+        iResidueCount = UnitIOAmberOrderResidues( uUnit );
         if ( iResidueCount == 0 ) {
                 VP0(" no residues\n" );
                 if (uUnit->vaResidues) VarArrayDestroy(&uUnit->vaResidues);
@@ -1125,7 +1171,6 @@ PdbWrite( FILE *fOut, UNIT uUnit )
 
         if (iDictionaryElementCount(uUnit->dHeterogens) != 0 ) {
 
-            // FIXME: TODO: split descripton at first ';' into HETNAM+HETSYN
             dlHeterogens = ydlDictionaryLoop( uUnit->dHeterogens );
             while ( yPDictionaryNext( uUnit->dHeterogens, &dlHeterogens ) ) {
                 p.pdb.hetnam.serial_num=0;
@@ -1133,7 +1178,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
                 strcpy(sDesc, (char*)PDictLoopData(dlHeterogens));
                 char *cPHetID = sDictLoopKey(dlHeterogens);
                 char *cPCompID = zcPPdbMapName( SdResidueNameMap, HETID_COMPID, cPHetID, NULL );
-                //VP2("HETNAM: HETID=%s COMPID=%s\n",cPHetID,cPCompID);
+                //VP2("HETNAM: HETID=%s COMPID=%s\n",cPHetID,cPCompID); //FIXME verify this works
                 if (cPCompID && !strstr(sDesc,"COMP_ID:")) {
                     strcat(sDesc,"; COMP_ID:");
                     strcat(sDesc,cPCompID);
@@ -1196,9 +1241,9 @@ PdbWrite( FILE *fOut, UNIT uUnit )
                         p.pdb.link.residues[1].insert_code=' ';
                         strcpy(p.pdb.link.symop[1],"1555");
 
-                        double dX = aAtom->vPosition.dX - aNeighbor->vPosition.dX;
-                        double dY = aAtom->vPosition.dY - aNeighbor->vPosition.dY;
-                        double dZ = aAtom->vPosition.dZ - aNeighbor->vPosition.dZ;
+                        double dX = vAtomPosition(aAtom).dX - vAtomPosition(aNeighbor).dX;
+                        double dY = vAtomPosition(aAtom).dY - vAtomPosition(aNeighbor).dY;
+                        double dZ = vAtomPosition(aAtom).dZ - vAtomPosition(aNeighbor).dZ;
                         p.pdb.link.distance = sqrt(dX*dX + dY*dY + dZ*dZ);
 
                         if (!strcmp(p.pdb.link.residues[0].name,"CYS") && !strcmp(p.pdb.link.residues[1].name,"CYS") &&
@@ -1278,7 +1323,7 @@ LISTLOOP        llEntries;
 ASSOC           aEntry;
 int             iMap;
 STRING          sKey, sData;
-BOOL            bOk;
+bool            bOk;
 
     if ( iObjectType(lEntries) != LISTid ) {
         DFATAL("Need LIST" );
@@ -1501,8 +1546,8 @@ zPdbReadFile( PDBREADt *prPRead )
 {
 pdb_record      p;
 int             iPdbSequence; // previous resSeq
-BOOL            bLastReadPdbRecordWasTer = FALSE;
-BOOL            bNewChain, bNewRes;
+bool            bLastReadPdbRecordWasTer = FALSE;
+bool            bNewChain, bNewRes;
 RESIDUENAMEt    rnName;
 ATOMNAMEt       anAtom;
 struct pdb_link pdbLink;
@@ -1607,7 +1652,7 @@ int             iCurrentBioMT=0;
                 if (iCurrentModel) {
                     if (!GDefaults.iPdbReadModel) GDefaults.iPdbReadModel = iCurrentModel;
                     if (GDefaults.iPdbReadModel > 0 && GDefaults.iPdbReadModel != iCurrentModel) break;
-                    if (GDefaults.iPdbReadModel < 0 && p.pdb.atom.residue.chain_id[0]==' ') {
+                    if (GDefaults.iPdbReadModel < 0 && p.pdb.atom.residue.chain_id[0]==' ') {  // FIXME
                         int i = iCurrentModel-1;
                         if (i < CHAINID_LIST_LEN) {
                             p.pdb.atom.residue.chain_id[0] = GsChainIdList[i];
@@ -1815,6 +1860,7 @@ REMARK 350   BIOMT1   3 -0.809017 -0.500000  0.309017     1084.41630
                 /* fall through */
 
             case PDB_MTRIX:
+                if (GDefaults.bPdbExpandSymm) break;
                 VPTRACE("Read PDB_MTRIX record.\n" );
                 iStart = iVarArrayElementCount(prPRead->vaMatrices);
                 iSerial = p.pdb.mtrix.serial_num;
@@ -1891,7 +1937,7 @@ extern OBJEKT oCmd_loadAmberPrep( int iArgCount, ASSOC aaArgs[] );
 extern OBJEKT oCmd_loadMol2( int iArgCount, ASSOC aaArgs[] );
 extern OBJEKT oCmd_loadOff( int iArgCount, ASSOC aaArgs[] );
 
-static BOOL
+static bool
 zbFileReadable(char *sFilename)
 {
     FILE *fp = FOPENNOCOMPLAIN(sFilename, "r");
@@ -2000,7 +2046,7 @@ zLoadUnit(char *name) {
         oCmd_loadAmberParams( 1, &aAssoc );
         VP2("Loading FRCMOD file: %s\n", GsBasicsFullName);
     } else VP2(" ... not found.\n", sFilename);
-    Destroy((OBJEKT*)&aAssoc); // FIXME: does this destroy the contained string?
+    Destroy((OBJEKT*)&aAssoc);
     return uTemplate;
 }
 
@@ -2070,11 +2116,11 @@ typedef struct MatchCandidate {
     UNIT        uTemplate;
     const Pair *pairPMatched[MAXCONNECT];   // detected bonds matching CONNECT
     const Pair *pairPUnmatched[MAXCONNECT]; // detected bonds not matching CONNECT
-    BOOL        atomMatched[MAXATOMS];      // TRUE if this atom matched the template
+    bool        atomMatched[MAXATOMS];      // TRUE if this atom matched the template
     char        sUnmatchedNames[80];        // List of PDB names not matched
-    BOOL        bHeadIsCrossLink;           // Flag: HEAD bond to non-TAIL
-    BOOL        bTailIsCrossLink;           // Flag: TAIL bonds to non-HEAD
-    BOOL        bHasPendingForwardLinks;    // Flag: CONNECT links to forward atoms
+    bool        bHeadIsCrossLink;           // Flag: HEAD bond to non-TAIL
+    bool        bTailIsCrossLink;           // Flag: TAIL bonds to non-HEAD
+    bool        bHasPendingForwardLinks;    // Flag: CONNECT links to forward atoms
                                             // (CONNECT status of forward atom is unknown)
     MatchScore  score;
 } MatchCandidate;
@@ -2164,7 +2210,7 @@ static int qsort_strcmp(const void *a, const void *b)
     { return strcmp(*(const char *const *)a, *(const char *const *)b); }
 
 static int
-zBuildLinkPatchName(char *key_out, size_t key_max, BOOL bSort,
+zBuildLinkPatchName(char *key_out, size_t key_max, bool bSort,
                     const char *res1, const char *atom1,
                     const char *res2, const char *atom2)
 {
@@ -2180,7 +2226,7 @@ zBuildLinkPatchName(char *key_out, size_t key_max, BOOL bSort,
 
 // -- Patch dispatch ----------------------------------------------------------
 
-static BOOL
+static bool
 zProcessPatches(PDBREADt *prPPdb, STRING sPatchName[], int iNumPatchNames)
 {
     STRING sFilename;
@@ -2203,9 +2249,9 @@ zProcessPatches(PDBREADt *prPPdb, STRING sPatchName[], int iNumPatchNames)
     return TRUE;
 }
 
-static BOOL
+static bool
 zProcessPatches2(PDBREADt *prPPdb,
-                 STRING sPatchName[], BOOL bPatchReversed[], int iNumPatchNames)
+                 STRING sPatchName[], bool bPatchReversed[], int iNumPatchNames)
 {
     STRING sFilename;
     int i;
@@ -2243,7 +2289,7 @@ zProcessPatches2(PDBREADt *prPPdb,
 // -- Bond emission + link patch search ---------------------------------------
 
 static void
-zMakeBond(PDBREADt *prPPdb, const Pair *p, BOOL bFromIsConnect,
+zMakeBond(PDBREADt *prPPdb, const Pair *p, bool bFromIsConnect,
           const char *cPResName, const char *cPResType, int iResGlobal)
 {
     RESIDUENAMEt *rnPResidues  = PVAI(prPPdb->vaResidues, RESIDUENAMEt, 0);
@@ -2252,7 +2298,7 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, BOOL bFromIsConnect,
     ATOMNAMEt    *anTo         = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, p->to_member);
     int           iNumPatchNames = 0;
 
-    BOOL bToIsConnect = FALSE;
+    bool bToIsConnect = FALSE;
     if (rnTo->rResidue) {
         ATOM *aPToConnect = (ATOM*)rnTo->rResidue->aaConnect;
         for (int jc = 2; jc < MAXCONNECT && aPToConnect[jc]; jc++) {
@@ -2293,10 +2339,10 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, BOOL bFromIsConnect,
 
     /* Both connect: patch optional -- autolink makes the bond if patch didn't.
      * Any non-connect: patch mandatory -- patch is responsible for bonding. */
-    BOOL bPatchMandatory = !(bFromIsConnect && bToIsConnect);
+    bool bPatchMandatory = !(bFromIsConnect && bToIsConnect);
 
     STRING sPatchName[4];
-    BOOL   bPatchReversed[4];
+    bool   bPatchReversed[4];
     char   cResType2  = cResidueType(rnTo->rResidue);
     char  *cPRes2Type = strchr(RESTYPECLASSPOLYMER, cResType2)
                         ? sResidueTypeNameFromChar(cResType2) : NULL;
@@ -2328,7 +2374,7 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, BOOL bFromIsConnect,
         iNumPatchNames++;
     }
 
-    BOOL bPatchFound = zProcessPatches2(prPPdb, sPatchName, bPatchReversed, iNumPatchNames);
+    bool bPatchFound = zProcessPatches2(prPPdb, sPatchName, bPatchReversed, iNumPatchNames);
 
     if (!bPatchMandatory) {
         /* Optional (connect->connect): autolink makes the bond if patch didn't */
@@ -2393,7 +2439,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
         match->pairPMatched[0] = NULL;
     }
 
-    BOOL bStructuralPatchEmitted = FALSE;
+    bool bStructuralPatchEmitted = FALSE;
     STRING sPatchName[10];
 
     if (match->score.missing_head_tail) {
@@ -2437,7 +2483,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
         LOOP lAtoms = lLoop((OBJEKT)rResidue, ATOMS);
         ATOM aCand;
         while ((aCand = (ATOM)oNext(&lAtoms)) != NULL) {
-            BOOL found = FALSE;
+            bool found = FALSE;
             for (int i = iFirstAtom; i <= iLastAtom; i++) {
                 if (!strcmp(sContainerName(aCand),
                             PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName))
@@ -2489,7 +2535,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
 
 static void
 zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResIndex,
-        ATOMNAMEt *anPAtoms, int iFirstAtom, int iLastAtom, BOOL bPDBHasHydrogens, // PDB info
+        ATOMNAMEt *anPAtoms, int iFirstAtom, int iLastAtom, bool bPDBHasHydrogens, // PDB info
         const Pair *pairPDetected[], int iNumDetected,           // bonding info
         char *key, UNIT uTemplate,                         // template info
         MatchCandidate *cnPCandidate)                      // result
@@ -2520,21 +2566,21 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
      for (int id = 0; id < iNumDetected; id++) {
          const Pair *p         = pairPDetected[id];
          const char *sFromAtom = anPAtoms[p->from_member].sName;
-         BOOL isBackward    = (p->to_group <  iResIndex);
-         BOOL isAdjacentBack= (p->to_group == iResIndex - 1);
-         BOOL isAdjacentFwd = (p->to_group == iResIndex + 1);
-         BOOL isForward     = (p->to_group >  iResIndex);
+         bool isBackward    = (p->to_group <  iResIndex);
+         bool isAdjacentBack= (p->to_group == iResIndex - 1);
+         bool isAdjacentFwd = (p->to_group == iResIndex + 1);
+         bool isForward     = (p->to_group >  iResIndex);
 
          /* -- HEAD -- */
          if (aHead && !strcmp(sFromAtom, sContainerName(aHead))) {
              if (cnPCandidate->pairPMatched[0]) {
-                 BOOL bCurrentIsAdj = cnPCandidate->pairPMatched[0] &&
+                 bool bCurrentIsAdj = cnPCandidate->pairPMatched[0] &&
                                       cnPCandidate->pairPMatched[0]->to_group == iResIndex - 1;
                  if (bCurrentIsAdj || !isAdjacentBack) continue;
              }
              cnPCandidate->pairPMatched[0] = p;
              // additional checks for TAIL(prev) -> HEAD(curr) because TAIL(prev) is mapped
-             BOOL partnerIsTail = isAdjacentBack && prPPdb->rRes && aUnitTail(prPPdb->uUnit) &&
+             bool partnerIsTail = isAdjacentBack && prPPdb->rRes && aUnitTail(prPPdb->uUnit) &&
                               !strcmp(anPAtoms[p->to_member].sName, sContainerName(aUnitTail(prPPdb->uUnit)));
              cnPCandidate->bHeadIsCrossLink = !partnerIsTail;
              if (!cnPCandidate->bHeadIsCrossLink &&
@@ -2553,7 +2599,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
          /* -- TAIL -- */
          if (aTail && !strcmp(sFromAtom, sContainerName(aTail))) {
              if (cnPCandidate->pairPMatched[1]) {
-                 BOOL bCurrentIsAdj = cnPCandidate->pairPMatched[1] &&
+                 bool bCurrentIsAdj = cnPCandidate->pairPMatched[1] &&
                                    cnPCandidate->pairPMatched[1]->to_group == iResIndex + 1;
                  if (bCurrentIsAdj || !isAdjacentFwd) continue;
              }
@@ -2562,7 +2608,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
              continue;
          }
          /* -- CONNECT2 ... CONNECT5 -- */
-         BOOL match=FALSE;
+         bool match=FALSE;
          for (int jc = 2; jc < MAXCONNECT && aPTemplateConnect[jc]; jc++) {
              if (!strcmp(sFromAtom, sContainerName(aPTemplateConnect[jc]))) {
                  cnPCandidate->pairPMatched[jc] = p;
@@ -2575,8 +2621,8 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
 
          // Analyze non-CONNECT atom bonding contacts
          if (GDefaults.iPdbIgnoreNonConnect >= 2) continue;
-         BOOL bToIsConnect = FALSE;
-         BOOL bForwardLink = (pairPDetected[id]->to_group > iResIndex);
+         bool bToIsConnect = FALSE;
+         bool bForwardLink = (pairPDetected[id]->to_group > iResIndex);
          if (bForwardLink) {
              bToIsConnect = TRUE; /* assume connect -- verified when partner is processed */
          } else {
@@ -2615,7 +2661,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
      for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
          cnPCandidate->atomMatched[n] = TRUE;
          const char *name    = anPAtoms[i].sName;
-         BOOL found = (cContainerFindName((CONTAINER)rTemplateRes, ATOMid, name) != NULL);
+         bool found = (cContainerFindName((CONTAINER)rTemplateRes, ATOMid, name) != NULL);
          if (!found) {
              // Try atom name aliases
              char *cPAtomName = zcPPdbMapName(SdAtomNameMap, NOEND, name, rTemplateRes);
@@ -2750,7 +2796,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
     // -- Hydrogen check ------------------------------------------------------
 
-    BOOL bPDBHasHydrogens = FALSE;
+    bool bPDBHasHydrogens = FALSE;
     for (int i = iFirstAtom; i <= iLastAtom; i++) {
         if (anPAtoms[i].iElement == HYDROGEN) bPDBHasHydrogens = TRUE;
         break;
@@ -2835,10 +2881,10 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 VP0(" Extra atoms in template=%d", cnMatch.score.extra_atoms);
                 ATOM    aAtom;
                 LOOP    lAtoms = lLoop((OBJEKT)rTemplateRes, ATOMS);
-                BOOL    first  = TRUE;
+                bool    first  = TRUE;
                 while ((aAtom = (ATOM)oNext(&lAtoms)) != NULL) {
                     if (!bPDBHasHydrogens && aAtom->iAtomicNumber == HYDROGEN) continue;
-                    BOOL found = FALSE;
+                    bool found = FALSE;
                     for (int i = iFirstAtom; i <= iLastAtom; i++) {
                         if (!strcmp(sContainerName(aAtom),
                                     PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName))
@@ -3008,7 +3054,7 @@ int             iAdd, iAddH = 0, iAddHeavy = 0, iAddUnk = 0, iCreate = 0, nAtoms
 ATOM            aA, aB, *aPa, aHead, aTail;
 MatchCandidate  cnMatch;
 UNIT            uNew;
-BOOL            bStartChain;
+bool            bStartChain;
 int             iChainCount=0;
 
     VPTRACEENTER("zPdbCreateUnit" );
@@ -3077,8 +3123,9 @@ int             iChainCount=0;
             } else {
                 int i1 = iChainCount/CHAINID_LIST_LEN;
                 int i2 = iChainCount%CHAINID_LIST_LEN;
-                if (i1==CHAINID_LIST_LEN && i2==0) VPWARN("2-char ChainID overflowing to special chars\n");
-                else if (i1==CHAINID_LIST_LEN) {
+                if (i1==CHAINID_LIST_LEN && i2==0) {
+                    VPWARN("2-char ChainID overflowing to special chars\n");
+                } else if (i1==CHAINID_LIST_LEN_EXTRA) {
                     VPFATAL("2-char ChainID overflow\n");
                     i1=0; iChainCount=0;
                 }
@@ -3095,7 +3142,7 @@ int             iChainCount=0;
         int iLastAtom = (iRes < iResidueCount - 1) ? ((rnPName + 1)->iFirstAtom - 1)
                                  : iVarArrayElementCount(prPPdb->vaAtomRecs) - 1;
         for (int iAtom = iFirstAtom; iAtom <= iLastAtom; iAtom++) {
-            // ATOM processing part from AddAtom() // FIXME: use already matched index
+            // ATOM processing part from AddAtom() // TODO: use already matched index? (faster)
             ATOMNAMEt *anAtom = PVAI( prPPdb->vaAtomRecs, ATOMNAMEt, iAtom);
             ATOM aAtom = (ATOM)cContainerFindName( (CONTAINER)rRes, ATOMid, anAtom->sName );
 
@@ -3140,9 +3187,9 @@ int             iChainCount=0;
 
         if (!bStartChain && !GDefaults.bPdbAutoMatch &&
                     GDefaults.dPdbLinkCovalentCutoff > 0 && aHead && aTail) {
-            float dX = aTail->vPosition.dX - aHead->vPosition.dX;
-            float dY = aTail->vPosition.dY - aHead->vPosition.dY;
-            float dZ = aTail->vPosition.dZ - aHead->vPosition.dZ;
+            double dX = vAtomPosition(aTail).dX - vAtomPosition(aHead).dX;
+            double dY = vAtomPosition(aTail).dY - vAtomPosition(aHead).dY;
+            double dZ = vAtomPosition(aTail).dZ - vAtomPosition(aHead).dZ;
             float d2 = dX*dX + dY*dY + dZ*dZ;
             if (!bAtomsBondedDist(iAtomElement(aTail),iAtomElement(aHead), d2,
                                   GDefaults.dPdbLinkCovalentCutoff )) {
@@ -3314,7 +3361,7 @@ int             iChainCount=0;
  */
 
 UNIT
-uPdbRead( FILE *fPdb, VARARRAY vaUnits, BOOL bFormatCIF )
+uPdbRead( FILE *fPdb, VARARRAY vaUnits, bool bFormatCIF )
 {
 PDBREADt        prPdb = {0};
 int             i;
@@ -3354,7 +3401,9 @@ int             i;
         VP0("PdbRead:   First MODEL will be retained, if MODEL is present\n");
     else
         VP0("PdbRead:   MODEL %d will be retained\n", GDefaults.iPdbReadModel);
-    if (GDefaults.bPdbExpandBioMt)
+    if (GDefaults.bPdbExpandSymm)
+        VP0("PdbRead:   CRYST1 Spacegroup symmetry will be expanded, MTRIXn will be ignored\n" );
+    else if (GDefaults.bPdbExpandBioMt)
         VP0("PdbRead:   REMARK BIOMT will be read and processed, MTRIXn will be ignored\n" );
     else if (GDefaults.bPdbExpandNCSMt)
         VP0("PdbRead:   MTRIXn records will be processed, if present\n" );
@@ -3378,6 +3427,12 @@ int             i;
 
     if (bFormatCIF) CifReadFile( &prPdb );
     else zPdbReadFile( &prPdb );
+
+    if (GDefaults.bPdbAutoMatch) {
+        // Generate an index into all defined Residue Templates
+        zPdbIndexResidueTemplates( &prPdb );
+        // TODO: generate solvent residue list for solvent match below?
+    }
 
     RESIDUENAMEt *rnRes = PVAI( prPdb.vaResidues, RESIDUENAMEt, 0);
     int iNumPdbResidues = iVarArrayElementCount(prPdb.vaResidues);
@@ -3446,9 +3501,6 @@ int             i;
         prPdb.ngBondGrid = neighbor_grid_setup( PVAI(prPdb.vaPoints, Point, 0),
                 iVarArrayElementCount(prPdb.vaPoints), iNumPdbResidues, prPdb.iPGroupStart,
                 MAX_BOND_LENGTH * GDefaults.dPdbLinkCovalentCutoff ); // max expected bond length * cutoff multiplier
-
-        // Generate an index into all defined Residue Templates
-        zPdbIndexResidueTemplates( &prPdb );
 
     } else {
 

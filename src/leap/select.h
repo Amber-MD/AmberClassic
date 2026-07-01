@@ -38,14 +38,14 @@
 
 #include "minimizer.h"
 
-extern void	SelectAtom(ATOM aAtom, BOOL bOn);
-extern BOOL	bSelectRingWithAtom(UNIT uUnit, ATOM aAtom, BOOL bOn);
-extern void	SelectResidueWithAtom(UNIT uUnit, ATOM aAtom, BOOL bOn);
-extern void	SelectMoleculeWithAtom(UNIT uUnit, ATOM aAtom, BOOL bOn);
-extern void	SelectEverything(UNIT uUnit, BOOL bOn);
-extern void	SelectChainBetween(UNIT uUnit, ATOM aA, ATOM aB, BOOL bOn);
+extern void	SelectAtom(ATOM aAtom, bool bOn);
+extern bool	bSelectRingWithAtom(UNIT uUnit, ATOM aAtom, bool bOn);
+extern void	SelectResidueWithAtom(UNIT uUnit, ATOM aAtom, bool bOn);
+extern void	SelectMoleculeWithAtom(UNIT uUnit, ATOM aAtom, bool bOn);
+extern void	SelectEverything(UNIT uUnit, bool bOn);
+extern void	SelectChainBetween(UNIT uUnit, ATOM aA, ATOM aB, bool bOn);
 extern void	SelectRelaxInFramework(UNIT uUnit, MINIMIZER mMinimizer);
-extern BOOL     bSelectChainBetween( UNIT uUnit, ATOM aA, ATOM aB, BOOL bOn );
+extern bool     bSelectChainBetween( UNIT uUnit, ATOM aA, ATOM aB, bool bOn );
 
 #define	SelectSetFlags(u,f)	ContainerWithFlagsSetAtomFlags(u,ATOMSELECTED,f)
 #define	SelectResetFlags(u,f)\

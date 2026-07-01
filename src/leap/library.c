@@ -236,7 +236,7 @@ STRING          sPrefix;
  *
  *	Remove an entry from the library.
  */
-BOOL	
+bool	
 bLibraryRemove( LIBRARY ul, char *sName )
 {
 STRING		sPrefix, sEntry;
@@ -336,7 +336,7 @@ LibraryClose( LIBRARY *lPLibrary )
  *	object whose name is (sStr).
  *	Return TRUE if the object is found, otherwise FALSE.
  */
-BOOL
+bool
 bLibraryDBPrefix( LIBRARY lLib, char *cPResult, char *sStr )
 {
 STRING          sPrefix;

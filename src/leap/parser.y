@@ -34,8 +34,6 @@
  *      A YACC program for parsing commands to LEaP.
  *
  *      The syntax is described in this file.
- *      Comments are handled in the routine cGetChar, which skips over
- *      all text between '#' and '\n' inclusive.
  *
  *      The syntax has the form:        [] delimit necessary syntax elements
  *
@@ -122,22 +120,22 @@
 
 
 char            GsInputLine[MAXINPUT] = "";
-BOOL		GbLastLine = FALSE;
-BOOL		bCmdDeleteObj;
+bool		GbLastLine = FALSE;
+bool		bCmdDeleteObj;
 int             GiInputPos = 0;
 PARMLIB		GplAllParameters;
 RESULTt		GrMainResult;
 BLOCK		GbCommand = NULL;
 BLOCK		GbExecute = NULL;
 int		GiClipPrompts = 0;
-BOOL		GbGraphicalEnvironment;
+bool		GbGraphicalEnvironment;
 STRING		GsProgramName;
 
 extern int	iMemDebug;
 
 static	STRING	*SbFirstSourceFiles = NULL;
 static	int	iFirstSource = 0;
-static	BOOL	SbUseStartup = TRUE;
+static	bool	SbUseStartup = TRUE;
 
 
 
@@ -189,8 +187,8 @@ OBJEKT          o0;
 double          dTemp;
 ASSOC           aAssoc;
 STRING          sTemp;
-BOOL		bQuit = FALSE;
-BOOL		bCommandFound = FALSE;
+bool		bQuit = FALSE;
+bool		bCommandFound = FALSE;
 
                 /* There seems to be a problem with YACC not properly */
                 /* declaring yylval and yyval */
@@ -496,7 +494,7 @@ arg     :       rawexp
 
 */
 
-static  BOOL    SbGotUngetc = FALSE;
+static  bool    SbGotUngetc = FALSE;
 static  char    ScUngetc;
 
 
@@ -533,10 +531,10 @@ fINPUTFILE()
  *	Return FALSE if there is no more lines to be received from 
  *	the BLOCK.
  */
-BOOL
-zbGetLine( char *sLine, BOOL *bPFromExecute )
+bool
+zbGetLine( char *sLine, bool *bPFromExecute )
 {
-BOOL		bGotBlock;
+bool		bGotBlock;
 char		c;
 
     /* VPTRACEENTER("zbGetLine" ); */
@@ -581,13 +579,23 @@ char		c;
     return(bBlockReadLine( GbExecute, sLine ));
 }
 
-
-		
-	
+void zStripComment(char *s)
+{
+    bool bInQuote = FALSE;
+    for (; *s; s++) {
+        if (*s == '"')
+            bInQuote = !bInQuote;
+        if (*s == '#' && !bInQuote) {
+            s[0] = '\n';
+            s[1] = 0;
+            break;
+        }
+    }
+}
 
 
 /*
- *      zcGetChar
+ *      cGetChar
  *
  *      Get the next character from the line buffer.
  *	If there are no more characters in the line buffer and
@@ -596,10 +604,10 @@ char		c;
  *	in it.
  */
 char
-zcGetChar()
+cGetChar(void)
 {
 char            c;
-BOOL		bFromExecute;
+bool		bFromExecute;
 
                 /* If there is a pushed character then return it */
 
@@ -618,6 +626,7 @@ BOOL		bFromExecute;
 	}
 	GbLastLine = zbGetLine( GsInputLine, &bFromExecute );
 	GiInputPos = 0;
+        zStripComment(GsInputLine);
 	if ( bFromExecute ) {
 	    for (int i=GiClipPrompts; i<=iINPUTSTACKDEPTH(); i++ ) VP2(">" );
 	    VP2(" " );
@@ -628,7 +637,7 @@ BOOL		bFromExecute;
     }
 
     c = GsInputLine[GiInputPos++];
-
+    
 DONE:
     return(c);
 
@@ -649,30 +658,6 @@ zUngetc( char c )
 }
 
 
-
-
-
-
-/*
- *      cGetChar
- *
- *      Return the next character, skipping over comments
- *      which start with '#' and end with '\n'.
- */
-char
-cGetChar()
-{
-char    c;
-
-	while (1) {
-        	c = zcGetChar();
-        	if ( c == '#' )
-            		while ( ( c=zcGetChar() ) != '\n' )  /* Nothing */ ;
-		else
-			break;
-        } 
-	return(c);
-}
 
 int
 iOneCharToken( int c )
@@ -723,7 +708,7 @@ yylex()
 {
 STRING          sStr;
 int             iMax, tok;
-BOOL            bGotExp, bGotDot;
+bool            bGotExp, bGotDot;
 char            c;
 STRING		sCmd;
 STRING		sPossibleCmd;
@@ -763,6 +748,16 @@ STRING		sPossibleCmd;
 	    	sStr[j] = '\0';
 	    	break;
 	}
+
+        // Backslash gets \ plus next char, regardless of anything else
+        if ( c == '\\' ) {
+	    sStr[j++] = '\\';
+            c = cGetChar();
+            sStr[j] = c;
+            if ( c == '\0' ) break;
+            continue;
+        }
+             
 	/*
 	 *  allow anything inside quotes; chop closing quote
 	 */
@@ -1009,7 +1004,7 @@ char    *next;
 }
 
 /* Returns TRUE if s is a non-empty string of digits */
-static BOOL
+static bool
 zbResidNumeric(const char *s)
 {
     if (!*s) return FALSE;
@@ -1040,7 +1035,7 @@ OBJEKT      oVar;
 const char  *sVal;
 char        sBuf[MAXSTRINGLENGTH];
 char        *cPColon;
-BOOL        bFromVar = FALSE;
+bool        bFromVar = FALSE;
 
     /* --- expand leading '$' if present --- */
     if (*cPPos == '$') {
@@ -1339,7 +1334,7 @@ OBJEKT oArg2 = oAssocObject(arg2);
         double d2 = dODouble(oArg2);
         switch (operator) {
             case '*': ODoubleSet(oResult,d1*d2); break;
-            case '/': ODoubleSet(oResult,d1/d2); break; // FIXME check for divide by zero
+            case '/': ODoubleSet(oResult,d1/d2); break; // FIXME check for divide by zero? Or just let NaN take over?
             case '+': ODoubleSet(oResult,d1+d2); break;
             case '-': ODoubleSet(oResult,d1-d2); break;
             case '^': ODoubleSet(oResult,pow(d1,d2)); break;
@@ -1352,7 +1347,7 @@ OBJEKT oArg2 = oAssocObject(arg2);
                          operator, sObjectIndexType(iType2));
         return NULL;
     }
-    // re-use arg1 for the result -- FIXME  is this OK?
+    // re-use arg1 for the result -- Should be OK, object re-use is unsafe.
     AssocSetObject( arg1, oResult);
     return arg1;
 }

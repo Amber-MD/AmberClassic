@@ -74,8 +74,8 @@ extern double		dVectorAtomChirality( VECTOR *vPCenter,
 				VECTOR *vPA, VECTOR *vPB, VECTOR *vPC );
 extern double		dVectorAtomNormalizedChirality( VECTOR *vPCenter, 
 				int iCenterCoord,
-				VECTOR *vPA, BOOL bA, VECTOR *vPB, BOOL bB,
-				VECTOR *vPC, BOOL bC, VECTOR *vPD, BOOL bD );
+				VECTOR *vPA, bool bA, VECTOR *vPB, bool bB,
+				VECTOR *vPC, bool bC, VECTOR *vPD, bool bD );
 extern double		dVectorAtomLength( VECTOR *vPA, VECTOR *vPB );
 extern double		dVectorAtomAngle( VECTOR *vPA, VECTOR *vPB, 
 				VECTOR *vPC );

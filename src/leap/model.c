@@ -70,9 +70,9 @@ int		this = 0;
  
 typedef	struct	{
 		ATOM		aAtom;
-		BOOL		bPosKnown;
+		bool		bPosKnown;
 		VECTOR		vPos;
-		BOOL		bBuildInternals;
+		bool		bBuildInternals;
 		} MODELATOMt;
 
 
@@ -454,10 +454,10 @@ sAtomName(maPX->aAtom));
  *	An ATOMs position is known if the SfAtomPositionKnownFlag
  *	is set.
  */
-static BOOL
+static bool
 zbModelTrueIfPosKnown( MODELATOMt *maPAtom )
 {
-BOOL	bRes;
+bool	bRes;
 
     bRes = maPAtom->bPosKnown;
     return(bRes);
@@ -551,7 +551,7 @@ INTERNAL	iInt;
 MODELATOMt	*maPNew, *maPCur;
 MODELATOMt	*maPC1, *maPC2, *maPC3;
 MODELATOMt	*maPTemp1, *maPTemp2, *maPTemp3, *maPTemp4;
-BOOL		bGotOne;
+bool		bGotOne;
 int		i, j, iLeft;
 #ifdef DEBUG
 STRING		s1, s2, s3, s4;
@@ -730,7 +730,7 @@ void
 ModelAssignTorsionsAround( ATOM aX, ATOM aY, ATOM aOnly )
 {
 int		iHX, iHY;
-BOOL		bKnownX, bKnownY;
+bool		bKnownX, bKnownY;
 int		iTorsions, i, iTemp;
 INTERNAL	iaTorsions[MAXTORSIONSAROUNDBOND];
 ATOM		aTemp;

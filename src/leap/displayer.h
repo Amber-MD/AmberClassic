@@ -68,7 +68,7 @@ extern void		DisplayerDestroy(DISPLAYER *dPOld);
 
 extern void		DisplayerAdd(DISPLAYER dDisp, VFUNCTION vFunc, 
 				GENP PData );
-extern BOOL		bDisplayerRemove(DISPLAYER dDisp, VFUNCTION vFunc, 
+extern bool		bDisplayerRemove(DISPLAYER dDisp, VFUNCTION vFunc, 
 				GENP PData);
 extern void		DisplayerUpdate(DISPLAYER dDisp);
 

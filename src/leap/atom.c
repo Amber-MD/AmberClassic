@@ -149,37 +149,14 @@ ATOM
 aAtomCreate()
 {
 ATOM    a;
-int     i;
 
     MALLOC( a, ATOM, sizeof(ATOMt) );
-    a->iCoordination = 0;
-    for ( i=0; i<MAXBONDS; i++ ) 
-        a->aaBonds[i] = NULL;
-    a->iC4Pairwise = 0; //New
-    for (i=0; i<MAXC4Pairwise; i++) { //New
-        a->aaC4Pairwise[i] = NULL;
-        a->daC4Pairwise[i] = 0.0;
-    }
-    strcpy( a->sType, "" );
-    strcpy( a->sPertType, "" );
-    strcpy( a->sPertName, "" );
+    memset(a,0,sizeof(ATOMt));
     a->iUniqueId = SiUniqueId++;
-    a->fFlags = 0;
-    a->dCharge = 0.0;
-    a->dPertCharge = 0.0;
-    a->dPolar = 0.0;
-    a->dPertPolar = 0.0;
-    a->dScreenF = 0.0;
     a->iAtomicNumber = NOELEMENT;
     a->iPertAtomicNumber = NOELEMENT;
-    a->iSeenId = 0;
-    VectorDef( &(a->vPosition), 0.0, 0.0, 0.0 );
-    VectorDef( &(a->vVelocity), 0.0, 0.0, 0.0 );
-    a->PGraphicsData = NULL;
-
-    if ( GfAtomClassGraphicsCreator != NULL ) {
+    if ( GfAtomClassGraphicsCreator != NULL )
         GfAtomClassGraphicsCreator(a);
-    }
 
     return(a);
 }
@@ -311,7 +288,7 @@ STRING          sTemp, sTemp1;
 
 
 void
-AtomDescStr( ATOM aA, BOOL bResNum, char *cPDesc )
+AtomDescStr( ATOM aA, bool bResNum, char *cPDesc )
 {
 CONTAINER       cTemp;
 STRING          sTemp;
@@ -343,7 +320,7 @@ char            *cP;
  *      Simple routine to screen out the more egregious over-orders
  */
 
-BOOL
+bool
 bAtomCoordinationSaturated( ATOM aAtom )
 {
         VERIFYOBJEKT( aAtom, ATOMid );
@@ -396,7 +373,7 @@ bAtomCoordinationSaturated( ATOM aAtom )
  *
  *      Make sure both atoms are ok to bond
  */
-BOOL
+bool
 bBondAtomProblem( ATOM aAtom1, ATOM aAtom2 )
 {
 int     problem = 0;
@@ -508,7 +485,7 @@ so the 'earlier' mol1 residue #s are < mol2 residues
  *      the maximum number of bonds on the atom. Allow unreasonable
  *      bonds for hack purposes.
  */
-BOOL
+bool
 AtomTmpBondTo( ATOM aAtom1, ATOM aAtom2 )
 {
 STRING  sTemp;
@@ -578,34 +555,6 @@ AtomBondToOrder( ATOM aAtom1, ATOM aAtom2, int iOrder )
 }
 
 /*
- *      Atom
- *
- *      Create a pairwise C4 interaction between two atoms
- *      with the specified daC4Pairwise value as C4 value
- *
- *
- */
-void
-AtomAddC4Pairwise( ATOM aAtom1, ATOM aAtom2, double daC4Pairwise )
-{
-
-    VERIFYOBJEKT( aAtom1, ATOMid );
-    VERIFYOBJEKT( aAtom2, ATOMid );
-
-    aAtom1->aaC4Pairwise[iAtomC4Pairwise(aAtom1)] = aAtom2;
-    AtomDefineC4Pairwise( aAtom1, iAtomC4Pairwise(aAtom1), daC4Pairwise );
-    //aAtom1->daC4Pairwise[0] = daC4Pairwise;
-    aAtom1->iC4Pairwise++;
-    aAtom2->aaC4Pairwise[iAtomC4Pairwise(aAtom2)] = aAtom1;
-    AtomDefineC4Pairwise( aAtom2, iAtomC4Pairwise(aAtom2), daC4Pairwise );
-    //aAtom2->daC4Pairwise[0] = daC4Pairwise;
-    aAtom2->iC4Pairwise++;
-    CDU(aAtom1);
-    CDU(aAtom2);
-}
-
-
-/*
  *      AtomBondToFlags
  *
  *      Author: Christian Schafmeister (1991)
@@ -673,7 +622,7 @@ AtomRemoveBond( ATOM aAtom1, ATOM aAtom2 )
  *
  *      Return TRUE if aAtom1 is bonded to aAtom2.
  */
-BOOL
+bool
 bAtomBondedTo( ATOM aAtom1, ATOM aAtom2 )
 {
 int             i;
@@ -1269,7 +1218,7 @@ int             i, iNum, iOrder;
  *              or if there are no types assigned to the atoms.
  *
  */
-BOOL
+bool
 bAtomSpaceConflict( ATOM aAtom1, ATOM aAtom2 )
 {
 double  dR1, dR2, dDist, dX, dY, dZ;

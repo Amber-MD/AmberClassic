@@ -91,7 +91,7 @@ RestraintDestroy( RESTRAINT *rPRes )
  *	Return TRUE if the RESTRAINT bond has the
  *	same atoms as the user passed in.
  */
-BOOL
+bool
 bRestraintBondMatchAtoms( RESTRAINT rRes, ATOM aAtom1, ATOM aAtom2 )
 {
     if ( (rRes->rType.rbBond.aAtom1 == aAtom1 &&
@@ -110,7 +110,7 @@ bRestraintBondMatchAtoms( RESTRAINT rRes, ATOM aAtom1, ATOM aAtom2 )
  *	Return TRUE if the RESTRAINT angle has the
  *	same atoms as the user passed in.
  */
-BOOL
+bool
 bRestraintAngleMatchAtoms( RESTRAINT rRes, 
 	ATOM aAtom1, ATOM aAtom2, ATOM aAtom3 )
 {
@@ -134,7 +134,7 @@ bRestraintAngleMatchAtoms( RESTRAINT rRes,
  *	Return TRUE if the RESTRAINT torsion has the
  *	same atoms as the user passed in.
  */
-BOOL
+bool
 bRestraintTorsionMatchAtoms( RESTRAINT rRes, 
 	ATOM aAtom1, ATOM aAtom2, ATOM aAtom3, ATOM aAtom4 )
 {
@@ -160,7 +160,7 @@ bRestraintTorsionMatchAtoms( RESTRAINT rRes,
  *	the RESTRAINT.
  *	If it is return TRUE.
  */
-BOOL
+bool
 bRestraintContainsAtom( RESTRAINT rRes, ATOM aAtom )
 {
     switch ( rRes->iType ) {

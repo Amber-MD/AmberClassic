@@ -71,7 +71,7 @@ typedef struct  {
 	int		iOpenMode;
 	int             iPrefix;
 	STRING          saPrefixStack[MAXPREFIXSTACK];
-	BOOL            bCompactFileAtClose;
+	bool            bCompactFileAtClose;
 	DICTIONARY      dEntries;
 	int             iCurrentLine;
 	char            sLookAhead[MAXDATALINELEN];
@@ -126,10 +126,10 @@ extern	int	GiDBLastError;
  */
 
 extern DATABASE		dbDBRndOpen( char *sFileName, int iOpenMode );
-extern BOOL		bDBRndDeleteEntry( DATABASE db, char *sOrgEntry );
+extern bool		bDBRndDeleteEntry( DATABASE db, char *sOrgEntry );
 extern void		DBRndLoopEntryWithPrefix( DATABASE db, 
 				char *sOrgEntry );
-extern BOOL		bDBRndNextEntryWithPrefix( DATABASE db, char *sEntry );
+extern bool		bDBRndNextEntryWithPrefix( DATABASE db, char *sEntry );
 
 /*
  *--------------------------------------------------------------------
@@ -153,13 +153,13 @@ extern void		DBSeqGoto( DATABASE db, long lPos );
 
 #define	sDBName(d)	(d->sName)
 
-extern BOOL		bDBGetType( DATABASE db, char *sOrgEntry, 
+extern bool		bDBGetType( DATABASE db, char *sOrgEntry, 
 				int *iPType, int *iPLength );
-extern BOOL		bDBGetValue( DATABASE dbData, char *sOrgEntry, 
+extern bool		bDBGetValue( DATABASE dbData, char *sOrgEntry, 
 				int *iPLength, GENP PBuffer, int iBufferInc );
 extern void		DBPutValue( DATABASE db, char *sOrgEntry, int iType, 
 				int iCount, GENP PData, int iDataInc );
-extern BOOL		bDBGetTableType( DATABASE db, char *sOrgEntry, 
+extern bool		bDBGetTableType( DATABASE db, char *sOrgEntry, 
 				int *iPType, int *iPLength,
 				int *iPInt1Column, char *sInt1Name,
 				int *iPInt2Column, char *sInt2Name,
@@ -179,7 +179,7 @@ extern BOOL		bDBGetTableType( DATABASE db, char *sOrgEntry,
 				int *iPString4Column, char *sString4Name,
 				int *iPString5Column, char *sString5Name );
 
-extern BOOL	bDBGetTable( DATABASE db, char *sOrgEntry, int *iPLength,
+extern bool	bDBGetTable( DATABASE db, char *sOrgEntry, int *iPLength,
 			int iInt1Column, char *PInt1, int iInt1Skip,
 			int iInt2Column, char *PInt2, int iInt2Skip,
 			int iInt3Column, char *PInt3, int iInt3Skip,

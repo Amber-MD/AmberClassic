@@ -299,12 +299,12 @@ ContainerAdd( CONTAINER cContainer, OBJEKT oObject )
  *      may not be the case, which leads to accessing of freed space
  *      and memory corruption.
  */
-BOOL    
+bool    
 bContainerRemove( CONTAINER cContainer, OBJEKT oObject )
 {
 LISTLOOP        llList;
 CONTAINER       cSub;
-BOOL            bResult;
+bool            bResult;
 
         /* First try and remove it directly from this container */
         
@@ -987,7 +987,7 @@ ContainerCheck( CONTAINER cCont, int *iPErrors, int *iPWarnings )
  *      ( cOut ).  Check this by following up the linked list of
  *      CONTAINERs that contain cIn.
  */
-BOOL    
+bool    
 bContainerContainedBy( CONTAINER cIn, CONTAINER cOut )
 {
 CONTAINER       cTemp;
@@ -1366,7 +1366,7 @@ CONTAINER       cCont;
  *      their resective Van der Waals radii of each other.
  *
  */
-BOOL 
+bool 
 bContainerSpaceConflict( CONTAINER cCont1, CONTAINER cCont2 )
 {
 LOOP    lAtoms1, lAtoms2;

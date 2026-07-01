@@ -57,7 +57,7 @@
 
 #define LEAPRC  "leaprc"                /* Startup filename */
 
-extern	BOOL	GbGraphicalEnvironment;	/* TRUE if in a graphical environment*/
+extern	bool	GbGraphicalEnvironment;	/* TRUE if in a graphical environment*/
 
 
 

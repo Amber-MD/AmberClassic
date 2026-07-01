@@ -188,10 +188,10 @@ BLOCK	bNew;
  *	Add characters to the command buffer.
  *	If the character to add ends the block then return TRUE.
  */
-BOOL
+bool
 bBlockAddChar( BLOCK bBlock, char c )
 {
-BOOL	bEndOfBlock;
+bool	bEndOfBlock;
 
 
     bEndOfBlock = FALSE;
@@ -229,7 +229,7 @@ if ( bEndOfBlock ) {
  *	Remove the last character from the BLOCK.
  *	If there are no characters to remove then return FALSE.
  */
-BOOL
+bool
 bBlockRemoveChar( BLOCK bBlock )
 {
     if ( bBlock->iTextNext == 0 ) 
@@ -301,11 +301,11 @@ BlockDestroy( BLOCK *bPBlock )
  *	Return TRUE if the next character in the BLOCK is a '\0'
  *	meaning that the line is the last line in the block.
  */
-BOOL
+bool
 bBlockReadLine( BLOCK bBlock, char *sLine )
 {
 int		i;
-BOOL		bQuote = FALSE;
+bool		bQuote = FALSE;
 
     for ( i=0; cBlockPeek( bBlock ) != '\n'; i++) {
 	if (((sLine[i] = cBlockRead( bBlock ))) == '"' ) {

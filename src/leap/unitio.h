@@ -49,37 +49,42 @@
 #define UNITIO_H
 
 
-extern BOOL     zbUnitIOLoadTables(UNIT uUnit, DATABASE db);
+extern bool     zbUnitIOLoadTables(UNIT uUnit, DATABASE db);
 extern void     zUnitIOSaveTables(UNIT uUnit, DATABASE db);
 
 extern void     zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
-                        BOOL *bPGeneratedParameters, BOOL bPert, BOOL bCheck);
+                        bool *bPGeneratedParameters, bool bPert, bool bCheck);
 extern void     zUnitIOBuildFromTables(UNIT uUnit);
 extern void     zUnitIODestroyTables(UNIT uUnit);
-extern BOOL     zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert);
+extern bool     bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert);
 
-extern BOOL     zbUNitIOIndexC4Pairwise(UNIT uUnit, double daC4Pairwise); //New
-extern void     zUnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos, BOOL * bPFailed, BOOL bPert);
-extern void     zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE *fOut,
-                        char *crdName, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ); //NewT
-extern void     zUnitIOSaveAmberParmFormat_old(UNIT uUnit, FILE *fOut,
-                        char *crdName, BOOL bPolar, BOOL bPert, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ); //NewT
+extern void     UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos, bool * bPFailed, bool bPert);
+extern void     UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName, bool bPolar, bool bPert, bool bNetcdf);
 
 extern void     UnitIOSaveAmberPrep( UNIT uUnit, FILE *fOut );
 
-extern int      zUnitIOAmberOrderResidues(UNIT);
+extern int UnitIOAmberOrderResidues(UNIT);
+extern int UnitLabelMolecules(UNIT);
 
-//extern void     UnitIOSaveC4Type( UNIT uUnit, char *sA, char *sB, double daC4Type ); //NewT
+extern int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit, bool bPert, bool bPolar,
+                                      VARARRAY vaExcludedAtoms, VARARRAY vaExcludedCount, VARARRAY vaNBIndexMatrix,
+                                      VARARRAY vaNBParameters, VARARRAY vaNBIndex);
+extern void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut);
+extern int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid);
+extern void UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *crdName);
+extern void UnitIOSaveAmberCoord(UNIT uUnit, char *crdName);
+extern int BondAugmentationFound(UNIT uUnit);
+void UnitIOFindAndCountMolecules(UNIT uUnit);
 
-
-extern int iMarkMainChainAtoms(RESIDUE rRes, int complain);
-extern void MarkSideChains(RESIDUE rRes);
+extern int iMarkMainChainAtoms(RESIDUE rRes, bool bComplain);
+extern void MarkSideChainAtoms(RESIDUE rRes);
 
 /*
  *        Private data types
  *
  */
 
+#define ELECTRONTOKCAL  18.2223
 
 #define PERTURBED       0x00000001
 #define BOUNDARY        0x00000002
@@ -105,6 +110,20 @@ typedef struct {
 } SAVEATOMt;
 
 typedef struct {
+    CONTAINERNAMEt sName; // was STRING
+    int iSequenceNumber;
+    int iaConnectIndex[MAXCONNECT];
+    int iNextChildSequence;
+    int iAtomStartIndex;
+    int iImagingAtomIndex;
+    int iPdbResSeq;
+    char sChainId[3], sICode[2];
+    char sResidueType[2];
+    RESIDUE rResidue;
+} SAVERESIDUEt;
+
+
+typedef struct {
     int iType;
     FLAGS fFlags;
     int iAtom1;
@@ -114,9 +133,9 @@ typedef struct {
     double dKx;
     double dX0;
     double dN;
-    int iParmIndex;                /* This is filled in when */
-    /* the parameters are written */
-    /* to the file */
+    int iParmIndex;  /* This is filled in when */
+                     /* the parameters are written */
+                     /* to the file */
 } SAVERESTRAINTt;
 
 typedef struct {
@@ -126,16 +145,6 @@ typedef struct {
     int iPertParmIndex;
     FLAGS fFlags;
 } SAVEBONDt;
-
-// This is the New function added to help implementing
-// atom-specific pariwise C4 interactions.
-typedef struct {
-    int iAtom1;
-    int iAtom2;
-    int iParmIndex;
-    double daC4Pairwise;
-} SAVEC4Pairwiset;
-
 
 typedef struct {
     int iAtom1;
@@ -147,15 +156,15 @@ typedef struct {
 } SAVEANGLEt;
 
 typedef struct {
-    BOOL bProper;
+    bool bProper;
     int iAtom1;
     int iAtom2;
     int iAtom3;
     int iAtom4;
     int iParmIndex;
-    BOOL bCalc14;
+    bool bCalc14;
     int iPertParmIndex;
-    BOOL bPertCalc14;
+    bool bPertCalc14;
     FLAGS fFlags;
 } SAVETORSIONt;
 
@@ -187,32 +196,19 @@ typedef struct {
 
 
 typedef struct {
-    BOOL bCapableOfHBonding;
     double dE;
     double dR;
-    double dE14;
-    double dR14;
+    double dE14;  // CHARMM ext
+    double dR14;  // CHARMM ext
+    bool bCapableOfHBonding;
     typeStr sType;
 } NONBONDt;
 
 typedef struct {
-  typeStr         sType1;
-  typeStr         sType2;
-  double          dEI;
-  double          dEJ;
-  double          dRI;
-  double          dRJ;
-  double          dA;
-  double          dC;
-  DESCRIPTION     sDesc;
-} NBEDITt;
-
-typedef struct {
     double dA;
-    double dC;
-    double d4; //NewT
+    double dB;
     double dA14;
-    double dC14;
+    double dB14;
 } NONBONDACt;
 
                         /* Used to save the bounding box info */
@@ -243,6 +239,7 @@ typedef struct {
     int iIndexAtom;
 } SAVEGROUPSt;
 
-
+extern double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAtom);
+extern double dGBScreenForElement(int iElement);
 
 #endif  /* UNITIO_H */

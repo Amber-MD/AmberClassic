@@ -66,10 +66,10 @@ PARMLIB	GplDefaultParmLib = NULL;
  *
  *	Check if the variable passed is a valid PARMLIB.
  */
-static BOOL
+static bool
 zbParmLibOk( PARMLIB pl )
 {
-BOOL		bOk;
+bool		bOk;
 
     bOk = ( pl != NULL );
 #if 0
@@ -178,7 +178,7 @@ ParmLibParmSetLoop( PARMLIB plLib )
  *      Return each PARMSET one at a time.
  *      Return FALSE if there are no more PARMSETs.
  */
-BOOL
+bool
 bParmLibNextParmSet( PARMLIB plLib, PARMSET *psPSet )
 {
     if ( !zbParmLibOk(plLib) ) 

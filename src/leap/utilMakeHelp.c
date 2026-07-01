@@ -47,7 +47,7 @@
 
 #include	"basics.h"
 
-BOOL	GbGraphicalEnvironment;	/* HACK for lazy Imakefile */
+bool	GbGraphicalEnvironment;	/* HACK for lazy Imakefile */
 
 
 #define	BEGINHELP	"@@beginHelp:"
@@ -112,7 +112,7 @@ int main( int argc, char *argv[] )
 int             iKeyword, iLine, i, j;
 STRING          sLine, sTemp;
 FILE		*fIn, *fOut;
-BOOL		bBlank;
+bool		bBlank;
 
 #define	FGETS(s,l,f) { fgets(s,l,f); \
 if ( strlen(s)>0 && s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }

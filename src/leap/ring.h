@@ -76,7 +76,7 @@ extern void	RingBeforeAdd(RING rRing, GENP PBefore, GENP PData);
 
 extern void	rlRingLoop(RING rRing, RINGLOOP *rlP);
 extern GENP	PRingNext(RINGLOOP *rlPLoop);
-extern BOOL	bRingRemove(RING rRing, GENP PData);
+extern bool	bRingRemove(RING rRing, GENP PData);
 
 #define	rnPRingNode(rl)		(rl.rnPCur)
 

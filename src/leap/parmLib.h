@@ -61,7 +61,7 @@ extern void	ParmLibDestroy(PARMLIB *plPLib);
 extern void	ParmLibAddParmSet(PARMLIB plLib, PARMSET psSet);
 
 extern void	ParmLibParmSetLoop(PARMLIB plLib);
-extern BOOL	bParmLibNextParmSet(PARMLIB plLib, PARMSET *psPSet);
+extern bool	bParmLibNextParmSet(PARMLIB plLib, PARMSET *psPSet);
 
 #define iParmLibSize( p )	iListSize(((PARMLIB)(p))->lParmSets)
 

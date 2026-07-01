@@ -123,26 +123,12 @@ typedef struct  {
 	char		sChainId[3], cICode;
 	VARARRAY	vaImpropers;
 	double		dTemp;
-	int		iTemp;
+	int		iTemp; // do we need this? only used for default resSeq
+                               // parent already has iTempInt
+	int		iMolecule;
 } RESIDUEt;
 
 typedef RESIDUEt	*RESIDUE;
-
-// SAVE items contain printable data (no pointers) derived from RESIDUE
-typedef struct {
-    CONTAINERNAMEt sName; // was STRING
-    int iSequenceNumber;
-    int iaConnectIndex[MAXCONNECT];
-    int iNextChildSequence;
-    int iAtomStartIndex;
-    int iImagingAtomIndex;
-    int	iPdbResSeq;
-    char sChainId[3], sICode[2];
-    char sResidueType[2];
-    RESIDUE rResidue;
-} SAVERESIDUEt;
-
-
 
 /*
 ======================================================================
@@ -176,7 +162,7 @@ extern void		ResidueSetAttribute( RESIDUE rRes,
 extern OBJEKT		oResidueGetAttribute( RESIDUE rRes,
 				STRING sAttr);
 
-extern BOOL	bResidueCrossLink(RESIDUE rA, int iConnectA,
+extern bool	bResidueCrossLink(RESIDUE rA, int iConnectA,
 			RESIDUE rB, int iConnectB, int iOrder);
 extern void	ResidueYouAreBeingRemoved(RESIDUE rRes);
 extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);

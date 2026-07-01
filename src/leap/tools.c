@@ -267,7 +267,7 @@ double  dR;
  *      before centering.
  */
 void
-ToolCenterUnitByRadii( UNIT uUnit, BOOL bOrient )
+ToolCenterUnitByRadii( UNIT uUnit, bool bOrient )
 {
 LOOP            lTemp;
 ATOM            aAtom;
@@ -792,7 +792,7 @@ int     i, j;
  *      Return TRUE if the atom fails any criteria determined 
  *      by iCriteria 
  */
-static inline BOOL
+static inline bool
 zbToolAtomFailsCriteria( ATOM aAtom,
                          int iCriteria, // flags: ouside of box or octbox, defined by cPCriteria->dX,dY,dZ
                          CRITERIAt *cPCriteria,
@@ -1109,15 +1109,18 @@ double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
 
   lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
   while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
-        double  dX, dY, dZ;
-
-        dX = vAtomPosition(aAtom).dX;
-        dY = vAtomPosition(aAtom).dY;
-        dZ = vAtomPosition(aAtom).dZ;
-
-        vAtomPosition(aAtom).dX = t11*dX + t12*dY + t13*dZ;
-        vAtomPosition(aAtom).dY = t21*dX + t22*dY + t23*dZ;
-        vAtomPosition(aAtom).dZ = t31*dX + t32*dY + t33*dZ;
+        double dX = vAtomPosition(aAtom).dX;
+        double dY = vAtomPosition(aAtom).dY;
+        double dZ = vAtomPosition(aAtom).dZ;
+        VECTOR vNewPosition = {
+            t11*dX + t12*dY + t13*dZ,
+            t21*dX + t22*dY + t23*dZ,
+            t31*dX + t32*dY + t33*dZ
+        };
+        AtomSetPosition(aAtom, vNewPosition);
+        //vAtomPosition(aAtom).dX = t11*dX + t12*dY + t13*dZ;
+        //vAtomPosition(aAtom).dY = t21*dX + t22*dY + t23*dZ;
+        //vAtomPosition(aAtom).dZ = t31*dX + t32*dY + t33*dZ;
   }
   *dPAngle = tetra_angl*180./pi;
 }
@@ -1145,8 +1148,8 @@ double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
 void
 zToolSolvateAndShell( UNIT uSolute, UNIT uSolvent, 
                 double dXW, double dYW, double dZW, double dCloseness,
-                double dFarness, BOOL bShell, BOOL bClip, BOOL bOct,
-                BOOL bIsotropic )
+                double dFarness, bool bShell, bool bClip, bool bOct,
+                bool bIsotropic )
 {
 double          dXBox, dYBox, dZBox;
 double          dXWidth, dYWidth, dZWidth;
@@ -1688,7 +1691,7 @@ typedef struct {
 } PAIRt;
 
 int
-iToolDistanceSearch( CONTAINER cCont, double dCloseness, BOOL bAbsoluteDistance,
+iToolDistanceSearch( CONTAINER cCont, double dCloseness, bool bAbsoluteDistance,
                                 int iOperation )
 {
 LOOP                    lTemp;
@@ -2033,7 +2036,7 @@ double          dDot;
  *      Return TRUE if the geometric center was defined.
  *
  */
-BOOL
+bool
 bToolGeometricCenter( OBJEKT oObjekt, VECTOR *vPCenter )
 {
 LISTLOOP        llElements;
@@ -2043,7 +2046,7 @@ VECTOR          vPos;
 int             i, iCount;
 LOOP            lAtoms;
 ATOM            aAtom;
-BOOL            bVector;
+bool            bVector;
 double          daElements[3];
 
     if ( bObjectInClass( oObjekt, CONTAINERid ) ) {
@@ -2178,7 +2181,7 @@ OBJEKT          oObj;
  *      vdW and anisotropic box checks. 
  */
 void
-ToolOctBoxCheck( UNIT uSolute, double *dPBuf, BOOL bMsg, BOOL bIsotropic )
+ToolOctBoxCheck( UNIT uSolute, double *dPBuf, bool bMsg, bool bIsotropic )
 {
 LOOP            lTemp;
 ATOM            aAtom;

@@ -52,7 +52,7 @@ extern void     PdbDisplayAtomMap(void);
 extern int      fGetPdbResMapped(char *sResName);
 
 extern void     PdbWrite(FILE *fOut, UNIT uUnit);
-extern UNIT     uPdbRead(FILE *fPdb, VARARRAY vaUnits, BOOL bFormatCIF);
+extern UNIT     uPdbRead(FILE *fPdb, VARARRAY vaUnits, bool bFormatCIF);
 
 
 // Private/internal:
@@ -106,7 +106,7 @@ typedef struct {
 } ATOMKEYt;
 
 typedef struct  {
-        BOOL    bUsed;
+        bool    bUsed;
         MATRIX  mTransform; // 4x4 transform (rotate+translate+scale+skew)
 } PDBMATRIXt;
 
@@ -143,7 +143,7 @@ typedef struct  {
 } PDBREADt;
 
 #define CHAINID_LIST_LEN (26+10+26)
-//#define CHAINID_LIST_LEN (26+10+26+29)  // if we include special chars
+#define CHAINID_LIST_LEN_EXTRA (26+10+26+29)  // if we include special chars
 extern const char *GsChainIdList;
 
 extern void     CifReadFile( PDBREADt *prPRead);

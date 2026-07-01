@@ -52,7 +52,7 @@ typedef	struct	{
 	int		iStart;
 	int		iStop;
 	STRING		sFunction;
-	BOOL		bPrint;
+	bool		bPrint;
 } FUNCTIONt;
 
 #define	NO_FUNCTION	-1

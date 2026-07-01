@@ -49,8 +49,11 @@ typedef struct CMAPLST_t {
     struct CMAPLST_t *next;
 } CMAPLST;
 
-extern CMAP *cmap;
-extern CMAPLST *cmaplst;
-extern int mapnum;
+extern CMAP *Gcmap;
+extern CMAPLST *Gcmaplst;
+extern int GiCmapNum;
+
+//extern int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid);
+//extern void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut);
 
 #endif

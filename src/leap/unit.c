@@ -90,12 +90,12 @@
  *
  *      Return TRUE if there was a problem generating parameters.
  */
-static BOOL
+static bool
 zbUnitCheckBondParameters( PARMLIB plLib, UNIT uUnit)
 {
 LOOP            lTemp;
 ATOM            aAtom1, aAtom2;
-BOOL            bFailedGeneratingParameters;
+bool            bFailedGeneratingParameters;
 STRING          sAtom1, sAtom2;
 PARMSET         psTemp;
 int             iIndex;
@@ -153,45 +153,6 @@ int             iIndex;
 }
 
 /*
- * zbUnitCheckC4Pairwise
- * New2021
- *
-
-
-static BOOL
-zbUnitCheckC4Pairwise(UNIT uUnit)
-{
-LOOP            lTemp;
-ATOM            aAtom1, aAtom2;
-double          daC4Pairwise; // New
-BOOL            bFailedGeneratingParameters;
-STRING          sAtom1, sAtom2;
-PARMSET         psTemp;
-int             iIndex;
-
-    daC4Pairwise = 0.0; // New
-
-    bFailedGeneratingParameters = FALSE;
-
-    VP0("Checking for bond parameters.\n" );
-
-    lTemp = lLoop( (OBJEKT)uUnit, C4Pairwise );
-    while ( oNext(&lTemp) != NULL ) { 
-        LoopGetC4Pairwise( &lTemp, &aAtom1, &aAtom2, &daC4Pairwise );
-        strcpy( sAtom1, sAtomType(aAtom1) );
-        strcpy( sAtom2, sAtomType(aAtom2) );
-        if ( iIndex == PARM_NOT_FOUND ) {
-                bFailedGeneratingParameters = TRUE;
-                VPERROR("Could not find C4 parameter for: %s - %s\n",
-                        sAtom1, sAtom2 );
-        }
-    }
-
-    return(bFailedGeneratingParameters);
-}*/
-
-
-/*
  *      zbUnitCheckAngleParameters
  *
  *      Author: Christian Schafmeister (1991)
@@ -205,12 +166,12 @@ int             iIndex;
  *
  *      Return TRUE if there was a problem generating parameters.
  */
-static BOOL
+static bool
 zbUnitCheckAngleParameters( PARMLIB plLib, UNIT uUnit)
 {
 LOOP            lTemp;
 ATOM            aAtom1, aAtom2, aAtom3;
-BOOL            bFailedGeneratingParameters;
+bool            bFailedGeneratingParameters;
 STRING          sAtom1, sAtom2, sAtom3;
 PARMSET         psTemp;
 int             iTemp = PARM_NOT_FOUND;
@@ -310,7 +271,7 @@ IGNORE2:
  *
  *      Return TRUE if there was a problem generating parameters.
  */
-static BOOL
+static bool
 zbUnitCheckTorsionParameters( PARMLIB plLib, UNIT uUnit)
 {
 LOOP            lTemp;
@@ -318,7 +279,7 @@ ATOM            aAtom1, aAtom2, aAtom3, aAtom4;
 STRING          sAtom1, sAtom2, sAtom3, sAtom4;
 STRING          sPert1, sPert2, sPert3, sPert4;
 TORSION         tTorsion, tPertTorsion;
-BOOL            bPerturbTorsion;
+bool            bPerturbTorsion;
 PARMSET         psTemp;
 
 #define         MAX_N           9999
@@ -414,10 +375,10 @@ PARMSET         psTemp;
  *
  */
  
-static BOOL
+static bool
 zbUnitParmsMissing( UNIT uUnit, PARMLIB plParameters)
 {
-BOOL    bMissing = FALSE;
+bool    bMissing = FALSE;
 
     if ( plParameters == NULL ) {
         return(TRUE);
@@ -464,7 +425,7 @@ BOOL    bMissing = FALSE;
  *      this will cause the code to ignore this interaction.
  *      This will allow LEAP to handle TIP3 waters.
  */
-BOOL
+bool
 zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC )
 {
 
@@ -575,8 +536,6 @@ DICTLOOP        dlGroups, dlHeterogens;
         VarArrayDestroy( &(*uPUnit)->vaAtoms );
     if ( (*uPUnit)->vaBonds )
         VarArrayDestroy( &(*uPUnit)->vaBonds );
-    if ( (*uPUnit)->vaC4Pairwise )
-	VarArrayDestroy( &(*uPUnit)->vaC4Pairwise ); //New
     if ( (*uPUnit)->vaAngles )
         VarArrayDestroy( &(*uPUnit)->vaAngles );
     if ( (*uPUnit)->vaTorsions )
@@ -774,7 +733,7 @@ UNIT            uNew;
 
 
 void
-UnitSetUseBox( UNIT uUnit, BOOL b )
+UnitSetUseBox( UNIT uUnit, bool b )
 {
         if ( b ) {
             UnitSetFlags(uUnit, UNITUSEBOUNDINGBOX);
@@ -784,7 +743,7 @@ UnitSetUseBox( UNIT uUnit, BOOL b )
 }
 
 void
-UnitSetBoxOct( UNIT uUnit, BOOL b )
+UnitSetBoxOct( UNIT uUnit, bool b )
 {
         if ( b ) {
             UnitSetFlags(uUnit, UNITBOXOCT);
@@ -794,7 +753,7 @@ UnitSetBoxOct( UNIT uUnit, BOOL b )
 }
 
 void
-UnitSetUseSolventCap( UNIT uUnit, BOOL b ) 
+UnitSetUseSolventCap( UNIT uUnit, bool b ) 
 {
         if ( b ) {
             UnitSetFlags(uUnit, UNITUSESOLVENTCAP);
@@ -830,7 +789,6 @@ UnitResetPointers( UNIT uUnit )
 
     UnitSetHead( uUnit, cContainerCopyPointer(aUnitHead(uUnit)) );
     UnitSetTail( uUnit, cContainerCopyPointer(aUnitTail(uUnit)) );
-   // FIXME: why are the pointers not reset??
 }
 
 
@@ -933,20 +891,7 @@ ATOM            aB;
                 /* have NULL connect atoms */
     // If it is a Residue Template (UNIT with single RESIDUE) and has a
     // Description, add it to the parent UNIT's heterogen list
-// FIXME: requre HET: tag??
-#if 0
-    if (iContainerNumberOfChildren(uB) == 1 && !strncmp(sUnitDescription(uB),"HET:",4)) {
-        RESIDUE rRes = (RESIDUE)oContainerFirstObject(uB);
-        if ( iObjectType(rRes) == RESIDUEid &&
-                !yPDictionaryFind( uA->dHeterogens, sContainerName(rRes)) ) {
-            STRING *sDesc;
-            MALLOC(sDesc, STRING *, sizeof(STRING));
-            StringCopyMax( *sDesc, sUnitDescription(uB)+4, sizeof(STRING) );
-            DictionaryAdd( uA->dHeterogens, sContainerName(rRes), sDesc);
-        }
-    }
-#endif
-
+    // ASSUMPTION: Residue identifying data is only needed/useful for heterogens
     if (iContainerNumberOfChildren(uB) == 1 && sUnitDescription(uB)[0]) {
         RESIDUE rRes = (RESIDUE)oContainerFirstObject(uB);
         if ( iObjectType(rRes) == RESIDUEid &&
@@ -1002,7 +947,7 @@ ATOM            aB;
 void
 UnitSequence( UNIT uA, UNIT uB )
 {
-BOOL            bA, bB;
+bool            bA, bB;
 
     bA = bUnitTailUsed(uA);
     bB = bUnitHeadUsed(uB);
@@ -1040,7 +985,7 @@ BOOL            bA, bB;
 void
 UnitSave( UNIT uUnit, DATABASE db, PARMLIB plParameters )
 {
-BOOL            bGeneratedParameters;
+bool            bGeneratedParameters;
 
     zUnitIOBuildTables( uUnit, plParameters, &bGeneratedParameters, 
                         TRUE, FALSE );
@@ -1094,22 +1039,17 @@ DONE:
  *              bNcdf   - TRUE means write the coordinates in NetCDF format
  */
 void
-UnitSaveAmberParmFile( UNIT uUnit, FILE *fOut, char *crdName, 
-        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ) //NewT
+UnitSaveAmberParmFile( UNIT uUnit, char *prmtopName, char *crdName, 
+        PARMLIB plParms, bool bPolar, bool bPert, bool bNetcdf)
 {
-        BOOL            bGeneratedParameters;
-        // VP0("what saveparm returns before buildtable%d\n", iVarArrayElementCount(uUnit->vaAtoms)); //NewTdebug
+        bool            bGeneratedParameters;
         zUnitIOBuildTables( uUnit, plParms, &bGeneratedParameters, bPert, TRUE );
-        // VP0("what saveparm returns after buildtable %d\n", iVarArrayElementCount(uUnit->vaAtoms)); //NewTdebug
         if ( bGeneratedParameters == TRUE ) {
-#if 0
-                if( GDefaults.iOldPrmtopFormat ) 
-                        zUnitIOSaveAmberParmFormat_old( uUnit, fOut, crdName, 
-                                                                bPolar, bPert, sA, sB, daC4Type, iC4count ); //NewT 
-                else
-#endif
-                        zUnitIOSaveAmberParmFormat( uUnit, fOut, crdName, 
-                                                                bPolar, bPert, bNetcdf, sA, sB, daC4Type, iC4count ); //NewT 
+                bool bPrmtopNetcdf = bNetcdf && GDefaults.bPrmtopNetcdf;
+                UnitIOSaveAmberParmFormat( uUnit, prmtopName, bPolar, bPert, bPrmtopNetcdf);
+                if (bNetcdf) UnitIOSaveAmberCoordNetcdf(uUnit, crdName);
+                else UnitIOSaveAmberCoord(uUnit, crdName);
+                     
         } else {
                 VPWARN("Parameter file was not saved.\n" );
         }
@@ -1149,7 +1089,7 @@ UnitIAmBeingRemoved( UNIT uUnit, CONTAINER cRemoved )
 {
 BAGLOOP         blRestraints;
 RESTRAINT       rRest;
-BOOL            bFoundOne;
+bool            bFoundOne;
 DICTLOOP        dlGroups;
 LIST            lAtoms;
 
@@ -1201,12 +1141,12 @@ LIST            lAtoms;
  *      any of them can be perturbed.  If any of them can be
  *      then the UNIT can be perturbed.
  */
-BOOL
+bool
 bUnitCanBePerturbed( UNIT uUnit )
 {
 LOOP            lAtoms;
 ATOM            aAtom;
-BOOL            bCanBePerturbed;
+bool            bCanBePerturbed;
 
     bCanBePerturbed = FALSE;
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
@@ -1256,10 +1196,10 @@ UnitAddRestraint( UNIT uUnit, RESTRAINT rRest )
  *
  *      Remove the RESTRAINT, return TRUE if it is found.
  */
-BOOL
+bool
 bUnitRemoveRestraint( UNIT uUnit, RESTRAINT rRest )
 {
-BOOL            bReturn;
+bool            bReturn;
 
     bReturn = bBagRemove( uUnit->bRestraints, (GENP)rRest );
     CDU(uUnit);    
@@ -1331,7 +1271,7 @@ int             iCount;
  *      Return TRUE if the UNITs solvent cap contains
  *      the ATOM.
  */
-BOOL
+bool
 bUnitCapContainsAtom( UNIT uUnit, ATOM aAtom )
 {
 VECTOR          vDiff;
@@ -1360,7 +1300,7 @@ double          dDist2;
  *      Return TRUE if the UNITs solvent cap contains
  *      the at least one ATOM within the CONTAINER
  */
-BOOL
+bool
 bUnitCapContainsContainer( UNIT uUnit, CONTAINER cCont )
 {
 LOOP            lAtoms;
@@ -1705,7 +1645,7 @@ OBJEKT  oResult = NULL;
  *      Create a new ATOM group within the UNIT.
  *      Return TRUE if the group was created.
  */
-BOOL
+bool
 bUnitGroupCreate( UNIT uUnit, char *cPName )
 {
 LIST    lAtoms;
@@ -1747,7 +1687,7 @@ LIST    lGroup;
  *      Add an ATOM to the group.
  *      Return FALSE if the group does not exist.
  */
-BOOL
+bool
 bUnitGroupAddAtom( UNIT uUnit, char *sGroup, ATOM aAtom )
 {
 LIST    lGroup;
@@ -1769,8 +1709,8 @@ LIST    lGroup;
  *      Set bFound to TRUE if the ATOM was found, otherwise FALSE.
  *      Return TRUE if the group exists.
  */
-BOOL
-bUnitGroupFindAtom( UNIT uUnit, char *sGroup, ATOM aAtom, BOOL *bPFound )
+bool
+bUnitGroupFindAtom( UNIT uUnit, char *sGroup, ATOM aAtom, bool *bPFound )
 {
 LIST    lAtoms;
 
@@ -1794,7 +1734,7 @@ LIST    lAtoms;
  *      Remove the ATOM from the group.
  *      Return FALSE if the group does not exist.
  */
-BOOL
+bool
 bUnitGroupRemoveAtom( UNIT uUnit, char *sGroup, ATOM aAtom )
 {
 LIST    lAtoms;
@@ -1817,7 +1757,7 @@ LIST    lAtoms;
  *      Destroy the group.
  *      Return TRUE if the group existed, otherwise FALSE.
  */
-BOOL
+bool
 bUnitGroupDestroy( UNIT uUnit, char *sGroup )
 {
 LIST    lAtoms;
@@ -1855,7 +1795,7 @@ double          dLen;
 STRING          sTemp1, sTemp2;
 VECTOR          vVector;
 double          dCharge, dPertCharge, dFrac, dAbs;
-BOOL            bPert;
+bool            bPert;
 
 
     /* Check to make sure that all bond lengths are between MAXBONDLEN and */
@@ -2014,19 +1954,3 @@ double  dXMax, dYMax, dZMax;
 
 }
 
-// NewT
-/*
-void UnitSaveC4Type(UNIT uUnit, char *sA, char *sB, double daC4Type)
-{
-    VP0("what unit passed %s %s %f %d\n", sA, sB, daC4Type, iVarArrayElementCount(uUnit->vaAtoms));
-     
-    for (int i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++)
-    {
-        VP0("Atom type found!!!\n");
-        if (! strcmp( sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom), sA ))
-        {
-            VP0("Atom type found!!!\n");
-        }
-    }
-    
-}*/

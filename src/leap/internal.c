@@ -513,11 +513,11 @@ INTERNAL        iInt;
  *      If the torsion is good then return the bond, angle and torsion
  *      in iPBond, iPAngle, and iPTorsion.
  */
-BOOL
+bool
 bInternalGoodTorsion( INTERNAL iInt, ATOM aAtom, INTERNAL *iPTorsion, 
 			INTERNAL *iPAngle, INTERNAL *iPBond )
 {
-BOOL		bFound;
+bool		bFound;
 
     bFound = FALSE;
     if ( aAtom == aInternalAtom1(iInt) ) {
@@ -601,11 +601,11 @@ BOOL		bFound;
  *      If the angle is good then return the angles and bond
  *      in iPAngle1, iPAngle2, and iPBond.
  */
-BOOL
+bool
 bInternalGoodPairOfAngles( INTERNAL iInt, ATOM aAtom, 
 		INTERNAL *iPAngle1, INTERNAL *iPAngle2, INTERNAL *iPBond )
 {
-BOOL            bGotOne;
+bool            bGotOne;
 ATOM            aAtom2, aAtom3;
 LOOP            lInternals;
 INTERNAL        iNew;
@@ -686,7 +686,7 @@ INTERNAL        iNew;
  *      If the angle is good then return the bond
  *      in iPAngle, and iPBond.
  */
-BOOL    
+bool    
 bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle, 
 			INTERNAL *iPBond )
 {
@@ -732,7 +732,7 @@ bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle,
  *
  *      If the bond is good then return the bond in iPBond.
  */
-BOOL
+bool
 bInternalGoodBond( INTERNAL iInt, ATOM aAtom, INTERNAL *iPBond )
 {
     if ( aAtom == aInternalAtom1(iInt) ) {
@@ -888,7 +888,7 @@ aInternalRingNextAtom( INTERNAL iInt )
  *	Remove the ATOM from the ring INTERNAL, return TRUE if it
  *	was found, otherwise FALSE.
  */
-BOOL
+bool
 bInternalRingRemoveAtom( INTERNAL iInt, ATOM aAtom )
 {
     if ( bRingRemove( iInt->iType.riRing.rAtoms, (GENP)aAtom ) ) {

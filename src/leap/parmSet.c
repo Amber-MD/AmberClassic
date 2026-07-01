@@ -89,14 +89,6 @@ typedef struct  {
                 DESCRIPTION     sDesc;
 } BONDPARMt;
 
-//New type for C4Pairwise
-typedef struct {
-	       typeStr          sType1;
-	       typeStr          sType2;
-	       double           daC4Pairwise;
-	       DESCRIPTION      sDesc;
-} C4Pairwiset;
-
 typedef struct  {
                 typeStr         sType1;
                 typeStr         sType2;
@@ -116,17 +108,24 @@ typedef struct  {
                 DESCRIPTION     sDesc;
 } HBONDPARMt;
 
+
+
+
 typedef struct  {
-                typeStr         sType1;
-                typeStr         sType2;
-                double          dEI;
-                double          dEJ;
-                double          dRI;
-                double          dRJ;
-                double          dA;
-                double          dC;
-                DESCRIPTION     sDesc;
-} NBEDITt;
+        typeStr         sType1;
+        typeStr         sType2;
+        typeStr         sType3;
+        typeStr         sType4;
+        int                iType;
+        int                iN;
+        double          dKp;
+        double          dP0;
+        double          dScEE;
+        double          dScNB;
+        orderStr        sOrder;                /* for impropers */
+        DESCRIPTION     sDesc;
+} TORSIONPARMt;
+
 
 
         /* TORSION_MATCHt are stored inside TORSIONs */
@@ -135,19 +134,17 @@ typedef struct  {
                 TORSIONPARMt    tpTorsion;
 } TORSION_MATCHt;
 
-typedef struct CMNT_t {
-        char *record;
-        struct CMNT_t *next;
-} CMNTt;
-
-typedef struct {
-                STRING          title;
-                char            *reslist[8];
-                int             nres;
-                CMNTt           *cmnt;
-                int             resolution;
-                double          *map;
-} CMAPt;
+typedef struct  {
+                typeStr         sType1;
+                typeStr         sType2;
+                double          dEI;
+                double          dEJ;
+                double          dRI;
+                double          dRJ;
+                double          dA;
+                double          dB;
+                DESCRIPTION     sDesc;
+} NBEDITt;
 
 /*
  *-------------------------------------------------------------------
@@ -183,25 +180,6 @@ STRING                sTemp;
         SWAP_STRINGS( sAtom1, sAtom2, sTemp );
     }
 }
-
-/*
- *         zParmSetOrderC4Pairwise
- * 
- *         New Feature (2020)
- * 
- *         Order the C4Pairwise atom names into alphabetical order
- *         to speed up searches.
- */
-static void
-zParmSetOrderC4Pairwise( char *sAtom1, char *sAtom2 )
-{
-STRING                sTemp;
-
-    if ( strcmp( sAtom1, sAtom2 ) > 0 ) {
-        SWAP_STRINGS( sAtom1, sAtom2, sTemp );
-    }
-}
-
 
 /*
  *        zParmSetOrderAngleAtoms
@@ -267,80 +245,53 @@ int                iCmp14;
 
 
 /*
- *        zParmSetOrderImproperAtoms
+ * zParmSetOrderImproperAtoms
  *
- *        Author:        Christian Schafmeister (1991)
+ * Author: Christian Schafmeister (1991)
  *
- *        Order the improper atom _types_ into alphabetical order
- *        to speed up searches.
+ * Sort the three non-central improper dihedral atom types into
+ * alphabetical order to speed up parameter searches.
+ * Atom 3 (index 2) is always the central atom and is never moved.
  *
- *        The proper order is for the wild cards to be first
- *        and the rest of the types to be in alphabetical order.
- *        Only the first, second, and fourth atoms are affected,
- *        the third atom is ALWAYS the central atom.
+ * saAtoms[4] and sOrder[4] use the same 0-based indices 0,1,2,3
+ * corresponding to sAtom1,2,3,4. sOrder arrives as "0123" and
+ * tracks the resulting permutation.
+ *
+ * WILD_CARD_TYPE is defined as '!' (ASCII 33) which sorts before
+ * both digits (48+) and letters, so no wildcard encoding is needed.
  */
 static void
-zParmSetOrderImproperAtoms( char *sAtom1, char *sAtom2, 
+zParmSetOrderImproperAtoms( char *sAtom1, char *sAtom2,
         char *sAtom3, char *sAtom4, char *sOrder )
 {
-STRING                sTemp;
-STRING                saAtoms[3];
-char                cTemp;
-#define        zzSwapC(a,b)        {(cTemp)=(a);(a)=(b);(b)=(cTemp);}
+    STRING  sTemp;
+    STRING  saAtoms[4];     /* 0-based: 0,1,3 used; 2 is central, unused */
 
-    strcpy( saAtoms[0], sAtom1 != (char*)NULL ? sAtom1 : " ");
-    strcpy( saAtoms[1], sAtom2 != (char*)NULL ? sAtom2 : " ");
-    strcpy( saAtoms[2], sAtom4 != (char*)NULL ? sAtom4 : " ");
+    strcpy( saAtoms[0], sAtom1 ? sAtom1 : WILD_CARD_TYPE );
+    strcpy( saAtoms[1], sAtom2 ? sAtom2 : WILD_CARD_TYPE );
+    strcpy( saAtoms[3], sAtom4 ? sAtom4 : WILD_CARD_TYPE );
 
-                /* Change wild card types to spaces so that */
-                /* they are alphabetically before all other types */
-    if ( strcmp( saAtoms[0], WILD_CARD_TYPE ) == 0 ) strcpy( saAtoms[0], " " );
-    if ( strcmp( saAtoms[1], WILD_CARD_TYPE ) == 0 ) strcpy( saAtoms[1], " " );
-    if ( strcmp( saAtoms[2], WILD_CARD_TYPE ) == 0 ) strcpy( saAtoms[2], " " );
+#define SWAP_ATOMS(i, j)                                \
+    do {                                                \
+        SWAP_STRINGS( saAtoms[i], saAtoms[j], sTemp );  \
+        char _c   = sOrder[i];                          \
+        sOrder[i] = sOrder[j];                          \
+        sOrder[j] = _c;                                 \
+    } while (0)
 
-#ifndef BILL_NEW
-    if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[0], saAtoms[1], sTemp );
-        zzSwapC(sOrder[0],sOrder[1]);
-    }
-    if ( strcmp( saAtoms[1], saAtoms[2] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[1], saAtoms[2], sTemp );
-        zzSwapC(sOrder[1],sOrder[3]);
-    }
-    if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[0], saAtoms[1], sTemp );
-        zzSwapC(sOrder[0],sOrder[1]);
-    }
-    if ( strcmp( saAtoms[1], saAtoms[2] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[1], saAtoms[2], sTemp );
-        zzSwapC(sOrder[1],sOrder[3]);
-    }
-#else
-    if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[0], saAtoms[1], sTemp );
-        zzSwapC(sOrder[0],sOrder[1]);
-    }
-    if ( strcmp( saAtoms[1], saAtoms[3] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[1], saAtoms[3], sTemp );
-        zzSwapC(sOrder[1],sOrder[3]);
-    }
-    if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) {
-        SWAP_STRINGS(saAtoms[0], saAtoms[1], sTemp );
-        zzSwapC(sOrder[0],sOrder[1]);
-    }
-#endif
-                /* Change wild card characters back */
+    /* Bubble sort 3 elements needs only 3 comparisons:
+     * after [0,1] + [1,3], largest is guaranteed at [3];
+     * final [0,1] finishes the sort. */
+    if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) SWAP_ATOMS(0, 1);
+    if ( strcmp( saAtoms[1], saAtoms[3] ) > 0 ) SWAP_ATOMS(1, 3);
+    if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) SWAP_ATOMS(0, 1);
 
-    if ( strcmp( saAtoms[0], " " ) == 0 ) strcpy( saAtoms[0], WILD_CARD_TYPE );
-    if ( strcmp( saAtoms[1], " " ) == 0 ) strcpy( saAtoms[1], WILD_CARD_TYPE );
-    if ( strcmp( saAtoms[2], " " ) == 0 ) strcpy( saAtoms[2], WILD_CARD_TYPE );
+#undef SWAP_ATOMS
 
     strcpy( sAtom1, saAtoms[0] );
     strcpy( sAtom2, saAtoms[1] );
-    strcpy( sAtom4, saAtoms[2] );
+    strcpy( sAtom4, saAtoms[3] );
 }
-
-
 
 /*
  *---------------------------------------------------------------------
@@ -355,12 +306,14 @@ char                cTemp;
  *        Author:        Christian Schafmeister (1991)
  *
  *      Return TRUE if the four types match the torsion.
+ *
+ *      OR if Atom 1 is wildcard and Atoms 2,3 match (forces wildcard at Atom 4)
  */
-static BOOL
+static bool
 zbParmSetMatchTorsion( TORSIONPARMt *tpPTorsion, char *s1, char *s2, 
         char *s3, char *s4 )
 {
-BOOL            bFoundOne;
+bool            bFoundOne;
 
     bFoundOne = FALSE;
    
@@ -419,7 +372,7 @@ BOOL            bFoundOne;
  */
 static int
 zbParmSetAddToTorsion( TORSION tTorsion, int iIndex, TORSIONPARMt *tpPTorsion, 
-        BOOL bUseIndex )
+        bool bUseIndex )
 {
 TORSION_MATCHt        *tmPCur;
 int                i;
@@ -506,7 +459,7 @@ TORSION_MATCHt        tmNew;
  */
 static int
 zbParmSetAddToImproper( TORSION tTorsion, int iIndex, TORSIONPARMt *tpPTorsion,
-        BOOL bUseIndex )
+        bool bUseIndex )
 {
 TORSION_MATCHt        *tmPCur;
 TORSION_MATCHt        tmNew;
@@ -619,7 +572,7 @@ int                i;
  */
 static int
 zbParmSetBuildTorsion( PARMSET psParmSet, char *s1, char *s2, 
-        char *s3, char *s4, TORSION tTorsion, BOOL bUseIndex )
+        char *s3, char *s4, TORSION tTorsion, bool bUseIndex )
 {
 int                i;
 TORSIONPARMt        *tpPCur;
@@ -659,12 +612,12 @@ int                iRet = PARM_NOT_FOUND;
  *
  *      On entry, iWild equals the number of wildcards allowed.
  */
-static BOOL
+static bool
 zbParmSetMatchImproper( TORSIONPARMt *tpPTorsion, char *s1, char *s2, 
         char *s3, char *s4 )
 {
 int             iWild;
-BOOL            bFoundOne;
+bool            bFoundOne;
 
     bFoundOne = FALSE;
 
@@ -734,13 +687,13 @@ BOOL            bFoundOne;
  *        The atom types must be in canonical order.
  *        Return TRUE if the tTorsion was actually changed.
  */
-static BOOL
+static bool
 zbParmSetBuildImproperTorsion( PARMSET psParmSet, char *s1, char *s2, 
-        char *s3, char *s4, TORSION tTorsion, BOOL bUseIndex )
+        char *s3, char *s4, TORSION tTorsion, bool bUseIndex )
 {
 int                i;
 TORSIONPARMt        *tpPCur;
-BOOL                bAddedOne;
+bool                bAddedOne;
 int                iMax;
 
     bAddedOne = FALSE;
@@ -767,6 +720,111 @@ int                iMax;
  *
  */
 
+/*
+ *  BoilTorsions() - reduce list of torsion params to
+ *        unique numerical ones, updating param pointers
+ *        in the topological list.
+ *
+ *        Bill Ross, May 1996
+ */
+// FIXME: This is  a HACK because reduction should be done before the private SAVETORSIONS array exists
+#include "unitio.h"
+void
+BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
+             VARARRAY vaTorsions, int iTorsionOffset)
+{
+    VARARRAY vaB;
+    TORSIONPARMt *tpA, *tpB, tC;
+    int iIndex, iA, iB, iParmCount, iTorsionCount;
+
+    strcpy(tC.sDesc, "reduced params");
+    strcpy(tC.sType1, "__");
+    strcpy(tC.sType2, "__");
+    strcpy(tC.sType3, "__");
+    strcpy(tC.sType4, "__");
+    strcpy(tC.sOrder, "___");
+
+    iParmCount = iVarArrayElementCount(*vaPParms);
+    iTorsionCount = iVarArrayElementCount(vaTorsions);
+
+    iIndex = iParmOffset;
+    vaB = vaVarArrayCreate(sizeof(TORSIONPARMt));
+    tpA = PVAI(*vaPParms, TORSIONPARMt, 0);
+    for (iA = 0; iA < iParmCount; iA++, tpA++) {
+        int i, iOldIndex;
+        SAVETORSIONt *stP;
+
+        if (!strcmp(tpA->sType1, "__"))
+            continue;
+        /*
+         *  torsion hasn't been marked as 'superfluous'
+         *      so add to new array
+         */
+        tC.dKp = tpA->dKp;
+        tC.iN = tpA->iN;
+        tC.dP0 = tpA->dP0;
+	tC.dScEE = tpA->dScEE;
+	tC.dScNB = tpA->dScNB;
+        VarArrayAdd(vaB, (GENP) & tC);
+        iIndex++;
+        iOldIndex = iParmOffset + iA + 1;
+
+        /*
+         *  update any affected torsions
+         */
+        if (iIndex != iOldIndex) {
+            stP = PVAI(vaTorsions, SAVETORSIONt, iTorsionOffset);
+            for (i = iTorsionOffset; i < iTorsionCount; i++, stP++) {
+                if (stP->iParmIndex == iOldIndex)
+                    stP->iParmIndex = iIndex;
+                if (stP->iPertParmIndex == iOldIndex)
+                    stP->iPertParmIndex = iIndex;
+            }
+        }
+
+        /*
+         *  mark any subsequent duplicates 'superfluous'
+         *      and update indexes into the array
+         */
+        for (tpB = tpA + 1, iB = iA + 1; iB < iParmCount; iB++, tpB++) {
+            if (!strcmp(tpB->sType1, "__"))
+                continue;
+            if (tpB->iN != tpA->iN)
+                continue;
+            if (tpB->dKp != tpA->dKp)
+                continue;
+            if (tpB->dP0 != tpA->dP0)
+                continue;
+	    if (tpB->dScEE != tpA->dScEE)
+		continue;
+	    if (tpB->dScNB != tpA->dScNB)
+		continue;
+
+            /*
+             *  B is a duplicate of A
+             */
+            strcpy(tpB->sType1, "__");
+            iOldIndex = iParmOffset + iB + 1;
+            stP = PVAI(vaTorsions, SAVETORSIONt, iTorsionOffset);
+            for (i = iTorsionOffset; i < iTorsionCount; i++, stP++) {
+                if (stP->iParmIndex == iOldIndex)
+                    stP->iParmIndex = iIndex;
+                if (stP->iPertParmIndex == iOldIndex)
+                    stP->iPertParmIndex = iIndex;
+            }
+
+        }
+    }
+
+    /*
+     *  throw away the old parms array & put the new one in place
+     */
+    VarArrayDestroy(vaPParms);
+    *vaPParms = vaB;
+}
+
+
+
 
 
 
@@ -789,7 +847,6 @@ PARMSET psNew;
 
     psNew->vaAtoms       = vaVarArrayCreate( sizeof(ATOMPARMt) );
     psNew->vaBonds       = vaVarArrayCreate( sizeof(BONDPARMt) );
-    psNew->vaC4Pairwise  = vaVarArrayCreate( sizeof(C4Pairwiset) ); //New
     psNew->vaAngles      = vaVarArrayCreate( sizeof(ANGLEPARMt) );
     psNew->vaTorsions    = vaVarArrayCreate( sizeof(TORSIONPARMt) );
     psNew->vaImpropers   = vaVarArrayCreate( sizeof(TORSIONPARMt) );
@@ -821,7 +878,6 @@ PARMSET        psNew;
 
     psNew->vaAtoms = vaVarArrayCopy( psOld->vaAtoms );
     psNew->vaBonds = vaVarArrayCopy( psOld->vaBonds );
-    psNew->vaC4Pairwise  = vaVarArrayCopy( psOld->vaC4Pairwise ); //New
     psNew->vaAngles = vaVarArrayCopy( psOld->vaAngles );
     psNew->vaTorsions = vaVarArrayCopy( psOld->vaTorsions );
     psNew->vaImpropers = vaVarArrayCopy( psOld->vaImpropers );
@@ -845,7 +901,6 @@ ParmSetDestroy( PARMSET *psPLib )
 {
     VarArrayDestroy( &((*psPLib)->vaAtoms) );
     VarArrayDestroy( &((*psPLib)->vaBonds) );
-    VarArrayDestroy( &((*psPLib)->vaC4Pairwise) ); //New
     VarArrayDestroy( &((*psPLib)->vaAngles) );
     VarArrayDestroy( &((*psPLib)->vaTorsions) );
     VarArrayDestroy( &((*psPLib)->vaImpropers) );
@@ -878,7 +933,6 @@ ParmSetSave( PARMSET psLib, DATABASE db )
         VP0("PARMSET is NULL => deleting all parameter tables from dbase\n");
         bDBRndDeleteEntry( db, "parm.atoms" );
         bDBRndDeleteEntry( db, "parm.bonds" );
-        bDBRndDeleteEntry( db, "parm.C4Pairwise" ); //New2021
         bDBRndDeleteEntry( db, "parm.angles" );
         /*
          *  (torsions & impropers are folded together for
@@ -963,39 +1017,6 @@ ParmSetSave( PARMSET psLib, DATABASE db )
                 5, "desc",
                     (char *)&(PVAI(psLib->vaBonds,BONDPARMt,0)->sDesc),
                     iVarArrayElementSize(psLib->vaBonds),
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0 );
-    }
-
-    /*
-     *  C4Pairwise
-     */
-    if ( iVarArrayElementCount( psLib->vaC4Pairwise ) ) {
-        DBPutTable( db, "parm.C4Pairwise", iVarArrayElementCount(psLib->vaC4Pairwise),
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                3, "daC4Pairwise",
-                    (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->daC4Pairwise),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-                0, NULL, NULL, 0,
-
-                1, "type1",
-                    (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->sType1),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
-                2, "type2",
-                    (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->sType2),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
-                4, "desc",
-                    (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->sDesc),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
                 0, NULL, NULL, 0,
                 0, NULL, NULL, 0 );
     }
@@ -1167,7 +1188,6 @@ int                i;
 
     if ( !bDBGetType( db, "parm.atoms", &iType, &iLines ) &&
          !bDBGetType( db, "parm.bonds", &iType, &iLines ) &&
-         !bDBGetType( db, "parm.C4Pairwise", &iType, &iLines ) && // New2021
          !bDBGetType( db, "parm.angles", &iType, &iLines ) &&
          !bDBGetType( db, "parm.torsions", &iType, &iLines ) &&
          !bDBGetType( db, "parm.hbonds", &iType, &iLines ) )
@@ -1239,36 +1259,6 @@ int                i;
                    iVarArrayElementSize(psLib->vaBonds),
                 5, (char *)&(PVAI(psLib->vaBonds,BONDPARMt,0)->sDesc),
                    iVarArrayElementSize(psLib->vaBonds),
-                0, NULL, 0,
-                0, NULL, 0 );
-
-    /*
-     *   C4Pairwise
-     */
-    bDBGetType( db, "parm.C4Pairwise", &iType, &iLines );
-    VarArraySetSize( (psLib->vaC4Pairwise), iLines );
-    if ( iLines ) 
-        bDBGetTable( db, "parm.C4Pairwise", &iLines,
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-                3, (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->daC4Pairwise),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
-                0, NULL, 0,
-                0, NULL, 0,
-                0, NULL, 0,
-
-                1, (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->sType1),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
-                2, (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->sType2),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
-                4, (char *)&(PVAI(psLib->vaC4Pairwise,C4Pairwiset,0)->sDesc),
-                    iVarArrayElementSize(psLib->vaC4Pairwise),
                 0, NULL, 0,
                 0, NULL, 0 );
 
@@ -1447,7 +1437,6 @@ ParmSetDescribe( PARMSET psLib )
 {
 ATOMPARMt      *apPAtom;
 BONDPARMt      *bpPBond;
-C4Pairwiset    *cpPC4Pairwise;
 ANGLEPARMt     *apPAngle;
 TORSIONPARMt   *tpPTorsion;
 HBONDPARMt     *hpPHBond;
@@ -1499,23 +1488,6 @@ STRING                sElement;
                         bpPBond->sType1, bpPBond->sType2,
                         bpPBond->dKb, bpPBond->dR0, bpPBond->sDesc );
             if ( bBasicsInterrupt() ) 
-                goto QUIT;
-        }
-    }
-
-                /* Dump C4Pairwise */
-
-    VP0("--C4Pairwise\n" );
-    iMax = iVarArrayElementCount( psLib->vaC4Pairwise );
-    if ( !iMax ) {
-        VP0("  --None\n" );
-    } else {
-        cpPC4Pairwise = PVAI( psLib->vaC4Pairwise, C4Pairwiset, 0 );
-        for ( i=0; i<iMax; cpPC4Pairwise++, i++ ) {
-            VP0("    %4s - %4s   C4Pairwise=%8.2lf   Desc:%s\n",
-                        cpPC4Pairwise->sType1, cpPC4Pairwise->sType2,
-                        cpPC4Pairwise->daC4Pairwise, cpPC4Pairwise->sDesc ); //BUGFIX
-            if ( bBasicsInterrupt() )
                 goto QUIT;
         }
     }
@@ -1626,9 +1598,6 @@ QUIT:
 
 
 
-
-
-
 /*
  *      iParmSetAddAtom
  *
@@ -1698,34 +1667,6 @@ int iParmSetAddBond(PARMSET psLib, char *sType1, char *sType2, double dKb, doubl
 
   return(iVarArrayElementCount(psLib->vaBonds) - 1);
 }
-
-/*
- *      iParmSetAddC4Pairwise
- *
- *      Add pairwise C4 interactions.
- *      Return the index.
- *      
- */
-int iParmSetAddC4Pairwise(PARMSET psLib, char *sType1, char *sType2, double daC4Pairwise, char *sDesc)
-{
-  C4Pairwiset bpC4Pairwise;
-
-  memset(&bpC4Pairwise, 0, sizeof(bpC4Pairwise));        /* for Purify */
-  strcpy(bpC4Pairwise.sType1, sType1);
-  strcpy(bpC4Pairwise.sType2, sType2);
-  zParmSetOrderC4Pairwise(bpC4Pairwise.sType1, bpC4Pairwise.sType2);
-  bpC4Pairwise.daC4Pairwise = daC4Pairwise;
-  if (sDesc != NULL) {
-    strcpy(bpC4Pairwise.sDesc, sDesc);
-  }
-  else {
-    strcpy(bpC4Pairwise.sDesc, "");
-  }
-  VarArrayAdd((psLib->vaC4Pairwise), (GENP)&bpC4Pairwise);
-  //VP0("Return value of iParmSetAddC4Pairwise is: %i\n", iVarArrayElementCount(psLib->vaC4Pairwise) - 1);
-  return(iVarArrayElementCount(psLib->vaC4Pairwise) - 1);
-}
-
 
 
 
@@ -1905,7 +1846,7 @@ iParmSetAddNBEdit( PARMSET psLib, char *sType1, char *sType2, double dEI,
                    double dEJ, double dRI, double dRJ, char *sDesc )
 {
   int i;
-  double       dA, dC;
+  double       dA, dB;
   NBEDITt      hpNBEdit;
 
   memset( &hpNBEdit, 0, sizeof(hpNBEdit) );     /* for Purify */
@@ -1933,9 +1874,9 @@ iParmSetAddNBEdit( PARMSET psLib, char *sType1, char *sType2, double dEI,
       dRJ = PVAI(psLib->vaAtoms, ATOMPARMt, i)->dR;
     }
   }
-  MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dC);
+  MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dB);
   hpNBEdit.dA = dA;
-  hpNBEdit.dC = dC;
+  hpNBEdit.dB = dB;
   if ( sDesc != NULL )
     strcpy( hpNBEdit.sDesc, sDesc );
   else
@@ -1945,6 +1886,63 @@ iParmSetAddNBEdit( PARMSET psLib, char *sType1, char *sType2, double dEI,
 
   return(iVarArrayElementCount( psLib->vaNBEdits )-1);
 }
+
+/*
+ *      CheckTypeNBEdit
+ *
+ *        Author:       David S. Cerutti (2013)
+ *
+ *      Check to see whether this atom type (which is imminently to be
+ *      compacted in the nonbonded parameters array) is mentioned in any
+ *      nonbonded pair potential adjustments.  If so, then it has to remain
+ *      its own type.
+ */
+int
+CheckTypeNBEdit(typeStr sType, VARARRAY vaPNBEdits)
+{
+  int i;
+
+  for (i = 0; i < vaPNBEdits->count; i++) {
+    if (strcmp(sType, PVAI(vaPNBEdits, NBEDITt, i)->sType1) == 0 ||
+	strcmp(sType, PVAI(vaPNBEdits, NBEDITt, i)->sType2) == 0) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+/*
+ *      CheckAgainstNBEdits
+ *
+ *        Author:       David S. Cerutti (2013)
+ *
+ *      Check to see whether an atom type, when paired with any other atom
+ *      type, has any Lennard-Jones sigma and epsilon pairs that do not
+ *      conform to the standard combining rules.
+ */
+void
+CheckAgainstNBEdits(VARARRAY vaPNBEdits, typeStr tI, typeStr tJ,
+		    double *dA, double *dB)
+{
+  int i;
+
+  for (i = 0; i < vaPNBEdits->count; i++) {
+    if ((strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType1, tI) == 0 &&
+	 strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType2, tJ) == 0) ||
+	(strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType1, tJ) == 0 &&
+	 strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType2, tI) == 0)) {
+
+      /* This is an edited pair interaction */
+      MathOpConvertNonBondToAC(PVAI(vaPNBEdits, NBEDITt, i)->dEI,
+			       PVAI(vaPNBEdits, NBEDITt, i)->dRI,
+			       PVAI(vaPNBEdits, NBEDITt, i)->dEJ,
+			       PVAI(vaPNBEdits, NBEDITt, i)->dRJ, dA, dB);
+      break;
+    }
+  }
+}
+
 
 /*
  *      iParmSetFindAtom
@@ -1960,7 +1958,7 @@ iParmSetFindAtom( PARMSET psLib, char *sType )
 {
 ATOMPARMt        *apPAtom;
 int             i, iMax;
-BOOL            bFoundOne;
+bool            bFoundOne;
 
     iMax = iVarArrayElementCount( psLib->vaAtoms );
 
@@ -1999,7 +1997,7 @@ iParmSetFindBond( PARMSET psLib, char *sType1, char *sType2 )
 {
 BONDPARMt        *bpPBond;
 int             i, iMax;
-BOOL            bFoundOne;
+bool            bFoundOne;
 STRING                s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaBonds );
@@ -2032,59 +2030,6 @@ STRING                s1, s2;
 
 
 /*
- *      iParmSetFindC4Pairwise
- *
- *        New feature (2020)
- *
- *      Search for a C4 parameter in the ParmSet
- *      and return the index if it is found
- *      otherwise return PARM_NOT_FOUND
- */
-int
-iParmSetFindC4Pairwise( PARMSET psLib, char *sType1, char *sType2 )
-{
-C4Pairwiset        *cpPC4Pairwise;
-int             i, iMax;
-BOOL            bFoundOne;
-STRING                s1, s2;
-
-    iMax = iVarArrayElementCount( psLib->vaC4Pairwise );
-    //if (psLib->vaC4Pairwise == NULL) {
-      VP0("iMax is: %i\n", iMax);
-    //}
-    //TODO: iMax is always zero
-    if ( !iMax )
-        return(PARM_NOT_FOUND);
-
-    strcpy( s1, sType1 );
-    strcpy( s2, sType2 );
-    zParmSetOrderC4Pairwise( s1, s2 );
-
-    bFoundOne = FALSE;
-    cpPC4Pairwise = PVAI( psLib->vaC4Pairwise, C4Pairwiset, 0 );
-    VP0("Initial C4Pairwise %i\n", cpPC4Pairwise);
-    for ( i=0; i<iMax; cpPC4Pairwise++, i++ ) {
-        if ( strcmp( cpPC4Pairwise->sType1, s1 ) == 0 ) {
-            if ( strcmp( cpPC4Pairwise->sType2, s2 ) == 0 ) {
-                    bFoundOne = TRUE;
-                    break;
-            }
-        }
-    }
-    if ( bFoundOne ) {
-        MESSAGE("-C4Pairwise Parameter %s - %s\n",
-                sType1, sType2 );
-        return(i);
-    }
-    return(PARM_NOT_FOUND);
-}
-
-
-
-
-
-
-/*
  *      iParmSetFindAngle
  *
  *        Author:        Christian Schafmeister (1991)
@@ -2098,7 +2043,6 @@ iParmSetFindAngle( PARMSET psLib, char *sType1, char *sType2, char *sType3 )
 {
 ANGLEPARMt        *apPAngle;
 int             i, iMax;
-BOOL            bFoundOne;
 STRING                s1, s2, s3;
 
     iMax = iVarArrayElementCount( psLib->vaAngles );
@@ -2110,23 +2054,16 @@ STRING                s1, s2, s3;
     strcpy( s3, sType3 );
     zParmSetOrderAngleAtoms( s1, s2, s3 );
 
-    bFoundOne = FALSE;
     apPAngle = PVAI( psLib->vaAngles, ANGLEPARMt, 0 );
     for ( i=0; i<iMax; apPAngle++, i++ ) {
-        if ( strcmp( apPAngle->sType1, s1 ) == 0 ) {
-            if ( (strcmp( apPAngle->sType2, s2 ) == 0) &&
-                 (strcmp( apPAngle->sType3, s3 ) == 0) ) {
-                    bFoundOne = TRUE;
-                    break;
-            }
+        if ( !strcmp( apPAngle->sType1, s1 ) &&
+                !strcmp( apPAngle->sType2, s2 ) &&
+                !strcmp( apPAngle->sType3, s3 ) ) {
+            MESSAGE("-Angle Parameter %s - %s - %s\n", 
+                    sType1, sType2, sType3);
+            return i;
         }
     }
-    if ( bFoundOne ) {
-        MESSAGE("-Angle Parameter %s - %s - %s\n", 
-                sType1, sType2, sType3);
-    }
-    if ( bFoundOne )
-        return(i);
     return(PARM_NOT_FOUND);
 }
 
@@ -2157,7 +2094,7 @@ STRING                s1, s2, s3;
  *        valid.
  */
 int
-iParmSetFindProperTerms( PARMSET psLib, TORSION tTorsion, BOOL bUseIndex,
+iParmSetFindProperTerms( PARMSET psLib, TORSION tTorsion, bool bUseIndex,
                 char *sType1, char *sType2, char *sType3, char *sType4 )
 {
 STRING                s1, s2, s3, s4;
@@ -2202,7 +2139,7 @@ STRING                s1, s2, s3, s4;
  *        valid.
  */
 int
-iParmSetFindImproperTerms( PARMSET psLib, TORSION tTorsion, BOOL bUseIndex,
+iParmSetFindImproperTerms( PARMSET psLib, TORSION tTorsion, bool bUseIndex,
                         char *sType1, char *sType2, char *sType3, char *sType4 )
 {
 STRING                s1, s2, s3, s4;
@@ -2243,7 +2180,7 @@ iParmSetFindHBond( PARMSET psLib, char *sType1, char *sType2 )
 {
 HBONDPARMt        *hpPHBond;
 int             i, iMax;
-BOOL            bFoundOne;
+bool            bFoundOne;
 STRING                s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaHBonds );
@@ -2290,7 +2227,7 @@ iParmSetFindNBEdit( PARMSET psLib, char *sType1, char *sType2 )
 {
 NBEDITt         *hpPNBEdit;
 int             i, iMax;
-BOOL            bFoundOne;
+bool            bFoundOne;
 STRING                s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaNBEdits );
@@ -2382,7 +2319,7 @@ TORSION_MATCHt        *tmPCur;
  *
  *        Add the term to the TORSION.
  */
-BOOL
+bool
 bParmSetTORSIONAddProperTerm( TORSION tTorsion,
         char *cPType1, char *cPType2, char *cPType3, char *cPType4,
         int iN, double dKp, double dP0, double dScEE, double dScNB,
@@ -2422,7 +2359,7 @@ TORSIONPARMt        tpTorsion;
  *
  *        Add the term to the improper TORSION.
  */
-BOOL
+bool
 bParmSetTORSIONAddImproperTerm( TORSION tTorsion,
         char *cPType1, char *cPType2, char *cPType3, char *cPType4,
         int iN, double dKp, double dP0, double dScEE, double dScNB, char *sDesc )
@@ -2695,7 +2632,7 @@ int                iTemp, iBetter, iBetterIndex;
  *      Return TRUE if the atom type is capable of being involved
  *      in a HBond.
  */
-BOOL
+bool
 bParmSetCapableOfHBonding( PARMSET psParms, char *sType )
 {
 HBONDPARMt     *hbPCur;
@@ -2819,38 +2756,6 @@ void ParmSetBond(PARMSET psLib, int i, char *sType1, char *sType2, double *dPKb,
   *dPKpress  = bpPBond->dKpress;
   *dPRpress0 = bpPBond->dRpress0;
   strcpy(sDesc, bpPBond->sDesc);
-}
-
-
-// New---------------------------------------------------------------------------------------------
-// ParmSetC4Pairwise: Return a C4Pairwise in the ParmSet
-//
-// Arguments:
-//   psLib:      the library of available parameters, including bonds
-//   i:          the index of the bond to pull out
-//   sType1:     atom type for the first atom in the bond
-//   sType2:     atom type for the second atom in the bond
-//   daC4Pairwise:       C4 value
-//---------------------------------------------------------------------------------------------
-void ParmSetC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double *daC4Pairwise, char *sDesc)
-{
-  C4Pairwiset *cpPC4Pairwise;
-
-  if (!iVarArrayElementCount(psLib->vaC4Pairwise)) {
-
-    // Default values
-    VPWARN("Using default C4 values (0)\n");
-    strcpy(sType1, WILD_CARD_TYPE);
-    strcpy(sType2, WILD_CARD_TYPE);
-    *daC4Pairwise = 0.0;
-    strcpy(sDesc, "??");
-    return;
-  }
-  cpPC4Pairwise = PVAI(psLib->vaC4Pairwise, C4Pairwiset, i);
-  strcpy( sType1, cpPC4Pairwise->sType1 );
-  strcpy( sType2, cpPC4Pairwise->sType2 );
-  *daC4Pairwise = cpPC4Pairwise->daC4Pairwise;
-  strcpy(sDesc, cpPC4Pairwise->sDesc);
 }
 
 
@@ -3153,32 +3058,6 @@ void ParmSetUpdateBond(PARMSET psLib, int i, char *sType1, char *sType2,
   }
 }
 
-/* New 
- * ParmSetUpdateC4Pairwise
- */
-
-void ParmSetUpdateC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double *daC4Pairwise, char *sDescription)
-{
-  C4Pairwiset *cpPC4Pairwise;
-
-  cpPC4Pairwise = PVAI( psLib->vaC4Pairwise, C4Pairwiset, i );
-  if (sType1 != (char*)NULL) {
-    strcpy(cpPC4Pairwise->sType1, sType1);
-  }
-  if (sType2 != (char*)NULL) {
-    strcpy(cpPC4Pairwise->sType2, sType2);
-  }
-  if (daC4Pairwise != (double*)NULL) {
-    cpPC4Pairwise->daC4Pairwise = *daC4Pairwise;
-  }
-  if (sDescription != (char*)NULL) {
-    strcpy(cpPC4Pairwise->sDesc, sDescription);
-  }
-  if (sType1 || sType2) {
-    zParmSetOrderC4Pairwise(cpPC4Pairwise->sType1, cpPC4Pairwise->sType2);
-  }
-}
-
 
 /*
  *      ParmSetUpdateAngle
@@ -3356,25 +3235,6 @@ ParmSetNewBonds( PARMSET psParmSet, int iCount )
     psParmSet->vaBonds = vaVarArrayCreate( sizeof( BONDPARMt ));
     VarArraySetSize( psParmSet->vaBonds, iCount );
     MESSAGE("Bond parameters size changed to %i\n", iCount );
-}
-
-/*
- *        ParmSetNewC4Pairwise
- *
- *        New feather(2020)
- *
- *        Destroy the old parameters and create a new set that is empty
- *        of that can hold the iCount number of parameters
- *
- */
-
-void
-ParmSetNewC4Pairwise( PARMSET psParmSet, int iCount )
-{
-    VarArrayDestroy( &psParmSet->vaC4Pairwise );
-    psParmSet->vaC4Pairwise = vaVarArrayCreate( sizeof( C4Pairwiset ));
-    VarArraySetSize( psParmSet->vaC4Pairwise, iCount );
-    MESSAGE("C4 parameters size changed to %i\n", iCount );
 }
 
 

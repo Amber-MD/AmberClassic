@@ -67,7 +67,7 @@
 *       Christine Cezard (2007)
 *       Universite de Picardie - Jules Verne
 *       http://q4md-forcefieldtools.org
-*       zbUnitIOIndexBondParameters and zUnitDoAtoms are now "extern functions"
+*       bUnitIOIndexBondParameters and UnitDoAtoms are now "extern functions"
 */
 
 /*
@@ -154,7 +154,7 @@ zSetTreeType(ATOM aAtom, int iCoordLeft)
  *      Load the tables which can be used to construct the UNIT
  *      from a DATABASE.
  */
-BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
+bool zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
 {
     int iSize, iCount, iAtomCount, iType;
     STRING sName;
@@ -165,9 +165,8 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
     SAVEMOLECULEt *smPMolecule;
     SAVEHIERARCHYt *shPHierarchy;
     SAVEGROUPSt *sgPGroupAtom;
-    SAVEC4Pairwiset *scPC4Pairwise; // New2021
     int iBondCount, iRestraintCount, iSequence;
-    BOOL bGotOne;
+    bool bGotOne;
     SAVEBOXt sbBox;
     SAVECAPt scCap;
     int iTemp, iLen, i;
@@ -179,7 +178,7 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
         bGotOne = FALSE;
         goto DONE;
     }
-    ContainerSetName(uUnit, sName); // FIXME check this is OK
+    ContainerSetName(uUnit, sName);
 
     if (bDBGetValue(db, "description", &iLen, (GENP) sName, sizeof(sName))) {
         UnitSetDescription(uUnit, sName);
@@ -383,6 +382,7 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
     /* Load the RESIDUE PDB chainID numbers from an */
     /* extra table to remain compatible with old OFF files */
     if (bDBGetType(db, "residuesPdbChainID", &iType, &iTemp)) {
+        //
         bDBGetValue(db, "residuesPdbChainID", &iTemp,
                     (GENP) & (srPResidue->sChainId), iSize);
     } else {
@@ -457,34 +457,6 @@ BOOL zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
                     0, NULL, 0, 0, NULL, 0, 0, NULL, 0);
     }
 
-    /* New Load C4Pairwise interactions */
-    uUnit->vaC4Pairwise = vaVarArrayCreate(sizeof(SAVEC4Pairwiset));
-    bDBGetType(db, "C4Pairwise", &iType, &iCount);
-    VarArraySetSize((uUnit->vaC4Pairwise), iCount);
-    if (iCount) {
-        scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, 0);
-        iSize = sizeof(SAVEC4Pairwiset);
-        bDBGetTable(db, "C4Pairwise", &iCount,
-                   1, (char *) &(scPC4Pairwise->iAtom1), iSize,
-                   2, (char *) &(scPC4Pairwise->iAtom2), iSize,
-                   3, (char *) &(scPC4Pairwise->iParmIndex), iSize,
-                   4, (char *) &(scPC4Pairwise->daC4Pairwise), iSize,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0,
-                   0, NULL, 0);
-    }
-
-
     /* Load the atom groups */
 
     if (bDBGetType(db, "groupNames", &iType, &iCount)) {
@@ -540,7 +512,6 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
     int iSize, iCount, iSequence;
     SAVEATOMt *saPAtom;
     SAVEBONDt *sbPBond;
-    SAVEC4Pairwiset *scPC4Pairwise; //New
     SAVECONNECTIVITYt *scPConnectivity;
     SAVEANGLEt *saPAngle;
     SAVETORSIONt *stPTorsion;
@@ -753,6 +724,10 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
                    ENTRYARRAY | ENTRYINTEGER, iCount,
                    (GENP) & srPResidue->iPdbResSeq, iSize);
 
+        DBPutValue(db, "residuesPdbChainID",
+                   ENTRYARRAY | ENTRYSTRING, iCount,
+                    (GENP) &srPResidue->sChainId, iSize);
+
         DBPutTable(db, "residueconnect", iCount,
                    1, "c1x", (char *) &(srPResidue->iaConnectIndex[0]),
                    iSize, 2, "c2x",
@@ -844,24 +819,6 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
                    NULL, 0, 0, NULL, NULL, 0);
     }
 
-    // New save the C4 information
-
-    if ((iCount = iVarArrayElementCount(uUnit->vaC4Pairwise))) {
-        scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, 0);
-        iSize = sizeof(SAVEC4Pairwiset);
-        DBPutTable(db, "C4Pairwise", iCount,
-                   1, "atom1x", (char *) &(scPC4Pairwise->iAtom1), iSize,
-                   2, "atom2x", (char *) &(scPC4Pairwise->iAtom2), iSize,
-                   3, "parmx", (char *) &(scPC4Pairwise->iParmIndex), iSize,
-                   4, "daC4Pairwise", (char *) &(scPC4Pairwise->daC4Pairwise), iSize,
-                   0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
-                   NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
-                   NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
-                   NULL, 0, 0, NULL, NULL, 0, 0, NULL, NULL, 0, 0, NULL,
-                   NULL, 0, 0, NULL, NULL, 0);
-    }
-
-
     /* Save the angles information */
 
     if ((iCount = iVarArrayElementCount(uUnit->vaAngles))) {
@@ -919,7 +876,7 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
  */
 static void
 zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
-                    BOOL * bPFailed, BOOL bPert)
+                    bool * bPFailed, bool bPert)
 {
     SAVEATOMt *saPAtom;
     int iIndex, iElement, iHybridization, iTemp;
@@ -1097,10 +1054,10 @@ static int *Pint1, *Pint2;
  *
  */
 static void
-zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, BOOL * bPCalc14,
-                      BOOL * bPCalcPert14)
+zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, bool * bPCalc14,
+                      bool * bPCalcPert14)
 {
-    BOOL bCheck;
+    bool bCheck;
 
     /*
      *  order the 1st, last pointers by atom #
@@ -1172,7 +1129,7 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, BOOL * bPCalc14,
 
 
 /*
- *        zUnitIndexBondParameters
+ *        bUnitIndexBondParameters
  *
  *        Author:        Christian Schafmeister (1991)
  *
@@ -1184,14 +1141,14 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, BOOL * bPCalc14,
  *
  *        Return TRUE if there was a problem generating parameters.
  */
-BOOL
-zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
+bool
+bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 {
     int iCount, iIndex, iTemp;
     LOOP lTemp;
     SAVEBONDt *sbPBond;
     ATOM aAtom1, aAtom2;
-    BOOL bFailedGeneratingParameters;
+    bool bFailedGeneratingParameters;
     double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0;
     STRING sAtom1, sAtom2, sDesc;
     PARMSET psTemp;
@@ -1200,7 +1157,7 @@ zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
 #endif
 
 
-    VPTRACEENTER("zbUnitIOIndexBondParameters" );
+    VPTRACEENTER("bUnitIOIndexBondParameters" );
     bFailedGeneratingParameters = FALSE;
 
     if (uUnit->vaBonds != NULL) {
@@ -1324,71 +1281,10 @@ zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
         }
     }
 
-    VPTRACEEXIT("zbUnitIOIndexBondParameters" );
+    VPTRACEEXIT("bUnitIOIndexBondParameters" );
     return (bFailedGeneratingParameters);
 }
 
-/*
- *        zUnitIndexC4Pairwise
- *
- *        New feature (2021)
- *
- *        For all of the C4 interactions, search for their parameters
- *        within the UNITs PARMSET.  If they are
- *        found then set the index to the entry, otherwise
- *        add the C4 parameter to the PARMSET and set the index.
- *
- *        Return TRUE if there was a problem generating parameters.
- */
-
-BOOL
-zbUnitIOIndexC4Pairwise(UNIT uUnit)
-{
-    int iCount, iIndex;
-    LOOP lTemp;
-    SAVEC4Pairwiset *scPC4Pairwise;
-    ATOM aAtom1, aAtom2;
-    double daC4Pairwise; // New
-    BOOL bFailedGeneratingParameters;
-    STRING sAtom1, sAtom2, sDesc;
-
-    daC4Pairwise = 0.0; // New
-    bFailedGeneratingParameters = FALSE;
-
-    if (uUnit->vaC4Pairwise != NULL) {
-        // VP0("Rebuilding C4 parameters.\n"); // C4PairwiseDebug
-        VarArrayDestroy(&(uUnit->vaC4Pairwise));
-    }
-    // else
-        // VP0("Building C4 parameters.\n"); // C4PairwiseDebug
-
-    uUnit->vaC4Pairwise = vaVarArrayCreate(sizeof(SAVEC4Pairwiset));
-    iCount = 0;
-    lTemp = lLoop((OBJEKT) uUnit, C4Pairwise);
-    while (oNext(&lTemp) != NULL)
-        iCount++;
-    //VP0("iCount is: %i\n", iCount);
-    VarArraySetSize((uUnit->vaC4Pairwise), iCount);
-    if (iCount) {
-        lTemp = lLoop((OBJEKT) uUnit, C4Pairwise);
-        scPC4Pairwise = PVAI(uUnit->vaC4Pairwise, SAVEC4Pairwiset, 0);
-        if (scPC4Pairwise == NULL)
-            DFATAL(" ?? null\n");
-        iIndex = 0; //FIXME why is scPC4Pairwise->iParmIndex set twice below? -- JMK
-        for (; oNext(&lTemp) != NULL; scPC4Pairwise++) {
-            LoopGetC4Pairwise(&lTemp, &aAtom1, &aAtom2, &daC4Pairwise);
-            scPC4Pairwise->iAtom1 = iContainerTempInt(aAtom1);
-            scPC4Pairwise->iAtom2 = iContainerTempInt(aAtom2);
-            scPC4Pairwise->iParmIndex = 0;
-            scPC4Pairwise->daC4Pairwise = daC4Pairwise;
-            strcpy(sAtom1, sAtomType(aAtom1));
-            strcpy(sAtom2, sAtomType(aAtom2));
-            iIndex = iParmSetAddC4Pairwise(uUnit->psParameters, sAtom1, sAtom2, daC4Pairwise, sDesc);
-        }
-            scPC4Pairwise->iParmIndex = iIndex + 1;
-    }
-    return (bFailedGeneratingParameters);
-}
 
 /*
  *        zUnitIndexAngleParameters
@@ -1404,14 +1300,14 @@ zbUnitIOIndexC4Pairwise(UNIT uUnit)
  *
  *        Return TRUE if there was a problem generating parameters.
  */
-static BOOL
-zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
+static bool
+zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 {
     LOOP lTemp;
     SAVEANGLEt saAngle;
     ATOM aAtom1, aAtom2, aAtom3;
     int iIndex, iTemp;
-    BOOL bFailedGeneratingParameters;
+    bool bFailedGeneratingParameters;
     STRING sAtom1, sAtom2, sAtom3, sDesc;
     PARMSET psTemp;
     double dKt, dT0, dTkub, dRkub;
@@ -1571,109 +1467,6 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, BOOL bPert)
 }
 
 
-/*
- *  BoilTorsions() - reduce list of torsion params to
- *        unique numerical ones, updating param pointers
- *        in the topological list.
- *
- *        Bill Ross, May 1996
- */
-static void
-BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
-             VARARRAY vaTorsions, int iTorsionOffset)
-{
-    VARARRAY vaB;
-    TORSIONPARMt *tpA, *tpB, tC;
-    int iIndex, iA, iB, iParmCount, iTorsionCount;
-
-    strcpy(tC.sDesc, "reduced params");
-    strcpy(tC.sType1, "__");
-    strcpy(tC.sType2, "__");
-    strcpy(tC.sType3, "__");
-    strcpy(tC.sType4, "__");
-    strcpy(tC.sOrder, "___");
-
-    iParmCount = iVarArrayElementCount(*vaPParms);
-    iTorsionCount = iVarArrayElementCount(vaTorsions);
-
-    iIndex = iParmOffset;
-    vaB = vaVarArrayCreate(sizeof(TORSIONPARMt));
-    tpA = PVAI(*vaPParms, TORSIONPARMt, 0);
-    for (iA = 0; iA < iParmCount; iA++, tpA++) {
-        int i, iOldIndex;
-        SAVETORSIONt *stP;
-
-        if (!strcmp(tpA->sType1, "__"))
-            continue;
-        /*
-         *  torsion hasn't been marked as 'superfluous'
-         *      so add to new array
-         */
-        tC.dKp = tpA->dKp;
-        tC.iN = tpA->iN;
-        tC.dP0 = tpA->dP0;
-	tC.dScEE = tpA->dScEE;
-	tC.dScNB = tpA->dScNB;
-        VarArrayAdd(vaB, (GENP) & tC);
-        iIndex++;
-        iOldIndex = iParmOffset + iA + 1;
-
-        /*
-         *  update any affected torsions
-         */
-        if (iIndex != iOldIndex) {
-            stP = PVAI(vaTorsions, SAVETORSIONt, iTorsionOffset);
-            for (i = iTorsionOffset; i < iTorsionCount; i++, stP++) {
-                if (stP->iParmIndex == iOldIndex)
-                    stP->iParmIndex = iIndex;
-                if (stP->iPertParmIndex == iOldIndex)
-                    stP->iPertParmIndex = iIndex;
-            }
-        }
-
-        /*
-         *  mark any subsequent duplicates 'superfluous'
-         *      and update indexes into the array
-         */
-        for (tpB = tpA + 1, iB = iA + 1; iB < iParmCount; iB++, tpB++) {
-            if (!strcmp(tpB->sType1, "__"))
-                continue;
-            if (tpB->iN != tpA->iN)
-                continue;
-            if (tpB->dKp != tpA->dKp)
-                continue;
-            if (tpB->dP0 != tpA->dP0)
-                continue;
-	    if (tpB->dScEE != tpA->dScEE)
-		continue;
-	    if (tpB->dScNB != tpA->dScNB)
-		continue;
-
-            /*
-             *  B is a duplicate of A
-             */
-            strcpy(tpB->sType1, "__");
-            iOldIndex = iParmOffset + iB + 1;
-            stP = PVAI(vaTorsions, SAVETORSIONt, iTorsionOffset);
-            for (i = iTorsionOffset; i < iTorsionCount; i++, stP++) {
-                if (stP->iParmIndex == iOldIndex)
-                    stP->iParmIndex = iIndex;
-                if (stP->iPertParmIndex == iOldIndex)
-                    stP->iPertParmIndex = iIndex;
-            }
-
-        }
-    }
-
-    /*
-     *  throw away the old parms array & put the new one in place
-     */
-    VarArrayDestroy(vaPParms);
-    *vaPParms = vaB;
-}
-
-
-
 
 /*
  *        zbUnitIOIndexTorsionParameters
@@ -1714,9 +1507,9 @@ BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
  *        end/molecule_dihedrals
  */
 extern int itest;
-static BOOL
+static bool
 zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
-                               BOOL bProper, BOOL bPert )
+                               bool bProper, bool bPert )
 {
     VPTRACEENTER("zbUnitIOIndexTorsionParameters" );
     LOOP lTemp;
@@ -1727,14 +1520,14 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     STRING sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4;
     STRING sOrigPert1, sOrigPert2, sOrigPert3, sOrigPert4;
     TORSION tTorsion, tPertTorsion;
-    BOOL bPerturbTorsion;
+    bool bPerturbTorsion;
     PARMSET psTemp;
     int iTerm, iPertTerm;
-    BOOL bDone, bUse, bUsePert, bCopy, bCopyPert, bEnd, bPertEnd;
+    bool bDone, bUse, bUsePert, bCopy, bCopyPert, bEnd, bPertEnd;
     int iN, iPertIndex, iPertN, iLastN, iLastPertN;
     double dKp, dP0, dPertKp, dPertP0;
     double dScEE, dScNB, dPScEE, dPScNB;
-    BOOL bCalc14, bCalcPert14;
+    bool bCalc14, bCalcPert14;
 #ifdef  DEBUG2
     STRING s1, s2, s3, s4;
     int iTParm, iTmp;
@@ -1742,7 +1535,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     STRING sT1, sT2, sT3, sT4, sTemp;
 #endif
         STRING sDesc;
-    BOOL bFailedGeneratingParameters;
+    bool bFailedGeneratingParameters;
     int iTN, iTNPert = 0;
     int iaIndexes[4];
     char *cPaTypes[4];
@@ -2458,36 +2251,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
 
 
 /*
- *        zUnitDoResidue
- *
- *        Build a RESIDUE entry into the uUnit->vaResidues table.
- */
-static void
-zUnitDoResidue(UNIT uUnit, RESIDUE rRes, int *iPPos)
-{
-    SAVERESIDUEt *srPResidue;
-
-    ContainerSetTempInt(rRes, (*iPPos) + 1);
-
-    srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, *iPPos);
-    srPResidue->rResidue = rRes;
-    REF(rRes);
-    strcpy(srPResidue->sName, sContainerName(rRes));
-    srPResidue->sResidueType[0] = cResidueType(rRes);
-    srPResidue->sResidueType[1] = '\0';
-    srPResidue->iSequenceNumber = iContainerSequence(rRes);
-    srPResidue->iNextChildSequence = iContainerNextChildsSequence(rRes);
-    srPResidue->iPdbResSeq = iResiduePdbSequence(rRes);
-    memcpy(srPResidue->sChainId,rRes->sChainId,sizeof(srPResidue->sChainId));
-    if (rRes->cICode == ' ') srPResidue->sICode[0]=0;
-    else { srPResidue->sICode[0]=rRes->cICode;srPResidue->sICode[1]=0; }
-    (*iPPos)++;
-
-}
-
-
-/*
- *        zUnitDoAtoms
+ *        UnitDoAtoms
  *
  *        Loop over all of the ATOMs within the RESIDUE and add them
  *        to the UNITs tables.
@@ -2497,13 +2261,13 @@ zUnitDoResidue(UNIT uUnit, RESIDUE rRes, int *iPPos)
  *        with AMBER parm files.
  */
 void
-zUnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos,
-             BOOL * bPFailed, BOOL bPert)
+UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos,
+             bool * bPFailed, bool bPert)
 {
     SAVERESIDUEt *srPResidue;
     LOOP lTemp;
     ATOM aAtom, aIgnore;
-    BOOL bFailed;
+    bool bFailed;
 
     srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt,
                       iContainerTempInt(rRes) - 1);
@@ -2561,13 +2325,55 @@ zUnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos,
 // Also builds residue table, and marks RESIDUE TempInt with derived sequence order.
 
 int
-zUnitIOAmberOrderResidues( UNIT uUnit )
+UnitIOAmberOrderResidues( UNIT uUnit )
 {
+    LOOP    lResidues;
+    RESIDUE rRes;
+    int iResidueCount = UnitLabelMolecules(uUnit);
+
+    if (iResidueCount == 0)
+            return(0);
+
+    /*
+    **  allocate array for residues
+    */
+    uUnit->vaResidues = vaVarArrayCreate(sizeof(SAVERESIDUEt));
+    VarArraySetSize((uUnit->vaResidues), iResidueCount);
+    SAVERESIDUEt *srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
+
+    if ( !GDefaults.reorder_residues )
+        printf("\"order_residues\" off: keep input residue order.\n");
+    lResidues = lLoop((OBJEKT) uUnit, GDefaults.reorder_residues ?
+            DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM);
+    int iResIndex=0;
+    while ((rRes = (RESIDUE) oNext(&lResidues)) != NULL) {
+        if (iObjectType(rRes) != RESIDUEid) continue;
+    // Build a RESIDUE entry into the uUnit->vaResidues table.
+        ContainerSetTempInt(rRes, iResIndex+1);
+        srPResidue->rResidue = rRes;
+        REF(rRes);
+        strcpy(srPResidue->sName, sContainerName(rRes));
+        srPResidue->sResidueType[0] = cResidueType(rRes);
+        srPResidue->sResidueType[1] = 0;
+        srPResidue->iSequenceNumber = iContainerSequence(rRes);
+        srPResidue->iNextChildSequence = iContainerNextChildsSequence(rRes);
+        srPResidue->iPdbResSeq = iResiduePdbSequence(rRes);
+        memcpy(srPResidue->sChainId,rRes->sChainId,sizeof(srPResidue->sChainId));
+        if (rRes->cICode == ' ') srPResidue->sICode[0]=0;
+        else { srPResidue->sICode[0]=rRes->cICode;srPResidue->sICode[1]=0; }
+        srPResidue++;
+        iResIndex++;
+    }
+    return(iResidueCount);
+}
+
+int
+UnitLabelMolecules(UNIT uUnit) {
     LOOP    lResidues, lSpanning;
     RESIDUE rRes;
-    int     i=0, iResidueCount=0, iMolecule=0;
+    int     iResidueCount=0, iMolecule=0;
 
-    /* Clear the ATOMTOUCHED flag on all the ATOMs for molecuel labelling */
+    /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
     ContainerResetAllAtomsFlags((CONTAINER) uUnit, ATOMTOUCHED);
 
     /* Loop through solvent RESIDUEs and:
@@ -2594,38 +2400,23 @@ zUnitIOAmberOrderResidues( UNIT uUnit )
         /* been touched */
         ATOM aAtom = (ATOM)oContainerFirstObject(rRes);
         if (!bAtomFlagsSet(aAtom, ATOMTOUCHED)) {
+            iMolecule++; // inrement first: molecule index is 1-based
+
             /* Touch all of the ATOMs within the molecule that */
             /* contains the current RESIDUE */
-
             lSpanning = lLoop((OBJEKT) aAtom, SPANNINGTREE);
             FOREACH(aAtom, ATOM, lSpanning) {
                 AtomSetFlags(aAtom, ATOMTOUCHED);
                 CONTAINER cParent = cContainerWithin(aAtom);
                 if (iObjectType(cParent) == RESIDUEid)
-                    ((RESIDUE)cParent)->iTemp = iMolecule;
+                    ((RESIDUE)cParent)->iMolecule = iMolecule;
             }
-            iMolecule++;
         }
     }
 
-    if (iResidueCount == 0)
-            return(0);
+    uUnit->iMoleculeCount = iMolecule;
 
-    /*
-    **  allocate array for residues
-    */
-    uUnit->vaResidues = vaVarArrayCreate(sizeof(SAVERESIDUEt));
-    VarArraySetSize((uUnit->vaResidues), iResidueCount);
-
-    if ( !GDefaults.reorder_residues )
-        printf("\"order_residues\" off: keep input residue order.\n");
-    lResidues = lLoop((OBJEKT) uUnit, GDefaults.reorder_residues ?
-            DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM);
-    while ((rRes = (RESIDUE) oNext(&lResidues)) != NULL) {
-       if (iObjectType(rRes) == RESIDUEid)
-           zUnitDoResidue(uUnit, rRes, &i);
-    }
-    return(iResidueCount);
+    return iResidueCount;
 }
 
 /*
@@ -2646,9 +2437,9 @@ zUnitIOAmberOrderResidues( UNIT uUnit )
  */
 void
 zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
-            BOOL * bPGeneratedParameters, // set to TRUE if parameters generated
-            BOOL bPert,
-            BOOL bCheck)
+            bool * bPGeneratedParameters, // set to TRUE if parameters generated
+            bool bPert,
+            bool bCheck)
 {
     SAVECONNECTIVITYt *scPCon;
     SAVEMOLECULEt *smPMolecule;
@@ -2664,7 +2455,7 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     LOOP lMolecules;
     OBJEKT oAbove, oBelow;
     STRING sAtom1, sAtom2, sDesc;
-    BOOL bGenerateParameters, bFailedGeneratingParameters;
+    bool bGenerateParameters, bFailedGeneratingParameters;
     PARMSET psTemp;
     LOOP lTemp, lResidues;
     DICTLOOP dlGroups;
@@ -2738,15 +2529,15 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
     /* Build the residue information */
 
-    /* zUnitIOAmberOrderResidues generates the vaResidues array,
+    /* UnitIOAmberOrderResidues generates the vaResidues array,
      * and puts residues in arbitrary amber order
      */
-    iResidueCount = zUnitIOAmberOrderResidues( uUnit );
+    iResidueCount = UnitIOAmberOrderResidues( uUnit );
 
     if (iResidueCount) {
 
         /* Build the array for the atoms */
-        // Now we repeat THE SAME LOGIC as in zUnitIOAmberOrderResidues()
+        // Now we repeat THE SAME LOGIC as in UnitIOAmberOrderResidues()
         // or we are screwed!
 
         VP0("Building atom parameters.\n");
@@ -2778,7 +2569,7 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                         cResidueType(rRes) == RESTYPESOLVENT &&
                         bResidueFlagsSet(rRes, RESIDUEINCAP))
                     uUnit->iCapTempInt = i;
-                zUnitDoAtoms(uUnit, plParameters, rRes, &i,
+                UnitDoAtoms(uUnit, plParameters, rRes, &i,
                          &bFailedGeneratingParameters, bPert);
             }
         }
@@ -2970,11 +2761,7 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         /* Now generate the BOND table */
 
         bFailedGeneratingParameters |=
-            zbUnitIOIndexBondParameters(plParameters, uUnit, bPert);
-
-	/* New now generate C4 table  */
-	bFailedGeneratingParameters |=
-            zbUnitIOIndexC4Pairwise(uUnit);
+            bUnitIOIndexBondParameters(plParameters, uUnit, bPert);
 
         /* Now generate the ANGLE table */
 
@@ -3359,8 +3146,6 @@ void zUnitIODestroyTables(UNIT uUnit)
         VarArrayDestroy(&(uUnit->vaHierarchy));
     if (uUnit->vaBonds != NULL)
         VarArrayDestroy(&(uUnit->vaBonds));
-    if (uUnit->vaC4Pairwise != NULL)
-	    VarArrayDestroy(&(uUnit->vaC4Pairwise)); //New
     if (uUnit->vaAngles != NULL)
         VarArrayDestroy(&(uUnit->vaAngles));
     if (uUnit->vaTorsions != NULL)
@@ -3651,7 +3436,7 @@ zMarkSideChain(ATOM aParentAtom, ATOM aAtom, int *iP)
 }
 
 int
-iMarkMainChainAtoms(RESIDUE rRes, int complain)
+iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
 {
     int iAtomCount, i, j, iLevel, iMin, iMax, iNext, ierr = 0;
     ATOM aAtom, aAtom0, aAtom1, aChildAtom;
@@ -3693,12 +3478,12 @@ iMarkMainChainAtoms(RESIDUE rRes, int complain)
     aAtom0 = (ATOM) rRes->aaConnect[0];
     aAtom1 = (ATOM) rRes->aaConnect[1];
     if (aAtom0 == NULL) {
-        if (complain)
+        if (bComplain)
             VP0("  %s:  connect0 not defined\n", cPResName);
         ierr++;
     }
     if (aAtom1 == NULL) {
-        if (complain)
+        if (bComplain)
             VP0("  %s:  connect1 not defined\n", cPResName);
         ierr++;
     }
@@ -3825,12 +3610,12 @@ sAtomName(aChildAtom),
 }
 
 /*
- *  zMarkSideChains() - used for prmtop
+ *  zMarkSideChainAtoms() - used for prmtop
  *
  *        NOTE: ziMarkMainChainAtoms() must be run 1st
  */
 void
-MarkSideChains(RESIDUE rRes)
+MarkSideChainAtoms(RESIDUE rRes)
 {
     ATOM aAtom, aParentAtom, aAtom0, aAtom1;
     LOOP lTemp;
@@ -4116,6 +3901,133 @@ void UnitIOSaveAmberPrep(UNIT uUnit, FILE * fOut)
      */
     fprintf(fOut, "STOP\n");
 
+}
+
+
+double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAtom)
+{
+    double dGBrad = 1.5;
+    ATOM aAtom = sa->aAtom;
+    // left-trim resname
+    RESIDUE rRes = (RESIDUE)cContainerWithin(aAtom);
+    const char *sResName = sContainerName(rRes);
+    size_t l=strlen(sResName);
+    if (l > 3) sResName += l - 3;
+
+    if (GDefaults.iGBparm < 3 || GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
+        // Currently, this is all modes but 7
+        switch (iElement) {
+        case 1:
+            dGBrad = 1.2;
+            if (iAtomCoordination(aAtom) > 0) {
+                ATOM aAtomA = aAtomBondedNeighbor(aAtom, 0);
+                if (GDefaults.iGBparm == 1 || GDefaults.iGBparm == 2) {
+                    switch (aAtomA[0].iAtomicNumber) {
+                    case 6:  dGBrad = 1.3; break;
+                    case 8:  dGBrad = 0.8; break;
+                    case 16: dGBrad = 0.8; break;
+                    case 7:  if (GDefaults.iGBparm == 2) dGBrad = 1.3; break;
+                    case 1:
+                        if ((sAtomType(aAtomA)[0]=='H'||sAtomType(aAtomA)[0]=='h') &&
+                            (sAtomType(aAtomA)[1]=='W'||sAtomType(aAtomA)[1]=='w'))
+                            dGBrad = 0.8;
+                        break;
+                    }
+                } else if (GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
+                    if (aAtomA[0].iAtomicNumber == 7) {
+                        dGBrad = 1.3;
+                        if (GDefaults.iGBparm == 8) {
+                            if (!strcmp(sResName,"ARG") &&
+                                !(strncmp(sAtomName(aAtom),"HH",2) &&
+                                  strcmp(sAtomName(aAtom),"HE")))
+                                dGBrad = 1.17;
+                        }
+                    }
+                }
+            } else {
+                VPWARN("Unbonded Hydrogen %s in %s: writing unmodified Bondi GB radius.\n",
+                       sContainerName(aAtom),
+                       sContainerName(cContainerWithin(aAtom)));
+            }
+            break;
+        case 6:
+            {
+                const char *sType = sAtomType(aAtom);
+                if (strncmp(sType,"C1",2) && strncmp(sType,"C2",2) && strncmp(sType,"C3",2))
+                    dGBrad = 1.7;
+                else if (!strncmp(sType,"C1",2) && dMass < 13.0) dGBrad = 1.7;
+                else if (!strncmp(sType,"C2",2) && dMass < 14.0) dGBrad = 1.7;
+                else if (!strncmp(sType,"C3",2) && dMass < 15.0) dGBrad = 1.7;
+                else dGBrad = 2.2;
+            }
+            break;
+        case 7:  dGBrad = 1.55; break;
+        case 8:
+            dGBrad = 1.5;
+            if (GDefaults.iGBparm == 8) {
+                if (!(strcmp(sResName,"ASP")||strncmp(sAtomName(aAtom),"OD",2)) ||
+                    !(strcmp(sResName,"AS4")||strncmp(sAtomName(aAtom),"OD",2)) ||
+                    !(strcmp(sResName,"GLU")||strncmp(sAtomName(aAtom),"OE",2)) ||
+                    !(strcmp(sResName,"GL4")||strncmp(sAtomName(aAtom),"OE",2)) ||
+                    (!strcmp(sAtomName(aAtom),"OXT") ||
+                     (!bLastAtom && !strcmp(sAtomName(sa[1].aAtom),"OXT"))))
+                    dGBrad = 1.4;
+            }
+            break;
+        case 9:  dGBrad = 1.5;  break;
+        case 14: dGBrad = 2.1;  break;
+        case 15: dGBrad = 1.85; break;
+        case 16: dGBrad = 1.8;  break;
+        case 17: dGBrad = 1.7;  break;
+        default: dGBrad = 1.5;  break;
+        }
+    } else if (GDefaults.iGBparm == 3) {
+        switch (iElement) {
+        case 1:  dGBrad = 1.15; break;  case 6:  dGBrad = 1.85; break;
+        case 7:  dGBrad = 1.64; break;  case 8:  dGBrad = 1.53; break;
+        case 9:  dGBrad = 1.53; break;  case 15: dGBrad = 2.02; break;
+        case 16: dGBrad = 2.00; break;  case 17: dGBrad = 1.97; break;
+        case 35: dGBrad = 2.03; break;  case 53: dGBrad = 2.10; break;
+        default: dGBrad = 1.5;  break;
+        }
+    } else if (GDefaults.iGBparm == 7) {
+        switch (iElement) {
+        case 1:  dGBrad = 1.00; break;  case 6:  dGBrad = 1.70; break;
+        case 7:  dGBrad = 1.50; break;  case 8:  dGBrad = 1.40; break;
+        case 16: dGBrad = 1.85; break;  default: dGBrad = 1.50; break;
+        }
+    }
+    return dGBrad;
+}
+
+double dGBScreenForElement(int iElement)
+{
+    double s = 0.8;
+    if (GDefaults.iGBparm < 4 || GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
+        switch (iElement) {
+        case 1:  s = 0.85; break;  case 6:  s = 0.72; break;
+        case 7:  s = 0.79; break;  case 8:  s = 0.85; break;
+        case 9:  s = 0.88; break;  case 15: s = 0.86; break;
+        case 16: s = 0.96; break;  default: s = 0.80; break;
+        }
+    } else if (GDefaults.iGBparm == 4) {
+        switch (iElement) {
+        case 1:  s = 0.8461; break;  case 6:  s = 0.9615; break;
+        case 7:  s = 0.9343; break;  case 8:  s = 1.0088; break;
+        case 11: s = 1.0000; break;  case 12: s = 1.0000; break;
+        case 15: s = 1.0700; break;  case 16: s = 1.1733; break;
+        default: s = 0.8000; break;
+        }
+    } else if (GDefaults.iGBparm == 5) {
+        switch (iElement) {
+        case 1:  s = 0.8846; break;  case 6:  s = 0.9186; break;
+        case 7:  s = 0.8733; break;  case 8:  s = 0.8836; break;
+        case 11: s = 1.0000; break;  case 12: s = 1.0000; break;
+        case 15: s = 0.9604; break;  case 16: s = 0.9323; break;
+        default: s = 0.8000; break;
+        }
+    }
+    return s;
 }
 
 

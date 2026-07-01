@@ -63,13 +63,13 @@
  *	was found, otherwise FALSE.  Call the function fPCallback
  *	for each atom found.
  */
-BOOL
+bool
 bGraphUtilFindShortestPath( UNIT uUnit, ATOM aStart, ATOM aStop, 
 		void (*fPCallback)())
 {
 LOOP		lSpanning;
 ATOM		aCur;
-BOOL		bFound;
+bool		bFound;
 
     bFound = FALSE;
     lSpanning = lLoop( (OBJEKT)aStart, SPANNINGTREE );
@@ -118,7 +118,7 @@ typedef	struct	{
 
 typedef	struct	{
 		ATOM		aAtom;
-		BOOL		bInSmallRing;
+		bool		bInSmallRing;
 		} RINGOVERLAPt;
 
 typedef	struct	{
@@ -162,7 +162,7 @@ STRING		sTemp;
  *	is a minimal ring.
  *	On exit the ring in iBig will be minimal.
  */
-BOOL	
+bool	
 zbGraphUtilSeparate( INTERNAL iBig, int iBigIndex, 
 		INTERNAL iSmall, int iSmallIndex )
 {
@@ -462,7 +462,7 @@ INTERNAL	inRing;
 VARARRAY	vaRingGroups;
 LIST		lRingGroup;
 int		iRingGroupIndex;
-BOOL		bNewRingGroup;
+bool		bNewRingGroup;
 LISTLOOP	llRings;
 ATOM		aLast;
 VARARRAY	vaRingSort;

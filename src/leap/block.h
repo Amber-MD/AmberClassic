@@ -89,10 +89,10 @@ typedef	BLOCKt	*BLOCK;
 /*  block.c  */
 
 extern BLOCK		bBlockCreate(void);
-extern BOOL		bBlockRemoveChar( BLOCK bBlock );
+extern bool		bBlockRemoveChar( BLOCK bBlock );
 extern void		BlockEmpty( BLOCK bBlock );
 extern void		BlockDestroy( BLOCK *bPBlock );
-extern BOOL		bBlockReadLine( BLOCK bBlock, char *sLine );
-extern BOOL             bBlockAddChar( BLOCK bBlock, char c );
+extern bool		bBlockReadLine( BLOCK bBlock, char *sLine );
+extern bool             bBlockAddChar( BLOCK bBlock, char c );
 
 #endif

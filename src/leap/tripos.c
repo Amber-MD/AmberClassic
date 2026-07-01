@@ -76,7 +76,7 @@ FILE *fIn;
     ATOM aA, aB;
     int iOrder;
     ATOM aAtom;
-    BOOL bGotIt;
+    bool bGotIt;
     int iFileAtoms = 0;
     int iFileBonds = 0;
     int iFileSubstructures = 0;

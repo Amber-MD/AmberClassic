@@ -86,9 +86,6 @@ typedef struct  {
         SHORTt          saEquivs[MAXEQUIV];
 } EQUIVt;
 
-CMAP *cmap=NULL;
-CMAPLST *cmaplst=NULL;
-int mapnum=0;
 /*
  *----------------------------------------------------
  *
@@ -335,16 +332,16 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
     static int called = 0;
 
     if (!called) {
-// initialize cmap record
-          cmaplst = (CMAPLST *) malloc(sizeof( CMAPLST ));
-          cmaplst->cmap = NULL;
-          cmaplst->next = NULL;
-          cmap = NULL;
-          mapnum = 0;
+// initialize Gcmap record
+          Gcmaplst = (CMAPLST *) malloc(sizeof( CMAPLST ));
+          Gcmaplst->cmap = NULL;
+          Gcmaplst->next = NULL;
+          Gcmap = NULL;
+          GiCmapNum = 0;
           called ++;
       }
 
-    cmaplstt = cmaplst;
+    cmaplstt = Gcmaplst;
     while (cmaplstt->next != NULL) {
          cmaplstt=cmaplstt->next;
       }
@@ -352,7 +349,7 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
     cmnt=NULL;
     cmnt0=NULL;
     cmntt=NULL;
-//    mapnum = 0;
+//    GiCmapNum = 0;
     cmnt0=(CMNT *)malloc(sizeof(CMNT));
     cmntt=cmnt0;
     cmntt->next=NULL;
@@ -370,131 +367,131 @@ zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
                 if (strcmp("CMAP_COUNT", tmpchar2)==0){
                     sscanf(sLine, "%s%s%d", tmpchar1, tmpchar2, &tmpint1);
 
-//                    if (mapnum <= 1) mapnum = 1;
+//                    if (GiCmapNum <= 1) GiCmapNum = 1;
                     // initialize storage for maps
-//                    cmap = (CMAP *)malloc(sizeof(CMAP) * (mapnum));
-                    //printf("mjhsieh: mapnum =%d\n",mapnum);
-//                    mapnum += tmpint1;
+//                    Gcmap = (CMAP *)malloc(sizeof(CMAP) * (GiCmapNum));
+                    //printf("mjhsieh: GiCmapNum =%d\n",GiCmapNum);
+//                    GiCmapNum += tmpint1;
 //                    VP0("Read %i cmaps\n",tmpint1);
 
                 } else if(strcmp("CMAP_TITLE", tmpchar2)==0) {
                     FGETS(sLine, fIn);
-                    cmap = (CMAP *)malloc(sizeof(CMAP) );
+                    Gcmap = (CMAP *)malloc(sizeof(CMAP) );
                     while (cmaplstt->cmap != NULL ) {
                           cmaplstt = cmaplstt->next;
                        }
-                    cmaplstt->cmap = cmap;
+                    cmaplstt->cmap = Gcmap;
                     cmaplstt->next = (CMAPLST *) malloc(sizeof(CMAPLST));
                     cmaplstt->next->cmap = NULL;
                     cmaplstt->next->next = NULL;
 
-                    for (i=0;i<80 && sLine[i] != '\n'; i++) cmap->title[i]=sLine[i];
-                    cmap->title[i] = '\0';
-//                    VP0("Read cmap %s\n",cmap->title);
+                    for (i=0;i<80 && sLine[i] != '\n'; i++) Gcmap->title[i]=sLine[i];
+                    Gcmap->title[i] = '\0';
+//                    VP0("Read Gcmap %s\n",Gcmap->title);
                     cmnt=(CMNT *) malloc(sizeof(CMNT));
                     cmnt->next=NULL;
-                    cmap->cmnt=cmnt;
-                    mapnum ++;
+                    Gcmap->cmnt=cmnt;
+                    GiCmapNum ++;
 
 // set default to the main chain
-                    cmap->residx[0]=-1;
-                    cmap->residx[1]= 0;
-                    cmap->residx[2]= 0;
-                    cmap->residx[3]= 0;
-                    cmap->residx[4]= 1;
+                    Gcmap->residx[0]=-1;
+                    Gcmap->residx[1]= 0;
+                    Gcmap->residx[2]= 0;
+                    Gcmap->residx[3]= 0;
+                    Gcmap->residx[4]= 1;
 
 // In ff18SB,there's no CMAP that should be applied to termini residues.
 // This can be reactivated in the future when there're CMAPs trained for termini residues.
-                    //cmap->nresidx[0]= 0;
-                    //cmap->nresidx[1]= 0;
-                    //cmap->nresidx[2]= 0;
-                    //cmap->nresidx[3]= 0;
-                    //cmap->nresidx[4]= 1;
+                    //Gcmap->nresidx[0]= 0;
+                    //Gcmap->nresidx[1]= 0;
+                    //Gcmap->nresidx[2]= 0;
+                    //Gcmap->nresidx[3]= 0;
+                    //Gcmap->nresidx[4]= 1;
 
-                    //cmap->cresidx[0]=-1;
-                    //cmap->cresidx[1]= 0;
-                    //cmap->cresidx[2]= 0;
-                    //cmap->cresidx[3]= 0;
-                    //cmap->cresidx[4]= 0;
+                    //Gcmap->cresidx[0]=-1;
+                    //Gcmap->cresidx[1]= 0;
+                    //Gcmap->cresidx[2]= 0;
+                    //Gcmap->cresidx[3]= 0;
+                    //Gcmap->cresidx[4]= 0;
 
-                    strcpy(cmap->atmname[0],"C");
-                    strcpy(cmap->atmname[1],"N");
-                    strcpy(cmap->atmname[2],"CA");
-                    strcpy(cmap->atmname[3],"C");
-                    strcpy(cmap->atmname[4],"N");
+                    strcpy(Gcmap->atmname[0],"C");
+                    strcpy(Gcmap->atmname[1],"N");
+                    strcpy(Gcmap->atmname[2],"CA");
+                    strcpy(Gcmap->atmname[3],"C");
+                    strcpy(Gcmap->atmname[4],"N");
                      
 // In ff18SB,there's no CMAP that should be applied to termini residues.
 // This can be reactivated in the future when there're CMAPs trained for termini residues.
-                    //strcpy(cmap->natmname[0],"H1");
-                    //strcpy(cmap->natmname[1],"N");
-                    //strcpy(cmap->natmname[2],"CA");
-                    //strcpy(cmap->natmname[3],"C");
-                    //strcpy(cmap->natmname[4],"N");
+                    //strcpy(Gcmap->natmname[0],"H1");
+                    //strcpy(Gcmap->natmname[1],"N");
+                    //strcpy(Gcmap->natmname[2],"CA");
+                    //strcpy(Gcmap->natmname[3],"C");
+                    //strcpy(Gcmap->natmname[4],"N");
 
-                    //strcpy(cmap->catmname[0],"C");
-                    //strcpy(cmap->catmname[1],"N");
-                    //strcpy(cmap->catmname[2],"CA");
-                    //strcpy(cmap->catmname[3],"C");
-                    //strcpy(cmap->catmname[4],"OXT");
+                    //strcpy(Gcmap->catmname[0],"C");
+                    //strcpy(Gcmap->catmname[1],"N");
+                    //strcpy(Gcmap->catmname[2],"CA");
+                    //strcpy(Gcmap->catmname[3],"C");
+                    //strcpy(Gcmap->catmname[4],"OXT");
 
-                    cmap->termmap = 1; // assume applicable to terminal residues by default
+                    Gcmap->termmap = 1; // assume applicable to terminal residues by default
 
                 } else if(strcmp("CMAP_RESLIST",tmpchar2)==0){
                     char tmpchar[8];
                     sscanf(sLine,"%s%s%d",tmpchar1,tmpchar2,&tmpint1);
-                    cmap->nres = tmpint1;
-                    cmap->reslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
-                    cmap->creslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
-                    cmap->nreslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
+                    Gcmap->nres = tmpint1;
+                    Gcmap->reslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
+                    Gcmap->creslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
+                    Gcmap->nreslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
                     for (i=0; i<tmpint1; i++) {
                         fscanf(fIn, "%s", tmpchar);
                         //printf("%s\n",tmpchar);
-                        strcpy(cmap->reslist[i], tmpchar);
-                        strcpy(cmap->creslist[i], "C"); strcat(cmap->creslist[i], tmpchar);
-                        strcpy(cmap->nreslist[i], "N"); strcat(cmap->nreslist[i], tmpchar);
+                        strcpy(Gcmap->reslist[i], tmpchar);
+                        strcpy(Gcmap->creslist[i], "C"); strcat(Gcmap->creslist[i], tmpchar);
+                        strcpy(Gcmap->nreslist[i], "N"); strcat(Gcmap->nreslist[i], tmpchar);
                     }
                 } else if (strcmp("CMAP_RESOLUTION", tmpchar2) == 0) {
                     sscanf(sLine, "%s%s%d", tmpchar1, tmpchar2, &tmpint1);
-                    cmap->resolution = tmpint1;
-                    cmap->map=(double *) malloc(sizeof(double) * tmpint1 * tmpint1 );
+                    Gcmap->resolution = tmpint1;
+                    Gcmap->map=(double *) malloc(sizeof(double) * tmpint1 * tmpint1 );
                     //printf("%s\n",sLine);
                 } else if (strcmp("CMAP_PARAMETER", tmpchar2) == 0) {
                     double tmpdbl;
-                    tmpint1 = cmap->resolution * cmap->resolution;
+                    tmpint1 = Gcmap->resolution * Gcmap->resolution;
                     for (i=0; i<tmpint1; i++) {
                         fscanf(fIn, "%lf", &tmpdbl);
-                        cmap->map[i]=tmpdbl;
+                        Gcmap->map[i]=tmpdbl;
                     }
                     //printf("%s\n",sLine);
                 } else if(strcmp("CMAP_ATMLIST",tmpchar2)==0){
                     sscanf(sLine,"%s%s%s%s%s%s%s",tmpchar1,tmpchar2,
-                           cmap->atmname[0], cmap->atmname[1], cmap->atmname[2],
-                           cmap->atmname[3], cmap->atmname[4]);
+                           Gcmap->atmname[0], Gcmap->atmname[1], Gcmap->atmname[2],
+                           Gcmap->atmname[3], Gcmap->atmname[4]);
                            int l;
                            for (l=0; l<5; l++) {
-                                strcpy(cmap->catmname[l], cmap->atmname[l]);
-                                strcpy(cmap->natmname[l], cmap->atmname[l]);
+                                strcpy(Gcmap->catmname[l], Gcmap->atmname[l]);
+                                strcpy(Gcmap->natmname[l], Gcmap->atmname[l]);
                               }
-                           if (strcmp("C",cmap->atmname[0]) == 0) strcpy(cmap->natmname[0], "H1");
-                           if (strcmp("C",cmap->atmname[4]) == 0) strcpy(cmap->natmname[4], "H1");
-                           if (strcmp("N",cmap->atmname[0]) == 0) strcpy(cmap->catmname[0], "OXT");
-                           if (strcmp("N",cmap->atmname[4]) == 0) strcpy(cmap->catmname[4], "OXT");
+                           if (strcmp("C",Gcmap->atmname[0]) == 0) strcpy(Gcmap->natmname[0], "H1");
+                           if (strcmp("C",Gcmap->atmname[4]) == 0) strcpy(Gcmap->natmname[4], "H1");
+                           if (strcmp("N",Gcmap->atmname[0]) == 0) strcpy(Gcmap->catmname[0], "OXT");
+                           if (strcmp("N",Gcmap->atmname[4]) == 0) strcpy(Gcmap->catmname[4], "OXT");
 
                 } else if(strcmp("CMAP_RESIDX",tmpchar2)==0){
                     sscanf(sLine0,"%s%s%d%d%d%d%d",tmpchar1,tmpchar2,
-                           &cmap->residx[0], &cmap->residx[1], &cmap->residx[2],
-                           &cmap->residx[3], &cmap->residx[4]);
+                           &Gcmap->residx[0], &Gcmap->residx[1], &Gcmap->residx[2],
+                           &Gcmap->residx[3], &Gcmap->residx[4]);
                            int l;
                            for (l=0; l<5; l++) {
-                                cmap->cresidx[l] = cmap->residx[l];
-                                cmap->nresidx[l] = cmap->residx[l];
+                                Gcmap->cresidx[l] = Gcmap->residx[l];
+                                Gcmap->nresidx[l] = Gcmap->residx[l];
                               }
-                              cmap->nresidx[0] = 0;
-                              cmap->cresidx[4] = 0;
+                              Gcmap->nresidx[0] = 0;
+                              Gcmap->cresidx[4] = 0;
 
                 } else if(strcmp("CMAP_TERMMAP",tmpchar2)==0){
                     sscanf(sLine0,"%s%s%d",tmpchar1,tmpchar2,
-                           &cmap->termmap);
+                           &Gcmap->termmap);
 
                 } else {
                     VPWARN("Unknown Flag : %s\n",sLine);
@@ -645,7 +642,7 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
     int             iRead, iN;
     STRING          saStr[10];
     double          dKp, dP0, dN, dScEE, dScNB;
-    BOOL            bPrintLine;
+    bool            bPrintLine;
 
     memset(saStr, 0, sizeof(saStr));                    /* for Purify */
     MESSAGE("Reading IMPROPERs.\n" );
@@ -842,11 +839,11 @@ zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
  *      Determine whether this is an old AMBER parameter set
  *      or if it is one of the new FRCMOD parameter sets.
  */
-static BOOL
-zbAmberDetermineParmSetFrcModType( FILE *fIn, BOOL *bPMass, BOOL *bPNonBond )
+static bool
+zbAmberDetermineParmSetFrcModType( FILE *fIn, bool *bPMass, bool *bPNonBond )
 {
 STRING          sLine;
-BOOL            bNew;
+bool            bNew;
 
     bNew = FALSE;
     *bPMass = FALSE;
@@ -1293,14 +1290,14 @@ int             iBond, iAngle, iTorsion;
 double          dBond, dAngle, dTorsion;
 VECTOR          vPos, vPos1, vPos2, vPos3;
 ATOM            aMain0, aMain1;
-BOOL            bFirstTime;
+bool            bFirstTime;
 double          da[10];
 int             i, iLen, iErrors, iCharge, iCharges = 0, iChgWarn = 0, iAtoms = 0;
 double          dCutoff;
 INPUTLINEt      ilLine;
 int             iaTreeStack[500];
 int             iTreeStackTop;
-BOOL            bUseFirstColumn;
+bool            bUseFirstColumn;
 #define         TREEPOP()       ( iTreeStackTop-- )
 #define         TREEPUSH( i )   ( iaTreeStack[++iTreeStackTop] = i )
 #define         iTREETOP()      ( iaTreeStack[iTreeStackTop] )
@@ -2002,8 +1999,8 @@ STRING          sTemp;
 PARMSET 
 psAmberReadParmSet( FILE *fIn, char *sFilename )
 {
-BOOL            bFrcMod;
-BOOL            bMass, bNonBonds;
+bool            bFrcMod;
+bool            bMass, bNonBonds;
 PARMSET         psParms;
 
     bFrcMod = zbAmberDetermineParmSetFrcModType( fIn, &bMass, &bNonBonds );

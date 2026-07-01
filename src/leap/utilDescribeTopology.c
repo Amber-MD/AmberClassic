@@ -88,15 +88,15 @@ typedef	struct	{
  *      Global variables
  */
 
-static	BOOL    SbIncludeAtomNumberInName = FALSE;
-static	BOOL    SbIncludeAtomTypeInName = FALSE;
-static	BOOL    SbIncludeAtomName = FALSE;
-static	BOOL    SbIncludeResidueName = FALSE;
-static	BOOL    SbIncludeIndices = FALSE;
-static	BOOL    SbPrintEnergy = FALSE;
-static	BOOL	SbIgnoreNonbonds = FALSE;
-static	BOOL	SbDescLoad = FALSE;
-static	BOOL	SbSortTorsions = FALSE;
+static	bool    SbIncludeAtomNumberInName = FALSE;
+static	bool    SbIncludeAtomTypeInName = FALSE;
+static	bool    SbIncludeAtomName = FALSE;
+static	bool    SbIncludeResidueName = FALSE;
+static	bool    SbIncludeIndices = FALSE;
+static	bool    SbPrintEnergy = FALSE;
+static	bool	SbIgnoreNonbonds = FALSE;
+static	bool	SbDescLoad = FALSE;
+static	bool	SbSortTorsions = FALSE;
 
 int             ntotat, ntypes, nbonh, nbona, ntheth, ntheta, nphih, nphia;
 int             jhparm, jparm, next, ntotrs, mbona, mtheta, mphia, mumbnd;
@@ -367,7 +367,7 @@ VARARRAY        vaIgraph;
 VARARRAY        vaIb;
 VARARRAY        vaJb;
 VARARRAY        vaIcb;
-BOOL		bRest;
+bool		bRest;
 {
 STRING          sI, sJ, sTemp;
 STRING          sName;
@@ -411,7 +411,7 @@ VARARRAY        vaIt;
 VARARRAY        vaJt;
 VARARRAY        vaKt;
 VARARRAY        vaIct;
-BOOL		bRest;
+bool		bRest;
 {
 STRING          sI, sJ, sK, sTemp;
 STRING          sName;
@@ -455,9 +455,9 @@ VARARRAY        vaJp;
 VARARRAY        vaKp;
 VARARRAY        vaLp;
 VARARRAY        vaIcp;
-BOOL		bRest;
+bool		bRest;
 {
-BOOL            bImproper, bCalc14;
+bool            bImproper, bCalc14;
 STRING          sI, sJ, sK, sL, sTemp, sName;
 STRING          s1, s2, s3;
 BLOCKt*		bPBlock;
@@ -708,7 +708,7 @@ char*		cPNew;
 DICTIONARY	dTorsions;
 int		iParm;
 double		dKp, dN, dPhase;
-BOOL		bImproper;
+bool		bImproper;
 int		iN;
 
 

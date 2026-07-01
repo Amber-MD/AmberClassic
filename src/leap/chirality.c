@@ -252,7 +252,7 @@ dChiralityForAtom( ATOM aAtom )
 {
 ATOM	aAtomA, aAtomB, aAtomC, aAtomD;
 double	dChi;
-BOOL	bKnowA, bKnowB, bKnowC, bKnowD;
+bool	bKnowA, bKnowB, bKnowC, bKnowD;
 VECTOR	*vPA = NULL, *vPB = NULL, *vPC = NULL, *vPD = NULL;
 
 	if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) 
@@ -315,7 +315,7 @@ dChiralityToOrientation( double dChirality, ATOM aCenter,
 {
 ATOM		aaOrig[4], aaNew[4];
 double		dOrient;
-BOOL		bNewNull, bOrigNull, bFound;
+bool		bNewNull, bOrigNull, bFound;
 int		i, j;
 
     if ( iDoubleCompare(dChirality,0.0)==0 ) return(0.0);
@@ -373,7 +373,7 @@ dChiralityFromOrientation( double dOrient, ATOM aCenter,
 {
 ATOM		aaOrig[4], aaNew[4];
 double		dChirality;
-BOOL		bNewNull, bOrigNull, bFound;
+bool		bNewNull, bOrigNull, bFound;
 int		i, j;
 
     if ( iDoubleCompare(dOrient,0.0) == 0 ) return(0.0);

@@ -44,7 +44,7 @@ extern char	*sRemoveSpaces(char *sIn, char *sOut);
 extern char	*sRemoveControlAndPadding(char *sRaw, char *sResult);
 extern char	*sRemoveLeadingSpaces(char *sLine);
 extern char	*sRemoveFirstString(char *sLine, char *sHead);
-extern BOOL	bStringMatchPattern(char *sString, char *sPattern);
+extern bool	bStringMatchPattern(char *sString, char *sPattern);
 extern void	StringCopyMax(char *sDest, char *sSource, int iMax);
 
 #endif

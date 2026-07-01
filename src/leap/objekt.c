@@ -401,7 +401,7 @@ Describe( OBJEKT oObject )
  *      its superclasses.
  *      The ENTIRE class structure has to be represented here.
  */
-BOOL
+bool
 bObjectInClass( OBJEKT oObject, int iClass )
 {
 int             iObjClass;
@@ -619,7 +619,7 @@ sObjectType( OBJEKT oObj )
  *      Check the type of the argument, print an error and return FALSE
  *      if it is not the correct type.
  */
-BOOL
+bool
 bObjektWarnType( OBJEKT oObj, int iType )
 {
 

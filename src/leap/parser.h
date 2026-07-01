@@ -86,7 +86,7 @@ typedef	struct	{
 
 extern RESULTt		GrMainResult;
 extern PARMLIB		GplAllParameters;
-extern BOOL		GbGraphicalEnvironment;
+extern bool		GbGraphicalEnvironment;
 extern STRING		GsProgramName;
 
 

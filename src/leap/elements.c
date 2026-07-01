@@ -242,13 +242,13 @@ int             i;
 
 
     for (i=0; GeaElements[i].iNumber != NOELEMENT; i++) {
-        if ( GeaElements[i].iNumber == iNumber ) {
-            strcpy( sName, GeaElements[i].sName );
-            return(sName);
-        }
+        if ( GeaElements[i].iNumber == iNumber ) break;
     }
-    strcpy( sName, NOELEMENTNAME );
-    return(sName);
+    if (sName) {
+        strcpy( sName, GeaElements[i].sName );
+        return sName;
+    }
+    return(GeaElements[i].sName);
 }
 
 

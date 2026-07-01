@@ -337,6 +337,52 @@ int neighbor_grid_query_point(NeighborGrid *grid,
     return 0;
 }
 
+bool neighbor_grid_query_point_bool(NeighborGrid *grid,
+                              float x, float y, float z,
+                              int query_group)
+{
+    if (!grid) return false;
+
+    // quick reject if query is definitely too far from the model box
+    float r = grid->r_cut;
+    if (x < grid->xmin - r || x > grid->xmax + r ||
+        y < grid->ymin - r || y > grid->ymax + r ||
+        z < grid->zmin - r || z > grid->zmax + r) {
+        return false;
+    }
+
+    const float cell = grid->cell;
+    const float r2 = grid->r_cut * grid->r_cut;
+
+    int32_t ci = (int32_t)floorf((x - grid->xmin) / cell);
+    int32_t cj = (int32_t)floorf((y - grid->ymin) / cell);
+    int32_t ck = (int32_t)floorf((z - grid->zmin) / cell);
+
+    for (int di = -1; di <= 1; ++di)
+    for (int dj = -1; dj <= 1; ++dj)
+    for (int dk = -1; dk <= 1; ++dk) {
+        uint64_t key = pack_cell(ci + di, cj + dj, ck + dk);
+        CellRange *cr = find_range(grid->ranges, grid->ranges_count, key);
+        if (!cr) continue;
+
+        for (size_t t = 0; t < cr->count; ++t) {
+            int pidx = grid->kidx[cr->start + t].idx;
+            const Point *P = &grid->points[pidx];
+
+            if (query_group >= 0 && P->group == query_group) continue;
+
+            float dx = P->x - x;
+            float dy = P->y - y;
+            float dz = P->z - z;
+            float d2 = dx*dx + dy*dy + dz*dz;
+            if (d2 > r2) continue;
+
+            return true;
+        }
+    }
+    return false;
+}
+
 void neighbor_grid_free(NeighborGrid *grid)
 {
     if (!grid) return;

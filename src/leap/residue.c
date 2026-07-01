@@ -657,7 +657,7 @@ int		i;
  *
  *	Create a bond between the two connection ATOMs.
  */
-BOOL
+bool
 bResidueCrossLink( RESIDUE rA, int iConnectA, 
 	RESIDUE rB, int iConnectB, int iOrder )
 {

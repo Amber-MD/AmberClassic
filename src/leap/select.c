@@ -58,7 +58,7 @@
  *	Just select the ATOM.
  */
 void
-SelectAtom( ATOM aAtom, BOOL bOn )
+SelectAtom( ATOM aAtom, bool bOn )
 {
     if ( bOn )
 	AtomSetFlags( aAtom, ATOMSELECTED );
@@ -76,10 +76,10 @@ SelectAtom( ATOM aAtom, BOOL bOn )
  *	Select the RINGs that contain the ATOM.
  *	If there are no RINGs then return FALSE, otherwise TRUE.
  */
-BOOL
-bSelectRingWithAtom( UNIT uUnit, ATOM aAtom, BOOL bOn )
+bool
+bSelectRingWithAtom( UNIT uUnit, ATOM aAtom, bool bOn )
 {
-BOOL		bFoundOne;
+bool		bFoundOne;
 ATOM		aCur;
 INTERNAL	iRing;
 LOOP		lInternals, lAtoms;
@@ -121,7 +121,7 @@ LOOP		lInternals, lAtoms;
  *	Select the RESIDUE that contains the ATOM.
  */
 void	
-SelectResidueWithAtom( UNIT uUnit, ATOM aAtom, BOOL bOn )
+SelectResidueWithAtom( UNIT uUnit, ATOM aAtom, bool bOn )
 {
 LOOP		lAtoms;
 ATOM		aCur;
@@ -143,7 +143,7 @@ ATOM		aCur;
  *	Do this by generating a spanning tree.
  */
 void
-SelectMoleculeWithAtom( UNIT uUnit, ATOM aAtom, BOOL bOn )
+SelectMoleculeWithAtom( UNIT uUnit, ATOM aAtom, bool bOn )
 {
 LOOP		lSpan;
 
@@ -164,7 +164,7 @@ LOOP		lSpan;
  *	Select all of the ATOMs in the UNIT.
  */
 void
-SelectEverything( UNIT uUnit, BOOL bOn )
+SelectEverything( UNIT uUnit, bool bOn )
 {
 LOOP		lAtoms;
 ATOM		aAtom;
@@ -188,8 +188,8 @@ ATOM		aAtom;
  *	Select the shortest chain of ATOMs between aA and aB.
  *	Return FALSE if no chain was found.
  */
-BOOL
-bSelectChainBetween( UNIT uUnit, ATOM aA, ATOM aB, BOOL bOn )
+bool
+bSelectChainBetween( UNIT uUnit, ATOM aA, ATOM aB, bool bOn )
 {
 LOOP		lSpan;
 ATOM		aCur;

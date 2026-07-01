@@ -47,10 +47,10 @@
  *	Functions
  */
 
-extern BOOL	bGraphUtilFindShortestPath( UNIT uUnit, ATOM aStart, ATOM aStop,
+extern bool	bGraphUtilFindShortestPath( UNIT uUnit, ATOM aStart, ATOM aStop,
                 	void (*fPCallback)());
 extern void	zGraphUtilDescribeRing( INTERNAL iRing );
-extern BOOL	zbGraphUtilSeparate( INTERNAL iBig, int iBigIndex, 
+extern bool	zbGraphUtilSeparate( INTERNAL iBig, int iBigIndex, 
 			INTERNAL iSmall, int iSmallIndex );
 extern int	ziGraphUtilJoinRingGroups( VARARRAY vaRingGroup, int iGroup1, 				int iGroup2 );
 extern void	GraphUtilFindAllSmallestRingsAndRingGroups( UNIT uUnit, 

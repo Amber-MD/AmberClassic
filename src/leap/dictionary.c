@@ -293,7 +293,7 @@ yPDictionaryDelete( DICTIONARY dDict, const char *sKey )
 {
 char		*cPKey;
 GENP		PData;
-BOOL		bFound;
+bool		bFound;
 
 
     bFound = bHTDelete( dDict->htEntries, sKey, &cPKey, &PData );

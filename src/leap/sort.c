@@ -121,7 +121,7 @@ char	*cPA, *cPB;
  */
 void
 SortByInteger( GENP PStart, int iElements, int iSize, GENP PFirst, 
-		BOOL bAscending )
+		bool bAscending )
 {
     SiAscending = bAscending ? 1 : -1;
     SiOffset = (char*)PFirst - (char*)PStart;
@@ -139,7 +139,7 @@ SortByInteger( GENP PStart, int iElements, int iSize, GENP PFirst,
  */
 void
 SortByDouble( GENP PStart, int iElements, int iSize, GENP PFirst, 
-		BOOL bAscending )
+		bool bAscending )
 {
 
     SiAscending = bAscending ? 1 : -1;
@@ -161,7 +161,7 @@ SortByDouble( GENP PStart, int iElements, int iSize, GENP PFirst,
  */
 void
 SortByString( GENP PStart, int iElements, int iSize, 
-		GENP PFirst, BOOL bAscending )
+		GENP PFirst, bool bAscending )
 {
     SiAscending = bAscending ? 1 : -1;
     SiOffset = (char*)PFirst - (char*)PStart;
@@ -182,7 +182,7 @@ SortByString( GENP PStart, int iElements, int iSize,
  *	false.
  */
 
-typedef	BOOL	(*SIFTFUNCTION)();
+typedef	bool	(*SIFTFUNCTION)();
 
 void
 Sift( GENP PData, int iElementSize, int iElements, SIFTFUNCTION bFCriteria, 

@@ -262,7 +262,7 @@ double		vv10, vv11, vv12, vv13, vv14;
 int             iAtom1, iAtom2;
 EATOMt		*eaPAtom1, *eaPAtom2;
 ATOM            aAtom1, aAtom2;
-BOOL            bMove1, bMove2;
+bool            bMove1, bMove2;
 EBONDt		*ebPBond;
 int             i, iBonds, iAtom1Index, iAtom2Index;
 double          x1,y1,z1, x2,y2,z2;
@@ -397,7 +397,7 @@ double          Kt, T0;
 int             iAtom1, iAtom2, iAtom3;
 EATOMt		*eaPAtom1, *eaPAtom2, *eaPAtom3;
 ATOM            aAtom1, aAtom2, aAtom3;
-BOOL            bMove1, bMove2, bMove3;
+bool            bMove1, bMove2, bMove3;
 EANGLEt		*eaPAngle;
 int             i, iAngles, iAtom1Index, iAtom2Index, iAtom3Index;
 double          x1,y1,z1, x2,y2,z2, x3,y3,z3;
@@ -591,7 +591,7 @@ int             iAtom1, iAtom2, iAtom3, iAtom4;
 int             iAtom1Index, iAtom2Index, iAtom3Index, iAtom4Index;
 EATOMt		*eaPAtom1, *eaPAtom2, *eaPAtom3, *eaPAtom4;
 ATOM            aAtom1, aAtom2, aAtom3, aAtom4;
-BOOL            bMove1, bMove2, bMove3, bMove4;
+bool            bMove1, bMove2, bMove3, bMove4;
 ETORSIONt	*etPTor;
 int             i, iTorsions;
 double          N;
@@ -1495,7 +1495,7 @@ int             iAtom;
  *      Return FALSE if one of the atoms was not defined within the
  *      MINIMIZER object.
  */
-BOOL
+bool
 bMinimizerAddBond( MINIMIZER mMinimizer, 
 		ATOM aAtom1, ATOM aAtom2, 
 		double dKb, double dR0)
@@ -1538,7 +1538,7 @@ int             iAtom;
  *      Return FALSE if one of the atoms was not defined within the
  *      MINIMIZER object.
  */
-BOOL
+bool
 bMinimizerAddAngle( MINIMIZER mMinimizer, ATOM aAtom1, ATOM aAtom2, ATOM aAtom3, 
 		double dKt, double dT0 )
 {
@@ -1585,7 +1585,7 @@ int             iAtom;
  *      Return FALSE if one of the atoms was not defined within the
  *      MINIMIZER object.
  */
-BOOL
+bool
 bMinimizerAddTorsion( MINIMIZER mMinimizer, 
 		ATOM aAtom1, ATOM aAtom2, ATOM aAtom3, ATOM aAtom4,
 		double dN, double dKp, double dP0 )

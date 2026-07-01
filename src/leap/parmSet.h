@@ -71,7 +71,7 @@ typedef struct {
         VARARRAY        vaImpropers;
         VARARRAY        vaHBonds;
         VARARRAY        vaNBEdits;
-        BOOL            bBeingEdited;
+        bool            bBeingEdited;
 } PARMSETt;
 
 typedef PARMSETt        *PARMSET;
@@ -90,20 +90,6 @@ typedef        char        orderStr[MAXORDERLEN];
 #define PARMDESCRIPTIONLEN      32
 typedef char            DESCRIPTION[PARMDESCRIPTIONLEN];
 
-typedef struct  {
-        typeStr         sType1;
-        typeStr         sType2;
-        typeStr         sType3;
-        typeStr         sType4;
-        int                iType;
-        int                iN;
-        double          dKp;
-        double          dP0;
-        double          dScEE;
-        double          dScNB;
-        orderStr        sOrder;                /* for impropers */
-        DESCRIPTION     sDesc;
-} TORSIONPARMt;
 
 
 typedef        VARARRAY        TORSION;
@@ -171,6 +157,9 @@ extern int iParmSetAddHBond(PARMSET psLib, char *sType1, char *sType2, double dA
 extern int iParmSetAddNBEdit(PARMSET psLib, char *sType1, char *sType2, double dEI, double dEJ,
                              double dRI, double dRJ, char *sDesc );
 
+
+extern void BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
+             VARARRAY vaTorsions, int iTorsionOffset);
 /*
  *        Find the parameters within a PARMSET and return the index
  *        into the PARMSET for that parameter.
@@ -187,17 +176,20 @@ extern int iParmSetAddNBEdit(PARMSET psLib, char *sType1, char *sType2, double d
  
 extern int        iParmSetFindAtom(PARMSET psLib, char *sType);
 extern int        iParmSetFindBond(PARMSET psLib, char *sType1, char *sType2);
-extern int        iParmSetFindC4Pairwise(PARMSET psLib, char *sType1, char *sType2); //New
 extern int        iParmSetFindAngle(PARMSET psLib, 
                         char *sType1, char *sType2, char *sType3);
 extern int        iParmSetFindProperTerms(PARMSET psLib, TORSION tTorsion, 
-                        BOOL bUseIndex, 
+                        bool bUseIndex, 
                         char *sType1, char *sType2, char *sType3, char *sType4);
 extern int        iParmSetFindImproperTerms(PARMSET psLib, TORSION tTorsion, 
-                        BOOL bUseIndex,
+                        bool bUseIndex,
                         char *sType1, char *sType2, char *sType3, char *sType4);
 extern int        iParmSetFindHBond(PARMSET psLib, char *sType1, char *sType2);
 extern int        iParmSetFindNBEdit(PARMSET psLib, char *sType1, char *sType2);
+
+// Find NB edit parm and apply to dA, dB
+extern void CheckAgainstNBEdits(VARARRAY vaPNBEdits, typeStr tI, typeStr tJ,
+		    double *dA, double *dB);
 
 /*
  *        TORSION routines
@@ -224,12 +216,12 @@ extern void        ParmSetTORSIONTerm(TORSION tTorsion, int iTorsionIndex,
                         char *cPTyp1, char *cPTyp2, char *cPTyp3, char *cPTyp4,
                         int *iPN, double *dPKp, double *dPP0, double *dPScEE,
                         double *dPScNB, char *sDesc );
-extern BOOL        bParmSetTORSIONAddProperTerm(TORSION tTorsion,
+extern bool        bParmSetTORSIONAddProperTerm(TORSION tTorsion,
                         char *cPType1, char *cPType2, 
                         char *cPType3, char *cPType4,
                         int iN, double dKp, double dP0, double dScEE,
                         double dScNB, char *sDesc);
-extern BOOL        bParmSetTORSIONAddImproperTerm(TORSION tTorsion,
+extern bool        bParmSetTORSIONAddImproperTerm(TORSION tTorsion,
                         char *cPType1, char *cPType2, 
                         char *cPType3, char *cPType4,
                         int iN, double dKp, double dP0, double dScEE,
@@ -237,7 +229,7 @@ extern BOOL        bParmSetTORSIONAddImproperTerm(TORSION tTorsion,
 extern void        ParmSetTORSIONOrderAtoms(void);        
 extern void        ParmSetImproperOrderAtoms( TORSION tTorsion, int iTorsionIndex,
                         char *cPaTypes[4], int iaIndexes[4] );
-extern BOOL        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
+extern bool        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
 
 /*
  *        PARMSET information routines.
@@ -262,8 +254,8 @@ extern BOOL        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
 #define iParmSetTotalNBEdits( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaNBEdits )
 
-extern  BOOL    bParmSetCapableofHBonding(void);    /* ( PARMSET, char* ) */
-
+extern  bool    bParmSetCapableofHBonding(void);    /* ( PARMSET, char* ) */
+extern int CheckTypeNBEdit(typeStr sType, VARARRAY vaPNBEdits);
 
 /*
  *        Routines used to actually obtain PARMSET parameters

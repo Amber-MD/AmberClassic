@@ -149,10 +149,10 @@ extern void	Describe(OBJEKT oObject);
 #define iObjectType( o ) \
         (o==NULL ? NULLid : (int)(((OBJEKT)(o))->cObjType))
 
-extern BOOL	bObjectInClass(OBJEKT oObject, int iClass);
+extern bool	bObjectInClass(OBJEKT oObject, int iClass);
 extern char	*sObjectIndexType(int iType);
 extern char	*sObjectType(OBJEKT oObj);
-extern BOOL	bObjektWarnType(OBJEKT oObj, int iType);
+extern bool	bObjektWarnType(OBJEKT oObj, int iType);
 
 
 	/* DO NOT USE oObjectDuplicate from applications */

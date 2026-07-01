@@ -286,10 +286,10 @@ double          dDot;
  */
 double
 dVectorAtomNormalizedChirality( VECTOR *vPCenter, int iCenterCoord,
-                                        VECTOR *vPA, BOOL bA,
-                                        VECTOR *vPB, BOOL bB,
-                                        VECTOR *vPC, BOOL bC,
-                                        VECTOR *vPD, BOOL bD )
+                                        VECTOR *vPA, bool bA,
+                                        VECTOR *vPB, bool bB,
+                                        VECTOR *vPC, bool bC,
+                                        VECTOR *vPD, bool bD )
 {
 double          dChi;
 

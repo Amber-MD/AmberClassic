@@ -68,13 +68,13 @@ typedef LIBRARYt	*LIBRARY;
 extern LIBRARY	lLibraryOpen(char *sName, int iOpenMode);
 extern OBJEKT	oLibraryLoad(LIBRARY ul, char *sName);
 extern void	LibrarySave(LIBRARY ul, char *sName, OBJEKT oObj, PARMLIB plLibrary);
-extern BOOL	bLibraryRemove(LIBRARY ul, char *sName);
+extern bool	bLibraryRemove(LIBRARY ul, char *sName);
 
 extern void	LibraryLoop(LIBRARY ul);
 extern char	*sLibraryNext(LIBRARY ul);
 extern void	LibraryClose(LIBRARY *lPLibrary);
 
-extern BOOL	bLibraryDBPrefix(LIBRARY lLib, char *cPResult, char *sStr );
+extern bool	bLibraryDBPrefix(LIBRARY lLib, char *cPResult, char *sStr );
 #define	dbLibraryDatabase(l)	(l->dbLibrary)
 
 

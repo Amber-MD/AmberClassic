@@ -118,11 +118,10 @@ typedef struct  {
                         /* to store interactions and pointers to parameters */
                         /* for writing UNITs to DATABASEs and for writing */
                         /* UNITs with parameters for SPASMS */
-
+        int             iMoleculeCount;
         int             iCapTempInt;
         VARARRAY        vaAtoms;       // SAVEATOMt
         VARARRAY        vaBonds;       // SAVEBONDt
-	VARARRAY        vaC4Pairwise;  // SAVEC4Pairwiset
         VARARRAY        vaAngles;      // SAVEANGLEt
         VARARRAY        vaTorsions;    // SAVETORSIONt
         VARARRAY        vaConnectivity;// SAVECONNECTIVITYt
@@ -176,20 +175,18 @@ extern void     UnitCheck(UNIT uUnit, int *iPErrors, int *iPWarnings);
 extern void     UnitCheckForParms( UNIT uUnit, PARMLIB plParms, 
                         PARMSET psParmSet );
 
-extern void     UnitSaveAmberParmFile(UNIT uUnit, FILE *fOut, char *crdName,
-                        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf,
-                        char sA[8][16], char sB[8][16],
-                        double daC4Type[16], int iC4count ); //NewT
+extern void     UnitSaveAmberParmFile(UNIT uUnit, char *prmtopName, char *crdName,
+                        PARMLIB plParms, bool bPolar, bool bPert, bool bNetcdf);
 
 extern void     UnitYouAreBeingRemoved(UNIT uUnit);
 extern void     UnitIAmBeingRemoved(UNIT uUnit, CONTAINER cRemoved);
 
-extern BOOL     bUnitCanBePerturbed(UNIT uUnit);
+extern bool     bUnitCanBePerturbed(UNIT uUnit);
 
                 /* Restraint add/remove/loop */
 
 extern void     UnitAddRestraint(UNIT uUnit, RESTRAINT rRest );
-extern BOOL     bUnitRemoveRestraint(UNIT uUnit, RESTRAINT rRest);
+extern bool     bUnitRemoveRestraint(UNIT uUnit, RESTRAINT rRest);
 extern void     UnitLoopRestraints(UNIT uUnit);
 extern RESTRAINT        rUnitNextRestraint(UNIT uUnit);
 
@@ -198,27 +195,25 @@ extern int      iUnitRestraintTypeCount(UNIT uUnit, int iType);
 extern void     UnitSetAttribute(UNIT uUnit, STRING sAttr, OBJEKT oAttr);
 extern OBJEKT   oUnitGetAttribute(UNIT uUnit, STRING sAttr);
 
-extern BOOL     bUnitCapContainsAtom(UNIT uUnit, ATOM aAtom);
-extern BOOL     bUnitCapContainsContainer(UNIT uUnit, CONTAINER cCont);
+extern bool     bUnitCapContainsAtom(UNIT uUnit, ATOM aAtom);
+extern bool     bUnitCapContainsContainer(UNIT uUnit, CONTAINER cCont);
 
-extern BOOL     bUnitGroupCreate(UNIT uUnit, char *cPName);
+extern bool     bUnitGroupCreate(UNIT uUnit, char *cPName);
 extern LIST     lUnitGroup(UNIT uUnit, char *sGroup);
-extern BOOL     bUnitGroupAddAtom(UNIT uUnit, char *sGroup, ATOM aAtom);
-extern BOOL     bUnitGroupFindAtom(UNIT uUnit, char *sGroup, ATOM aAtom, 
-                        BOOL *bPFound);
-extern BOOL     bUnitGroupRemoveAtom(UNIT uUnit, char *sGroup, ATOM aAtom);
-extern BOOL     bUnitGroupDestroy(UNIT uUnit, char *sGroup);
+extern bool     bUnitGroupAddAtom(UNIT uUnit, char *sGroup, ATOM aAtom);
+extern bool     bUnitGroupFindAtom(UNIT uUnit, char *sGroup, ATOM aAtom, 
+                        bool *bPFound);
+extern bool     bUnitGroupRemoveAtom(UNIT uUnit, char *sGroup, ATOM aAtom);
+extern bool     bUnitGroupDestroy(UNIT uUnit, char *sGroup);
 extern void     UnitFindBoundingBox(UNIT uUnit, VECTOR *vPLower, 
                         VECTOR *vPUpper);
 
-extern void     UnitSetUseBox(UNIT uUnit, BOOL b);
-extern void     UnitSetBoxOct(UNIT uUnit, BOOL b);
-extern void     UnitSetUseSolventCap(UNIT uUnit, BOOL b);
+extern void     UnitSetUseBox(UNIT uUnit, bool b);
+extern void     UnitSetBoxOct(UNIT uUnit, bool b);
+extern void     UnitSetUseSolventCap(UNIT uUnit, bool b);
 extern void     UnitDestroy( UNIT *uPUnit );
-extern BOOL     zbUnitIgnoreHwHwOwAngle( STRING sA, STRING sB, STRING sC );
-extern BOOL     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
-
-//extern void     UnitSaveC4Type( UNIT uUnit, char *sA, char *sB, double daC4Type ); //NewT
+extern bool     zbUnitIgnoreHwHwOwAngle( STRING sA, STRING sB, STRING sC );
+extern bool     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
 
 #define sUnitDescription( u )     ( ((UNIT)u)->sDescription )
 #define UnitSetDescription( u, s ) ( StringCopyMax( ((UNIT)u)->sDescription, s,\
