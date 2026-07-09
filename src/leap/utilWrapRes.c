@@ -144,9 +144,7 @@ bool		bOnlySpaces;
 
 
 
-void main( argc, argv )
-int		argc;
-char*		argv[];
+int main(int argc, char *argv[] )
 {
 FILE*		fIn;
 FILE*		fOut;
@@ -157,9 +155,8 @@ bool		bFirst;
     BasicsInitialize();
 
     if ( argc != 3 ) {
-	printf( "Usage: %s {resourcefile_in} {header_out}\n",
-		argv[0] );
-	exit(1);
+	printf( "Usage: %s {resourcefile_in} {header_out}\n", argv[0] );
+	return 1;
     }
 
     fIn = fopen( argv[1], "r" );
@@ -185,4 +182,5 @@ bool		bFirst;
 
     fclose(fIn);
     fclose(fOut); 
+    return 0;
 }

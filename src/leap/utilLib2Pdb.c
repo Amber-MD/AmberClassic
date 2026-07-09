@@ -48,9 +48,7 @@
 #include	"pdbFile.h"
 
 
-main( argc, argv )
-int		argc;
-char*		argv[];
+int main(int argc, char *argv[] )
 {
 STRING		sFile;
 LIBRARY		lUnits;
@@ -90,10 +88,9 @@ char*		cPUnit;
 	fclose(fPdb);
     }
     LibraryClose( &lUnits );
-    exit(0);
+    return 0;
 
 BADARG:
     fprintf( stderr, "Usage: %s LIBRARY\n", argv[0] );
-    exit(1);
-    
+    return 1;
 }

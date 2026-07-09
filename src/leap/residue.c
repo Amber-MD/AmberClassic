@@ -127,7 +127,7 @@ int		i, iNum;
  *              Return a pointer to the RESIDUE created.
  */
 RESIDUE
-rResidueCreate()
+rResidueCreate(void)
 {
 RESIDUE m;
 int     i;
@@ -377,6 +377,13 @@ STRING          sTemp;
         VPWARN("Unknown residue: %s\n", 
                 sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) );
     }
+
+    if ( cResidueType( rRes ) ==  RESTYPEUNDEFINED) {
+        (*iPWarnings)++;
+        VPWARN("Unknown residue type: %s\n", 
+                sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) );
+    }
+
 
     lContents = lLoop( (OBJEKT)rRes, DIRECTCONTENTS );
     while ( (cCont = (CONTAINER)oNext(&lContents)) ) {

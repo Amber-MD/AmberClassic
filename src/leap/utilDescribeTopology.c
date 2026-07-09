@@ -787,9 +787,7 @@ int		iN;
 
 
 
-void main( argc, argv )
-int             argc;
-char*           argv[];
+int main(int argc, char *argv[] )
 {
 /*types*/
 int             iIndex;
@@ -1691,7 +1689,5 @@ OVERPERT:
 
     fclose( fIn );
 
-    
-
-    exit(0);
+    return 0;
 }

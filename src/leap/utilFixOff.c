@@ -121,9 +121,7 @@ int		i;
 
  
 
-main( argc, argv )
-int		argc;
-char*		argv[];
+int main(int argc, char *argv[] )
 {
 int		iState, i;
 STRING		sLine;
@@ -203,6 +201,7 @@ FILE*		fOut;
     sprintf( sLine, "mv %s %s", TEMPFILE, argv[1] );
     system( sLine );
 
+    return 0;
 }
 
 

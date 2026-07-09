@@ -64,6 +64,25 @@ typedef MOLECULEt	*MOLECULE;
 
 
 
+#ifdef DEBUG
+static inline CONTAINER container_from_molecule(MOLECULE m) { return m ? &(m->cHeader) : NULL; }
+static inline OBJEKT objekt_from_molecule(MOLECULE m) { return m ? &(m->cHeader.oHeader) : NULL; }
+static inline MOLECULE molecule_from_objekt(OBJEKT o)
+  { assert ( iObjectType(o) == MOLECULEid ); return (MOLECULE)o; }
+static inline MOLECULE molecule_from_container(CONTAINER c)
+  { assert ( iObjectType(c ? &(c->oHeader) : NULL) == MOLECULEid ); return (MOLECULE)c; }
+static inline MOLECULE molecule_from_genp(void *p)
+  { assert ( iObjectType((OBJEKT)p) == MOLECULEid ); return (MOLECULE)p; }
+static inline MOLECULE molecule_from_molecule(MOLECULE m) { return m; }
+#define MOLECULE_from(x) _Generic((x), \
+    OBJEKT: molecule_from_objekt, \
+    CONTAINER: molecule_from_container, \
+    MOLECULE: molecule_from_molecule \
+)(x)
+#else
+#define MOLECULE_from(x) ((MOLECULE)(x))
+#endif
+
 
 
 /*

@@ -87,7 +87,7 @@ typedef char    typeStr[MAXTYPELEN];
 #define        MAXORDERLEN        5
 typedef        char        orderStr[MAXORDERLEN];
 
-#define PARMDESCRIPTIONLEN      32
+#define PARMDESCRIPTIONLEN      128
 typedef char            DESCRIPTION[PARMDESCRIPTIONLEN];
 
 
@@ -118,6 +118,20 @@ typedef        VARARRAY        TORSION;
 #define PARM_NOT_FOUND                -6
 #define PARM_FOUND_WILD                -7
 #define PARM_FOUND_EXACT        -8
+
+
+#ifdef DEBUG
+static inline PARMSET parmset_from_objekt(OBJEKT o)
+  { assert ( iObjectType(o) == PARMSETid ); return (PARMSET)o; }
+static inline OBJEKT objekt_from_parmset(PARMSET ps) { return &(ps->oSuper); }
+
+#define PARMSET_from(x) _Generic((x), \
+    OBJEKT: parmset_from_objekt \
+)(x)
+
+#else
+#define PARMSET_from(x) ((PARMSET)(x))
+#endif
 
 /*
  *        The following routines are used to create/destroy/describe

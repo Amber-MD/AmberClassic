@@ -188,60 +188,60 @@ char    *sTemp;
     do {
         switch ( *sTemp ) {
             case '*':
-                return(TRUE);
+                return TRUE;
             case 'u':
                 if ( iObjectType(oObj) == UNITid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "unit" );
                 break;
             case 'm':
                 if ( iObjectType(oObj) == MOLECULEid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "molecule" );
                 break;
             case 'r':
                 if ( iObjectType(oObj) == RESIDUEid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "residue" );
                 break;
             case 'a':
                 if ( iObjectType(oObj) == ATOMid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "atom" );
                 break;
             case 'l':
                 if ( iObjectType(oObj) == LISTid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "list" );
                 break;
             case 'n':
                 if ( iObjectType(oObj) == ODOUBLEid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "number" );
                 break;
             case 'i':
                 if ( iObjectType(oObj) == OINTEGERid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "integer" );
                 break;
             case 's':
                 if ( iObjectType(oObj) == OSTRINGid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "string" );
                 break;
             case 'p':
                 if ( iObjectType(oObj) == PARMSETid )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "parameter_set" );
                 break;
             case 'z':
                 if ( oObj == NULL )
-                        return(TRUE);
+                        return TRUE;
                 strcat( sNeedType, "null" );
                 break;
             case '\0':
             case ' ':
-                return(FALSE);
+                return FALSE;
             default:
                 DFATAL("ILLEGAL type character in bCmdMatchTypes" );
         }
@@ -251,7 +251,7 @@ char    *sTemp;
             (*iPCount)++;
         }
     } while ( *sTemp != '\0' );
-    return(FALSE);
+    return FALSE;
 }
 
 
@@ -315,7 +315,7 @@ int             iNeedCount;
 
     if ( iArgCount != iNeeded ) {
         VPFATAL("%s: Improper number of arguments!\n", sCmd );
-        return(FALSE);
+        return FALSE;
     }
 
                 /* Check the types of arguments */
@@ -323,7 +323,7 @@ int             iNeedCount;
                 /* within the ASSOC */
 
     for ( i=0; i<iArgCount; i++ ) {
-        oObj = (OBJEKT)aaArgs[i];
+        oObj = OBJEKT_from(aaArgs[i]);
         if ( iObjectType(oObj) == ASSOCid )
                 oObj = oAssocObject(oObj);
         if ( !bCmdMatchTypes( oObj, &sTypes, sNeed, &iNeedCount ) ) {
@@ -332,10 +332,10 @@ int             iNeedCount;
                       "    Verify the type of an argument with the desc command.\n"
                       "    Check for alternate argument names with the list command.\n",
                 sCmd, i+1, sObjectType(oObj), sNeed );
-            return(FALSE);
+            return FALSE;
         }
     }
-    return(TRUE);
+    return TRUE;
 }
 
 
@@ -357,7 +357,7 @@ int             i, iSize;
 OBJEKT          oObj;
 
     iSize = iListSize(lList);
-    vaList = vaVarArrayCreate( sizeof(OBJEKT) );
+    vaList = vaVarArrayCreate( sizeofOBJEKT_from( ));
     VarArraySetSize( vaList, iSize );
 
     i = 0;
@@ -365,7 +365,7 @@ OBJEKT          oObj;
     while ( oObj = oListNext(&llElements) ) {
         *PVAI( vaList, OBJEKT, i ) = oObj;
     }
-    return(vaList);
+    return vaList;
 }
 #endif
 
@@ -394,13 +394,13 @@ oCmd_quit( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "quit", iArgCount, aaArgs, (char *)"" ) ) {
         VPFATALDELAYEDEXIT("usage:  quit\n" );
-        return(NULL);
+        return NULL;
     }
 
     GrMainResult.iCommand = CQUIT;
     VP0("\tQuit\n" );
     VPEPILOG( );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -417,12 +417,12 @@ oCmd_describe( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "desc", iArgCount, aaArgs, "*" ) ) {
         VPFATALDELAYEDEXIT("usage:  desc <variable>\n" );
-        return(NULL);
+        return NULL;
     }
 
     Describe( oAssocObject(aaArgs[0]) );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -439,13 +439,13 @@ oCmd_debugOn( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "debugOn", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  debugOn <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     MessageAddFile( sOString(oAssocObject(aaArgs[0])) );
     VP0("Messages will be displayed from the files:\n" );
     MessageFileList();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -461,13 +461,13 @@ oCmd_debugOff( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "debugOff", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  debugOff <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     MessageRemoveFile( sOString(oAssocObject(aaArgs[0])) );
     VP0("Messages will be displayed from the files:\n" );
     MessageFileList();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -498,14 +498,14 @@ char            *sUsage = "usage:  debugStatus [testMemoryOff|testMemoryOn]\n";
 
     if ( iArgCount == 0 ) {
         if ( !bCmdGoodArguments( sCmd,  iArgCount, aaArgs, "" ) )
-                return(NULL);
+                return NULL;
         VP0("Current memory usage: %ld bytes\n", GiMemoryAllocated );
         VP0("Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) );
-        return(NULL);
+        return NULL;
     }
     if ( !bCmdGoodArguments( "debugStatus", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
 
     oObj = oAssocObject(aaArgs[0]);
@@ -523,7 +523,7 @@ char            *sUsage = "usage:  debugStatus [testMemoryOff|testMemoryOn]\n";
         VPFATALDELAYEDEXIT("%s",sUsage );
     }
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -577,7 +577,7 @@ HELP            hTemp;
                 VP0("%s\n", sHelpText(hTemp) );
         }
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -598,7 +598,7 @@ oCmd_list( int iArgCount, ASSOC aaArgs[] )
         VPFATALDELAYEDEXIT("usage:  list\n" );
     else
         VariablesList();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -622,13 +622,13 @@ LIBRARY         ul;
 
     if ( !bCmdGoodArguments( "loadOff", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  loadOff <filename>\n" );
-        return(NULL);
+        return NULL;
     }
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
 
     ul = lLibraryOpen( sFilename, OPENREADONLY );
     if ( ul == NULL )
-        return(NULL);
+        return NULL;
 
     VP0("Loading library: %s\n", GsBasicsFullName );
 
@@ -646,10 +646,10 @@ LIBRARY         ul;
                         /* And make it the default PARMLIBRARY */
 
             if ( iObjectType(oObj)==PARMSETid ) {
-                PARMSET psTemp = (PARMSET) oObj;
+                PARMSET psTemp = PARMSET_from(oObj);
 
                 strcpy( sParmName(psTemp), sFilename );
-                ParmLibAddParmSet( GplAllParameters, (PARMSET)oObj );
+                ParmLibAddParmSet( GplAllParameters, PARMSET_from(oObj) );
                 ParmLibDefineDefault( GplAllParameters );
             }
         }
@@ -657,7 +657,7 @@ LIBRARY         ul;
 
     LibraryClose( &ul );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -688,25 +688,25 @@ int             iDum;
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "l" ) ) {
         VPFATALDELAYEDEXIT("usage:  sequence <LIST>\n" );
-        return(NULL);
+        return NULL;
     }
-    llElements = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
+    llElements = llListLoop( LIST_from(oAssocObject(aaArgs[0])) );
 
                 /* Get the first element from the list */
 
-    aAss = (ASSOC)oListNext(&llElements);
+    aAss = ASSOC_from(oListNext(&llElements));
     MESSAGE("Copying the first UNIT\n" );
     if ( iObjectType(oAssocObject(aAss)) != UNITid ) {
         VPFATALEXIT("%s: Invalid UNIT at position #1.\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
                 /* Get the first UNIT and build INTERNALs */
 
-    uFirst = (UNIT)oCopy(oAssocObject(aAss));
-    VP1("Sequence: %s\n", sContainerName((CONTAINER) uFirst) );
-    while ( (aAss = (ASSOC)oListNext(&llElements)) ) {
-        uUnit = (UNIT)oAssocObject(aAss);
+    uFirst = uCopyUnit(oAssocObject(aAss));
+    VP1("Sequence: %s\n", sContainerName(CONTAINER_from( uFirst)) );
+    while ( (aAss = ASSOC_from(oListNext(&llElements))) ) {
+        uUnit = UNIT_from(oAssocObject(aAss));
         if ( uUnit == NULL ) {
                 VP0("Unknown UNIT: %s\n", sAssocName(aAss) );
         } else {
@@ -720,18 +720,18 @@ int             iDum;
                 Destroy((OBJEKT *)&uFirst);
                 VPFATALEXIT("%s: Invalid UNIT named: %s\n", sCmd,
                         sAssocName(aAss) );
-                return(NULL);
+                return NULL;
             }
 
                         /* Copy the next UNIT */
 
-            uSecond = (UNIT)oCopy( (OBJEKT)uUnit );
-            VP1("Sequence: %s\n", sContainerName((CONTAINER) uSecond) );
+            uSecond = uCopyUnit(uUnit);
+            VP1("Sequence: %s\n", sContainerName(CONTAINER_from( uSecond)) );
 
                         /* Build INTERNALs for the next UNIT */
 
             MESSAGE("Building internals for subsequent UNIT\n" );
-            BuildInternalsForContainer( (CONTAINER) uSecond,
+            BuildInternalsForContainer( CONTAINER_from( uSecond),
                         ATOMNEEDSBUILD, ATOMPOSITIONKNOWN );
 
             aConnect = aUnitHead( uSecond );
@@ -745,7 +745,7 @@ int             iDum;
             UnitSequence( uFirst, uSecond );
 
             if ( aConnect != NULL ) {
-                lAtoms = lLoop( (OBJEKT)aConnect, SPANNINGTREE );
+                lAtoms = lLoop( OBJEKT_from(aConnect), SPANNINGTREE );
                 iDum = 0;       /* for purify */
                 BuildExternalsUsingFlags( &lAtoms, ATOMNEEDSBUILD, 0,
                                         ATOMPOSITIONKNOWN,
@@ -757,17 +757,17 @@ int             iDum;
 
                 /* Destroy INTERNALs to clean up */
 
-    lAtoms = lLoop( (OBJEKT)uFirst, ATOMS );
+    lAtoms = lLoop( OBJEKT_from(uFirst), ATOMS );
     BuildDestroyInternals( &lAtoms );
 
                 /* Define PDB sequence */
 
-    lTemp = lLoop( (OBJEKT)uFirst, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lTemp)) ) {
-        ResidueSetPdbSequence( rRes, iContainerSequence((CONTAINER) rRes) );
+    lTemp = lLoop( OBJEKT_from(uFirst), RESIDUES );
+    while ( (rRes = RESIDUE_from(oNext(&lTemp))) ) {
+        ResidueSetPdbSequence( rRes, iContainerSequence(CONTAINER_from( rRes)) );
     }
 
-    return((OBJEKT)uFirst);
+    return OBJEKT_from(uFirst);
 }
 
 
@@ -790,17 +790,17 @@ UNIT            uUnit;
 
     if ( !bCmdGoodArguments( "loadMol2", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = loadMol2 <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     fMol2 = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
-    if ( fMol2 == NULL ) return(NULL);
+    if ( fMol2 == NULL ) return NULL;
 
     VP0("Loading Mol2 file: %s\n", GsBasicsFullName );
     uUnit = uTriposReadUnit( fMol2 );
     fclose(fMol2);
 
-    return((OBJEKT)uUnit);
+    return OBJEKT_from(uUnit);
 }
 
 
@@ -826,17 +826,17 @@ UNIT            uUnit;
 
     if ( !bCmdGoodArguments( "loadMol3", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = loadMol3 <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     fMol3 = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
-    if ( fMol3 == NULL ) return(NULL);
+    if ( fMol3 == NULL ) return NULL;
 
     VP0("Loading Mol3 file: %s\n", GsBasicsFullName );
     uUnit = uTriposReadUnit( fMol3 );
 
     fclose(fMol3);
-    return((OBJEKT)uUnit);
+    return OBJEKT_from(uUnit);
 }
 
 
@@ -857,17 +857,17 @@ FILE            *fCif;
 UNIT            uUnit;
     if ( !bCmdGoodArguments( "loadCif", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = loadCif <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     fCif = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
-    if ( fCif == NULL ) return(NULL);
+    if ( fCif == NULL ) return NULL;
 
     VP0("Loading CIF file: %s\n", GsBasicsFullName );
     uUnit = uPdbRead( fCif, NULL, TRUE );
     fclose(fCif);
 
-    return((OBJEKT)uUnit);
+    return OBJEKT_from(uUnit);
 }
 
 /*
@@ -887,18 +887,18 @@ FILE            *fPdb;
 UNIT            uUnit;
     if ( !bCmdGoodArguments( "loadPdb", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = loadPdb <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     fPdb = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
-    if ( fPdb == NULL ) return(NULL);
+    if ( fPdb == NULL ) return NULL;
 
     VP0("Loading PDB file: %s\n", GsBasicsFullName );
     uUnit = uPdbRead( fPdb, NULL, FALSE );
     fclose(fPdb);
 
     // TODO:  Name UNIT based on filename?
-    return((OBJEKT)uUnit);
+    return OBJEKT_from(uUnit);
 }
 
 
@@ -929,34 +929,34 @@ char            *sCmd = "loadPdbUsingSeq";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s l" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = loadPdbUsingSeq <filename> <unitLIST>\n" );
-        return(NULL);
+        return NULL;
     }
 
     fPdb = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
-    if ( fPdb == NULL ) return(NULL);
+    if ( fPdb == NULL ) return NULL;
 
                 /* Copy the list of UNITs into a VARARRAY */
 
-    lUnits = (LIST)oAssocObject(aaArgs[1]);
+    lUnits = LIST_from(oAssocObject(aaArgs[1]));
     vaUnits = vaVarArrayCreate( sizeof(UNIT) );
     VarArraySetSize( vaUnits, iCollectionSize(lUnits) );
     llLoop = llListLoop(lUnits);
     i = 0;
     iErr = 0;
-    while ( (aObj = (ASSOC)oListNext(&llLoop)) ) {
+    while ( (aObj = ASSOC_from(oListNext(&llLoop))) ) {
         oObj = oAssocObject(aObj);
-        *PVAI( vaUnits, UNIT, i ) = (UNIT)oObj;
         if ( iObjectType(oObj) != UNITid ) {
             VP0("%s: %s is not a unit!\n", sCmd, sAssocName(aObj) );
             iErr++;
         }
+        *PVAI( vaUnits, UNIT, i ) = UNIT_from(oObj);
         i++;
     }
     if ( iErr ) {
         VarArrayDestroy( &vaUnits );
         fclose(fPdb);
         VP0("Not loaded\n" );
-        return(NULL);
+        return NULL;
     }
 
 
@@ -968,7 +968,7 @@ char            *sCmd = "loadPdbUsingSeq";
 
     fclose(fPdb);
 
-    return((OBJEKT)uUnit);
+    return OBJEKT_from(uUnit);
 }
 
 
@@ -998,11 +998,11 @@ char            *sCmd = "saveOff";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "upl s" ) ) {
         VPFATALDELAYEDEXIT("usage:  saveOff <object> <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     ul = lLibraryOpen( sOString(oAssocObject(aaArgs[1])), OPENREADWRITE );
-    if ( ul==NULL ) return(NULL);
+    if ( ul==NULL ) return NULL;
 
     DisplayerAccumulateUpdates();
     if ( iObjectType( oAssocObject(aaArgs[0]) ) == UNITid ||
@@ -1012,8 +1012,8 @@ char            *sCmd = "saveOff";
                         oAssocObject(aaArgs[0]), NULL );
     } else {
         oObj = oAssocObject(aaArgs[0]);
-        llUnits = llListLoop( (LIST)oObj );
-        while ( (aObj = (ASSOC)oListNext(&llUnits) ) != NULL ) {
+        llUnits = llListLoop( LIST_from(oObj));
+        while ( (aObj = ASSOC_from(oListNext(&llUnits)) ) != NULL ) {
             oObj = oAssocObject(aObj);
             if ( iObjectType(oObj) != UNITid &&
                  iObjectType(oObj) != PARMSETid ) {
@@ -1029,7 +1029,7 @@ char            *sCmd = "saveOff";
     DisplayerReleaseUpdates();
 
     LibraryClose( &ul );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1055,12 +1055,12 @@ PARMSET         psParmSet;
 
     if ( !bCmdGoodArguments( "createParmset",  iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = createParmset <name>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    psParmSet = (PARMSET)oCreate(PARMSETid);
-    AssocSetObject( aaArgs[0], (OBJEKT)psParmSet );
-    return((OBJEKT)psParmSet);
+    psParmSet = PARMSET_from(oCreate(PARMSETid));
+    AssocSetObject( aaArgs[0], OBJEKT_from(psParmSet ));
+    return OBJEKT_from(psParmSet);
 }
 
 
@@ -1083,45 +1083,13 @@ UNIT            uUnit;
 
     if ( !bCmdGoodArguments( "createUnit", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = createUnit <name>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit = (UNIT)oCreate(UNITid);
-    ContainerSetName( (CONTAINER) uUnit, sOString(oAssocObject(aaArgs[0])) );
-    return((OBJEKT)uUnit);
+    uUnit = UNIT_from(oCreate(UNITid));
+    ContainerSetName( CONTAINER_from( uUnit), sOString(oAssocObject(aaArgs[0])) );
+    return OBJEKT_from(uUnit);
 }
-
-
-
-/*
- *      oCmd_moleculeCreate
- *
- *      Author: Christian Schafmeister (1991)
- *
- *      Return a newly created MOLECULE.
- *
- *      Arguments:
- *              [0]     - OSTRING MOLECULE name.
- */
-OBJEKT
-oCmd_moleculeCreate( int iArgCount, ASSOC aaArgs[] )
-{
-MOLECULE        mMol;
-
-/*
-TODO - no help for this.. write & rename to createMolecule
-or delete this cmd
-*/
-    if ( !bCmdGoodArguments( "moleculeCreate", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT("usage:  <variable> = moleculecreate <name>\n" );
-        return(NULL);
-    }
-
-    mMol = (MOLECULE)oCreate(MOLECULEid);
-    ContainerSetName( (CONTAINER) mMol, sOString(oAssocObject(aaArgs[0])) );
-    return((OBJEKT)mMol);
-}
-
 
 
 /*
@@ -1141,12 +1109,12 @@ RESIDUE         rRes;
 
     if ( !bCmdGoodArguments( "createResidue", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = createResidue <name>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    rRes = (RESIDUE)oCreate(RESIDUEid);
-    ContainerSetName( (CONTAINER) rRes, sOString(oAssocObject(aaArgs[0])) );
-    return((OBJEKT)rRes);
+    rRes = RESIDUE_from(oCreate(RESIDUEid));
+    ContainerSetName( CONTAINER_from( rRes), sOString(oAssocObject(aaArgs[0])) );
+    return OBJEKT_from(rRes);
 }
 
 
@@ -1174,15 +1142,15 @@ char            *sCmd = "createAtom";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s n" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = createAtom <name> <type> <charge>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    aAtom = (ATOM)oCreate(ATOMid);
-    ContainerSetName( (CONTAINER) aAtom, sOString(oAssocObject(aaArgs[0])) );
+    aAtom = ATOM_from(oCreate(ATOMid));
+    ContainerSetName( CONTAINER_from( aAtom), sOString(oAssocObject(aaArgs[0])) );
     AtomSetType( aAtom, sOString(oAssocObject(aaArgs[1])) );
     AtomSetCharge( aAtom, dODouble(oAssocObject(aaArgs[2])) );
 
-    return((OBJEKT)aAtom);
+    return OBJEKT_from(aAtom);
 }
 
 
@@ -1211,7 +1179,7 @@ char            *sCmd = "add";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umr mra" ) ) {
         VPFATALDELAYEDEXIT("usage:  add <unit/residue/atom> <unit/residue/atom>\n" );
-        return(NULL);
+        return NULL;
     }
 
     oA = oAssocObject(aaArgs[0]);
@@ -1221,25 +1189,25 @@ char            *sCmd = "add";
     if ( (iA==UNITid) &&
         !((iB==MOLECULEid)||(iB==RESIDUEid)||(iB==ATOMid)) ) {
         VP0("%s: UNITs cannot contain UNITs.\n", sCmd );
-        return(NULL);
+        return NULL;
     }
     if ( (iA==MOLECULEid) &&
         !((iB==RESIDUEid)||(iB==ATOMid)) ) {
         VP0("%s: MOLECULEs can only contain RESIDUEs and ATOMs.\n", sCmd );
-        return(NULL);
+        return NULL;
     }
     if ( (iA==RESIDUEid) && (iB!=ATOMid) ) {
         VP0("%s: Residues can only contain ATOMs.\n", sCmd );
-        return(NULL);
+        return NULL;
     }
-    if ( cContainerWithin((CONTAINER) oB) != NULL ) {
+    if ( cContainerWithin(CONTAINER_from( oB)) != NULL ) {
         VP0("%s: The object %s is already contained within %s\n",
                 sCmd, sAssocName(aaArgs[1]),
-                sContainerFullDescriptor( cContainerWithin((CONTAINER) oB), sTemp ) );
-        return(NULL);
+                sContainerFullDescriptor( cContainerWithin(CONTAINER_from( oB)), sTemp ) );
+        return NULL;
     }
-    ContainerAdd( (CONTAINER)oA, oB );
-    return(NULL);
+    ContainerAdd( CONTAINER_from(oA), oB );
+    return NULL;
 }
 
 
@@ -1264,20 +1232,20 @@ char            *sCmd = "remove";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umr mra" ) ) {
         VPFATALDELAYEDEXIT("usage:  remove <unit/residue/atom> <unit/residue/atom>\n" );
-        return(NULL);
+        return NULL;
     }
 
     oA = oAssocObject(aaArgs[0]);
     oB = oAssocObject(aaArgs[1]);
 
     REF( oB );  /* bContainerRemove() needs this */
-    if ( !bContainerRemove( (CONTAINER)oA, oB ) ) {
+    if ( !bContainerRemove( CONTAINER_from(oA), oB ) ) {
         VP0("%s: Could not find %s within %s.\n",
                 sCmd, sAssocName(aaArgs[1]), sAssocName(aaArgs[0]) );
     }
     DEREF( oB ); /* reset count after bContainerRemove */
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1307,20 +1275,20 @@ char            *sCmd = "bond";
         cOrder = 'S';
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
             VPFATALDELAYEDEXIT("usage:  bond <atom1> <atom2> [order]\n" );
-            return(NULL);
+            return NULL;
         }
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a s" ) ) {
             VPFATALDELAYEDEXIT("usage:  bond <atom1> <atom2> [order]\n" );
-            return(NULL);
+            return NULL;
         }
         cOrder = sOString(oAssocObject(aaArgs[2]))[0];
     }
 
     DisplayerAccumulateUpdates();
 
-    aA = (ATOM)oAssocObject(aaArgs[0]);
-    aB = (ATOM)oAssocObject(aaArgs[1]);
+    aA = ATOM_from(oAssocObject(aaArgs[0]));
+    aB = ATOM_from(oAssocObject(aaArgs[1]));
 
     switch ( cOrder ) {
         case 'S':
@@ -1343,7 +1311,7 @@ char            *sCmd = "bond";
     AtomBondToOrder( aA, aB, iOrder );
 DONE:
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1369,13 +1337,13 @@ char            *sCmd = "deleteBond";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
         VPFATALDELAYEDEXIT("usage:  deleteBond <atom1> <atom2>\n" );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
-    aA = (ATOM)oAssocObject(aaArgs[0]);
-    aB = (ATOM)oAssocObject(aaArgs[1]);
+    aA = ATOM_from(oAssocObject(aaArgs[0]));
+    aB = ATOM_from(oAssocObject(aaArgs[1]));
 
     if ( bAtomBondedTo( aA, aB ) ) {
         AtomRemoveBond( aA, aB );
@@ -1384,7 +1352,7 @@ char            *sCmd = "deleteBond";
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1426,26 +1394,26 @@ char            *sCmd = "zMatrix";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umr l" ) ) {
         VPFATALDELAYEDEXIT("usage:  zMatrix <unit/residue> <LIST>\n" );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
-    cCont = (CONTAINER)oAssocObject(aaArgs[0]);
-    llLines = llListLoop( (LIST)oAssocObject(aaArgs[1]) );
-    while ( (aAss = (ASSOC)oListNext(&llLines) ) != NULL ) {
-        lLine = (LIST)oAssocObject(aAss);
+    cCont = CONTAINER_from(oAssocObject(aaArgs[0]));
+    llLines = llListLoop( LIST_from(oAssocObject(aaArgs[1])) );
+    while ( (aAss = ASSOC_from(oListNext(&llLines)) ) != NULL ) {
+        lLine = LIST_from(oAssocObject(aAss));
         if ( iObjectType(lLine) != LISTid ) {
             VPWARN("%s: Invalid object in zMatrix list was ignored.\n", sCmd );
             continue;
         }
         llElements = llListLoop( lLine );
         iCount = 0;
-        while ( ( aAss2 = (ASSOC)oListNext(&llElements)) != NULL ) {
+        while ( ( aAss2 = ASSOC_from(oListNext(&llElements))) != NULL ) {
             oObj = oAssocObject(aAss2);
             if ( iObjectType(oObj) == OSTRINGid ) {
-                oObj = (OBJEKT)cContainerFindName( cCont,
-                                ATOMid, sOString(oObj) );
+                oObj = OBJEKT_from(cContainerFindName( cCont,
+                                ATOMid, sOString(oObj)) );
             }
             oaElements[iCount] = oObj;
             iCount++;
@@ -1513,7 +1481,7 @@ BAD:
 
 DONE:
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1539,36 +1507,36 @@ UNIT            uUnit;
 char            *sCmd = "saveOffParm";
 
     VP0("saveOffParm: command deactivated\n" );
-    return(NULL);
+    return NULL;
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "ul s" ) ) {
         VPFATALDELAYEDEXIT("usage:  saveOffParm <object> <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
     ul = lLibraryOpen( sOString( oAssocObject(aaArgs[1]) ), OPENREADWRITE );
 
     if ( iObjectType( oAssocObject(aaArgs[0]) ) == UNITid ) {
-        LibrarySave( ul, sContainerName((CONTAINER) oAssocObject(aaArgs[0])),
+        LibrarySave( ul, sContainerName( oAssocObject(aaArgs[0])),
                         oAssocObject(aaArgs[0]),
                         GplAllParameters );
     } else {
-        llUnits = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
-        while ( (uUnit = (UNIT)oListNext(&llUnits) ) != NULL ) {
+        llUnits = llListLoop( LIST_from(oAssocObject(aaArgs[0])) );
+        while ( (uUnit = UNIT_from(oListNext(&llUnits)) ) != NULL ) {
             if ( iObjectType(uUnit) != UNITid ) {
                 VPWARN("%s: Invalid UNIT in list was ignored.\n", sCmd );
                 continue;
             }
-            LibrarySave( ul, sContainerName((CONTAINER) uUnit), (OBJEKT) uUnit, GplAllParameters );
+            LibrarySave( ul, sContainerName(uUnit), OBJEKT_from( uUnit), GplAllParameters );
         }
     }
 
     LibraryClose( &ul );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1609,38 +1577,38 @@ char            *sCmd = "loadAmberPrep";
     if ( iArgCount == 1 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s" ) ) {
             VPFATALDELAYEDEXIT("usage:  loadAmberPrep <filename> [prefix]\n" );
-            return(NULL);
+            return NULL;
         }
         strcpy( sPrefix, "" );
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s" ) ) {
             VPFATALDELAYEDEXIT("usage:  loadAmberPrep <filename> [prefix]\n" );
-            return(NULL);
+            return NULL;
         }
         strcpy( sPrefix, sOString(oAssocObject(aaArgs[1])) );
     }
     dUnits = dAmberReadPrepFile( sOString(oAssocObject(aaArgs[0])) );
     if ( dUnits != NULL ) {
         dlLoop = ydlDictionaryLoop( dUnits );
-        while ( (uUnit=(UNIT)yPDictionaryNext( dUnits, &dlLoop )) != NULL ) {
+        while ( (uUnit=UNIT_from(yPDictionaryNext( dUnits, &dlLoop ))) != NULL ) {
             strcpy( sName, sPrefix );
-            strcat( sName, sContainerName((CONTAINER) uUnit) );
+            strcat( sName, sContainerName(CONTAINER_from( uUnit)) );
             VP1("Loaded UNIT: %s\n", sName );
 
                 /* Set the name for the UNIT */
 
-            ContainerSetName( (CONTAINER) uUnit, sName );
+            ContainerSetName( CONTAINER_from( uUnit), sName );
 
                 /* Set the name for the only residue in the unit */
 
-            lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
-            rRes = (RESIDUE)oNext(&lResidues);
-            ContainerSetName( (CONTAINER) rRes, sName );
-            VariableSet( sName, (OBJEKT) uUnit );       /* adds 1 REF */
+            lResidues = lLoop( OBJEKT_from(uUnit), RESIDUES );
+            rRes = RESIDUE_from(oNext(&lResidues));
+            ContainerSetName( CONTAINER_from( rRes), sName );
+            VariableSet( sName, OBJEKT_from( uUnit ));       /* adds 1 REF */
         }
         DictionaryDestroy(&dUnits);
     }
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -1680,7 +1648,7 @@ static          char parm15[] = "parm15";
 
     if ( !bCmdGoodArguments( "loadAmberParams", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT( sUsage );
-        return(NULL);
+        return NULL;
     }
     strcpy( sFile, sOString(oAssocObject(aaArgs[0])) );
 
@@ -1689,7 +1657,7 @@ static          char parm15[] = "parm15";
         if( parm10_loaded > 1 ){
             VPNOTE( "Skipping %s: already loaded\n", sFile );
             parm10_loaded -= 1;
-            return(NULL);
+            return NULL;
         }
     }
     if( strstr( sFile, parm99 ) ) {
@@ -1697,7 +1665,7 @@ static          char parm15[] = "parm15";
         if( parm99_loaded > 1 ){
             VPNOTE( "Skipping %s: already loaded\n", sFile );
             parm99_loaded -= 1;
-            return(NULL);
+            return NULL;
         }
     }
     if( strstr( sFile, parm15 ) ) {
@@ -1705,13 +1673,13 @@ static          char parm15[] = "parm15";
         if( parm15_loaded > 1 ){
             VPNOTE( "Skipping %s: already loaded\n", sFile );
             parm15_loaded -= 1;
-            return(NULL);
+            return NULL;
         }
     }
 
     fIn = FOPENCOMPLAIN( sFile, "r" );
     if ( fIn == NULL ) 
-        return(NULL);
+        return NULL;
 
     if( parm99_loaded + parm15_loaded + parm10_loaded > 1 ){
         VPFATALEXIT( "Cannot load more than one of parm99/10/15.dat\n"
@@ -1729,7 +1697,7 @@ static          char parm15[] = "parm15";
     } else
         VPNOTE( "-- no parameters loaded" );
 
-    return((OBJEKT)psParms);
+    return OBJEKT_from(psParms);
 }
 
 
@@ -1754,16 +1722,16 @@ FILE            *fOut;
 
     if ( !bCmdGoodArguments( "savePdb", iArgCount, aaArgs, "u s" ) ) {
         VPFATALDELAYEDEXIT("usage:  savePdb <object> <filename>\n" );
-        return(NULL);
+        return NULL;
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
     fOut = FOPENCOMPLAIN( sString, "w" );
     if ( fOut == NULL )
-        return(NULL);
+        return NULL;
     VP0("Writing pdb file: %s\n", sString);
-    PdbWrite( fOut, (UNIT)oAssocObject(aaArgs[0]) );
+    PdbWrite( fOut, UNIT_from(oAssocObject(aaArgs[0]) ));
     fclose( fOut );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1796,17 +1764,17 @@ double          choice;
         VP0("usage:  saveMol2 <object> <filename> <option>\n" );
         VP0("<option> = 0 for Default atom types \n" );
         VPFATALDELAYEDEXIT("<option> = 1 for AMBER atom types \n" );
-        return(NULL);
+        return NULL;
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
     choice =  (int) dODouble( oAssocObject(aaArgs[2]) ) ;
     fOut = FOPENCOMPLAIN( sString, "w" );
     if ( fOut == NULL )
-        return(NULL);
+        return NULL;
     VP0("Writing mol2 file: %s\n", sString);
-    Mol2Write( fOut, (UNIT)oAssocObject(aaArgs[0]), choice);
+    Mol2Write( fOut, UNIT_from(oAssocObject(aaArgs[0])), choice);
     fclose( fOut );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1838,18 +1806,18 @@ double          choice;
         VP0("usage:  saveMol3 <object> <filename> <option>\n" );
         VP0("<option> = 0 for Default atom types \n" );
         VPFATALDELAYEDEXIT("<option> = 1 for AMBER atom types \n" );
-        return(NULL);
+        return NULL;
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
     choice =  (int) dODouble( oAssocObject(aaArgs[2]) );
     fOut = FOPENCOMPLAIN( sString, "w" );
-    if ( fOut == NULL ) return(NULL);
+    if ( fOut == NULL ) return NULL;
 
     VP0("Writing mol3 file: %s\n", sString);
 
-    Mol3Write( fOut, (UNIT)oAssocObject(aaArgs[0]), choice);
+    Mol3Write( fOut, UNIT_from(oAssocObject(aaArgs[0])), choice);
     fclose( fOut );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1890,11 +1858,11 @@ char            *sUsage =
      */
     if ( !bCmdGoodArguments( sCmd, 3, aaArgs, "u u ln" ) ) {
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
     if ( iArgCount > 5 ) {
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
     if ( iArgCount != 3 ) {
         OBJEKT  oObj;
@@ -1902,7 +1870,7 @@ char            *sUsage =
         /*
          *  handle possible 'iso' &/or closeness
          */
-        oObj = (OBJEKT)aaArgs[3];
+        oObj = OBJEKT_from(aaArgs[3]);
         if ( iObjectType(oObj) != ASSOCid )
                 DFATAL("unexpected objtype %s\n", sObjectType(oObj) );
 
@@ -1911,20 +1879,19 @@ char            *sUsage =
         } else {
                 bIsotropic = TRUE;
                 if ( iArgCount == 5 ) {
-                        oObj = (OBJEKT)aaArgs[4];
-                        oObj = oAssocObject(oObj);
+                        oObj = oAssocObject(aaArgs[4]);
                 } else
                         oObj = NULL;
         }
         if ( oObj != NULL ) {
                 if ( iObjectType(oObj) != ODOUBLEid ) {
                         VPFATALEXIT("%s",sUsage );
-                        return(NULL);
+                        return NULL;
                 }
                 dCloseness = dODouble( oObj );
                 if ( dCloseness <= 0.0 ) {
                         VPFATALEXIT("%s",sUsage );
-                        return(NULL);
+                        return NULL;
                 }
         }
     }
@@ -1933,11 +1900,11 @@ char            *sUsage =
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
-    uSolute = (UNIT)oAssocObject(aaArgs[0]);
-    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    uSolute = UNIT_from(oAssocObject(aaArgs[0]));
+    uSolvent = UNIT_from(oAssocObject(aaArgs[1]));
 
     if ( iObjectType( oAssocObject(aaArgs[2]) ) == LISTid ) {
         /*
@@ -1946,28 +1913,28 @@ char            *sUsage =
         if ( iListSize(oAssocObject(aaArgs[2])) != 3 ) {
             VPFATALEXIT("%s: Argument #3 must have three values: "
                     "{ x y z } or one.\n%s", sCmd, sUsage );
-            return(NULL);
+            return NULL;
         }
-        llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
+        llNumbers = llListLoop(LIST_from(oAssocObject(aaArgs[2])));
         for ( i=0; i<3; i++ ) {
-            aAss = (ASSOC)oListNext(&llNumbers);
+            aAss = ASSOC_from(oListNext(&llNumbers));
             if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
                 VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
                         sCmd, i, sUsage );
-                return(NULL);
+                return NULL;
             }
             daBuffer[i] = dODouble(oAssocObject(aAss));
             if ( daBuffer[i] < 0.0 ) {
                 VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
                         sCmd, i+1, sUsage );
-                return(NULL);
+                return NULL;
             }
         }
     } else {
         daBuffer[0] = dODouble(oAssocObject(aaArgs[2]));
         if ( daBuffer[0] < 0.0 ) {
                 VPFATALEXIT("%s: Bad box clearance.\n%s", sCmd, sUsage );
-                return(NULL);
+                return NULL;
         }
         daBuffer[2] = daBuffer[1] = daBuffer[0];
     }
@@ -1988,14 +1955,14 @@ char            *sUsage =
         ToolCenterUnitByRadii( uSolute, FALSE );
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) uSolute );
+    ContainerDisplayerUpdate( CONTAINER_from( uSolute ));
 
     /*
      *  do the solvation
      */
     TurnOffDisplayerUpdates();
 
-    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iInitialSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     zToolSolvateAndShell( uSolute, uSolvent,
                 daBuffer[0], daBuffer[1], daBuffer[2], dCloseness,
@@ -2005,15 +1972,15 @@ char            *sUsage =
      *  Get rid of solvent copy
      */
     ContainerDestroy( (CONTAINER *) &uSolvent );
-    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iFinalSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
 
     VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2046,18 +2013,18 @@ char            *sUsage =
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" );
     if (bUsage) {
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
 
         /* Make sure there is a parameter set loaded */
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
-    uSolute = (UNIT)oAssocObject(aaArgs[0]);
-    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    uSolute = UNIT_from(oAssocObject(aaArgs[0]));
+    uSolvent = UNIT_from(oAssocObject(aaArgs[1]));
     if ( iArgCount == 3 )
         dCloseness = dODouble(oAssocObject(aaArgs[2]));
 
@@ -2066,14 +2033,14 @@ char            *sUsage =
      */
     uSolvent = zToolSetupSolvent( uSolvent );
 
-    ContainerDisplayerUpdate( (CONTAINER) uSolute );
+    ContainerDisplayerUpdate( CONTAINER_from( uSolute ));
 
     /*
      *  do the solvation
      */
     TurnOffDisplayerUpdates();
 
-    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iInitialSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     ToolSolvateCell( uSolute, uSolvent, dCloseness);
 
@@ -2081,15 +2048,15 @@ char            *sUsage =
      *  Get rid of solvent copy
      */
     ContainerDestroy( (CONTAINER *) &uSolvent );
-    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iFinalSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
 
     VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2129,11 +2096,11 @@ char            *sUsage =
          */
         if ( !bCmdGoodArguments( sCmd, 3, aaArgs, "u u ln" ) ) {
                 VPFATALDELAYEDEXIT("%s",sUsage );
-                return(NULL);
+                return NULL;
         }
         if ( iArgCount > 5 ) {
                 VPFATALDELAYEDEXIT("%s",sUsage );
-                return(NULL);
+                return NULL;
         }
         if ( iArgCount != 3 ) {
 
@@ -2141,7 +2108,7 @@ char            *sUsage =
                 *  handle possible 'aniso' &/or closeness
                 */
 
-                oObj = (OBJEKT)aaArgs[3];
+                oObj = OBJEKT_from(aaArgs[3]);
                 if ( iObjectType(oObj) != ASSOCid )
                 DFATAL("unexpected objtype %s\n", sObjectType(oObj) );
 
@@ -2153,8 +2120,7 @@ char            *sUsage =
                                 oObj = oAssocObject(oObj);
                         } else {
                                 if ( iArgCount == 5 ) {
-                                        oObj = (OBJEKT)aaArgs[4];
-                                        oObj = oAssocObject(oObj);
+                                        oObj = oAssocObject(aaArgs[4]);
                                 } else {
                                         oObj = NULL;
                                 }
@@ -2165,8 +2131,7 @@ char            *sUsage =
                         /* found aniso keyword: */
                         bIsotropic = FALSE;
                         if ( iArgCount == 5 ) {
-                                oObj = (OBJEKT)aaArgs[4];
-                                oObj = oAssocObject(oObj);
+                                oObj = oAssocObject(aaArgs[4]);
                         } else {
                                 oObj = NULL;
                         }
@@ -2175,12 +2140,12 @@ char            *sUsage =
                 if ( oObj != NULL ) {
                         if ( iObjectType(oObj) != ODOUBLEid ) {
                                 VPFATALEXIT("%s",sUsage );
-                                return(NULL);
+                                return NULL;
                         }
                         dCloseness = dODouble( oObj );
                         if ( dCloseness <= 0.0 ) {
                                 VPFATALEXIT("%s",sUsage );
-                                return(NULL);
+                                return NULL;
                         }
                 }
         }
@@ -2189,17 +2154,17 @@ char            *sUsage =
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
-    uSolute = (UNIT)oAssocObject(aaArgs[0]);
-    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    uSolute = UNIT_from(oAssocObject(aaArgs[0]));
+    uSolvent = UNIT_from(oAssocObject(aaArgs[1]));
 
     if ( iObjectType( oAssocObject(aaArgs[2]) ) == LISTid ) {
 
         if ( bIsotropic ) {
                 VPFATALEXIT("%s: 'iso' requires a single clearance value\n", sCmd );
-                return(NULL);
+                return NULL;
         }
 
         /*
@@ -2208,28 +2173,28 @@ char            *sUsage =
         if ( iListSize(oAssocObject(aaArgs[2])) != 4 ) {
             VPFATALEXIT("%s: Argument #3 must have four values: "
                     "{ x y z d } or one.\n%s", sCmd, sUsage );
-            return(NULL);
+            return NULL;
         }
-        llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
+        llNumbers = llListLoop(LIST_from(oAssocObject(aaArgs[2])));
         for ( i=0; i<4; i++ ) {
-            aAss = (ASSOC)oListNext(&llNumbers);
+            aAss = ASSOC_from(oListNext(&llNumbers));
             if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
                 VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
                         sCmd, i, sUsage );
-                return(NULL);
+                return NULL;
             }
             daBuffer[i] = dODouble(oAssocObject(aAss));
             if ( daBuffer[i] < 0.0 ) {
                 VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
                         sCmd, i+1, sUsage );
-                return(NULL);
+                return NULL;
             }
         }
     } else {
         daBuffer[0] = dODouble(oAssocObject(aaArgs[2]));
         if ( daBuffer[0] < 0.0 ) {
                 VPFATALEXIT("%s: Bad box clearance.\n%s", sCmd, sUsage );
-                return(NULL);
+                return NULL;
         }
         daBuffer[3] = daBuffer[2] = daBuffer[1] = daBuffer[0];
     }
@@ -2248,7 +2213,7 @@ char            *sUsage =
     else
         ToolCenterUnitByRadii( uSolute, FALSE );
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) uSolute );
+    ContainerDisplayerUpdate( CONTAINER_from( uSolute ));
 
                 /* adjust box for diagonal clearance if necc */
 
@@ -2258,7 +2223,7 @@ char            *sUsage =
 
     TurnOffDisplayerUpdates();
 
-    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iInitialSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
     zToolSolvateAndShell( uSolute, uSolvent,
                 daBuffer[0], daBuffer[1], daBuffer[2],
                 dCloseness, NOSHELL, FALSE, TRUE, TRUE, bIsotropic );
@@ -2267,15 +2232,15 @@ char            *sUsage =
      *  Get rid of solvent copy
      */
     ContainerDestroy( (CONTAINER *) &uSolvent );
-    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iFinalSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
 
     VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2316,13 +2281,13 @@ char            *sUsage =
     if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u ln" ) ) {
             VPFATALDELAYEDEXIT("%s",sUsage );
-            return(NULL);
+            return NULL;
         }
         dCloseness = 1.0;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u ln n" ) ) {
             VPFATALDELAYEDEXIT("%s",sUsage );
-            return(NULL);
+            return NULL;
         }
         dCloseness = dODouble( oAssocObject(aaArgs[3]) );
     }
@@ -2331,25 +2296,25 @@ char            *sUsage =
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
-    uSolute = (UNIT)oAssocObject(aaArgs[0]);
-    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    uSolute = UNIT_from(oAssocObject(aaArgs[0]));
+    uSolvent = UNIT_from(oAssocObject(aaArgs[1]));
 
     if ( iObjectType( oAssocObject(aaArgs[2]) ) == LISTid ) {
         if ( iListSize(oAssocObject(aaArgs[2])) != 3 ) {
             VPFATALEXIT("%s: Argument #3 must have three values: "
                     "{ x y z } or one.\n%s", sCmd, sUsage );
-            return(NULL);
+            return NULL;
         }
-        llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
+        llNumbers = llListLoop(LIST_from(oAssocObject(aaArgs[2])));
         for ( i=0; i<3; i++ ) {
-            aAss = (ASSOC)oListNext(&llNumbers);
+            aAss = ASSOC_from(oListNext(&llNumbers));
             if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
                 VPFATALEXIT("%s: Bad value #%d in the third argument.\n%s",
                         sCmd, i, sUsage );
-                return(NULL);
+                return NULL;
             } else daBuffer[i] = dODouble(oAssocObject(aAss));
         }
     } else {
@@ -2369,10 +2334,10 @@ char            *sUsage =
     ToolCenterUnitByRadii( uSolute, FALSE );
     TurnOnDisplayerUpdates();
 
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
     TurnOffDisplayerUpdates();
-    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iInitialSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
     zToolSolvateAndShell( uSolute, uSolvent,
                 daBuffer[0], daBuffer[1], daBuffer[2],
                 dCloseness, NOSHELL, FALSE, FALSE, FALSE, bIsotropic );
@@ -2381,14 +2346,14 @@ char            *sUsage =
      *  Get rid of solvent copy
      */
     ContainerDestroy( (CONTAINER *) &uSolvent );
-    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iFinalSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
     VP0("  Added %d residues.\n", iFinalSize - iInitialSize );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2421,13 +2386,13 @@ char            *sUsage =
     if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ) ) {
             VPFATALDELAYEDEXIT("%s",sUsage );
-            return(NULL);
+            return NULL;
         }
         dCloseness = 1.0;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n n" ) ) {
             VPFATALDELAYEDEXIT("%s",sUsage );
-            return(NULL);
+            return NULL;
         }
         dCloseness = dODouble( oAssocObject(aaArgs[3]) );
     }
@@ -2436,11 +2401,11 @@ char            *sUsage =
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
-    uSolute = (UNIT)oAssocObject(aaArgs[0]);
-    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    uSolute = UNIT_from(oAssocObject(aaArgs[0]));
+    uSolvent = UNIT_from(oAssocObject(aaArgs[1]));
 
     /*
      *  make copy of solvent w/ box & solv residue types set
@@ -2453,16 +2418,16 @@ char            *sUsage =
     TurnOffDisplayerUpdates();
     ToolCenterUnitByRadii( uSolute, FALSE );
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
     dThickness = dODouble(oAssocObject(aaArgs[2]));
     if ( dThickness <= 0.0 ) {
         VPFATALEXIT("%s: bad thickness\n%s", sCmd, sUsage );
-        return( NULL );
+        return  NULL ;
     }
 
     TurnOffDisplayerUpdates();
-    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iInitialSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
     zToolSolvateAndShell( uSolute, uSolvent,
                 dThickness, dThickness, dThickness,
                 dCloseness, dThickness, TRUE, TRUE, FALSE, FALSE );
@@ -2471,15 +2436,15 @@ char            *sUsage =
      *  Get rid of solvent copy
      */
     ContainerDestroy( (CONTAINER *) &uSolvent );
-    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iFinalSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate((CONTAINER) uSolute);
+    ContainerDisplayerUpdate(CONTAINER_from( uSolute));
 
     VP0(" Added %d residues.\n", iFinalSize - iInitialSize );
 
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2506,7 +2471,7 @@ int     iVerb;
 
     if ( !bCmdGoodArguments( "verbosity", iArgCount, aaArgs, "n" ) ) {
         VPFATALDELAYEDEXIT("usage:  verbosity <level>\n" );
-        return(NULL);
+        return NULL;
     }
 
     iVerb = (int)dODouble(oAssocObject(aaArgs[0]));
@@ -2515,7 +2480,7 @@ int     iVerb;
     GrMainResult.sVariable[0] = (char)iVerb;
 
     VP2("Verbosity level: %d\n", iVerb );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2539,7 +2504,7 @@ FILE            *fLog;
 
     if ( !bCmdGoodArguments( "logFile", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  logFile <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
@@ -2559,7 +2524,7 @@ FILE            *fLog;
         VerbositySetLogFile( fLog );
         VP0("Log file: %s\n", GsBasicsFullName );
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2589,14 +2554,14 @@ char            *sCmd = "combine";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "l" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = combine <LIST>\n" );
-        return(NULL);
+        return NULL;
     }
-    llElements = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
+    llElements = llListLoop( LIST_from(oAssocObject(aaArgs[0])) );
 
                 /* Get the first element from the list */
 
     uCombined = NULL;
-    while ( (aAss = (ASSOC)oListNext(&llElements)) ) {
+    while ( (aAss = ASSOC_from(oListNext(&llElements))) ) {
         oObj = oAssocObject(aAss);
         if ( iObjectType( oObj ) != UNITid ) {
                 VP0("%s: %s is type %s\n", sCmd,
@@ -2607,8 +2572,8 @@ char            *sCmd = "combine";
         /*
         **      objekt is a unit, so make a copy
         */
-        uCurrent = (UNIT)oCopy( oObj );
-        VP1("  Sequence: %s\n", sContainerName((CONTAINER) uCurrent) );
+        uCurrent = uCopyUnit(oObj);
+        VP1("  Sequence: %s\n", sContainerName(CONTAINER_from( uCurrent)) );
         if ( uCombined == NULL ) {
                 MESSAGE("Copying the first UNIT\n" );
                 uCombined = uCurrent;
@@ -2620,17 +2585,17 @@ char            *sCmd = "combine";
     }
     if ( uCombined == NULL ) {
         VP0("No UNITS, so no combine performed\n" );
-        return(NULL);
+        return NULL;
     }
 
                 /* Define PDB sequence */
 
-    lTemp = lLoop( (OBJEKT)uCombined, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lTemp)) ) {
-        ResidueSetPdbSequence( rRes, iContainerSequence((CONTAINER) rRes) );
+    lTemp = lLoop( OBJEKT_from(uCombined), RESIDUES );
+    while ( (rRes = RESIDUE_from(oNext(&lTemp))) ) {
+        ResidueSetPdbSequence( rRes, iContainerSequence(CONTAINER_from( rRes)) );
     }
 
-    return((OBJEKT)uCombined);
+    return OBJEKT_from(uCombined);
 }
 
 
@@ -2655,7 +2620,7 @@ FILE            *fCmds;
 
     if ( !bCmdGoodArguments( "source", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  source <filename>\n" );
-        return(NULL);
+        return NULL;
     }
 
     fCmds = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[0])), "r" );
@@ -2674,7 +2639,7 @@ FILE            *fCmds;
         }
     }
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -2708,7 +2673,7 @@ bool            bAbsoluteDist = TRUE;
         case 1:
             if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umra" )) {
                 VPFATALDELAYEDEXIT("usage:  check <unit> [parmset] [dCloseness]\n" );
-                return(NULL);
+                return NULL;
             }
             break;
         case 2:
@@ -2717,13 +2682,13 @@ bool            bAbsoluteDist = TRUE;
                 iArgCount = 1;
             } else if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u ps" )) {
                 VPFATALDELAYEDEXIT("usage:  check <unit> [parmset] [dCloseness]\n" );
-                return(NULL);
+                return NULL;
             }
             break;
         case 3:
             if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u ps n" )) {
                 VPFATALDELAYEDEXIT("usage:  check <unit> [parmset] [dCloseness]\n" );
-                return(NULL);
+                return NULL;
             }
             dCloseness = dODouble(oAssocObject( aaArgs[2] ));
             iArgCount = 2;
@@ -2731,7 +2696,7 @@ bool            bAbsoluteDist = TRUE;
         default:
             VP0("%s: A maximum of two parameters are acceptable:\n", sCmd );
             VP0("     a UNIT and an (optional) PARMSET.\n" );
-            return( NULL );
+            return  NULL ;
             break;
     }
 
@@ -2745,21 +2710,21 @@ bool            bAbsoluteDist = TRUE;
     iErrors = 0;
     iWarnings = 0;
     VP0("Checking '%s'....\n", sAssocName( aaArgs[0] ));
-    ContainerCheck( (CONTAINER) oAssocObject( aaArgs[0] ), &iErrors, &iWarnings );
+    ContainerCheck( CONTAINER_from( oAssocObject( aaArgs[0] )), &iErrors, &iWarnings );
 
                         /* Look for close contacts */
-    iWarnings += iToolDistanceSearch( (CONTAINER)oAssocObject(aaArgs[0]), dCloseness,
+    iWarnings += iToolDistanceSearch( CONTAINER_from(oAssocObject(aaArgs[0])), dCloseness,
                                         bAbsoluteDist, DISTANCE_SEARCH_PRINT_WARNINGS );
 
     if ( iObjectType( oAssocObject( aaArgs[0] )) == UNITid ) {
         VP0("Checking parameters for unit '%s'.\n", sAssocName( aaArgs[0] ));
-        uUnit = (UNIT)oAssocObject( aaArgs[0] );
+        uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
         if ( iArgCount == 2 ) {
             if ( iObjectType(oAssocObject( aaArgs[1] )) == OSTRINGid ) {
                 VP0("Creating empty parmset %s\n", sAssocName( aaArgs[1] ) );
-                psParmSet = (PARMSET)oCreate(PARMSETid);
+                psParmSet = PARMSET_from(oCreate(PARMSETid));
             } else {
-                psParmSet = (PARMSET)oAssocObject( aaArgs[1] );
+                psParmSet = PARMSET_from(oAssocObject( aaArgs[1]));
             }
             UnitCheckForParms( uUnit, GplAllParameters, psParmSet );
             if ( iObjectType(oAssocObject( aaArgs[1] )) == OSTRINGid )
@@ -2778,7 +2743,7 @@ bool            bAbsoluteDist = TRUE;
     if ( iErrors == 0 )
         VP0("%s is OK.\n", sObjectType( oAssocObject( aaArgs[0] )));
 
-    return(NULL);
+    return NULL;
 }
 
 static void
@@ -2794,10 +2759,10 @@ char            *sCmd = "get";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umra s" ) ) {
         getUsage();
-        return(NULL);
+        return NULL;
     }
 
-    OBJEKT oResult = oContainerGetAttribute( (CONTAINER) oAssocObject(aaArgs[0]),
+    OBJEKT oResult = oContainerGetAttribute( CONTAINER_from( oAssocObject(aaArgs[0])),
                         sOString(oAssocObject(aaArgs[1])) );
     if (iObjectType(oResult)==OSTRINGid)
         VP2("Result: \"%s\"\n",sOString(oResult));
@@ -2841,7 +2806,7 @@ char            *sCmd = "set";
     if ( (iArgCount == 2 && !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s ns")) ||
          (iArgCount != 2 && !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "lumras s *" )) ){
         setUsage();
-        return(NULL);
+        return NULL;
     }
 
     if ( iArgCount == 2 ) {
@@ -2855,13 +2820,13 @@ char            *sCmd = "set";
         if (strchr(sString, '.')) {
                 VPFATAL("%s: not a container (e.g. residue)\n", sString );
                 setUsage();
-                return(NULL);
+                return NULL;
         }
         StringLower( sString );
         if ( strcmp( sString, "default" )) {
                 VPFATAL("%s: expected 'default'\n", sString );
                 setUsage();
-                return(NULL);
+                return NULL;
         }
         /*
         **  handle the default
@@ -2869,18 +2834,19 @@ char            *sCmd = "set";
         if ( iObjectType(oAssocObject(aaArgs[1])) != OSTRINGid ) {
             VPFATAL("%s: expected 'default <type> <value>'\n", sString );
                 setUsage();
-            return(NULL);
+            return NULL;
         }
         return SetDefault(sOString(oAssocObject(aaArgs[1])), oAssocObject(aaArgs[2]));
     }
 
     DisplayerAccumulateUpdates();
+    // List of objects
     if ( iObjectType(oAssocObject(aaArgs[0])) == LISTid ) {
-        llElements = llListLoop((LIST)oAssocObject(aaArgs[0]));
-        while ( (aAssoc = (ASSOC)oListNext(&llElements)) ) {
+        llElements = llListLoop(LIST_from(oAssocObject(aaArgs[0])));
+        while ( (aAssoc = ASSOC_from(oListNext(&llElements))) ) {
             MESSAGE("Setting attribute for: %s\n", sAssocName(aAssoc) );
             if ( bObjectInClass( oAssocObject(aAssoc), CONTAINERid ) ) {
-                ContainerSetAttribute( (CONTAINER) oAssocObject(aAssoc),
+                ContainerSetAttribute( CONTAINER_from(oAssocObject(aAssoc)),
                         sOString(oAssocObject(aaArgs[1])),
                         oAssocObject(aaArgs[2]) );
             } else {
@@ -2889,10 +2855,12 @@ char            *sCmd = "set";
                          sObjectType(oAssocObject(aAssoc)) );
             }
         }
-    } else {
+    }
+    // Scalar/single object
+    else {
         MESSAGE("Setting attribute for: %s\n", sAssocName(oAssocObject(aaArgs[0])) );
         if ( bObjectInClass( oAssocObject(aaArgs[0]), CONTAINERid ) ) {
-            ContainerSetAttribute( (CONTAINER) oAssocObject(aaArgs[0]),
+            ContainerSetAttribute( CONTAINER_from( oAssocObject(aaArgs[0])),
                     sOString(oAssocObject(aaArgs[1])),
                     oAssocObject(aaArgs[2]) );
         } else {
@@ -2902,7 +2870,7 @@ char            *sCmd = "set";
         }
     }
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -2934,10 +2902,10 @@ bool    bVdw;
 
     if ( bUsage ) {
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     sOpt = (char *)sOString(oAssocObject(aaArgs[1]));
     if ( !strcmp(sOpt, "vdw")  ) {
         bVdw = TRUE;
@@ -2946,7 +2914,7 @@ bool    bVdw;
     } else {
         VPFATAL("%s: Expected 'vdw' or 'centers' for second argument.\n", sCmd );
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
 
     if ( bUnitBoxOct(uUnit) ) {
@@ -2973,18 +2941,18 @@ bool    bVdw;
                         " { x y z } for third argument.\n",
                         sCmd );
                 VPFATALDELAYEDEXIT("%s",sUsage );
-                return(NULL);
+                return NULL;
             }
-            llNumbers = llListLoop((LIST)oAssocObject(aaArgs[2]));
+            llNumbers = llListLoop(LIST_from(oAssocObject(aaArgs[2])));
             for ( i=0; i<3; i++ ) {
-                ASSOC   aAss = (ASSOC)oListNext(&llNumbers);
+                ASSOC   aAss = ASSOC_from(oListNext(&llNumbers));
                 if ( iObjectType(oAssocObject(aAss)) != ODOUBLEid ) {
                     VPFATAL("%s: Bad value #%d in third argument.\n", sCmd, i );
                     VP0("%s: Expected 3 non-negative floating point numbers"
                             " { x y z } for third argument.\n",
                             sCmd );
                     VPFATALDELAYEDEXIT("%s",sUsage );
-                    return(NULL);
+                    return NULL;
                 }
                 daBuffer[i] = 2.0 * dODouble(oAssocObject(aAss));
                 if ( daBuffer[i] < 0.0 ) {
@@ -2993,7 +2961,7 @@ bool    bVdw;
                             " { x y z } for third argument.\n",
                             sCmd );
                     VPFATALDELAYEDEXIT("%s",sUsage );
-                    return(NULL);
+                    return NULL;
                 }
             }
         } else {
@@ -3004,7 +2972,7 @@ bool    bVdw;
                         " for third argument.\n",
                         sCmd );
                 VPFATALDELAYEDEXIT("%s",sUsage );
-                return(NULL);
+                return NULL;
             }
             daBuffer[2] = daBuffer[1] = daBuffer[0];
         }
@@ -3019,7 +2987,7 @@ bool    bVdw;
 //    This does not support arbitrary box, it just uses 0,1 interval instead of -1/2,1/2
             VECTOR vOrigin;
             VectorDef( &vOrigin, 0.0, 0.0, 0.0 );
-            ContainerCenterAt( (CONTAINER)uUnit, vOrigin );
+            ContainerCenterAt( CONTAINER_from(uUnit), vOrigin );
             ToolSetUnitBoxByCenters( uUnit );
         }
     }
@@ -3035,7 +3003,7 @@ bool    bVdw;
         UnitSetBox( uUnit, dX, dY, dZ );
     }
     VP0("Box dimensions:  %f %f %f\n", dX, dY, dZ );
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -3064,10 +3032,10 @@ char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> |
 
     if ( bUsage ) {
         VPFATALDELAYEDEXIT("%s",sUsage );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     double a = dODouble(oAssocObject(aaArgs[1]));
     double b = dODouble(oAssocObject(aaArgs[2]));
     double c = dODouble(oAssocObject(aaArgs[3]));
@@ -3081,7 +3049,7 @@ char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> |
     UnitSetCell(uUnit,a,b,c,alpha,beta,gamma);
     UnitSetUseBox( uUnit, TRUE );
     VP0("Cell dimensions:  %f %f %f %f %f %f\n", a,b,c,alpha,beta,gamma );
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -3095,11 +3063,11 @@ oCmd_showDefault( int iArgCount, ASSOC aaArgs[] )
 char    *sCmd = "showDefault";
     if (!bCmdGoodArguments( sCmd, iArgCount, aaArgs, (iArgCount == 1) ? "s" : "" )) {
         VPFATALDELAYEDEXIT("usage:  showDefault [<parameter_name>]\n" );
-        return(NULL);
+        return NULL;
     }
     if ( iArgCount == 1 ) PrintDefaultSettings(sOString(oAssocObject(aaArgs[0])));
     else PrintDefaultSettings(NULL);
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -3134,10 +3102,10 @@ double                  dCharge, dPertCharge;
 
     if ( !bCmdGoodArguments( "charge", iArgCount, aaArgs, "umral" ) ) {
         VPFATALDELAYEDEXIT("usage:  charge <object>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    cCont = (CONTAINER)oAssocObject(aaArgs[0]);
+    cCont = CONTAINER_from(oAssocObject(aaArgs[0]));
 
     ContainerTotalCharge( cCont, &dCharge, &dPertCharge );
     VP0("Total unperturbed charge: %10.6lf\n", dCharge );
@@ -3147,12 +3115,12 @@ double                  dCharge, dPertCharge;
     int iCount=0, iNumRes = iContainerNumberOfChildren(cCont);
     CHARGERESt *crResidues = malloc(sizeof(CHARGERESt)*iNumRes);
     RESIDUE rRes;
-    LOOP lRes = lLoop( (OBJEKT)cCont, RESIDUES );
-    while ( ( rRes = (RESIDUE)oNext(&lRes) ) != NULL ) {
+    LOOP lRes = lLoop( OBJEKT_from(cCont), RESIDUES );
+    while ( ( rRes = RESIDUE_from(oNext(&lRes)) ) != NULL ) {
             double charge=0;
             ATOM aAtom;
-            LOOP lAtom = lLoop( (OBJEKT)rRes, ATOMS );
-            while ( ( aAtom = (ATOM)oNext(&lAtom)) != NULL ) {
+            LOOP lAtom = lLoop( OBJEKT_from(rRes), ATOMS );
+            while ( ( aAtom = ATOM_from(oNext(&lAtom))) != NULL ) {
                 charge += dAtomCharge(aAtom);
             }
             crResidues[iCount].dFrac = fabs(charge - round(charge));
@@ -3164,12 +3132,12 @@ double                  dCharge, dPertCharge;
         VP0("Residues with the largest deviation from unit charge:\n");
         for (int i=0;i<iNumRes && i<20 && crResidues[i].dFrac > 0.00005;i++) {
             STRING sDesc;
-            printf("%15s  Q=%7.3f  dq=%8.4f\n",sContainerDescriptor((CONTAINER)crResidues[i].rRes,sDesc),
+            VP1("%15s  Q=%7.3f  dq=%8.4f\n",sContainerDescriptor(CONTAINER_from(crResidues[i].rRes),sDesc),
                      crResidues[i].dCharge,crResidues[i].dFrac);
         }
     }
     free(crResidues);
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3195,19 +3163,19 @@ char    *sCmd = "saveAmberParm";
     VPTRACEMULTIPLEEXIT("oCmd_saveAmberParm" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
         VPFATALDELAYEDEXIT("usage:  saveAmberParm <unit> <topologyfile> <coordfile> \n" );
-        return(NULL);
+        return NULL;
     }
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile(uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, FALSE, FALSE, FALSE);
     TurnOnDisplayerUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -3232,20 +3200,20 @@ char    *sCmd = "saveAmberParmNetCDF";
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
         VPFATALDELAYEDEXIT("usage: saveAmberParmNetCDF <unit> <topologyfile>"
                 " <coordfile> \n" );
-        return(NULL);
+        return NULL;
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, FALSE, FALSE, TRUE);
     TurnOnDisplayerUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3269,19 +3237,19 @@ char    *sCmd = "saveAmberParmPol";
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
         VPFATALDELAYEDEXIT("usage:  %s <unit> <topologyfile> <coordfile>\n",
                 sCmd );
-        return(NULL);
+        return NULL;
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, TRUE, FALSE, FALSE);
     TurnOnDisplayerUpdates();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3307,20 +3275,20 @@ char    *sCmd = "saveAmberParmPert";
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
         VPFATALDELAYEDEXIT("usage:  %s <unit> <topologyfile> <coordfile>\n",
                 sCmd );
-        return(NULL);
+        return NULL;
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[1])),
                 GplAllParameters, FALSE, TRUE, FALSE);
     TurnOnDisplayerUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3344,19 +3312,19 @@ char    *sCmd = "saveAmberParmPert";
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s" ) ) {
         VPFATALDELAYEDEXIT("usage:  %s <unit> <topologyfile> <coordfile>\n",
                 sCmd );
-        return(NULL);
+        return NULL;
     }
 
     if ( iParmLibSize(GplAllParameters) == 0 ) {
         VPWARN("%s: There are no parameter sets loaded\n", sCmd );
-        return(NULL);
+        return NULL;
     }
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     TurnOffDisplayerUpdates();
     UnitSaveAmberParmFile( uUnit, sOString(oAssocObject(aaArgs[1])), sOString(oAssocObject(aaArgs[2])),
                 GplAllParameters, TRUE, TRUE, FALSE);
     TurnOnDisplayerUpdates();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3372,16 +3340,16 @@ char            *sCmd = "saveAmberPrep";
     VPTRACEMULTIPLEEXIT("oCmd_saveAmberPrep" );
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" ) ) {
         VPFATALDELAYEDEXIT("usage:  saveAmberPrep <unit> <file>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
 
     fOut = FOPENCOMPLAIN( sOString(oAssocObject(aaArgs[1])), "w" );
     if ( fOut == NULL ) {
         VPFATALEXIT("%s: Could not open file: %s\n",
                 sCmd, sOString(oAssocObject(aaArgs[1])));
-        return(NULL);
+        return NULL;
     }
 
     TurnOffDisplayerUpdates();
@@ -3390,7 +3358,7 @@ char            *sCmd = "saveAmberPrep";
 
     fclose( fOut );
     VP0("  -- Remember to delete unwanted IMPROPER terms!\n" );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3414,14 +3382,14 @@ ASSOC           aAssoc;
     } else {
         if ( !bCmdGoodArguments( "clearVariables", iArgCount, aaArgs, "l" ) ) {
             VPFATALDELAYEDEXIT("usage:  clearVariables [LIST]\n" );
-            return(NULL);
+            return NULL;
         }
-        llVariables = llListLoop( (LIST)oAssocObject(aaArgs[0]) );
-        while ( (aAssoc = (ASSOC)oListNext(&llVariables)) ) {
+        llVariables = llListLoop( LIST_from(oAssocObject(aaArgs[0])) );
+        while ( (aAssoc = ASSOC_from(oListNext(&llVariables))) ) {
             VariableRemove( sAssocName(aAssoc) );
         }
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3451,23 +3419,23 @@ char            *sCmd = "matchVariables";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  <variable> = matchVariables <string>\n" );
-        return(NULL);
+        return NULL;
     }
     dVariables = dVariablesDictionary();
-    lVars = (LIST)oCreate(LISTid);
+    lVars = LIST_from(oCreate(LISTid));
 
     dlEntries = ydlDictionaryLoop(dVariables);
     while ( yPDictionaryNext( dVariables, &dlEntries ) ) {
         if ( bStringMatchPattern( sDictLoopKey(dlEntries),
                                   sOString(oAssocObject(aaArgs[0])) ) ) {
-            aAssoc = (ASSOC)oCreate(ASSOCid);
+            aAssoc = ASSOC_from(oCreate(ASSOCid));
             AssocSetName( aAssoc, sDictLoopKey(dlEntries) );
             AssocSetObject( aAssoc, PDictLoopData(dlEntries) );
-            ListAddToEnd( lVars, (OBJEKT)aAssoc );
+            ListAddToEnd( lVars, OBJEKT_from(aAssoc ));
         }
     }
 
-    return((OBJEKT)lVars);
+    return OBJEKT_from(lVars);
 }
 
 
@@ -3507,11 +3475,11 @@ RESIDUE         rRes;
     if ( !GbGraphicalEnvironment ) {
         VPWARN("The edit command only works in a graphical environment.\n" );
         GrMainResult.iCommand = CNONE;
-        return(NULL);
+        return NULL;
     }
     if ( !bCmdGoodArguments( "edit", iArgCount, aaArgs, "ups" ) ) {
         VPFATALDELAYEDEXIT("usage:  edit <unit/parmset>\n" );
-        return(NULL);
+        return NULL;
     }
 
     GrMainResult.iCommand = CEDIT;
@@ -3524,23 +3492,23 @@ RESIDUE         rRes;
                         iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
             VP0("Creating a new, empty UNIT \"%s\"\n",
                         sOString( oAssocObject(aaArgs[0])));
-            uUnit = (UNIT)oCreate(UNITid);
-            ContainerSetName( (CONTAINER) uUnit,
+            uUnit = UNIT_from(oCreate(UNITid));
+            ContainerSetName( CONTAINER_from( uUnit),
                                 sOString( oAssocObject(aaArgs[0])));
-            rRes  = (RESIDUE)oCreate(RESIDUEid);
-            ContainerSetName( (CONTAINER) rRes,
+            rRes  = RESIDUE_from(oCreate(RESIDUEid));
+            ContainerSetName( CONTAINER_from( rRes),
                                 sOString(oAssocObject(aaArgs[0])));
-            ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rRes );
-            VariableSet( sOString( oAssocObject(aaArgs[0])), (OBJEKT)uUnit );   /* adds 1 REF */
-            GrMainResult.oObject = (OBJEKT) uUnit;
+            ContainerAdd( CONTAINER_from(uUnit), OBJEKT_from(rRes ));
+            VariableSet( sOString( oAssocObject(aaArgs[0])), OBJEKT_from(uUnit ));   /* adds 1 REF */
+            GrMainResult.oObject = OBJEKT_from( uUnit);
 
     } else if ( iObjectType(oAssocObject(aaArgs[0])) == UNITid ) {
-            uUnit = (UNIT)(oAssocObject(aaArgs[0]));
-            GrMainResult.oObject = (OBJEKT) uUnit;
+            uUnit = UNIT_from(oAssocObject(aaArgs[0]));
+            GrMainResult.oObject = OBJEKT_from( uUnit);
 
     } else if ( iObjectType(oAssocObject(aaArgs[0])) == PARMSETid) {
-            psParmSet = (PARMSET)(oAssocObject(aaArgs[0]));
-            GrMainResult.oObject = (OBJEKT) psParmSet;
+            psParmSet = PARMSET_from(oAssocObject(aaArgs[0]));
+            GrMainResult.oObject = OBJEKT_from( psParmSet);
 
     } else {
             VPWARN("Can't edit type %s\n",
@@ -3548,7 +3516,7 @@ RESIDUE         rRes;
             GrMainResult.iCommand = CNONE;
     }
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3572,19 +3540,19 @@ oCmd_alignAxes( int iArgCount, ASSOC aaArgs[] )
 
     if ( !bCmdGoodArguments( "alignAxes", iArgCount, aaArgs, "u" ) ) {
         VPFATALDELAYEDEXIT("usage:  alignAxes <unit>\n" );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
-    ToolOrientPrincipleAxisAlongCoordinateAxis( (UNIT)oAssocObject(aaArgs[0]) );
+    ToolOrientPrincipleAxisAlongCoordinateAxis( UNIT_from(oAssocObject(aaArgs[0]) ));
 
                 /* Instruct the graphics system to reset the viewing */
                 /* matrices of the UNIT */
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3612,30 +3580,29 @@ ATOM            aAtom;
 
     if ( !bCmdGoodArguments( "select", iArgCount, aaArgs, "umral" ) ) {
         VPFATALDELAYEDEXIT("usage:  select <object>\n" );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
     oOver = oAssocObject(aaArgs[0]);
     lAtoms = lLoop( oOver, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    while ( (aAtom = ATOM_from(oNext(&lAtoms)))) {
         AtomSetFlags( aAtom, ATOMSELECTED );
     }
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 #include "selection.h"
 OBJEKT
 oCmd_selectMask( int iArgCount, ASSOC aaArgs[] )
 {
-    printf("String=%s\n",sOString(oAssocObject(aaArgs[1])));
     if ( !bCmdGoodArguments( "selectMask", iArgCount, aaArgs, "u s" ) ) {
         VPFATALDELAYEDEXIT("usage:  selectMask <unit> <string>\n" );
-        return(NULL);
+        return NULL;
     }
-    UNIT uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    UNIT uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     SELNODE selNode = selParseAtomMask(sOString(oAssocObject(aaArgs[1])));
     VARARRAY vaAtoms = vaUnitEvalSelection(selNode, uUnit);
     SelFree(selNode);
@@ -3644,10 +3611,10 @@ oCmd_selectMask( int iArgCount, ASSOC aaArgs[] )
     for (int i=0; i<iNumAtoms; i++, aPAtom++) {
         AtomSetFlags( *aPAtom, ATOMSELECTED );
         STRING sTemp;
-        printf("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+        VP0("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
     }
     VarArrayDestroy(&vaAtoms);
-    return(NULL);
+    return NULL;
 }
 
 OBJEKT
@@ -3655,9 +3622,9 @@ oCmd_deSelectMask( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "deSelectMask", iArgCount, aaArgs, "u s" ) ) {
         VPFATALDELAYEDEXIT("usage:  deSelectMask <unit> <string>\n" );
-        return(NULL);
+        return NULL;
     }
-    UNIT uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    UNIT uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     SELNODE selNode = selParseAtomMask(sOString(oAssocObject(aaArgs[1])));
     VARARRAY vaAtoms = vaUnitEvalSelection(selNode, uUnit);
     SelFree(selNode);
@@ -3666,10 +3633,10 @@ oCmd_deSelectMask( int iArgCount, ASSOC aaArgs[] )
     for (int i=0; i<iNumAtoms; i++, aPAtom++) {
         AtomResetFlags( *aPAtom, ATOMSELECTED );
         STRING sTemp;
-        printf("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+        VP0("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
     }
     VarArrayDestroy(&vaAtoms);
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -3687,24 +3654,24 @@ double          dScale;
 
     if ( !bCmdGoodArguments( "scaleCharges", iArgCount, aaArgs, "umral n" ) ) {
         VPFATALDELAYEDEXIT("usage:  scaleCharges <object> <scale_factor>\n" );
-        return(NULL);
+        return NULL;
     }
 
     dScale = dODouble(oAssocObject(aaArgs[1]));
     if ( dScale <= 0.0 ) {
         VPFATAL("scaleCharges: scale_factor must be > 0\n" );
         VPFATALDELAYEDEXIT("usage:  scaleCharges <object> <scale_factor>\n" );
-        return(NULL);
+        return NULL;
     }
 
     oOver = oAssocObject(aaArgs[0]);
     lAtoms = lLoop( oOver, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    while ( (aAtom = ATOM_from(oNext(&lAtoms)))) {
         /* HACK - resetting charge without marking for update */
         dAtomCharge( aAtom ) *= dScale;
         dAtomPertCharge( aAtom ) *= dScale;
     }
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -3722,21 +3689,21 @@ double          dScale;
 
     if ( !bCmdGoodArguments( "scaleCoor", iArgCount, aaArgs, "umral n" ) ) {
         VPFATALDELAYEDEXIT("usage:  scaleObject <object> <scale_factor>\n" );
-        return(NULL);
+        return NULL;
     }
 
     oOver = oAssocObject(aaArgs[0]);
     dScale = dODouble(oAssocObject(aaArgs[1]));
 
     if ( iObjectType(oOver) == UNITid ) {
-        UNIT uUnit = (UNIT)oOver;
+        UNIT uUnit = UNIT_from(oOver);
         uUnit->dXWidth *= dScale;
         uUnit->dYWidth *= dScale;
         uUnit->dZWidth *= dScale;
     }
 
     lAtoms = lLoop( oOver, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    while ( (aAtom = ATOM_from(oNext(&lAtoms)))) {
         VECTOR vNewPosition = {
             aAtom->vPosition.dX * dScale,
             aAtom->vPosition.dY * dScale,
@@ -3744,7 +3711,7 @@ double          dScale;
         };
         AtomSetPosition(aAtom, vNewPosition);
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3769,20 +3736,20 @@ ATOM            aAtom;
 
     if ( !bCmdGoodArguments( "deSelect", iArgCount, aaArgs, "umral" ) ) {
         VPFATALDELAYEDEXIT("usage:  deSelect <object>\n" );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
     oOver = oAssocObject(aaArgs[0]);
     lAtoms = lLoop( oOver, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    while ( (aAtom = ATOM_from(oNext(&lAtoms)))) {
         AtomResetFlags( aAtom, ATOMSELECTED );
     }
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3815,19 +3782,19 @@ char            *sCmd = "restrainBond";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a n n" ) ) {
         VPFATALDELAYEDEXIT("usage:  restrainBond <unit> <a> <b> <force> <length>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit  = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit  = UNIT_from(oAssocObject(aaArgs[0]));
     for ( i=0; i<ATOMSINBOND; i++ )
-        aaAtoms[i] = (ATOM)oAssocObject(aaArgs[1+i]);
+        aaAtoms[i] = ATOM_from(oAssocObject(aaArgs[1+i]));
     dKr    = dODouble(oAssocObject(aaArgs[3]));
     dR0    = dODouble(oAssocObject(aaArgs[4]));
 
     for ( i=0; i<ATOMSINBOND; i++ ) {
-        if ( !bContainerContainedBy( (CONTAINER)aaAtoms[i], (CONTAINER)uUnit ) ) {
+        if ( !bContainerContainedBy( CONTAINER_from(aaAtoms[i]), CONTAINER_from(uUnit )) ) {
             VPFATALEXIT("%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 );
-            return(NULL);
+            return NULL;
         }
     }
 
@@ -3837,7 +3804,7 @@ char            *sCmd = "restrainBond";
     RestraintBondSet( rRest, aaAtoms[0], aaAtoms[1], dKr, dR0 );
     UnitAddRestraint( uUnit, rRest );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3872,19 +3839,19 @@ char            *sCmd = "restrainAngle";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a n n" ) ) {
         VPFATALDELAYEDEXIT("usage:  restrainAngle <unit> <a> <b> <c> <force> <length>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit  = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit  = UNIT_from(oAssocObject(aaArgs[0]));
     for ( i=0; i<ATOMSINANGLE; i++ )
-        aaAtoms[i] = (ATOM)oAssocObject(aaArgs[1+i]);
+        aaAtoms[i] = ATOM_from(oAssocObject(aaArgs[1+i]));
     dKt    = dODouble(oAssocObject(aaArgs[4]));
     dT0    = DEGTORAD * dODouble(oAssocObject(aaArgs[5]));
 
     for ( i=0; i<ATOMSINANGLE; i++ ) {
-        if ( !bContainerContainedBy( (CONTAINER)aaAtoms[i], (CONTAINER)uUnit ) ) {
+        if ( !bContainerContainedBy( CONTAINER_from(aaAtoms[i]), CONTAINER_from(uUnit )) ) {
             VPFATALEXIT("%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 );
-            return(NULL);
+            return NULL;
         }
     }
 
@@ -3894,7 +3861,7 @@ char            *sCmd = "restrainAngle";
     RestraintAngleSet( rRest, aaAtoms[0], aaAtoms[1], aaAtoms[2], dKt, dT0 );
     UnitAddRestraint( uUnit, rRest );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3931,20 +3898,20 @@ char            *sCmd = "restrainTorsion";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a a n n n" ) ) {
         VPFATALDELAYEDEXIT("usage:  restrainTorsion <unit> <a> <b> <c> <d> <force> <length>\n" );
-        return(NULL);
+        return NULL;
     }
 
-    uUnit  = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit  = UNIT_from(oAssocObject(aaArgs[0]));
     for ( i=0; i<ATOMSINTORSION; i++ )
-        aaAtoms[i] = (ATOM)oAssocObject(aaArgs[1+i]);
+        aaAtoms[i] = ATOM_from(oAssocObject(aaArgs[1+i]));
     dKp    = dODouble(oAssocObject(aaArgs[5]));
     dP0    = DEGTORAD * dODouble(oAssocObject(aaArgs[6]));
     dN     = dODouble(oAssocObject(aaArgs[7]));
 
     for ( i=0; i<ATOMSINTORSION; i++ ) {
-        if ( !bContainerContainedBy( (CONTAINER)aaAtoms[i], (CONTAINER)uUnit ) ) {
+        if ( !bContainerContainedBy( CONTAINER_from(aaAtoms[i]), CONTAINER_from(uUnit )) ) {
             VPFATALEXIT("%s: Atom#%d is not part of the UNIT\n", sCmd, i+1 );
-            return(NULL);
+            return NULL;
         }
     }
 
@@ -3955,7 +3922,7 @@ char            *sCmd = "restrainTorsion";
                          dKp, dP0, dN );
     UnitAddRestraint( uUnit, rRest );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -3982,27 +3949,27 @@ char            *sCmd = "deleteRestraint";
     if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a" ) ) {
           VPFATALDELAYEDEXIT("usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" );
-          return(NULL);
+          return NULL;
         }
         iAtomCount = 2;
     } else if ( iArgCount == 4 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a" ) ) {
           VPFATALDELAYEDEXIT("usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" );
-          return(NULL);
+          return NULL;
         }
         iAtomCount = 3;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u a a a a" ) ) {
           VPFATALDELAYEDEXIT("usage:  deleteRestraint <unit> <a> <b> [<c> <d>]\n" );
-          return(NULL);
+          return NULL;
         }
         iAtomCount = 4;
     }
 
         /* Get the UNIT and the ATOMs that form the RESTRAINT */
-    uUnit  = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit  = UNIT_from(oAssocObject(aaArgs[0]));
     for ( i=0; i<iArgCount-1; i++ )
-        aaAtoms[i] = (ATOM)oAssocObject(aaArgs[1+i]);
+        aaAtoms[i] = ATOM_from(oAssocObject(aaArgs[1+i]));
 
                 /* Now loop through all the RESTRAINTs and find */
                 /* the one the user specified */
@@ -4051,7 +4018,7 @@ DONE:
         bFound = bUnitRemoveRestraint( uUnit, rRest );
         VP1("Restraint was removed = %i \n", bFound );
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4098,31 +4065,31 @@ char            *sCmd = "impose";
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u l l" ) ) {
         VPFATALDELAYEDEXIT("usage:  %s <unit> <residueseqlist> <internalslistlist>\n",
                         sCmd );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
         /* Build the INTERNALs */
 
-    uUnit = (UNIT)oAssocObject( aaArgs[0] );
-    lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
+    uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+    lAtoms = lLoop( OBJEKT_from(uUnit), ATOMS );
     BuildInternalsUsingFlags( &lAtoms, 0, 0, 0, ATOMPOSITIONKNOWN );
 
         /* First get a list of RESIDUEs using oCmd_Residues */
 
-    lResidues = lToolListOfResidues( uUnit, (LIST)oAssocObject(aaArgs[1]) );
+    lResidues = lToolListOfResidues( uUnit, LIST_from(oAssocObject(aaArgs[1])) );
 
         /* Now apply the INTERNALs to each of the RESIDUEs in turn */
 
     llResidues = llListLoop(lResidues);
-    while ( (rRes = (RESIDUE)oListNext(&llResidues)) ) {
+    while ( (rRes = RESIDUE_from(oListNext(&llResidues))) ) {
 
                 /* Loop over all the sub-lists */
 
-        lInternals = (LIST)oAssocObject(aaArgs[2]);
+        lInternals = LIST_from(oAssocObject(aaArgs[2]));
         llInternals = llListLoop(lInternals);
-        while ( (aInternal = (ASSOC)oListNext(&llInternals)) ) {
+        while ( (aInternal = ASSOC_from(oListNext(&llInternals))) ) {
 
             if ( iObjectType(oAssocObject(aInternal)) != LISTid ) {
                 VPFATALEXIT("%s: Invalid internal list in internalslistlist !\n"
@@ -4138,10 +4105,10 @@ char            *sCmd = "impose";
 
             bSkipSubList = FALSE;
             iObjekts = 0;
-            lOne = (LIST)oAssocObject(aInternal);
+            lOne = LIST_from(oAssocObject(aInternal));
             llOne = llListLoop(lOne);
-            while( (aOne = (ASSOC)oListNext(&llOne)) ) {
-                oOne = (OBJEKT)oAssocObject(aOne);
+            while( (aOne = ASSOC_from(oListNext(&llOne))) ) {
+                oOne = OBJEKT_from(oAssocObject(aOne));
                 oaIntObjekts[iObjekts++] = oOne;
                 if ( iObjekts > MAXOBJEKTSININTERNALLIST ) {
                     VPFATALEXIT("%s: Too many lists in argument #3\n", sCmd );
@@ -4171,9 +4138,9 @@ char            *sCmd = "impose";
                                         (int)dODouble(oaIntObjekts[0]) );
                         } else rResModify = rRes;
                         MESSAGE("Imposing on Residue: %s:%d\n",
-                                sContainerName((CONTAINER) rResModify),
-                                iContainerSequence((CONTAINER) rResModify) );
-                        bBuildChangeInternalBond( (CONTAINER) rResModify,
+                                sContainerName(CONTAINER_from( rResModify)),
+                                iContainerSequence(CONTAINER_from( rResModify)) );
+                        bBuildChangeInternalBond( CONTAINER_from( rResModify),
                                 sOString(oaIntObjekts[iStart+0]),
                                 sOString(oaIntObjekts[iStart+1]),
                                 dODouble(oaIntObjekts[iStart+2]) );
@@ -4195,9 +4162,9 @@ char            *sCmd = "impose";
                                         (int)dODouble(oaIntObjekts[0]) );
                         } else rResModify = rRes;
                         MESSAGE("Imposing on Residue: %s:%d\n",
-                                sContainerName((CONTAINER) rResModify),
-                                iContainerSequence((CONTAINER) rResModify) );
-                        bBuildChangeInternalAngle( (CONTAINER) rResModify,
+                                sContainerName(CONTAINER_from( rResModify)),
+                                iContainerSequence(CONTAINER_from( rResModify)) );
+                        bBuildChangeInternalAngle( CONTAINER_from( rResModify),
                                 sOString(oaIntObjekts[iStart+0]),
                                 sOString(oaIntObjekts[iStart+1]),
                                 sOString(oaIntObjekts[iStart+2]),
@@ -4221,9 +4188,9 @@ char            *sCmd = "impose";
                                         (int)dODouble(oaIntObjekts[0]) );
                         } else rResModify = rRes;
                         MESSAGE("Imposing on Residue: %s:%d\n",
-                                sContainerName((CONTAINER) rResModify),
-                                iContainerSequence((CONTAINER) rResModify) );
-                        bBuildChangeInternalTorsion( (CONTAINER) rResModify,
+                                sContainerName(CONTAINER_from( rResModify)),
+                                iContainerSequence(CONTAINER_from( rResModify)) );
+                        bBuildChangeInternalTorsion( CONTAINER_from( rResModify),
                                 sOString(oaIntObjekts[iStart+0]),
                                 sOString(oaIntObjekts[iStart+1]),
                                 sOString(oaIntObjekts[iStart+2]),
@@ -4240,7 +4207,7 @@ char            *sCmd = "impose";
 
                 /* Now build the externals again */
 
-    lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
+    lAtoms = lLoop( OBJEKT_from(uUnit), ATOMS );
     lSpanning = lLoop( oNext(&lAtoms), SPANNINGTREE );
     iDum = 0;   /* for purify */
     BuildExternalsUsingFlags( &lSpanning, 0, 0,
@@ -4250,12 +4217,12 @@ char            *sCmd = "impose";
 
                 /* Destroy all of the INTERNALs */
 
-    lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
+    lAtoms = lLoop( OBJEKT_from(uUnit), ATOMS );
     BuildDestroyInternals( &lAtoms );
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4288,19 +4255,19 @@ char            *sCmd = "translate";
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umral l" ) ) {
         VPFATALDELAYEDEXIT("usage:  %s <unit/residue/atom> <directionlist>\n",
                                 sCmd );
-        return(NULL);
+        return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
                 /* Get the CONTAINER to translate */
 
-    cCont = (CONTAINER)oAssocObject( aaArgs[0] );
+    cCont = CONTAINER_from(oAssocObject( aaArgs[0] ));
 
-    lVector = (LIST)oAssocObject( aaArgs[1] );
+    lVector = LIST_from(oAssocObject( aaArgs[1] ));
     i = 0;
     llElements = llListLoop(lVector);
-    while ( (aAssoc = (ASSOC)oListNext(&llElements)) ) {
+    while ( (aAssoc = ASSOC_from(oListNext(&llElements))) ) {
         if ( iObjectType(oAssocObject(aAssoc)) == ODOUBLEid ) {
             if ( i<3 ) {
                 daVector[i] = dODouble(oAssocObject(aAssoc));
@@ -4322,7 +4289,7 @@ char            *sCmd = "translate";
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4349,19 +4316,19 @@ VECTOR          vOffset;
 
     if ( !bCmdGoodArguments( "center", iArgCount, aaArgs, "umral" ) ) {
           VPFATALDELAYEDEXIT("usage:  center <unit/residue/atom>\n" );
-          return(NULL);
+          return NULL;
     }
 
                 /* Get the CONTAINER to translate */
 
-    cCont = (CONTAINER)oAssocObject( aaArgs[0] );
+    cCont = CONTAINER_from(oAssocObject( aaArgs[0] ));
 
     vOffset = vContainerGeometricCenter(cCont);
 
     VP0("The center is at: %4.2lf, %4.2lf, %4.2lf\n",
                 dVX(&vOffset), dVY(&vOffset), dVZ(&vOffset) );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4396,20 +4363,20 @@ char            *sCmd = "solvateCap";
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u mral n" ) ) {
             VPFATALDELAYEDEXIT("usage:  solvateCap <solute> <solvent> <position>"
                     " <radius> <closeness>\n" );
-            return(NULL);
+            return NULL;
         }
         dCloseness = 1.0;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u mral n n" ) ) {
             VPFATALDELAYEDEXIT("usage:  solvateCap <solute> <solvent> <position>"
                     " <radius> <closeness>\n" );
-            return(NULL);
+            return NULL;
         }
         dCloseness = dODouble(oAssocObject(aaArgs[4]));
     }
 
-    uSolute = (UNIT)oAssocObject(aaArgs[0]);
-    uSolvent = (UNIT)oAssocObject(aaArgs[1]);
+    uSolute = UNIT_from(oAssocObject(aaArgs[0]));
+    uSolvent = UNIT_from(oAssocObject(aaArgs[1]));
     /*
      *  make copy of solvent w/ box & solv residue types set
      */
@@ -4420,21 +4387,21 @@ char            *sCmd = "solvateCap";
                 /* doubles, if it is then treat it like a vector */
 
     if ( !bToolGeometricCenter( oPosition, &vPos ) ) {
-        return(NULL);
+        return NULL;
     }
 
 
     dRadius = dODouble(oAssocObject(aaArgs[3]));
     if ( dRadius < 0.0 ) {
         VPFATALEXIT("radius (%f) must be > 0\n", dRadius );
-        return(NULL);
+        return NULL;
     }
 
     TurnOffDisplayerUpdates();
-    iInitialSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iInitialSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
     zToolSolvateInSphere( uSolute, uSolvent, &vPos, dRadius, dCloseness );
 
-    iFinalSize = iContainerNumberOfChildren( (CONTAINER) uSolute );
+    iFinalSize = iContainerNumberOfChildren( CONTAINER_from( uSolute ));
 
     VP0("Added %d residues.\n", iFinalSize - iInitialSize );
 
@@ -4444,9 +4411,9 @@ char            *sCmd = "solvateCap";
     UnitSetUseSolventCap( uSolute, TRUE );
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) uSolute );
+    ContainerDisplayerUpdate( CONTAINER_from( uSolute ));
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4468,14 +4435,14 @@ oCmd_addPath( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "addPath", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT("usage:  addPath <path>\n" );
-        return(NULL);
+        return NULL;
     }
 
     if ( BasicsAddDirectory( sOString(oAssocObject(aaArgs[0])), 0 ) )
         VP0("%s added to file search path.\n",
                         sOString(oAssocObject(aaArgs[0])) );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4512,19 +4479,19 @@ char            *usage =
           VP0(usage );
           VP0("(For multiple molecules, note that residue numbering jumps\n");
           VPFATALDELAYEDEXIT(" by 1001 for each new molecule)\n");
-          return(NULL);
+          return NULL;
         }
         oObj = oAssocObject(aaArgs[4]);
         iOrder = iAtomBondOrderFromName(sOString(oObj));
         if ( iOrder == BONDNONE ) {
             VPFATALEXIT("%s: Invalid bond order\n", sCmd );
-            return(NULL);
+            return NULL;
         }
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "r s r s" ) ) {
           VPFATALDELAYEDEXIT("usage:  crossLink <res1> <connect> <res2> "
                                                  "<connect> [bondorder]\n" );
-          return(NULL);
+          return NULL;
         }
         iOrder = BONDSINGLE;
     }
@@ -4533,17 +4500,17 @@ char            *usage =
     iConnectA = iResidueConnectFromName(sOString(oObj));
     if ( iConnectA == NOEND ) {
         VPFATALEXIT("%s: Invalid connect atom: %s\n", sCmd, sOString(oObj) );
-        return(NULL);
+        return NULL;
     }
     oObj = oAssocObject(aaArgs[3]);
     iConnectB = iResidueConnectFromName(sOString(oObj));
     if ( iConnectB == NOEND ) {
         VPFATALEXIT("%s: Invalid connect atom: %s\n", sCmd, sOString(oObj) );
-        return(NULL);
+        return NULL;
     }
 
-    rA = (RESIDUE)oAssocObject(aaArgs[0]);
-    rB = (RESIDUE)oAssocObject(aaArgs[2]);
+    rA = RESIDUE_from(oAssocObject(aaArgs[0]));
+    rB = RESIDUE_from(oAssocObject(aaArgs[2]));
 
     DisplayerAccumulateUpdates();
 
@@ -4554,7 +4521,7 @@ char            *usage =
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4585,10 +4552,10 @@ oCmd_addPdbResMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "addPdbResMap", iArgCount, aaArgs, "l" ) ) {
          VPFATALDELAYEDEXIT("usage:  addPdbResMap <list_of_lists>\n" );
-         return(NULL);
+         return NULL;
     }
-    PdbAppendToResMap( (LIST)oAssocObject(aaArgs[0]) );
-    return(NULL);
+    PdbAppendToResMap( LIST_from(oAssocObject(aaArgs[0])) );
+    return NULL;
 }
 
 /*
@@ -4602,12 +4569,12 @@ oCmd_addPdbAtomMap( int iArgCount, ASSOC aaArgs[] )
 
     if ( !bCmdGoodArguments( "addPdbMap", iArgCount, aaArgs, "l" ) ) {
          VPFATALDELAYEDEXIT("usage:  addPdbAtomMap <list_of_lists>\n" );
-         return(NULL);
+         return NULL;
     }
 
-    PdbAppendToAtomMap( (LIST)oAssocObject(aaArgs[0]) );
+    PdbAppendToAtomMap( LIST_from(oAssocObject(aaArgs[0])) );
 
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -4621,13 +4588,13 @@ oCmd_addAtomTypes( int iArgCount, ASSOC aaArgs[] )
 LIST            lList;
         if ( !bCmdGoodArguments( "addAtomTypes", iArgCount, aaArgs, "l" ) ) {
                 VPFATALDELAYEDEXIT("usage:  addAtomTypes <list_of_lists>\n" );
-                return(NULL);
+                return NULL;
         }
 
-        lList =  (LIST)oAssocObject(aaArgs[0]);
+        lList =  LIST_from(oAssocObject(aaArgs[0]));
 
         AmberAddAtomTypes( lList );
-        return(NULL);
+        return NULL;
 }
 
 
@@ -4644,10 +4611,10 @@ oCmd_displayPdbResMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "displayPdbResMap", iArgCount, aaArgs, "" ) ) {
          VPFATALDELAYEDEXIT("usage:  displayPdbResMap\n" );
-         return(NULL);
+         return NULL;
     }
     PdbDisplayResMap();
-    return(NULL);
+    return NULL;
 }
 
 OBJEKT
@@ -4655,10 +4622,10 @@ oCmd_displayPdbAtomMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "displayPdbAtomMap", iArgCount, aaArgs, "" ) ) {
          VPFATALDELAYEDEXIT("usage:  displayPdbAtomMap\n" );
-         return(NULL);
+         return NULL;
     }
     PdbDisplayAtomMap();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4679,10 +4646,10 @@ oCmd_clearPdbResMap( int iArgCount, ASSOC aaArgs[] )
 {
     if ( !bCmdGoodArguments( "clearPdbResMap", iArgCount, aaArgs, "" ) ) {
          VPFATALDELAYEDEXIT("usage:  clearPdbResMap\n" );
-         return(NULL);
+         return NULL;
     }
     PdbClearResMap();
-    return(NULL);
+    return NULL;
 }
 
 OBJEKT
@@ -4691,10 +4658,10 @@ oCmd_clearPdbAtomMap( int iArgCount, ASSOC aaArgs[] )
 
     if ( !bCmdGoodArguments( "clearPdbAtomMap", iArgCount, aaArgs, "" ) ) {
          VPFATALDELAYEDEXIT("usage:  clearPdbAtomMap\n" );
-         return(NULL);
+         return NULL;
     }
     PdbClearAtomMap();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4729,12 +4696,12 @@ char            *sCmd = "measureGeom";
     if ( iArgCount == 4 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a a a" ) ) {
           VPFATALDELAYEDEXIT("usage:  measureGeom <atom> <atom> [atom [atom]]\n" );
-          return(NULL);
+          return NULL;
         }
-        aA = (ATOM)oAssocObject(aaArgs[0]);
-        aB = (ATOM)oAssocObject(aaArgs[1]);
-        aC = (ATOM)oAssocObject(aaArgs[2]);
-        aD = (ATOM)oAssocObject(aaArgs[3]);
+        aA = ATOM_from(oAssocObject(aaArgs[0]));
+        aB = ATOM_from(oAssocObject(aaArgs[1]));
+        aC = ATOM_from(oAssocObject(aaArgs[2]));
+        aD = ATOM_from(oAssocObject(aaArgs[3]));
         dVal = dVectorAtomTorsion(
                 &vAtomPosition(aA), &vAtomPosition(aB),
                 &vAtomPosition(aC), &vAtomPosition(aD) )/DEGTORAD;
@@ -4742,11 +4709,11 @@ char            *sCmd = "measureGeom";
     } else if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a a" ) ) {
           VPFATALDELAYEDEXIT("usage:  measureGeom <atom> <atom> [atom [atom]]\n" );
-          return(NULL);
+          return NULL;
         }
-        aA = (ATOM)oAssocObject(aaArgs[0]);
-        aB = (ATOM)oAssocObject(aaArgs[1]);
-        aC = (ATOM)oAssocObject(aaArgs[2]);
+        aA = ATOM_from(oAssocObject(aaArgs[0]));
+        aB = ATOM_from(oAssocObject(aaArgs[1]));
+        aC = ATOM_from(oAssocObject(aaArgs[2]));
         dVal = dVectorAtomAngle(
                 &vAtomPosition(aA), &vAtomPosition(aB),
                 &vAtomPosition(aC) )/DEGTORAD;
@@ -4754,17 +4721,17 @@ char            *sCmd = "measureGeom";
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
           VPFATALDELAYEDEXIT("usage:  measureGeom <atom> <atom> [atom [atom]]\n" );
-          return(NULL);
+          return NULL;
         }
-        aA = (ATOM)oAssocObject(aaArgs[0]);
-        aB = (ATOM)oAssocObject(aaArgs[1]);
+        aA = ATOM_from(oAssocObject(aaArgs[0]));
+        aB = ATOM_from(oAssocObject(aaArgs[1]));
         dVal = dVectorAtomLength(
                 &vAtomPosition(aA), &vAtomPosition(aB) );
         VP0("Distance: %4.2lf angstroms\n", dVal );
     }
-    odVal = (ODOUBLE)oCreate(ODOUBLEid);
+    odVal = ODOUBLE_from(oCreate(ODOUBLEid));
     ODoubleSet( odVal, dVal );
-    return((OBJEKT)odVal);
+    return OBJEKT_from(odVal);
 }
 
 
@@ -4772,7 +4739,7 @@ OBJEKT
 oCmd_memDebug( int iArgCount, ASSOC aaArgs[] )
 {
         iMemDebug = 1;
-        return(NULL);
+        return NULL;
 }
 
 /*
@@ -4799,29 +4766,29 @@ char            *sUsage = "usage:  bondByDistance <unit> [maxdistance]\n";
     if ( iArgCount == 1 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umrl" ) ) {
             VPFATALDELAYEDEXIT("%s",sUsage );
-            return(NULL);
+            return NULL;
         }
         if (!(dDist = GDefaults.dDSearchDistance))
             dDist = DEFAULT_DISTANCE_SEARCH;
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umrl n" ) ) {
             VPFATALDELAYEDEXIT("%s",sUsage );
-            return(NULL);
+            return NULL;
         }
         dDist = dODouble(oAssocObject(aaArgs[1]));
     }
 
     TurnOffDisplayerUpdates();
 
-    iBonds = iToolDistanceSearch( (CONTAINER)oAssocObject(aaArgs[0]), dDist,
+    iBonds = iToolDistanceSearch( CONTAINER_from(oAssocObject(aaArgs[0])), dDist,
                                         TRUE, DISTANCE_SEARCH_CREATE_BONDS );
 
     VP0("Created %d bonds.\n", iBonds );
 
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) oAssocObject(aaArgs[0]) );
+    ContainerDisplayerUpdate( CONTAINER_from( oAssocObject(aaArgs[0])));
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4849,12 +4816,12 @@ char            *sCmd = "groupSelectedAtoms";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" ) ) {
           VPFATALDELAYEDEXIT("usage:  groupSelectedAtoms <unit> <groupname>\n" );
-          return(NULL);
+          return NULL;
     }
 
     DisplayerAccumulateUpdates();
 
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
     strcpy( sGroup, sOString(oAssocObject(aaArgs[1])));
 
     if ( lUnitGroup( uUnit, sGroup ) ) {
@@ -4864,8 +4831,8 @@ char            *sCmd = "groupSelectedAtoms";
     bUnitGroupCreate( uUnit, sGroup );
 
     iAtoms = 0;
-    lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    lAtoms = lLoop( OBJEKT_from(uUnit), ATOMS );
+    while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
         if ( bAtomFlagsSet( aAtom, ATOMSELECTED ) ) {
             bUnitGroupAddAtom( uUnit, sGroup, aAtom );
             iAtoms++;
@@ -4875,7 +4842,7 @@ char            *sCmd = "groupSelectedAtoms";
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4912,24 +4879,24 @@ char            *sCmd = "transform";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umral l" ) ) {
           VPFATALDELAYEDEXIT("usage:  transform <atoms> <matrixlist>\n" );
-          return(NULL);
+          return NULL;
     }
 
                 /* Get the CONTAINER to translate */
 
-    cCont = (CONTAINER)oAssocObject( aaArgs[0] );
+    cCont = CONTAINER_from(oAssocObject( aaArgs[0] ));
 
-    lVectorY = (LIST)oAssocObject( aaArgs[1] );
+    lVectorY = LIST_from(oAssocObject( aaArgs[1] ));
     iX = 0;
     iY = 0;
     MatrixIdentity( mTransform );
     llElementsY = llListLoop(lVectorY);
-    while ( (aAssocY = (ASSOC)oListNext(&llElementsY)) ) {
+    while ( (aAssocY = ASSOC_from(oListNext(&llElementsY))) ) {
         if ( iObjectType(oAssocObject(aAssocY)) == LISTid ) {
             if ( iY<4 ) {
-                lVectorX = (LIST)oAssocObject(aAssocY);
+                lVectorX = LIST_from(oAssocObject(aAssocY));
                 llElementsX = llListLoop(lVectorX);
-                while ( (aAssocX = (ASSOC)oListNext(&llElementsX)) ) {
+                while ( (aAssocX = ASSOC_from(oListNext(&llElementsX))) ) {
                     if ( iObjectType(oAssocObject(aAssocX)) == ODOUBLEid ) {
                         if ( iX<4 ) {
                             mTransform[iX][iY] = dODouble(oAssocObject(aAssocX));
@@ -4949,12 +4916,12 @@ char            *sCmd = "transform";
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 
 ERROR:
 
     VPFATALEXIT("%s: Invalid matrix\n", sCmd );
-    return(NULL);
+    return NULL;
 }
 
 
@@ -4972,12 +4939,12 @@ OBJEKT          oNew;
 
     if ( !bCmdGoodArguments( "copy", iArgCount, aaArgs, "umranp" ) ) {
           VPFATALDELAYEDEXIT("usage:  <newvariable> = copy <variable>\n" );
-          return(NULL);
+          return NULL;
     }
 
     oNew = oCopy(oAssocObject(aaArgs[0]));
 
-    return(oNew);
+    return oNew;
 }
 
 
@@ -4995,7 +4962,7 @@ PARMSET         psSet;
 
     if ( !bCmdGoodArguments( "listParmSets", iArgCount, aaArgs, "" ) ) {
           VPFATALDELAYEDEXIT("usage:  listParmSets\n" );
-          return(NULL);
+          return NULL;
     }
 
     VPTRACEENTER(__func__ );
@@ -5049,7 +5016,7 @@ int             iCount=0, iErrorCount=0;
 
     if ( !bCmdGoodArguments( "listResidues", iArgCount, aaArgs, "" ) ) {
           VPFATALDELAYEDEXIT("usage:  listResidues\n" );
-          return(NULL);
+          return NULL;
     }
 
     VPTRACEENTER(__func__ );
@@ -5057,10 +5024,10 @@ int             iCount=0, iErrorCount=0;
     dlLoop = ydlDictionaryLoop(dVariables);
     int iUpdatedElements = 0;
     while ( yPDictionaryNext(dVariables, &dlLoop ) ) {
-        UNIT uUnit = (UNIT)PDictLoopData(dlLoop);
+        UNIT uUnit = UNIT_from(PDictLoopData(dlLoop));
         if ( iObjectType(uUnit) != UNITid ) continue;
         if ( iContainerNumberOfChildren(uUnit) > 1 ) continue;
-        RESIDUE rRes = (RESIDUE)oContainerFirstObject(uUnit);
+        RESIDUE rRes = RESIDUE_from(oContainerFirstObject(uUnit));
         if ( iObjectType(rRes) != RESIDUEid ) continue; // unlikely
         // Variable is a UNIT containing a single RESIDUE
         if (iCount % 40 == 0) {
@@ -5077,12 +5044,12 @@ int             iCount=0, iErrorCount=0;
         if (fEndFlag & RESIDUEFIRSTEND) strcat(sEndFlags,"F");
         if (fEndFlag & RESIDUENOEND) strcat(sEndFlags,"N");
         if (fEndFlag & RESIDUELASTEND) strcat(sEndFlags,"L");
-        ATOM aHead = (ATOM)uUnit->aHead;
-        ATOM aTail = (ATOM)uUnit->aTail;
+        ATOM aHead = ATOM_from(uUnit->aHead);
+        ATOM aTail = ATOM_from(uUnit->aTail);
         ATOM aAtom;
         bool bNonAtoms=FALSE, bLongAtomName=FALSE, bMissingElements=FALSE;
-        LOOP lContents = lLoop( (OBJEKT)rRes, DIRECTCONTENTSBYSEQNUM );
-        while ( (aAtom = (ATOM)oNext(&lContents)) ) {
+        LOOP lContents = lLoop( OBJEKT_from(rRes), DIRECTCONTENTSBYSEQNUM );
+        while ( (aAtom = ATOM_from(oNext(&lContents))) ) {
             char *cPAtomName = sContainerName(aAtom);
             if ( iObjectType(aAtom) != ATOMid ) {
                  bNonAtoms = TRUE;
@@ -5143,9 +5110,9 @@ int             iCount=0, iErrorCount=0;
                bResidueConnectUsed(rRes,3) ? sContainerName(aResidueConnectAtom(rRes,3)):"",
                bResidueConnectUsed(rRes,4) ? sContainerName(aResidueConnectAtom(rRes,4)):"",
                bResidueConnectUsed(rRes,5) ? sContainerName(aResidueConnectAtom(rRes,5)):"",
-#ifdef DEBUG
-               ((OBJEKT)uUnit)->iReferences,
-               ((OBJEKT)rRes)->iReferences,
+#ifdef DEBUG // reference counting is hopelelssly corrupted so don't even try
+               OBJEKT_from(uUnit)->iReferences,
+               OBJEKT_from(rRes)->iReferences,
 #endif
                sErrors );
     }
@@ -5153,7 +5120,7 @@ int             iCount=0, iErrorCount=0;
     VP0("Found %d Residue Template variables and %d with errors or warnings\n",iCount,iErrorCount);
     if (iUpdatedElements) VP0("Updated %d missing Atom element defintions\n",iUpdatedElements);
     VPTRACEEXIT(__func__ );
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -5172,12 +5139,12 @@ char            *cPNext;
 
     if ( !bCmdGoodArguments( "listOff", iArgCount, aaArgs, "s" ) ) {
           VPFATALDELAYEDEXIT("usage:  listOff <filename>\n" );
-          return(NULL);
+          return NULL;
     }
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
 
     lLib = lLibraryOpen( sFilename, OPENREADONLY );
-    if ( lLib == NULL ) return(NULL);
+    if ( lLib == NULL ) return NULL;
 
     VP0("Index of library: %s\n", sFilename );
 
@@ -5188,7 +5155,7 @@ char            *cPNext;
 
     LibraryClose( &lLib );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -5212,13 +5179,13 @@ char            *sCmd = "deleteOffLibEntry";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s" ) ) {
           VPFATALDELAYEDEXIT("usage:  deleteOffLibEntry <filename> <entry>\n" );
-          return(NULL);
+          return NULL;
     }
     strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
     strcpy( sEntry, sOString(oAssocObject(aaArgs[1])) );
 
     lLib = lLibraryOpen( sFilename, OPENREADWRITE );
-    if ( lLib == NULL ) return(NULL);
+    if ( lLib == NULL ) return NULL;
 
     bRemoved = bLibraryRemove( lLib, sEntry );
 
@@ -5230,7 +5197,7 @@ char            *sCmd = "deleteOffLibEntry";
 
     LibraryClose(&lLib);
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -5259,18 +5226,18 @@ char            *sCmd = "mutate";
 
     if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n r" ) ) {
           VPFATALDELAYEDEXIT("usage:  mutate <unit> <number> <residue>\n" );
-          return(NULL);
+          return NULL;
     }
-    uUnit = (UNIT)oAssocObject( aaArgs[0] );
-    odSeqNum = (ODOUBLE)oAssocObject( aaArgs[1] );
-    rNew = (RESIDUE)oAssocObject( aaArgs[2] );
+    uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+    odSeqNum = ODOUBLE_from(oAssocObject( aaArgs[1] ));
+    rNew = RESIDUE_from(oAssocObject( aaArgs[2] ));
 
     DisplayerAccumulateUpdates();
 
     iSeqNum = (int)dODouble(odSeqNum);
 
-    rOld = (RESIDUE)cContainerFindSequence( (CONTAINER) uUnit,
-                                                RESIDUEid, iSeqNum );
+    rOld = RESIDUE_from(cContainerFindSequence( CONTAINER_from(uUnit),
+                                                RESIDUEid, iSeqNum ));
     if ( rOld == NULL ) {
         VPFATAL("%s: Could not find residue with sequence number: %d\n",
                                         sCmd, iSeqNum );
@@ -5279,11 +5246,11 @@ char            *sCmd = "mutate";
 
                 /* Make sure there are no bonds out of the new residue */
 
-    lAtoms = lLoop( (OBJEKT)rNew, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    lAtoms = lLoop( OBJEKT_from(rNew), ATOMS );
+    while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
         for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
             aNeighbor = aAtomBondedNeighbor( aAtom, i );
-            if ( rNew != (RESIDUE)cContainerWithin((CONTAINER) aNeighbor) ) {
+            if ( rNew != RESIDUE_from(cContainerWithin(CONTAINER_from( aNeighbor)))) {
                 VPFATAL("%s: The mutant residue cannot be bonded to anything.\n",
                                                 sCmd );
                 goto FAIL;
@@ -5291,7 +5258,7 @@ char            *sCmd = "mutate";
         }
     }
 
-    rCopy = (RESIDUE)oCopy( (OBJEKT)rNew );
+    rCopy = rCopyResidue(rNew);
 
                 /* Perform the mutation */
 
@@ -5302,12 +5269,12 @@ char            *sCmd = "mutate";
                 /* the UNITs next child sequence number */
 
     REF( rOld );  /* bContainerRemove() needs this */
-    bContainerRemove( (CONTAINER)uUnit, (OBJEKT)rOld );
-    iNext = iContainerNextChildsSequence( (CONTAINER) uUnit );
-    ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rCopy );
-    ContainerSetSequence( (CONTAINER) rCopy,
-                        iContainerSequence((CONTAINER) rOld) );
-    ContainerSetNextChildsSequence( (CONTAINER) uUnit, iNext );
+    bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(rOld ));
+    iNext = iContainerNextChildsSequence( CONTAINER_from( uUnit ));
+    ContainerAdd( CONTAINER_from(uUnit), OBJEKT_from(rCopy ));
+    ContainerSetSequence( CONTAINER_from( rCopy),
+                        iContainerSequence(CONTAINER_from( rOld)) );
+    ContainerSetNextChildsSequence( CONTAINER_from( uUnit), iNext );
 
                 /* DEREF the old RESIDUE */
 
@@ -5319,7 +5286,7 @@ FAIL:
 
 RET:
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 
@@ -5360,14 +5327,14 @@ LOOP            lRes;
 RESIDUE         rRes;
 
         vaSolvent = vaVarArrayCreate( sizeof(RESIDUE) );
-        lRes = lLoop( (OBJEKT)uUnit, RESIDUES );
-        while ( (rRes = (RESIDUE)oNext( &lRes )) )
+        lRes = lLoop( OBJEKT_from(uUnit), RESIDUES );
+        while ( (rRes = RESIDUE_from(oNext( &lRes ))) )
                 if ( cResidueType( rRes ) == RESTYPESOLVENT ) {
                         VarArrayAdd( vaSolvent, (GENP)&rRes );
                 }
         if ( !iVarArrayElementCount( vaSolvent ) )
                 VarArrayDestroy( &vaSolvent );
-        return( vaSolvent );
+        return  vaSolvent ;
 }
 
 static void
@@ -5392,8 +5359,8 @@ int             i, iCount;
         for (i=0; i<iCount; i++, PrRes++) {
                 if ( *PrRes == NULL ) /* already deleted */
                         continue;
-                lAtoms = lLoop( (OBJEKT)*PrRes, ATOMS );
-                aAtom = (ATOM) oNext( &lAtoms );
+                lAtoms = lLoop( OBJEKT_from(*PrRes), ATOMS );
+                aAtom = ATOM_from(oNext( &lAtoms ));
                 x = PvIon->dX - vAtomPosition( aAtom ).dX;
                 x = x * x;
                 y = PvIon->dY - vAtomPosition( aAtom ).dY;
@@ -5410,7 +5377,7 @@ int             i, iCount;
         if ( dmin2 < 9 ) {  /* HACK test */
                 VP0("(Replacing solvent molecule)\n");
                 REF( *PrClosest );  /* bContainerRemove() needs this */
-                if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*PrClosest )) {
+                if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*PrClosest ))) {
                         ContainerDestroy( (CONTAINER *) PrClosest );
                         *PrClosest = NULL;
                         *PvIon = vClosest;
@@ -5459,7 +5426,7 @@ char            *sCmd = "addIons";
           /*
            *  Translate the 2 extra args
            */
-          uIon2 = (UNIT)oAssocObject( aaArgs[3] );
+          uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
           iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           if ( uIon2  &&  iIon2 == 0 ) {
               VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
@@ -5479,25 +5446,25 @@ char            *sCmd = "addIons";
           } else {
                 VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
-          return(NULL);
+          return NULL;
     }
 
     /*
      *  Translate args common to both cases
      */
-    uUnit = (UNIT)oAssocObject( aaArgs[0] );
-    uIon1 = (UNIT)oAssocObject( aaArgs[1] );
+    uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+    uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
     iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
 
     /*
      *  Consider target unit's charge
      */
-    ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
+    ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
     if ( !dCharge ) {
         VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
         if ( iIon1 == 0 ) {
                 VP0("%s: Can't neutralize.\n", sCmd );
-                return(NULL);
+                return NULL;
         }
         VP0("Adding the ions anyway.\n");
     } else
@@ -5506,18 +5473,18 @@ char            *sCmd = "addIons";
     /*
      *  Consider ion(s) charge
      */
-    ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
+    ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
         VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
                 sCmd, sAssocName( aaArgs[1] ));
-        return(NULL);
+        return NULL;
     }
     if ( uIon2 ) {
-        ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
+        ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
            VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
                 sCmd, sAssocName( aaArgs[3] ));
-           return(NULL);
+           return NULL;
         }
     }
 
@@ -5539,7 +5506,7 @@ char            *sCmd = "addIons";
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
                          dCharge, dICharge1 );
-                return(NULL);
+                return NULL;
         }
         /*
          *  Get the nearest integer number of ions that
@@ -5553,7 +5520,7 @@ char            *sCmd = "addIons";
                 (int)(fabs( dCharge) / fabs( dICharge1 )) );
         if ( uIon2 ) {
                 VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
-                return(NULL);
+                return NULL;
         }
         VP0("%d %s ion%s required to neutralize.\n", iIon1,
                 sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
@@ -5564,8 +5531,8 @@ char            *sCmd = "addIons";
      */
     dIonSize1 = 0.0;
     iUnknown = 0;
-    lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-    for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+    lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+    for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
                 VP0("Using default radius %5.2f for ion %s\n",
                         ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
@@ -5577,7 +5544,7 @@ char            *sCmd = "addIons";
         if ( iUnknown ) {
             VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
                 sAssocName( aaArgs[1] ), iUnknown );
-            return( NULL );
+            return  NULL ;
         }
         VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
                 sAssocName( aaArgs[1] ), dIonSize1 );
@@ -5586,8 +5553,8 @@ char            *sCmd = "addIons";
         VECTOR          vPos;
 
         VectorDef( &vPos, 0.0, 0.0, 0.0 );
-        lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-        aAtom = (ATOM)oNext(&lAtoms);
+        lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+        aAtom = ATOM_from(oNext(&lAtoms));
         AtomSetPosition( aAtom, vPos );
         AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
     }
@@ -5595,8 +5562,8 @@ char            *sCmd = "addIons";
     dIonSize2 = 0.0;
     if ( uIon2 ) {
         iUnknown = 0;
-        lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
-        for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+        lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
+        for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
                         VP0("Using default radius %5.2f for ion %s\n",
                                 ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
@@ -5608,7 +5575,7 @@ char            *sCmd = "addIons";
             if ( iUnknown ) {
                 VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
                     sAssocName( aaArgs[1] ), iUnknown );
-                return( NULL );
+                return  NULL ;
             }
             VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
                 sAssocName( aaArgs[3] ), dIonSize2 );
@@ -5617,8 +5584,8 @@ char            *sCmd = "addIons";
             VECTOR              vPos;
 
             VectorDef( &vPos, 0.0, 0.0, 0.0 );
-            lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-            aAtom = (ATOM)oNext(&lAtoms);
+            lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+            aAtom = ATOM_from(oNext(&lAtoms));
             AtomSetPosition( aAtom, vPos );
             AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
         }
@@ -5636,7 +5603,7 @@ char            *sCmd = "addIons";
     }
 
     if ( iIon1 + iIon2 == 0 )
-        return(NULL);
+        return NULL;
 
     /*
      *  Build grid and calc potential on it.
@@ -5645,7 +5612,7 @@ char            *sCmd = "addIons";
                                         GDefaults.dGridSpace, dMinSize, GDefaults.dShellExtent, 0 );
     if ( !octTreeSolute ) {
         VP0("%s: No solute to add ions to\n", sCmd );
-        return(NULL);
+        return NULL;
     }
     vaSolvent = vaSolventResidues( uUnit );
 
@@ -5676,8 +5643,8 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                 /*
                  *  Make a copy of ion unit and give it new point.
                  */
-                uPlace = (UNIT) oCopy( (OBJEKT)uIon1 );
-                ContainerCenterAt( (CONTAINER) uPlace, vNewPoint );
+                uPlace = uCopyUnit(uIon1);
+                ContainerCenterAt( CONTAINER_from( uPlace), vNewPoint );
 
                 /*
                  *  Add ion to solute.
@@ -5710,8 +5677,8 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                 /*
                  *  Make a copy of ion unit and give it new point.
                  */
-                uPlace = (UNIT) oCopy( (OBJEKT)uIon2 );
-                ContainerCenterAt( (CONTAINER) uPlace, vNewPoint );
+                uPlace = uCopyUnit(uIon2);
+                ContainerCenterAt( CONTAINER_from( uPlace), vNewPoint );
 
                 /*
                  *  Add ion to solute.
@@ -5742,8 +5709,8 @@ OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
     if ( vaSolvent )
         VarArrayDestroy( &vaSolvent );
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) uUnit );
-    return(NULL);
+    ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
+    return NULL;
 
 CANCEL:
 
@@ -5754,7 +5721,7 @@ CANCEL:
     if ( vaSolvent )
         VarArrayDestroy( &vaSolvent );
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 OBJEKT
@@ -5791,7 +5758,7 @@ char            *sCmd = "addIons";
           /*
            *  Translate the 2 extra args
            */
-          uIon2 = (UNIT)oAssocObject( aaArgs[3] );
+          uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
           iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           if ( uIon2  &&  iIon2 == 0 ) {
               VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
@@ -5811,25 +5778,25 @@ char            *sCmd = "addIons";
           } else {
                 VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
-          return(NULL);
+          return NULL;
     }
 
     /*
      *  Translate args common to both cases
      */
-    uUnit = (UNIT)oAssocObject( aaArgs[0] );
-    uIon1 = (UNIT)oAssocObject( aaArgs[1] );
+    uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+    uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
     iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
 
     /*
      *  Consider target unit's charge
      */
-    ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
+    ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
     if ( !dCharge ) {
         VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
         if ( iIon1 == 0 ) {
                 VP0("%s: Can't neutralize.\n", sCmd );
-                return(NULL);
+                return NULL;
         }
         VP0("Adding the ions anyway.\n");
     } else
@@ -5838,18 +5805,18 @@ char            *sCmd = "addIons";
     /*
      *  Consider ion(s) charge
      */
-    ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
+    ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
         VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
                 sCmd, sAssocName( aaArgs[1] ));
-        return(NULL);
+        return NULL;
     }
     if ( uIon2 ) {
-        ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
+        ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
            VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
                 sCmd, sAssocName( aaArgs[3] ));
-           return(NULL);
+           return NULL;
         }
     }
 
@@ -5863,7 +5830,7 @@ char            *sCmd = "addIons";
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
                          dCharge, dICharge1 );
-                return(NULL);
+                return NULL;
         }
         /*
          *  Get the nearest integer number of ions that
@@ -5877,7 +5844,7 @@ char            *sCmd = "addIons";
                 (int)(fabs( dCharge) / fabs( dICharge1 )) );
         if ( uIon2 ) {
                 VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
-                return(NULL);
+                return NULL;
         }
         VP0("%d %s ion%s required to neutralize.\n", iIon1,
                 sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
@@ -5888,8 +5855,8 @@ char            *sCmd = "addIons";
      */
     dIonSize1 = 0.0;
     iUnknown = 0;
-    lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-    for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+    lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+    for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
                 VP0("Using default radius %5.2f for ion %s\n",
                         ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
@@ -5901,7 +5868,7 @@ char            *sCmd = "addIons";
         if ( iUnknown ) {
             VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
                 sAssocName( aaArgs[1] ), iUnknown );
-            return( NULL );
+            return  NULL ;
         }
         VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
                 sAssocName( aaArgs[1] ), dIonSize1 );
@@ -5910,8 +5877,8 @@ char            *sCmd = "addIons";
         VECTOR          vPos;
 
         VectorDef( &vPos, 0.0, 0.0, 0.0 );
-        lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-        aAtom = (ATOM)oNext(&lAtoms);
+        lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+        aAtom = ATOM_from(oNext(&lAtoms));
         AtomSetPosition( aAtom, vPos );
         AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
     }
@@ -5919,8 +5886,8 @@ char            *sCmd = "addIons";
     dIonSize2 = 0.0;
     if ( uIon2 ) {
         iUnknown = 0;
-        lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
-        for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+        lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
+        for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
                         VP0("Using default radius %5.2f for ion %s\n",
                                 ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
@@ -5932,7 +5899,7 @@ char            *sCmd = "addIons";
             if ( iUnknown ) {
                 VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
                     sAssocName( aaArgs[1] ), iUnknown );
-                return( NULL );
+                return  NULL ;
             }
             VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
                 sAssocName( aaArgs[3] ), dIonSize2 );
@@ -5941,8 +5908,8 @@ char            *sCmd = "addIons";
             VECTOR              vPos;
 
             VectorDef( &vPos, 0.0, 0.0, 0.0 );
-            lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-            aAtom = (ATOM)oNext(&lAtoms);
+            lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+            aAtom = ATOM_from(oNext(&lAtoms));
             AtomSetPosition( aAtom, vPos );
             AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
         }
@@ -5953,7 +5920,7 @@ char            *sCmd = "addIons";
                 iIon1 + iIon2, sAssocName( aaArgs[0] ));
 
     if ( iIon1 + iIon2 == 0 )
-        return(NULL);
+        return NULL;
 
     /*
      *  Build grid and calc potential on it.
@@ -5962,7 +5929,7 @@ char            *sCmd = "addIons";
                                         GDefaults.dGridSpace, dMinSize, GDefaults.dShellExtent, 1 );
     if ( !octTreeSolute ) {
         VP0("%s: No atoms to add ions to\n", sCmd );
-        return(NULL);
+        return NULL;
     }
 
 
@@ -5985,8 +5952,8 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                 /*
                  *  Make a copy of ion unit and give it new point.
                  */
-                uPlace = (UNIT) oCopy( (OBJEKT)uIon1 );
-                ContainerCenterAt( (CONTAINER) uPlace, vNewPoint );
+                uPlace = uCopyUnit(uIon1);
+                ContainerCenterAt( CONTAINER_from( uPlace), vNewPoint );
 
                 /*
                  *  Add ion to solute.
@@ -6017,8 +5984,8 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                 /*
                  *  Make a copy of ion unit and give it new point.
                  */
-                uPlace = (UNIT) oCopy( (OBJEKT)uIon2 );
-                ContainerCenterAt( (CONTAINER) uPlace, vNewPoint );
+                uPlace = uCopyUnit(uIon2);
+                ContainerCenterAt( CONTAINER_from( uPlace), vNewPoint );
 
                 /*
                  *  Add ion to solute.
@@ -6047,8 +6014,8 @@ OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
     VP0("\nDone adding ions.\n" );
     OctTreeDestroy( &octTreeSolute );
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) uUnit );
-    return(NULL);
+    ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
+    return NULL;
 
 CANCEL:
 
@@ -6057,7 +6024,7 @@ CANCEL:
     if ( octTreeSolute )
         OctTreeDestroy( &octTreeSolute );
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 OBJEKT
@@ -6093,7 +6060,7 @@ char            *sCmd = "addIonSolv";
           /*
            *  Translate the 2 extra args
            */
-          uIon2 = (UNIT)oAssocObject( aaArgs[3] );
+          uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
           iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           if ( uIon2  &&  iIon2 == 0 ) {
               VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
@@ -6113,14 +6080,14 @@ char            *sCmd = "addIonSolv";
           } else {
                 VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
-          return(NULL);
+          return NULL;
     }
 
     /*
      *  Translate args common to both cases
      */
-    uUnit = (UNIT)oAssocObject( aaArgs[0] );
-    uIon1 = (UNIT)oAssocObject( aaArgs[1] );
+    uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+    uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
     iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
 
     /*
@@ -6129,18 +6096,18 @@ char            *sCmd = "addIonSolv";
     vaSolvent = vaSolventResidues( uUnit );
     if ( vaSolvent == NULL ) {
         VPFATALEXIT("No solvent present: solvate 1st or use addIons\n" );
-        return(NULL);
+        return NULL;
     }
 
     /*
      *  Consider target unit's charge
      */
-    ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
+    ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
     if ( !dCharge ) {
         VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
         if ( iIon1 == 0 ) {
                 VP0("%s: Can't neutralize.\n", sCmd );
-                return(NULL);
+                return NULL;
         }
         VP0("Adding the ions anyway.\n");
     } else
@@ -6149,18 +6116,18 @@ char            *sCmd = "addIonSolv";
     /*
      *  Consider ion(s) charge
      */
-    ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
+    ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
         VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
                 sCmd, sAssocName( aaArgs[1] ));
-        return(NULL);
+        return NULL;
     }
     if ( uIon2 ) {
-        ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
+        ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
            VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
                 sCmd, sAssocName( aaArgs[3] ));
-           return(NULL);
+           return NULL;
         }
     }
 
@@ -6174,7 +6141,7 @@ char            *sCmd = "addIonSolv";
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
                          dCharge, dICharge1 );
-                return(NULL);
+                return NULL;
         }
         /*
          *  Get the nearest integer number of ions that
@@ -6188,7 +6155,7 @@ char            *sCmd = "addIonSolv";
                 (int)(fabs( dCharge) / fabs( dICharge1 )) );
         if ( uIon2 ) {
                 VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
-                return(NULL);
+                return NULL;
         }
         VP0("%d %s ion%s required to neutralize.\n", iIon1,
                 sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
@@ -6199,8 +6166,8 @@ char            *sCmd = "addIonSolv";
      */
     dIonSize1 = 0.0;
     iUnknown = 0;
-    lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-    for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+    lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+    for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
                 VP0("Using default radius %5.2f for ion %s\n",
                         ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
@@ -6212,7 +6179,7 @@ char            *sCmd = "addIonSolv";
         if ( iUnknown ) {
             VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
                 sAssocName( aaArgs[1] ), iUnknown );
-            return( NULL );
+            return  NULL ;
         }
         VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
                 sAssocName( aaArgs[1] ), dIonSize1 );
@@ -6221,16 +6188,16 @@ char            *sCmd = "addIonSolv";
         VECTOR          vPos;
 
         VectorDef( &vPos, 0.0, 0.0, 0.0 );
-        lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-        aAtom = (ATOM)oNext(&lAtoms);
+        lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+        aAtom = ATOM_from(oNext(&lAtoms));
         AtomSetPosition( aAtom, vPos );
         AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
     }
     if ( uIon2 ) {
         dIonSize2 = 0.0;
         iUnknown = 0;
-        lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
-        for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+        lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
+        for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
                         VP0("Using default radius %5.2f for ion %s\n",
                                 ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
@@ -6242,7 +6209,7 @@ char            *sCmd = "addIonSolv";
             if ( iUnknown ) {
                 VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
                     sAssocName( aaArgs[1] ), iUnknown );
-                return( NULL );
+                return  NULL ;
             }
             VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
                 sAssocName( aaArgs[3] ), dIonSize2 );
@@ -6251,8 +6218,8 @@ char            *sCmd = "addIonSolv";
             VECTOR              vPos;
 
             VectorDef( &vPos, 0.0, 0.0, 0.0 );
-            lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-            aAtom = (ATOM)oNext(&lAtoms);
+            lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+            aAtom = ATOM_from(oNext(&lAtoms));
             AtomSetPosition( aAtom, vPos );
             AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
         }
@@ -6263,13 +6230,13 @@ char            *sCmd = "addIonSolv";
 
     if ( iIon1 + iIon2 == 0 ) {
         VarArrayDestroy( &vaSolvent );
-        return(NULL);
+        return NULL;
     }
 
     if ( iIon1 + iIon2 > iVarArrayElementCount( vaSolvent ) ) {
         VarArrayDestroy( &vaSolvent );
         VPFATALEXIT("Can't do it - more ions than solvent\n" );
-        return(NULL);
+        return NULL;
     }
 
     /*
@@ -6312,8 +6279,8 @@ char            *sCmd = "addIonSolv";
     VP0("\nDone adding ions.\n" );
     VarArrayDestroy( &vaSolvent );
     TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( (CONTAINER) uUnit );
-    return(NULL);
+    ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
+    return NULL;
 
 CANCEL:
 
@@ -6321,7 +6288,7 @@ CANCEL:
     BasicsResetInterrupt();
     VarArrayDestroy( &vaSolvent );
     DisplayerReleaseUpdates();
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -6332,7 +6299,7 @@ OBJEKT
 oCmd_addIonsNear( int iArgCount, ASSOC aaArgs[] )
 {
         VP0("Not implemented\n");
-        return(NULL);
+        return NULL;
 }
 
 /*
@@ -6397,7 +6364,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         break;
       }
       // Get the arguments for the second ion
-      uIon2 = (UNIT)oAssocObject( aaArgs[3] );
+      uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
       iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
       if ( uIon2  &&  iIon2 == 0 )
       {
@@ -6414,7 +6381,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         break;
       }
       // Get the arguments for the second ion
-      uIon2 = (UNIT)oAssocObject( aaArgs[3] );
+      uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
       iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
       if ( uIon2  &&  iIon2 == 0 )
       {
@@ -6445,23 +6412,23 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       VPFATALDELAYEDEXIT("No help available on addIons\n" );
     else
       VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
-    return(NULL);
+    return NULL;
   }
 
   // Translate unit, ion, and charge arguments
-  uUnit = (UNIT)oAssocObject( aaArgs[0] );
-  uIon1 = (UNIT)oAssocObject( aaArgs[1] );
+  uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+  uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
   iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
 
   // Check the unit's validity
-  ContainerTotalCharge( (CONTAINER) uUnit, &dCharge, &dPertCharge );
+  ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
   if ( !dCharge )
   {
     VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
     if ( iIon1 == 0 )
     {
       VP0("%s: Can't neutralize.\n", sCmd );
-      return(NULL);
+      return NULL;
     }
     VP0("Adding the ions anyway.\n");
   }
@@ -6469,21 +6436,21 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
     MESSAGE("dCharge:  %4.2lf\n", dCharge );
 
   // Make sure the ions are actually ions
-  ContainerTotalCharge((CONTAINER)uIon1, &dICharge1, &dPertCharge );
+  ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
   if ( !dICharge1 )
   {
     VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
           sCmd, sAssocName( aaArgs[1] ));
-    return(NULL);
+    return NULL;
   }
   if ( uIon2 )
   {
-    ContainerTotalCharge((CONTAINER)uIon2, &dICharge2, &dPertCharge );
+    ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
     if ( !dICharge2 )
     {
       VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
             sCmd, sAssocName( aaArgs[3] ));
-      return(NULL);
+      return NULL;
     }
   }
 
@@ -6495,7 +6462,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
                          "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
                             "     can't neutralize.\n" , sCmd,
                          dCharge, dICharge1 );
-      return(NULL);
+      return NULL;
     }
     /*
      *  Get the nearest integer number of ions that
@@ -6510,7 +6477,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
     }
     if ( uIon2 ) {
         VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
-        return(NULL);
+        return NULL;
     }
     VP0("%d %s ion%s required to neutralize.\n", iIon1,
           sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
@@ -6518,8 +6485,8 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
 
   // Check ion size and position
   iUnknown = 0;
-  lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-  for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+  lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+  for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
     if ( iAtomSetTmpRadius( aAtom ) )
       VP0("Using default radius %5.2f for ion %s\n",
             ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
@@ -6530,21 +6497,21 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
     if ( iUnknown ) {
       VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
             sAssocName( aaArgs[1] ), iUnknown );
-      return( NULL );
+      return  NULL ;
     }
   } else if ( iUnknown ) {
     VECTOR          vPos;
 
     VectorDef( &vPos, 0.0, 0.0, 0.0 );
-    lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-    aAtom = (ATOM)oNext(&lAtoms);
+    lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+    aAtom = ATOM_from(oNext(&lAtoms));
     AtomSetPosition( aAtom, vPos );
     AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
   }
   if ( uIon2 ) {
     iUnknown = 0;
-    lAtoms = lLoop( (OBJEKT)uIon2, ATOMS );
-    for(i=0; (aAtom = (ATOM)oNext(&lAtoms)); i++) {
+    lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
+    for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
       if ( iAtomSetTmpRadius( aAtom ) )
         VP0("Using default radius %5.2f for ion %s\n",
               ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
@@ -6555,13 +6522,13 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       if ( iUnknown ) {
         VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
               sAssocName( aaArgs[1] ), iUnknown );
-        return( NULL );
+        return  NULL ;
       }
     } else if ( iUnknown ) {
       VECTOR              vPos;
       VectorDef( &vPos, 0.0, 0.0, 0.0 );
-      lAtoms = lLoop( (OBJEKT)uIon1, ATOMS );
-      aAtom = (ATOM)oNext(&lAtoms);
+      lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
+      aAtom = ATOM_from(oNext(&lAtoms));
       AtomSetPosition( aAtom, vPos );
       AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
     }
@@ -6571,14 +6538,14 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   if ( !vaSolvent )
   {
     VPFATALEXIT("No solvent present. Add solvent first.\n");
-    return(NULL);
+    return NULL;
   }
   if ( iIon1 + iIon2 == 0 )
-    return(NULL);
+    return NULL;
   if ( iVarArrayElementCount(vaSolvent)-iIon1-iIon2 <= 0)
   {
     VPFATALEXIT("Too few solvent molecules to add ions.\n" );
-    return(NULL);
+    return NULL;
   }
   VP0("Adding %d counter ions to \"%s\". %d solvent molecules will remain.\n",
         iIon1 + iIon2, sAssocName( aaArgs[0] ), iVarArrayElementCount(vaSolvent)-iIon1-iIon2);
@@ -6598,8 +6565,8 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
 
       // Get position of solvent residue atom
       rPRes = (RESIDUE*)PVarArrayIndex ( vaSolvent, random );
-      lAtoms = lLoop( (OBJEKT)*rPRes, ATOMS);
-      aAtom = (ATOM)oNext(&lAtoms);
+      lAtoms = lLoop( OBJEKT_from(*rPRes), ATOMS);
+      aAtom = ATOM_from(oNext(&lAtoms));
       vNewPoint = vAtomPosition( aAtom );
 
       // Check that new point isn't too close to other ions
@@ -6626,11 +6593,11 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
               dVZ(&(vNewPoint)));
 
         // Save this ion's position if desired
-        uPlace = (UNIT) oCopy( (OBJEKT)uIon1 );
-        ContainerCenterAt((CONTAINER) uPlace, vNewPoint );
+        uPlace = uCopyUnit(uIon1);
+        ContainerCenterAt(CONTAINER_from( uPlace), vNewPoint );
         if ( dMinSeparation ) {
-          lAtoms = lLoop( (OBJEKT)(uPlace), ATOMS);
-          aIons[counter] = (ATOM)oNext(&lAtoms);
+          lAtoms = lLoop( OBJEKT_from(uPlace), ATOMS);
+          aIons[counter] = ATOM_from(oNext(&lAtoms));
           ++counter;
         }
         // Copy ion unit, position, and add it to the unit
@@ -6639,7 +6606,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         // Delete the solvent residue that was replaced
         REF( *rPRes );  /* bContainerRemove() needs this */
         ResidueYouAreBeingRemoved( *rPRes );
-        if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*rPRes ) == FALSE)
+        if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*rPRes )) == FALSE)
           DFATAL("rmv solv %d failed\n", random );
         ContainerDestroy((CONTAINER *) rPRes );
         rPRes = NULL;
@@ -6662,8 +6629,8 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
 
       // Get position of solvent residue atom
       rPRes = PVAI( vaSolvent, RESIDUE, random );
-      lAtoms = lLoop( (OBJEKT)*rPRes, ATOMS);
-      aAtom = (ATOM)oNext(&lAtoms);
+      lAtoms = lLoop( OBJEKT_from(*rPRes), ATOMS);
+      aAtom = ATOM_from(oNext(&lAtoms));
       vNewPoint = vAtomPosition( aAtom );
 
       // Check that new point isn't too close to other ions
@@ -6690,11 +6657,11 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
               dVZ(&(vNewPoint)));
 
         // Save this ion's position
-        uPlace = (UNIT) oCopy( (OBJEKT)uIon2 );
-        ContainerCenterAt((CONTAINER) uPlace, vNewPoint );
+        uPlace = uCopyUnit(uIon2);
+        ContainerCenterAt(CONTAINER_from( uPlace), vNewPoint );
         if (dMinSeparation) {
-        lAtoms = lLoop( (OBJEKT)(uPlace), ATOMS);
-        aIons[counter] = (ATOM)oNext(&lAtoms);
+        lAtoms = lLoop( OBJEKT_from(uPlace), ATOMS);
+        aIons[counter] = ATOM_from(oNext(&lAtoms));
         ++counter;
         }
         // Copy ion unit, position, and add it to the unit
@@ -6703,7 +6670,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         // Delete the solvent residue that was replaced
         REF( *rPRes );  /* bContainerRemove() needs this */
         ResidueYouAreBeingRemoved( *rPRes );
-        if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*rPRes ) == FALSE)
+        if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*rPRes )) == FALSE)
           DFATAL("rmv solv %d failed\n", random );
         ContainerDestroy((CONTAINER *) rPRes );
         rPRes = NULL;
@@ -6727,8 +6694,8 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   if ( aIons )
     FREE( aIons );
   TurnOnDisplayerUpdates();
-  ContainerDisplayerUpdate( (CONTAINER) uUnit );
-  return(NULL);
+  ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
+  return NULL;
 
   // Error handling
   CANCEL:
@@ -6738,7 +6705,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   if ( vaSolvent )
     VarArrayDestroy( &vaSolvent );
   DisplayerReleaseUpdates();
-  return(NULL);
+  return NULL;
 }
 
 
@@ -6790,7 +6757,7 @@ char    *sCmd = "alias";
                     } else {
                         VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
                     }
-                    return(NULL);
+                    return NULL;
                 }
                 StringLower( sAlias );
                 StringLower( sCommand );
@@ -6808,7 +6775,7 @@ char    *sCmd = "alias";
                 if ( bOK == FALSE ) {
                     VPFATALEXIT("%s: '%s' is not a command.\n"
                         "Please check the spelling and try again.\n", sCmd, sCommand );
-                    return( NULL );
+                    return  NULL ;
                 }
 
                 /* Make sure that the alias is not an existing command */
@@ -6824,7 +6791,7 @@ char    *sCmd = "alias";
                 if ( bOK == FALSE ) {
                     VPFATALEXIT("%s: '%s' is already one of the commands.\n"
                         "Please try something different.\n", sCmd, sAlias );
-                    return( NULL );
+                    return  NULL ;
                 }
 
                 if ( GvaAlias == 0 ) {
@@ -6867,13 +6834,13 @@ char    *sCmd = "alias";
                     } else {
                         VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
                     }
-                    return(NULL);
+                    return NULL;
                 }
                 StringLower( sAlias );
                 iAliases = iVarArrayElementCount( GvaAlias );
                 if ( !iAliases ) {
                     VPWARN("%s: There are no aliases loaded.\n", sCmd );
-                    return(NULL);
+                    return NULL;
                 }
                 PaAlias = PVAI( GvaAlias, ALIASt, 0 );
                 for ( i = 0; i < iAliases; i++, PaAlias++ ) {
@@ -6887,7 +6854,7 @@ char    *sCmd = "alias";
                 iAliases = iVarArrayElementCount( GvaAlias );
                 if ( !iAliases ) {
                     VPWARN("There are no aliases loaded.\n" );
-                    return(NULL);
+                    return NULL;
                 }
                 VP0("Current Aliases  [alias....command]\n" );
                 for ( i = 0; i < iAliases; i++ ) {
@@ -6915,7 +6882,7 @@ char    *sCmd = "alias";
                 break;
 
    } /* end of switch */
-   return(NULL);
+   return NULL;
 }
 
 
@@ -6956,7 +6923,7 @@ char            *sCmd = "update";
         } else {
             VPFATALDELAYEDEXIT("%s\n", sHelpText(hTemp) );
         }
-        return(NULL);
+        return NULL;
     }
     if (! bCmdGoodArguments( sCmd, iArgCount, aaArgs, "ru" )) {
         hTemp = hHelp( "update" );
@@ -6965,29 +6932,29 @@ char            *sCmd = "update";
         } else {
             VPFATALDELAYEDEXIT("%s\n", sHelpText(hTemp) );
         }
-        return(NULL);
+        return NULL;
     }
     switch ( iObjectType(oAssocObject( aaArgs[0] ))) {
         case    UNITid:
             DisplayerAccumulateUpdates();
-            uUnit = (UNIT)oAssocObject( aaArgs[0] );
-            lResidue = lLoop( (OBJEKT)uUnit, RESIDUES );
-            while ( (rOld = (RESIDUE)oNext( &lResidue )) ) {
-                strcpy( sTemp, sContainerName((CONTAINER)rOld));
+            uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
+            lResidue = lLoop( OBJEKT_from(uUnit), RESIDUES );
+            while ( (rOld = RESIDUE_from(oNext( &lResidue ))) ) {
+                strcpy( sTemp, sContainerName(CONTAINER_from(rOld)));
                 for ( i = 0; i < strlen(sTemp); i++){
                     if ( sTemp[i] == ' ') break;
                     sResName[i] = sTemp[i];
                 }
                 sResName[i] = '\0';
                 // FIXME, bad code, do this:
-                //  rNew =  (RESIDUE)yPDictionaryFind( GdVariables, sResName)
+                //  rNew =  RESIDUE_from(yPDictionaryFind( GdVariables, sResName))
                 dlLoop = ydlDictionaryLoop(GdVariables);
                 while ( yPDictionaryNext( GdVariables, &dlLoop )) {
                     if (!strcmp(sResName, sDictLoopKey(dlLoop))) {
                         iResidues = 0;
-                        lRes = lLoop( (OBJEKT)PDictLoopData( dlLoop ), RESIDUES);
+                        lRes = lLoop( OBJEKT_from(PDictLoopData)( dlLoop ), RESIDUES);
                         rNew = rCopy = NULL;
-                        while ((rNew = (RESIDUE)oNext( &lRes ))) {
+                        while ((rNew = RESIDUE_from(oNext( &lRes )))) {
                             iResidues++;
                                 /* Make sure that there are not more than
                                         1 residue in the unit */
@@ -6996,7 +6963,7 @@ char            *sCmd = "update";
                                 );
                                 goto NEXTRES1;
                             }
-                            rCopy = (RESIDUE)oCopy((OBJEKT)rNew );
+                            rCopy = (RESIDUE)oCopy(OBJEKT_from(rNew ));
                         }
                         ResidueMutate( rCopy, rOld );
 
@@ -7005,11 +6972,11 @@ char            *sCmd = "update";
                         /* the UNITs next child sequence number */
 
                         REF( rOld );  /* bContainerRemove() needs this */
-                        bContainerRemove( (CONTAINER) uUnit, (OBJEKT)rOld );
-                        iNext = iContainerNextChildsSequence( (CONTAINER) uUnit );
-                        ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rCopy );
-                        ContainerSetSequence( (CONTAINER) rCopy, iContainerSequence((CONTAINER) rOld) );
-                        ContainerSetNextChildsSequence( (CONTAINER) uUnit, iNext );
+                        bContainerRemove( CONTAINER_from( uUnit), OBJEKT_from(rOld ));
+                        iNext = iContainerNextChildsSequence( CONTAINER_from( uUnit ));
+                        ContainerAdd( CONTAINER_from(uUnit), OBJEKT_from(rCopy ));
+                        ContainerSetSequence( CONTAINER_from( rCopy), iContainerSequence(CONTAINER_from( rOld)) );
+                        ContainerSetNextChildsSequence( CONTAINER_from( uUnit), iNext );
 
                         DEREF( rOld );
 
@@ -7025,9 +6992,9 @@ NEXTSEQ:        ;
 
         case    RESIDUEid:
             DisplayerAccumulateUpdates();
-            rOld = (RESIDUE)oAssocObject( aaArgs[0] );
-            uUnit = (UNIT)cContainerWithin((CONTAINER)rOld );
-            strcpy( sTemp, sContainerName((CONTAINER)rOld ));
+            rOld = RESIDUE_from(oAssocObject( aaArgs[0] ));
+            uUnit = (UNIT)cContainerWithin(CONTAINER_from(rOld ));
+            strcpy( sTemp, sContainerName(CONTAINER_from(rOld )));
             for ( i = 0; i < strlen(sTemp); i++){
                 if ( sTemp[i] == ' ') break;
                     sResName[i] = sTemp[i];
@@ -7036,13 +7003,13 @@ NEXTSEQ:        ;
 
             dlLoop = ydlDictionaryLoop(GdVariables);
             // FIXME, bad code, do this:
-            //  rNew =  (RESIDUE)yPDictionaryFind( GdVariables, sResName)
+            //  rNew =  RESIDUE_from(yPDictionaryFind( GdVariables, sResName))
             while ( yPDictionaryNext( GdVariables, &dlLoop )) {
                 if (!strcmp(sResName, sDictLoopKey(dlLoop))) {
                     iResidues = 0;
-                    lRes = lLoop( (OBJEKT)PDictLoopData( dlLoop ), RESIDUES);
+                    lRes = lLoop( OBJEKT_from(PDictLoopData)( dlLoop ), RESIDUES);
                     rNew = NULL;
-                    while ( (rTemp = (RESIDUE)oNext( &lRes)) ) {
+                    while ( (rTemp = RESIDUE_from(oNext( &lRes))) ) {
                         rNew = rTemp;
                         iResidues++;
                     }
@@ -7053,7 +7020,7 @@ NEXTSEQ:        ;
                         goto NEXTRES2;
                     }
 
-                    rCopy = (RESIDUE)oCopy( (OBJEKT)rNew );
+                    rCopy = rCopyResidue(rNew);
                     ResidueMutate( rCopy, rOld );
 
                         /* Remove the old RESIDUE from the UNIT */
@@ -7061,11 +7028,11 @@ NEXTSEQ:        ;
                         /* the UNITs next child sequence number */
 
                     REF( rOld );  /* bContainerRemove() needs this */
-                    bContainerRemove( (CONTAINER) uUnit, (OBJEKT)rOld );
-                    iNext = iContainerNextChildsSequence( (CONTAINER) uUnit );
-                    ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rCopy );
-                    ContainerSetSequence( (CONTAINER) rCopy, iContainerSequence((CONTAINER) rOld) );
-                    ContainerSetNextChildsSequence( (CONTAINER) uUnit, iNext );
+                    bContainerRemove( CONTAINER_from( uUnit), OBJEKT_from(rOld ));
+                    iNext = iContainerNextChildsSequence( CONTAINER_from( uUnit ));
+                    ContainerAdd( CONTAINER_from(uUnit), OBJEKT_from(rCopy ));
+                    ContainerSetSequence( CONTAINER_from( rCopy), iContainerSequence(CONTAINER_from( rOld)) );
+                    ContainerSetNextChildsSequence( CONTAINER_from( uUnit), iNext );
 
                     DEREF( rOld );
 
@@ -7080,7 +7047,7 @@ NEXTRES2:       ;
             DFATAL("Impossible control flow.\n" );
             break;
     }
-    return(NULL);
+    return NULL;
 }
 #endif
 
@@ -7099,18 +7066,18 @@ UNIT        uUnit;
 LOOP        lAtoms;
 ATOM        aAtom;
 
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    if ( uUnit == NULL ) return(NULL);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
+    if ( uUnit == NULL ) return NULL;
 
-    lAtoms = lLoop((OBJEKT) uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    lAtoms = lLoop(OBJEKT_from( uUnit), ATOMS );
+    while ( (aAtom = ATOM_from(oNext(&lAtoms)))) {
         if ( bAtomFlagsSet( aAtom, ATOMSELECTED ) ) {
-            bBuildFlipChiralityFor((CONTAINER) uUnit, aAtom );
+            bBuildFlipChiralityFor(CONTAINER_from( uUnit), aAtom );
         }
     }
 
 
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -7127,8 +7094,8 @@ oCmd_relax(int iArgCount, ASSOC aaArgs[])
 MINIMIZER       mStrain;
 UNIT            uUnit;
 
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    if ( uUnit == NULL ) return(NULL);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
+    if ( uUnit == NULL ) return NULL;
 
         /* Setup a MINIMIZER and give it a callback to use */
         /* to update the display every step of the minimization */
@@ -7138,9 +7105,9 @@ UNIT            uUnit;
         /* control-c that may have been hit before */
 
     BasicsResetInterrupt();
-    SelectRelaxInFramework( (UNIT)uUnit, mStrain );
+    SelectRelaxInFramework( uUnit, mStrain );
 
-    return(NULL);
+    return NULL;
 }
 
 /*
@@ -7159,8 +7126,8 @@ UNIT            uUnit;
 int             iDum;
 
     DisplayerAccumulateUpdates();
-    uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    if ( uUnit == NULL ) return(NULL);
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
+    if ( uUnit == NULL ) return NULL;
 
         /* Add hydrogens */
 
@@ -7168,12 +7135,12 @@ int             iDum;
 
         /* Try to build geometries for simple rings */
 
-    BuildInternalsForSimpleRings( (CONTAINER)uUnit );
+    BuildInternalsForSimpleRings( CONTAINER_from(uUnit ));
 
         /* Assign internal coordinates for all internals that */
         /* include atoms that need building */
 
-    lAtom = lLoop((OBJEKT) uUnit, ATOMS );
+    lAtom = lLoop(OBJEKT_from( uUnit), ATOMS );
     BuildInternalsUsingFlags( &lAtom, ATOMPOSITIONDRAWN, 0,
                                 ATOMNEEDSBUILD,
                                 ATOMPOSITIONDRAWN );
@@ -7181,22 +7148,22 @@ int             iDum;
         /* Build spanning trees for all atoms that need building */
         /* and build external coordinates for those atoms */
 
-    lAtom = lLoop((OBJEKT) uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtom)) ) {
+    lAtom = lLoop(OBJEKT_from( uUnit), ATOMS );
+    while ( (aAtom = ATOM_from(oNext(&lAtom)))) {
         if ( bAtomFlagsSet( aAtom, ATOMNEEDSBUILD ) ) {
 
                         /* Look for a collision with an ATOM that has */
                         /* already been built */
                         /* Then start building from there */
 
-            lSpan = lLoop((OBJEKT) aAtom, SPANNINGTREE );
+            lSpan = lLoop(OBJEKT_from( aAtom), SPANNINGTREE );
             LoopDefineVisibleAtoms( &lSpan, ATOMNEEDSBUILD );
             while ( oNext(&lSpan) );
             if ( iLoopInvisibleCollisionCount(&lSpan) > 0 ) {
                 aStart = aLoopLastCollisionAtom(&lSpan);
-                lSpan = lLoop((OBJEKT) aStart, SPANNINGTREE );
+                lSpan = lLoop(OBJEKT_from( aStart), SPANNINGTREE );
             } else {
-                lSpan = lLoop((OBJEKT) aAtom, SPANNINGTREE );
+                lSpan = lLoop(OBJEKT_from( aAtom), SPANNINGTREE );
             }
             LoopDefineVisibleAtoms( &lSpan, ATOMNEEDSBUILD );
             iDum = 0;   /* for purify */
@@ -7209,12 +7176,12 @@ int             iDum;
 
                 /* Destroy all of the INTERNALs */
 
-    lAtom = lLoop((OBJEKT) uUnit, ATOMS );
+    lAtom = lLoop(OBJEKT_from( uUnit), ATOMS );
     BuildDestroyInternals( &lAtom );
 
     DisplayerReleaseUpdates();
 
-    return(NULL);
+    return NULL;
 }
 
 

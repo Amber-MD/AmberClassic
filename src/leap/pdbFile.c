@@ -165,20 +165,20 @@ zPdbToNameMapKey( int iPart, const char *sPart, char *sKey, const char *sResName
 {
     switch ( iPart ) {
         case NOEND:
-            if (sResName)  sprintf( sKey, "%s:%s", sResName, sPart );
+            if (sResName)  sprintf( sKey, "%.8s:%.8s", sResName, sPart );
             else strcpy( sKey, sPart );
             break;
         case FIRSTEND:
-            sprintf( sKey, "0:%s", sPart );
+            sprintf( sKey, "0:%.8s", sPart );
             break;
         case LASTEND:
-            sprintf( sKey, "1:%s", sPart );
+            sprintf( sKey, "1:%.8s", sPart );
             break;
         case COMPID_HETID:
-            sprintf( sKey, "H:%s", sPart );
+            sprintf( sKey, "H:%.8s", sPart );
             break;
         case HETID_COMPID:
-            sprintf( sKey, "C:%s", sPart );
+            sprintf( sKey, "C:%.8s", sPart );
             break;
         default:
             DFATAL("Invalid termination type" );
@@ -747,7 +747,7 @@ static void
 zPdbCreateSymmetryRelatedMonomers( PDBREADt *prPPdb )
 {
 int             iTransforms, iLast;
-VECTOR          vPos, vCenOrig, vCen, vCenFrac, vCenWrap, vShift = {0,0,0};
+VECTOR          vPos, vCenOrig = {0,0,0}, vCen, vCenFrac, vCenWrap, vShift = {0,0,0};
 MATRIX          mTransform, M, Mi;
 UNIT            uOrig, uCopy;
 ATOM            aAtom;
@@ -1545,7 +1545,7 @@ static void
 zPdbReadFile( PDBREADt *prPRead )
 {
 pdb_record      p;
-int             iPdbSequence; // previous resSeq
+int             iPdbSequence=0; // previous resSeq
 bool            bLastReadPdbRecordWasTer = FALSE;
 bool            bNewChain, bNewRes;
 RESIDUENAMEt    rnName;
@@ -1630,7 +1630,7 @@ int             iCurrentBioMT=0;
                     char *pCompId = strstr(*desc,"COMP_ID:");
                     if (pCompId) {
                         char sCompId[32], sKey[32];
-                        strncpy(sCompId,pCompId+strlen("COMP_ID:"),32);
+                        StringCopyMax(sCompId,pCompId+strlen("COMP_ID:"),sizeof(sCompId));
                         pCompId = strtok(sCompId,"; \n\r");
                         VP0("Found COMP_ID=%s for HetID=%s\n",pCompId,p.pdb.hetsyn.het_id);
                         if ( strlen(pCompId) < 3 || strlen(pCompId) > 5 ) {

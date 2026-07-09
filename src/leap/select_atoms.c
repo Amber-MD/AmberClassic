@@ -1,33 +1,14 @@
 // file: select_atoms.c
 // requires processed selection.l, selection.y
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <fnmatch.h>
-#include "selection.h"
+#include "basics.h"
 #include "container.h"
+#include "selection.h"
 #include "elements.h"
 #include "residue.h"
 #include "loop.h"
+#include "molecule.h" // why does _Generic() macero expander need this here only???
 
-
-#if 0 // for refernece, declared in selection.h
-struct SELNODEt {
-    SELNODEKINDt kind;
-    struct SELNODEt *left;   /* left child (binary), single child (unary), or ref selection (distance) */
-    struct SELNODEt *right;  /* right child (binary), NULL otherwise */
-    char *text;    /* for name nodes */
-    long a, b;     /* for numeric, numeric-range nodes */
-    double dist;  /* distance, distance nodes only */
-    NeighborGrid *ngGrid; /* nonbond grid cache, distance nodes only */
-    void *cache_object;
-    bool cache_result;
-    bool forced_string;
-    bool has_glob;
-};
-#endif
-
-// Note: left node is the default node
 bool cpptraj_compatible = TRUE;
 
 void SelFree(SELNODE node)
@@ -40,26 +21,12 @@ void SelFree(SELNODE node)
     free(node);
 }
 
-static inline bool sel_match_text(const SELNODE node, const char *value)
-{
-    if (!node || !value) return false;
-    /* forced_string or no glob chars: exact compare */
-    if (node->forced_string || !node->has_glob)
-        return strcmp(node->text, value) == 0;
-    /*
-     * Globbing via fnmatch. The lexer preserves the literal pattern;
-     * use ~ prefix for strings that should not be globbed.
-     */
-    return fnmatch(node->text, value, 0) == 0;
-}
-
 VARARRAY
 vaUnitEvalSelection(const SELNODE node, const UNIT uUnit)
 {
     VARARRAY vaResult = vaVarArrayCreate(sizeof(ATOM));
     LOOP lAtoms = lLoop((OBJEKT) uUnit, ATOMS);
     ATOM aAtom;
-    int i=0;
     while ( (aAtom = (ATOM) oNext(&lAtoms)) ) {
         if (bAtomEvalSelection(node, aAtom)) {
             VarArrayAdd(vaResult, (GENP)&aAtom);
@@ -79,13 +46,25 @@ static void NodeEnsureGrid(const SELNODE node, const ATOM atom) {
         points[i].x = dVX(&vAtomPosition(*aPAtom));
         points[i].y = dVY(&vAtomPosition(*aPAtom));
         points[i].z = dVZ(&vAtomPosition(*aPAtom));
-        //printf("Point %d = %g,%g,%g\n",i,points[i].x,points[i].y,points[i].z);
         points[i].group = 0;
         points[i].p = (void*)*aPAtom;
     }
     unsigned int group_start[2]={0,npoints};
     node->ngGrid = neighbor_grid_setup(points,npoints,1, group_start,node->dist);
     VarArrayDestroy(&vaAtoms);
+}
+
+static inline bool bSelMatchText(const SELNODE node, const char *value)
+{
+    if (!node || !value) return false;
+    /* forced_string or no glob chars: exact compare */
+    if (node->forced_string || !node->has_glob)
+        return strcmp(node->text, value) == 0;
+    /*
+     * Globbing via fnmatch. The lexer preserves the literal pattern;
+     * use ~ prefix for strings that should not be globbed.
+     */
+    return fnmatch(node->text, value, 0) == 0;
 }
 
 static bool bNodeSelectionWithin(const SELNODE node, const ATOM atom) {
@@ -96,7 +75,7 @@ static bool bNodeSelectionWithin(const SELNODE node, const ATOM atom) {
             dVZ(&vAtomPosition(atom)), -1);
 }
 
-static bool sel_within_res(SELNODE node, ATOM atom) {
+static bool bSelWithinResidue(SELNODE node, ATOM atom) {
     RESIDUE rRes = (RESIDUE)cContainerWithin(atom);
     if (node->cache_object == (void*)rRes) return node->cache_result;
     node->cache_object = (void*)rRes;
@@ -113,7 +92,7 @@ static bool sel_within_res(SELNODE node, ATOM atom) {
     return node->cache_result;
 }
 
-static bool sel_within_rescen(SELNODE node, ATOM atom) {
+static bool bSelWithinResCenter(SELNODE node, ATOM atom) {
     RESIDUE rRes = (RESIDUE)cContainerWithin(atom);
     if (node->cache_object == (void*)rRes) return node->cache_result;
     node->cache_object = (void*)rRes;
@@ -134,7 +113,7 @@ static bool sel_within_rescen(SELNODE node, ATOM atom) {
     return node->cache_result;
 }
 
-static bool sel_within_mol(SELNODE node, ATOM atom) {
+static bool bSelWithinMolecule(SELNODE node, ATOM atom) {
     long iMol = ((RESIDUE)cContainerWithin(atom))->iMolecule;
     if ((long)node->cache_object == iMol && node->cache_object != NULL)
         return node->cache_result;
@@ -164,7 +143,7 @@ done:
     return node->cache_result;
 }
 
-static bool mol_contains_match(const SELNODE node, const UNIT uUnit, long iMol)
+static bool bSelMolContains(const SELNODE node, const UNIT uUnit, long iMol)
 {
     LOOP lResidues = lLoop((OBJEKT)uUnit, RESIDUES);
     RESIDUE rRes;
@@ -200,15 +179,15 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
         return true;
 
     case SEL_NODE_RESNAME:
-        return sel_match_text(node, sContainerName(cContainerWithin(atom)));
+        return bSelMatchText(node, sContainerName(cContainerWithin(atom)));
     case SEL_NODE_CHAINID:
-        return sel_match_text(node, sResidueChainId(cContainerWithin(atom)));
+        return bSelMatchText(node, sResidueChainId(cContainerWithin(atom)));
     case SEL_NODE_ATOMNAME:
-        return sel_match_text(node, sContainerName(atom));
+        return bSelMatchText(node, sContainerName(atom));
     case SEL_NODE_ATOMTYPE:
-        return sel_match_text(node, sAtomType(atom));
+        return bSelMatchText(node, sAtomType(atom));
     case SEL_NODE_ELEMENT:
-        return sel_match_text(node, sElementName(iAtomElement(atom), NULL));
+        return bSelMatchText(node, sElementName(iAtomElement(atom), NULL));
 
     case SEL_NODE_MOL_CONTAINS:
         {
@@ -217,7 +196,7 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
                 return node->cache_result;
             node->cache_object = (void*)iMol;
             UNIT uUnit = (UNIT)cContainerWithin(cContainerWithin(atom));
-            node->cache_result = mol_contains_match(node, uUnit, iMol);
+            node->cache_result = bSelMolContains(node, uUnit, iMol);
             return node->cache_result;
         }
 
@@ -279,17 +258,17 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
         return !bNodeSelectionWithin(node, atom);
 
     case SEL_NODE_DIST_WITHIN_RES:
-        return sel_within_res(node, atom);
+        return bSelWithinResidue(node, atom);
     case SEL_NODE_DIST_BEYOND_RES:
-        return !sel_within_res(node, atom);
+        return !bSelWithinResidue(node, atom);
     case SEL_NODE_DIST_WITHIN_RESCEN:
-        return sel_within_rescen(node, atom);
+        return bSelWithinResCenter(node, atom);
     case SEL_NODE_DIST_BEYOND_RESCEN:
-        return !sel_within_rescen(node, atom);
+        return !bSelWithinResCenter(node, atom);
     case SEL_NODE_DIST_WITHIN_MOL:
-        return sel_within_mol(node, atom);
+        return bSelWithinMolecule(node, atom);
     case SEL_NODE_DIST_BEYOND_MOL:
-        return !sel_within_mol(node, atom);
+        return !bSelWithinMolecule(node, atom);
 
     }
     // not implmenented error

@@ -146,7 +146,10 @@ OBJEKT  o;
         /* Define the type. */
         
     o->cObjType = iType;
-    o->iReferences = 1;    
+#ifdef DEBUG
+    o->iObjektMagic = OBJEKT_MAGIC;
+#endif
+    o->iReferences = 1;
     return(o);
 }
 

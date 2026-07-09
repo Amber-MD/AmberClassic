@@ -130,6 +130,23 @@ typedef struct  {
 
 typedef RESIDUEt	*RESIDUE;
 
+#ifdef DEBUG
+static inline OBJEKT objekt_from_residue(RESIDUE r) { return r ? &(r->cHeader.oHeader) : NULL; }
+static inline CONTAINER container_from_residue(RESIDUE r) { return r ? &(r->cHeader) : NULL; }
+static inline RESIDUE residue_from_objekt(OBJEKT o)
+  { return o ? (assert (iObjectType(o)==RESIDUEid), (RESIDUE)o) : NULL; }
+static inline RESIDUE residue_from_container(CONTAINER c)
+  { return c ? (assert(iObjectType(&(c->oHeader))==RESIDUEid), (RESIDUE)c) : NULL; }
+static inline RESIDUE residue_from_residue(RESIDUE r) { return r; }
+#define RESIDUE_from(x) _Generic((x), \
+    OBJEKT: residue_from_objekt, \
+    CONTAINER: residue_from_container, \
+    RESIDUE: residue_from_residue \
+)(x)
+#else
+#define RESIDUE_from(x) ((RESIDUE)(x))
+#endif
+
 /*
 ======================================================================
 
@@ -167,29 +184,30 @@ extern bool	bResidueCrossLink(RESIDUE rA, int iConnectA,
 extern void	ResidueYouAreBeingRemoved(RESIDUE rRes);
 extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);
 
+#define rCopyResidue(r) RESIDUE_from(oCopy(OBJEKT_from(r)))
 
-#define bResidueConnectUsed(r,c)     (((RESIDUE)r)->aaConnect[c]!=NULL)
-#define ResidueSetConnectAtom(r,c,a) (((RESIDUE)r)->aaConnect[c]=(OBJEKT)(a),\
+#define bResidueConnectUsed(r,c)     (RESIDUE_from(r)->aaConnect[c]!=NULL)
+#define ResidueSetConnectAtom(r,c,a) (RESIDUE_from(r)->aaConnect[c]=(OBJEKT)(a),\
 					CDU(r))
-#define aResidueConnectAtom(r,c)        (ATOM)(((RESIDUE)r)->aaConnect[c])
-#define ResidueSetDescription(r,s) (strcpy( ((RESIDUE)(r))->sDescription,s),\
+#define aResidueConnectAtom(r,c)        (ATOM)(RESIDUE_from(r)->aaConnect[c])
+#define ResidueSetDescription(r,s) (strcpy( RESIDUE_from(r)->sDescription,s),\
 					CDU(r))
-#define sResidueDescription(r)          (((RESIDUE)(r))->sDescription)
-#define bResidueFlagsSet(r,f)           ((((RESIDUE)(r))->fFlags & f)!= 0)
-#define ResidueSetFlags(r,f)            (((RESIDUE)(r))->fFlags |= f,CDU(r) )
-#define ResidueDefineFlags(r,f)  (((RESIDUE)(r))->fFlags = f,CDU(r))
-#define ResidueResetFlags(r,f)    (((RESIDUE)(r))->fFlags &= ~f,CDU(r))
-#define	ResidueSetType(r,c)	(((RESIDUE)(r))->cResType = (c),CDU(r))
-#define	cResidueType(r)		(((RESIDUE)(r))->cResType)
-#define ResidueSetImagingAtom(r,a) (((RESIDUE)r)->aSolventImagingAtom=(OBJEKT)(a),CDU(r))
-#define aResidueImagingAtom(r)     (ATOM)(((RESIDUE)r)->aSolventImagingAtom)
-#define	iResiduePdbSequence(r)	(((RESIDUE)r)->iPdbResSeq)
-#define	ResidueSetPdbSequence(r,i) (((RESIDUE)r)->iPdbResSeq=(i))
-#define	sResidueChainId(r) (((RESIDUE)r)->sChainId)
+#define sResidueDescription(r)          (RESIDUE_from(r)->sDescription)
+#define bResidueFlagsSet(r,f)           ((RESIDUE_from(r)->fFlags & f)!= 0)
+#define ResidueSetFlags(r,f)            (RESIDUE_from(r)->fFlags |= f,CDU(r) )
+#define ResidueDefineFlags(r,f)  (RESIDUE_from(r)->fFlags = f,CDU(r))
+#define ResidueResetFlags(r,f)    (RESIDUE_from(r)->fFlags &= ~f,CDU(r))
+#define	ResidueSetType(r,c)	(RESIDUE_from(r)->cResType = (c),CDU(r))
+#define	cResidueType(r)		(RESIDUE_from(r)->cResType)
+#define ResidueSetImagingAtom(r,a) (RESIDUE_from(r)->aSolventImagingAtom=(OBJEKT)(a),CDU(r))
+#define aResidueImagingAtom(r)     (ATOM)(RESIDUE_from(r)->aSolventImagingAtom)
+#define	iResiduePdbSequence(r)	(RESIDUE_from(r)->iPdbResSeq)
+#define	ResidueSetPdbSequence(r,i) (RESIDUE_from(r)->iPdbResSeq=(i))
+#define	sResidueChainId(r) (RESIDUE_from(r)->sChainId)
 #define	ResidueSetChainId(r,s) do { \
-        memcpy(((RESIDUE)(r))->sChainId,s,2); \
-        ((RESIDUE)(r))->sChainId[2]=0; \
+        memcpy(RESIDUE_from(r)->sChainId,s,2); \
+        RESIDUE_from(r)->sChainId[2]=0; \
      } while (0);
-#define	sResidueChainId(r)      (((RESIDUE)r)->sChainId)
+#define	sResidueChainId(r)      (RESIDUE_from(r)->sChainId)
 
 #endif /* RESIDUE_H */

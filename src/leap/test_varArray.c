@@ -37,7 +37,7 @@
 #include	"varArray.h"
 
 
-main()
+int main(iint argc, char *argv[])
 {
 VARARRAY	vaTest;
 

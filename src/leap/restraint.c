@@ -58,7 +58,10 @@ RESTRAINT	rNew;
 
     MALLOC( rNew, RESTRAINT, sizeof(RESTRAINTt) );
     rNew->iType = RESTRAINTNONE;
-    RestraintDefineFlags( rNew, RESTRAINTALWAYS );
+    RestraintDefineFlags(rNew, RESTRAINTALWAYS );
+#ifdef DEBUG
+    rNew->iMagic = RESTRAINT_MAGIC;
+#endif
     return(rNew);
 }
 

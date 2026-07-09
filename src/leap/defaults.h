@@ -9,9 +9,10 @@ typedef struct {
 	float	fDESPDielectric;
 	int	iDESPConstant;
 	int	pdbwritecharges;
-	int nocenter;
-	int reorder_residues;
-	int reverse_lists;
+	int     nocenter;
+	int     reorder_residues;
+	int     reverse_lists;
+        int     iOldPrmtopFormat;
 	double	dGridSpace;
 	double	dShellExtent;
 	int	iDielectricFlag;

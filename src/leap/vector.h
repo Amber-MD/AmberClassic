@@ -50,13 +50,13 @@ typedef struct  {
 #define VectorDef( vP, x, y, z )	( (vP)->dX=x, (vP)->dY=y, (vP)->dZ=z )
 
 
-#define dVX(VV)                 (((VECTOR*)(VV))->dX)
-#define dVY(VV)                 (((VECTOR*)(VV))->dY)
-#define dVZ(VV)                 (((VECTOR*)(VV))->dZ)
+#define dVX(v)                 ((v)->dX)
+#define dVY(v)                 ((v)->dY)
+#define dVZ(v)                 ((v)->dZ)
 
-#define VectorSetX(VV,DD)       ((VV)->dX = DD)
-#define VectorSetY(VV,DD)       ((VV)->dY = DD)
-#define VectorSetZ(VV,DD)       ((VV)->dZ = DD)
+#define VectorSetX(v,d)       ((v)->dX = d)
+#define VectorSetY(v,d)       ((v)->dY = d)
+#define VectorSetZ(v,d)       ((v)->dZ = d)
 
 
 /*  vector.c  */

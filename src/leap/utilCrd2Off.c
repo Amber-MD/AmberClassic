@@ -240,9 +240,8 @@ LABELTYPE       lTemp;
 	FortranSkipLine();
     }
 }
-void main( argc, argv )
-int             argc;
-char*           argv[];
+
+void main(int argc, char *argv[] )
 {
 int             iIndex;
 FILE*           fIn;

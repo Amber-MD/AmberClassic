@@ -85,6 +85,7 @@ extern void MarkSideChainAtoms(RESIDUE rRes);
  */
 
 #define ELECTRONTOKCAL  18.2223
+// precise value: 1 AMBER charge unit = 18.22261543523944 e
 
 #define PERTURBED       0x00000001
 #define BOUNDARY        0x00000002

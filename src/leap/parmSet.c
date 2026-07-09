@@ -1624,10 +1624,8 @@ ATOMPARMt        apAtom;
     apAtom.dScreenF     = dScreenF;
     apAtom.iElement        = iElement;
     apAtom.iHybridization= iHybridization;
-    if ( sDesc != NULL )
-            strcpy( apAtom.sDesc, sDesc );
-    else
-            strcpy( apAtom.sDesc, "" );
+    if (sDesc != NULL) StringCopyMax(apAtom.sDesc, sDesc, sizeof(apAtom.sDesc));
+    else apAtom.sDesc[0]=0;
 
     VarArrayAdd( (psLib->vaAtoms), (GENP)&apAtom );
 
@@ -1657,12 +1655,8 @@ int iParmSetAddBond(PARMSET psLib, char *sType1, char *sType2, double dKb, doubl
   bpBond.dRpull0 = dRpull0;
   bpBond.dKpress = dKpress;
   bpBond.dRpress0 = dRpress0;
-  if (sDesc != NULL) {
-    strcpy(bpBond.sDesc, sDesc);
-  }
-  else {
-    strcpy(bpBond.sDesc, "");
-  }
+  if (sDesc != NULL) StringCopyMax(bpBond.sDesc, sDesc, sizeof(bpBond.sDesc));
+  else bpBond.sDesc[0]=0;
   VarArrayAdd((psLib->vaBonds), (GENP)&bpBond); 
 
   return(iVarArrayElementCount(psLib->vaBonds) - 1);
@@ -1693,10 +1687,8 @@ ANGLEPARMt      apAngle;
     apAngle.dT0 = dT0;
     apAngle.dTkub = dTkub;
     apAngle.dRkub = dRkub;
-    if ( sDesc != NULL )
-        strcpy( apAngle.sDesc, sDesc);
-    else
-        strcpy( apAngle.sDesc, "" );
+    if (sDesc != NULL) StringCopyMax(apAngle.sDesc, sDesc, sizeof(apAngle.sDesc));
+    else apAngle.sDesc[0]=0;
 
     VarArrayAdd( (psLib->vaAngles), (GENP)&apAngle ); 
 
@@ -1720,7 +1712,6 @@ iParmSetAddProperTerm( PARMSET psLib,
         char *sDesc )
 {
 TORSIONPARMt    tpTorsion;
-
     memset( &tpTorsion, 0, sizeof(tpTorsion) );                /* for Purify */
     strcpy( tpTorsion.sType1, sType1 );
     strcpy( tpTorsion.sType2, sType2 );
@@ -1736,10 +1727,8 @@ TORSIONPARMt    tpTorsion;
     tpTorsion.dScEE = dScEE;
     tpTorsion.dScNB = dScNB;
     strcpy( tpTorsion.sOrder, "0123" );
-    if ( sDesc != NULL )
-            strcpy( tpTorsion.sDesc, sDesc );
-    else
-        strcpy( tpTorsion.sDesc, "" );
+    if (sDesc != NULL) StringCopyMax(tpTorsion.sDesc, sDesc, sizeof(tpTorsion.sDesc));
+    else tpTorsion.sDesc[0]=0;
 
     VarArrayAdd( psLib->vaTorsions, (GENP)&tpTorsion ); 
 
@@ -1784,11 +1773,8 @@ orderStr        sOrder;
     tpImproper.dP0 = dP0;
     tpImproper.dScEE = 0.;
     tpImproper.dScNB = 0.;
-
-    if ( sDesc != NULL )
-            strcpy( tpImproper.sDesc, sDesc );
-    else
-        strcpy( tpImproper.sDesc, "" );
+    if (sDesc != NULL) StringCopyMax(tpImproper.sDesc, sDesc, sizeof(tpImproper.sDesc));
+    else tpImproper.sDesc[0]=0;
 
     strcpy( tpImproper.sOrder, sOrder );
 
@@ -1822,10 +1808,8 @@ HBONDPARMt      hpHBond;
     zParmSetOrderBondAtoms( hpHBond.sType1, hpHBond.sType2 );
     hpHBond.dA = dA;
     hpHBond.dB = dB;
-    if ( sDesc != NULL )
-            strcpy( hpHBond.sDesc, sDesc );
-    else
-        strcpy( hpHBond.sDesc, "" );
+    if (sDesc != NULL) StringCopyMax(hpHBond.sDesc, sDesc, sizeof(hpHBond.sDesc));
+    else hpHBond.sDesc[0]=0;
 
     VarArrayAdd( (psLib->vaHBonds), (GENP)&hpHBond ); 
 
@@ -1877,10 +1861,8 @@ iParmSetAddNBEdit( PARMSET psLib, char *sType1, char *sType2, double dEI,
   MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dB);
   hpNBEdit.dA = dA;
   hpNBEdit.dB = dB;
-  if ( sDesc != NULL )
-    strcpy( hpNBEdit.sDesc, sDesc );
-  else
-    strcpy( hpNBEdit.sDesc, "" );
+  if (sDesc != NULL) StringCopyMax(hpNBEdit.sDesc, sDesc, sizeof(hpNBEdit.sDesc));
+  else hpNBEdit.sDesc[0]=0;
 
   VarArrayAdd( (psLib->vaNBEdits), (GENP)&hpNBEdit );
 
@@ -1892,7 +1874,7 @@ iParmSetAddNBEdit( PARMSET psLib, char *sType1, char *sType2, double dEI,
  *
  *        Author:       David S. Cerutti (2013)
  *
- *      Check to see whether this atom type (which is imminently to be
+ *      Check to sebpBond.sDesce whether this atom type (which is imminently to be
  *      compacted in the nonbonded parameters array) is mentioned in any
  *      nonbonded pair potential adjustments.  If so, then it has to remain
  *      its own type.
@@ -2341,7 +2323,8 @@ TORSIONPARMt        tpTorsion;
     tpTorsion.dP0 = dP0;
     tpTorsion.dScEE = dScEE;
     tpTorsion.dScNB = dScNB;
-    strcpy(tpTorsion.sDesc, sDesc);
+    if (sDesc != NULL) StringCopyMax(tpTorsion.sDesc, sDesc, sizeof(tpTorsion.sDesc));
+    else tpTorsion.sDesc[0]=0;
     strcpy( tpTorsion.sOrder, "0123" );
     
     if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, FALSE )
@@ -2381,7 +2364,8 @@ orderStr        sOrder;
     tpTorsion.dP0 = dP0;
     tpTorsion.dScEE = 0.;
     tpTorsion.dScNB = 0.;
-    strcpy(tpTorsion.sDesc, sDesc);
+    if (sDesc != NULL) StringCopyMax(tpTorsion.sDesc, sDesc, sizeof(tpTorsion.sDesc));
+    else tpTorsion.sDesc[0]=0;
     strcpy( tpTorsion.sOrder, sOrder );
     
     if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, FALSE )
@@ -2997,7 +2981,8 @@ ATOMPARMt        *apPAtom;
     if (   dPScreenF != (double*)NULL)  apPAtom->dScreenF = *dPScreenF;
     if (   iPElement != (int*)NULL   )        apPAtom->iElement = *iPElement;
     if (    iPHybrid != (int*)NULL   )        apPAtom->iHybridization = *iPHybrid;
-    if (sDescription != (char*)NULL  )        strcpy(apPAtom->sDesc, sDescription);
+    if (sDescription != (char*)NULL  )
+        StringCopyMax(apPAtom->sDesc, sDescription, sizeof(apPAtom->sDesc));
 }
 
 
@@ -3051,7 +3036,7 @@ void ParmSetUpdateBond(PARMSET psLib, int i, char *sType1, char *sType2,
     bpPBond->dRpress0 = *dPRpress0;
   }
   if (sDescription != (char*)NULL) {
-    strcpy(bpPBond->sDesc, sDescription);
+    StringCopyMax(bpPBond->sDesc, sDescription, sizeof(bpPBond->sDesc));
   }
   if (sType1 || sType2) {
     zParmSetOrderBondAtoms(bpPBond->sType1, bpPBond->sType2);
@@ -3081,7 +3066,8 @@ ANGLEPARMt     *apPAngle;
     if(      sType3 != (char*)NULL  ) strcpy( apPAngle->sType3, sType3 );
     if(        dPKt != (double*)NULL) apPAngle->dKt = *dPKt;
     if(        dPT0 != (double*)NULL) apPAngle->dT0 = *dPT0;
-    if(sDescription != (char*)NULL  ) strcpy(apPAngle->sDesc, sDescription);
+    if(sDescription != (char*)NULL  )
+        StringCopyMax(apPAngle->sDesc, sDescription, sizeof(apPAngle->sDesc));
 
     if ( sType1  ||  sType2 )
             zParmSetOrderAngleAtoms( apPAngle->sType1,
@@ -3122,7 +3108,7 @@ orderStr        sOrder;
     if (        dPP0 != (double*)NULL) tpPTorsion->dP0 = *dPP0;
     if (      dPScEE != (double*)NULL) tpPTorsion->dScEE = *dPScEE;
     if (      dPScNB != (double*)NULL) tpPTorsion->dScNB = *dPScNB;
-    if (sDescription != (char*)NULL  ) strcpy(tpPTorsion->sDesc, sDescription);
+        StringCopyMax(tpPTorsion->sDesc, sDescription, sizeof(tpPTorsion->sDesc));
 
     strcpy( sOrder, "0123" );
     zParmSetOrderTorsionAtoms( tpPTorsion->sType1,
@@ -3158,7 +3144,8 @@ orderStr        sOrder;
     if (         iPN != (int*)NULL   ) tpPTorsion->iN = *iPN;
     if (        dPKp != (double*)NULL) tpPTorsion->dKp = *dPKp;
     if (        dPP0 != (double*)NULL) tpPTorsion->dP0 = *dPP0;
-    if (sDescription != (char*)NULL  ) strcpy(tpPTorsion->sDesc, sDescription);
+    if (sDescription != (char*)NULL  )
+        StringCopyMax(tpPTorsion->sDesc, sDescription, sizeof(tpPTorsion->sDesc));
 
     strcpy( sOrder, "0123" );
     zParmSetOrderImproperAtoms( tpPTorsion->sType1,
@@ -3190,7 +3177,8 @@ HBONDPARMt     *hpPHBond;
     if(      sType2 != (char*)NULL  )        strcpy( hpPHBond->sType2, sType2 );
     if(         dPA != (double*)NULL)         hpPHBond->dA = *dPA;
     if(         dPB != (double*)NULL)         hpPHBond->dB = *dPB;
-    if(sDescription != (char*)NULL  )        strcpy(hpPHBond->sDesc, sDescription);
+    if(sDescription != (char*)NULL  )
+        StringCopyMax(hpPHBond->sDesc, sDescription, sizeof(hpPHBond->sDesc));
 
     if ( sType1 || sType2 )
             zParmSetOrderBondAtoms( hpPHBond->sType1, hpPHBond->sType2 );

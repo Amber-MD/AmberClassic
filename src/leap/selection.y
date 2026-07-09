@@ -197,8 +197,8 @@ selection_spec_list
         { $$ = mk_node(SEL_NODE_AND, $1, $2); }
     | mol_selection  atom_selection      %prec IMPLIED_AND
         { $$ = mk_node(SEL_NODE_AND, $1, $2); }
-    | mol_selection  res_selection       %prec IMPLIED_AND
-        { $$ = mk_node(SEL_NODE_AND, $1, $2); }
+    | mol_res_selection                  %prec IMPLIED_AND
+        { $$ = $1; }
     | mol_res_selection atom_selection   %prec IMPLIED_AND
         { $$ = mk_node(SEL_NODE_AND, $1, $2); }
     | selection_spec_list selection_spec %prec IMPLIED_OR
@@ -208,7 +208,7 @@ selection_spec_list
 /* three-level chain: ^1:ALA@CA — mol+res reduces here first,
  * then the combined node can accept an atom_selection           */
 mol_res_selection
-    : mol_selection res_selection
+    : mol_selection res_selection        %prec IMPLIED_AND
         { $$ = mk_node(SEL_NODE_AND, $1, $2); }
     ;
 

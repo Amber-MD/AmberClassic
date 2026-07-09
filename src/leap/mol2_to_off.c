@@ -53,7 +53,7 @@
  *
  *	Author:	Christian Schafmeister (1991)
  */
-void main( argc, argv )
+int main( argc, argv )
 int             argc;
 char*           argv[];
 {
@@ -98,5 +98,5 @@ LIBRARY		lLibrary;
     }
 
     fclose( fIn );
-
+    return 0;
 }

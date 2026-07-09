@@ -111,6 +111,7 @@ typedef INTERNALt	*INTERNAL;
 
 
 
+static inline OBJEKT objekt_from_internal(INTERNAL i) { return &(i->oSuper); }
 
 /*
 ======================================================================

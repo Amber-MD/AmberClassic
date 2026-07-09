@@ -43,7 +43,7 @@
 
 #ifndef OBJEKT_H
 #define OBJEKT_H
- 
+#include <stdint.h> 
 /*
 #####################################################################
 
@@ -54,6 +54,7 @@
         to call to handle subclass messages.
         Suffix the macro with "id".
 */
+#define OBJEKT_MAGIC 0x404F626A
 
 #define NULLid          'N'
 #define OBJEKTid        'O'
@@ -73,9 +74,6 @@
 #define ASSOCid         'a'
 
 #define	NO_OBJEKTid	'?'
-
-
-
 
 
 /*
@@ -123,10 +121,52 @@
 
 typedef struct  {
 	char            cObjType;
+#ifdef DEBUG
+	uint32_t        iObjektMagic;
+#endif
 	int             iReferences; 
 } OBJEKTt;
 
 typedef OBJEKTt *OBJEKT;
+
+#ifdef DEBUG
+static inline bool bIsObjekt(void *p) {
+    OBJEKT o = (OBJEKT)p;
+    return o->iObjektMagic == OBJEKT_MAGIC;
+}
+static inline uint32_t iGetObjektType( void *o ) {
+    if (!o) return NULLid;
+    assert(bIsObjekt(o));
+    return ((OBJEKT)o)->cObjType;
+}
+static inline OBJEKT objekt_from_objekt(OBJEKT o) { return o; }
+static inline OBJEKT objekt_from_genp(GENP p) { return p ? (assert(bIsObjekt(p)), (OBJEKT)p) : NULL; }
+#define OBJEKT_from(x) _Generic((x), \
+    OBJEKT: objekt_from_objekt, \
+    CONTAINER: objekt_from_container, \
+    UNIT: objekt_from_unit, \
+    MOLECULE: objekt_from_molecule, \
+    RESIDUE: objekt_from_residue, \
+    ATOM: objekt_from_atom, \
+    INTERNAL: objekt_from_internal, \
+    GENP: objekt_from_genp, \
+    LIST: objekt_from_list, \
+    ASSOC: objekt_from_assoc, \
+    PARMSET: objekt_from_parmset, \
+    OSTRING: objekt_from_string, \
+    ODOUBLE: objekt_from_double \
+)(x)
+
+#define iObjectType( o ) iGetObjektType((void*)o)
+
+#else
+
+#define OBJEKT_from(x) ((OBJEKT)(x))
+#define iObjectType( o ) \
+        ( (o) ? (int)(OBJEKT_from(o)->cObjType) : NULLid )
+
+#endif
+
 
 /*
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -146,9 +186,6 @@ extern OBJEKT	oCopy(OBJEKT oCur);
 extern void	Destroy(OBJEKT  *oPObject);
 extern void	Describe(OBJEKT oObject);
 
-#define iObjectType( o ) \
-        (o==NULL ? NULLid : (int)(((OBJEKT)(o))->cObjType))
-
 extern bool	bObjectInClass(OBJEKT oObject, int iClass);
 extern char	*sObjectIndexType(int iType);
 extern char	*sObjectType(OBJEKT oObj);
@@ -162,22 +199,19 @@ extern bool	bObjektWarnType(OBJEKT oObj, int iType);
 
 extern OBJEKT	oObjectDuplicate(OBJEKT oOld);
 
-#define	INVALIDATE_OBJEKT(o)		(((OBJEKT)(o))->cObjType = NO_OBJEKTid )
+#define	INVALIDATE_OBJEKT(o)		(OBJEKT_from(o)->cObjType = NO_OBJEKTid )
 
 
 
-#define REF( o ) {if ( o!=NULL ) (((OBJEKT)(o))->iReferences++);}
+#define REF( o ) {if ( o!=NULL ) (OBJEKT_from(o)->iReferences++);}
 
 #define DEREF( o )      {\
 	if ( (OBJEKT)(o)!=NULL ) {\
-        	((OBJEKT)(o))->iReferences--;\
-        	if ( ((OBJEKT)(o))->iReferences<=0 ) \
+        	OBJEKT_from(o)->iReferences--;\
+        	if ( OBJEKT_from(o)->iReferences<=0 ) \
 			Destroy((OBJEKT *)&(o));\
 	}\
 }
-
-
-
 
 
 /*

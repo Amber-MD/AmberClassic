@@ -73,6 +73,20 @@ typedef OSTRINGt	*OSTRING;
 
 
 
+#ifdef DEBUG
+static inline OSTRING string_from_string( OSTRING oS ) { return oS; }
+static inline OBJEKT objekt_from_string( OSTRING oS ) { return &(oS->oSuper); }
+static inline OSTRING string_from_objekt( OBJEKT o )
+        { assert(iObjectType(o)==OSTRINGid); return (OSTRING)o; }
+
+#define OSTRING_from(x) _Generic((x), \
+    OSTRING: string_from_string, \
+    OBJEKT: string_from_objekt \
+)(x)
+#else
+#define OSTRING_from(x) ((OSTRING)(x))
+#endif
+
 /*
 ======================================================================
 
@@ -98,8 +112,8 @@ extern void	OStringConcat(OSTRING osA, OSTRING osB);
 extern OSTRING	osOStringDuplicate( OSTRING os );
 
 #define iOStringCompare( OS1, OS2 )     \
-( strcmp( ((OSTRING)OS1)->sString, ((OSTRING)OS2)->sString )
-#define sOString( OS )  ( ((OSTRING)OS)->sString ? ((OSTRING)OS)->sString : "" )
+   strcmp( sOString(OS1)->sString, sOString(OS2)->sString )
+#define sOString( OS )  ( OSTRING_from(OS)->sString ? OSTRING_from(OS)->sString : "" )
 
 
 #endif /* OSTRING_H */

@@ -24,6 +24,14 @@
 
 #endif
 
+#define COMMENT_DIM(name, n) \
+    sprintf(sComment, "%%COMMENT DIMENSION=%s; SIZE=%d", (name), (n)); \
+    FortranWriteString(sComment)
+
+#define COMMENT_SIZE(n) \
+    sprintf(sComment, "%%COMMENT SIZE=%d", (n)); \
+    FortranWriteString(sComment)
+
 #define AMBERINDEX(i)   3*(i-1)
 
 typedef struct {
@@ -219,6 +227,7 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     int k1, k2;
     CMAP *Gcmap;
     int maxmap;
+    STRING sComment;
 
     if (!GDefaults.iCMAP)
         return;
@@ -430,6 +439,7 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     }
     FortranFormat(1, "%-80s");
     FortranWriteString("%FLAG CMAP_COUNT");
+    FortranWriteString("%COMMENT SIZE=2; MEMBERS=CMAP_KINDS,CMAP_TYPES");
     //FortranWriteString("%COMMENT");
 //        for (cmntt=cmnt0; cmntt->next != NULL; cmntt=cmntt->next){
 //            sTmp[0]='\0';
@@ -441,12 +451,14 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     FortranWriteString("%FORMAT(2I8)");
 //        sprintf(sTmp,"%8d%8d",mapcount,GiCmapNum);
 //        sprintf(sTmp,"%8d%8d",k,maptypes);
+    int CMAP_KINDS=mk, CMAP_TYPES=maptypes;
     sprintf(sTmp, "%8d%8d", mk, maptypes);
     FortranWriteString(sTmp);
     //FortranEndLine();
 
     FortranFormat(1, "%-80s");
     FortranWriteString("%FLAG CMAP_RESOLUTION");
+    COMMENT_DIM("CMAP_TYPES", CMAP_TYPES);
     FortranWriteString("%FORMAT(20I4)");
     FortranFormat(20, "%4d");
     mapid = 0;
@@ -466,11 +478,15 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
             sprintf(sTmp, "%%FLAG CMAP_PARAMETER_%02d", mapidx[mapid] + 1);
             FortranFormat(1, "%-80s");
             FortranWriteString(sTmp);
-            sprintf(sTmp, "%%COMMENT  %s", Gcmap->title);
+            msize = Gcmap->resolution * Gcmap->resolution;
+            sprintf(sComment,
+                  "%%COMMENT DIMENSION=CMAP_RESOLUTION(%d),CMAP_RESOLUTION(%d); SIZE=%d",
+                  mapidx[mapid]+1,mapidx[mapid]+1,msize);
+            FortranWriteString(sComment);
+            sprintf(sTmp, "%%COMMENT TITLE=%s", Gcmap->title);
             FortranWriteString(sTmp);
             FortranWriteString("%FORMAT(8F9.5)");
             FortranFormat(8, "%9.5lf");
-            msize = Gcmap->resolution * Gcmap->resolution;
             for (j = 0; j < msize; j += 8) {
                 int l;
                 for (l = j; l < msize && l < j + 8; l++) {
@@ -484,6 +500,8 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
 
     FortranFormat(1, "%-80s");
     FortranWriteString("%FLAG CMAP_INDEX");
+    sprintf(sComment, "%%COMMENT DIMENSION=CMAP_KINDS; STRIDE=6; SIZE=%d; MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,ATOM_M,PARM_INDEX", CMAP_KINDS*6);
+    FortranWriteString(sComment);
     FortranWriteString("%FORMAT(6I8)");
     FortranFormat(6, "%8d");
     for (i = 0; i < k; i++) {

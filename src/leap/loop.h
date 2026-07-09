@@ -73,7 +73,7 @@
 
 #define GOALONLY                0x0000FFFF
 #define MOLECULES               MOLECULEid
-#define RESIDUES                RESIDUEid       
+#define RESIDUES                RESIDUEid
 #define ATOMS                   ATOMid
 #define CONTAINERS              CONTAINERid
 #define INTERNALS               INTERNALid
@@ -231,8 +231,8 @@ extern void		LoopDestroyMemory(LOOP *lPLoop);
 
 #define FOREACH(x,type,l)       while ( ( x = (type)oNext(&l) ) != NULL )
 #define LOOPOVERALL(over,goal,element,type,loop) \
-        loop = lLoop((OBJEKT)over,goal);\
-        while ( ( element=(type)oNext(&loop) ) != NULL )
+        loop = lLoop(OBJEKT_from(over),goal);\
+        while ( (element=type##_from(oNext(&loop))) )
 
 
 #endif/* LOOP_H */

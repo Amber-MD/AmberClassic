@@ -970,8 +970,8 @@ STRING	sTemp;
 void	
 BuildInternalsForContainer( CONTAINER cCont, FLAGS fSet, FLAGS fReset )
 {
-ATOM		aTemp;
-ATOM		a1, a2, a3;
+OBJEKT          oTemp;
+ATOM            aTemp, a1, a2, a3;
 LOOP		lTemp;
 #ifdef DEBUG
 STRING		s1, s2, s3;
@@ -988,7 +988,8 @@ double		dValue;
 		/* around central pairs of ATOMs taking into account any */
 		/* external coordinates that may be defined already */
 
-    LOOPOVERALL( cCont, BONDS, aTemp, ATOM, lTemp ) {
+    LOOPOVERALL( cCont, BONDS, oTemp, OBJEKT, lTemp ) {
+        
 	LoopGetBond( &lTemp, &a2, &a3 );
 	if ( iAtomCoordination(a2) <= 1 ) continue;
 	if ( iAtomCoordination(a3) <= 1 ) continue;
@@ -1004,7 +1005,7 @@ double		dValue;
     }
 		/* Build bond angles */
 
-    LOOPOVERALL( cCont, ANGLES, aTemp, ATOM, lTemp ) {
+    LOOPOVERALL( cCont, ANGLES, oTemp, OBJEKT, lTemp ) {
 	LoopGetAngle( &lTemp, &a1, &a2, &a3 );
 	MESSAGE("Building angle INTERNAL for: %s - %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
@@ -1031,7 +1032,7 @@ double		dValue;
 
 		/* Build bond internals */
 
-    LOOPOVERALL( cCont, BONDS, aTemp, ATOM, lTemp ) {
+    LOOPOVERALL( cCont, BONDS, oTemp, OBJEKT, lTemp ) {
 	LoopGetBond( &lTemp, &a1, &a2 );
 	MESSAGE("Building bond INTERNAL for: %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),

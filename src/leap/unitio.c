@@ -900,7 +900,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
         strcpy(saPAtom->sPertName, sAtomPertName(aAtom));
     } else {
         MESSAGE(" no pert atom name set for %s - using nonpert\n",
-                 sContainerFullDescriptor((CONTAINER) aAtom, sTemp));
+                 sFullDescriptor(aAtom, sTemp));
         strcpy(saPAtom->sPertName, sContainerName(aAtom));
     }
     strcpy(saPAtom->sType, sAtomType(aAtom));
@@ -908,7 +908,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
         strcpy(saPAtom->sPertType, sAtomPertType(aAtom));
     } else {
         MESSAGE(" no pert atom type set for %s - using nonpert\n",
-                 sContainerFullDescriptor((CONTAINER) aAtom, sTemp));
+                 sFullDescriptor(aAtom, sTemp));
         strcpy(saPAtom->sPertType, sAtomType(aAtom));
     }
     saPAtom->dCharge = dAtomCharge(aAtom);
@@ -965,7 +965,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
                 iIndex = 0;
                 VPERROR("For atom (%s) could not find vdW (or other) "
                         "parameters for type (%s)\n",
-                     sContainerFullDescriptor((CONTAINER) aAtom, sTemp),
+                     sFullDescriptor(aAtom, sTemp),
                      sAtomType(aAtom));
                 *bPFailed = TRUE;
             }
@@ -1002,7 +1002,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
                     iIndex = 0;
                     VPERROR("For atom (%s) of type (%s) could not find "
                         "perturbed type (%s)\n",
-                        sContainerFullDescriptor((CONTAINER) aAtom, sTemp),
+                        sFullDescriptor(aAtom, sTemp),
                         sType, saPAtom->sPertType );
                     *bPFailed = TRUE;
                 }
@@ -1168,16 +1168,14 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 
     uUnit->vaBonds = vaVarArrayCreate(sizeof(SAVEBONDt));
     iCount = 0;
-    lTemp = lLoop((OBJEKT) uUnit, BONDS);
-    while (oNext(&lTemp) != NULL)
-        iCount++;
+    lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
+    while (oNext(&lTemp)) iCount++;
     VarArraySetSize((uUnit->vaBonds), iCount);
     if (iCount) {
-        lTemp = lLoop((OBJEKT) uUnit, BONDS);
         sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
         if (sbPBond == NULL)
             DFATAL(" ?? null\n");
-        for (; oNext(&lTemp) != NULL; sbPBond++) {
+        for (lTemp=lLoop(OBJEKT_from(uUnit), BONDS); oNext(&lTemp); sbPBond++) {
             LoopGetBond(&lTemp, &aAtom1, &aAtom2);
             sbPBond->iAtom1 = iContainerTempInt(aAtom1);
             sbPBond->iAtom2 = iContainerTempInt(aAtom2);
@@ -1207,8 +1205,8 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                     iIndex = 0;
                     VECTOR vPos1 = vAtomPosition(aAtom1);
                     VECTOR vPos2 = vAtomPosition(aAtom2);
-                    RESIDUE rRes1 = (RESIDUE)cContainerWithin(aAtom1);
-                    RESIDUE rRes2 = (RESIDUE)cContainerWithin(aAtom2);
+                    RESIDUE rRes1 = RESIDUE_from(cContainerWithin(aAtom1));
+                    RESIDUE rRes2 = RESIDUE_from(cContainerWithin(aAtom2));
                     VPERROR("Could not find bond parameter for atom types: %s - %s\n"
                             "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f \n"
                             "        and atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f.\n",
@@ -1229,10 +1227,8 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                 /* not it is on the boundary between perturbed and */
                 /* non-perturbed */
                 MESSAGE("Pert interaction between: %s-%s\n",
-                         sContainerFullDescriptor((CONTAINER) aAtom1,
-                                                  sTemp1),
-                         sContainerFullDescriptor((CONTAINER) aAtom2,
-                                                  sTemp2));
+                         sFullDescriptor(aAtom1, sTemp1),
+                         sFullDescriptor(aAtom2, sTemp2));
                 MESSAGE("Indexes = %d-%d\n", sbPBond->iAtom1,
                          sbPBond->iAtom2);
                 sbPBond->fFlags |= PERTURBED;
@@ -1324,7 +1320,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 
     uUnit->vaAngles = vaVarArrayCreate(sizeof(SAVEANGLEt));
 
-    lTemp = lLoop((OBJEKT) uUnit, ANGLES);
+    lTemp = lLoop(OBJEKT_from(uUnit), ANGLES);
     while (oNext(&lTemp) != NULL) {
         LoopGetAngle(&lTemp, &aAtom1, &aAtom2, &aAtom3);
 
@@ -1366,9 +1362,9 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                 VECTOR vPos1 = vAtomPosition(aAtom1);
                 VECTOR vPos2 = vAtomPosition(aAtom2);
                 VECTOR vPos3 = vAtomPosition(aAtom3);
-                RESIDUE rRes1 = (RESIDUE)cContainerWithin(aAtom1);
-                RESIDUE rRes2 = (RESIDUE)cContainerWithin(aAtom2);
-                RESIDUE rRes3 = (RESIDUE)cContainerWithin(aAtom3);
+                RESIDUE rRes1 = RESIDUE_from(cContainerWithin(aAtom1));
+                RESIDUE rRes2 = RESIDUE_from(cContainerWithin(aAtom2));
+                RESIDUE rRes3 = RESIDUE_from(cContainerWithin(aAtom3));
                 VPERROR("Could not find angle parameter for atom types: %s - %s - %s\n"
                         "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f,\n"
                         "            atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f,\n"
@@ -1534,7 +1530,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     double dTK, dTP;
     STRING sT1, sT2, sT3, sT4, sTemp;
 #endif
-        STRING sDesc;
+    STRING sDesc;
     bool bFailedGeneratingParameters;
     int iTN, iTNPert = 0;
     int iaIndexes[4];
@@ -1646,7 +1642,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         ePImp->recptr = NULL;
     }
 
-    lTemp = lLoop((OBJEKT) uUnit, (bProper ? PROPERS : IMPROPERS));
+    lTemp = lLoop(OBJEKT_from(uUnit), (bProper ? PROPERS : IMPROPERS));
 
     while (oNext(&lTemp) != NULL) {
         if (bProper) {
@@ -1904,10 +1900,10 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 VECTOR vPos2 = vAtomPosition(aAtom2);
                 VECTOR vPos3 = vAtomPosition(aAtom3);
                 VECTOR vPos4 = vAtomPosition(aAtom4);
-                RESIDUE rRes1 = (RESIDUE)cContainerWithin(aAtom1);
-                RESIDUE rRes2 = (RESIDUE)cContainerWithin(aAtom2);
-                RESIDUE rRes3 = (RESIDUE)cContainerWithin(aAtom3);
-                RESIDUE rRes4 = (RESIDUE)cContainerWithin(aAtom4);
+                RESIDUE rRes1 = RESIDUE_from(cContainerWithin(aAtom1));
+                RESIDUE rRes2 = RESIDUE_from(cContainerWithin(aAtom2));
+                RESIDUE rRes3 = RESIDUE_from(cContainerWithin(aAtom3));
+                RESIDUE rRes4 = RESIDUE_from(cContainerWithin(aAtom4));
                 VPERROR(" ** No torsion terms for atom types: %-s-%-s-%-s-%-s\n"
                         "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f,\n"
                         "            atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f,\n"
@@ -1924,10 +1920,10 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                         vPos4.dX, vPos4.dY, vPos4.dZ);
                 bFailedGeneratingParameters = TRUE;
             } else if ( iAtomHybridization(aAtom3) == 2 ){
-                RESIDUE rRes1 = (RESIDUE)cContainerWithin(aAtom1);
-                RESIDUE rRes2 = (RESIDUE)cContainerWithin(aAtom2);
-                RESIDUE rRes3 = (RESIDUE)cContainerWithin(aAtom3);
-                RESIDUE rRes4 = (RESIDUE)cContainerWithin(aAtom4);
+                RESIDUE rRes1 = RESIDUE_from(cContainerWithin(aAtom1));
+                RESIDUE rRes2 = RESIDUE_from(cContainerWithin(aAtom2));
+                RESIDUE rRes3 = RESIDUE_from(cContainerWithin(aAtom3));
+                RESIDUE rRes4 = RESIDUE_from(cContainerWithin(aAtom4));
                 VP1(" ** Warning: No sp2 improper torsion term for  %-s-%-s-%-s-%-s\n",
                      sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4);
                         VP1("        atoms are: %s.%s:%d.%s %s.%s:%d.%s %s.%s:%d.%s %s.%s:%d.%s\n",
@@ -2167,10 +2163,10 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
             }
 #ifdef        DEBUG2
             MESSAGE("Adding %s : %s - %s - %s - %s\n", bProper ? "PROPER" : "IMPROPER"),
-                     sContainerFullDescriptor((CONTAINER) aAtom1, s1),
-                     sContainerFullDescriptor((CONTAINER) aAtom2, s2),
-                     sContainerFullDescriptor((CONTAINER) aAtom3, s3),
-                     sContainerFullDescriptor((CONTAINER) aAtom4, s4);
+                     sFullDescriptor(aAtom1, s1),
+                     sFullDescriptor(aAtom2, s2),
+                     sFullDescriptor(aAtom3, s3),
+                     sFullDescriptor(aAtom4, s4);
             MESSAGE("Perturbed: %s\n", sBOOL(bPerturbTorsion));
 #endif
             if (!bPerturbTorsion) {
@@ -2211,14 +2207,13 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                      iParmOffset, uUnit->vaTorsions,        /* atom lists */
                      iTorsionOffset);
 
-        lTemp = lLoop((OBJEKT) uUnit, RESIDUES);
-        while ((rRes = (RESIDUE) oNext(&lTemp))) {
+        LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lTemp) {
             if (rRes->vaImpropers) {
                 if (iPrep++ == 0)
                     VP0("old PREP-specified impropers:\n");
             }
             if ((iCount = iVarArrayElementCount(rRes->vaImpropers))) {
-                sContainerDescriptor((CONTAINER) rRes, sDesc);
+                sContainerDescriptor(CONTAINER_from(rRes), sDesc);
                 IP = PVAI(rRes->vaImpropers, IMPROPERt, 0);
                 for (i = 0; i < iCount; i++, IP++) {
                     iImproper2++;
@@ -2292,16 +2287,12 @@ UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos,
 
     /* Now put the rest of the ATOMs */
 
-    lTemp = lLoop((OBJEKT) rRes, DIRECTCONTENTSBYSEQNUM);
-    while ((aAtom = (ATOM) oNext(&lTemp)) != NULL) {
+    LOOPOVERALL(rRes,DIRECTCONTENTSBYSEQNUM,aAtom,ATOM,lTemp) {
 
         /* Ignore the imaging ATOM if there is one */
+        if (aAtom == aIgnore) continue;
 
-        if (aAtom == aIgnore)
-            continue;
-
-        zUnitIOTableAddAtom(uUnit, aAtom, *iPPos, plParameters, &bFailed,
-                            bPert);
+        zUnitIOTableAddAtom(uUnit, aAtom, *iPPos, plParameters, &bFailed, bPert);
         (*iPPos)++;
         *bPFailed |= bFailed;
         if (srPResidue->iAtomStartIndex == 0) {
@@ -2343,11 +2334,13 @@ UnitIOAmberOrderResidues( UNIT uUnit )
 
     if ( !GDefaults.reorder_residues )
         printf("\"order_residues\" off: keep input residue order.\n");
-    lResidues = lLoop((OBJEKT) uUnit, GDefaults.reorder_residues ?
+    lResidues = lLoop(OBJEKT_from(uUnit), GDefaults.reorder_residues ?
             DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM);
     int iResIndex=0;
-    while ((rRes = (RESIDUE) oNext(&lResidues)) != NULL) {
-        if (iObjectType(rRes) != RESIDUEid) continue;
+    OBJEKT oObj;
+    while ( (oObj = oNext(&lResidues)) ) {
+        if (iObjectType(oObj) != RESIDUEid) continue;
+        rRes = RESIDUE_from(oObj);
     // Build a RESIDUE entry into the uUnit->vaResidues table.
         ContainerSetTempInt(rRes, iResIndex+1);
         srPResidue->rResidue = rRes;
@@ -2374,7 +2367,7 @@ UnitLabelMolecules(UNIT uUnit) {
     int     iResidueCount=0, iMolecule=0;
 
     /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
-    ContainerResetAllAtomsFlags((CONTAINER) uUnit, ATOMTOUCHED);
+    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
 
     /* Loop through solvent RESIDUEs and:
      * 1) Count them
@@ -2387,34 +2380,33 @@ UnitLabelMolecules(UNIT uUnit) {
      *     TODO: zUnitIOFindAndCountMolecules can use labels instead
      *     of repeating the full spanning tree search
     */
-    lResidues = lLoop((OBJEKT) uUnit, DIRECTCONTENTS);
-    while ((rRes = (RESIDUE) oNext(&lResidues))) {
+    LOOPOVERALL(uUnit,DIRECTCONTENTS,rRes,RESIDUE,lResidues) {
         iResidueCount++;
         if (cResidueType(rRes) == RESTYPESOLVENT) {
-            if (bUnitCapContainsContainer(uUnit, (CONTAINER) rRes))
+            if (bUnitCapContainsContainer(uUnit, CONTAINER_from(rRes)))
                 ResidueSetFlags(rRes, RESIDUEINCAP);
             else
                 ResidueResetFlags(rRes, RESIDUEINCAP);
         }
         /* Search for the next RESIDUE whose first ATOM has not */
         /* been touched */
-        ATOM aAtom = (ATOM)oContainerFirstObject(rRes);
+        ATOM aAtom = ATOM_from(oContainerFirstObject(rRes));
         if (!bAtomFlagsSet(aAtom, ATOMTOUCHED)) {
             iMolecule++; // inrement first: molecule index is 1-based
 
             /* Touch all of the ATOMs within the molecule that */
             /* contains the current RESIDUE */
-            lSpanning = lLoop((OBJEKT) aAtom, SPANNINGTREE);
-            FOREACH(aAtom, ATOM, lSpanning) {
+            LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
                 AtomSetFlags(aAtom, ATOMTOUCHED);
                 CONTAINER cParent = cContainerWithin(aAtom);
                 if (iObjectType(cParent) == RESIDUEid)
-                    ((RESIDUE)cParent)->iMolecule = iMolecule;
+                    RESIDUE_from(cParent)->iMolecule = iMolecule;
             }
         }
     }
 
     uUnit->iMoleculeCount = iMolecule;
+    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
 
     return iResidueCount;
 }
@@ -2496,7 +2488,7 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
     bGenerateParameters = FALSE;
     if (plParameters != NULL) {
-        uUnit->psParameters = (PARMSET) oCreate(PARMSETid);
+        uUnit->psParameters = PARMSET_from(oCreate(PARMSETid));
         bGenerateParameters = TRUE;
     }
 
@@ -2504,18 +2496,15 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     /* Build the molecule information */
 
     iMoleculeCount = 0;
-    lMolecules = lLoop((OBJEKT) uUnit, MOLECULES);
-    while (oNext(&lMolecules) != NULL)
-        iMoleculeCount++;
+    lMolecules = lLoop(OBJEKT_from(uUnit), MOLECULES);
+    while (oNext(&lMolecules)) iMoleculeCount++;
 
     if (iMoleculeCount) {
         uUnit->vaMolecules = vaVarArrayCreate(sizeof(SAVEMOLECULEt));
         VarArraySetSize((uUnit->vaMolecules), iMoleculeCount);
-
-        lMolecules = lLoop((OBJEKT) uUnit, MOLECULES);
         smPMolecule = PVAI(uUnit->vaMolecules, SAVEMOLECULEt, 0);
-        for (i = 0; (mMol = (MOLECULE) oNext(&lMolecules));
-             i++, smPMolecule++) {
+        i=0;
+        LOOPOVERALL(uUnit,MOLECULES,mMol,MOLECULE,lMolecules) {
             ContainerSetTempInt(mMol, i + 1);
             smPMolecule->mMolecule = mMol;
             REF(mMol);
@@ -2523,6 +2512,8 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
             smPMolecule->iSequenceNumber = iContainerSequence(mMol);
             smPMolecule->iNextChildSequence =
                 iContainerNextChildsSequence(mMol);
+             i++;
+             smPMolecule++;
         }
     }
 
@@ -2543,9 +2534,8 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         VP0("Building atom parameters.\n");
 
         iAtomCount = 0;
-        lTemp = lLoop((OBJEKT) uUnit, ATOMS);
-        while (oNext(&lTemp) != NULL)
-            iAtomCount++;
+        lTemp = lLoop(OBJEKT_from(uUnit), ATOMS);
+        while (oNext(&lTemp)) iAtomCount++;
 
         if (iAtomCount) {
             uUnit->vaAtoms = vaVarArrayCreate(sizeof(SAVEATOMt));
@@ -2559,10 +2549,10 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
             /* THEM THEMSELVES TO PREVENT INCOMPATIBILITIES */
             /* WITH FUTURE RELEASES!!!!!!!!!!!!!!!!!!!!!!!! */
 
-            lResidues = lLoop((OBJEKT) uUnit, GDefaults.reorder_residues ?
-                      DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM);
             uUnit->iCapTempInt=0;
-            while ((rRes = (RESIDUE) oNext(&lResidues)) != NULL) {
+            LOOPOVERALL(uUnit, (GDefaults.reorder_residues ?
+                    DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM),
+                    rRes,RESIDUE, lResidues) {
                 /* Set the uUnit->iCapTempInt integer to point to */
                 /* the last ATOM that is not CAP solvent */
                 if ( !uUnit->iCapTempInt &&
@@ -2590,7 +2580,7 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                         iBagSize(uUnit->bRestraints));
         srPRestraint = PVAI(uUnit->vaRestraints, SAVERESTRAINTt, 0);
         blRestraint = blBagLoop(uUnit->bRestraints);
-        while ((rRest = (RESTRAINT) PBagNext(&blRestraint))) {
+        while ((rRest = RESTRAINT_from(PBagNext(&blRestraint)))) {
             srPRestraint->iType = iRestraintType(rRest);
             srPRestraint->fFlags = fRestraintFlags(rRest);
             switch (iRestraintType(rRest)) {
@@ -2660,16 +2650,15 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     /* Now generate the connectivity table */
 
     iCount = 0;
-    lTemp = lLoop((OBJEKT) uUnit, BONDS);
-    while (oNext(&lTemp) != NULL)
-        iCount++;
+    lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
+    while (oNext(&lTemp)) iCount++;
     uUnit->vaConnectivity = vaVarArrayCreate(sizeof(SAVECONNECTIVITYt));
     VarArraySetSize((uUnit->vaConnectivity), iCount);
     if (iCount) {
         i = 0;
-        lTemp = lLoop((OBJEKT) uUnit, BONDS);
         scPCon = PVAI(uUnit->vaConnectivity, SAVECONNECTIVITYt, 0);
-        while (oNext(&lTemp) != NULL) {
+        lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
+        while (oNext(&lTemp)) {
             LoopGetBond(&lTemp, &aAtom1, &aAtom2);
             scPCon->fFlags = fAtomFindBondFlags(aAtom1, aAtom2);
             scPCon->iAtom1 = iContainerTempInt(aAtom1);
@@ -2683,17 +2672,16 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     /* Build a table for the Hierarchy information */
 
     iCount = 0;
-    lTemp = lLoop((OBJEKT) uUnit, CONTAINERS);
-    while (oNext(&lTemp) != NULL)
-        iCount++;
+    lTemp = lLoop(OBJEKT_from(uUnit), CONTAINERS);
+    while (oNext(&lTemp)) iCount++;
     if (iCount) {
         uUnit->vaHierarchy = vaVarArrayCreate(sizeof(SAVEHIERARCHYt));
         VarArraySetSize((uUnit->vaHierarchy), iCount);
-        lTemp = lLoop((OBJEKT) uUnit, CONTAINERS);
+        lTemp = lLoop(OBJEKT_from(uUnit), CONTAINERS);
         i = 0;
         shPHierarchy = PVAI(uUnit->vaHierarchy, SAVEHIERARCHYt, 0);
         while ((oBelow = oNext(&lTemp)) != NULL) {
-            oAbove = (OBJEKT) cContainerWithin(oBelow);
+            oAbove = OBJEKT_from(cContainerWithin(oBelow));
             shPHierarchy->sAboveType[0] = iObjectType(oAbove);
             shPHierarchy->sAboveType[1] = '\0';
             shPHierarchy->sBelowType[0] = iObjectType(oBelow);
@@ -2737,16 +2725,16 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         uUnit->vaGroupAtoms = vaVarArrayCreate(sizeof(SAVEGROUPSt));
         iGroup = 0;
         dlGroups = ydlDictionaryLoop(uUnit->dAtomGroups);
-        while ((lGroup =
-               (LIST) yPDictionaryNext(uUnit->dAtomGroups, &dlGroups))) {
+        while ( (lGroup =
+                LIST_from(yPDictionaryNext(uUnit->dAtomGroups, &dlGroups))) ) {
             strcpy((char *) (PVAI(uUnit->vaGroupNames, STRING, iGroup)),
                    sDictLoopKey(dlGroups));
             llAtoms = llListLoop(lGroup);
             for (i = 0; i < iListSize(lGroup); i++) {
                 sgAtomGroup.iGroupIndex = iGroup + 1;
                 sgAtomGroup.iIndexAtom =
-                    iContainerTempInt((ATOM) oListNext(&llAtoms));
-                VarArrayAdd(uUnit->vaGroupAtoms, (GENP) & sgAtomGroup);
+                    iContainerTempInt(oListNext(&llAtoms));
+                VarArrayAdd(uUnit->vaGroupAtoms, (GENP)&sgAtomGroup);
             }
             iGroup++;
         }
@@ -2871,7 +2859,7 @@ void zUnitIOBuildFromTables(UNIT uUnit)
 
     saPAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, 0);
     for (i = 0; i < iMax; i++, saPAtom++) {
-        aAtom = (ATOM) oCreate(ATOMid);
+        aAtom = ATOM_from(oCreate(ATOMid));
         ContainerSetName(aAtom, saPAtom->sName);
         ContainerSetSequence(aAtom, saPAtom->iSequence);
         AtomSetElement(aAtom, saPAtom->iElement);
@@ -2896,7 +2884,7 @@ void zUnitIOBuildFromTables(UNIT uUnit)
     iMax = iVarArrayElementCount(uUnit->vaResidues);
     rRes = NULL;
     for (i = 0; i < iMax; i++, srPResidue++) {
-        rRes = (RESIDUE) oCreate(RESIDUEid);
+        rRes = RESIDUE_from(oCreate(RESIDUEid));
         ContainerSetName(rRes, srPResidue->sName);
         ContainerSetSequence(rRes, srPResidue->iSequenceNumber);
         ContainerSetNextChildsSequence(rRes,
@@ -2933,7 +2921,7 @@ void zUnitIOBuildFromTables(UNIT uUnit)
     if ((iMax = iVarArrayElementCount(uUnit->vaMolecules))) {
         smPMolecule = PVAI(uUnit->vaMolecules, SAVEMOLECULEt, 0);
         for (i = 0; i < iMax; i++, smPMolecule++) {
-            mMol = (MOLECULE) oCreate(MOLECULEid);
+            mMol = MOLECULE_from(oCreate(MOLECULEid));
             ContainerSetName(mMol, smPMolecule->sName);
             ContainerSetSequence(mMol, smPMolecule->iSequenceNumber);
             // FIXME: added rRes=NULL initialization, may be used here; but is this dead code? --JMK
@@ -2965,44 +2953,44 @@ void zUnitIOBuildFromTables(UNIT uUnit)
 
             switch (shPHierarchy->sAboveType[0]) {
             case UNITid:
-                oObj1 = (OBJEKT) uUnit;
+                oObj1 = OBJEKT_from(uUnit);
                 break;
             case MOLECULEid:
-                oObj1 = (OBJEKT)
+                oObj1 = OBJEKT_from(
                     (PVAI(uUnit->vaMolecules, SAVEMOLECULEt,
-                          shPHierarchy->iAboveIndex - 1))->mMolecule;
+                          shPHierarchy->iAboveIndex - 1))->mMolecule);
                 break;
             case RESIDUEid:
-                oObj1 = (OBJEKT)
+                oObj1 = OBJEKT_from(
                     (PVAI(uUnit->vaResidues, SAVERESIDUEt,
-                          shPHierarchy->iAboveIndex - 1))->rResidue;
+                          shPHierarchy->iAboveIndex - 1))->rResidue);
                 break;
             case ATOMid:
-                oObj1 = (OBJEKT)
+                oObj1 = OBJEKT_from(
                     (PVAI(uUnit->vaAtoms, SAVEATOMt,
-                          shPHierarchy->iAboveIndex - 1))->aAtom;
+                          shPHierarchy->iAboveIndex - 1))->aAtom);
                 break;
             default:
                 DFATAL("Coding error, object hierarchy");
             }
             switch (shPHierarchy->sBelowType[0]) {
             case UNITid:
-                oObj2 = (OBJEKT) uUnit;
+                oObj2 = OBJEKT_from(uUnit);
                 break;
             case MOLECULEid:
-                oObj2 = (OBJEKT)
+                oObj2 = OBJEKT_from(
                     (PVAI(uUnit->vaMolecules, SAVEMOLECULEt,
-                          shPHierarchy->iBelowIndex - 1))->mMolecule;
+                          shPHierarchy->iBelowIndex - 1))->mMolecule);
                 break;
             case RESIDUEid:
-                oObj2 = (OBJEKT)
+                oObj2 = OBJEKT_from(
                     (PVAI(uUnit->vaResidues, SAVERESIDUEt,
-                          shPHierarchy->iBelowIndex - 1))->rResidue;
+                          shPHierarchy->iBelowIndex - 1))->rResidue);
                 break;
             case ATOMid:
-                oObj2 = (OBJEKT)
+                oObj2 = OBJEKT_from(
                     (PVAI(uUnit->vaAtoms, SAVEATOMt,
-                          shPHierarchy->iBelowIndex - 1))->aAtom;
+                          shPHierarchy->iBelowIndex - 1))->aAtom);
                 break;
             default:
                 DFATAL("Coding error, object hierarchy");
@@ -3012,7 +3000,7 @@ void zUnitIOBuildFromTables(UNIT uUnit)
             /*
              *  ContainerAdd() increments Obj2's reference counter
              */
-            ContainerAdd((CONTAINER) oObj1, oObj2);
+            ContainerAdd(CONTAINER_from(oObj1), oObj2);
             ContainerSetNextChildsSequence(oObj1, iChildSeq);
             ContainerSetSequence(oObj2, iSeq);
         }
@@ -3096,7 +3084,7 @@ void zUnitIOBuildFromTables(UNIT uUnit)
                                 (char *) PVAI(uUnit->vaGroupNames, STRING,
                                               iGroup));
             aAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, iIndex - 1)->aAtom;
-            ListAddUnique(lGroup, (GENP) aAtom);
+            ListAddUnique(lGroup, (GENP)aAtom);
         }
     }
 
@@ -3293,7 +3281,7 @@ sAtomName(aChildAtom), (char)dAtomTemp( aChildAtom ));
                      break;
             }
             if (i == iVarArrayElementCount(vaLoopAtoms))
-                VarArrayAdd(vaLoopAtoms, (GENP) sTemp);
+                VarArrayAdd(vaLoopAtoms, (GENP)sTemp);
         }
     }
     /*
@@ -3452,8 +3440,7 @@ iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
      *  for any residue without CONNECT0 and CONNECT1
      */
     iAtomCount = 0;
-    lTemp = lLoop((OBJEKT) rRes, ATOMS);
-    while ((aAtom = (ATOM) oNext(&lTemp)) != NULL) {
+    LOOPOVERALL(rRes,ATOMS,aAtom,ATOM,lTemp) {
         AtomSetTempInt(aAtom, -1);
         AtomSetTempDouble(aAtom, (double) 'x');
         iAtomCount++;
@@ -3466,8 +3453,7 @@ iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
         /*
          *  call it a main chain whether connected or not
          */
-        lTemp = lLoop((OBJEKT) rRes, ATOMS);
-        aAtom = (ATOM) oNext(&lTemp);
+        aAtom = ATOM_from(oContainerFirstObject(CONTAINER_from(rRes)));
         AtomSetTempDouble(aAtom, (double) 'M');
         return (1);
     }
@@ -3475,8 +3461,8 @@ iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
     /*
      *  check connect atoms
      */
-    aAtom0 = (ATOM) rRes->aaConnect[0];
-    aAtom1 = (ATOM) rRes->aaConnect[1];
+    aAtom0 = ATOM_from(rRes->aaConnect[0]);
+    aAtom1 = ATOM_from(rRes->aaConnect[1]);
     if (aAtom0 == NULL) {
         if (bComplain)
             VP0("  %s:  connect0 not defined\n", cPResName);
@@ -3621,8 +3607,8 @@ MarkSideChainAtoms(RESIDUE rRes)
     LOOP lTemp;
     int iCount;
 
-    aAtom0 = (ATOM) rRes->aaConnect[0];
-    aAtom1 = (ATOM) rRes->aaConnect[1];
+    aAtom0 = ATOM_from(rRes->aaConnect[0]);
+    aAtom1 = ATOM_from(rRes->aaConnect[1]);
     if (aAtom0 == NULL)                /* 1-atom residue */
         return;
 
@@ -3631,8 +3617,7 @@ MarkSideChainAtoms(RESIDUE rRes)
      *
      *      reset atom temp ints to use in marking 'seen' atoms
      */
-    lTemp = lLoop((OBJEKT) rRes, ATOMS);
-    while ((aAtom = (ATOM) oNext(&lTemp)) != NULL) {
+    LOOPOVERALL(rRes,ATOMS,aAtom,ATOM,lTemp) {
         AtomSetTempInt(aAtom, -1);
         AtomSetSeenId(aAtom, -1);
     }
@@ -3695,8 +3680,8 @@ static void WritePrepRes(RESIDUE rRes, FILE * fOut)
     if (iMarkMainChainAtoms(rRes, 1) < 1)
         return;
 
-    aAtom0 = (ATOM) rRes->aaConnect[0];
-    aAtom1 = (ATOM) rRes->aaConnect[1];
+    aAtom0 = ATOM_from(rRes->aaConnect[0]);
+    aAtom1 = ATOM_from(rRes->aaConnect[1]);
 
 
     /*
@@ -3724,8 +3709,7 @@ static void WritePrepRes(RESIDUE rRes, FILE * fOut)
      *      atoms in impropers; dAtomTemps were set in
      *      ziMarkMainChainAtoms()
      */
-    lTemp = lLoop((OBJEKT) rRes, ATOMS);
-    while ((aAtom = (ATOM) oNext(&lTemp)) != NULL) {
+    LOOPOVERALL(rRes,ATOMS,aAtom,ATOM,lTemp) {
         AtomSetTempInt(aAtom, -1);
         AtomSetSeenId(aAtom, -1);
     }
@@ -3793,7 +3777,7 @@ static void WritePrepRes(RESIDUE rRes, FILE * fOut)
     /*
      *  write list of potential IMPROPERs
      */
-    lTemp = lLoop((OBJEKT) rRes, IMPROPERS);
+    lTemp = lLoop(OBJEKT_from(rRes), IMPROPERS);
     for (i = 0; oNext(&lTemp);) {
         ATOM aAtomA, aAtomB, aAtomC, aAtomD;
         int iSame;
@@ -3893,8 +3877,7 @@ void UnitIOSaveAmberPrep(UNIT uUnit, FILE * fOut)
     /*
      *  put each residue in
      */
-    lResidues = lLoop((OBJEKT) uUnit, RESIDUES);
-    while ((rRes = (RESIDUE) oNext(&lResidues)))
+    LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lResidues)
         WritePrepRes(rRes, fOut);
     /*
      *  terminate file
@@ -3909,7 +3892,7 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
     double dGBrad = 1.5;
     ATOM aAtom = sa->aAtom;
     // left-trim resname
-    RESIDUE rRes = (RESIDUE)cContainerWithin(aAtom);
+    RESIDUE rRes = RESIDUE_from(cContainerWithin(aAtom));
     const char *sResName = sContainerName(rRes);
     size_t l=strlen(sResName);
     if (l > 3) sResName += l - 3;

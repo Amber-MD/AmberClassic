@@ -66,7 +66,19 @@ typedef struct  {
 
 typedef ODOUBLEt	*ODOUBLE;
 
+#ifdef DEBUG
+static inline ODOUBLE double_from_double( ODOUBLE oD ) { return oD; }
+static inline OBJEKT objekt_from_double( ODOUBLE oD ) { return &(oD->oSuper); }
+static inline ODOUBLE double_from_objekt( OBJEKT o )
+        { assert(iObjectType(o)==ODOUBLEid); return (ODOUBLE)o; }
 
+#define ODOUBLE_from(x) _Generic((x), \
+    ODOUBLE: double_from_double, \
+    OBJEKT: double_from_objekt \
+)(x)
+#else
+#define ODOUBLE_from(x) ((ODOUBLE)(x))
+#endif
 
 /*
 ======================================================================
@@ -88,8 +100,8 @@ extern void		ODoubleDestroy(ODOUBLE *odPDbl);
 extern void		ODoubleDescribe(ODOUBLE odDbl);
 extern ODOUBLE		odODoubleDuplicate( ODOUBLE od );
 
-#define dODouble( OD )  ( ((ODOUBLE)OD)->dValue )
-#define ODoubleSet( OD, V ) ( ((ODOUBLE)OD)->dValue = (V) )
+#define dODouble( OD )  (ODOUBLE_from(OD)->dValue )
+#define ODoubleSet( OD, V ) ( ODOUBLE_from(OD)->dValue = (V) )
 
 
 #endif /* ODOUBLE_H */

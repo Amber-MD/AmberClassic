@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#ifdef BINTRAJ
 
 #include        "basics.h"
 #include        "defaults.h"
@@ -11,7 +12,6 @@
 #include        "cmap.h"
 #include <assert.h>
 
-#ifdef BINTRAJ
 #define LABLEN 4
 #define MAXDESCLEN MAXSTRINGLENGTH
 
@@ -280,7 +280,7 @@ static int write_torsions(int ncid, UNITt *uUnit, bool bPert, int dimid_atom4)
     dims2[0]=dimid_dih_h; dims2[1]=dimid_atom4;
     NC_CHECK(nc_def_var(ncid, "DIHEDRALS_INC_HYDROGEN_ATOMS", NC_INT, 2, dims2, &vid_dih_h_atoms));
     NC_CHECK(nc_put_att_text(ncid, vid_dih_h_atoms, "long_name", 20, "1-based atom indices"));
-    NC_CHECK(nc_put_att_text(ncid, vid_dih_h_atoms, "reference_dimension", 6, "NTOTAT"));
+    NC_CHECK(nc_put_att_text(ncid, vid_dih_h_atoms, "reference_dimension", 5, "NATOM"));
     NC_CHECK(nc_put_att_text(ncid, vid_dih_h_atoms, "note", 46,
                              "atom3,atom4 sign encodes bCalc14,bProper flags"));
 
@@ -292,7 +292,7 @@ static int write_torsions(int ncid, UNITt *uUnit, bool bPert, int dimid_atom4)
     dims2[0]=dimid_dih_nh; dims2[1]=dimid_atom4;
     NC_CHECK(nc_def_var(ncid, "DIHEDRALS_WITHOUT_HYDROGEN_ATOMS", NC_INT, 2, dims2, &vid_dih_nh_atoms));
     NC_CHECK(nc_put_att_text(ncid, vid_dih_nh_atoms, "long_name", 20, "1-based atom indices"));
-    NC_CHECK(nc_put_att_text(ncid, vid_dih_nh_atoms, "reference_dimension", 6, "NTOTAT"));
+    NC_CHECK(nc_put_att_text(ncid, vid_dih_nh_atoms, "reference_dimension", 5, "NATOM"));
     NC_CHECK(nc_put_att_text(ncid, vid_dih_nh_atoms, "note", 47,
                              "atom3/atom4 sign encodes bCalc14/bProper flags"));
 
@@ -329,8 +329,8 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
 {
     int ncid;
     int dimid_atoms, dimid_res, dimid_name4;
-    int dimid_bp;   /* MUMBND - shared by bond parm and augmentation sections */
-    int dimid_ap;   /* MUMANG - shared by angle parm and CHARMM UB sections */
+    int dimid_bp;   /* NUMBND - shared by bond parm and augmentation sections */
+    int dimid_ap;   /* NUMANG - shared by angle parm and CHARMM UB sections */
     int dimid_atom2, dimid_atom3, dimid_atom4;
     int n_atoms    = iVarArrayElementCount(uUnit->vaAtoms);
     int n_residues = iVarArrayElementCount(uUnit->vaResidues);
@@ -425,8 +425,9 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_var(ncid, "ATOM_NAME", NC_CHAR, 2, dims2, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 9, "Atom name"));
         NC_CHECK(nc_put_att_text(ncid, vid, "pdb_field",     4, "name"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_atom_id"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_alt",    22, "atom_site.auth_atom_id"));
+        if (GDefaults.bCIFReadAuth)
+            NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",    22, "atom_site.auth_atom_id"));
+        else NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_atom_id"));
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_text(ncid, vid, b));
         free(b);
@@ -444,7 +445,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             buf[i] = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->dCharge;
         NC_CHECK(nc_redef(ncid));
         NC_CHECK(nc_def_var(ncid, "CHARGE", NC_DOUBLE, 1, &dimid_atoms, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "units", 18, "elementary_charge"));
+        NC_CHECK(nc_put_att_text(ncid, vid, "units", 18, "elementary charge"));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 51,
                                  "multiply by 18.2223 for AMBER internal charge units"));
         NC_CHECK(nc_enddef(ncid));
@@ -544,10 +545,11 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             VPWARN("%d residues have undefined type\n",iUnknownTypes);
         NC_CHECK(nc_redef(ncid));
         NC_CHECK(nc_def_var(ncid, "RESIDUE_LABEL", NC_CHAR, 2, dims2, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 11, "residue name"));
+        NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 12, "residue name"));
         NC_CHECK(nc_put_att_text(ncid, vid, "pdb_field",     7, "resName"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_comp_id"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_alt",    22, "atom_site.auth_comp_id"));
+        if (GDefaults.bCIFReadAuth)
+            NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",    22, "atom_site.auth_comp_id"));
+        else NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_comp_id"));
         NC_CHECK(nc_def_var(ncid, "RESIDUE_TYPE", NC_CHAR, 1, dims2, &vid_type));
         NC_CHECK(nc_put_att_text(ncid, vid_type, "long_name", strlen(type_info), type_info));
         NC_CHECK(nc_enddef(ncid));
@@ -569,7 +571,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_var(ncid, "RESIDUE_POINTER", NC_INT, 1, &dimid_res, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 36,
                                  "1-based first atom index per residue"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 5, "NATOM"));
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_int(ncid, vid, buf));
         free(buf);
@@ -582,7 +584,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         int n  = nb + nr;
         double *kb = malloc(n*sizeof(double)), *r0 = malloc(n*sizeof(double));
         NC_CHECK(nc_redef(ncid));
-        NC_CHECK(nc_def_dim(ncid, "MUMBND", n, &dimid_bp));
+        NC_CHECK(nc_def_dim(ncid, "NUMBND", n, &dimid_bp));
         NC_CHECK(nc_def_var(ncid, "BOND_FORCE_CONSTANT", NC_DOUBLE, 1, &dimid_bp, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "units", 19, "kcal/mol/angstrom^2"));
         NC_CHECK(nc_enddef(ncid));
@@ -603,7 +605,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         free(kb); free(r0);
     }
 
-    /* -12B..E- bond augmentation, same MUMBND dimension as above */
+    /* -12B..E- bond augmentation, same NUMBND dimension as above */
     if (BondAugmentationFound(uUnit) == 1) {
         int nb = iParmSetTotalBondParms(uUnit->psParameters);
         int nr = iUnitRestraintTypeCount(uUnit, RESTRAINTBOND);
@@ -652,17 +654,17 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         int vid_force, vid_equil;
         double *kt = malloc(n*sizeof(double)), *t0 = malloc(n*sizeof(double));
         NC_CHECK(nc_redef(ncid));
-        NC_CHECK(nc_def_dim(ncid, "MUMANG", n, &dimid_ap));
+        NC_CHECK(nc_def_dim(ncid, "NUMANG", n, &dimid_ap));
         NC_CHECK(nc_def_var(ncid, "ANGLE_FORCE_CONSTANT", NC_DOUBLE, 1, &dimid_ap, &vid_force));
         NC_CHECK(nc_put_att_text(ncid, vid_force, "units", 17, "kcal/mol/radian^2"));
         NC_CHECK(nc_def_var(ncid, "ANGLE_EQUIL_VALUE", NC_DOUBLE, 1, &dimid_ap, &vid_equil));
-        NC_CHECK(nc_put_att_text(ncid, vid_equil, "units", 6, "radian"));
+        NC_CHECK(nc_put_att_text(ncid, vid_equil, "units", 6, "degrees"));
         NC_CHECK(nc_enddef(ncid));
 
         for (int i = 0; i < na; i++) {
             ParmSetAngle(uUnit->psParameters, i, s1, s2, s3, &dKt, &dT0,
                          &dTkub, &dRkub, sd);
-            kt[i] = dKt; t0[i] = dT0;
+            kt[i] = dKt; t0[i] = dT0 / DEGTORAD;
         }
         NC_RESTRAINTLOOP(uUnit, RESTRAINTANGLE, dKx, kt, na);
         NC_CHECK(nc_put_var_double(ncid, vid_force, kt));
@@ -800,22 +802,22 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         dims2[0]=dimid_bh; dims2[1]=dimid_atom2;
         NC_CHECK(nc_def_var(ncid, "BONDS_INC_HYDROGEN_ATOMS", NC_INT, 2, dims2, &vid_bh_atoms));
         NC_CHECK(nc_put_att_text(ncid, vid_bh_atoms, "long_name",          20, "1-based atom indices"));
-        NC_CHECK(nc_put_att_text(ncid, vid_bh_atoms, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid_bh_atoms, "reference_dimension", 5, "NATOM"));
 
         NC_CHECK(nc_def_var(ncid, "BONDS_INC_HYDROGEN_PARM", NC_INT, 1, &dimid_bh, &vid_bh_parm));
         NC_CHECK(nc_put_att_text(ncid, vid_bh_parm, "long_name", 18, "1-based parm index"));
-        NC_CHECK(nc_put_att_text(ncid, vid_bh_parm, "reference_dimenson", 6, "MUMBND"));
+        NC_CHECK(nc_put_att_text(ncid, vid_bh_parm, "reference_dimenson", 6, "NUMBND"));
         NC_CHECK(nc_put_att_text(ncid, vid_bh_parm, "reference", 36,
                                  "BOND_FORCE_CONSTANT BOND_EQUIL_VALUE"));
 
         dims2[0]=dimid_bnh; dims2[1]=dimid_atom2;
         NC_CHECK(nc_def_var(ncid, "BONDS_WITHOUT_HYDROGEN_ATOMS", NC_INT, 2, dims2, &vid_bnh_atoms));
         NC_CHECK(nc_put_att_text(ncid, vid_bnh_atoms, "long_name",          20, "1-based atom indices"));
-        NC_CHECK(nc_put_att_text(ncid, vid_bnh_atoms, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid_bnh_atoms, "reference_dimension", 5, "NATOM"));
 
         NC_CHECK(nc_def_var(ncid, "BONDS_WITHOUT_HYDROGEN_PARM", NC_INT, 1, &dimid_bnh, &vid_bnh_parm));
         NC_CHECK(nc_put_att_text(ncid, vid_bnh_parm, "long_name", 18, "1-based parm index"));
-        NC_CHECK(nc_put_att_text(ncid, vid_bnh_parm, "reference_dimenson", 6, "MUMBND"));
+        NC_CHECK(nc_put_att_text(ncid, vid_bnh_parm, "reference_dimenson", 6, "NUMBND"));
         NC_CHECK(nc_put_att_text(ncid, vid_bnh_parm, "reference", 36,
                                  "BOND_FORCE_CONSTANT BOND_EQUIL_VALUE"));
         NC_CHECK(nc_enddef(ncid));
@@ -871,22 +873,22 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         dims2[0]=dimid_ah; dims2[1]=dimid_atom3;
         NC_CHECK(nc_def_var(ncid, "ANGLES_INC_HYDROGEN_ATOMS", NC_INT, 2, dims2, &vid_ah_atoms));
         NC_CHECK(nc_put_att_text(ncid, vid_ah_atoms, "long_name",          20, "1-based atom indices"));
-        NC_CHECK(nc_put_att_text(ncid, vid_ah_atoms, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid_ah_atoms, "reference_dimension", 5, "NATOM"));
 
         NC_CHECK(nc_def_var(ncid, "ANGLES_INC_HYDROGEN_PARM", NC_INT, 1, &dimid_ah, &vid_ah_parm));
         NC_CHECK(nc_put_att_text(ncid, vid_ah_parm, "long_name", 18, "1-based parm index"));
-        NC_CHECK(nc_put_att_text(ncid, vid_ah_parm, "reference_dimenson", 6, "MUMANG"));
+        NC_CHECK(nc_put_att_text(ncid, vid_ah_parm, "reference_dimenson", 6, "NUMANG"));
         NC_CHECK(nc_put_att_text(ncid, vid_ah_parm, "reference", 38,
                                  "ANGLE_FORCE_CONSTANT ANGLE_EQUIL_VALUE"));
 
         dims2[0]=dimid_anh; dims2[1]=dimid_atom3;
         NC_CHECK(nc_def_var(ncid, "ANGLES_WITHOUT_HYDROGEN_ATOMS", NC_INT, 2, dims2, &vid_anh_atoms));
         NC_CHECK(nc_put_att_text(ncid, vid_anh_atoms, "long_name",          20, "1-based atom indices"));
-        NC_CHECK(nc_put_att_text(ncid, vid_anh_atoms, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid_anh_atoms, "reference_dimension", 5, "NATOM"));
 
         NC_CHECK(nc_def_var(ncid, "ANGLES_WITHOUT_HYDROGEN_PARM", NC_INT, 1, &dimid_anh, &vid_anh_parm));
         NC_CHECK(nc_put_att_text(ncid, vid_anh_parm, "long_name", 18, "1-based parm index"));
-        NC_CHECK(nc_put_att_text(ncid, vid_anh_parm, "reference_dimenson", 6, "MUMANG"));
+        NC_CHECK(nc_put_att_text(ncid, vid_anh_parm, "reference_dimenson", 6, "NUMANG"));
         NC_CHECK(nc_put_att_text(ncid, vid_anh_parm, "reference", 38,
                                  "ANGLE_FORCE_CONSTANT ANGLE_EQUIL_VALUE"));
         NC_CHECK(nc_enddef(ncid));
@@ -910,7 +912,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_dim(ncid, "NEXT", n, &dimid_excl));
         NC_CHECK(nc_def_var(ncid, "EXCLUDED_ATOMS_LIST", NC_INT, 1, &dimid_excl, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name",          19, "excluded atom list"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 5, "NATOM"));
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_int(ncid, vid, PVAI(vaExcludedAtoms, int, 0)));
     }
@@ -924,7 +926,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             double *B   = malloc(n*sizeof(double));
 
             NC_CHECK(nc_redef(ncid));
-            NC_CHECK(nc_def_dim(ncid, "NHB", n, &dimid_hb));
+            NC_CHECK(nc_def_dim(ncid, "NPHB", n, &dimid_hb));
             NC_CHECK(nc_def_var(ncid, "HBOND_ACOEF", NC_DOUBLE, 1, &dimid_hb, &vid_hba));
             NC_CHECK(nc_put_att_text(ncid, vid_hba, "units", 20, "kcal/mol*angstrom^12"));
 
@@ -1009,7 +1011,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_var(ncid, "IPTRES", NC_INT, 0, NULL, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name",          46,
                                  "1-based residue index of first solvent residue"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 6, "NTOTRS"));
+        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 4, "NRES"));
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_int(ncid, vid, &iFirstSolvRes));
 
@@ -1040,7 +1042,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_var(ncid, "CAP_INFO_ATOM", NC_INT, 0, NULL, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name",          45,
                              "Index of the last atom not in the Solvent Cap"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 5, "NATOM"));
         NC_CHECK(nc_enddef(ncid));
 
         double dX, dY, dZ, dR;
@@ -1110,7 +1112,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                 NC_CHECK(nc_def_dim(ncid, "NBPER", n, &dimid_pb));
                 dims2[0]=dimid_pb; dims2[1]=dimid_atom2;
                 NC_CHECK(nc_def_var(ncid, "PERT_BOND_ATOMS", NC_INT, 2, dims2, &vid));
-                NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 6, "NTOTAT"));
+                NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 5, "NATOM"));
                 NC_CHECK(nc_enddef(ncid));
                 NC_CHECK(nc_put_var_int(ncid, vid, (int*)a));
             }
@@ -1138,13 +1140,13 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                 NC_CHECK(nc_redef(ncid));
                 NC_CHECK(nc_def_dim(ncid, "MBPER", n, &dimid_pb));
                 NC_CHECK(nc_def_var(ncid, "PERT_BOND_PARAMS_L0", NC_INT, 1, &dimid_pb, &vid));
-                NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimenson", 6, "MUMBND"));
+                NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimenson", 6, "NUMBND"));
                 NC_CHECK(nc_put_att_text(ncid, vid, "reference", 36,
                                          "BOND_FORCE_CONSTANT BOND_EQUIL_VALUE"));
                 NC_CHECK(nc_enddef(ncid));
                 NC_CHECK(nc_put_var_int(ncid, vid, p0));
                 NC_CHECK(nc_def_var(ncid, "PERT_BOND_PARAMS_L1", NC_INT, 1, &dimid_pb, &vid));
-                NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimenson", 6, "MUMBND"));
+                NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimenson", 6, "NUMBND"));
                 NC_CHECK(nc_put_att_text(ncid, vid, "reference", 36,
                                          "BOND_FORCE_CONSTANT BOND_EQUIL_VALUE"));
                 NC_CHECK(nc_enddef(ncid));
@@ -1314,8 +1316,9 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_var(ncid, "RESIDUE_NUMBER", NC_INT, 1, &dimid_res, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 10, "PDB resSeq"));
         NC_CHECK(nc_put_att_text(ncid, vid, "pdb_field",     6, "resSeq"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  22, "atom_site.label_seq_id"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_alt",    21, "atom_site.auth_seq_id"));
+        if (GDefaults.bCIFReadAuth)
+            NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",    21, "atom_site.auth_seq_id"));
+        else NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  22, "atom_site.label_seq_id"));
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_int(ncid, vid, buf));
         free(buf);
@@ -1333,8 +1336,9 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_var(ncid, "RESIDUE_CHAINID", NC_CHAR, 2, dims2, &vid));
         NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 10, "PDB resSeq"));
         NC_CHECK(nc_put_att_text(ncid, vid, "pdb_field",     7, "chainID"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_comp_id"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_alt",    22, "atom_site.auth_comp_id"));
+        if (GDefaults.bCIFReadAuth)
+            NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",    22, "atom_site.auth_comp_id"));
+        else NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_comp_id"));
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_text(ncid, vid, cbuf));
         free(cbuf);

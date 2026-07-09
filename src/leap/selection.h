@@ -1,6 +1,5 @@
 #ifndef SELECTION_H
 #define SELECTION_H
-#include <stdbool.h>
 #include <stddef.h>
 #include "unit.h"
 #include "atom.h"

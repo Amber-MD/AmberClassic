@@ -171,7 +171,25 @@ typedef ATOMt   *ATOM;
 #define ATOMFLAG3               0x80000000
 
 
+#ifdef DEBUG
+#define assert_loc(cond, file, line) \
+    ((cond) ? (void)0 : (fprintf(stderr, "%s:%d: assertion failed: %s\n", (file), (line), #cond), abort()))
+static inline CONTAINER container_from_atom(ATOM a) { return a ? &(a->cHeader) : NULL; }
+static inline OBJEKT objekt_from_atom(ATOM a) { return a ? &(a->cHeader.oHeader) : NULL; }
+static inline ATOM atom_from_objekt(OBJEKT o, const char *file, int line)
+  { return o ? (assert_loc(iObjectType(o)==ATOMid,file,line),(ATOM)o) : NULL; }
+static inline ATOM atom_from_container(CONTAINER c, const char *file, int line)
+  { return c ? (assert_loc(iObjectType(&(c->oHeader))==ATOMid,file,line), (ATOM)c) : NULL; }
+static inline ATOM atom_from_atom(ATOM a,const char *file,int line) { return a; }
 
+#define ATOM_from(x) _Generic((x), \
+    OBJEKT: atom_from_objekt, \
+    CONTAINER: atom_from_container, \
+    ATOM: atom_from_atom \
+)(x,__FILE__,__LINE__)
+#else
+#define ATOM_from(x) ((ATOM)(x))
+#endif
 
 /*
 ======================================================================
@@ -183,9 +201,6 @@ typedef ATOMt   *ATOM;
         when the message is sent to the most primitive superclass
         of this class that it will eventually make it into these routines.
 */
-
-
-
 #define AtomDefineBondFlags(a,i,f)      (((ATOM)(a))->faBondFlags[i] = f,CDU(a) )
 #define AtomSetBondFlags(a,i,f)         (((ATOM)(a))->faBondFlags[i] |= f,CDU(a) )
 #define AtomResetBondFlags(a,i,f)       \

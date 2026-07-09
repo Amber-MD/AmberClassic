@@ -59,8 +59,20 @@ typedef struct  {
 typedef LISTt	*LIST;
 
 
+#ifdef DEBUG
+static inline LIST list_from_genp(GENP p)
+  { assert(bIsObjekt(p)); assert(iObjectType((OBJEKT)p)==LISTid); return (LIST)p; }
+static inline LIST list_from_objekt(OBJEKT o)
+  { assert ( iObjectType(o)==LISTid ); return (LIST)o; }
+static inline OBJEKT objekt_from_list(LIST l) { return &(l->oSuper.oObjectHeader); }
 
-
+#define LIST_from(x) _Generic((x), \
+    OBJEKT: list_from_objekt, \
+    GENP: list_from_genp \
+)(x)
+#else
+#define LIST_from(x) ((LIST)(x))
+#endif
 
 /*
 --------------------------------------------------------------------

@@ -141,8 +141,25 @@ typedef struct  {
 typedef UNITt   *UNIT;
 
 
-
-
+#ifdef DEBUG
+static inline CONTAINER container_from_unit(UNIT u) { return u ? &(u->cHeader) : NULL; }
+static inline OBJEKT objekt_from_unit(UNIT u) { return u ? &(u->cHeader.oHeader) : NULL; }
+static inline UNIT unit_from_objekt(OBJEKT o)
+  { return o ? (assert(iObjectType(o)==UNITid), (UNIT)o) : NULL; }
+static inline UNIT unit_from_container(CONTAINER c)
+  { return c ? (assert(iObjectType(&(c->oHeader))==UNITid), (UNIT)c) : NULL; }
+static inline UNIT unit_from_genp(void *p)
+  { return p ? (assert(iObjectType((OBJEKT)p)==UNITid),(UNIT)p) : NULL; }
+static inline UNIT unit_from_unit(UNIT u) { return u; }
+#define UNIT_from(x) _Generic((x), \
+    OBJEKT: unit_from_objekt, \
+    CONTAINER: unit_from_container, \
+    UNIT: unit_from_unit, \
+    GENP: unit_from_genp \
+)(x)
+#else
+#define UNIT_from(x) ((UNIT)(x))
+#endif
 
 /*
 ======================================================================
@@ -215,46 +232,48 @@ extern void     UnitDestroy( UNIT *uPUnit );
 extern bool     zbUnitIgnoreHwHwOwAngle( STRING sA, STRING sB, STRING sC );
 extern bool     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
 
-#define sUnitDescription( u )     ( ((UNIT)u)->sDescription )
-#define UnitSetDescription( u, s ) ( StringCopyMax( ((UNIT)u)->sDescription, s,\
+#define uCopyUnit(u) UNIT_from(oCopy(OBJEKT_from(u)))
+
+#define sUnitDescription( u )     ( UNIT_from(u)->sDescription )
+#define UnitSetDescription( u, s ) ( StringCopyMax( UNIT_from(u)->sDescription, s,\
                                         sizeof(STRING) ) )
 #define UnitUseParameters( u, p ) \
-        ( ((UNIT)(u))->psParameters = (OBJEKT)(p),CDU(u) )
-#define psUnitParameters( u )     ((PARMSET)( ((UNIT)(u))->psParameters ))
+        ( UNIT_from(u)->psParameters = (p),CDU(u) )
+#define psUnitParameters( u )     ( UNIT_from(u)->psParameters )
 
-#define bUnitHeadUsed(u)                ( ((UNIT)(u))->aHead != NULL )
-#define aUnitHead(u)                    ( (ATOM)(((UNIT)(u))->aHead) )
-#define UnitSetHead( u, a )             ( ((UNIT)(u))->aHead = (OBJEKT)(a),CDU(u) )
+#define bUnitHeadUsed(u)                ( UNIT_from(u)->aHead != NULL )
+#define aUnitHead(u)                    ( ATOM_from(UNIT_from(u)->aHead) )
+#define UnitSetHead( u, a )             ( UNIT_from(u)->aHead = (OBJEKT)(a),CDU(u) )
 
-#define bUnitTailUsed(u)        ( ((UNIT)(u))->aTail != NULL )
-#define aUnitTail(u)            ( (ATOM)(((UNIT)(u))->aTail) )
-#define UnitSetTail( u, a )     ( ((UNIT)(u))->aTail = (OBJEKT)(a),CDU(u) )
+#define bUnitTailUsed(u)        ( UNIT_from(u)->aTail != NULL )
+#define aUnitTail(u)            ( ATOM_from(UNIT_from(u)->aTail) )
+#define UnitSetTail( u, a )     ( UNIT_from(u)->aTail = (OBJEKT)(a),CDU(u) )
 
-#define UnitSetMode( u, m )             (((UNIT)(u))->iMode = m,CDU(u) )
-#define iUnitMode( u )                  (((UNIT)(u))->iMode)
-#define dUnitAtomGroups(u)              (((UNIT)(u))->dAtomGroups)
+#define UnitSetMode( u, m )             (UNIT_from(u)->iMode = m,CDU(u) )
+#define iUnitMode( u )                  (UNIT_from(u)->iMode)
+#define dUnitAtomGroups(u)              (UNIT_from(u)->dAtomGroups)
 #define UnitGetBox( u, xP, yP, zP ) (\
-        *(xP) = ((UNIT)(u))->dXWidth,\
-        *(yP) = ((UNIT)(u))->dYWidth,\
-        *(zP) = ((UNIT)(u))->dZWidth )
+        *(xP) = UNIT_from(u)->dXWidth,\
+        *(yP) = UNIT_from(u)->dYWidth,\
+        *(zP) = UNIT_from(u)->dZWidth )
 #define UnitSetBox( u, x, y, z ) (\
-        ((UNIT)(u))->dXWidth = (x),\
-        ((UNIT)(u))->dYWidth = (y),\
-        ((UNIT)(u))->dZWidth = (z),CDU(u) )
+        UNIT_from(u)->dXWidth = (x),\
+        UNIT_from(u)->dYWidth = (y),\
+        UNIT_from(u)->dZWidth = (z),CDU(u) )
 #define UnitGetCell( u, xP, yP, zP, aP, bP, gP ) (\
-        *(xP) = ((UNIT)(u))->dXWidth,\
-        *(yP) = ((UNIT)(u))->dYWidth,\
-        *(zP) = ((UNIT)(u))->dZWidth,\
-        *(aP) = ((UNIT)(u))->dAlpha,\
-        *(bP) = ((UNIT)(u))->dBeta,\
-        *(gP) = ((UNIT)(u))->dGamma)
+        *(xP) = UNIT_from(u)->dXWidth,\
+        *(yP) = UNIT_from(u)->dYWidth,\
+        *(zP) = UNIT_from(u)->dZWidth,\
+        *(aP) = UNIT_from(u)->dAlpha,\
+        *(bP) = UNIT_from(u)->dBeta,\
+        *(gP) = UNIT_from(u)->dGamma)
 #define UnitSetCell( u, x, y, z, a, b, g ) (\
-        ((UNIT)(u))->dXWidth = (x),\
-        ((UNIT)(u))->dYWidth = (y),\
-        ((UNIT)(u))->dZWidth = (z),\
-        ((UNIT)(u))->dAlpha = (a),\
-        ((UNIT)(u))->dBeta = (b),\
-        ((UNIT)(u))->dGamma = (g), CDU(u) )
+        UNIT_from(u)->dXWidth = (x),\
+        UNIT_from(u)->dYWidth = (y),\
+        UNIT_from(u)->dZWidth = (z),\
+        UNIT_from(u)->dAlpha = (a),\
+        UNIT_from(u)->dBeta = (b),\
+        UNIT_from(u)->dGamma = (g), CDU(u) )
 #define UnitGetSolventCap( u, xP, yP, zP, rP ) {\
         (*xP) = dVX(&(u->vCapOrigin));\
         (*yP) = dVY(&(u->vCapOrigin));\
@@ -263,13 +282,13 @@ extern bool     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
 #define UnitSetSolventCap( u, x, y, z, r ) {\
         VectorDef( &(u->vCapOrigin), x, y, z );\
         u->dCapRadius = r;CDU(u); }
-#define UnitSetBeta( u, d )     ( ((UNIT)(u))->dBeta = d, \
-        ((UNIT)(u))->dAlpha = ((UNIT)(u))->dGamma = 90.0*DEGTORAD, CDU(u))
-#define dUnitBeta( u )          ( ((UNIT)(u))->dBeta )
-#define UnitDefineFlags( u, f ) ( ((UNIT)(u))->fFlags = (f), CDU(u) )
-#define UnitSetFlags( u, f )    { ((UNIT)(u))->fFlags |= (f); CDU(u); }
-#define UnitResetFlags( u, f )  { ((UNIT)(u))->fFlags &= ~(f); CDU(u); }
-#define bUnitFlagsSet( u, f )   ( (((UNIT)(u))->fFlags & (f)) == (f) )
+#define UnitSetBeta( u, d )     ( UNIT_from(u)->dBeta = d, \
+        UNIT_from(u)->dAlpha = UNIT_from(u)->dGamma = 90.0*DEGTORAD, CDU(u))
+#define dUnitBeta( u )          ( UNIT_from(u)->dBeta )
+#define UnitDefineFlags( u, f ) ( UNIT_from(u)->fFlags = (f), CDU(u) )
+#define UnitSetFlags( u, f )    { UNIT_from(u)->fFlags |= (f); CDU(u); }
+#define UnitResetFlags( u, f )  { UNIT_from(u)->fFlags &= ~(f); CDU(u); }
+#define bUnitFlagsSet( u, f )   ( (UNIT_from(u)->fFlags & (f)) == (f) )
 #define bUnitUseBox(u)          (bUnitFlagsSet(u,UNITUSEBOUNDINGBOX))
 #define bUnitBoxOct(u)          (bUnitFlagsSet(u,UNITBOXOCT))
 #define bUnitUseSolventCap(u)           bUnitFlagsSet(u,UNITUSESOLVENTCAP)

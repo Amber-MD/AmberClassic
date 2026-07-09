@@ -61,12 +61,16 @@ typedef struct  {
 
 static VARARRAY         vaAtomTypes = NULL;
 
+// NONBONDt and MASSt are merged and passed to iParmSetAddAtom()
+// and get storderd as ATOMPARMt
+// Loop over NONBONDt, and skipped if MASSt absent.
 typedef struct  {
         char            sNonBondType[ATOMNAMELEN];
         double          dRStar;
         double          dDepth;
         double          dRStar14;
         double          dDepth14;
+        DESCRIPTION     sDesc;
 } NONBONDt;
 
 typedef struct  {
@@ -97,9 +101,9 @@ typedef struct  {
  * CO-CX-2C-C    1     0.00000    0.0 -4.0  CASH/CASN chi1'
  * The format is at most a2,1x,a2,1x,a2,1x,a2; hence, the magic 9.
  */
-#define REPLACEDASHES(s) {int z;for(z=0;z<9;z++) if(s[z]=='-')s[z]=' '; else if(s[z]=='\n') break;}
-#define NODASHES(s)     {int z;for(z=0;z<9;z++) if(s[z]=='-')s[z]=' ';}
-#define NODASHESWL(s)     {int z;for(z=0;z<strlen(s);z++) if(s[z]=='-')s[z]=' ';}
+#define REPLACEDASHES(s) {StringRTrim(sLine); for(int z=0;z<9;z++) if(s[z]=='-')s[z]=' '; else if(s[z]=='\n') break;}
+#define NODASHES(s)     {for(int z=0;z<9;z++) if(s[z]=='-')s[z]=' ';}
+#define NODASHESWL(s)     {for(int z=0;z<strlen(s);z++) if(s[z]=='-')s[z]=' ';}
 
 
 /*
@@ -225,7 +229,7 @@ STRING          sHybridization;
 //---------------------------------------------------------------------------------------------
 static void zAmberReadParmSetBonds(PARMSET psParms, FILE *fIn)
 {
-    int    iRead;
+    int    iRead, iDesc1, iDesc;
     STRING sLine;
     STRING saStr[10];
     double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0;
@@ -236,11 +240,13 @@ static void zAmberReadParmSetBonds(PARMSET psParms, FILE *fIn)
     while (1) {
         FGETS(sLine, fIn);
         REPLACEDASHES(sLine);
-        iRead = sscanf(sLine, "%s %s %lf %lf %lf %lf %lf %lf", saStr[0], saStr[1],
-                       &dKb, &dR0, &dKpull, &dRpull0, &dKpress, &dRpress0);
-        if (iRead <= 0)
+        StringRTrim(sLine);
+        iRead = sscanf(sLine, "%s %s %lf %lf %n%lf %lf %lf %lf %n", saStr[0], saStr[1],
+                       &dKb, &dR0, &iDesc1, &dKpull, &dRpull0, &dKpress, &dRpress0, &iDesc);
+        if (iRead < 4) // XXX was <=0
             break;
         if (iRead != 8) {
+            iDesc = iDesc1;
             dKpull   =   0.0;
             dKpress  =   0.0;
             dRpull0  = 100.0;
@@ -248,7 +254,7 @@ static void zAmberReadParmSetBonds(PARMSET psParms, FILE *fIn)
         }
         MESSAGE("Read %d BOND terms from: %s", iRead, sLine );
         iParmSetAddBond(psParms, saStr[0], saStr[1], dKb, dR0, dKpull, dRpull0,
-                        dKpress, dRpress0, "");
+                        dKpress, dRpress0, &sLine[iDesc]);
     }
     MESSAGE("Done reading BONDs.\n" );
 }
@@ -262,7 +268,7 @@ static void
 zAmberReadParmSetAngles( PARMSET psParms, FILE *fIn )
 {
 STRING          sLine;
-int             iRead;
+int             iRead, iDesc;
 STRING          saStr[10];
 double          dKt, dT0, dTkub, dRkub, zero;
 
@@ -273,21 +279,21 @@ double          dKt, dT0, dTkub, dRkub, zero;
         FGETS( sLine, fIn );
         REPLACEDASHES(sLine);
         if( GDefaults.iCharmm ){
-            iRead = sscanf( sLine, "%s %s %s %lf %lf %lf %lf", 
-                            saStr[0], saStr[1], saStr[2], &dKt, &dT0, &dTkub, &dRkub );
+            iRead = sscanf( sLine, "%s %s %s %lf %lf %lf %lf %n", 
+                            saStr[0], saStr[1], saStr[2], &dKt, &dT0, &dTkub, &dRkub, &iDesc );
             if ( iRead != 7 )
                 break;
             MESSAGE("Read 7 ANGLE terms from: %s", sLine );
             iParmSetAddAngle( psParms, saStr[0], saStr[1], saStr[2],
-                              dKt, dT0*DEGTORAD, dTkub, dRkub, "" );
+                              dKt, dT0*DEGTORAD, dTkub, dRkub, &sLine[iDesc] );
         } else {
-            iRead = sscanf( sLine, "%s %s %s %lf %lf", 
-                            saStr[0], saStr[1], saStr[2], &dKt, &dT0 );
+            iRead = sscanf( sLine, "%s %s %s %lf %lf %n", 
+                            saStr[0], saStr[1], saStr[2], &dKt, &dT0, &iDesc );
             if ( iRead != 5 )
                 break;
             MESSAGE("Read 5 ANGLE terms from: %s", sLine );
             iParmSetAddAngle( psParms, saStr[0], saStr[1], saStr[2],
-                              dKt, dT0*DEGTORAD, zero, zero, "" );
+                              dKt, dT0*DEGTORAD, zero, zero, &sLine[iDesc] );
         }
     } 
     if ( iRead > 0 ){
@@ -536,7 +542,7 @@ static void
 zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
 {
     STRING          sLine;
-    int             iRead, iN;
+    int             iRead, iN, iDesc, iDesc1, iDesc2;
     STRING          saStr[10], taStr[10];
     double          dDivisions, dKp, dP0, dN, dScEE, dScNB;
     char            *cScEE, *cScNB;
@@ -553,10 +559,10 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
  *
  *        DI-DJ-DK-DL division kp PHI periodicity SCEE SCNB
  */
-        iRead = sscanf( sLine, "%s %s %s %s %lf %lf %lf %lf %lf %lf", 
+        iRead = sscanf( sLine, "%s %s %s %s %lf %lf %lf %lf %n%lf %n%lf %n", 
                                 saStr[0], saStr[1], saStr[2], saStr[3], 
-                                &dDivisions, &dKp, &dP0, &dN,
-                                &dScEE, &dScNB );
+                                &dDivisions, &dKp, &dP0, &dN, &iDesc1,
+                                &dScEE, &iDesc2, &dScNB, &iDesc );
         if ( iRead <= 0 )
             break;
         if ( sLine[0] == ' ' && sLine[1] == ' ') {
@@ -583,9 +589,11 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
  *  Neither SCEE nor SCNB has been set. Mark dScEE = 0.0, dScNB = 0.0 "not read".
  */
         if (iRead < 9) {
+            iDesc = iDesc1;
             dScEE = -1.0;
             dScNB = -1.0;
         } else if (iRead < 10) {
+            iDesc = iDesc2;
             dScNB = -1.0;
         }
 
@@ -604,7 +612,7 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
         iParmSetAddProperTerm( psParms, 
                                 saStr[0], saStr[1], saStr[2], saStr[3],
                                 abs(iN), dKp, dP0*DEGTORAD, dScEE,
-                                dScNB, "" );
+                                dScNB, &sLine[iDesc] );
         while( iN < 0 ) {
             FGETS( sLine, fIn );
             NODASHES(sLine);
@@ -621,7 +629,7 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
             iN = (int)floor(dN+0.5);
             MESSAGE("Read %d DIHEDRAL extra terms from: %s", iRead, sLine );
             iParmSetAddProperTerm( psParms, saStr[0], saStr[1], saStr[2], saStr[3],
-                                   abs(iN), dKp, dP0*DEGTORAD, dScEE, dScNB, "" );
+                                   abs(iN), dKp, dP0*DEGTORAD, dScEE, dScNB, "MULT" );
         }
         if ( iRead <= 0 )
             break;
@@ -639,7 +647,7 @@ static void
 zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
 {
     STRING          sLine;
-    int             iRead, iN;
+    int             iRead, iN, iDesc;
     STRING          saStr[10];
     double          dKp, dP0, dN, dScEE, dScNB;
     bool            bPrintLine;
@@ -654,8 +662,8 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
          *      extraneous idivf value allowed by
          *      the input spec for PARM
          */
-        iRead = sscanf( sLine, "%s %s %s %s",
-                                saStr[0], saStr[1], saStr[2], saStr[3] );
+        iRead = sscanf( sLine, "%s %s %s %s %n",
+                                saStr[0], saStr[1], saStr[2], saStr[3], &iDesc );
         if ( iRead != 4 )
             break;
         MESSAGE("Read %d IMPROPER strings;\n", iRead );
@@ -693,7 +701,7 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
 
         iParmSetAddImproperTerm( psParms, 
                                 saStr[0], saStr[1], saStr[2], saStr[3],
-                                iN, dKp, dP0*DEGTORAD, dScEE, dScNB, "" );
+                                iN, dKp, dP0*DEGTORAD, dScEE, dScNB, &sLine[iDesc] );
     }
     if ( iRead > 0 ){
         VPWARN("Incomplete Improper Torsion line:\n%s", sLine );
@@ -713,7 +721,7 @@ static void
 zAmberReadParmSetHBonds( PARMSET psParms, FILE *fIn )
 {
 STRING          sLine;
-int             iRead;
+int             iRead, iDesc;
 STRING          saStr[10];
 double          dA, dB;
 
@@ -721,11 +729,11 @@ double          dA, dB;
     MESSAGE("Reading H-BONDs.\n" );
     while (1) {
         FGETS( sLine, fIn );
-        iRead = sscanf( sLine, "%s %s %lf %lf", saStr[0], saStr[1], &dA, &dB );
+        iRead = sscanf( sLine, "%s %s %lf %lf %n", saStr[0], saStr[1], &dA, &dB, &iDesc );
         if ( iRead <= 0 )
             break;
         MESSAGE("Read %d H-BOND terms from: %s", iRead, sLine );
-        iParmSetAddHBond( psParms, saStr[0], saStr[1], dA, dB, "" );
+        iParmSetAddHBond( psParms, saStr[0], saStr[1], dA, dB, &sLine[iDesc] );
     } 
     MESSAGE("Done reading H-BONDs.\n" );
 }
@@ -740,7 +748,7 @@ static void
 zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
 {
     STRING          sLine;
-    int             iRead;
+    int             iRead, iDesc;
     STRING          saStr[10];
     double          dRStar, dDepth, dRStar14, dDepth14;
     NONBONDt        nbNonBond;
@@ -753,8 +761,8 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
     while (1) {
         FGETS( sLine, fIn );
         if( GDefaults.iCharmm ){
-            iRead = sscanf( sLine, "%s %lf %lf %lf %lf", 
-                    saStr[0], &dRStar, &dDepth, &dRStar14, &dDepth14 );
+            iRead = sscanf( sLine, "%s %lf %lf %lf %lf %n", 
+                    saStr[0], &dRStar, &dDepth, &dRStar14, &dDepth14, &iDesc );
             if ( iRead <= 0 )
                 break;
             strcpy( nbNonBond.sNonBondType, saStr[0] );
@@ -762,9 +770,10 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
             nbNonBond.dDepth = dDepth;
             nbNonBond.dRStar14 = dRStar14;
             nbNonBond.dDepth14 = dDepth14;
+            strcpy( nbNonBond.sDesc, &sLine[iDesc] );
             VarArrayAdd( vaNonBonds, (GENP)&nbNonBond );
         } else {
-            iRead = sscanf( sLine, "%s %lf %lf", saStr[0], &dRStar, &dDepth );
+            iRead = sscanf( sLine, "%s %lf %lf %n", saStr[0], &dRStar, &dDepth, &iDesc );
             if ( iRead <= 0 )
                 break;
             strcpy( nbNonBond.sNonBondType, saStr[0] );
@@ -772,6 +781,7 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
             nbNonBond.dDepth = dDepth;
             nbNonBond.dRStar14 = dRStar;
             nbNonBond.dDepth14 = dDepth;
+            strcpy( nbNonBond.sDesc, &sLine[iDesc] );
             VarArrayAdd( vaNonBonds, (GENP)&nbNonBond );
         }
         MESSAGE("Read %d NON-BOND terms from: %s", iRead, sLine );
@@ -793,7 +803,7 @@ static void
 zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
 {
     STRING          sLine;
-    int             iRead;
+    int             iRead, iDesc;
     STRING          saStr[10];
     double          dEI, dEJ, dRI, dRJ;
 
@@ -816,8 +826,8 @@ zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
         if (fgets( sLine, MAXSTRINGLENGTH, fIn ) == NULL) {
             break;
         }
-        iRead = sscanf( sLine, "%s %s %lf %lf %lf %lf", saStr[0], saStr[1],
-                        &dRI, &dEI, &dRJ, &dEJ );
+        iRead = sscanf( sLine, "%s %s %lf %lf %lf %lf %n", saStr[0], saStr[1],
+                        &dRI, &dEI, &dRJ, &dEJ, &iDesc);
         if ( iRead <= 0 ) {
             break;
         } else if ( iRead < 6 ) {
@@ -827,7 +837,7 @@ zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
             /* Silently ignore trailing characters */
         }
         MESSAGE("Read %d LJEDIT terms from: %s", iRead, sLine );
-        iParmSetAddNBEdit( psParms, saStr[0], saStr[1], dEI, dEJ, dRI, dRJ, "" );
+        iParmSetAddNBEdit( psParms, saStr[0], saStr[1], dEI, dEJ, dRI, dRJ, &sLine[iDesc] );
     }
     MESSAGE("Done reading LJEDITs.\n" );
 }
@@ -1230,7 +1240,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
                                              :iAtomTypeToElement(saStr[0]),
                                 iHybridization!=HUNDEFINED?iHybridization
                                              :iAtomTypeHybridization(saStr[0]),
-                                    "" );
+                                nbP->sDesc );
         }
     }
 

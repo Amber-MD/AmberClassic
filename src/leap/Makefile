@@ -33,9 +33,8 @@ OO1= assoc.o atom.o byteArray.o
 OO2= collection.o container.o internal.o
 OO3= list.o loop.o molecule.o 
 OO4= oDouble.o oInteger.o oString.o
-#OO5= objekt.o parmSet.o residue.o unit.o unitio.o tripos.o unitio_prmtop.o unitio_netcdf.o unitio_cmap.o
-OO5= objekt.o parmSet.o residue.o unit.o unitio.o tripos.o unitio_prmtop.o unitio_cmap.o
-OO6= graphUtil.o select.o selection.tab.o selection.o select_atoms.o
+OO5= objekt.o parmSet.o residue.o unit.o unitio.o tripos.o unitio_prmtop.o unitio_netcdf.o unitio_cmap.o
+OO6= graphUtil.o select.o selection.tab.o lex.selection.o select_atoms.o
 OO = $(OO1) $(OO2) $(OO3) $(OO4) $(OO5) $(OO6)
 
 # 
@@ -43,7 +42,7 @@ OO = $(OO1) $(OO2) $(OO3) $(OO4) $(OO5) $(OO6)
 # 
 
 OL1= amber.o build.o elements.o library.o chirality.o
-OL2= minimizer.o model.o parmLib.o pdbFile.o mol2File.o mol3File.o tools.o
+OL2= minimizer.o model.o parmLib.o pdbFile.o mol2File.o mol3File.o tools.o 
 OL3= variables.o parser.o help.o helptext.o octree.o
 OL4= commands.o mathop.o block.o restraint.o hybrid.o defaults.o
 OL = $(OL1) $(OL2) $(OL3) $(OL4)
@@ -163,15 +162,9 @@ lex.selection.c: selection.l
 selection.tab.c selection.tab.h: selection.y
 	$(VB)$(YACC) -d -p sel -b selection  $<
 
-parser.o:       parser.y
-#	@echo "[TLEAP]  YACC parser.y"
-#	$(VB)$(YACC) -o $@ $<
-#	@echo "(The warning 'conflicts: 6 shift/reduce' is normal)"
-	@/bin/rm -f parser.c
-	@mv y.tab.c parser.c
-	@echo "[TLEAP]  CC parser.c"
-	$(VB)$(CC) -c -I$(XHOME)/include $(NETCDFINC) -DYYERROR_VERBOSE \
-	      $(CFLAGS) $(LDFLAGS) -o $@ parser.c
+parser.c:       parser.y
+	@echo "[TLEAP]  YACC parser.y"
+	$(VB)$(YACC) -o $@ $<
 
 helptext.c: helptext.text utilMakeHelp$(SFX)
 	$(VB)./utilMakeHelp$(SFX) helptext.text helptext.c

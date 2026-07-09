@@ -1073,16 +1073,16 @@ ContainerIAmBeingRemoved( CONTAINER cCont, CONTAINER cRemoved )
             DFATAL("Attempt to inform a raw CONTAINER");
             break;
         case UNITid:
-            UnitIAmBeingRemoved( (UNIT)cCont, (CONTAINER)cRemoved );
+            UnitIAmBeingRemoved( (UNIT)cCont, cRemoved );
             break;
         case MOLECULEid:
-            MoleculeIAmBeingRemoved( (MOLECULE)cCont, (CONTAINER)cRemoved );
+            MoleculeIAmBeingRemoved( (MOLECULE)cCont, cRemoved );
             break;
         case RESIDUEid:
-            ResidueIAmBeingRemoved( (RESIDUE)cCont, (CONTAINER)cRemoved );
+            ResidueIAmBeingRemoved( (RESIDUE)cCont, cRemoved );
             break;
         case ATOMid:
-            AtomIAmBeingRemoved( (ATOM)cCont, (CONTAINER)cRemoved );
+            AtomIAmBeingRemoved( (ATOM)cCont, cRemoved );
             break;
         default:
             DFATAL("Attempting to inform CONTAINER with id:%c", 

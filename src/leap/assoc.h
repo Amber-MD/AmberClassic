@@ -68,8 +68,19 @@ typedef struct  {
 
 typedef ASSOCt  *ASSOC;
 
+#ifdef DEBUG
+static inline ASSOC assoc_from_assoc(ASSOC a) { return a; }
+static inline ASSOC assoc_from_objekt(OBJEKT o)
+  { return o ? (assert(iObjectType(o)==ASSOCid), (ASSOC)o) : NULL; }
+static inline OBJEKT objekt_from_assoc(ASSOC a) { return &(a->oSuper); }
 
-
+#define ASSOC_from(x) _Generic((x), \
+    ASSOC: assoc_from_assoc, \
+    OBJEKT: assoc_from_objekt \
+)(x)
+#else
+#define ASSOC_from(x) ((ASSOC)(x))
+#endif
 
 /*
 ======================================================================
@@ -83,12 +94,12 @@ typedef ASSOCt  *ASSOC;
 */
 
 
-#define AssocSetName(a,n)       (strcpy(((ASSOC)(a))->sName,n))
-#define sAssocName(a)           (((ASSOC)(a))->sName)
-#define AssocSetObject(a,o)     { OBJEKT zzo; zzo = (OBJEKT)(o);\
-                                ((ASSOC)(a))->oObj = zzo; \
-                                REF(zzo); }
-#define oAssocObject(a)         ( ((ASSOC)(a))->oObj )
+#define AssocSetName(a,n)       (strcpy(ASSOC_from(a)->sName,n))
+#define sAssocName(a)           (ASSOC_from(a)->sName)
+#define AssocSetObject(a,o)     { OBJEKT _o = OBJEKT_from(o); \
+                                ASSOC_from(a)->oObj = _o; \
+                                REF(_o); }
+#define oAssocObject(a)         ( ASSOC_from(a)->oObj )
 
 
 /*  assoc.c  */

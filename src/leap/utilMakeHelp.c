@@ -178,5 +178,5 @@ if ( strlen(s)>0 && s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }
     }
     fprintf( fOut, "}\n" );
 
-    exit(0);
+    return 0;
 }

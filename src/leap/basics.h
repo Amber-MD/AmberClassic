@@ -152,8 +152,9 @@ typedef unsigned char   bool;
 
 // headers
 // ---------------------------------------------------------------------
-// Just make stdbool.h mandatory
+// Just make stdbool.h, assert.h mandatory
 #include <stdbool.h>
+#include <assert.h>
 
 #if (!defined WIN32)
 # include <pwd.h>
@@ -882,8 +883,6 @@ extern bool     GbTestMemory;
 #include        "list.h"
 #include        "assoc.h"
 #include        "vector.h"
-#include        "container.h"
-#include        "atom.h"
 #include        "bag.h"
 #include        "block.h"
 #include        "loop.h"

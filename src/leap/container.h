@@ -59,7 +59,6 @@
 # include       "matrix.h"
 # include       "stringExtra.h"
 
-
 /*
  *-----------------------------------------------------------------------
  *
@@ -89,9 +88,26 @@ typedef struct  CONTAINERSTRUCT {
 
 typedef CONTAINERt      *CONTAINER;
 
+#ifdef DEBUG
+static inline CONTAINER container_from_objekt(OBJEKT o)
+  { assert ( bObjectInClass( o, CONTAINERid ) ); return (CONTAINER)o; }
+static inline CONTAINER container_from_genp(void *p)
+  { assert(bIsObjekt(p)); assert(bObjectInClass((OBJEKT)p,CONTAINERid)); return (CONTAINER)p; }
+static inline CONTAINER container_from_container(CONTAINER c) { return c; }
+static inline OBJEKT objekt_from_container(CONTAINER c) { return c ? &(c->oHeader) : NULL; }
 
-
-
+#define CONTAINER_from(x) _Generic((x), \
+    OBJEKT: container_from_objekt, \
+    CONTAINER: container_from_container, \
+    MOLECULE: container_from_molecule, \
+    UNIT: container_from_unit, \
+    RESIDUE: container_from_residue, \
+    ATOM: container_from_atom, \
+    GENP: container_from_genp \
+)(x)
+#else
+#define CONTAINER_from(x) ((CONTAINER)(x))
+#endif
 
 /*
 ======================================================================
@@ -105,45 +121,47 @@ typedef CONTAINERt      *CONTAINER;
 */
 
 
-#define CDU(c)  ContainerDisplayerUpdate((CONTAINER)c)
+#define CDU(c)  ContainerDisplayerUpdate(CONTAINER_from(c))
 
-#define sContainerName( c )     ( ((CONTAINER)c)->sName )
-#define ContainerSetName( c, n ) ( StringCopyMax( ((CONTAINER)c)->sName, n,\
+#define sContainerName( c )     ( CONTAINER_from(c)->sName )
+#define ContainerSetName( c, n ) ( StringCopyMax( CONTAINER_from(c)->sName, n,\
                                         sizeof(CONTAINERNAMEt) ),CDU(c) )
-#define cContainerWithin( c )   ( ((CONTAINER)c)->cContainedBy )
-#define ContainerSetWithin( c, w ) (((CONTAINER)c)->cContainedBy = w,CDU(c) )
-#define cContainerContents( c )    (((CONTAINER)c)->lContents)
+#define cContainerWithin( c )   ( CONTAINER_from(c)->cContainedBy )
+#define ContainerSetWithin( c, w ) (CONTAINER_from(c)->cContainedBy = w,CDU(c) )
+#define cContainerContents( c )    (CONTAINER_from(c)->lContents)
+
 #define iContainerNumberOfChildren(c) (iListSize(cContainerContents(c)))
 // Convenience speed-up to grab the first object in a single-element container // JMK
-#define oContainerFirstObject( c ) (((LIST) cContainerContents(c))->nPFirstNode->PObject)
-#define oContainerLastObject( c ) (((LIST) cContainerContents(c))->nPLastNode->PObject)
+#define oContainerFirstObject( c ) (LIST_from(cContainerContents(c))->nPFirstNode->PObject)
+#define oContainerLastObject( c ) (LIST_from(cContainerContents(c))->nPLastNode->PObject)
 
 
                 /* If the copy is NULL then return the original */
                 /* otherwise return the copy                    */
 #define cContainerCopyPointer( c ) \
-( c == NULL ? NULL : ( ((((CONTAINER)c)->cCopy)!=NULL) ? \
-(CONTAINER)(((CONTAINER)c)->cCopy) : ((CONTAINER)c) ))
+( c == NULL ? NULL : ( ((CONTAINER_from(c)->cCopy)!=NULL) ? \
+(CONTAINER)(CONTAINER_from(c)->cCopy) : CONTAINER_from(c) ))
 
-#define ContainerSetCopyPointer( c, n )   (((CONTAINER)c)->cCopy=n)
+#define ContainerSetCopyPointer( c, n )   (CONTAINER_from(c)->cCopy=n)
 
-#define ContainerSetTempInt(c,i)        (((CONTAINER)(c))->iTempInt = i )
-#define iContainerTempInt(c)            (((CONTAINER)(c))->iTempInt)
-#define iContainerSequence( c )         (((CONTAINER)c)->iSequence)
-#define ContainerSetSequence( c,xn )    (((CONTAINER)c)->iSequence = xn,CDU(c))
+#define ContainerSetTempInt(c,i)        (CONTAINER_from(c)->iTempInt = i )
+#define iContainerTempInt(c)            (CONTAINER_from(c)->iTempInt)
+#define iContainerSequence( c )         (CONTAINER_from(c)->iSequence)
+#define ContainerSetSequence( c,xn )    (CONTAINER_from(c)->iSequence = xn,CDU(c))
 #define iContainerNextChildsSequenceInc( c ) \
-        (((CONTAINER)(c))->iNextChildsSequence++)
+        (CONTAINER_from(c)->iNextChildsSequence++)
 #define iContainerNextChildsSequence( c ) \
-        (((CONTAINER)(c))->iNextChildsSequence)
+        (CONTAINER_from(c)->iNextChildsSequence)
 #define ContainerSetNextChildsSequence( c, i ) \
-        (((CONTAINER)(c))->iNextChildsSequence = i,CDU(c))
+        (CONTAINER_from(c)->iNextChildsSequence = i,CDU(c))
 
 
-#define ContainerSetLoopNext( c, n )    ( ((CONTAINER)(c))->cLoopNext = n )
-#define cContainerLoopNext(c)           ( ((CONTAINER)(c))->cLoopNext )
+#define ContainerSetLoopNext( c, n )    ( CONTAINER_from(c)->cLoopNext = n )
+#define cContainerLoopNext(c)           ( CONTAINER_from(c)->cLoopNext )
 
-#define dContainerDisplayer(c)  (((CONTAINER)c)->dDisp)
+#define dContainerDisplayer(c)  (CONTAINER_from(c)->dDisp)
 
+#define sFullDescriptor(x,s) sContainerFullDescriptor(CONTAINER_from(x),s)
 
 extern CONTAINER        cContainerCreate( int iType );
 extern void             ContainerDestroy( CONTAINER *cPContainer );

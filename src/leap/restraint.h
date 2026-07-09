@@ -97,6 +97,9 @@ typedef	struct	{
 
 typedef	struct	{
 	int		iType;
+#ifdef DEBUG
+        int             iMagic;
+#endif
 	FLAGS		fFlags;
 	union	{
 		RESTRAINTBONDt		rbBond;
@@ -107,7 +110,19 @@ typedef	struct	{
 
 typedef	RESTRAINTt	*RESTRAINT;
 
-
+#ifdef DEBUG
+#define RESTRAINT_MAGIC 0x52657374
+static inline RESTRAINT restraint_from_genp(GENP p) {
+    RESTRAINT rs=(RESTRAINT)p;
+    assert(rs->iMagic==RESTRAINT_MAGIC && rs->iType>=0 && rs->iType<=3);
+    return rs;
+}
+#define RESTRAINT_from(x) _Generic((x), \
+    GENP: restraint_from_genp \
+)(x)
+#else
+#define RESTRAINT_from(x) ((RESTRAINT)(x))
+#endif
 
 extern RESTRAINT	rRestraintCreate(void);
 extern void		RestraintDestroy(RESTRAINT *rPRes);

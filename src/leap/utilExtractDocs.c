@@ -110,9 +110,7 @@ STRING		sKeyword;
 }
 
 
-main( argc, argv )
-int		argc;
-char*		argv[];
+int main(int argc, char *argv[] )
 {
 int		iKeyword;
 STRING          sLine, sTemp;
@@ -190,6 +188,5 @@ if ( s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }
     }
     fprintf( fOut, "\n\n" );
 
-
-    exit(0);
+    return 0;
 }
