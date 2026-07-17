@@ -63,7 +63,7 @@ oiOIntegerCreate()
 {
 OINTEGER        oiNew;
 
-    MALLOC( oiNew, OINTEGER, sizeof(OINTEGERt) );
+    oiNew = (OINTEGER)MALLOC(sizeof(OINTEGERt) );
 
     return(oiNew);
 }

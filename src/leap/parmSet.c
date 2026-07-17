@@ -171,13 +171,12 @@ typedef struct  {
  *        Order the bond atom names into alphabetical order
  *        to speed up searches.
  */
-static void
-zParmSetOrderBondAtoms( char *sAtom1, char *sAtom2 )
+static inline void
+zParmSetOrderBondAtoms( typeStr sAtom1, typeStr sAtom2 )
 {
-STRING                sTemp;
-
+typeStr sTemp;
     if ( strcmp( sAtom1, sAtom2 ) > 0 ) {
-        SWAP_STRINGS( sAtom1, sAtom2, sTemp );
+        SWAP_STRINGS( sAtom1, sAtom2, sTemp);
     }
 }
 
@@ -192,18 +191,14 @@ STRING                sTemp;
  *        The proper order is for the first atom type to
  *        be less than the third atom type.
  */
-static void
-zParmSetOrderAngleAtoms( char *sAtom1, char *sAtom2, char *sAtom3 )
+static inline void
+zParmSetOrderAngleAtoms( typeStr sAtom1, typeStr sAtom2, typeStr sAtom3 )
 {
-STRING                sTemp;
-
+typeStr sTemp;
     if ( strcmp( sAtom1, sAtom3 ) > 0 ) {
         SWAP_STRINGS( sAtom1, sAtom3, sTemp );
     }
 }
-
-
-
 
 
 
@@ -220,11 +215,10 @@ STRING                sTemp;
  *        If the first and fourth are the same then the
  *        second type must be less than the third type.
  */
-void
-zParmSetOrderTorsionAtoms( char *sAtom1, char *sAtom2, 
-                char *sAtom3, char *sAtom4 )
+static void
+zParmSetOrderTorsionAtoms( typeStr sAtom1, typeStr sAtom2,
+                typeStr sAtom3, typeStr sAtom4 )
  {
-STRING                sTemp;
 int                iCmp14;
 
     iCmp14 = strcmp( sAtom1, sAtom4 );
@@ -237,11 +231,11 @@ int                iCmp14;
         /*
          *  reorder end-to-end: ABCD->DCBA
          */
+        typeStr sTemp;
         SWAP_STRINGS( sAtom1, sAtom4, sTemp );
         SWAP_STRINGS( sAtom2, sAtom3, sTemp );
     }
 }
-
 
 
 /*
@@ -261,11 +255,10 @@ int                iCmp14;
  * both digits (48+) and letters, so no wildcard encoding is needed.
  */
 static void
-zParmSetOrderImproperAtoms( char *sAtom1, char *sAtom2,
-        char *sAtom3, char *sAtom4, char *sOrder )
+zParmSetOrderImproperAtoms( typeStr sAtom1, typeStr sAtom2,
+        typeStr sAtom3, typeStr sAtom4, char *sOrder )
 {
-    STRING  sTemp;
-    STRING  saAtoms[4];     /* 0-based: 0,1,3 used; 2 is central, unused */
+    typeStr saAtoms[4];     /* 0-based: 0,1,3 used; 2 is central, unused */
 
     strcpy( saAtoms[0], sAtom1 ? sAtom1 : WILD_CARD_TYPE );
     strcpy( saAtoms[1], sAtom2 ? sAtom2 : WILD_CARD_TYPE );
@@ -273,10 +266,9 @@ zParmSetOrderImproperAtoms( char *sAtom1, char *sAtom2,
 
 #define SWAP_ATOMS(i, j)                                \
     do {                                                \
-        SWAP_STRINGS( saAtoms[i], saAtoms[j], sTemp );  \
-        char _c   = sOrder[i];                          \
-        sOrder[i] = sOrder[j];                          \
-        sOrder[j] = _c;                                 \
+        typeStr sTemp;                                  \
+        SWAP_STRINGS( saAtoms[i], saAtoms[j], sTemp);   \
+        char _c; SWAP(sOrder[i],sOrder[j],_c);          \
     } while (0)
 
     /* Bubble sort 3 elements needs only 3 comparisons:
@@ -728,7 +720,7 @@ int                iMax;
  *        Bill Ross, May 1996
  */
 // FIXME: This is  a HACK because reduction should be done before the private SAVETORSIONS array exists
-#include "unitio.h"
+#include "unitio.h"  // for SAVETORSIONt
 void
 BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
              VARARRAY vaTorsions, int iTorsionOffset)
@@ -825,6 +817,232 @@ BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
 
 
 
+/*
+ *  CMAP parmset functions.
+ *
+ *  Types:
+ *    typedef struct { ... } CMAPt;
+ *    typedef CMAPt *CMAP;
+ *
+ *  CMAPt struct:
+ *    title[256]    — description
+ *    reslist       — WRD* (owned pointer), nres entries
+ *    nres          — count of residue names
+ *    comments      — \n-joined comment string
+ *    resolution    — grid dimension (resolution x resolution)
+ *    map           — double* (owned pointer), resolution^2 entries
+ *    atmname[5]    — WRD[5] atom names for the 5-atom phi/psi set
+ *    residx[5]     — relative residue indices; first slot where
+ *                    residx[l]==0 is the reference residue for reslist
+ *
+ *  Ownership:
+ *    iParmSetAddCMAP takes ownership of reslist and map pointers.
+ *    ParmSetGetCMAP with bCopy=true returns owned copies (caller frees
+ *    via VarArrayDestroyCMAP or by freeing reslist+map manually).
+ *    ParmSetGetCMAP with bCopy=false shares pointers — do not free.
+ *
+ *  Storage: psLib->vaCMAPs is a VarArray of CMAPt structs (not pointers).
+ */
+
+/* ----------------------------------------------------------------
+   internal helper: match relative residue indices.
+   Finds first slot where cmapResidx[l]==0 (reference residue)
+   and shifts iRelResIdx[] to align before comparing all 5.
+   ---------------------------------------------------------------- */
+static bool bRelResIdxMatch(int *cmapResidx, int *iRelResIdx)
+{
+    int l, shift;
+    for (l = 0; l < 5 && cmapResidx[l] != 0; l++);
+    shift = iRelResIdx[l];
+    for (int j = 0; j < 5; j++)
+        if ((iRelResIdx[j] - shift) != cmapResidx[j]) return FALSE;
+    return TRUE;
+}
+
+/* ----------------------------------------------------------------
+   internal helper: check reference residue name against reslist.
+   Reference slot is first where residx[l]==0.
+   If l==4 (last slot) accept any — no single reference residue.
+   ---------------------------------------------------------------- */
+static bool bRefResNameMatch(CMAP cmap, const char *sResNames[5])
+{
+    int l;
+    for (l = 0; l < 5 && cmap->residx[l] != 0; l++);
+    if (l == 4) return TRUE;
+    for (int r = 0; r < cmap->nres; r++)
+        if (strcmp(cmap->reslist[r], sResNames[l]) == 0) return TRUE;
+    return FALSE;
+}
+
+/* ----------------------------------------------------------------
+   internal helper: match 4 atom names against WRD atmname set.
+   Tries forward then reversed.
+   Returns 4=forward, -4=reversed, 0=no match.
+   ---------------------------------------------------------------- */
+static int iAtomNamesMatch4(const char *an[4], WRD *cmapAtmName)
+{
+    int fwd = 0, rev = 0;
+    for (int k = 0; k < 4; k++) {
+        if (strcmp(an[k], cmapAtmName[k])   == 0) fwd++;
+        if (strcmp(an[k], cmapAtmName[3-k]) == 0) rev++;
+    }
+    if (fwd == 4) return  4;
+    if (rev == 4) return -4;
+    return 0;
+}
+
+/* ================================================================
+   iParmSetAddCMAP
+   Add a CMAP entry. Takes ownership of reslist and map pointers
+   inside the passed CMAPt. Caller must not free them after this.
+   The struct itself is copied by value into the VarArray.
+   Returns 0-based index of new entry.
+   ================================================================ */
+int iParmSetAddCMAP(PARMSET psLib, CMAP cmap)
+{
+    printf("AddCMAPs = %p\n",psLib->vaCMAPs);
+    if (!psLib->vaCMAPs) {
+        psLib->vaCMAPs = vaVarArrayCreate(sizeof(CMAPt));
+        printf("Alloc CMAPs = %p\n",psLib->vaCMAPs);
+    }
+    VarArrayAdd(psLib->vaCMAPs, (GENP)cmap);
+    printf("CMAP added '%s', size=%d, map #%d\n",cmap->title,cmap->resolution, iVarArrayElementCount(psLib->vaCMAPs));
+    return iVarArrayElementCount(psLib->vaCMAPs) - 1;
+}
+
+/* ================================================================
+   iParmSetHasCMAP
+   ================================================================ */
+bool iParmSetHasCMAP(PARMSET psLib)
+{
+    return psLib->vaCMAPs != NULL &&
+           iVarArrayElementCount(psLib->vaCMAPs) > 0;
+}
+
+/* ================================================================
+   iParmSetTotalCMAPParms
+   ================================================================ */
+int iParmSetTotalCMAPParms(PARMSET psLib)
+{
+    printf("get total cmaps pCMAPs = %p\n",psLib->vaCMAPs);
+    if (!psLib->vaCMAPs) return 0;
+    return iVarArrayElementCount(psLib->vaCMAPs);
+}
+
+/* ================================================================
+   VarArrayDestroyCMAP
+   Free owned pointers inside each CMAPt, then destroy the array.
+   ================================================================ */
+void VarArrayDestroyCMAP(VARARRAY *pva)
+{
+    if (!*pva) return;
+    int n = iVarArrayElementCount(*pva);
+    CMAPt *cmaps = PVAI(*pva, CMAPt, 0);
+    for (int i = 0; i < n; i++) {
+        free(cmaps[i].reslist);
+        free(cmaps[i].map);
+    }
+    VarArrayDestroy(pva);
+}
+
+/* ================================================================
+   bParmSetCMAPHasTorsion
+   Pre-filter: check if any CMAP could use these 4 atoms as phi
+   (atmname[0..3]) or psi (atmname[1..4]).
+   Atom names only — residue and residx checked in FindCMAP.
+   Sets *bMatchPhi and *bMatchPsi independently.
+   ================================================================ */
+bool bParmSetCMAPHasTorsion(PARMSET psLib,
+                             const char *sAtomNames[4],
+                             bool *bMatchPhi,
+                             bool *bMatchPsi)
+{
+    *bMatchPhi = FALSE;
+    *bMatchPsi = FALSE;
+    if (!iParmSetHasCMAP(psLib)) return FALSE;
+
+    int n = iVarArrayElementCount(psLib->vaCMAPs);
+    CMAPt *cmaps = PVAI(psLib->vaCMAPs, CMAPt, 0);
+
+    for (int i = 0; i < n && (!*bMatchPhi || !*bMatchPsi); i++) {
+        if (!*bMatchPhi &&
+            abs(iAtomNamesMatch4(sAtomNames, &cmaps[i].atmname[0])) == 4)
+            *bMatchPhi = TRUE;
+        if (!*bMatchPsi &&
+            abs(iAtomNamesMatch4(sAtomNames, &cmaps[i].atmname[1])) == 4)
+            *bMatchPsi = TRUE;
+    }
+    return *bMatchPhi || *bMatchPsi;
+}
+
+/* ================================================================
+   iParmSetFindCMAP
+   Full 5-atom CMAP lookup. Handles torsion reversal internally.
+   Lookup params (ParmSetFindXXX convention — caller prepares):
+     sResNames[5]  — residue name per atom
+     sAtomNames[5] — atom name per atom
+     iRelResIdx[5] — residue index relative to atom[0]
+   Returns 0-based index, or PARM_NOT_FOUND.
+   ================================================================ */
+int iParmSetFindCMAP(PARMSET psLib,
+                     const char *sResNames[5],
+                     const char *sAtomNames[5],
+                     int   iRelResIdx[5])
+{
+    if (!iParmSetHasCMAP(psLib)) return PARM_NOT_FOUND;
+
+    int n = iVarArrayElementCount(psLib->vaCMAPs);
+    CMAPt *cmaps = PVAI(psLib->vaCMAPs, CMAPt, 0);
+
+    /* try forward orientation */
+    for (int i = 0; i < n; i++) {
+        CMAP cmap = &cmaps[i];
+        if (!bRefResNameMatch(cmap, sResNames))                          continue;
+        if (abs(iAtomNamesMatch4(sAtomNames,     &cmap->atmname[0])) != 4) continue;
+        if (abs(iAtomNamesMatch4(sAtomNames + 1, &cmap->atmname[1])) != 4) continue;
+        if (!bRelResIdxMatch(cmap->residx, iRelResIdx))                  continue;
+        return i;
+    }
+
+    /* try reversed orientation: atoms 4,3,2,1,0 */
+    const char *rn_r[5], *an_r[5];
+    int ri_r[5];
+    for (int k = 0; k < 5; k++) {
+        rn_r[k] = sResNames[4-k];
+        an_r[k] = sAtomNames[4-k];
+        ri_r[k] = iRelResIdx[4-k] - iRelResIdx[4];
+    }
+    for (int i = 0; i < n; i++) {
+        CMAP cmap = &cmaps[i];
+        if (!bRefResNameMatch(cmap, rn_r))                          continue;
+        if (abs(iAtomNamesMatch4(an_r,     &cmap->atmname[0])) != 4) continue;
+        if (abs(iAtomNamesMatch4(an_r + 1, &cmap->atmname[1])) != 4) continue;
+        if (!bRelResIdxMatch(cmap->residx, ri_r))                   continue;
+        return i;
+    }
+
+    return PARM_NOT_FOUND;
+}
+
+/* ================================================================
+   ParmSetCMAP
+   Fetch CMAP data by index into cmapReturn.
+   bCopy=true  — deep copies reslist and map; caller owns them.
+   bCopy=false — shares pointers with parmset; caller must not free.
+   No bounds check — always preceded by iParmSetFindCMAP per convention.
+   ================================================================ */
+void ParmSetCMAP(PARMSET psLib, int i, CMAP cmapReturn, bool bCopy)
+{
+    CMAPt *src = PVAI(psLib->vaCMAPs, CMAPt, i);
+    *cmapReturn = *src;              /* struct copy — pointers shared initially */
+    if (bCopy) {
+        cmapReturn->reslist = malloc(src->nres * sizeof(WRD));
+        memcpy(cmapReturn->reslist, src->reslist, src->nres * sizeof(WRD));
+        int m = src->resolution * src->resolution;
+        cmapReturn->map = malloc(m * sizeof(double));
+        memcpy(cmapReturn->map, src->map, m * sizeof(double));
+    }
+}
 
 
 
@@ -841,7 +1059,7 @@ psParmSetCreate()
 {
 PARMSET psNew;
 
-    MALLOC( psNew, PARMSET, sizeof(PARMSETt) );
+    psNew = (PARMSET)MALLOC(sizeof(PARMSETt) );
 
     strcpy( psNew->sFname, "no name assigned" );
 
@@ -852,6 +1070,7 @@ PARMSET psNew;
     psNew->vaImpropers   = vaVarArrayCreate( sizeof(TORSIONPARMt) );
     psNew->vaHBonds      = vaVarArrayCreate( sizeof(HBONDPARMt) );
     psNew->vaNBEdits     = vaVarArrayCreate( sizeof(NBEDITt) );
+    psNew->vaCMAPs       = vaVarArrayCreate( sizeof(CMAPt) );
 
     psNew->bBeingEdited  = FALSE; /* V. Romanovski */
 
@@ -872,7 +1091,7 @@ psParmSetDuplicate( PARMSET psOld )
 {
 PARMSET        psNew;
 
-    MALLOC( psNew, PARMSET, sizeof(PARMSETt) );
+    psNew = (PARMSET)MALLOC(sizeof(PARMSETt) );
     memcpy( psNew, psOld, sizeof(PARMSETt) );
     psNew->bBeingEdited = FALSE;
 
@@ -883,6 +1102,7 @@ PARMSET        psNew;
     psNew->vaImpropers = vaVarArrayCopy( psOld->vaImpropers );
     psNew->vaHBonds = vaVarArrayCopy( psOld->vaHBonds );
     psNew->vaNBEdits = vaVarArrayCopy( psOld->vaNBEdits );
+    psNew->vaCMAPs = vaVarArrayCopy( psOld->vaCMAPs );
 
     return(psNew);
 }
@@ -906,6 +1126,7 @@ ParmSetDestroy( PARMSET *psPLib )
     VarArrayDestroy( &((*psPLib)->vaImpropers) );
     VarArrayDestroy( &((*psPLib)->vaHBonds) );
     VarArrayDestroy( &((*psPLib)->vaNBEdits) );
+    VarArrayDestroyCMAP( &((*psPLib)->vaCMAPs) );
     FREE( *psPLib );
     *psPLib = NULL;
 }
@@ -1711,16 +1932,12 @@ iParmSetAddProperTerm( PARMSET psLib,
         int iN, double dKp, double dP0, double dScEE, double dScNB,
         char *sDesc )
 {
-TORSIONPARMt    tpTorsion;
-    memset( &tpTorsion, 0, sizeof(tpTorsion) );                /* for Purify */
+TORSIONPARMt    tpTorsion={0};
     strcpy( tpTorsion.sType1, sType1 );
     strcpy( tpTorsion.sType2, sType2 );
     strcpy( tpTorsion.sType3, sType3 );
     strcpy( tpTorsion.sType4, sType4 );
-    zParmSetOrderTorsionAtoms( tpTorsion.sType1,
-                          tpTorsion.sType2,
-                          tpTorsion.sType3,
-                          tpTorsion.sType4 );
+    zParmSetOrderTorsionAtoms(tpTorsion.sType1, tpTorsion.sType2, tpTorsion.sType3, tpTorsion.sType4);
     tpTorsion.dKp = dKp;
     tpTorsion.iN  = iN;
     tpTorsion.dP0 = dP0;
@@ -1754,11 +1971,9 @@ iParmSetAddImproperTerm( PARMSET psLib,
         char *sType1, char *sType2, char *sType3, char *sType4, 
         int iN, double dKp, double dP0, double dScEE, double dScNB, char *sDesc )
 {
-TORSIONPARMt    tpImproper;
-orderStr        sOrder;
+TORSIONPARMt    tpImproper={0};
+orderStr        sOrder="0123";
 
-    memset( &tpImproper, 0, sizeof(tpImproper) );        /* for Purify */
-    strcpy( sOrder, "0123" );
     strcpy( tpImproper.sType1, sType1 );
     strcpy( tpImproper.sType2, sType2 );
     strcpy( tpImproper.sType3, sType3 );
@@ -1805,7 +2020,7 @@ HBONDPARMt      hpHBond;
     memset( &hpHBond, 0, sizeof(hpHBond) );        /* for Purify */
     strcpy( hpHBond.sType1, sType1 );
     strcpy( hpHBond.sType2, sType2 );
-    zParmSetOrderBondAtoms( hpHBond.sType1, hpHBond.sType2 );
+    zParmSetOrderBondAtoms(hpHBond.sType1, hpHBond.sType2);
     hpHBond.dA = dA;
     hpHBond.dB = dB;
     if (sDesc != NULL) StringCopyMax(hpHBond.sDesc, sDesc, sizeof(hpHBond.sDesc));
@@ -1836,7 +2051,7 @@ iParmSetAddNBEdit( PARMSET psLib, char *sType1, char *sType2, double dEI,
   memset( &hpNBEdit, 0, sizeof(hpNBEdit) );     /* for Purify */
   strcpy( hpNBEdit.sType1, sType1 );
   strcpy( hpNBEdit.sType2, sType2 );
-  zParmSetOrderBondAtoms( hpNBEdit.sType1, hpNBEdit.sType2 );
+  zParmSetOrderBondAtoms(hpNBEdit.sType1, hpNBEdit.sType2);
   hpNBEdit.dEI = dEI;
   hpNBEdit.dEJ = dEJ;
   hpNBEdit.dRI = dRI;
@@ -1980,7 +2195,7 @@ iParmSetFindBond( PARMSET psLib, char *sType1, char *sType2 )
 BONDPARMt        *bpPBond;
 int             i, iMax;
 bool            bFoundOne;
-STRING                s1, s2;
+typeStr         s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaBonds );
     if ( !iMax )
@@ -1988,7 +2203,7 @@ STRING                s1, s2;
 
     strcpy( s1, sType1 );
     strcpy( s2, sType2 );
-    zParmSetOrderBondAtoms( s1, s2 );
+    zParmSetOrderBondAtoms(s1, s2);
 
     bFoundOne = FALSE;
     bpPBond = PVAI( psLib->vaBonds, BONDPARMt, 0 );
@@ -2079,7 +2294,7 @@ int
 iParmSetFindProperTerms( PARMSET psLib, TORSION tTorsion, bool bUseIndex,
                 char *sType1, char *sType2, char *sType3, char *sType4 )
 {
-STRING                s1, s2, s3, s4;
+typeStr       s1, s2, s3, s4;
 
                 /* First look for specific parameters */
 
@@ -2125,7 +2340,7 @@ iParmSetFindImproperTerms( PARMSET psLib, TORSION tTorsion, bool bUseIndex,
                         char *sType1, char *sType2, char *sType3, char *sType4 )
 {
 STRING                s1, s2, s3, s4;
-orderStr        sOrder;
+orderStr        sOrder="0123";
 
                 /* First look for specific parameters */
 
@@ -2133,7 +2348,6 @@ orderStr        sOrder;
     strcpy( s2, sType2 );
     strcpy( s3, sType3 );
     strcpy( s4, sType4 );
-    strcpy( sOrder, "0123" );
 
     zParmSetOrderImproperAtoms( s1, s2, s3, s4, sOrder );
     
@@ -2160,10 +2374,10 @@ orderStr        sOrder;
 int
 iParmSetFindHBond( PARMSET psLib, char *sType1, char *sType2 )
 {
-HBONDPARMt        *hpPHBond;
+HBONDPARMt      *hpPHBond;
 int             i, iMax;
 bool            bFoundOne;
-STRING                s1, s2;
+typeStr         s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaHBonds );
     if ( !iMax )
@@ -2176,8 +2390,8 @@ STRING                s1, s2;
     bFoundOne = FALSE;
     hpPHBond = PVAI( psLib->vaHBonds, HBONDPARMt, 0 );
     for ( i=0; i<iMax; hpPHBond++, i++ ) {
-        if ( strcmp( hpPHBond->sType1, s1 ) == 0 ) {
-            if ( strcmp( hpPHBond->sType2, s2 ) == 0 ) {
+        if ( strcmp( hpPHBond->sType1, sType1 ) == 0 ) {
+            if ( strcmp( hpPHBond->sType2, sType2 ) == 0 ) {
                     bFoundOne = TRUE;
                     break;
             }
@@ -2210,7 +2424,7 @@ iParmSetFindNBEdit( PARMSET psLib, char *sType1, char *sType2 )
 NBEDITt         *hpPNBEdit;
 int             i, iMax;
 bool            bFoundOne;
-STRING                s1, s2;
+typeStr         s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaNBEdits );
     if ( !iMax )
@@ -2313,11 +2527,10 @@ TORSIONPARMt        tpTorsion;
     strcpy( tpTorsion.sType2, cPType2 );
     strcpy( tpTorsion.sType3, cPType3 );
     strcpy( tpTorsion.sType4, cPType4 );
-    zParmSetOrderTorsionAtoms( tpTorsion.sType1,
-                                tpTorsion.sType2,
-                            tpTorsion.sType3,
-                            tpTorsion.sType4 );
-
+    zParmSetOrderTorsionAtoms(tpTorsion.sType1,
+                              tpTorsion.sType2,
+                              tpTorsion.sType3,
+                              tpTorsion.sType4);
     tpTorsion.iN = iN;
     tpTorsion.dKp = dKp;
     tpTorsion.dP0 = dP0;
@@ -2348,13 +2561,12 @@ bParmSetTORSIONAddImproperTerm( TORSION tTorsion,
         int iN, double dKp, double dP0, double dScEE, double dScNB, char *sDesc )
 {
 TORSIONPARMt        tpTorsion;
-orderStr        sOrder;
+orderStr        sOrder="0123";
 
     strcpy( tpTorsion.sType1, cPType1 );
     strcpy( tpTorsion.sType2, cPType2 );
     strcpy( tpTorsion.sType3, cPType3 );
     strcpy( tpTorsion.sType4, cPType4 );
-    strcpy( sOrder, "0123" );
     zParmSetOrderImproperAtoms( tpTorsion.sType1,
                                 tpTorsion.sType2,
                             tpTorsion.sType3,
@@ -2709,9 +2921,9 @@ ATOMPARMt      *apPAtom;
 //   dPKpress:   stiffness constant for compression overtone
 //   dPRpress0:  length at which the compression overtone kicks in
 //---------------------------------------------------------------------------------------------
-void ParmSetBond(PARMSET psLib, int i, char *sType1, char *sType2, double *dPKb, double *dPR0,
+void ParmSetBond(PARMSET psLib, int i, typeStr sType1, typeStr sType2, double *dPKb, double *dPR0,
                  double *dPKpull, double *dPRpull0, double *dPKpress, double *dPRpress0,
-                 char *sDesc)
+                 STRING sDesc)
 {
   BONDPARMt *bpPBond;
 
@@ -3095,7 +3307,6 @@ ParmSetUpdateTorsion( PARMSET psLib, int i,
         double *dPScNB, char *sDescription)
 {
 TORSIONPARMt        *tpPTorsion;
-orderStr        sOrder;
 
     tpPTorsion = PVAI( psLib->vaTorsions, TORSIONPARMt, i );
 
@@ -3110,12 +3321,11 @@ orderStr        sOrder;
     if (      dPScNB != (double*)NULL) tpPTorsion->dScNB = *dPScNB;
         StringCopyMax(tpPTorsion->sDesc, sDescription, sizeof(tpPTorsion->sDesc));
 
-    strcpy( sOrder, "0123" );
     zParmSetOrderTorsionAtoms( tpPTorsion->sType1,
                           tpPTorsion->sType2,
                           tpPTorsion->sType3,
                           tpPTorsion->sType4 );
-    strcpy( tpPTorsion->sOrder, sOrder );
+    strcpy( tpPTorsion->sOrder, "0123" );
 }
 
 
@@ -3134,7 +3344,7 @@ ParmSetUpdateImproper( PARMSET psLib, int i,
         int *iPN, double *dPKp, double *dPP0, double *dScEE, double *dScNB, char *sDescription)
 {
 TORSIONPARMt   *tpPTorsion;
-orderStr        sOrder;
+orderStr        sOrder="0123"; // only valid if given all atoms at the same time
 
     tpPTorsion = PVAI( psLib->vaImpropers, TORSIONPARMt, i );
     if (      sType1 != (char*)NULL  ) strcpy( tpPTorsion->sType1, sType1 );
@@ -3147,7 +3357,6 @@ orderStr        sOrder;
     if (sDescription != (char*)NULL  )
         StringCopyMax(tpPTorsion->sDesc, sDescription, sizeof(tpPTorsion->sDesc));
 
-    strcpy( sOrder, "0123" );
     zParmSetOrderImproperAtoms( tpPTorsion->sType1,
                           tpPTorsion->sType2,
                           tpPTorsion->sType3,

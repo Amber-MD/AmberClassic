@@ -386,7 +386,7 @@ BLOCKt*		bPBlock;
     strcat( sName, sI ); strcat( sName, "-" );
     strcat( sName, sJ ); 
 
-    MALLOC( bPBlock, BLOCKt*, sizeof(BLOCKt) );
+    bPBlock = (BLOCKt*)MALLOC(sizeof(BLOCKt) );
     bPBlock->iIntI = *PVAI(vaIb,int,i);
     bPBlock->iIntJ = *PVAI(vaJb,int,i);
     bPBlock->PData = (GENP)PVAI(vaIcb,int,i);
@@ -530,7 +530,7 @@ BLOCKt*		bPBlock;
         strcat( sName, sK ); strcat( sName, "-" );
         strcat( sName, sL );
 
-	MALLOC( bPBlock, BLOCKt*, sizeof(BLOCKt) );    
+	bPBlock = (BLOCKt*)MALLOC(sizeof(BLOCKt) );    
 	bPBlock->iIntI = *PVAI(vaIp,int,i);
 	bPBlock->iIntJ = *PVAI(vaJp,int,i);
 	bPBlock->iIntK = *PVAI(vaKp,int,i);

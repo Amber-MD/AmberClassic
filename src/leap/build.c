@@ -1155,7 +1155,7 @@ bool            bFoundOne;
 LOOP            lBonds;
 ATOM            aAtom2, aAtom3;
 int             i;
-double          dSub, dNew;
+double          dSub=0, dNew;
 #ifdef DEBUG
 STRING		sAtom1, sAtom2, sAtom3, sAtom4;
 #endif

@@ -75,14 +75,12 @@ FILE *fIn;
     int iIndex, iA, iB;
     ATOM aA, aB;
     int iOrder;
-    ATOM aAtom;
     bool bGotIt;
     int iFileAtoms = 0;
     int iFileBonds = 0;
     int iFileSubstructures = 0;
     int iTemp, i;
     double dCharge;
-    RESIDUE rRes;
     STRING sName;
     STRING sOrder;
     int iRootAtom;
@@ -196,7 +194,7 @@ see below for usage examples.
         iResidue = iResidue < 1 ? 1 : iResidue;
 
         MESSAGE(" Atom: %s\n", sName);
-        aAtom = (ATOM) oCreate(ATOMid);
+        ATOM aAtom = (ATOM) oCreate(ATOMid);
         ContainerSetName(aAtom, sName);
         AtomSetTempInt(aAtom, iResidue);
         VectorDef(&vPos, dX, dY, dZ);
@@ -286,9 +284,10 @@ see below for usage examples.
             }
 
             MESSAGE(" Substructure: %s\n", sName);
-            rRes = (RESIDUE) oCreate(RESIDUEid);
+            RESIDUE rRes = (RESIDUE) oCreate(RESIDUEid);
             ContainerSetName(rRes, sName);
             ContainerSetSequence(rRes, iIndex);
+            ResidueSetType(rRes,RESTYPELIGAND);
             VarArrayAdd(vaResidues, (GENP) & rRes);
         }
     } else {
@@ -296,7 +295,7 @@ see below for usage examples.
         /* create a single residue with the same name as the unit name:  */
 
         vaResidues = vaVarArrayCreate(sizeof(RESIDUE));
-        rRes = (RESIDUE) oCreate(RESIDUEid);
+        RESIDUE rRes = (RESIDUE) oCreate(RESIDUEid);
         ContainerSetName(rRes, sUnitName);
         ContainerSetSequence(rRes, iIndex);
         VarArrayAdd(vaResidues, (GENP) & rRes);
@@ -308,10 +307,11 @@ see below for usage examples.
     /* Put the ATOMs within the RESIDUES */
 
     for (i = 0; i < iVarArrayElementCount(vaAtoms); i++) {
-        aAtom = *PVAI(vaAtoms, ATOM, i);
+        ATOM aAtom = *PVAI(vaAtoms, ATOM, i);
         iResidue = iAtomTempInt(aAtom);
-        rRes = *PVAI(vaResidues, RESIDUE, iResidue - 1);
+        RESIDUE rRes = *PVAI(vaResidues, RESIDUE, iResidue - 1);
         ContainerAdd((CONTAINER) rRes, (OBJEKT) aAtom);
+        DEREF(aAtom);
     }
 
 /*_____________________________________________________________________________
@@ -336,9 +336,8 @@ see below for usage examples.
         /* Set the Head and Tail */
         for (LineNumber=1; LineNumber<=2; LineNumber++){
             fscanf(fIn, "%s %d", HeadTailName, &HeadTailParentNumber);
-            ATOM aShortLived = (ATOM) oCreate(ATOMid);
             for (AtomNumber = 0; AtomNumber < iVarArrayElementCount(vaAtoms); AtomNumber++){
-                aShortLived = *PVAI(vaAtoms, ATOM, AtomNumber);
+                ATOM aShortLived = *PVAI(vaAtoms, ATOM, AtomNumber);
                 ResSequenceNumber = iContainerSequence(cContainerWithin(aShortLived));
                 if ( ResSequenceNumber == HeadTailParentNumber ){
                     if ( strcmp(aShortLived->cHeader.sName, HeadTailName) == 0 ){
@@ -379,11 +378,10 @@ see below for usage examples.
                 fscanf(fIn, "%d %s %s %s %s %s %s",&ResNumber, ConnectName[0], ConnectName[1],
                     ConnectName[2], ConnectName[3], ConnectName[4], ConnectName[5]);
                 RESIDUE rRes = *PVAI(vaResidues, RESIDUE, i);
-                ATOM aShortLived = (ATOM) oCreate(ATOMid);
                 for (j=0; j<=5; j++){
                     if(ConnectName[j]!=0){
                         for (AtomNumber=0; AtomNumber < iVarArrayElementCount(vaAtoms); AtomNumber++){
-                            aShortLived = *PVAI(vaAtoms, ATOM, AtomNumber);
+                            ATOM aShortLived = *PVAI(vaAtoms, ATOM, AtomNumber);
                             ResSequenceNumber = iContainerSequence(cContainerWithin(aShortLived));
                             if ( ResSequenceNumber==ResNumber ){
                                 if ( strcmp(aShortLived->cHeader.sName, ConnectName[j]) == 0 ){
@@ -400,8 +398,9 @@ see below for usage examples.
     /* Put the RESIDUES within the UNIT */
 
     for (i = 0; i < iVarArrayElementCount(vaResidues); i++) {
-        rRes = *PVAI(vaResidues, RESIDUE, i);
+        RESIDUE rRes = *PVAI(vaResidues, RESIDUE, i);
         ContainerAdd((CONTAINER) uUnit, (OBJEKT) rRes);
+        DEREF(rRes);
     }
     VarArrayDestroy(&vaAtoms);
     VarArrayDestroy(&vaResidues);
@@ -414,14 +413,14 @@ see below for usage examples.
     /* Destroy everything */
     if (vaAtoms) {
         for (i = 0; i < iVarArrayElementCount(vaAtoms); i++) {
-            aAtom = *PVAI(vaAtoms, ATOM, i);
+            ATOM aAtom = *PVAI(vaAtoms, ATOM, i);
             Destroy((OBJEKT *) & aAtom);
         }
         VarArrayDestroy(&vaAtoms);
     }
     if (vaResidues) {
         for (i = 0; i < iVarArrayElementCount(vaResidues); i++) {
-            rRes = *PVAI(vaResidues, RESIDUE, i);
+            RESIDUE rRes = *PVAI(vaResidues, RESIDUE, i);
             Destroy((OBJEKT *) & rRes);
         }
         VarArrayDestroy(&vaResidues);

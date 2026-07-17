@@ -48,7 +48,7 @@
 
 # include        "hash.h"
 # include        "database.h"
-
+#include "cmap.h"
 
 /*
  *-----------------------------------------------------------------------
@@ -59,18 +59,18 @@
  *        its first structure element.
  */
 
-typedef struct {
+typedef struct PARMSETSTRUCT {
         OBJEKTt         oSuper;
         STRING          sFname;
         STRING          sTitle;
         VARARRAY        vaAtoms;
         VARARRAY        vaBonds;
-        VARARRAY        vaC4Pairwise; //New
         VARARRAY        vaAngles;
         VARARRAY        vaTorsions;
         VARARRAY        vaImpropers;
         VARARRAY        vaHBonds;
         VARARRAY        vaNBEdits;
+        VARARRAY        vaCMAPs;
         bool            bBeingEdited;
 } PARMSETt;
 
@@ -157,7 +157,6 @@ extern int iParmSetAddAtom(PARMSET psLib, char *sType, double dMass, double dPol
 extern int iParmSetAddBond(PARMSET psLib, char *sType1, char *sType2, double dKb, double dR0,
                            double dKpull, double dRpull0, double dKpress, double dRpress0,
                            char *sDesc);
-extern int iParmSetAddC4Pairwise(PARMSET psLib, char *sType1, char *sType2, double daC4Pairwise, char *sDesc); //New
 extern int iParmSetAddAngle(PARMSET psLib, char *sType1, char *sType2, char *sType3,
                             double dKt, double dT0, double dTkub, double dRkub, char *sDesc);
 extern int iParmSetAddProperTerm(PARMSET psLib, char *sType1, char *sType2, char *sType3,
@@ -171,6 +170,12 @@ extern int iParmSetAddHBond(PARMSET psLib, char *sType1, char *sType2, double dA
 extern int iParmSetAddNBEdit(PARMSET psLib, char *sType1, char *sType2, double dEI, double dEJ,
                              double dRI, double dRJ, char *sDesc );
 
+extern int iParmSetAddCMAP(PARMSET psLib, CMAP cmap);
+extern int iParmSetFindCMAP (PARMSET psLib, const char **sResNames, const char **sAtomNames, int *iRelResIdx);
+extern int iParmSetTotalCMAPParms (PARMSET psLib);
+extern void ParmSetCMAP (PARMSET psLib, int i, CMAP cmapReturn, bool bCopy); 
+extern void VarArrayDestroyCMAP (VARARRAY *pva); 
+extern bool bParmSetCMAPHasTorsion (PARMSET psLib, const char **sAtomNames, bool *bMatchPhi, bool *bMatchPsi);
 
 extern void BoilTorsions(VARARRAY * vaPParms, int iParmOffset,
              VARARRAY vaTorsions, int iTorsionOffset);
@@ -255,8 +260,6 @@ extern bool        bParmSetCapableOfHBonding( PARMSET psParms, char *sType );
                         iVarArrayElementCount( (psParmSet)->vaAtoms )
 #define iParmSetTotalBondParms( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaBonds )
-#define iParmSetTotalC4Pairwise( psParmSet ) \
-	                iVarArrayElementCount( (psParmSet)->vaC4Pairwise) //New 
 #define iParmSetTotalAngleParms( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaAngles )
 #define iParmSetTotalTorsionParms( psParmSet ) \
@@ -275,28 +278,27 @@ extern int CheckTypeNBEdit(typeStr sType, VARARRAY vaPNBEdits);
  *        Routines used to actually obtain PARMSET parameters
  *        Use the index obtained from iParmSetFindxxxxx
  */
-extern void ParmSetAtom(PARMSET psLib, int i, char *sType, double *dPMass,
+extern void ParmSetAtom(PARMSET psLib, int i, typeStr sType, double *dPMass,
                         double *dPPolar, double *dPEpsilon, double *dPR,
                         double *dPEpsilon14, double *dPR14, double *dPScreenF,
-                        int *iPElement, int *iPHybridization, char *sDesc);
-extern void ParmSetBond(PARMSET psLib, int i, char *sType1, char *sType2,
+                        int *iPElement, int *iPHybridization, STRING sDesc);
+extern void ParmSetBond(PARMSET psLib, int i, typeStr sType1, typeStr sType2,
                         double *dPKb, double *dPR0, double *dKpull, double *dRpull0,
-                        double *dKpress, double *dRpress0, char *sDesc);
-extern void ParmSetC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double *daC4Pairwise, char *sDesc); //New
+                        double *dKpress, double *dRpress0, STRING sDesc);
 extern void ParmSetAngle(PARMSET psLib, int i, 
-                         char *sType1, char *sType2, char *sType3,
+                         typeStr sType1, typeStr sType2, typeStr sType3,
                          double *dPKt, double *dPT0, double *dPTkub, double *dPRkub,
-                         char *sDesc);
-extern void ParmSetTorsion(PARMSET psLib, int i, char *sType1, char *sType2, char *sType3,
-                           char *sType4, int *iPN, double *dPKp, double *dPP0, double *dPScEE,
-                           double *dPScNB, char *sDesc);
-extern void ParmSetImproper(PARMSET psLib, int i, char *sType1, char *sType2, char *sType3,
-                            char *sType4, int *iPN, double *dPKp, double *dPP0, char *sDesc);
-extern void ParmSetHBond(PARMSET psLib, int i, char *sType1, char *sType2,
-                         double *dPA, double *dPB, char *sDesc);
-extern void ParmSetNBEdit(PARMSET psLib, int i, char *sType1, char *sType2,
+                         STRING sDesc);
+extern void ParmSetTorsion(PARMSET psLib, int i, typeStr sType1, typeStr sType2, typeStr sType3,
+                           typeStr sType4, int *iPN, double *dPKp, double *dPP0, double *dPScEE,
+                           double *dPScNB, STRING sDesc);
+extern void ParmSetImproper(PARMSET psLib, int i, typeStr sType1, typeStr sType2, typeStr sType3,
+                            typeStr sType4, int *iPN, double *dPKp, double *dPP0, STRING sDesc);
+extern void ParmSetHBond(PARMSET psLib, int i, typeStr sType1, typeStr sType2,
+                         double *dPA, double *dPB, STRING sDesc);
+extern void ParmSetNBEdit(PARMSET psLib, int i, typeStr sType1, typeStr sType2,
                           double *dEI, double *dEJ, double *dRI,
-                          double *dRJ, char *sDesc);
+                          double *dRJ, STRING sDesc);
 
 //---------------------------------------------------------------------------------------------
 // Routines used to update PARMSET parameters.  Use the index obtained from iParmSetFindxxxxx.
@@ -310,7 +312,6 @@ extern void ParmSetUpdateAtom(PARMSET psLib, int i, char *sType, double *dPMass,
 extern void ParmSetUpdateBond(PARMSET psLib, int i, char *sType1, char *sType2,
                               double *dPKb, double *dPR0, double *dKpull, double *dRpull0,
                               double *dKpress, double *dRpress0, char *sDescription);
-extern void ParmSetUpdateC4Pairwise(PARMSET psLib, int i, char *sType1, char *sType2, double *daC4Pairwise, char *sDescription); //New
 extern void ParmSetUpdateAngle(PARMSET psLib, int i, char *sType1, char *sType2, char *sType3,
                                double *dPKt, double *dPT0, char *sDescription);
 extern void ParmSetUpdateTorsion(PARMSET psLib, int i, char *sType1, char *sType2,
@@ -326,7 +327,6 @@ extern void ParmSetUpdateHBond(PARMSET psLib, int i, char *sType1, char *sType2,
 
 extern void ParmSetNewAtoms(PARMSET psParmSet, int iCount);
 extern void ParmSetNewBonds(PARMSET psParmSet, int iCount);
-extern void ParmSetNewC4Pairwise(PARMSET psParmset, int iCount); //New
 extern void ParmSetNewAngles(PARMSET psParmSet, int iCount);
 extern void ParmSetNewTorsions(PARMSET psParmSet, int iCount);
 extern void ParmSetNewImpropers(PARMSET psParmSet, int iCount);

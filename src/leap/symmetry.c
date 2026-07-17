@@ -2,13 +2,13 @@
 #include "symmetry.h"
 
 /* ------------------------------------------------------------------ */
-/*  parse_symop                                                       */
+/*  parse_symop of the form Y+1/2,X-1/2,Z  Case insensitive           */
+/*  matrices are integer form with translation in 1/12 units          */
 /* ------------------------------------------------------------------ */
 int parse_symop(const char *s, int rot[3][3], int trans[3])
 {
     memset(rot,   0, 9 * sizeof(int));
     memset(trans, 0, 3 * sizeof(int));
-
     int row = 0, sign = +1;
 
     while (*s && row < 3) {
@@ -84,7 +84,7 @@ static int extract_quoted(const char *src, char *dst, int dstlen)
 /* ------------------------------------------------------------------ */
 
 /*
- * Parse 'filename' for a space group matching number (if > 0)
+ * Parse CCP4 syminfo.lib for a space group matching number (if > 0)
  * or name (matched against xHM and old symbol fields).
  * Fills *sg on success.  Returns 0 on success, -1 on error/not found.
  */
@@ -92,9 +92,13 @@ int parse_spacegroup_file(int number, const char *name, SPACEGROUPt *sg)
 {
     STRING sFilename;
     char *CLIBD = getenv("CLIBD");
+    char *PHENIX = getenv("PHENIX");
     if (CLIBD) {
         strcpy(sFilename,CLIBD);
         strcat(sFilename,"/syminfo.lib");
+    } else if (PHENIX) {
+        strcpy(sFilename,PHENIX);
+        strcat(sFilename,"modules/ccp4io/libccp4/data/syminfo.lib");
     } else
         strcpy(sFilename,"syminfo.lib");
 
@@ -163,7 +167,7 @@ int parse_spacegroup_file(int number, const char *name, SPACEGROUPt *sg)
                 if (parse_symop(ops, op->rot, op->trans) == 0)
                     sg->n_symops++;
                 else
-                    fprintf(stderr, "Warning: failed to parse symop '%s'\n", ops);
+                    VPWARN("failed to parse symop '%s'\n", ops);
             }
         } else if (strncmp(t, "cenop", 5) == 0) {
             char *ops = trim(t + 5);
@@ -172,7 +176,7 @@ int parse_spacegroup_file(int number, const char *name, SPACEGROUPt *sg)
                 if (parse_symop(ops, op->rot, op->trans) == 0)
                     n_cenops++;
                 else
-                    fprintf(stderr, "Warning: failed to parse cenop '%s'\n", ops);
+                    VPWARN("failed to parse cenop '%s'\n", ops);
             }
         }
         /* all other keywords silently ignored */

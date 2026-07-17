@@ -117,7 +117,7 @@ DATABASE	dbDatabase;
 	return(NULL);
     }
    
-    MALLOC( ul, LIBRARY, sizeof(LIBRARYt) );
+    ul = (LIBRARY)MALLOC(sizeof(LIBRARYt) );
     
     ul->dLibrary = dDictionaryCreate();
     ul->dbLibrary = dbDatabase;

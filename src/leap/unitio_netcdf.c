@@ -158,7 +158,7 @@ static int write_polar_section(int ncid, UNITt *uUnit,
     char sType[MAXTYPELEN], sDesc[MAXDESCLEN];
     double dMass, dPolar, dEpsilon, dRStar, dEpsilon14, dRStar14, dScreenF;
     int iElement, iHybridization;
-    int vid;
+    int vid_polar, vid_damp, vid_pper;
     SAVEATOMt *a = PVAI(uUnit->vaAtoms, SAVEATOMt, 0);
 
     for (i = 0; i < n; i++, a++) {
@@ -170,8 +170,7 @@ static int write_polar_section(int ncid, UNITt *uUnit,
         polar[i] = dPolar;
         damp[i]  = (dScreenF == 0.0) ? GDefaults.dDipoleDampFactor : dScreenF;
         if (bPert) {
-            bool bTmp = bAtomPerturbed(a->aAtom);
-            if (bTmp) {
+            if ( bAtomPerturbed(a->aAtom)) {
                 int iPIdx = iParmSetFindAtom(uUnit->psParameters, a->sPertType);
                 ParmSetAtom(uUnit->psParameters, iPIdx, sType, &dMass, &dPolar,
                             &dEpsilon, &dRStar, &dEpsilon14, &dRStar14, &dScreenF,
@@ -185,23 +184,23 @@ static int write_polar_section(int ncid, UNITt *uUnit,
     if (iCount > 0)
         VP0("Total atoms with default polarization=0.0: %d of %d\n", iCount, n);
 
-    NC_CHECK(nc_def_var(ncid, "POLARIZABILITY", NC_DOUBLE, 1, &dimid_atoms, &vid));
-    NC_CHECK(nc_put_att_text(ncid, vid, "units", 10, "angstrom^3"));
+    NC_CHECK(nc_def_var(ncid, "POLARIZABILITY", NC_DOUBLE, 1, &dimid_atoms, &vid_polar));
+    NC_CHECK(nc_put_att_text(ncid, vid_polar, "units", 10, "angstrom^3"));
     NC_CHECK(nc_enddef(ncid));
-    NC_CHECK(nc_put_var_double(ncid, vid, polar));
+    NC_CHECK(nc_put_var_double(ncid, vid_polar, polar));
 
-    NC_CHECK(nc_def_var(ncid, "DIPOLE_DAMP_FACTOR", NC_DOUBLE, 1, &dimid_atoms, &vid));
+    NC_CHECK(nc_def_var(ncid, "DIPOLE_DAMP_FACTOR", NC_DOUBLE, 1, &dimid_atoms, &vid_damp));
     NC_CHECK(nc_enddef(ncid));
-    NC_CHECK(nc_put_var_double(ncid, vid, damp));
+    NC_CHECK(nc_put_var_double(ncid, vid_damp, damp));
 
     if (bPert) {
         if (iCountPerturbed > 0)
             VP0("Total pert atoms with default polarization=0.0: %d of %d\n",
                 iCountPerturbed, iPertTot);
-        NC_CHECK(nc_def_var(ncid, "PERT_POLARIZABILITY", NC_DOUBLE, 1, &dimid_atoms, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "units", 10, "angstrom^3"));
+        NC_CHECK(nc_def_var(ncid, "PERT_POLARIZABILITY", NC_DOUBLE, 1, &dimid_atoms, &vid_pper));
+        NC_CHECK(nc_put_att_text(ncid, vid_pper, "units", 10, "angstrom^3"));
         NC_CHECK(nc_enddef(ncid));
-        NC_CHECK(nc_put_var_double(ncid, vid, pper));
+        NC_CHECK(nc_put_var_double(ncid, vid_pper, pper));
         free(pper);
     }
     free(polar); free(damp);
@@ -334,12 +333,14 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int dimid_atom2, dimid_atom3, dimid_atom4;
     int n_atoms    = iVarArrayElementCount(uUnit->vaAtoms);
     int n_residues = iVarArrayElementCount(uUnit->vaResidues);
-    char s1[8], s2[8], s3[8], s4[8], sd[80];
+    char s1[8], s2[8], s3[8], s4[8];
+    STRING sDesc;
     double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0;
     double dKt, dT0, dTkub, dRkub;
     double dKp, dP0, dScEE, dScNB;
     double dC, dD;
-    int vid;
+    int vid_name, vid_charge, vid_atomic_num, vid_itype;
+    int vid; //TODO: declare all first then write
 
     NC_CHECK(nc_create(fname, NC_CLOBBER|NC_64BIT_OFFSET|NC_NOFILL, &ncid));
 
@@ -411,26 +412,25 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     /* -3- atom names */
     {
         int n = iVarArrayElementCount((uUnit)->vaAtoms);
-        char *b = malloc(n * LABLEN);
-        int vid;
+        char *name = malloc(n * LABLEN);
         int dims2[2] = {dimid_atoms, dimid_name4};
-        memset(b, ' ', n * LABLEN);
+        memset(name, ' ', n * LABLEN);
         for (int i = 0; i < n; i++) {
             const char *s = PVAI((uUnit)->vaAtoms,SAVEATOMt,i)->sName;
             size_t l = strlen(s);
             if (l > (size_t)LABLEN) s += l - LABLEN;
-            memcpy(b+i*LABLEN, s, l < (size_t)LABLEN ? l : LABLEN);
+            memcpy(name+i*LABLEN, s, l < (size_t)LABLEN ? l : LABLEN);
         }
         NC_CHECK(nc_redef(ncid));
-        NC_CHECK(nc_def_var(ncid, "ATOM_NAME", NC_CHAR, 2, dims2, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 9, "Atom name"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "pdb_field",     4, "name"));
+        NC_CHECK(nc_def_var(ncid, "ATOM_NAME", NC_CHAR, 2, dims2, &vid_name));
+        NC_CHECK(nc_put_att_text(ncid, vid_name, "long_name", 9, "Atom name"));
+        NC_CHECK(nc_put_att_text(ncid, vid_name, "pdb_field",     4, "name"));
         if (GDefaults.bCIFReadAuth)
-            NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",    22, "atom_site.auth_atom_id"));
-        else NC_CHECK(nc_put_att_text(ncid, vid, "mmcif_field",  23, "atom_site.label_atom_id"));
+            NC_CHECK(nc_put_att_text(ncid, vid_name, "mmcif_field",    22, "atom_site.auth_atom_id"));
+        else NC_CHECK(nc_put_att_text(ncid, vid_name, "mmcif_field",  23, "atom_site.label_atom_id"));
         NC_CHECK(nc_enddef(ncid));
-        NC_CHECK(nc_put_var_text(ncid, vid, b));
-        free(b);
+        NC_CHECK(nc_put_var_text(ncid, vid_name, name));
+        free(name);
     }
 
 /* ================================================================
@@ -444,12 +444,12 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         for (int i = 0; i < n; i++)
             buf[i] = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->dCharge;
         NC_CHECK(nc_redef(ncid));
-        NC_CHECK(nc_def_var(ncid, "CHARGE", NC_DOUBLE, 1, &dimid_atoms, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "units", 18, "elementary charge"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 51,
+        NC_CHECK(nc_def_var(ncid, "CHARGE", NC_DOUBLE, 1, &dimid_atoms, &vid_charge));
+        NC_CHECK(nc_put_att_text(ncid, vid_charge, "units", 18, "elementary charge"));
+        NC_CHECK(nc_put_att_text(ncid, vid_charge, "long_name", 51,
                                  "multiply by 18.2223 for AMBER internal charge units"));
         NC_CHECK(nc_enddef(ncid));
-        NC_CHECK(nc_put_var_double(ncid, vid, buf));
+        NC_CHECK(nc_put_var_double(ncid, vid_charge, buf));
         free(buf);
     }
 
@@ -459,10 +459,10 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         for (int i = 0; i < n_atoms; i++)
             buf[i] = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->iElement;
         NC_CHECK(nc_redef(ncid));
-        NC_CHECK(nc_def_var(ncid, "ATOMIC_NUMBER", NC_INT, 1, &dimid_atoms, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "long_name", 13, "atomic number"));
+        NC_CHECK(nc_def_var(ncid, "ATOMIC_NUMBER", NC_INT, 1, &dimid_atoms, &vid_atomic_num));
+        NC_CHECK(nc_put_att_text(ncid, vid_atomic_num, "long_name", 13, "atomic number"));
         NC_CHECK(nc_enddef(ncid));
-        NC_CHECK(nc_put_var_int(ncid, vid, buf));
+        NC_CHECK(nc_put_var_int(ncid, vid_atomic_num, buf));
         free(buf);
     }
 
@@ -477,12 +477,12 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             buf[i] = *PVAI(vaNBIndex, int, iAtom) + 1;
         }
         NC_CHECK(nc_redef(ncid));
-        NC_CHECK(nc_def_var(ncid, "ATOM_TYPE_INDEX", NC_INT, 1, &dimid_atoms, &vid));
-        NC_CHECK(nc_put_att_text(ncid, vid, "long_name",          18, "1-based type index"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "reference_dimension", 7, "NTYPES2"));
-        NC_CHECK(nc_put_att_text(ncid, vid, "reference",          20, "NONBONDED_PARM_INDEX"));
+        NC_CHECK(nc_def_var(ncid, "ATOM_TYPE_INDEX", NC_INT, 1, &dimid_atoms, &vid_itype));
+        NC_CHECK(nc_put_att_text(ncid, vid_itype, "long_name",          18, "1-based type index"));
+        NC_CHECK(nc_put_att_text(ncid, vid_itype, "reference_dimension", 7, "NTYPES2"));
+        NC_CHECK(nc_put_att_text(ncid, vid_itype, "reference",          20, "NONBONDED_PARM_INDEX"));
         NC_CHECK(nc_enddef(ncid));
-        NC_CHECK(nc_put_var_int(ncid, vid, buf));
+        NC_CHECK(nc_put_var_int(ncid, vid_itype, buf));
         free(buf);
     }
 
@@ -555,6 +555,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_enddef(ncid));
         NC_CHECK(nc_put_var_text(ncid, vid, buf));
         NC_CHECK(nc_put_var_text(ncid, vid_type, buf_type));
+        free(buf_type);
         free(buf);
     }
 
@@ -590,7 +591,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_enddef(ncid));
         for (int i = 0; i < nb; i++) {
             ParmSetBond(uUnit->psParameters, i, s1, s2, &dKb, &dR0,
-                        &dKpull, &dRpull0, &dKpress, &dRpress0, sd);
+                        &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
             kb[i] = dKb; r0[i] = dR0;
         }
         NC_RESTRAINTLOOP(uUnit, RESTRAINTBOND, dKx, kb, nb);
@@ -616,7 +617,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         double *rpress0 = malloc(n*sizeof(double));
         for (int i = 0; i < nb; i++) {
             ParmSetBond(uUnit->psParameters, i, s1, s2, &dKb, &dR0,
-                        &dKpull, &dRpull0, &dKpress, &dRpress0, sd);
+                        &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
             kpull[i]=dKpull; rpull0[i]=dRpull0;
             kpress[i]=dKpress; rpress0[i]=dRpress0;
         }
@@ -663,7 +664,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
 
         for (int i = 0; i < na; i++) {
             ParmSetAngle(uUnit->psParameters, i, s1, s2, s3, &dKt, &dT0,
-                         &dTkub, &dRkub, sd);
+                         &dTkub, &dRkub, sDesc);
             kt[i] = dKt; t0[i] = dT0 / DEGTORAD;
         }
         NC_RESTRAINTLOOP(uUnit, RESTRAINTANGLE, dKx, kt, na);
@@ -693,14 +694,14 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_enddef(ncid));
         for (int i = 0; i < nt; i++) {
             ParmSetTorsion(uUnit->psParameters, i, s1, s2, s3, s4,
-                           &iN, &dKp, &dP0, &dScEE, &dScNB, sd);
+                           &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
             kp[i]=dKp; per[i]=iN; p0[i]=dP0/DEGTORAD;
             scee[i]=(dScEE<0.0)?GDefaults.dSceeScaleFactor:dScEE;
             scnb[i]=(dScNB<0.0)?GDefaults.dScnbScaleFactor:dScNB;
         }
         for (int i = 0; i < ni; i++) {
             ParmSetImproper(uUnit->psParameters, i, s1, s2, s3, s4,
-                            &iN, &dKp, &dP0, sd);
+                            &iN, &dKp, &dP0, sDesc);
             kp[nt+i]=dKp; per[nt+i]=iN; p0[nt+i]=dP0/DEGTORAD;
             scee[nt+i]=0.0; scnb[nt+i]=0.0;
         }
@@ -939,7 +940,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             NC_CHECK(nc_enddef(ncid));
 
             for (int i = 0; i < n; i++) {
-                ParmSetHBond(uUnit->psParameters, i, s1, s2, &dC, &dD, sd);
+                ParmSetHBond(uUnit->psParameters, i, s1, s2, &dC, &dD, sDesc);
                 A[i] = dC; B[i] = dD;
             }
             NC_CHECK(nc_put_var_double(ncid, vid_hba, A));
@@ -999,7 +1000,8 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     if (bUnitUseBox(uUnit)) {
         int iFirstSolvRes = n_residues;
         for (int i = 0; i < n_residues; i++) {
-            if (PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sResidueType[0] == RESTYPESOLVENT) {
+            //if (PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sResidueType[0] == RESTYPESOLVENT) {
+            if ( bResidueFlagsSet(PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->rResidue, RESIDUEBULKSOLVENT) ) {
                 iFirstSolvRes = i; break;
             }
         }
@@ -1291,7 +1293,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         //NC_CHECK(nc_def_dim(ncid, "CHARMM_NUB", nub, &dimid_nub));
         NC_CHECK(nc_def_dim(ncid, "CHARMM_NUBTYPES", nubtypes, &dimid_nubtypes));
         for (int i = 0; i < nubtypes; i++) {
-            ParmSetAngle(uUnit->psParameters, i, s1, s2, s3, &dKt, &dT0, &dTkub, &dRkub, sd);
+            ParmSetAngle(uUnit->psParameters, i, s1, s2, s3, &dKt, &dT0, &dTkub, &dRkub, sDesc);
             tkub[i] = dTkub; rkub[i] = dRkub;
         }
         NC_CHECK(nc_def_var(ncid, "UREY_BRADLEY_FORCE_CONSTANT", NC_DOUBLE, 1, &dimid_nubtypes, &vid));
@@ -1348,7 +1350,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     NC_CHECK(SaveAmberParmCMAPNetcdf(uUnit, ncid));
 
     NC_CHECK(nc_close(ncid));
-    printf("Successfully saved NetCDF PRMTOP file \"%s\"\n", fname);
+    VP0("Successfully saved NetCDF PRMTOP file \"%s\"\n", fname);
     return NC_NOERR;
 }
 
@@ -1369,7 +1371,7 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
     int dimensionID[NC_MAX_VAR_DIMS];
 
     int iAtomCount = iVarArrayElementCount(uUnit->vaAtoms);
-    printf("There are %i atoms\n", iAtomCount);
+    VP0("There are %i atoms\n", iAtomCount);
 
     if (nc_create(filename, NC_64BIT_OFFSET, &ncid) != NC_NOERR)
         VPFATALEXIT("%s: Error creating file\n", filename);
@@ -1397,7 +1399,7 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         VPFATALEXIT("%s: Error setting coordinate units to angstrom\n", filename);
 
     if (bUnitUseBox(uUnit) == TRUE) {
-        printf("Using the unit box\n");
+        VP0("Using the unit box\n");
         if (nc_def_dim(ncid, "cell_spatial", 3, &did_cell_spatial) != NC_NOERR)
             VPFATALEXIT("%s: Error defining cell spatial dimension\n", filename);
         dimensionID[0] = did_cell_spatial;
@@ -1461,7 +1463,7 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
     }
 
     double *data;
-    MALLOC(data, double *, 3 * iAtomCount * sizeof(double));
+    data = (double *)MALLOC(3 * iAtomCount * sizeof(double));
     int counter = 0;
     VECTOR vPos;
 
@@ -1470,8 +1472,8 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         VPFATALEXIT("%s: Error writing start time\n", filename);
 
     double dX, dY, dZ, dX2, dY2, dZ2;
+    UnitGetBox(uUnit, &dX, &dY, &dZ);
     if (bUnitUseBox(uUnit) == TRUE && GDefaults.nocenter == 0) {
-        UnitGetBox(uUnit, &dX, &dY, &dZ);
         dX2 = dX * 0.5; dY2 = dY * 0.5; dZ2 = dZ * 0.5;
     } else {
         dX2 = dY2 = dZ2 = 0.0;
@@ -1510,13 +1512,13 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         VPFATALEXIT("%s: Error closing file\n", filename);
     }
     FREE(data);
-    printf("Successfully saved NetCDF inpcrd file \"%s\"\n", filename);
+    VP0("Successfully saved NetCDF inpcrd file \"%s\"\n", filename);
 }
 #else
 
 void UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
 {
-    VPFATALEXIT("Built without NETCDF support. Rebuild with -DBINTRAJ\n");
+    VPFATALEXIT("Built without NetCDF support. Rebuild with -DBINTRAJ\n");
 }
 
 int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
@@ -1527,7 +1529,7 @@ int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                               VARARRAY vaNBParameters,
                               VARARRAY vaNBIndex)
 {
-    VPFATALEXIT("Built without NETCDF support. Rebuild with -DBINTRAJ\n");
+    VPFATALEXIT("Built without NetCDF support. Rebuild with -DBINTRAJ\n");
     return 0;
 }
 

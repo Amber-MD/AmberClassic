@@ -151,7 +151,7 @@ size_t      mylength;
  *      Copy everything in the string up until the first space into sHead.
  *      Remove everything (including the space) from the string sLine.
  */
-void
+char *
 sRemoveFirstString( char *sLine, char *sHead )
 {
 char	*sTemp;
@@ -162,7 +162,7 @@ size_t      mylength;
     if ( *sTemp == '\0' ) {
         strcpy( sHead, sLine );
         *sLine = '\0';
-        return;
+        return sLine;
     }
     *sTemp = '\0';
     strcpy( sHead, sLine );
@@ -171,7 +171,7 @@ size_t      mylength;
     //strcpy( sLine, sTemp );
     memmove(sLine, sTemp, mylength);
     sLine[mylength]='\0';
-    
+    return sLine;
 }
 
 

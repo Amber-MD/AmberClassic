@@ -95,7 +95,7 @@ typedef	struct	{
 	int		iRingTempInt;	/* Used to separate rings */
 } RINGINTERNALt;
 
-typedef struct  {
+typedef struct INTERNALSTRUCT {
 	OBJEKTt         oSuper;
 	char            cInternalType;
 	union	{

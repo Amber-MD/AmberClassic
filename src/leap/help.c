@@ -127,10 +127,10 @@ HelpAdd( char *sUpSubject, char *sText )
 {
 HELP    hNew;
 
-    MALLOC( hNew, HELP, sizeof(HELPt) );
+    hNew = (HELP)MALLOC(sizeof(HELPt) );
     sHelpUpSubject( hNew ) = sUpSubject;
 
-    MALLOC( sHelpSubject( hNew ), char *, strlen(sUpSubject) + 1 );
+    sHelpSubject( hNew ) = (char *)MALLOC(strlen(sUpSubject) + 1 );
     strcpy( sHelpSubject( hNew ), sUpSubject );
 
     StringLower( sHelpSubject( hNew ) );

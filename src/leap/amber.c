@@ -323,213 +323,160 @@ int             iRead,myiPOL;
 }
 
 /*
- *      zAmberReadParmSetCMAP
+ *  zAmberReadParmSetCMAP
  *
+ *  Read CMAP parameter records from frcmod/dat file into psParms.
+ *
+ *  Token ordering rules:
+ *    CMAP_TITLE     — always first in a record; commits any prior record
+ *    CMAP_PARAMETER — always last; commits current record, resets bReading
+ *    CMAP_COUNT     — either total count or per-record 1-based index;
+ *                     validated as max, not exact match
+ *    All others     — may appear in any order between TITLE and PARAMETER
+ *    Any token other than COUNT or TITLE before bReading is set → warning
  */
 static void
-zAmberReadParmSetCMAP( VARARRAY *vaFoo, FILE *fIn )
+zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
 {
-    STRING sLine,sLine0;
-    STRING tmpchar1, tmpchar2;
-    int tmpint1;
-    int i;
-    CMNT *cmntt, *cmnt, *cmnt0;
-    CMAPLST *cmaplstt;
-    static int called = 0;
+    STRING sLine;
+    char tok1[32], tok2[32];
+    int i, ipos;
+    int iMaxCount = 0;       /* max seen in CMAP_COUNT */
+    bool bReading = FALSE;   /* TRUE between CMAP_TITLE and CMAP_PARAMETER */
+    CMAPt cmap;
 
-    if (!called) {
-// initialize Gcmap record
-          Gcmaplst = (CMAPLST *) malloc(sizeof( CMAPLST ));
-          Gcmaplst->cmap = NULL;
-          Gcmaplst->next = NULL;
-          Gcmap = NULL;
-          GiCmapNum = 0;
-          called ++;
-      }
-
-    cmaplstt = Gcmaplst;
-    while (cmaplstt->next != NULL) {
-         cmaplstt=cmaplstt->next;
-      }
-
-    cmnt=NULL;
-    cmnt0=NULL;
-    cmntt=NULL;
-//    GiCmapNum = 0;
-    cmnt0=(CMNT *)malloc(sizeof(CMNT));
-    cmntt=cmnt0;
-    cmntt->next=NULL;
-    
-    //This is a pseudo reader
     while (1) {
-        
-        FGETS(sLine0, fIn);
-        strcpy(sLine,sLine0);
-
-        NODASHESWL(sLine);
-        if ( sLine[0] == '%' ) {
-            sscanf(sLine, "%s%s", tmpchar1, tmpchar2);
-            if (strcmp("%FLAG", tmpchar1) == 0) {
-                if (strcmp("CMAP_COUNT", tmpchar2)==0){
-                    sscanf(sLine, "%s%s%d", tmpchar1, tmpchar2, &tmpint1);
-
-//                    if (GiCmapNum <= 1) GiCmapNum = 1;
-                    // initialize storage for maps
-//                    Gcmap = (CMAP *)malloc(sizeof(CMAP) * (GiCmapNum));
-                    //printf("mjhsieh: GiCmapNum =%d\n",GiCmapNum);
-//                    GiCmapNum += tmpint1;
-//                    VP0("Read %i cmaps\n",tmpint1);
-
-                } else if(strcmp("CMAP_TITLE", tmpchar2)==0) {
-                    FGETS(sLine, fIn);
-                    Gcmap = (CMAP *)malloc(sizeof(CMAP) );
-                    while (cmaplstt->cmap != NULL ) {
-                          cmaplstt = cmaplstt->next;
-                       }
-                    cmaplstt->cmap = Gcmap;
-                    cmaplstt->next = (CMAPLST *) malloc(sizeof(CMAPLST));
-                    cmaplstt->next->cmap = NULL;
-                    cmaplstt->next->next = NULL;
-
-                    for (i=0;i<80 && sLine[i] != '\n'; i++) Gcmap->title[i]=sLine[i];
-                    Gcmap->title[i] = '\0';
-//                    VP0("Read Gcmap %s\n",Gcmap->title);
-                    cmnt=(CMNT *) malloc(sizeof(CMNT));
-                    cmnt->next=NULL;
-                    Gcmap->cmnt=cmnt;
-                    GiCmapNum ++;
-
-// set default to the main chain
-                    Gcmap->residx[0]=-1;
-                    Gcmap->residx[1]= 0;
-                    Gcmap->residx[2]= 0;
-                    Gcmap->residx[3]= 0;
-                    Gcmap->residx[4]= 1;
-
-// In ff18SB,there's no CMAP that should be applied to termini residues.
-// This can be reactivated in the future when there're CMAPs trained for termini residues.
-                    //Gcmap->nresidx[0]= 0;
-                    //Gcmap->nresidx[1]= 0;
-                    //Gcmap->nresidx[2]= 0;
-                    //Gcmap->nresidx[3]= 0;
-                    //Gcmap->nresidx[4]= 1;
-
-                    //Gcmap->cresidx[0]=-1;
-                    //Gcmap->cresidx[1]= 0;
-                    //Gcmap->cresidx[2]= 0;
-                    //Gcmap->cresidx[3]= 0;
-                    //Gcmap->cresidx[4]= 0;
-
-                    strcpy(Gcmap->atmname[0],"C");
-                    strcpy(Gcmap->atmname[1],"N");
-                    strcpy(Gcmap->atmname[2],"CA");
-                    strcpy(Gcmap->atmname[3],"C");
-                    strcpy(Gcmap->atmname[4],"N");
-                     
-// In ff18SB,there's no CMAP that should be applied to termini residues.
-// This can be reactivated in the future when there're CMAPs trained for termini residues.
-                    //strcpy(Gcmap->natmname[0],"H1");
-                    //strcpy(Gcmap->natmname[1],"N");
-                    //strcpy(Gcmap->natmname[2],"CA");
-                    //strcpy(Gcmap->natmname[3],"C");
-                    //strcpy(Gcmap->natmname[4],"N");
-
-                    //strcpy(Gcmap->catmname[0],"C");
-                    //strcpy(Gcmap->catmname[1],"N");
-                    //strcpy(Gcmap->catmname[2],"CA");
-                    //strcpy(Gcmap->catmname[3],"C");
-                    //strcpy(Gcmap->catmname[4],"OXT");
-
-                    Gcmap->termmap = 1; // assume applicable to terminal residues by default
-
-                } else if(strcmp("CMAP_RESLIST",tmpchar2)==0){
-                    char tmpchar[8];
-                    sscanf(sLine,"%s%s%d",tmpchar1,tmpchar2,&tmpint1);
-                    Gcmap->nres = tmpint1;
-                    Gcmap->reslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
-                    Gcmap->creslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
-                    Gcmap->nreslist=(WRD *) malloc(sizeof(WRD)*tmpint1 );
-                    for (i=0; i<tmpint1; i++) {
-                        fscanf(fIn, "%s", tmpchar);
-                        //printf("%s\n",tmpchar);
-                        strcpy(Gcmap->reslist[i], tmpchar);
-                        strcpy(Gcmap->creslist[i], "C"); strcat(Gcmap->creslist[i], tmpchar);
-                        strcpy(Gcmap->nreslist[i], "N"); strcat(Gcmap->nreslist[i], tmpchar);
-                    }
-                } else if (strcmp("CMAP_RESOLUTION", tmpchar2) == 0) {
-                    sscanf(sLine, "%s%s%d", tmpchar1, tmpchar2, &tmpint1);
-                    Gcmap->resolution = tmpint1;
-                    Gcmap->map=(double *) malloc(sizeof(double) * tmpint1 * tmpint1 );
-                    //printf("%s\n",sLine);
-                } else if (strcmp("CMAP_PARAMETER", tmpchar2) == 0) {
-                    double tmpdbl;
-                    tmpint1 = Gcmap->resolution * Gcmap->resolution;
-                    for (i=0; i<tmpint1; i++) {
-                        fscanf(fIn, "%lf", &tmpdbl);
-                        Gcmap->map[i]=tmpdbl;
-                    }
-                    //printf("%s\n",sLine);
-                } else if(strcmp("CMAP_ATMLIST",tmpchar2)==0){
-                    sscanf(sLine,"%s%s%s%s%s%s%s",tmpchar1,tmpchar2,
-                           Gcmap->atmname[0], Gcmap->atmname[1], Gcmap->atmname[2],
-                           Gcmap->atmname[3], Gcmap->atmname[4]);
-                           int l;
-                           for (l=0; l<5; l++) {
-                                strcpy(Gcmap->catmname[l], Gcmap->atmname[l]);
-                                strcpy(Gcmap->natmname[l], Gcmap->atmname[l]);
-                              }
-                           if (strcmp("C",Gcmap->atmname[0]) == 0) strcpy(Gcmap->natmname[0], "H1");
-                           if (strcmp("C",Gcmap->atmname[4]) == 0) strcpy(Gcmap->natmname[4], "H1");
-                           if (strcmp("N",Gcmap->atmname[0]) == 0) strcpy(Gcmap->catmname[0], "OXT");
-                           if (strcmp("N",Gcmap->atmname[4]) == 0) strcpy(Gcmap->catmname[4], "OXT");
-
-                } else if(strcmp("CMAP_RESIDX",tmpchar2)==0){
-                    sscanf(sLine0,"%s%s%d%d%d%d%d",tmpchar1,tmpchar2,
-                           &Gcmap->residx[0], &Gcmap->residx[1], &Gcmap->residx[2],
-                           &Gcmap->residx[3], &Gcmap->residx[4]);
-                           int l;
-                           for (l=0; l<5; l++) {
-                                Gcmap->cresidx[l] = Gcmap->residx[l];
-                                Gcmap->nresidx[l] = Gcmap->residx[l];
-                              }
-                              Gcmap->nresidx[0] = 0;
-                              Gcmap->cresidx[4] = 0;
-
-                } else if(strcmp("CMAP_TERMMAP",tmpchar2)==0){
-                    sscanf(sLine0,"%s%s%d",tmpchar1,tmpchar2,
-                           &Gcmap->termmap);
-
-                } else {
-                    VPWARN("Unknown Flag : %s\n",sLine);
-                }
-            }
-            if (strcmp("%COMMENT",tmpchar1) == 0 ) {
-                if (cmnt != NULL) {
-                    for (i=0;i<80 && sLine[i] != '\n'; i++) {
-                        continue;
-                    }
-                    sLine[i]='\0';
-                    cmnt->record=(char *) malloc(sizeof(char) * 256);
-                    strcpy(cmnt->record, &sLine[9]);
-                    cmnt->next=(CMNT *) malloc(sizeof(CMNT));
-                    cmnt=cmnt->next;
-                    cmnt->next=NULL;
-                } else {
-                    // Well, this may be a comment line not specific for a particular map.
-                    // simply copy it.
-                    cmntt->record=(char *) malloc(sizeof(char) * 256);
-                    strcpy(cmntt->record, &sLine[9]);
-                    cmntt->next=(CMNT *) malloc(sizeof(CMNT));
-                    cmntt=cmntt->next;
-                    cmntt->next=NULL;
-                }
-            }
-        } else if (sLine[0]=='\0'){
-            break;
-        } else {
-            //printf("%s\n",sLine);
+        FGETS(sLine, fIn);
+        if (sLine[0] == '\0') break;
+        StringRTrim(sLine);
+        if (sLine[0] != '%') {
+            if (strlen(sLine))
+                VPWARN("Unrecognized line parsing CMAP data: %s\n", sLine);
             continue;
         }
+        sscanf(sLine, "%31s%31s%n", tok1, tok2, &ipos);
+
+        if (strcmp("%FLAG", tok1) != 0) {
+            if (strcmp("%COMMENT", tok1) == 0) {
+                // No bReading check: COMMENT lines preceding TITLE drop into the next cmap
+                /* accumulate comment into current record */
+                char *cmnt = &sLine[9];
+                size_t used = strnlen(cmap.comments, sizeof(cmap.comments));
+                if (used < sizeof(cmap.comments) - 1) {
+                    if (used > 0) cmap.comments[used++] = '\n';
+                    size_t avail = sizeof(cmap.comments) - used - 1;
+                    size_t n = strnlen(cmnt, avail);
+                    memcpy(cmap.comments + used, cmnt, n);
+                    cmap.comments[used + n] = '\0';
+                }
+            }
+            else VPWARN("Unrecognized line parsing CMAP data: %s\n", sLine);
+            continue;
+        }
+
+        /* Invalid record guard: only COUNT and TITLE allowed before bReading ── */
+        if (!bReading &&
+            strcmp("CMAP_COUNT", tok2) != 0 &&
+            strcmp("CMAP_TITLE", tok2) != 0) {
+            VPWARN("CMAP %%FLAG %s before %%FLAG CMAP_TITLE — skipping\n", tok2);
+            continue;
+        }
+
+        if (strcmp("CMAP_COUNT", tok2) == 0) {
+            int iCount = atoi(&sLine[ipos]);
+            if (iCount > iMaxCount) iMaxCount = iCount;
+            if (iCount > iParmSetTotalCMAPParms(psParms) + 1)
+                VPWARN("CMAP_COUNT=%d but only %d records read so far\n",
+                       iCount, iParmSetTotalCMAPParms(psParms));
+
+        } else if (strcmp("CMAP_TITLE", tok2) == 0) {
+            /* PARAMETER must have closed the previous record */
+            if (bReading)
+                VPWARN("CMAP record '%s' had no CMAP_PARAMETER — discarding\n",
+                       cmap.title);
+            /* discard incomplete record — free any allocated inner pointers */
+            if (bReading && cmap.reslist) { free(cmap.reslist); cmap.reslist = NULL; }
+            if (bReading && cmap.map)     { free(cmap.map);     cmap.map     = NULL; }
+
+
+
+            memset(&cmap, 0, sizeof(CMAPt));
+            bReading = TRUE;
+
+            FGETS(sLine, fIn);
+            StringTrim(sLine);
+            sLine[sizeof(cmap.title) - 1] = '\0';
+            strcpy(cmap.title, sLine);
+            VP2("Reading CMAP: %s\n", cmap.title);
+
+            /* defaults — standard backbone phi/psi */
+            cmap.residx[0] = -1;
+            cmap.residx[4] =  1;
+            strcpy(cmap.atmname[0], "C");
+            strcpy(cmap.atmname[1], "N");
+            strcpy(cmap.atmname[2], "CA");
+            strcpy(cmap.atmname[3], "C");
+            strcpy(cmap.atmname[4], "N");
+
+        } else if (strcmp("CMAP_RESLIST", tok2) == 0) {
+            if (cmap.reslist) free(cmap.reslist);
+            cmap.nres = atoi(&sLine[ipos]);
+            cmap.reslist = malloc(sizeof(WRD) * cmap.nres);
+            for (i = 0; i < cmap.nres; i++)
+                fscanf(fIn, "%7s", cmap.reslist[i]);
+
+        } else if (strcmp("CMAP_RESOLUTION", tok2) == 0) {
+            cmap.resolution = atoi(&sLine[ipos]);
+
+        } else if (strcmp("CMAP_PARAMETER", tok2) == 0) {
+            if (cmap.resolution <= 0) {
+                VPWARN("CMAP_PARAMETER before CMAP_RESOLUTION in '%s' — skipping\n",
+                       cmap.title);
+            } else {
+                if (cmap.map) {
+                    VPWARN("CMAP record '%s': duplicate PARAMETER\n", cmap.title);
+                    free(cmap.map);
+                }
+                cmap.map = malloc(sizeof(double) *
+                              cmap.resolution * cmap.resolution);
+                int m = cmap.resolution * cmap.resolution;
+                for (i = 0; i < m; i++)
+                    fscanf(fIn, "%lf", &cmap.map[i]);
+            }
+            /* PARAMETER is always last — commit and reset */
+            if (cmap.resolution <= 0 || !cmap.map)
+                VPWARN("CMAP record '%s': missing map data — skipping\n", cmap.title);
+            else
+                iParmSetAddCMAP(psParms, &cmap);
+            bReading = FALSE;
+        } else if (strcmp("CMAP_ATMLIST", tok2) == 0) {
+            NODASHESWL(sLine);
+            sscanf(&sLine[ipos], "%7s%7s%7s%7s%7s",
+                   cmap.atmname[0], cmap.atmname[1], cmap.atmname[2],
+                   cmap.atmname[3], cmap.atmname[4]);
+
+        } else if (strcmp("CMAP_RESIDX", tok2) == 0) {
+            NODASHESWL(sLine);
+            sscanf(&sLine[ipos], "%d%d%d%d%d",
+                   &cmap.residx[0], &cmap.residx[1], &cmap.residx[2],
+                   &cmap.residx[3], &cmap.residx[4]);
+
+        } else if (strcmp("CMAP_TERMMAP", tok2) == 0) {
+            int iTermMap = atoi(&sLine[ipos]);
+            if (iTermMap != 0)
+                VPFATALEXIT("CMAP_TERMMAP=%d not supported\n", iTermMap);
+
+        } else {
+            VPWARN("Unknown CMAP %%FLAG: %s\n", tok2);
+        }
+    }
+
+    /* end of file — if still reading, CMAP_PARAMETER was never seen */
+    if (bReading) {
+        VPWARN("CMAP record '%s' had no CMAP_PARAMETER — discarding\n",
+               cmap.title);
+        if (cmap.reslist) free(cmap.reslist);
+        if (cmap.map)     free(cmap.map);
     }
 }
 
@@ -1144,7 +1091,6 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
 {
     STRING          sLine, saStr[10];
     VARARRAY        vaMasses, vaNonBonds;
-    VARARRAY        vaFoo;
     PARMSET         psParms;
     int             i, j;
 
@@ -1161,6 +1107,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
     vaMasses = NULL;
     vaNonBonds = NULL;
 
+    // Mass and NonBond are deferred, and saved in ParmSet as a unit
     do {
         FGETS( sLine, fIn );
         if ( strncmp( sLine, "MASS", 4 ) == 0 ) {
@@ -1178,7 +1125,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
         } else if ( strncmp( sLine, "NONB", 4 ) == 0 ) {
             zAmberReadParmSetNonBonds( &vaNonBonds, fIn );
         } else if ( strncmp( sLine, "CMAP", 4 ) == 0 ) {
-            zAmberReadParmSetCMAP( &vaFoo, fIn );
+            zAmberReadParmSetCMAP( psParms, fIn );
         } else if ( strncmp( sLine, "IPOL", 4 ) == 0 ) {
             zAmberReadParmSetIPOL( fIn );
         } else if ( strncmp( sLine, "LJEDIT", 6 ) == 0 ) {
@@ -1329,6 +1276,7 @@ bool            bUseFirstColumn;
     uUnit = (UNIT)oCreate(UNITid);
     rRes  = (RESIDUE)oCreate(RESIDUEid);
     ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rRes );
+    DEREF(rRes);
 
                 /* Skip a line (this is the mainchain filename, if present) */
     FGETS( sLine, fIn );
@@ -1612,6 +1560,7 @@ MESSAGE("============\n" );
             AtomSetPosition( aAtom, vPos );
             AtomSetCharge( aAtom, dCharge );
             ContainerAdd( (CONTAINER)rRes, (OBJEKT)aAtom );
+            DEREF(aAtom);
             if ( iBond != -1 ) {
                 aAtom2 = (PVAI( vaCoor, TREENODEt, iBond))->aAtom;
                 if ( aAtom2 != NULL ) {
@@ -1664,7 +1613,6 @@ MESSAGE("============\n" );
         iRead = sscanf( sLine, "%s", saStr[1] );
         if ( iRead <= 0 ) continue;
         MESSAGE("Parsed command: %s\n", saStr[1] );
-        TESTMEMORY();
         if ( strcmp( saStr[1], "DONE" ) == 0 ) break;
         else if ( strcmp( saStr[1], "LOOP" ) == 0 ) {
             int problem = 0;
@@ -1783,8 +1731,6 @@ MESSAGE("============\n" );
             }
         }
     }
-
-    TESTMEMORY();
 
     UnitSetHead( uUnit, aMain0 );
     ResidueSetConnectAtom( rRes, NEND, aMain0 );
@@ -1936,28 +1882,6 @@ TYPEELEMENTt    tTypeInfo;
         VarArrayAdd( vaAtomTypes, (GENP)&tTypeInfo );
     }
 
-    /*
-     *  now delete it all.. except the top list, which parser.y does,
-     *  but this needs to be DEREF'd for some reason.. the overall
-     *  structure:
-     *
-     *          assoc -> list(lEntries) 
-     *                  [commands.c passes lEntries to amber.c;
-     *                   both the assoc & lEntries destroyed in parser.y]
-     *
-     *          lEntries: list of assoc, each containing a list of strings.
-     */
-    llEntries = llListLoop(lEntries);
-    while ( (aEntry1 = (ASSOC)oListNext(&llEntries)) ) {
-        lEntry = (LIST)oAssocObject(aEntry1);
-        llEntry = llListLoop(lEntry);
-        while ( (aEntry2 = (ASSOC)oListNext(&llEntry)) ) {
-                Destroy( (OBJEKT *)&aEntry2 );
-        }
-        Destroy( (OBJEKT *)&aEntry1 );
-        Destroy( (OBJEKT *)&lEntry );
-    }
-    DEREF( lEntries );
 }
 
 /*

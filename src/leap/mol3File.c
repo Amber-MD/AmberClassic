@@ -51,7 +51,7 @@ Mol3Write( FILE *fOut, UNIT uUnit, int choice ){
         iResNumber=(((CONTAINER)aUnitHead(uUnit))->cContainedBy)->iSequence;
 
         cPTemp = ((CONTAINER)aUnitHead(uUnit))->sName;
-        strncpy( sName, cPTemp, 4 );
+        memcpy( sName, cPTemp, 4 );
       
         if ( strlen(cPTemp) > 4 ) {
             VP0(" Truncating residue name for PDB format: %s -> %s\n", ((CONTAINER)aUnitHead(uUnit))->sName, sName );
@@ -70,7 +70,7 @@ Mol3Write( FILE *fOut, UNIT uUnit, int choice ){
         iResNumber=(((CONTAINER)aUnitTail(uUnit))->cContainedBy)->iSequence;
 
         cPTemp = ((CONTAINER)aUnitTail(uUnit))->sName;
-        strncpy( sName, cPTemp, 4 );
+        memcpy( sName, cPTemp, 4 );
 
         if ( strlen(cPTemp) > 4 ) {
             VP0(" Truncating residue name for PDB format: %s -> %s\n", ((CONTAINER)aUnitTail(uUnit))->sName, sName );
@@ -93,7 +93,7 @@ Mol3Write( FILE *fOut, UNIT uUnit, int choice ){
         for (j = 0; j <= 5; j++) {
             if ( prRes.rResidue->aaConnect[j] != NULL ){
                 cPTemp = sContainerName(prRes.rResidue->aaConnect[j]);
-                strncpy( sName, cPTemp, 4 );
+                memcpy( sName, cPTemp, 4 );
                 if ( strlen(cPTemp) > 4 ) {
                     VP0(" Truncating residue name for PDB format: %s -> %s\n", sContainerName(prRes.rResidue->aaConnect[j]), sName );
                     fprintf(fOut," %s",sName);

@@ -14,6 +14,8 @@
  *
  *      No Length modifier characters allowed e.g. %lf (%f = double)
  *
+ *      Variations from sscanf():
+ *
  *              d       get an integer.  Default:  0.
  *              x       get a hexadecimal integer.  Default:  0.
  *              h       get a hybrid36 encoded integer.  Default:  0.
@@ -45,7 +47,7 @@ pdb_sscanf(char *buffer, char *fmt, ...)
 
                         /* calculate field_width */
                         field_width = 0;
-                        for (++fmt; isdigit(*fmt); fmt++)
+                        for (++fmt; isdigit((unsigned char)*fmt); fmt++)
                                 field_width = field_width * 10 + *fmt - '0';
                         if (field_width == 0)
                                 field_width = 1;        /* default */

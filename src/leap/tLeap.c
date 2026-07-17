@@ -112,13 +112,6 @@ void ParseInit(RESULTt * rPResult);
 void ParseArguments(int argc, char *argv[]);
 void ParseShutdown();
 extern void ParseBlock(BLOCK, RESULTt *);
-#if defined(__SANITIZE_ADDRESS__)
-// Code only for AddressSanitizer
-// Disable leak detection because Leap leaks like a seive (for now)
-const char* __asan_default_options() {
-  return "detect_leaks=0";
-}
-#endif
 /*
  *******************************************************************
  *
@@ -188,11 +181,9 @@ int main(int argc, char *argv[])
         }
 
     }
-    while (rResult.iCommand != CQUIT);
+    BlockDestroy(&bCmd);
 
     ParseShutdown();
 
-    LISTUNFREEDMEMORYTOLOGFILE();
-
-    exit(0);
+    return 0;
 }

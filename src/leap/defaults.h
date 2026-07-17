@@ -11,8 +11,11 @@ typedef struct {
 	int	pdbwritecharges;
 	int     nocenter;
 	int     reorder_residues;
+	int     reorder_molecules;
 	int     reverse_lists;
+	int     orig_cmap_order;
         int     iOldPrmtopFormat;
+        double  dPrmtopFormat;
 	double	dGridSpace;
 	double	dShellExtent;
 	int	iDielectricFlag;
@@ -34,6 +37,7 @@ typedef struct {
 
         double  dPdbLinkCovalentCutoff;
         double  dPdbCrosslinkCovalentCutoff;
+        double  dPdbBulkQ;
         int     iPdbIgnoreNonConnect;
         int     iPdbReadModel;
         int     iPdbConvertResName;
@@ -45,10 +49,10 @@ typedef struct {
         bool    bPdbUseConect;
         bool    bPdbLinkIons;
         bool    bPdbResetChainID;
-        bool    bPdbExpandBioMt;
         bool    bPdbExpandNCSMt;
         bool    bPdbExpandSymm;
         bool    bCIFReadAuth;
+        bool    bMaskPDBMode;
         char    cPdbAltLocSelect;
         STRING  sPdbPatchFilename;
 } defaultstruct ;

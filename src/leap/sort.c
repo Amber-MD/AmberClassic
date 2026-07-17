@@ -194,7 +194,7 @@ int		iTopTrue, iBottomFalse;
 	/* Temporarily allocate a swap buffer */
 
 
-    MALLOC( PSwapBuffer ,GENP ,iElementSize );
+    PSwapBuffer  = (GENP )MALLOC(iElementSize );
 
     iTopTrue = -1;
     iBottomFalse = iElements;

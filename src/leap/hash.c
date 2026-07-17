@@ -266,7 +266,7 @@ zhlPPHTInsertList( HASH_LISTt **hlPPFirst)
 {
 HASH_LISTt	*hlPNew;
     
-    MALLOC( hlPNew, HASH_LISTt*, sizeof(HASH_LISTt) );
+    hlPNew = (HASH_LISTt*)MALLOC(sizeof(HASH_LISTt) );
     hlPNew->hlPNext = (*hlPPFirst);
     (*hlPPFirst) = hlPNew;
 
@@ -342,11 +342,11 @@ int		i, iPrimeTableSize;
 
 		/* Allocate space for the HASH_TABLEt structure */
 
-    MALLOC( htTable, HASH_TABLE, sizeof(HASH_TABLEt) );
+    htTable = (HASH_TABLE)MALLOC(sizeof(HASH_TABLEt) );
 
 		/* Allocate space for the actual table */
 
-    MALLOC( htTable->hlPaTable, HASH_LISTt**, sizeof(HASH_LISTt*)*usSize );
+    htTable->hlPaTable = (HASH_LISTt**)MALLOC(sizeof(HASH_LISTt*)*usSize );
 
     for ( i=0; i<(int)usSize; i++ ) {
 	htTable->hlPaTable[i] = NULL;

@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "basics.h"
 #include "defaults.h"
 #include "classes.h"
@@ -10,6 +9,19 @@
 #include "octree.h" // DIEL_R*
 #include "tools.h" // DEFAULT_DISTANCE_SEARCH
 
+// To add a default option parameter:
+// 1. Add an item to the defaultstruct in defaults.h
+// 2. If enum type, make option[] enum string and optionDesc[] descriptions
+//    -> enum option has type S plus options and optioosDesc set
+// 3. Make entry in zSDefaultSettings[] array.
+//    type: B=boolean, S=string, I=int, D=double, or C=char
+//    sNameLower = lowercase, sName = pretty-print form
+// 4. set .defval.integer (all types but D) or .defval.real
+//    set options,OptionDesc for enum, with .defval.integer pointing to default enum
+//    String type S defult is integer for enum, or empty for plain string
+//
+//  NOTE:  NULL terminates all entry lists.
+
 defaultstruct GDefaults;
 
 typedef struct {
@@ -19,6 +31,7 @@ typedef struct {
     union {
         double real;
         int integer;
+        char *string;
     } defval; // integer for boolean, character, and string-enum types as well
     // direct string default (currently) is always empty. If this changes, may need: char *defval.string
     char **options;    // setting tokens
@@ -29,8 +42,9 @@ static char opt_null[]="null";
 char *PBRadii_options[] =
      {"bondi", "amber6", "mbondi", opt_null /*"pbamber"*/ ,opt_null,opt_null, "mbondi2", "parse", "mbondi3", NULL};
 char *PBRadii_optionDesc[] =
-     {"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii","","","",
-       "H(N)-modified Bondi radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
+     {"Bondi radii","Amber6 modified Bondi radii","modified Bondi radii","","","", 
+     //{"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii","","","", 
+       "H(N)-modified Bondi radii", "PARSE radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
 static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
 static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
 static char *PdbConvertResname_options[] = {"none","keep","variant","standard",NULL};
@@ -43,8 +57,11 @@ zSDefaultSettings[] = {
     { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
     { 'B', "nocenter", "NoCenter", &GDefaults.nocenter },
     { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.reorder_residues, .defval.integer=1 },
-    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.reverse_lists },
-    { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.iOldPrmtopFormat, .defval.integer=1 },
+    { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.reorder_molecules, .defval.integer=0 }, // TODO default to 1?
+    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.reverse_lists, .defval.integer=1 },
+    { 'B', "original_cmap_order", "Original_CMAP_Order", &GDefaults.orig_cmap_order, .defval.integer=1 },
+    { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.iOldPrmtopFormat },
+    { 'D', "prmtopformat", "PrmtopFormat", &GDefaults.dPrmtopFormat, .defval.real=1.0 },
     { 'B', "gibbs", "Gibbs", &GDefaults.iGibbs },
     { 'B', "hybrid36", "Hybrid36", &GDefaults.bPdbHybrid36, .defval.integer=1 },
     { 'B', "keep_chainid", "Keep_chainId", &GDefaults.bPdbKeepChainId },
@@ -73,21 +90,22 @@ zSDefaultSettings[] = {
     { 'D', "pdb_crosslink_cutoff","PDB_CrossLink_Cutoff", &GDefaults.dPdbCrosslinkCovalentCutoff,
                .defval.real=1.1 },
     { 'B', "pdb_auto_load","PDB_Auto_Load", &GDefaults.bPdbAutoLoadRes },
-    { 'C', "pdb_altloc","PDB_AltLoc", &GDefaults.cPdbAltLocSelect, .defval.integer='A' },
+    { 'C', "pdb_altloc","PDB_AltLoc", &GDefaults.cPdbAltLocSelect, .defval.integer=(int)'A' },
     { 'B', "pdb_use_link","PDB_Use_LINK", &GDefaults.bPdbUseLinkRecords },
-    { 'B', "pdb_use_conect","PDB_Use_CONECT", &GDefaults.bPdbUseConect },
+    { 'B', "pdb_use_conect","PDB_Use_CONECT", &GDefaults.bPdbUseConect, .defval.integer=1 },
     { 'B', "pdb_link_ions","PDB_Link_Ions", &GDefaults.bPdbLinkIons },
     { 'B', "pdb_reset_chainids","PDB_Reset_ChainIds", &GDefaults.bPdbResetChainID },
     { 'S', "pdb_convert_resname","PDB_Convert_ResName", &GDefaults.iPdbConvertResName,
                .options = PdbConvertResname_options, .optionDesc = PdbConvertResname_optionDesc  },
     { 'B', "pdb_ignore_nonconnect","PDB_Ignore_NonConnect", &GDefaults.iPdbIgnoreNonConnect },
     { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
-    { 'B', "pdb_expand_biomt","PDB_Expand_BioMT", &GDefaults.bPdbExpandBioMt },
     { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
     { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },
     { 'B', "cif_read_auth","CIF_Read_auth", &GDefaults.bCIFReadAuth, .defval.integer=1 },
     { 'S', "pdb_patch_file","PDB_Patch_File", &GDefaults.sPdbPatchFilename },
+    { 'D', "pdb_bulk_q","PDB_Bulk_Q", &GDefaults.dPdbBulkQ, .defval.real=1.0 },
     { 'B', "prmtop_netcdf","PrmTop_NetCDF", &GDefaults.bPrmtopNetcdf },
+    { 'B', "mask_pdb_mode","Mask_PDB_Mode", &GDefaults.bMaskPDBMode },
     { 0 }
 };
 
@@ -109,6 +127,8 @@ void InitializeDefaults(void) {
             case 'S':
                 if (zSDefaultSettings[i].options)
                     *((int*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
+                else if (zSDefaultSettings[i].defval.string)
+                    strcpy((char*)zSDefaultSettings[i].pValue, zSDefaultSettings[i].defval.string);
                 else
                     (*((STRING*)zSDefaultSettings[i].pValue))[0] = 0;
                 break;
@@ -215,7 +235,6 @@ int iOptIndex;
                 VPWARN("set default: %s value must be greater than 0; resetting to %g\n",
                        zSDefaultSettings[iOptIndex].sName, dValue);
             }
-            printf("Set value = %g\n",dValue);
             *((double*)zSDefaultSettings[iOptIndex].pValue) = dValue;
             break;
         case 'I':

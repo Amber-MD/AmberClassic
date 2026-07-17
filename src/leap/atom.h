@@ -92,6 +92,7 @@
 
 typedef char            BONDt;
 typedef char            ATOMTYPEt[ATOMTYPELEN];
+typedef char            atomNameStr[ATOMNAMELEN];
 
 typedef struct  ATOMSTRUCT {
         CONTAINERt              cHeader;
@@ -172,8 +173,6 @@ typedef ATOMt   *ATOM;
 
 
 #ifdef DEBUG
-#define assert_loc(cond, file, line) \
-    ((cond) ? (void)0 : (fprintf(stderr, "%s:%d: assertion failed: %s\n", (file), (line), #cond), abort()))
 static inline CONTAINER container_from_atom(ATOM a) { return a ? &(a->cHeader) : NULL; }
 static inline OBJEKT objekt_from_atom(ATOM a) { return a ? &(a->cHeader.oHeader) : NULL; }
 static inline ATOM atom_from_objekt(OBJEKT o, const char *file, int line)

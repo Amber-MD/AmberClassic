@@ -58,6 +58,7 @@
 %token  LASSIGN 
 %token  LENDOFCOMMAND
 %token  LOPENLIST
+%token  LASSOC
 %token  LCLOSELIST
 %token  LOPENPAREN
 %token  LCLOSEPAREN
@@ -93,6 +94,7 @@
 
 #include        "leap.h"
 #include        "block.h"
+#include        "select_mask.h"
 
 #include        "help.h"
 
@@ -121,7 +123,6 @@
 
 char            GsInputLine[MAXINPUT] = "";
 bool		GbLastLine = FALSE;
-bool		bCmdDeleteObj;
 int             GiInputPos = 0;
 PARMLIB		GplAllParameters;
 RESULTt		GrMainResult;
@@ -202,7 +203,8 @@ typedef struct  {
 #define YYSTYPE YYSTYPEt
 
 
-extern  OBJEKT oGetObject( char *sName );
+static char * zsScanMaskLiteral(void);
+static  OBJEKT zoGetObject( char *sName );
 static  int    yyerror( const char *sStr );
 static  int    yylex();
 static  int    yyparse();
@@ -249,7 +251,7 @@ line    :       LENDOFCOMMAND
         ;
 
 instruct:       assign LENDOFCOMMAND
-        |       function LENDOFCOMMAND
+        |       function LENDOFCOMMAND { DEREF($<aVal>1); }
         ;
 
 assign  :       LVARIABLE LASSIGN express 
@@ -262,12 +264,12 @@ assign  :       LVARIABLE LASSIGN express
                                 VariableSet( $<sVal>1, oAssocObject(aAssoc) );
 				MESSAGE("DEREF (assign) - %s\n",
 							sAssocName(aAssoc) );
-                                DEREF( aAssoc );
 			    } else {
 				MESSAGE("Not assigning value to %s - rmving\n",
 							$<sVal>1 );
 				VariableRemove( $<sVal>1 );
 			    }
+                            DEREF( aAssoc );
 
                         }
         |       LVARIABLE LASSIGN 
@@ -288,7 +290,9 @@ rawexp  :       LOPENLIST
                                 /* Create an ASSOC for the list */
                             aAssoc = (ASSOC)oCreate(ASSOCid);
                             AssocSetName( aAssoc, "" );
-                            AssocSetObject( aAssoc, oCreate(LISTid) );
+                            OBJEKT oObject = oCreate(LISTid);
+                            LIST_from(oObject)->bFreeChildren=TRUE;
+                            AssocTakeObject( aAssoc, oObject );
                             CURRENTLIST = aAssoc;
                         }
                     elements LCLOSELIST 
@@ -296,8 +300,12 @@ rawexp  :       LOPENLIST
                             $<aVal>$ = $<aVal>3;
                             POPLIST();
                         }
+        |       LASSOC 
+                        {
+                            $<aVal>$ = $<aVal>1;
+                        }
         |       scalar
-        |       LDUMMY
+        |       LDUMMY     /*  '*' wildcard   */
                         {
                             aAssoc = (ASSOC)oCreate(ASSOCid);
                             AssocSetName( aAssoc, "" );
@@ -309,7 +317,7 @@ rawexp  :       LOPENLIST
                             MESSAGE("Parsed a null\n" );
                             aAssoc = (ASSOC)oCreate(ASSOCid);
                             AssocSetName( aAssoc, "" );
-                            AssocSetObject( aAssoc, NULL );
+                            AssocTakeObject( aAssoc, NULL );
                             $<aVal>$ = aAssoc;
                         }
         ;
@@ -320,7 +328,7 @@ scalar :       LNUMBER
                             AssocSetName( aAssoc, "" );
                             o0 = oCreate(ODOUBLEid);
                             ODoubleSet( o0, $<dVal>1 );
-                            AssocSetObject( aAssoc, o0 );
+                            AssocTakeObject( aAssoc, o0 );
                             $<aVal>$ = aAssoc;
                         }
         |       LSTRING
@@ -329,16 +337,15 @@ scalar :       LNUMBER
                             AssocSetName( aAssoc, "" );
                             o0 = oCreate(OSTRINGid);
                             OStringDefine( (OSTRING) o0, $<sVal>1 );
-                            AssocSetObject( aAssoc, o0 );
-			    DEREF( o0 );	/* keeps count = 1 */
+                            AssocTakeObject( aAssoc, o0 );
                             $<aVal>$ = aAssoc;
                         }
         |       LVARIABLE
                         {
-			    OBJEKT	o = oGetObject($<sVal>1);
+			    OBJEKT o = zoGetObject($<sVal>1); /* returns with coutned REF */
                             aAssoc = (ASSOC)oCreate(ASSOCid);
                             AssocSetName( aAssoc, $<sVal>1 );
-                            AssocSetObject( aAssoc, o ); /* REF's o */
+                            AssocTakeObject( aAssoc, o );
                             $<aVal>$ = aAssoc;
                         }
          ;
@@ -350,30 +357,19 @@ function:       cmdname
                         {
                                 /* Execute the command */
 			    MESSAGE("executing function\n");
-			    bCmdDeleteObj = FALSE;
-                            // XXX bCmdDeleteObj is never set to true. This causes small memory leaks
-                            // with literals that coccurs on the command line. Note that OBJEKTs by design
-                            // are reference tracked but parsing is a bit hard to track and the leaks are small
-                            // In general, only strings and double objects leak, so total space is small?
+                            /* Command execute;returns with counted REF */
                             o0 = $<fCallback>1( iArgCount, aaArgs );
 			    if ( o0 != NULL ) {
                             	aAssoc = (ASSOC)oCreate(ASSOCid);
-                            	AssocSetObject( aAssoc, o0 );
+                            	AssocTakeObject( aAssoc, o0 );
                             	$<aVal>$ = aAssoc;
 			    } else {
 				MESSAGE("func == NULL---\n");
 				$<aVal>$ = NULL;
 			    }
-
-                                /* DEREF each of the arguments */
-
+                             /* DEREF each of the arguments */
                             for (int i=0; i<iArgCount; i++ ) {
-				if ( bCmdDeleteObj ) {
-					MESSAGE("bCmdDeleteObj---\n" );
-					DEREF( oAssocObject( aaArgs[i] ) );
-				}
-				MESSAGE("DEREF (function) - %s\n",
-						sAssocName(aaArgs[i]));
+				MESSAGE("DEREF (function) - %s\n", sAssocName(aaArgs[i]));
                                 DEREF( aaArgs[i] );
                             }
                         }
@@ -382,7 +378,7 @@ function:       cmdname
 evalcmd :       LEVAL evalexpr
                         {
                             $<aVal>$ = $<aVal>2;
-                            if ($<aVal>$ != NULL && GiVerbosityLevel > 2 ) {
+                            if ($<aVal>$ != NULL && iVerbosity() > 2 ) {
                                 OBJEKT oVar = oAssocObject($<aVal>$);
                                 if (iObjectType(oVar) == OSTRINGid)
                                     VP2("Expression evaluated to string: \"%s\"\n", sOString(oVar));
@@ -395,10 +391,14 @@ evalcmd :       LEVAL evalexpr
 evalexpr: evalexpr LPLUS evalterm
                         {
                             $<aVal>$ = zaEvalBinary('+', $<aVal>1, $<aVal>3);
+                            DEREF($<aVal>1);
+                            DEREF($<aVal>3);
                         }
                         | evalexpr LMINUS evalterm
                         {
                             $<aVal>$ = zaEvalBinary('-', $<aVal>1, $<aVal>3);
+                            DEREF($<aVal>1);
+                            DEREF($<aVal>3);
                         }
                         | evalterm
                         {
@@ -409,10 +409,14 @@ evalexpr: evalexpr LPLUS evalterm
 evalterm : evalterm LDUMMY evalpower  /* LDUMMY == '*' */
                         {
                             $<aVal>$ = zaEvalBinary('*', $<aVal>1, $<aVal>3);
+                            DEREF($<aVal>1);
+                            DEREF($<aVal>3);
                         }
                         | evalterm LDIV evalpower
                         {
                             $<aVal>$ = zaEvalBinary('/', $<aVal>1, $<aVal>3);
+                            DEREF($<aVal>1);
+                            DEREF($<aVal>3);
                         }
                         | evalpower
                         {
@@ -423,6 +427,8 @@ evalterm : evalterm LDUMMY evalpower  /* LDUMMY == '*' */
 evalpower: evalfactor LPOW evalpower
                         {
                             $<aVal>$ = zaEvalBinary('^', $<aVal>1, $<aVal>3);
+                            DEREF($<aVal>1);
+                            DEREF($<aVal>3);
                         }
                         | evalfactor
                         {
@@ -434,7 +440,7 @@ evalfactor: scalar
                         | LMINUS evalfactor
                         {
                             // This is the only unary operator
-                            $<aVal>$ = $<aVal>2;
+                            $<aVal>$ = $<aVal>2; // transfer ref
                             dODouble(oAssocObject($<aVal>$)) *= -1.0;
                         }
                         | LINT LOPENPAREN evalexpr LCLOSEPAREN
@@ -443,11 +449,11 @@ evalfactor: scalar
                             double int_part;
                             modf(dODouble(doVal), &int_part); 
                             ODoubleSet(doVal, int_part);
-                            $<aVal>$ = $<aVal>3;
+                            $<aVal>$ = $<aVal>3; //transfer ref
                         }
                         | LOPENPAREN evalexpr LCLOSEPAREN
                         {
-                            $<aVal>$ = $<aVal>2;
+                            $<aVal>$ = $<aVal>2; //transfer ref
                         }
           ;
 
@@ -457,7 +463,8 @@ elements:       /* nothing */
                                 /* Get the element and add it to the list */
                             MESSAGE("Adding to list:\n" );
                             ListAddToEnd( (LIST)oAssocObject(CURRENTLIST), 
-							(OBJEKT) $<aVal>2 );
+							(OBJEKT) $<aVal>2 ); // adds REF
+			    DEREF( $<aVal>2 );
                             $<aVal>$ = CURRENTLIST;
                         } 
         ;
@@ -626,7 +633,6 @@ bool		bFromExecute;
 	}
 	GbLastLine = zbGetLine( GsInputLine, &bFromExecute );
 	GiInputPos = 0;
-        zStripComment(GsInputLine);
 	if ( bFromExecute ) {
 	    for (int i=GiClipPrompts; i<=iINPUTSTACKDEPTH(); i++ ) VP2(">" );
 	    VP2(" " );
@@ -634,6 +640,7 @@ bool		bFromExecute;
 	} else {
 	    VPLOG("> %s", GsInputLine );
 	}
+        zStripComment(GsInputLine);
     }
 
     c = GsInputLine[GiInputPos++];
@@ -797,6 +804,33 @@ STRING		sPossibleCmd;
 		sStr[j] = c;
 		continue;
 	}
+
+
+	/*
+	 *  '(' is a single-char token UNLESS the identifier collected
+	 *  so far names a UNIT, in which case this opens an inline
+	 *  AtomMask selection expression: UNIT(mask)
+	 */
+	if ( c == '(' ) {
+	    sStr[j] = '\0';   /* terminate identifier collected so far */
+	    OBJEKT oVar = oVariable( sStr );
+	    if ( oVar != NULL && iObjectType(oVar) == UNITid ) {
+		char *sMask = zsScanMaskLiteral();   /* consumes up to matching ')' */
+		LIST lAtoms = lAtomMaskSelect((UNIT)oVar, sMask );
+                lAtoms->bFreeChildren = TRUE;
+		aAssoc = (ASSOC)oCreate(ASSOCid);
+                AssocSetName( aAssoc, "atomMask" );
+                AssocTakeObject( aAssoc, OBJEKT_from(lAtoms) );
+		yylval.aVal = aAssoc;
+		MESSAGE("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
+		return(LASSOC);
+	    }
+	    /* not a UNIT: '(' really is just the single-char token */
+	    zUngetc( c );
+	    break;
+	}
+
+
 	tok = iOneCharToken( c );
 	if ( tok != LNOTSINGLECHAR ) {
 		zUngetc( c );
@@ -820,8 +854,8 @@ STRING		sPossibleCmd;
      */
     bGotExp = FALSE;
     bGotDot = FALSE;
-    if ( isdigit(sStr[0]) || sStr[0] == '-' || sStr[0] == '+' || 
-				( sStr[0] == '.' && isdigit(sStr[1]) ) ) {
+    if ( isdigit((unsigned char)sStr[0]) || sStr[0] == '-' || sStr[0] == '+' || 
+				( sStr[0] == '.' && isdigit((unsigned char)sStr[1]) ) ) {
 
         for (int j=0; j<sizeof(STRING); j++ ) {
             MESSAGE("Thinking NUMBER got: %c\n", sStr[j] );
@@ -859,7 +893,7 @@ STRING		sPossibleCmd;
 		case '-':
                     break;
 		default:
-            	    if ( !isdigit(sStr[j]) ) {
+            	    if ( !isdigit((unsigned char)sStr[j]) ) {
 			goto notnum;
 		    }
             	    break;
@@ -914,11 +948,6 @@ notnum:
      *  see if it's a variable/command 
      */
     strcpy( yylval.sVal, sStr );
-                /* LASTLY!!!!!!!! */
-    /* 
-     *  see if it's a variable/command 
-     */
-    strcpy( yylval.sVal, sStr );
     strcpy( sPossibleCmd, sStr );
     StringLower( sPossibleCmd );
 
@@ -968,6 +997,77 @@ notnum:
 
 }
 
+#define NOBODYSMASKWILLOVERRUNME 4096
+/*
+ *      sScanMaskLiteral
+ *
+ *      Called immediately after consuming the opening '(' of an
+ *      inline AtomMask expression: UNIT(mask).
+ *
+ *      Reads raw characters up to the matching ')', treating the
+ *      mask text as a foreign sub-grammar:
+ *        - whitespace and commas are passed through verbatim
+ *          (AtomMask is whitespace-sensitive; LEaP's usual
+ *          comma-as-whitespace rule does NOT apply inside here)
+ *        - '(' / ')' are depth-counted so AtomMask's own grouping
+ *          parens don't terminate the scan early
+ *        - '[' ... ']' is treated as opaque: '(' or ')' characters
+ *          inside a bracket class (fnmatch-style patterns) do NOT
+ *          affect paren depth and are not otherwise interpreted
+ *
+ *      Returns the mask text with the closing ')' already consumed.
+ */
+static char *
+zsScanMaskLiteral()
+{
+static char sBuf[NOBODYSMASKWILLOVERRUNME];
+int     j = 0;
+int     iDepth = 1;       /* opening '(' already consumed by caller */
+bool    bInBracket = FALSE;
+char    c;
+
+    for ( ;; ) {
+
+	if ( j >= NOBODYSMASKWILLOVERRUNME - 1 )
+	    DFATAL("AtomMask expression too long");
+
+	c = cGetChar();
+
+	if ( c == '\0' )
+	    DFATAL("unterminated AtomMask expression, missing ')'");
+
+	if ( bInBracket ) {
+	    sBuf[j++] = c;
+	    if ( c == ']' )
+		bInBracket = FALSE;
+	    continue;
+	}
+
+	if ( c == '[' ) {
+	    bInBracket = TRUE;
+	    sBuf[j++] = c;
+	    continue;
+	}
+
+	if ( c == '(' ) {
+	    iDepth++;
+	    sBuf[j++] = c;
+	    continue;
+	}
+
+	if ( c == ')' ) {
+	    iDepth--;
+	    if ( iDepth == 0 ) {
+		sBuf[j] = '\0';
+		return(sBuf);
+	    }
+	    sBuf[j++] = c;
+	    continue;
+	}
+
+	sBuf[j++] = c;
+    }
+}
 
 //----------- Molecular object hierarchy parser ---------------
 // main function is zoFindObject() which uses the following
@@ -1009,7 +1109,7 @@ zbResidNumeric(const char *s)
 {
     if (!*s) return FALSE;
     for (const char *p = s; *p; p++)
-        if (!isdigit(*p)) return FALSE;
+        if (!isdigit((unsigned char)*p)) return FALSE;
     return TRUE;
 }
 
@@ -1150,7 +1250,7 @@ eContTokenType  eTok;
     cSep     = cSepNext;
     cSepNext = zsNextObjectToken(cPPos, &cPNext);
 
-    if ( bObjectInClass(oObj, COLLECTIONid ) && isdigit(*cPPos))  {
+    if ( bObjectInClass(oObj, COLLECTIONid ) && isdigit((unsigned char)*cPPos))  {
         int index = atoi(cPPos);
         ASSOC aAssocElem;
         int i=0;
@@ -1285,14 +1385,14 @@ eContTokenType  eTok;
 
 }
  
-OBJEKT
-oGetObject(char *sName)
+static OBJEKT
+zoGetObject(char *sName)
 {
     OBJEKT oObj;
     OSTRING osString;
 
     oObj = zoFindObject(sName);
-    if (oObj != NULL) return oObj;
+    if (oObj != NULL) return REF(oObj);
 
     /*
      * Not an object variable or resolvable object reference.
@@ -1300,8 +1400,6 @@ oGetObject(char *sName)
      */
     osString = (OSTRING)oCreate(OSTRINGid);
     OStringDefine(osString, sName);
-    // XXX This is done because the parser tokens are never freed.
-    ((OBJEKT)osString)->iReferences = 0;
     return (OBJEKT)osString;
 }
 
@@ -1338,7 +1436,7 @@ OBJEKT oArg2 = oAssocObject(arg2);
             case '+': ODoubleSet(oResult,d1+d2); break;
             case '-': ODoubleSet(oResult,d1-d2); break;
             case '^': ODoubleSet(oResult,pow(d1,d2)); break;
-            default: oResult = NULL; break;
+            default: Destroy(&oResult); break;
         }
     }
 
@@ -1347,9 +1445,9 @@ OBJEKT oArg2 = oAssocObject(arg2);
                          operator, sObjectIndexType(iType2));
         return NULL;
     }
-    // re-use arg1 for the result -- Should be OK, object re-use is unsafe.
-    AssocSetObject( arg1, oResult);
-    return arg1;
+    ASSOC aResult = (ASSOC)oCreate(ASSOCid);
+    AssocTakeObject( aResult, oResult);
+    return aResult;
 }
 
 
@@ -1396,11 +1494,11 @@ extern	char	*optarg;
 	    case 'f':
 		printf( "-f: Source %s.\n", optarg );
 		if ( iFirstSource == 0 ) {
-			MALLOC( SbFirstSourceFiles, STRING *, sizeof(STRING) );
+			SbFirstSourceFiles = (STRING *)MALLOC(sizeof(STRING));
 			iFirstSource = 1;
 		} else {
 			iFirstSource++;
-			REALLOC( SbFirstSourceFiles, STRING *, SbFirstSourceFiles,
+			SbFirstSourceFiles = (STRING *)REALLOC(SbFirstSourceFiles,
 					iFirstSource * sizeof(STRING));
 		}
 		strcpy( SbFirstSourceFiles[iFirstSource-1], optarg );
@@ -1432,9 +1530,6 @@ int	iFile;
 #ifdef  DEBUG
     VP0("LEaP is running in DEBUG mode!\n" );
 #endif
-
-		/* Initialize memory manager debugging */
-    INITMEMORYDEBUG();
 
     HelpInitialize();
 
@@ -1561,7 +1656,7 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
 
 
 
-
+extern void CMAPDestroy(void);
 /*
  *	ParseShutdown
  *
@@ -1573,7 +1668,6 @@ void
 ParseShutdown()
 {
 	if ( !iMemDebug )
-		return;
 
 	Destroy( (OBJEKT *)&aDummy );
 	VariablesDestroy();

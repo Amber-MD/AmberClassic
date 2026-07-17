@@ -50,10 +50,11 @@ typedef struct  NodeStruct      {
 typedef NODE    *NODEP;
 typedef NODE	*LISTLOOP;
 
-typedef struct  {
+typedef struct LISTSTRUCT {
 	COLLECTIONt     oSuper;
 	NODEP           nPFirstNode;
 	NODEP           nPLastNode;
+        bool            bFreeChildren;
 } LISTt;
                 
 typedef LISTt	*LIST;
@@ -87,10 +88,10 @@ extern void		ListDescribe(LIST lList);
 
 extern void		ListAdd(LIST lList, OBJEKT oObj);
 extern void		ListAddToEnd(LIST lList, OBJEKT oObj);
-extern void		ListAddUnique(LIST lList, GENP PData);
+extern void		ListAddUnique(LIST lList, OBJEKT oObj);
 extern void		ListConcat(LIST lList1, LIST lList2);
-extern bool		bListRemove(LIST lList, GENP PPtr);
-extern bool		bListContains(LIST lList, GENP PPtr);
+extern bool		bListRemove(LIST lList, OBJEKT oObj);
+extern bool		bListContains(LIST lList, OBJEKT oObj);
 extern LISTLOOP		llListLoop(LIST lList);
 extern OBJEKT		oListNext(LISTLOOP *llPListLoop);
 

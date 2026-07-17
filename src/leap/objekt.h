@@ -54,7 +54,6 @@
         to call to handle subclass messages.
         Suffix the macro with "id".
 */
-#define OBJEKT_MAGIC 0x404F626A
 
 #define NULLid          'N'
 #define OBJEKTid        'O'
@@ -119,20 +118,39 @@
 
 */
 
-typedef struct  {
+// gcc object poiner tracker! TODO
+//#if defined(__GNUC__) && defined(__analyzer__)
+//    // Explicitly pair these functions together for the analyzer
+//    __attribute__((malloc(decref, 1))) Object* create_object(int initial_value);
+//    __attribute__((malloc(decref, 1))) Object* addref(Object* obj);
+//#endif
+
+typedef struct OBJEKTSTRUCT {
 	char            cObjType;
 #ifdef DEBUG
-	uint32_t        iObjektMagic;
+	GENP            PKlass;
 #endif
 	int             iReferences; 
 } OBJEKTt;
 
 typedef OBJEKTt *OBJEKT;
 
+extern	KLASSt	GkTObjekt;
+
 #ifdef DEBUG
+#define VERIFYOBJEKT_loc( O, Oid, file, line ) {\
+    if ( iObjectType(O) != Oid ) {\
+        fprintf(stderr, "ERROR, Object of type: %c should be type: %c\n",\
+                iObjectType(O), Oid );\
+        fprintf(stderr, "In file: %s   line: %d\n",file,line );\
+        abort(); \
+    }}
+#define CK_loc(x,c,file,line) ((!(x)||(GENP)((x)->PKlass)!=(GENP)(c))?BasicsKlassMismatchPanic((x),file,line):0)
+#define assert_loc(cond, file, line) \
+    ((cond) ? (void)0 : (fprintf(stderr, "%s:%d: assertion failed: %s\n", (file), (line), #cond), abort()))
 static inline bool bIsObjekt(void *p) {
     OBJEKT o = (OBJEKT)p;
-    return o->iObjektMagic == OBJEKT_MAGIC;
+    return (o->PKlass == (GENP)&GkTObjekt);
 }
 static inline uint32_t iGetObjektType( void *o ) {
     if (!o) return NULLid;
@@ -141,6 +159,7 @@ static inline uint32_t iGetObjektType( void *o ) {
 }
 static inline OBJEKT objekt_from_objekt(OBJEKT o) { return o; }
 static inline OBJEKT objekt_from_genp(GENP p) { return p ? (assert(bIsObjekt(p)), (OBJEKT)p) : NULL; }
+
 #define OBJEKT_from(x) _Generic((x), \
     OBJEKT: objekt_from_objekt, \
     CONTAINER: objekt_from_container, \
@@ -203,7 +222,7 @@ extern OBJEKT	oObjectDuplicate(OBJEKT oOld);
 
 
 
-#define REF( o ) {if ( o!=NULL ) (OBJEKT_from(o)->iReferences++);}
+#define REF( o ) (!(o)?NULL:(OBJEKT_from(o)->iReferences++,(o)))
 
 #define DEREF( o )      {\
 	if ( (OBJEKT)(o)!=NULL ) {\

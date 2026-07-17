@@ -110,8 +110,8 @@ int		iScanned, iFunction;
 	    break;
     }
 
-    MALLOC( mMess, MESS, sizeof(MESSt) ); 
-    MALLOC( cPText, char*, strlen(sText)+1 );
+    mMess = (MESS)MALLOC(sizeof(MESSt) ); 
+    cPText = (char*)MALLOC(strlen(sText)+1 );
 
     mMess->cType = cType;
     mMess->iFunction = iFunction;

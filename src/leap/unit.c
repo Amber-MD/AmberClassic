@@ -467,8 +467,7 @@ uUnitCreate()
 {
 UNIT    m;
 
-    MALLOC( m, UNIT, sizeof(UNITt) );
-    memset(m,0,sizeof(UNITt));
+    m = (UNIT)CALLOC(sizeof(UNITt) );
 
     UnitSetMode( m, UNITNORMAL );
     UnitSetBeta( m, 90.0*DEGTORAD );
@@ -720,7 +719,7 @@ uUnitDuplicate( UNIT uOld )
 {
 UNIT            uNew;
 
-    MALLOC( uNew, UNIT, sizeof(UNITt) );
+    uNew = (UNIT)MALLOC(sizeof(UNITt) );
     memcpy( uNew, uOld, sizeof(UNITt) );
 
     uNew->bRestraints = bBagCreate();
@@ -897,7 +896,7 @@ ATOM            aB;
         if ( iObjectType(rRes) == RESIDUEid &&
                 !yPDictionaryFind( uA->dHeterogens, sContainerName(rRes)) ) {
             STRING *sDesc;
-            MALLOC(sDesc, STRING *, sizeof(STRING));
+            sDesc = (STRING *)MALLOC(sizeof(STRING));
             StringCopyMax( *sDesc, sUnitDescription(uB), sizeof(STRING) );
             DictionaryAdd( uA->dHeterogens, sContainerName(rRes), sDesc);
         }
@@ -987,10 +986,10 @@ UnitSave( UNIT uUnit, DATABASE db, PARMLIB plParameters )
 {
 bool            bGeneratedParameters;
 
-    zUnitIOBuildTables( uUnit, plParameters, &bGeneratedParameters, 
+    UnitIOBuildTables( uUnit, plParameters, &bGeneratedParameters, 
                         TRUE, FALSE );
-    zUnitIOSaveTables( uUnit, db );
-    zUnitIODestroyTables( uUnit );
+    UnitIOSaveTables( uUnit, db );
+    UnitIODestroyTables( uUnit );
 }
 
 
@@ -1010,13 +1009,13 @@ uUnitLoad( DATABASE db )
 UNIT            uNew;
 
     uNew = (UNIT)oCreate(UNITid);
-    if ( !zbUnitIOLoadTables( uNew, db ) ) {
+    if ( !bUnitIOLoadTables( uNew, db ) ) {
         Destroy((OBJEKT *)&uNew);
         uNew = NULL;
         goto DONE;
     }
-    zUnitIOBuildFromTables( uNew );
-    zUnitIODestroyTables( uNew );
+    UnitIOBuildFromTables( uNew );
+    UnitIODestroyTables( uNew );
 DONE:
     return(uNew);
 }
@@ -1039,21 +1038,29 @@ DONE:
  *              bNcdf   - TRUE means write the coordinates in NetCDF format
  */
 void
+UnitIOSaveAmberParmFormat_old( UNIT uUnit, FILE *fOut, char *crdName, 
+        bool bPolar, bool bPert);
+void
 UnitSaveAmberParmFile( UNIT uUnit, char *prmtopName, char *crdName, 
         PARMLIB plParms, bool bPolar, bool bPert, bool bNetcdf)
 {
         bool            bGeneratedParameters;
-        zUnitIOBuildTables( uUnit, plParms, &bGeneratedParameters, bPert, TRUE );
+        UnitIOBuildTables( uUnit, plParms, &bGeneratedParameters, bPert, TRUE );
         if ( bGeneratedParameters == TRUE ) {
+            if( GDefaults.iOldPrmtopFormat ) {
+                FILE *fOut=FOPENCOMPLAIN(prmtopName,"w");
+                UnitIOSaveAmberParmFormat_old( uUnit, fOut, crdName, bPolar, bPert);
+                fclose(fOut);
+            } else {
                 bool bPrmtopNetcdf = bNetcdf && GDefaults.bPrmtopNetcdf;
                 UnitIOSaveAmberParmFormat( uUnit, prmtopName, bPolar, bPert, bPrmtopNetcdf);
                 if (bNetcdf) UnitIOSaveAmberCoordNetcdf(uUnit, crdName);
                 else UnitIOSaveAmberCoord(uUnit, crdName);
-                     
+            }
         } else {
                 VPWARN("Parameter file was not saved.\n" );
         }
-        zUnitIODestroyTables( uUnit );
+        UnitIODestroyTables( uUnit );
 }
 
 /*
@@ -1654,7 +1661,8 @@ LIST    lAtoms;
         return(FALSE);
     }
     lAtoms = (LIST)oCreate(LISTid);
-    DictionaryAdd( uUnit->dAtomGroups, cPName, (GENP)lAtoms );
+    lAtoms->bFreeChildren=TRUE;
+    DictionaryAdd( uUnit->dAtomGroups, cPName, (GENP)lAtoms );  // GENP not ref counted
     return(TRUE);
 }
 
@@ -1742,7 +1750,7 @@ LIST    lAtoms;
     lAtoms = (LIST)yPDictionaryFind( uUnit->dAtomGroups, sGroup );
     if ( lAtoms == NULL ) return(FALSE);
 
-    bListRemove( lAtoms, (GENP)aAtom );
+    bListRemove( lAtoms, OBJEKT_from(aAtom) );
     return(TRUE);
 }
 

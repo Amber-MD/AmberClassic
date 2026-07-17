@@ -278,7 +278,7 @@ STRING		sTemp;
      */
 
     while ( *sName == ' ' ) sName++;
-    while ( isdigit( *sName ) ) sName++;
+    while ( isdigit( (unsigned char)*sName ) ) sName++;
 
 		/* Compare the two-character element names */
     for (i=0; GeaElements[i].iNumber != NOELEMENT; i++) {

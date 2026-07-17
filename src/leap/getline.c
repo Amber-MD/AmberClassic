@@ -908,7 +908,7 @@ hist_save(char *p)
 
     if (nl) {
         if ((s = malloc(len)) != 0) {
-            strncpy(s, p, len-1);
+            memcpy(s, p, len-1);
 	    s[len-1] = 0;
 	}
     } else {

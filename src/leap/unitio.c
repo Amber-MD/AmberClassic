@@ -154,7 +154,8 @@ zSetTreeType(ATOM aAtom, int iCoordLeft)
  *      Load the tables which can be used to construct the UNIT
  *      from a DATABASE.
  */
-bool zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
+bool
+bUnitIOLoadTables(UNIT uUnit, DATABASE db)
 {
     int iSize, iCount, iAtomCount, iType;
     STRING sName;
@@ -382,7 +383,6 @@ bool zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
     /* Load the RESIDUE PDB chainID numbers from an */
     /* extra table to remain compatible with old OFF files */
     if (bDBGetType(db, "residuesPdbChainID", &iType, &iTemp)) {
-        //
         bDBGetValue(db, "residuesPdbChainID", &iTemp,
                     (GENP) & (srPResidue->sChainId), iSize);
     } else {
@@ -500,14 +500,15 @@ bool zbUnitIOLoadTables(UNIT uUnit, DATABASE db)
 }
 
 /*
- *      zUnitIOSaveTables
+ *      UnitIOSaveTables
  *
  *        Author:        Christian Schafmeister (1991)
  *
  *      Save the tables which can be used to construct the UNIT
  *      from a DATABASE.
  */
-void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
+void
+UnitIOSaveTables(UNIT uUnit, DATABASE db)
 {
     int iSize, iCount, iSequence;
     SAVEATOMt *saPAtom;
@@ -532,6 +533,7 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
     DBPutValue(db, "name", ENTRYSINGLE | ENTRYSTRING, 1,
                (GENP) sContainerName(uUnit), 0);
 
+    if (GDefaults.dPrmtopFormat > 1.0) //FIXME non conditional or use different flag
     if (sUnitDescription(uUnit)[0]!=0) {
         DBPutValue(db, "description", ENTRYSINGLE | ENTRYSTRING, 1,
                (GENP) sUnitDescription(uUnit), 0);
@@ -724,9 +726,15 @@ void zUnitIOSaveTables(UNIT uUnit, DATABASE db)
                    ENTRYARRAY | ENTRYINTEGER, iCount,
                    (GENP) & srPResidue->iPdbResSeq, iSize);
 
-        DBPutValue(db, "residuesPdbChainID",
-                   ENTRYARRAY | ENTRYSTRING, iCount,
-                    (GENP) &srPResidue->sChainId, iSize);
+        // Only write chainID if present
+        for (int i=0;i<iCount;i++) {
+            if (srPResidue[i].sChainId[0] != 0) {
+                DBPutValue(db, "residuesPdbChainID",
+                        ENTRYARRAY | ENTRYSTRING, iCount,
+                        (GENP) &srPResidue->sChainId, iSize);
+                break;
+            }
+        }
 
         DBPutTable(db, "residueconnect", iCount,
                    1, "c1x", (char *) &(srPResidue->iaConnectIndex[0]),
@@ -1564,7 +1572,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
          *
          *  create index, non-duplicate keys, key length == 2 ints
          */
-        create_index(&scr14_index, IX_DUPKEYREC, 2 * sizeof(int));
+        create_index(&scr14_index, IX_NODUPKEY, 2 * sizeof(int));
 
         /*
          *  set up convenience pointers for stuffing key
@@ -1633,7 +1641,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
          *  create record w/ key portion longer than the default
          */
         create_index(&improper_index, IX_DUPKEYREC, IX_LEN_CSTRING);
-        MALLOC(ePImp, IX_REC *, sizeof(IX_REC) + 80);
+        ePImp = (IX_REC *)MALLOC(sizeof(IX_REC) + 80);
         /*
          *  set recptr to avoid mem check complaint
          *      (since this index doesn't use its
@@ -2222,7 +2230,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 }
             }
         }
-        if (iImproper && GiVerbosityLevel > 0) {
+        if (iImproper && iVerbosity() > 0) {
 
             VP0("--Impropers:\n");
             first_key(&improper_index);
@@ -2260,38 +2268,15 @@ UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos,
              bool * bPFailed, bool bPert)
 {
     SAVERESIDUEt *srPResidue;
-    LOOP lTemp;
-    ATOM aAtom, aIgnore;
     bool bFailed;
 
     srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt,
                       iContainerTempInt(rRes) - 1);
     srPResidue->iAtomStartIndex = 0;
-
-    /* Check if it is a solvent RESIDUE */
-    /* If it is, put the imaging ATOM into the table first */
-
-    aIgnore = NULL;
-    if (cResidueType(rRes) == RESTYPESOLVENT) {
-        if (aResidueImagingAtom(rRes) != NULL) {
-            aIgnore = aResidueImagingAtom(rRes);
-            zUnitIOTableAddAtom(uUnit, aIgnore, *iPPos,
-                                plParameters, &bFailed, bPert);
-            (*iPPos)++;
-            *bPFailed |= bFailed;
-            if (srPResidue->iAtomStartIndex == 0) {
-                srPResidue->iAtomStartIndex = iContainerTempInt(aIgnore);
-            }
-        }
-    }
-
-    /* Now put the rest of the ATOMs */
-
-    LOOPOVERALL(rRes,DIRECTCONTENTSBYSEQNUM,aAtom,ATOM,lTemp) {
-
-        /* Ignore the imaging ATOM if there is one */
-        if (aAtom == aIgnore) continue;
-
+    ATOM aAtom; LOOP lAtoms;
+    LOOPOVERALL(rRes, GDefaults.reorder_residues ?
+            DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
+            aAtom , ATOM, lAtoms) {
         zUnitIOTableAddAtom(uUnit, aAtom, *iPPos, plParameters, &bFailed, bPert);
         (*iPPos)++;
         *bPFailed |= bFailed;
@@ -2333,12 +2318,12 @@ UnitIOAmberOrderResidues( UNIT uUnit )
     SAVERESIDUEt *srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
 
     if ( !GDefaults.reorder_residues )
-        printf("\"order_residues\" off: keep input residue order.\n");
-    lResidues = lLoop(OBJEKT_from(uUnit), GDefaults.reorder_residues ?
-            DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM);
+        VP0("\"order_residues\" off: keep input residue order.\n");
     int iResIndex=0;
     OBJEKT oObj;
-    while ( (oObj = oNext(&lResidues)) ) {
+    LOOPOVERALL(uUnit, GDefaults.reorder_residues ?
+            DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
+            oObj, OBJEKT, lResidues) {
         if (iObjectType(oObj) != RESIDUEid) continue;
         rRes = RESIDUE_from(oObj);
     // Build a RESIDUE entry into the uUnit->vaResidues table.
@@ -2351,9 +2336,9 @@ UnitIOAmberOrderResidues( UNIT uUnit )
         srPResidue->iSequenceNumber = iContainerSequence(rRes);
         srPResidue->iNextChildSequence = iContainerNextChildsSequence(rRes);
         srPResidue->iPdbResSeq = iResiduePdbSequence(rRes);
-        memcpy(srPResidue->sChainId,rRes->sChainId,sizeof(srPResidue->sChainId));
+        strcpy(srPResidue->sChainId,sResidueChainId(rRes));
         if (rRes->cICode == ' ') srPResidue->sICode[0]=0;
-        else { srPResidue->sICode[0]=rRes->cICode;srPResidue->sICode[1]=0; }
+        else { srPResidue->sICode[0]=rRes->cICode; srPResidue->sICode[1]=0; }
         srPResidue++;
         iResIndex++;
     }
@@ -2362,12 +2347,14 @@ UnitIOAmberOrderResidues( UNIT uUnit )
 
 int
 UnitLabelMolecules(UNIT uUnit) {
-    LOOP    lResidues, lSpanning;
+    LOOP    lResidues, lSpanning, lAtoms;
     RESIDUE rRes;
+    ATOM    aAtom;
     int     iResidueCount=0, iMolecule=0;
 
     /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
     ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
+    LOOPOVERALL(uUnit,ATOMS,aAtom,ATOM,lAtoms) AtomSetSeenId(aAtom, -1);
 
     /* Loop through solvent RESIDUEs and:
      * 1) Count them
@@ -2380,7 +2367,7 @@ UnitLabelMolecules(UNIT uUnit) {
      *     TODO: zUnitIOFindAndCountMolecules can use labels instead
      *     of repeating the full spanning tree search
     */
-    LOOPOVERALL(uUnit,DIRECTCONTENTS,rRes,RESIDUE,lResidues) {
+    LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lResidues) {
         iResidueCount++;
         if (cResidueType(rRes) == RESTYPESOLVENT) {
             if (bUnitCapContainsContainer(uUnit, CONTAINER_from(rRes)))
@@ -2390,18 +2377,17 @@ UnitLabelMolecules(UNIT uUnit) {
         }
         /* Search for the next RESIDUE whose first ATOM has not */
         /* been touched */
-        ATOM aAtom = ATOM_from(oContainerFirstObject(rRes));
-        if (!bAtomFlagsSet(aAtom, ATOMTOUCHED)) {
-            iMolecule++; // inrement first: molecule index is 1-based
+        aAtom = ATOM_from(oContainerFirstObject(rRes));
+        if (bAtomFlagsSet(aAtom, ATOMTOUCHED)) continue;
+        iMolecule++; // inrement first: molecule index is 1-based
 
-            /* Touch all of the ATOMs within the molecule that */
-            /* contains the current RESIDUE */
-            LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
-                AtomSetFlags(aAtom, ATOMTOUCHED);
-                CONTAINER cParent = cContainerWithin(aAtom);
-                if (iObjectType(cParent) == RESIDUEid)
-                    RESIDUE_from(cParent)->iMolecule = iMolecule;
-            }
+        /* Touch all of the ATOMs within the molecule that */
+        /* contains the current RESIDUE */
+        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
+            AtomSetFlags(aAtom, ATOMTOUCHED);
+            CONTAINER cParent = cContainerWithin(aAtom);
+            if (iObjectType(cParent) == RESIDUEid)
+                RESIDUE_from(cParent)->iMolecule = iMolecule;
         }
     }
 
@@ -2412,7 +2398,7 @@ UnitLabelMolecules(UNIT uUnit) {
 }
 
 /*
- *      zUnitIOBuildTables
+ *      UnitIOBuildTables
  *
  *        Author:        Christian Schafmeister (1991)
  *
@@ -2427,9 +2413,10 @@ UnitLabelMolecules(UNIT uUnit) {
  *        NOTE: within tables and OFF files is COMPLETELY ARBITRARY.
  *
  */
+extern void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib);
 void
-zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
-            bool * bPGeneratedParameters, // set to TRUE if parameters generated
+UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
+            bool *bPGeneratedParameters, // set to TRUE if parameters generated
             bool bPert,
             bool bCheck)
 {
@@ -2815,6 +2802,8 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 	  }
 	}
     }
+    UnitIOBuildCMAPTables(uUnit, plParameters);
+
     if (bFailedGeneratingParameters == FALSE)
         *bPGeneratedParameters = TRUE;
     else
@@ -2827,13 +2816,13 @@ zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
 
 /*
- *      zUnitIOBuildFromTables
+ *      UnitIOBuildFromTables
  *
  *        Author:        Christian Schafmeister (1991)
  *
  *      Build a UNIT from its tables.
  */
-void zUnitIOBuildFromTables(UNIT uUnit)
+void UnitIOBuildFromTables(UNIT uUnit)
 {
     SAVEATOMt *saPAtom;
     SAVECONNECTIVITYt *scPCon;
@@ -3091,13 +3080,13 @@ void zUnitIOBuildFromTables(UNIT uUnit)
 }
 
 /*
- *      zUnitIODestroyTables
+ *      UnitIODestroyTables
  *
  *        Author:        Christian Schafmeister (1991)
  *
  *      Destroy all of the tables associated with the UNIT.
  */
-void zUnitIODestroyTables(UNIT uUnit)
+void UnitIODestroyTables(UNIT uUnit)
 {
     int i, iCount;
 
@@ -3130,6 +3119,8 @@ void zUnitIODestroyTables(UNIT uUnit)
         VarArrayDestroy(&(uUnit->vaMolecules));
     }
 /* %%% */
+    if (uUnit->psParameters)
+        ParmSetDestroy(&(uUnit->psParameters));
     if (uUnit->vaHierarchy != NULL)
         VarArrayDestroy(&(uUnit->vaHierarchy));
     if (uUnit->vaBonds != NULL)
@@ -3150,6 +3141,8 @@ void zUnitIODestroyTables(UNIT uUnit)
         VarArrayDestroy(&(uUnit->vaGroupAtoms));
     if (uUnit->vaAtomsPerMolecule != NULL)
         VarArrayDestroy(&(uUnit->vaAtomsPerMolecule));
+    if (uUnit->vaCMAPs != NULL)
+        VarArrayDestroy(&(uUnit->vaCMAPs));
 
     UnitSetMode(uUnit, UNITNORMAL);
 }
@@ -3911,8 +3904,8 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
                     case 16: dGBrad = 0.8; break;
                     case 7:  if (GDefaults.iGBparm == 2) dGBrad = 1.3; break;
                     case 1:
-                        if ((sAtomType(aAtomA)[0]=='H'||sAtomType(aAtomA)[0]=='h') &&
-                            (sAtomType(aAtomA)[1]=='W'||sAtomType(aAtomA)[1]=='w'))
+                        if (cLower(sAtomType(aAtomA)[0])=='h' &&
+                            cLower(sAtomType(aAtomA)[1])=='w')
                             dGBrad = 0.8;
                         break;
                     }
@@ -3921,38 +3914,34 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
                         dGBrad = 1.3;
                         if (GDefaults.iGBparm == 8) {
                             if (!strcmp(sResName,"ARG") &&
-                                !(strncmp(sAtomName(aAtom),"HH",2) &&
-                                  strcmp(sAtomName(aAtom),"HE")))
+                                (!strncmp(sAtomName(aAtom),"HH",2) ||
+                                  !strcmp(sAtomName(aAtom),"HE")))
                                 dGBrad = 1.17;
                         }
                     }
                 }
             } else {
                 VPWARN("Unbonded Hydrogen %s in %s: writing unmodified Bondi GB radius.\n",
-                       sContainerName(aAtom),
-                       sContainerName(cContainerWithin(aAtom)));
+                       sContainerName(aAtom), sContainerName(rRes));
             }
             break;
         case 6:
             {
                 const char *sType = sAtomType(aAtom);
-                if (strncmp(sType,"C1",2) && strncmp(sType,"C2",2) && strncmp(sType,"C3",2))
-                    dGBrad = 1.7;
-                else if (!strncmp(sType,"C1",2) && dMass < 13.0) dGBrad = 1.7;
-                else if (!strncmp(sType,"C2",2) && dMass < 14.0) dGBrad = 1.7;
-                else if (!strncmp(sType,"C3",2) && dMass < 15.0) dGBrad = 1.7;
-                else dGBrad = 2.2;
+                dGBrad = ((!strncmp(sType, "C1", 2) && dMass >= 13.0) ||
+                          (!strncmp(sType, "C2", 2) && dMass >= 14.0) ||
+                          (!strncmp(sType, "C3", 2) && dMass >= 15.0)) ? 2.2 : 1.7;
             }
             break;
         case 7:  dGBrad = 1.55; break;
         case 8:
             dGBrad = 1.5;
             if (GDefaults.iGBparm == 8) {
-                if (!(strcmp(sResName,"ASP")||strncmp(sAtomName(aAtom),"OD",2)) ||
-                    !(strcmp(sResName,"AS4")||strncmp(sAtomName(aAtom),"OD",2)) ||
-                    !(strcmp(sResName,"GLU")||strncmp(sAtomName(aAtom),"OE",2)) ||
-                    !(strcmp(sResName,"GL4")||strncmp(sAtomName(aAtom),"OE",2)) ||
-                    (!strcmp(sAtomName(aAtom),"OXT") ||
+                if ( ( (!strcmp(sResName,"ASP") || !strcmp(sResName,"AS4"))
+                        && !strncmp(sAtomName(aAtom),"OD",2) ) ||
+                     ( (!strcmp(sResName,"GLU") || !strcmp(sResName,"GL4"))
+                        && !strncmp(sAtomName(aAtom),"OE",2) ) ||
+                     (!strcmp(sAtomName(aAtom),"OXT") ||
                      (!bLastAtom && !strcmp(sAtomName(sa[1].aAtom),"OXT"))))
                     dGBrad = 1.4;
             }
@@ -3985,7 +3974,7 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
 
 double dGBScreenForElement(int iElement)
 {
-    double s = 0.8;
+    double s = 0.0;
     if (GDefaults.iGBparm < 4 || GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
         switch (iElement) {
         case 1:  s = 0.85; break;  case 6:  s = 0.72; break;
@@ -4012,5 +4001,4 @@ double dGBScreenForElement(int iElement)
     }
     return s;
 }
-
 

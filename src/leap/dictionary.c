@@ -167,7 +167,7 @@ dDictionaryCreate()
 {
 DICTIONARY	dNew;
 
-    MALLOC( dNew, DICTIONARY, sizeof(DICTIONARYt) );
+    dNew = (DICTIONARY)MALLOC(sizeof(DICTIONARYt) );
 		/* Create a HASH_TABLE */
 
 		/* Define the class */
@@ -254,7 +254,7 @@ char		*cPKey;
 		/* Allocate memory for the key  -- strdup() */
 
     iLen = strlen(sKey);
-    MALLOC( cPKey, char*, iLen+1 );
+    cPKey = (char*)MALLOC(iLen+1 );
     strcpy( cPKey, sKey );
 
     HTAdd( dDict->htEntries, cPKey, PData );

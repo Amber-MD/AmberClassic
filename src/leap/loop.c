@@ -68,6 +68,7 @@
 
 
 #include        "basics.h"
+#include        "defaults.h" // FIXME: only to turn off molecule re-ordering
 
 #include        "classes.h"
 
@@ -515,9 +516,11 @@ iLoopParmOrder(const void *A, const void *B)
                 ((cResidueType(rB) == RESTYPESOLVENT) ? 1 : 0);
         if (iSolA < iSolB) return -1;
         else if (iSolA > iSolB) return 1;
-        // RESIDUE.iMolecule MUST BE labelled with the molecule number
-        if (rA->iMolecule < rB->iMolecule) return -1;
-        if (rA->iMolecule > rB->iMolecule) return 1;
+        if (GDefaults.reorder_molecules) {
+            // RESIDUE.iMolecule MUST BE labelled with the molecule number
+            if (rA->iMolecule < rB->iMolecule) return -1;
+            if (rA->iMolecule > rB->iMolecule) return 1;
+        }
     } else if (iObjectType(oA) == UNITid) {
         // non-residues come last
         return 1;
@@ -543,7 +546,7 @@ zLoopAddToMemory( LOOP *lPLoop, OBJEKT oObject )
 {
 LOOPNODE	lnNew;
 
-    MALLOC( lnNew, LOOPNODE, sizeof(LOOPNODEt) );
+    lnNew = (LOOPNODE)MALLOC(sizeof(LOOPNODEt) );
     if ( lPLoop->lnLast != NULL ) {
 	lPLoop->lnLast->lnNext = lnNew;
     } else {
@@ -625,27 +628,22 @@ CONTAINER	cTemp;
         i = iCollectionSize( cContainerContents(oOver) );
 	if ( i != 0 ) {
             vaSeqNum = vaVarArrayCreate( sizeof(CONTAINER) );
-	    TESTMEMORY();
             VarArraySetSize( vaSeqNum, i );
 
                 /* Fill the array with the CONTAINERs */
-	    TESTMEMORY();
             cPCur = PVAI( vaSeqNum, CONTAINER, 0 );
             lTemp = lLoop( oOver, DIRECTCONTENTS );
             while ( (cTemp = (CONTAINER)oNext(&lTemp)) ) {
 		*cPCur = cTemp;
 		cPCur++;
 	    }
-	    TESTMEMORY();
             if ( iGoal == DIRECTCONTENTSBYSEQNUM )
                 qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER), iLoopContainerMatch );
             else /* DIRECTCONTENTSPARMORDER */
                 qsort( PVAI( vaSeqNum, CONTAINER, 0 ), i, sizeof(CONTAINER), iLoopParmOrder );
-	    TESTMEMORY();
                 /* Create the sorted linked list */
             cPCur = PVAI( vaSeqNum, CONTAINER, 0 );
             lL.oaSubLoopOver[0] = (OBJEKT)(*cPCur);
-	    TESTMEMORY();
             for ( i=0; i< iVarArrayElementCount(vaSeqNum)-1; i++ ) {
                 ContainerSetLoopNext( *cPCur, *(cPCur+1) );
                 cPCur++;
@@ -655,7 +653,6 @@ CONTAINER	cTemp;
 	} else {
 	    lL.oaSubLoopOver[0] = (OBJEKT)NULL;
 	}
-	TESTMEMORY();
     } else if ( (iGoal&WAYONLY)==SPANNINGTREE ) {
 
                 /* Set up the LOOP for a spanning tree */
@@ -688,7 +685,7 @@ CONTAINER	cTemp;
 OBJEKT
 oNext( LOOP *lPLoop )
 {
-OBJEKT                  oObject;
+OBJEKT                  oObject=NULL;
 int                     iGoal, i;
 LISTLOOP                llPLoop;
 bool                    bSeenBefore;

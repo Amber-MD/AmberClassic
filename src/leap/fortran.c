@@ -307,7 +307,7 @@ int             iLen;
             if ( (iLen=strlen(SsInput)) > 0 ) SsInput[iLen-1] = '\0';
         }
         SbNeedInput = FALSE;
-        strncpy( sString, SsInput, 4 );
+        memcpy( sString, SsInput, 4 );
         sString[4] = '\0';
         strcpy( SsInput, SsInput+4 );
         if ( strlen(sString)!=0 ) bGotOne = TRUE;

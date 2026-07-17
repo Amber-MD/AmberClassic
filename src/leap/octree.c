@@ -175,7 +175,7 @@ double		dHalfEdge = PdHalfEdges[iDepth-1];
 	 *  Make nodes & set simple stuff by initializing 1st node
 	 *	and copying it.
 	 */
-	MALLOC( PonChildren, OCTNODEt *, 8 * sizeof(OCTNODEt) );
+	PonChildren = (OCTNODEt *)MALLOC(8 * sizeof(OCTNODEt) );
 	memset(PonChildren, 0, sizeof(OCTNODEt));
 	PonChildren->iStatus = iStatus;
 	PonChildren->iDepth = iDepth;
@@ -335,7 +335,7 @@ OCTNODEt	*PonChildren;
 	 *	is necessarily <= size of parent's.
 	 */
 
-	MALLOC( PaNewAtoms, ATOM *, iAtoms * sizeof(ATOM) );
+	PaNewAtoms = (ATOM *)MALLOC(iAtoms * sizeof(ATOM) );
 	memset( PaNewAtoms, 0, iAtoms * sizeof(ATOM) );
 	PonNode->PaAtomList = PaNewAtoms;
 	iNewAtoms = 0;
@@ -567,7 +567,7 @@ OCTNODEt	*PonChildren;
 	 *  Get memory for list of atoms inside sphere enclosing this cube, which 
 	 *	must be <= size of parent's.
 	 */
-	MALLOC( PaNewAtoms, ATOM *, iAtoms * sizeof(ATOM) );
+	PaNewAtoms = (ATOM *)MALLOC(iAtoms * sizeof(ATOM) );
 	memset( PaNewAtoms, 0, iAtoms * sizeof(ATOM) );
 	PonNode->PaAtomList = PaNewAtoms;
 #ifdef DBG2
@@ -684,7 +684,7 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 	/*
 	 *  Create the octree "object" and initialize
 	 */
-	MALLOC( octTree, OCTREE, sizeof(OCTREEt) );
+	octTree = (OCTREE)MALLOC(sizeof(OCTREEt) );
 	octTree->iType = iType;
 	octTree->dGridSize = dGridSpace;
 	octTree->PfCharges = NULL;
@@ -755,9 +755,9 @@ dTmax = 20.0;
 for (dTmp=dTmax, iMaxDepth=0; dTmp>dGridSize; iMaxDepth++, dTmp/=2.0);
 octTree->iMaxDepth = iMaxDepth;
 for (dTmax=dGridSize, i=0; i<iMaxDepth; i++, dTmax*=2.0);
-MALLOC( PdHalfEdges, double *, (iMaxDepth+1) * sizeof(double) );
+PdHalfEdges = (double *)MALLOC((iMaxDepth+1) * sizeof(double) );
 octTree->PdHalfEdges = PdHalfEdges;
-MALLOC( PdHalfDiagonals, double *, (iMaxDepth+1) * sizeof(double) );
+PdHalfDiagonals = (double *)MALLOC((iMaxDepth+1) * sizeof(double) );
 octTree->PdHalfDiagonals = PdHalfDiagonals;
 return(octTree);
 */
@@ -883,9 +883,9 @@ return(octTree);
 	 *  Set up arrays (indexed by depth) of edge size & half-diagonals 
 	 *	to save recalculation
 	 */
-	MALLOC( PdHalfEdges, double *, (iMaxDepth+1) * sizeof(double) );
+	PdHalfEdges = (double *)MALLOC((iMaxDepth+1) * sizeof(double) );
 	octTree->PdHalfEdges = PdHalfEdges;
-	MALLOC( PdHalfDiagonals, double *, (iMaxDepth+1) * sizeof(double) );
+	PdHalfDiagonals = (double *)MALLOC((iMaxDepth+1) * sizeof(double) );
 	octTree->PdHalfDiagonals = PdHalfDiagonals;
 
 	for (dTmp=dTmax/2.0, i=0; i<=iMaxDepth; dTmp/=2.0, i++) {
@@ -898,7 +898,7 @@ return(octTree);
 	 *  Set up array (indexed by depth) of points per box, used
 	 *	for rejuggling charge array when splitting boxes.
 	 */
-	MALLOC( PiDensities, int *, (iMaxDepth+1) * sizeof(int) );
+	PiDensities = (int *)MALLOC((iMaxDepth+1) * sizeof(int) );
 	octTree->PiDensities = PiDensities;
 	for (i=iMaxDepth, j=1; i>-1; i--, j*=8)
 		PiDensities[i] = j;
@@ -1118,7 +1118,7 @@ ATOM	*PaAtom;
 	 *  Get the memory for the charges and note the dielectric.
 	 */
 
-	MALLOC( PfCharges, float *, octTree->iTreePoints * sizeof(float) );
+	PfCharges = (float *)MALLOC(octTree->iTreePoints * sizeof(float) );
 	octTree->PfCharges = PfCharges;
 	octTree->iDielectric = iDielectric;
 
@@ -1312,8 +1312,8 @@ OCTNODEt	*PonChildren;
 	/*
 	 *  copy the parent's charges to a temp array
 	 */
-	MALLOC( PfTmpCharges, float *, 
-			sizeof(float) * PiDensities[PonNode->iDepth]);
+	PfTmpCharges = (float *)MALLOC(
+                        sizeof(float) * PiDensities[PonNode->iDepth]);
 	memcpy( PfTmpCharges, PonNode->PfCharges, 
 			sizeof(float) * PiDensities[PonNode->iDepth]);
 

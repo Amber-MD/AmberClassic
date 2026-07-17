@@ -92,7 +92,7 @@ DISPLAYER	dNew;
     if ( GbGraphicalEnvironment == FALSE ) 
 	return(NULL);
 
-    MALLOC( dNew, DISPLAYER, sizeof(DISPLAYERt) );
+    dNew = (DISPLAYER)MALLOC(sizeof(DISPLAYERt) );
     dNew->cStatus = D_SENSITIVE;
     dNew->dnFirst = NULL;
     dNew->PObject = PObject;
@@ -168,7 +168,7 @@ DisplayerAdd( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
 {
 DISPLAYERNODE	dnNew;
 
-    MALLOC( dnNew, DISPLAYERNODE, sizeof(DISPLAYERNODEt) )
+    dnNew = (DISPLAYERNODE)MALLOC(sizeof(DISPLAYERNODEt) );
     dnNew->fCallback = vFunc;
     dnNew->PData = PData;
     dnNew->dnNext = dDisp->dnFirst;

@@ -103,7 +103,7 @@ plParmLibCreate()
 {
 PARMLIB     plTemp;
 
-    MALLOC( plTemp, PARMLIB, sizeof(PARMLIBt) );
+    plTemp = (PARMLIB)MALLOC(sizeof(PARMLIBt) );
 
     plTemp->lParmSets = (LIST)oCreate(LISTid);
     return(plTemp);

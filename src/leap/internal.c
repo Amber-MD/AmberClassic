@@ -91,7 +91,7 @@ iInternalCreate()
 {
 INTERNAL        iNew;
 
-    MALLOC( iNew, INTERNAL, sizeof(INTERNALt) );
+    iNew = (INTERNAL)MALLOC(sizeof(INTERNALt) );
     
     iNew->cInternalType = INTERNALUNDEFINED;
     iNew->iType.niNormal.aAtom1 = NULL;
@@ -245,15 +245,12 @@ iInternalChirality( ATOM aAtom1, double dValue )
 {
 INTERNAL        iInt;
 
-    TESTMEMORY();
     iInt = (INTERNAL)oCreate(INTERNALid);
     iInt->cInternalType = INTERNALCHIRALITY;
     iInt->iType.niNormal.aAtom1 = aAtom1;
     iInt->iType.niNormal.dValue = dValue;
   
-    TESTMEMORY(); 
     ContainerAdd( (CONTAINER)aAtom1, (OBJEKT)iInt );
-    TESTMEMORY();
     return(iInt);
 }
 

@@ -58,7 +58,7 @@
 #include	"varArray.h"
 
 
-typedef	struct	{
+typedef	struct DICTLOOPSTRUCT	{
 	char	*cPKey;
 	GENP	PData;
 } DICTLOOPt;
@@ -66,7 +66,7 @@ typedef	struct	{
 typedef DICTLOOPt	*DICTLOOP;
 
 
-typedef	struct	{
+typedef	struct DICTIONARYSTRUCT	{
 	GENP		PKlass;
 	HASH_TABLE	htEntries;
 	VARARRAY	vaSort;		/* DICTIONARY_SORTt */

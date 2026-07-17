@@ -156,7 +156,7 @@ VARARRAY vaVarArrayCreate(int size)
     VARARRAY new;
     size_t alloc_size;
 
-    MALLOC(new, VARARRAY, sizeof(HeaderStruct));
+    new = (VARARRAY)MALLOC(sizeof(HeaderStruct));
 
     if (new == NULL) {
         DFATAL("vaVarArrayCreate: not enough memory ");
@@ -166,7 +166,7 @@ VARARRAY vaVarArrayCreate(int size)
         DFATAL("vaVarArrayCreate: element size too large (%d bytes)", size);
     }
     
-    MALLOC(new->data, char *, alloc_size);
+    new->data = (char *)MALLOC(alloc_size);
 
     if (new->data == NULL) {
         FREE(new);
@@ -254,7 +254,7 @@ void VarArrayAdd(VARARRAY header, GENP data)
         VARARRAY_LOG("Growing VARARRAY: %d -> %d slots, %zu bytes",
                      header->slot, new_slot, new_alloc_size);
         
-        REALLOC(header->data, char *, header->data, new_alloc_size);
+        header->data = (char *)REALLOC(header->data,new_alloc_size);
         
         if (header->data == NULL) {
             DFATAL(" VarArrayAdd: realloc failed for %zu bytes", new_alloc_size);
@@ -282,7 +282,7 @@ VARARRAY vaVarArrayCopy(VARARRAY header)
         DFATAL(" vaVarArrayCopy: VARARRAY is NULL");
     }
 
-    MALLOC(new, VARARRAY, sizeof(HeaderStruct));
+    new = (VARARRAY)MALLOC(sizeof(HeaderStruct));
     if (new == NULL) {
         DFATAL(" vaVarArrayCopy: cannot allocate header");
     }
@@ -296,7 +296,7 @@ VARARRAY vaVarArrayCopy(VARARRAY header)
         DFATAL(" vaVarArrayCopy: allocation size overflow");
     }
 
-    MALLOC(new->data, char *, alloc_size);
+    new->data = (char *)MALLOC(alloc_size);
     if (new->data == NULL) {
         FREE(new);
         DFATAL(" vaVarArrayCopy: cannot allocate %zu bytes", alloc_size);
@@ -330,7 +330,7 @@ VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
     }
     total_count = header1->count + header2->count;
 
-    MALLOC(new, VARARRAY, sizeof(HeaderStruct));
+    new = (VARARRAY)MALLOC(sizeof(HeaderStruct));
     if (new == NULL) {
         DFATAL(" vaVarArrayCopy2: cannot allocate header");
     }
@@ -344,7 +344,7 @@ VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
         DFATAL(" vaVarArrayCopy2: allocation size overflow");
     }
 
-    MALLOC(new->data, char *, alloc_size);
+    new->data = (char *)MALLOC(alloc_size);
     if (new->data == NULL) {
         FREE(new);
         DFATAL(" vaVarArrayCopy2: cannot allocate %zu bytes", alloc_size);
@@ -384,7 +384,7 @@ void VarArrayInsertBeforeMore(VARARRAY header, int pos, int num)
         
         VARARRAY_LOG("Growing for insert: %d -> %d slots", header->slot, nslot);
         
-        REALLOC(header->data, char *, header->data, alloc_size);
+        header->data = (char *)REALLOC(header->data,alloc_size);
         if (header->data == NULL) {
             DFATAL(" VarArrayInsertBeforeMore: realloc failed");
         }
@@ -460,7 +460,7 @@ void VarArrayDeleteMore(VARARRAY header, int pos, int num)
             
             VARARRAY_LOG("Shrinking VARARRAY: %d -> %d slots", header->slot, nslot);
             
-            REALLOC(header->data, char *, header->data, alloc_size);
+            header->data = (char *)REALLOC(header->data,alloc_size);
             if (header->data == NULL) {
                 DFATAL(" VarArrayDelete: realloc failed during shrink");
             }
@@ -503,7 +503,7 @@ void VarArraySetSize(VARARRAY header, int ncount)
         VARARRAY_LOG("Resizing VARARRAY: %d -> %d elements, %d -> %d slots, %zu bytes",
                      header->count, ncount, header->slot, nslot, alloc_size);
         
-        REALLOC(header->data, char *, header->data, alloc_size);
+        header->data = (char *)REALLOC(header->data,alloc_size);
         if (header->data == NULL) {
             DFATAL(" VarArraySetSize: realloc failed for %zu bytes", alloc_size);
         }

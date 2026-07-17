@@ -92,7 +92,7 @@ osOStringCreate()
 {
 OSTRING osNew;
 
-    MALLOC( osNew, OSTRING, sizeof(OSTRINGt) );
+    osNew = (OSTRING)MALLOC(sizeof(OSTRINGt) );
     osNew->iMaxLen = 0;
     osNew->sString = NULL;
     return(osNew);
@@ -162,7 +162,7 @@ OStringCopy( OSTRING osDest, OSTRING osSrc )
  
     if ( osSrc->sString != NULL ) {
         if ( strlen(osSrc->sString) >0 ) {
-            MALLOC( osDest->sString, char*, strlen(osSrc->sString)+1 );
+            osDest->sString = (char*)MALLOC(strlen(osSrc->sString)+1 );
             osDest->iMaxLen = strlen(osSrc->sString)+1;
             strcpy( osDest->sString, osSrc->sString );
         }
@@ -196,7 +196,7 @@ OStringDefine( OSTRING osStr, char *sStr )
 
     if ( sStr != NULL ) {
         if ( strlen(sStr) != 0 ) {
-            MALLOC( osStr->sString, char*, strlen(sStr)+1 );
+            osStr->sString = (char*)MALLOC(strlen(sStr)+1 );
             strcpy( osStr->sString, sStr );
             osStr->iMaxLen = strlen(sStr)+1;
         }
@@ -231,7 +231,7 @@ int             iSize;
         /* Figure out how big the new string will have to be. */
 
     iSize = strlen( osA->sString ) + strlen( osB->sString ) + 1;
-    REALLOC( osA->sString, char*, osA->sString, iSize ); 
+    osA->sString = (char*)REALLOC(osA->sString,iSize ); 
     osA->iMaxLen = iSize;
     strcat( osA->sString, osB->sString );
 }

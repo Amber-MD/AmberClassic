@@ -9,7 +9,7 @@
 //               | '(' expression ')'
 //               | expression distance_op
 //
-//  operand     := selection_spec_list
+//  operand     := selection_spec_list | '*'
 //
 //  selection_spec_list := selection_spec
 //               | res_selection  atom_selection      -- implied AND (narrow down)
@@ -40,12 +40,13 @@
 //               | name                        -- glob active, fnmatch semantics
 //               | '~' name                   -- forced literal, no glob
 //               -- note: * and ? are valid name chars, lex as NAME via NAMESTART
+//               -- bare * at expression level means select-all
 //
 //  distance_op := ('<@' | '>@' |             -- by atom
 //                  '<:' | '>:' |             -- by residue
 //                  '<;' | '>;' |             -- by residue center
 //                  '<^' | '>^')              -- by molecule
-//                 REAL
+//                 number                     -- REAL or INTEGER (promoted to double)
 //
 //  Residue numbering modes:
 //    RESNUM    ':'   default — PDB resSeq normally, flat index in compat mode
@@ -60,11 +61,12 @@
 //  the reference selection; atoms within/beyond the cutoff of any reference
 //  atom are selected. The nonbond grid is built lazily on first eval and
 //  cached on the AST node for reuse across trajectory frames.
+//  dist is stored as-is; the grid setup squares it internally.
 //------------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "selection.h"
+#include "select_mask.h"
 
 static SELNODE mk_node(SELNODEKINDt k, SELNODE l, SELNODE r);
 static SELNODE mk_text_node(SELNODEKINDt k, char *text, int forced);
@@ -74,6 +76,8 @@ static SELNODE mk_dist_node(SELNODEKINDt k, SELNODE ref, double dist);
 
 extern int sellex(void);
 extern void selerror(const char *s);
+
+extern char sel_error_token[];  /* last token seen, set by lexer via YY_USER_ACTION */
 
 SELNODE selection_root = NULL;
 %}
@@ -94,7 +98,9 @@ SELNODE selection_root = NULL;
 %token COLON_SEMICOLON       /* :; RES_PDBSEQ — always PDB resSeq */
 %token COLON_HASH            /* :# RES_INDEX  — always flat sequential index */
 %token COLON_PCT             /* :% RESTYPE    — residue type, single literal name */
-%token AT                    /* @  atom name or index */
+%token AT                    /* @  atom name or global index (cpptraj compat) */
+%token AT_HASH               /* @# explicit global flat atom index */
+%token AT_SEMICOLON          /* @; atom index within residue (PDB order, 1-based) */
 %token AT_PCT                /* @% atom type (always literal) */
 %token AT_SLASH              /* @/ atom element */
 %token LESS_AT               /* <@ distance within, by atom */
@@ -114,8 +120,8 @@ SELNODE selection_root = NULL;
 %token RPAREN                /* ) */
 %token DASH                  /* - */
 /* NOTE: no STAR token — * and ? are valid NAMESTART chars and lex as NAME.
- * fnmatch handles glob matching. Bare * in a list context matches all via
- * fnmatch("*", anything, 0) == 0.                                         */
+ * fnmatch handles glob matching. Bare * at expression level is select-all,
+ * handled by checking NAME == "*" in primary.                             */
 
 %type <node> expr term factor primary
 %type <node> selection_spec_list selection_spec
@@ -125,10 +131,13 @@ SELNODE selection_root = NULL;
 %type <node> res_list_pdbseq  res_item_pdbseq
 %type <node> res_list_index   res_item_index
 %type <node> atom_list atom_item
+%type <node> atom_list_index   atom_item_index
+%type <node> atom_list_residx  atom_item_residx
 %type <node> chain_list chain_item
 %type <node> elem_list elem_item
 %type <node> type_list type_item
 %type <node> mol_list mol_item
+%type <rnum> number
 %type <text> name forced_name any_name
 
 /* Implied operator precedence: AND binds tighter than OR */
@@ -144,6 +153,7 @@ SELNODE selection_root = NULL;
 
 input
     : expr                          { selection_root = $1; }
+    | error                         { selerror("invalid selection expression"); YYERROR; }
     ;
 
 expr
@@ -167,29 +177,42 @@ factor
  * The reference set is the left child; the nonbond grid is built from it
  * lazily on first eval and cached on the node. dist is stored as-is;
  * neighbor_grid_setup() squares it internally.
- *
- * Distance ops bind as part of primary so they compose with explicit
- * AND/OR naturally: :ALA <@ 5.0 & :GLY selects atoms within 5Å of ALA
- * that are also in GLY residues.                                        */
+ * Both REAL and INTEGER are accepted for distance — INTEGER is promoted
+ * to double so <@5 and <@5.0 are equivalent.                            */
 primary
     : LPAREN expr RPAREN             { $$ = $2; }
+    | LPAREN error RPAREN            { selerror("invalid expression inside parentheses");
+                                       YYERROR; }
+    | NAME                           { if (strcmp($1, "*") != 0) {
+                                           selerror("bare name requires : @ ^ prefix — "
+                                                    "did you mean :name or @name? "
+                                                    "Use * alone to select all atoms.");
+                                           free($1); YYERROR;
+                                       }
+                                       free($1);
+                                       $$ = mk_node(SEL_NODE_ALL, NULL, NULL); }
     | selection_spec_list            { $$ = $1; }
-    | primary LESS_AT        REAL    { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_ATOM,   $1, $3); }
-    | primary LESS_COLON     REAL    { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_RES,    $1, $3); }
-    | primary LESS_SEMICOLON REAL    { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_RESCEN, $1, $3); }
-    | primary LESS_CARAT     REAL    { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_MOL,    $1, $3); }
-    | primary GREATER_AT     REAL    { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_ATOM,   $1, $3); }
-    | primary GREATER_COLON  REAL    { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_RES,    $1, $3); }
-    | primary GREATER_SEMICOLON REAL { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_RESCEN, $1, $3); }
-    | primary GREATER_CARAT  REAL    { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_MOL,    $1, $3); }
+    | primary LESS_AT        number  { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_ATOM,    $1, $3); }
+    | primary LESS_COLON     number  { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_RES,     $1, $3); }
+    | primary LESS_SEMICOLON number  { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_RESCEN,  $1, $3); }
+    | primary LESS_CARAT     number  { $$ = mk_dist_node(SEL_NODE_DIST_WITHIN_MOL,     $1, $3); }
+    | primary GREATER_AT     number  { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_ATOM,    $1, $3); }
+    | primary GREATER_COLON  number  { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_RES,     $1, $3); }
+    | primary GREATER_SEMICOLON number { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_RESCEN,$1, $3); }
+    | primary GREATER_CARAT  number  { $$ = mk_dist_node(SEL_NODE_DIST_BEYOND_MOL,     $1, $3); }
+    | primary LESS_AT        NAME    { selerror("distance requires a number e.g. <@5.0");
+                                       free($3); YYERROR; }
+    | primary GREATER_AT     NAME    { selerror("distance requires a number e.g. >@5.0");
+                                       free($3); YYERROR; }
     ;
 
-/* --- implied AND/OR between juxtaposed selection specs ---
- *
- * Moving DOWN the mol -> res -> atom hierarchy implies AND (narrowing).
- * Same level or upward juxtaposition implies OR.
- * %prec IMPLIED_AND rules have higher priority so bison shifts into them
- * rather than reducing via the implied-OR rule.                         */
+/* number: accept REAL or INTEGER, promote INTEGER to double.
+ * Allows <@5 and <@5.0 to be equivalent.                     */
+number
+    : REAL                          { $$ = $1; }
+    | INTEGER                       { $$ = (double)$1; }
+    ;
+
 selection_spec_list
     : selection_spec
         { $$ = $1; }
@@ -205,8 +228,10 @@ selection_spec_list
         { $$ = mk_node(SEL_NODE_OR,  $1, $2); }
     ;
 
-/* three-level chain: ^1:ALA@CA — mol+res reduces here first,
- * then the combined node can accept an atom_selection           */
+/* three-level chain: ^1:ALA@CA — mol+res reduces here first via its own
+ * %prec so bison doesn't confuse it with selection_spec_list mol res.
+ * The combined node can then accept an atom_selection for the third level,
+ * or stand alone as a two-level mol+res selection.                        */
 mol_res_selection
     : mol_selection res_selection        %prec IMPLIED_AND
         { $$ = mk_node(SEL_NODE_AND, $1, $2); }
@@ -219,6 +244,9 @@ res_selection
     | COLON_SEMICOLON res_list_pdbseq   { $$ = $2; }
     | COLON_HASH      res_list_index    { $$ = $2; }
     | COLON_PCT       name              { $$ = mk_text_node(SEL_NODE_RESTYPE, $2, 1); }
+    | COLON_PCT       INTEGER           { selerror(":% residue type requires a name, not a number — "
+                                                   "did you mean :# for residue index?");
+                                          YYERROR; }
     | COLON_COLON     chain_list        { $$ = $2; }
     | chain_res_selection               { $$ = $1; }
     | COLON LPAREN expr RPAREN          { $$ = mk_node(SEL_NODE_RES_CONTAINS, $3, NULL); }
@@ -234,9 +262,39 @@ chain_res_selection
     ;
 
 atom_selection
-    : AT       atom_list                { $$ = $2; }
-    | AT_PCT   type_list                { $$ = $2; }
-    | AT_SLASH elem_list                { $$ = $2; }
+    : AT           atom_list           { $$ = $2; }
+    | AT_HASH      atom_list_index     { $$ = $2; }   /* explicit global flat index */
+    | AT_SEMICOLON atom_list_residx    { $$ = $2; }   /* index within residue, PDB order */
+    | AT_PCT       type_list           { $$ = $2; }
+    | AT_SLASH     elem_list           { $$ = $2; }
+    ;
+
+/* --- atom index lists --- */
+
+atom_list_index
+    : atom_item_index                           { $$ = $1; }
+    | atom_list_index COMMA atom_item_index     { $$ = mk_node(SEL_NODE_OR, $1, $3); }
+    ;
+
+atom_item_index
+    : INTEGER               { $$ = mk_int_node(SEL_NODE_ATOM_INDEX,       $1); }
+    | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_ATOM_INDEX, $1, $3); }
+    | NAME                  { selerror("@# requires integer — use @ for atom name");
+                              free($1); YYERROR; }
+    ;
+
+/* --- atom index within residue (PDB order, 1-based) --- */
+
+atom_list_residx
+    : atom_item_residx                          { $$ = $1; }
+    | atom_list_residx COMMA atom_item_residx   { $$ = mk_node(SEL_NODE_OR, $1, $3); }
+    ;
+
+atom_item_residx
+    : INTEGER               { $$ = mk_int_node(SEL_NODE_ATOM_RESIDX,       $1); }
+    | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_ATOM_RESIDX, $1, $3); }
+    | NAME                  { selerror("@; requires integer — atom index within residue");
+                              free($1); YYERROR; }
     ;
 
 mol_selection
@@ -277,6 +335,9 @@ res_list_pdbseq
 res_item_pdbseq
     : INTEGER               { $$ = mk_int_node( SEL_NODE_RES_PDBSEQ,       $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RES_PDBSEQ, $1, $3); }
+    | NAME                  { selerror(":; PDB resSeq requires integer — "
+                                       "use : for residue name selection");
+                              free($1); YYERROR; }
     ;
 
 res_list_index
@@ -287,6 +348,9 @@ res_list_index
 res_item_index
     : INTEGER               { $$ = mk_int_node( SEL_NODE_RES_INDEX,       $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RES_INDEX, $1, $3); }
+    | NAME                  { selerror(":# residue index requires integer — "
+                                       "use : for residue name selection");
+                              free($1); YYERROR; }
     ;
 
 /* --- atom list --- */
@@ -297,10 +361,10 @@ atom_list
     ;
 
 atom_item
-    : name                  { $$ = mk_text_node(SEL_NODE_ATOMNAME,  $1, 0); }
-    | forced_name           { $$ = mk_text_node(SEL_NODE_ATOMNAME,  $1, 1); }
-    | INTEGER               { $$ = mk_int_node( SEL_NODE_INDEX,     $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_ATOM,$1, $3); }
+    : name                  { $$ = mk_text_node(SEL_NODE_ATOMNAME,   $1, 0); }
+    | forced_name           { $$ = mk_text_node(SEL_NODE_ATOMNAME,   $1, 1); }
+    | INTEGER               { $$ = mk_int_node( SEL_NODE_INDEX,      $1); }
+    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_ATOM, $1, $3); }
     ;
 
 /* --- chain list --- */
@@ -329,7 +393,9 @@ elem_list
     ;
 
 elem_item
-    : any_name              { $$ = mk_text_node(SEL_NODE_ELEMENT, $1, 0); }
+    : any_name              { $$ = mk_text_node(SEL_NODE_ELEMENT,    $1, 0); }
+    | INTEGER               { $$ = mk_int_node( SEL_NODE_ELEMENT_NUM,$1); }
+    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_ELEM, $1, $3); }
     ;
 
 /* --- atom type list (always forced literal — no glob in type names) --- */
@@ -341,6 +407,8 @@ type_list
 
 type_item
     : any_name              { $$ = mk_text_node(SEL_NODE_ATOMTYPE, $1, 1); }
+    | INTEGER               { selerror("@% atom type requires a name, not a number");
+                              YYERROR; }
     ;
 
 /* --- molecule list (numbers and ranges only — no string names) --- */
@@ -353,6 +421,9 @@ mol_list
 mol_item
     : INTEGER               { $$ = mk_int_node(SEL_NODE_MOLNUM,    $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_MOL, $1, $3); }
+    | NAME                  { selerror("^ molecule selector requires integer — "
+                                       "molecule names are not supported");
+                              free($1); YYERROR; }
     ;
 
 /* --- name nonterminals --- */
@@ -369,6 +440,11 @@ forced_name
      * The 'forced' flag in mk_text_node() disables glob pattern matching:
      * ~ means "literal string, no wildcards, no fnmatch".                */
     : TILDE NAME            { $$ = $2; }
+    | TILDE INTEGER         { selerror("~ followed by bare integer — "
+                                       "leading zeros are preserved so ~017 != ~17, "
+                                       "but the lexer should have emitted this as NAME. "
+                                       "This is an internal error.");
+                              YYERROR; }
     ;
 
 any_name
@@ -380,7 +456,7 @@ any_name
 
 void selerror(const char *s)
 {
-    VPFATAL("selection parse error: %s\n", s);
+    VPFATAL("selection parse error near '%s': %s\n", sel_error_token, s);
 }
 
 static SELNODE alloc_node(SELNODEKINDt k)
@@ -388,7 +464,7 @@ static SELNODE alloc_node(SELNODEKINDt k)
     SELNODE n = (SELNODE)calloc(1, sizeof(SELNODEt));
     if (!n) abort();
     n->kind = k;
-    //TODO: n->cache_mol = SEL_CACHE_INVALID;  /* -1 is never a valid molecule number */
+    n->cache_object = SEL_CACHE_INVALID;
     return n;
 }
 
@@ -406,7 +482,7 @@ static SELNODE mk_text_node(SELNODEKINDt k, char *text, int forced)
     n->text = text;
     n->forced_string = forced;
     n->has_glob = !forced && (strchr(text, '*') || strchr(text, '?') ||
-                              strchr(text, '[') || strchr(text, '\\') );
+                              strchr(text, '['));
     return n;
 }
 
@@ -427,6 +503,10 @@ static SELNODE mk_range(SELNODEKINDt k, long a, long b)
 
 static SELNODE mk_dist_node(SELNODEKINDt k, SELNODE ref, double dist)
 {
+    /* dist stored as-is — neighbor_grid_setup() squares it internally.
+     * ngGrid is left NULL by calloc — built lazily on first eval and
+     * cached here for reuse across trajectory frames. Caller must call
+     * sel_invalidate_coords(root) between frames if coordinates change. */
     SELNODE n = alloc_node(k);
     n->left = ref;
     n->dist = dist;

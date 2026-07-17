@@ -47,9 +47,9 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
                         else
                                 fill_char = ' ';
 
-                        if (isdigit(*f)) {
+                        if (isdigit((unsigned char)*f)) {
                                 field1 = *f++ - '0';
-                                while (isdigit(*f))
+                                while (isdigit((unsigned char)*f))
                                         field1 = field1 * 10 + *f++ - '0';
                         }
                         else
@@ -58,7 +58,7 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
                         if (*f == '.') {
                                 f++;
                                 field2 = 0;
-                                while (isdigit(*f))
+                                while (isdigit((unsigned char)*f))
                                         field2 = field2 * 10 + *f++ - '0';
                         }
                         else
@@ -276,6 +276,7 @@ register char   *p;
 {
         register int    len;
 
+        if (width <0) width = maxstr;
         len = strlen(s);
         if (maxstr >= 0 && len > maxstr)
                 len = maxstr;

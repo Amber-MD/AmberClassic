@@ -106,10 +106,10 @@ int		i, iNum;
     iNum = sizeof(ScaConnectNames)/sizeof(ScaConnectNames[0]);
     for ( i=0; i<iNum; i++ ) {
 	if ( strcasecmp( sName, ScaConnectNames[i].sName ) == 0 ) {
-	    return(ScaConnectNames[i].iConnect);
+	    return ScaConnectNames[i].iConnect;
 	}
     }
-    return(NOEND);
+    return NOEND;
 }
 
 
@@ -130,21 +130,11 @@ RESIDUE
 rResidueCreate(void)
 {
 RESIDUE m;
-int     i;
 
-    MALLOC( m, RESIDUE, sizeof(RESIDUEt) );
-    m->cHeader.dDisp = NULL;
-    m->vaImpropers = NULL;
-    for ( i=0; i<MAXCONNECT; i++ ) {
-        m->aaConnect[i] = NULL;
-    }
-    ResidueDefineFlags( m, 0 );
+    m = (RESIDUE)CALLOC(sizeof(RESIDUEt) );
     ResidueSetType( m, RESTYPEUNDEFINED );
-    ResidueSetImagingAtom( m, NULL );
-    ResidueSetPdbSequence( m, 0 );
-    ResidueSetChainId( m, "  " );
     m->cICode = ' ';
-    return(m);
+    return m;
 }
 
 
@@ -204,7 +194,7 @@ STRING          sTemp;
     }
     VP0("RESIDUE sequence number: %d\n", 
                         iContainerSequence(rResidue) );
-    VP0("RESIDUE PDB chainId: %s\n", rResidue->sChainId);
+    VP0("RESIDUE PDB chainId: %s\n", rResidue->sChainId[0] ? rResidue->sChainId : "\"\"");
     VP0("RESIDUE PDB sequence number: %d\n",
 			iResiduePdbSequence(rResidue) );
     double dSum = 0.0;
@@ -271,13 +261,13 @@ rResidueDuplicate( RESIDUE rOld )
 {
 RESIDUE	rNew;
 
-    MALLOC(rNew, RESIDUE, sizeof(RESIDUEt) );
+    rNew = (RESIDUE)MALLOC(sizeof(RESIDUEt) );
     memcpy( rNew, rOld, sizeof(RESIDUEt) );
 
     if ( rOld->vaImpropers ) {
 	rNew->vaImpropers = vaVarArrayCopy( rOld->vaImpropers );
     }
-    return(rNew);
+    return rNew;
 }
 
 
@@ -541,13 +531,13 @@ ATOM		aAtom;
 int		i;
 
     if ( ( aAtom = aResidueConnectAtom( rRes, iConnect ) ) == NULL )
-	return(NULL);
+	return NULL;
 
     for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
 	if ( (RESIDUE)cContainerWithin(aAtomBondedNeighbor(aAtom,i)) != rRes )
 	    return (RESIDUE)cContainerWithin(aAtomBondedNeighbor(aAtom,i));
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -566,17 +556,17 @@ char *
 sResidueTypeNameFromChar( char c )
 {
     switch ( c ) {
-	case RESTYPEUNDEFINED	: return("undefined");
-	case RESTYPESOLVENT	: return("solvent");
-	case RESTYPEPROTEIN	: return("protein");
-	case RESTYPENUCLEIC	: return("nucleic");
-	case RESTYPESACCHARIDE	: return("saccharide");
-	case RESTYPEION	        : return("ion");
-	case RESTYPELIGAND	: return("ligand");
-	case RESTYPEOTHER     	: return("other");
+	case RESTYPEUNDEFINED	: return "undefined";
+	case RESTYPESOLVENT	: return "solvent";
+	case RESTYPEPROTEIN	: return "protein";
+	case RESTYPENUCLEIC	: return "nucleic";
+	case RESTYPESACCHARIDE	: return "saccharide";
+	case RESTYPEION	        : return "ion";
+	case RESTYPELIGAND	: return "ligand";
+	case RESTYPEOTHER     	: return "other";
 	default: break;
     }
-    return("UNKNOWN RESIDUE TYPE NAME!");
+    return "UNKNOWN RESIDUE TYPE NAME!";
 }
 
 
@@ -682,10 +672,10 @@ STRING          sTemp;
 	   VPFATALEXIT(" %s: no such connect atom\n", sTemp);
     }
     if ( aA == NULL || aB == NULL ) {
-	return(FALSE);
+	return FALSE;
     }
     AtomBondToOrder( aA, aB, iOrder );
-    return(TRUE);
+    return TRUE;
 }
 
 

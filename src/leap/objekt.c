@@ -66,13 +66,18 @@
 
 #include        "classes.h"
 
-
-
-
 #define DEFAULTSIZE     -1
 
+KLASSt GkTObjekt = { "OBJEKT", NULL };
 
-
+OBJEKT
+oObjectCreate(void)
+{
+OBJEKT  o;
+    PRINTF("A raw OBJEKT is being created!!\n" );
+    o = (OBJEKT)MALLOC(sizeof(OBJEKTt) );
+    return o;
+}
 
 /*
  *      oCreateSize
@@ -92,8 +97,7 @@ OBJEKT  o;
     switch ( iType ) {
     
         case OBJEKTid:
-            PRINTF("A raw OBJEKT is being created!!\n" );
-            MALLOC( o, OBJEKT, sizeof(OBJEKTt) );
+            o = oObjectCreate();
             break;
 
         case ASSOCid:
@@ -118,7 +122,7 @@ OBJEKT  o;
             break;
             
         case BYTEARRAYid:
-            o = (OBJEKT)baByteArrayCreate( iSize );
+            o = (OBJEKT)baByteArrayCreate(iSize);
             break;
             
         case ATOMid:
@@ -147,7 +151,7 @@ OBJEKT  o;
         
     o->cObjType = iType;
 #ifdef DEBUG
-    o->iObjektMagic = OBJEKT_MAGIC;
+    o->PKlass = (GENP)&GkTObjekt;
 #endif
     o->iReferences = 1;
     return(o);

@@ -79,7 +79,7 @@ mMoleculeCreate()
 {
 MOLECULE        m;
 
-    MALLOC( m, MOLECULE, sizeof(MOLECULEt) );
+    m = (MOLECULE)MALLOC(sizeof(MOLECULEt) );
     return(m);
 }
 
@@ -166,7 +166,7 @@ mMoleculeDuplicate( MOLECULE mOld )
 {
 MOLECULE	mNew;
 
-    MALLOC( mNew, MOLECULE, sizeof(MOLECULEt) );
+    mNew = (MOLECULE)MALLOC(sizeof(MOLECULEt) );
     memcpy( mNew, mOld, sizeof(MOLECULEt) );
     return(mNew);
 }

@@ -158,8 +158,6 @@ CONTAINER       c;
 void    
 ContainerDestroy( CONTAINER *cPContainer )
 {
-LISTLOOP        llLoop;
-OBJEKT          oObj;
 
     if ( *cPContainer == NULL ) 
         return;
@@ -167,10 +165,9 @@ OBJEKT          oObj;
     if ((*cPContainer)->dDisp != NULL)  
         DisplayerDestroy(&((*cPContainer)->dDisp));
  
-                /* DEREF the contents of the CONTAINER */
+    /* DEREF the contents of the CONTAINER and destroy the List */
                 
-    llLoop = llListLoop((LIST)(*cPContainer)->lContents);
-    while ( (oObj=oListNext(&llLoop))!= NULL ) DEREF(oObj);
+    LIST_from((*cPContainer)->lContents)->bFreeChildren = TRUE;
     ListDestroy((LIST *)&((*cPContainer)->lContents));
     
     switch ( iObjectType(*cPContainer) ) {
@@ -257,13 +254,11 @@ ContainerDescribe( CONTAINER cContainer  )
 void    
 ContainerAdd( CONTAINER cContainer, OBJEKT oObject )
 {
-    TESTMEMORY();
 
                 /* Add the OBJEKT to the end of the list to perserve */
                 /* the NATURAL ORDER OF THINGS */
     ListAddToEnd( (LIST)cContainer->lContents, oObject );
         
-    TESTMEMORY();
                 /* If the object being placed within this container */
                 /* is itself a container then record within the object */
                 /* which container it is being placed within. */
@@ -273,8 +268,6 @@ ContainerAdd( CONTAINER cContainer, OBJEKT oObject )
         ContainerSetWithin( oObject, cContainer );
     }
     
-    TESTMEMORY();
-
     CDU(cContainer);
 }
 
@@ -868,10 +861,10 @@ char *
 sContainerDescriptor( CONTAINER cCont, char *sDesc )
 {
     if ( iObjectType(cCont) == UNITid) {
-        if ( GiVerbosityLevel < 4 ) strcpy( sDesc, "" );
+        if ( iVerbosity() < 4 ) strcpy( sDesc, "" );
         else sprintf(sDesc, "%c<%s>", iObjectType(cCont), sContainerName(cCont));
     } else {
-        if (GiVerbosityLevel > 2 && iObjectType(cCont)==RESIDUEid)
+        if (iVerbosity() > 2 && iObjectType(cCont)==RESIDUEid)
             sprintf( sDesc, "%c<%s | %s:%d | %d>", iObjectType(cCont), 
                     sContainerName(cCont),
                     sResidueChainId(cCont),iResiduePdbSequence(cCont),

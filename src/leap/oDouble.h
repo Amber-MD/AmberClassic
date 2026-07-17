@@ -59,7 +59,7 @@
 */
 
 
-typedef struct  {
+typedef struct ODOUBLESTRUCT {
 	OBJEKTt         oSuper;
 	double          dValue;
 } ODOUBLEt;

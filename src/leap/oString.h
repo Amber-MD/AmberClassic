@@ -55,7 +55,7 @@
 #define OSTRING_H
 
 /*
------------------------------------------------------------------------
+--------------------------------------------------------------typedef struct  CONTAINERSTRUCT ---------
 
         Define object typedefs here.
         
@@ -63,7 +63,7 @@
         its first structure element.
 */
 
-typedef struct  {
+typedef struct OSTRINGSTRUCT {
 	OBJEKTt         oSuper;
 	int             iMaxLen;
 	char		*sString;

@@ -60,6 +60,7 @@ boostlib="\$(LIBDIR)/libboost_program_options.a \$(LIBDIR)/libboost_iostreams.a 
 netcdflibf_static="\$(LIBDIR)/libnetcdff.a \$(LIBDIR)/libnetcdf.a"
 netcdflibf_shared="-L\$(LIBDIR) -lnetcdff -lnetcdf"
 netcdflibf=$netcdflibf_static
+netcdflib="\$(LIBDIR)/libnetcdf.a"
 lapack="skip"
 blas="skip"
 macAccelerate="no"
@@ -359,6 +360,7 @@ fi
 if [ "$conda" == "yes" ]; then
 
    netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
+   netcdflib="-L$CONDA_PREFIX/lib -lnetcdf"
    echo "using netcdf   libraries from conda-forge"
 
 elif [ ! -s "lib/libnetcdf.a" ]; then
@@ -730,6 +732,7 @@ LM=$lm
 #  (3) specify some library options:
 
 NETCDFLIBF=$netcdflibf
+NETCDFLIB=$netcdflib
 BOOSTLIB=$boostlib
 LAPACK=$lapack
 BLAS=$blas
@@ -740,7 +743,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag
+CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag -DBINTRAJ
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)

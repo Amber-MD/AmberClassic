@@ -99,7 +99,7 @@ bBagCreate()
 {
 BAG    bBag;
 
-        MALLOC( bBag, BAG, sizeof(BAGt) );
+        bBag = (BAG)MALLOC(sizeof(BAGt) );
 	bBag->iElementCount = 0;
         bBag->bnPFirstNode = NULL;
         bBag->bnPLastNode = NULL;
@@ -161,7 +161,7 @@ BNODEP   bnPTempBag;
                 /* Insert the new node at the head of the bag */
 
     bnPTempBag = bBag->bnPFirstNode;
-    MALLOC( bBag->bnPFirstNode, BNODEP, sizeof(BNODE) );
+    bBag->bnPFirstNode = (BNODEP)MALLOC(sizeof(BNODE) );
 
                 /* Keep up to date the last node of the bag */
 
@@ -198,7 +198,7 @@ BNODEP   bnPTempBag;
                 /* Insert the new node at the tail of the bag */
 
     bnPTempBag = bBag->bnPLastNode;
-    MALLOC( bBag->bnPLastNode, BNODEP, sizeof(BNODE) );
+    bBag->bnPLastNode = (BNODEP)MALLOC(sizeof(BNODE) );
 
                 /* Keep up to date the last node of the bag */
 

@@ -77,85 +77,6 @@ int     GiVPnoteCount = 0;    /* Count the number of Notes */
 "FREEfreeNow this is free also and will be free until it is malloced again" 
 
 
-typedef struct  MEMHEADERs {
-	char                    sFile[FILENAMELEN];
-	int                     iLineNumber;
-	long                    lSize;
-	struct MEMHEADERs	*mPNext;
-	char                    sCheck[TRAILERLEN];
-} MEMHEADER;
-
-static  MEMHEADER	*SmPMallocList = NULL;
-
-#include "varArray.h"
-#define TSIZE	1000000
-/*
-static VARARRAY	vtest = NULL;
- */
-
-void 
-IMem(void)
-{
-/*
-	int   i, *ip;
-	vtest = vaVarArrayCreate( sizeof(int) );
-	VarArraySetSize( vtest, TSIZE );
-	ip = PVAI( vtest, int, 0);
-	for (i=0; i<TSIZE; i++) ip[i] = i;
- */
-	return;
-}
-
-void 
-TMem(void)
-{
-/*
-	int	i, *ip;
-	char	*p = NULL;
-	ip = PVAI( vtest, int, 0);
-	for (i=0; i<TSIZE; i++)
-	if (ip[i] != i) {
-		fprintf(stderr, "element %d=%d\n", i, ip[i]);
-		*p = ' ';
-	}
- */
-	return;
-}
-
-
-#if 0 // DEBUG
-/*
- *	zBasicsTrapBUS
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *	Trap SIGBUS exceptions.
- */
-static void	
-zBasicsTrapBUS( int iSignal, int iCode )
-{
-    DFATAL("Bus error.\n" );
-}
-
-/*
- *	zBasicsTrapSEGV
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *	Trap SIGSEGV exceptions.
- */
-static void	
-zBasicsTrapSEGV( int iSignal, int iCode )
-{
-TMem();
-
-    DFATAL("Segmentation violation.\n" );
-}
-#endif
-
-
-
-
 /*
  *      myAcos
  *
@@ -267,7 +188,7 @@ bStringToInt( char *cPData, int *iPData )
 			}
 			continue;
 		}
-		if (!isdigit(*cp)) {
+		if (!isdigit((unsigned char)*cp)) {
 			VP0("non-digit in %s\n", cPData );
 			return(FALSE);
 		}
@@ -348,306 +269,52 @@ StringRTrim(char *sStr)
 }
 
 
-/*
- *--------------------------------------------------------------------
- *
- *      Memory management with consistency checking
- *
- */
+//---------------------------------------------------------------
+//      Memory status via rusage, GLIBC or libasan
+#ifdef __GLIBC__
+#  include <malloc.h>
+#endif
+#if defined(__SANITIZE_ADDRESS__)
+#  ifdef __has_include
+#    if __has_include(<sanitizer/allocator_interface.h>)
+#      include <sanitizer/allocator_interface.h>
+#      define USE_MODERN_SAN_HEADERS 1
+#    endif
+#  endif
+#  ifndef USE_MODERN_SAN_HEADERS
+     extern size_t __sanitizer_get_current_allocated_bytes(void);
+     extern size_t __sanitizer_get_heap_size(void);
+     extern size_t __sanitizer_get_free_bytes(void);
+#  endif
+#endif
+#include <sys/resource.h>
 
-STRING  GsLastMemOpFile;
-int     GiLastMemOpLine;
-int	GiMemoryAllocated;
-bool	GbTestMemory = FALSE;
-
-/*
- *      DebugCheckMemoryBlock
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *      Check if a memory block is a MALLOC'd memory block.
- */
-static void    
-DebugCheckMemoryBlock( MEMHEADER *mPMem )
-{
-    if ( strcmp( mPMem->sCheck, CHECKSTR ) != 0 ) {
-        DFATAL("In FREE or REALLOC with a BAD memory block!\n" );
+void
+PrintMemoryStats(void) {
+#ifdef __GLIBC__
+    struct mallinfo mi = mallinfo();
+    VP0("Current memory usage:%9ld KB\n", mi.uordblks / 1024 );
+#endif
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+        long kb = usage.ru_maxrss;
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+        kb = kb / 1024;
+#endif
+        // On Linux, ru_maxrss is in Kilobytes.
+        VP0("Peak RAM Usage (HWM):%9ld KB\n", kb);
     }
+#if defined(__SANITIZE_ADDRESS__)
+    VP0("Built with Address Sanitization library\n");
+    size_t current_heap = __sanitizer_get_current_allocated_bytes();
+    size_t free_bytes = __sanitizer_get_free_bytes();
+    size_t heap_size = __sanitizer_get_heap_size();    // Current total bytes allocated by the application via ASan's wrapper
+    VP0("--- ASan Memory Snapshot ---\n");
+    VP0("Actively Used Heap:  %9zu KB\n", current_heap / 1024);
+    VP0("Total Managed Pool:  %9zu KB\n", heap_size / 1024);
+    VP0("Cached Free List:    %9zu KB\n", free_bytes / 1024);
+#endif
 }
-
-
-
-/*
- *      DebugMemoryTest
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *      Test the linked list of malloc'd memory blocks for consistency.
- *      Display an error message and exit if the memory has been corrupted.
- *	If bReport is TRUE then write the memory header for each
- *	block as it is checked to the LOG file.
- */
-static void
-DebugMemoryTest( char *sFile, int iLine, bool bReport )
-{
-	MEMHEADER	*mPMem, *mPPreviousMem;
-	char		*sTrailer;
-
-	if ( !GbTestMemory ) 
-		return;
-
-	if ( bReport ) {
-		VPLOG("Dumping unreleased memory\n" );
-	}
-
-	MESSAGE("---TESTMEMORY\n" );
-    
-	mPPreviousMem = NULL;
-	mPMem = SmPMallocList;
-	while ( mPMem != NULL ) {
-		sTrailer = ((char*)mPMem)+sizeof(MEMHEADER)+mPMem->lSize;
-		if ( strcmp( mPMem->sCheck, CHECKSTR ) != 0 ||
-		     strcmp( mPMem->sCheck, sTrailer ) != 0 ) {
-			PRINTF("MEMORY ERROR!!!!\n" );
-			PRINTF("A memory block has been corrupted!\n\n" );
-			PRINTF("Last memory operation before error in: %15s:%5d\n",
-                          GsLastMemOpFile, GiLastMemOpLine );
-			PRINTF("Memory op. that discovered error in  : %15s:%5d\n",
-			  sFile, iLine );
-			PRINTF("--------------------\n" );
-			PRINTF("Corrupted block malloc'd in: %s:%d   size: %ld\n",
-                          mPMem->sFile, mPMem->iLineNumber,
-                          mPMem->lSize );
-			PRINTF("Header= |%s|\n", mPMem->sCheck );
-			PRINTF("Trailer=|%s|\n", sTrailer );
-			PRINTF("NOTE: Header must be the same as Trailer!!!!!\n" );
-			if ( mPPreviousMem != NULL ) {
-				PRINTF("------------------------\n" );
-				PRINTF("The preceding memory block is:\n" );
-				PRINTF("malloc'd in: %s  line: %d   size: %ld\n",
-				  mPPreviousMem->sFile, 
-				  mPPreviousMem->iLineNumber,
-				  mPPreviousMem->lSize );
-				PRINTF("Header= |%s|\n",
-				  mPPreviousMem->sCheck );
-			} else 
-				PRINTF("This is the first memory block.\n" );
-			abort();
-		} else {
-			if ( bReport ) {
-				VPLOG("Block malloc'd in: %s:%d   size: %ld\n",
-				  mPMem->sFile, mPMem->iLineNumber,
-				  mPMem->lSize );
-			}
-		}
-		mPPreviousMem = mPMem;
-		mPMem = mPMem->mPNext;
-	}
-    
-	MESSAGE("---TESTMEMORY GOOD!!!!!!!\n" );
-}
-
-
-
-
-    
-                        
-
-/*
- *      DebugMalloc
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *      Malloc the amount of memory required with some extra
- *      information at the head and tail of the memory.
- *
- *      In the head place the name of the file and the line number
- *      where the memory was malloced, also place the memory in a 
- *      linked list.  Then place a 1 byte value just before the block of
- *      memory that will be returned to the user and the same value
- *      immediatly after.  This will be used to check if the block
- *      is being overwritten.
- */
-char *
-DebugMalloc( long lSize, char *sFile, int iLine )
-{
-MEMHEADER	*mPMem;
-char		*sTrailer;
-//char		*cPBlock;
-
-                /* Check for consistency */
-
-    MESSAGE("---MALLOC\n" );
-
-    DebugMemoryTest( sFile, iLine, FALSE );
-
-                /* Malloc what the user wants and a header and trailer */
-                
-    mPMem = (MEMHEADER*)malloc( lSize + sizeof(MEMHEADER) + TRAILERLEN );
-    FILEMESSAGE("MEMORY", "In: %s:%d Malloc at: %p,  %ld bytes\n",
-				sFile, iLine, (void*)mPMem, lSize );
-    if ( mPMem == NULL ) {
-        DFATAL("Could not malloc: %s\n", strerror(errno) );
-    }
-    
-    //cPBlock = ((char*)mPMem)+sizeof(MEMHEADER);
-
-    if ( strcmp( mPMem->sCheck, "" ) != 0 ) {
-        MESSAGE("---In MALLOC, previous contents=%s\n", mPMem->sCheck );
-    }
-    
-                /* Fill the header */
-
-    strcpy( mPMem->sFile, sFile );
-    mPMem->iLineNumber = iLine;
-    mPMem->lSize = lSize;
-    strcpy( mPMem->sCheck, CHECKSTR );
-    mPMem->mPNext = SmPMallocList;
-    SmPMallocList = mPMem;
-    
-    sTrailer = ((char*)mPMem)+sizeof(MEMHEADER)+lSize;
-    memmove( sTrailer, mPMem->sCheck, TRAILERLEN );
-    
-    return ((char*)mPMem) + sizeof(MEMHEADER);
-}
-
-
-
-
-
-/*
- *      DebugRealloc
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *      Check ALL of memory, and if everything is OK then
- *      perform the realloc.  After the realloc is performed, update
- *      the trailer of the memory block.
- */
-char *
-DebugRealloc( char *cPBlock, long lSize, char *sFile, int iLine )
-{
-MEMHEADER	*mPMem, *mPPrevious, *mPCur;
-char		*sTrailer;
-
-                /* Check for consistency */
-
-    MESSAGE("---REALLOC\n" );
-    DebugMemoryTest( sFile, iLine, FALSE );
-
-    
-                /* Find where the actual memory block begins */
-
-    mPMem = (MEMHEADER*)( cPBlock - sizeof(MEMHEADER) );
-    FILEMESSAGE("MEMORY", "<<<In %s:%d  Realloc at: %p,  %ld bytes\n",
-			sFile, iLine, cPBlock, mPMem->lSize );
-    DebugCheckMemoryBlock(mPMem);
-
-                /* Find the memory block in the linked list */
-                /* to remove it, invalidate the current block */
-
-    mPPrevious = NULL;
-    mPCur = SmPMallocList;
-    while ( mPCur != NULL && mPCur != mPMem ) {
-        mPPrevious = mPCur;
-        mPCur = mPCur->mPNext;
-    }
-    if ( mPCur == NULL ) {
-        DFATAL("In DebugRealloc, MEMORY CORRUPTION!, block not found!" );
-    }
-                /* Remove the block from the linked list */
-    if ( mPPrevious == NULL ) {
-        SmPMallocList = mPCur->mPNext;
-    } else {
-        mPPrevious->mPNext = mPCur->mPNext;
-    }
-
-                /* Allocate memory for the new block, copy the old stuff */
-                /* into it, and free the old stuff */
-
-    mPPrevious = mPMem;
-    mPMem = (MEMHEADER*)malloc( lSize+sizeof(MEMHEADER)+TRAILERLEN );
-    FILEMESSAGE("MEMORY", "In %s:%d  >>>Realloc at: %p,  %ld bytes\n",
-				sFile, iLine, (void*)mPMem, lSize );
-    if ( mPMem == NULL ) {
-        DFATAL("Could not malloc in REALLOC: %s\n", strerror(errno) );
-    }
-    memmove( mPMem, mPPrevious, 
-           MIN( lSize, mPPrevious->lSize) + sizeof(MEMHEADER)+TRAILERLEN );
-                     
-    strcpy( mPPrevious->sCheck, FREESTR );
-    free(mPPrevious);
-    mPMem->lSize = lSize;
-    mPMem->mPNext = SmPMallocList;
-    SmPMallocList = mPMem;
-
-                /* Fill the trailer */
-    
-    sTrailer = ((char*)mPMem)+sizeof(MEMHEADER)+lSize;
-    memmove( sTrailer, mPMem->sCheck, strlen(mPMem->sCheck) );
-    sTrailer[strlen(mPMem->sCheck)]='\0';
-    
-    return ((char*)mPMem) + sizeof(MEMHEADER);
-}
-
-
-
-
-
-
-/*
- *      DebugFree
- *
- *	Author:	Christian Schafmeister (1991)
- *
- *      Check ALL of memory, and if everything is OK then
- *      perform the free.
- */
-void    
-DebugFree( char *cPBlock, char *sFile, int iLine )
-{
-MEMHEADER	*mPMem, *mPCur, *mPPrevious;
-
-                /* Check for consistency */
-
-    MESSAGE("---FREE\n" );
-    DebugMemoryTest( sFile, iLine, FALSE );
-
-
-                /* Find where the actual memory block begins */
-
-    mPMem = (MEMHEADER*)( cPBlock - sizeof(MEMHEADER) );
-    FILEMESSAGE("MEMORY", "In %s:%d Free at: %p  %ld bytes\n",
-			sFile, iLine, cPBlock, mPMem->lSize);
-    DebugCheckMemoryBlock(mPMem);
-
-    strcpy( mPMem->sCheck, FREESTR );
-
-                /* Find the memory block in the linked list */
-                /* to remove it */
-
-    mPPrevious = NULL;
-    mPCur = SmPMallocList;
-    while ( mPCur != NULL && mPCur != mPMem ) {
-        mPPrevious = mPCur;
-        mPCur = mPCur->mPNext;
-    }
-    if ( mPCur == NULL ) {
-        DFATAL("In DebugFree, MEMORY CORRUPTION!, Memory block could not be found!!!!!" );
-    }
-                /* Remove the block from the linked list */
-    if ( mPPrevious == NULL ) {
-        SmPMallocList = mPCur->mPNext;
-    } else {
-        mPPrevious->mPNext = mPCur->mPNext;
-    }
-    
-                /* Perform the free */
-
-    free( mPMem );
-}
-
-
 
 
 /*
@@ -661,7 +328,6 @@ MEMHEADER	*mPMem, *mPCur, *mPPrevious;
  
 static  int     SiMessageFiles = 0;
 static  STRING  SsaMessageFiles[MAXMESSAGEFILES];
-
 
 
  
@@ -759,7 +425,6 @@ MessageFileList(void)
 }    
 
 
-
 #ifdef DEBUG
 /*
  *	MessageInitialize
@@ -855,7 +520,7 @@ TODO: add string size protection
         char *var = getenv(user);
         if ( var == NULL ) {
 	    VP0("Could not get environment value for: %s\n", user);
-            return 0;
+            return 1;
         }
         strcpy( sExpanded, var );
         if ( sOriginal[i] == '/' )
@@ -1115,12 +780,11 @@ bool		bFoundOne;
     if ( !bFoundOne ) {
 	if ( SsiPSinks == NULL ) {
 	    i = 0;
-	    MALLOC( SsiPSinks, SINKINFOt*, sizeof(SINKINFOt) );
+	    SsiPSinks = (SINKINFOt*)MALLOC(sizeof(SINKINFOt) );
 	    SiNumberOfSinks = 1;
 	} else {
 	    i = SiNumberOfSinks;
-	    REALLOC( SsiPSinks, SINKINFOt*, SsiPSinks,
-				sizeof(SINKINFOt)*(SiNumberOfSinks+1) );
+	    SsiPSinks = (SINKINFOt*)REALLOC(SsiPSinks, sizeof(SINKINFOt)*(SiNumberOfSinks+1) );
 	    SiNumberOfSinks++;
 	    /*
 	     *  realloc can mean that globals pointing to the
@@ -1372,10 +1036,6 @@ BasicsInitialize(void)
 */
 #ifdef	DEBUG
     MessageInitialize();
-#endif
-
-#ifdef DEBUG
-    ALWAYS( "Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) );
 #endif
 
 } 

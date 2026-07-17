@@ -87,13 +87,13 @@ ATOM  A3AEA  N   TYRBP -45     351.130 172.789 312.980  1.00 43.62           N
                         int atom_overflow = (r->pdb.atom.serial_num > 99999);
                         int residue_overflow = (r->pdb.atom.residue.seq_num > 9999);
                         if (atom_overflow  &&  !residue_overflow) {
-                                fmt = "ATOM  %6d%-4s%C%3s%.2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f         %2s%2s";
+                                fmt = "ATOM  %6d%-4s%C%3s%2.2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f         %2s%2s";
                         } else if (!atom_overflow  &&  residue_overflow) {
-                                fmt = "ATOM  %5d %-4s%C%3s%.2s%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
+                                fmt = "ATOM  %5d %-4s%C%3s%2.2s%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
                         } else if (atom_overflow  &&  residue_overflow) {
-                                fmt = "ATOM  %6d%-4s%C%3s%.2s%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
+                                fmt = "ATOM  %6d%-4s%C%3s%2.2s%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
                         } else {
-                                fmt = "ATOM  %5d %-4s%C%3s%.2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
+                                fmt = "ATOM  %5d %-4s%C%3s%2.2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
                         }
                 }
                 pdb_sprintf(buffer, fmt, r->pdb.atom.serial_num,
@@ -330,11 +330,11 @@ TER   150016      WAT  35296
                         int atom_overflow = (r->pdb.atom.serial_num > 99999);
                         int residue_overflow = (r->pdb.atom.residue.seq_num > 9999);
                         if (atom_overflow  &&  !residue_overflow) {
-                                fmt = "TER   %6d     %3s%%.2s%4d%C";
+                                fmt = "TER   %6d     %3s%2.2s%4d%C";
                         } else if (!atom_overflow  &&  residue_overflow) {
-                                fmt = "TER   %5d      %3s%.2s%5d%C";
+                                fmt = "TER   %5d      %3s%2.2s%5d%C";
                         } else if (atom_overflow  &&  residue_overflow) {
-                                fmt = "TER   %6d     %3s%.2s%4d%C";
+                                fmt = "TER   %6d     %3s%2.2s%4d%C";
                         }
                 }
                 pdb_sprintf(buffer, fmt, r->pdb.ter.serial_num,

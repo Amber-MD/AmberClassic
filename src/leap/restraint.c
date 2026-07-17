@@ -56,7 +56,7 @@ rRestraintCreate()
 {
 RESTRAINT	rNew;
 
-    MALLOC( rNew, RESTRAINT, sizeof(RESTRAINTt) );
+    rNew = (RESTRAINT)MALLOC(sizeof(RESTRAINTt) );
     rNew->iType = RESTRAINTNONE;
     RestraintDefineFlags(rNew, RESTRAINTALWAYS );
 #ifdef DEBUG

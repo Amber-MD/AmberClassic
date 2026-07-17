@@ -51,8 +51,8 @@
  *
  */
  
-#include        "atom.h"
 #include        "basics.h"
+#include        "atom.h"
 #include        "defaults.h"
 #include        "classes.h"
 #include        "elements.h"
@@ -150,8 +150,7 @@ aAtomCreate()
 {
 ATOM    a;
 
-    MALLOC( a, ATOM, sizeof(ATOMt) );
-    memset(a,0,sizeof(ATOMt));
+    a = (ATOM)CALLOC(sizeof(ATOMt) );
     a->iUniqueId = SiUniqueId++;
     a->iAtomicNumber = NOELEMENT;
     a->iPertAtomicNumber = NOELEMENT;
@@ -366,6 +365,16 @@ bAtomCoordinationSaturated( ATOM aAtom )
         return(FALSE); /* for lint */
 }
 
+bool
+bIsConnectAtom(ATOM aAtom)
+{
+    RESIDUE rParent=RESIDUE_from(cContainerWithin( aAtom ));
+    for ( int i=0; i<MAXCONNECT; i++ )
+        if ( aResidueConnectAtom( rParent, i ) == aAtom ) return TRUE;
+    return FALSE;
+}
+
+
 /*
  *      bBondAtomProblem
  *
@@ -408,6 +417,7 @@ STRING  sTemp;
 void
 AtomBondTo( ATOM aAtom1, ATOM aAtom2 )
 {
+STRING sTemp;
 
     VERIFYOBJEKT( aAtom1, ATOMid );
     VERIFYOBJEKT( aAtom2, ATOMid );
@@ -461,6 +471,12 @@ so the 'earlier' mol1 residue #s are < mol2 residues
         }
     }
      */
+    if (!bIsConnectAtom(aAtom1))
+        VPWARN("Bond: %s is not a CONNECT atom\n",
+                        sContainerFullDescriptor(CONTAINER_from(aAtom1), sTemp) );
+    if (!bIsConnectAtom(aAtom2))
+        VPWARN("Bond: %s is not a CONNECT atom\n",
+                        sContainerFullDescriptor(CONTAINER_from(aAtom2), sTemp ) );
 
     /*
      *  make the bond
@@ -732,7 +748,7 @@ aAtomDuplicate( ATOM aAtom )
 {
 ATOM    aNewAtom;
 
-    MALLOC( aNewAtom, ATOM, sizeof(ATOMt) );
+    aNewAtom = (ATOM)MALLOC(sizeof(ATOMt) );
     memcpy( aNewAtom, aAtom, sizeof(ATOMt) );
     aNewAtom->iUniqueId = SiUniqueId++;
     if ( GfAtomClassGraphicsCreator != NULL ) {

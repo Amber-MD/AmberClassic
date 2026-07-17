@@ -180,16 +180,9 @@ int             i, iMax;
 NVECTOR         nvPosition;
 VECTOR          vPos;
 
-    MESSAGE("|||Before defining nvPosition\n" );
-    TESTMEMORY();
-    MESSAGE("|||Passed\n" );
-    
     iMax = iVarArrayElementCount(mMinimizer->vaAtoms);
     nvPosition = nvNVectorCreate( iMax * 3 );
-    MESSAGE("|||After defining nvPosition\n" );
-    TESTMEMORY();
-    MESSAGE("|||Passed\n" );
-    
+
                 /* Loop over all atoms and obtain the positions */
     if ( iMax ) {
         eaPAtom = PVAI( mMinimizer->vaAtoms, EATOMt, 0 );
@@ -202,9 +195,6 @@ VECTOR          vPos;
         
     	}
     }
-    MESSAGE("|||After filling nvPosition\n" );
-    TESTMEMORY();
-    MESSAGE("|||Passed\n" );
     return(nvPosition);
 }
 
@@ -1412,7 +1402,7 @@ mMinimizerCreate()
 {
 MINIMIZER       eNew;
 
-    MALLOC( eNew, MINIMIZER, sizeof(MINIMIZERt) );
+    eNew = (MINIMIZER)MALLOC(sizeof(MINIMIZERt) );
     
     eNew->vaAtoms      = vaVarArrayCreate( sizeof(EATOMt) );
     eNew->vaBonds      = vaVarArrayCreate( sizeof(EBONDt) );

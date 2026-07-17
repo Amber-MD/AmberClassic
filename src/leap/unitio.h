@@ -1,3 +1,5 @@
+#ifndef UNITIO_H
+#define UNITIO_H
 /*
  *      File:   unitio.h
  *
@@ -45,17 +47,16 @@
 *         zbUnitIOIndexBondParameters and zUnitDoAtoms are now "extern functions" 
 */ 
  
-#ifndef UNITIO_H
-#define UNITIO_H
 
+#define AMBERINDEX(i)   3*(i-1)
 
-extern bool     zbUnitIOLoadTables(UNIT uUnit, DATABASE db);
-extern void     zUnitIOSaveTables(UNIT uUnit, DATABASE db);
+extern bool     bUnitIOLoadTables(UNIT uUnit, DATABASE db);
+extern void     UnitIOSaveTables(UNIT uUnit, DATABASE db);
 
-extern void     zUnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
+extern void     UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                         bool *bPGeneratedParameters, bool bPert, bool bCheck);
-extern void     zUnitIOBuildFromTables(UNIT uUnit);
-extern void     zUnitIODestroyTables(UNIT uUnit);
+extern void     UnitIOBuildFromTables(UNIT uUnit);
+extern void     UnitIODestroyTables(UNIT uUnit);
 extern bool     bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert);
 
 extern void     UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos, bool * bPFailed, bool bPert);
@@ -84,12 +85,8 @@ extern void MarkSideChainAtoms(RESIDUE rRes);
  *
  */
 
-#define ELECTRONTOKCAL  18.2223
-// precise value: 1 AMBER charge unit = 18.22261543523944 e
-
 #define PERTURBED       0x00000001
 #define BOUNDARY        0x00000002
-#define JSBFAC          0.89089872 /* = 1/(2^(1/6)), needed for Jayaram et al. (M)GB radii */
 
 typedef struct {
     CONTAINERNAMEt sName;
@@ -157,12 +154,12 @@ typedef struct {
 } SAVEANGLEt;
 
 typedef struct {
-    bool bProper;
     int iAtom1;
     int iAtom2;
     int iAtom3;
     int iAtom4;
     int iParmIndex;
+    bool bProper;
     bool bCalc14;
     int iPertParmIndex;
     bool bPertCalc14;

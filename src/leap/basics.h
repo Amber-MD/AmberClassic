@@ -246,9 +246,6 @@ typedef struct  {
 #ifndef FALSE
 # define        FALSE   0
 #endif
-#ifndef NULL
-# define        NULL    0
-#endif
 #ifndef MAX
 # define        MAX( x, y )     ( (x) < (y) ? (y) : (x) )
 #endif
@@ -260,7 +257,9 @@ typedef struct  {
 #endif
 #ifndef SWAP_STRINGS
 # define        SWAP_STRINGS(a,b,temp)  { \
-        strcpy(temp,a);strcpy(a,b);strcpy(b,temp);}
+        memcpy(temp,a,sizeof(temp)); \
+        memcpy(a,b,sizeof(temp)); \
+        memcpy(b,temp,sizeof(temp)); }
 #endif
 
 /*
@@ -274,14 +273,29 @@ typedef struct  {
 #ifndef PI
 # define PI             3.1415926535897932384626433832795
 #endif
-/* 10^{-12} */
-#define VERYSMALL       0.000000000001
+
+#define VERYSMALL       1E-12
 #define TOLERANCE       0.001           /* Used for comparing doubles */
-#define DEGTORAD        0.01745329251994329576 // Was 0.0174533
+//#define DEGTORAD      0.017453292519943295769236907684886
+#define DEGTORAD        0.0174533
 
-typedef void    GEN;
-typedef GEN*    GENP;
+#define ELECTRONTOKCAL  18.2223
+// precise value: 1 AMBER charge unit = 18.2226134
+//   sqrt(332.0636407)
+//
+//  K = e² × Nₐ / (4πε₀ × 1Å × 1kcal)
+//  
+//    = (1.602176634×10⁻¹⁹)² × 6.02214076×10²³
+//      ────────────────────────────────────────────
+//      4π × 8.8541878128×10⁻¹² × 10⁻¹⁰ × 4184
+//  
+//  = 332.06364(some more digits depending on ε₀ precision)
+//
+//#define JSBFAC          0.89089872 /* = 1/(2^(1/6)), needed for Jayaram et al. (M)GB radii */
+//                        0.89089871814033930474022620559052
 
+// general pupose / generic pointer
+typedef void*    GENP;
 
 
 /*
@@ -412,6 +426,22 @@ extern  bool    GbInterrupt;
 #define MAXCHARSPERPRINTF       4096    /* 4096 characters max */
 
 typedef void            (*VFUNCTION)();
+
+#ifdef DEBUG
+// For _Generic() macros in DEBUG build
+#include "varArray.h"
+#include "atom.h"
+#include "container.h"
+#include "molecule.h"
+#include "residue.h"
+#include "unit.h"
+#include "internal.h"
+#include "list.h"
+#include "assoc.h"
+#include "parmSet.h"
+#include "oString.h"
+#include "oDouble.h"
+#endif
 
 extern bool             GbPrintPrefix;
 extern VFUNCTION        GfPrintStringCallback;
@@ -694,176 +724,15 @@ extern STRING   GsBasicsFullName;
  *
  *      Fail safe memory allocation
  *
- *      Only use the first set of memory allocation tools when
- *      debugging MEMORY PROBLEMS!!!  They are very slow because
- *      they constantly check malloc'd memory for overruns and
- *      other errors.
  */
-
-/*
- *      MEMORY_DEBUG can be 0, 1, 2, 3, 4
- *
- *              0 -     Dont do any MEMORY debugging.
- *              1 -     Use my memory usage tracking.
- *                              This adds 4 bytes to every MALLOC and stores
- *                              the size of the allocation in an int
- *                              at the front of the memory block.
- *              2 -     Use my memory debugging.
- *              3 -     Use SUN memory debugging, requires linking with
- *                              /usr/lib/debug/malloc.o
- *              4 -     Use my memory debugging, but test memory every time
- *                              a routine is entered or exited.
- *
- *      NOTE: Whenever it is changed, EVERYTHING must be recompiled!!!!!!!
- */
-
-#define MEM_NO_DEBUG                    0
-#define MEM_TRACKING                    1
-#define MEM_DEBUG                       2
-#define MEM_SUN_DEBUG                   3
-#define MEM_DEBUG_ULTRA_PARANOID        4
-
-
-                                /* By default don't use memory debugging */
-#ifndef MEMORY_DEBUG
-# define MEMORY_DEBUG     MEM_NO_DEBUG
-#endif
-
-
-extern int      GiMemoryAllocated;
-
-extern STRING   GsLastMemOpFile;
-extern int      GiLastMemOpLine;
-extern bool     GbTestMemory;
-
-
-                        /* Turn my memory testing on/off */
-
-#define TEST_MEMORY_ON(b)       ( GbTestMemory = b )
-#define bTEST_MEMORY_ON()       ( GbTestMemory )
-
-#define REGISTERMEMOP() ( strcpy( GsLastMemOpFile, __FILE__ ),\
-                          GiLastMemOpLine = __LINE__ )
-
-#if MEMORY_DEBUG == MEM_NO_DEBUG
-# define        INITMEMORYDEBUG()
-# define        TESTMEMORY()
-# define        MALLOC( dest, type, size ) { \
-    (dest) = (type)malloc(size); \
-    if ( (dest)==(type)NULL ) { \
-        DFATAL( "Malloc: %s", strerror(errno) ); \
-        }}
-
-# define        FREE(x) { \
-                        *(char*)(x)='?';free(x); x=NULL; }
-
-# define        REALLOC( dest, type, src, size ) { \
-        (dest) = (type) realloc( src, size ); \
-        if ( (dest)==(type)NULL ) { \
-                DFATAL( "Realloc: %s", strerror(errno) ); \
-        }}
-
-# define        LISTUNFREEDMEMORYTOLOGFILE()
-
-#endif
-
-
-#if MEMORY_DEBUG == MEM_TRACKING
-# define        TRUEPOS(x)      ((int*)(x)-1)
-# define        INITMEMORYDEBUG()
-# define        TESTMEMORY()
-# define        MALLOC( dest, type, size ) { \
-    (dest) = (type)((char*)malloc(size+sizeof(int))+sizeof(int)); \
-    FILEMESSAGE( "MEMORY", ("Malloc %d bytes at: %lX\n", size, (dest) ) ); \
-    *(int*)(TRUEPOS(dest)) = size; \
-    GiMemoryAllocated += size; \
-    if ( (dest)==(type)NULL ) { \
-        printf( "BAD MALLOC file: %s line: %d\n", __FILE__, __LINE__); \
-        exit(1);}}
-
-# define        FREE(x) {  \
-        *(char*)(x)='?'; \
-        FILEMESSAGE( "MEMORY", ("Free %d bytes at: %lX\n", *(int*)TRUEPOS(x), x ) ); \
-        GiMemoryAllocated -= *(int*)TRUEPOS(x); \
-        free(TRUEPOS(x)); \
-        x=NULL; }
-
-# define        REALLOC( dest, type, src, size ) { \
-        FILEMESSAGE( "MEMORY", ("<<<Realloc %d bytes at: %lX\n", size, src ) ); \
-        GiMemoryAllocated -= *TRUEPOS(src); \
-        (dest) = (type)((int*)realloc( TRUEPOS(src), size+sizeof(int) )+1); \
-        FILEMESSAGE( "MEMORY", \
-                        (">>>Realloc %d bytes at: %lX\n", size, (dest) ) ); \
-        GiMemoryAllocated += size; \
-        *(int*)(TRUEPOS(dest)) = size; \
-}
-
-# define        LISTUNFREEDMEMORYTOLOGFILE()
-
-#endif
-
-#if (MEMORY_DEBUG==MEM_DEBUG)||(MEMORY_DEBUG==MEM_DEBUG_ULTRA_PARANOID)
-
-# define        INITMEMORYDEBUG()
-
-#define TESTMEMORY()    { \
-        DebugMemoryTest( __FILE__, __LINE__, FALSE ); \
-        REGISTERMEMOP(void); \
-}
-
-#define MALLOC( dest, type, size ) { \
-    (dest) = (type)DebugMalloc((long)(size), __FILE__, __LINE__ ); \
-    if ( (dest)==(type)NULL ) { \
-        DFATAL( "Bad malloc" ); \
-    } REGISTERMEMOP(void); \
-}
-
-#define FREE(x)        { \
-        *(char*)(x)='?'; \
-        DebugFree(x,__FILE__,__LINE__);x=NULL; \
-        REGISTERMEMOP(void); \
-}
-
-#define REALLOC( dest, type, src, size ) { \
-        (dest)=(type)DebugRealloc((src),(long)(size),__FILE__,__LINE__); \
-                REGISTERMEMOP(void); \
-}
-
-#define LISTUNFREEDMEMORYTOLOGFILE()    { \
-        DebugMemoryTest( __FILE__,__LINE__, TRUE ); \
-        REGISTERMEMOP(void); \
-}
-#endif
-
-#if (MEMORY_DEBUG == MEM_DEBUG_ULTRA_PARANOID)
-# define        MEMORY_TEST_MACRO()     TESTMEMORY()
+# define        MALLOC(size) safe_malloc(size)
+# define        CALLOC(size) safe_calloc(size)
+# define        REALLOC(ptr,size) safe_realloc(ptr,size)
+#ifdef DEBUG
+# define        FREE(x) { *(char*)(x)='?';free(x); x=NULL; }
 #else
-# define        MEMORY_TEST_MACRO()
+# define        FREE(x) { free(x); x=NULL; }
 #endif
-
-
-#if MEMORY_DEBUG == MEM_SUN_DEBUG
-
-# define        INITMEMORYDEBUG() malloc_debug(2);
-# define        TESTMEMORY()    (malloc_verify(),REGISTERMEMOP())
-
-# define        MALLOC( dest, type, size ) { \
-    (dest) = (type)malloc(size); \
-    if ( (dest)==(type)NULL ) { \
-        printf( "BAD MALLOC file: %s line: %d\n", __FILE__, __LINE__); \
-        exit(1);}REGISTERMEMOP(void); \
-}
-
-# define        FREE(x)    { \
-                        *(char*)(x)='?',free(x); \
-                        x=NULL;REGISTERMEMOP(void); \
-}
-
-# define        REALLOC( dest, type, src, size ) { \
-                        (dest = (type) realloc( src, size ),REGISTERMEMOP(void);) }
-# define        LISTUNFREEDMEMORYTOLOGFILE()
-#endif
-
 
 #define DFATAL(fmt, ...) do { \
     printf( "%cFATAL ERROR----------------------------------------\n", PRINT_ALWAYS ); \
@@ -873,25 +742,21 @@ extern bool     GbTestMemory;
     exit(1); \
 } while(0)
 
-
-
-/*
-#include        "objekt.h"
-#include        "collection.h"
-#include        "dictionary.h"
-#include        "parmSet.h"
-#include        "list.h"
-#include        "assoc.h"
-#include        "vector.h"
-#include        "bag.h"
-#include        "block.h"
-#include        "loop.h"
-#include        "unit.h"
-#include        "minimizer.h"
-#include        "byteArray.h"
-*/
-extern void            IMem(void);
-extern void            TMem(void);
+static inline void *safe_malloc(size_t size) {
+    void *p = malloc(size);
+    if (!p) DFATAL("Malloc: %s", strerror(errno));
+    return p;
+}
+static inline void *safe_calloc(size_t size) {
+    void *p = calloc(1,size);
+    if (!p) DFATAL("Calloc: %s", strerror(errno));
+    return p;
+}
+static inline void *safe_realloc(void *ptr, size_t size) {
+    void *p = realloc(ptr,size);
+    if (!p) DFATAL("Realloc: %s", strerror(errno));
+    return p;
+}
 
 /*  sysdepend.c  */
 
@@ -915,10 +780,7 @@ extern void             StringLower( char *sStr );
 extern void             StringUpper( char *sStr );
 extern void             StringTrim( char *sStr );
 extern void             StringRTrim( char *sStr );
-extern char             *DebugMalloc( long lSize, char *sFile, int iLine );
-extern char             *DebugRealloc( char *cPBlock, long lSize, char *sFile,
-                                int iLine );
-extern void             DebugFree( char *cPBlock, char *sFile, int iLine );
+extern void             PrintMemoryStats(void);
 extern bool             bMessageCheck( char *sFile );
 extern void             MessageAddFile( char *sFile );
 extern void             MessageRemoveFile( char *sFile );

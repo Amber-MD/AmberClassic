@@ -77,7 +77,7 @@ char*		sLine;
 LINE		lNew;
 
 
-    MALLOC( lNew, LINE, sizeof(LINEt) );
+    lNew = (LINE)MALLOC(sizeof(LINEt) );
     lNew->lNext = NULL;
     strcpy( lNew->sText, sLine );
     if ( hPHelp->lFirst == NULL ) {

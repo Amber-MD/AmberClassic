@@ -60,7 +60,7 @@
         its first structure element.
 */
 
-typedef struct  {
+typedef struct  ASSOCSTRUCT {
         OBJEKTt         oSuper;
         STRING          sName;
         OBJEKT          oObj;
@@ -69,15 +69,18 @@ typedef struct  {
 typedef ASSOCt  *ASSOC;
 
 #ifdef DEBUG
-static inline ASSOC assoc_from_assoc(ASSOC a) { return a; }
-static inline ASSOC assoc_from_objekt(OBJEKT o)
-  { return o ? (assert(iObjectType(o)==ASSOCid), (ASSOC)o) : NULL; }
+static inline ASSOC assoc_from_assoc(ASSOC a,const char *file,int line) { return a; }
+static inline ASSOC assoc_from_objekt(OBJEKT o,const char *file,int line) {
+    if (!o) return NULL;
+    VERIFYOBJEKT_loc(o,ASSOCid,file,line);
+    return (ASSOC)o;
+}
 static inline OBJEKT objekt_from_assoc(ASSOC a) { return &(a->oSuper); }
 
 #define ASSOC_from(x) _Generic((x), \
     ASSOC: assoc_from_assoc, \
     OBJEKT: assoc_from_objekt \
-)(x)
+)(x,__FILE__,__LINE__)
 #else
 #define ASSOC_from(x) ((ASSOC)(x))
 #endif
@@ -99,6 +102,7 @@ static inline OBJEKT objekt_from_assoc(ASSOC a) { return &(a->oSuper); }
 #define AssocSetObject(a,o)     { OBJEKT _o = OBJEKT_from(o); \
                                 ASSOC_from(a)->oObj = _o; \
                                 REF(_o); }
+#define AssocTakeObject(a,o)    (ASSOC_from(a)->oObj = OBJEKT_from(o))
 #define oAssocObject(a)         ( ASSOC_from(a)->oObj )
 
 

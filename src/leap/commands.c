@@ -130,8 +130,7 @@
 
 int     iMemDebug = 0;
 
-extern DICTIONARY       GdVariables;
-extern bool             bCmdDeleteObj;
+//extern DICTIONARY       GdVariables;
 
 #define ATOMSINBOND     2
 #define ATOMSINANGLE    3
@@ -465,11 +464,10 @@ oCmd_debugOff( int iArgCount, ASSOC aaArgs[] )
     }
 
     MessageRemoveFile( sOString(oAssocObject(aaArgs[0])) );
-    VP0("Messages will be displayed from the files:\n" );
+    VP0("Messages will be displayed from the files (if any):\n" );
     MessageFileList();
     return NULL;
 }
-
 
 
 
@@ -480,55 +478,26 @@ oCmd_debugOff( int iArgCount, ASSOC aaArgs[] )
  *
  *      Display status of LEaP, like memory usage etc.
  *
- *      Arguments:
- *      option  [0] - String
- *
- *      If [0] is a string then it can have the following values.
- *              testMemoryOn    - Turn memory testing on.
- *              testMemoryOff   - Turn memory testing off.
- *
  */
 OBJEKT
 oCmd_debugStatus( int iArgCount, ASSOC aaArgs[] )
 {
-STRING          sOption;
-OBJEKT          oObj;
 char            *sCmd = "debugStatus";
-char            *sUsage = "usage:  debugStatus [testMemoryOff|testMemoryOn]\n";
 
-    if ( iArgCount == 0 ) {
-        if ( !bCmdGoodArguments( sCmd,  iArgCount, aaArgs, "" ) )
-                return NULL;
-        VP0("Current memory usage: %ld bytes\n", GiMemoryAllocated );
-        VP0("Memory testing on = %s\n", sBOOL(bTEST_MEMORY_ON()) );
+    if ( !bCmdGoodArguments( sCmd,  iArgCount, aaArgs, "" ) ) {
+        VPFATALDELAYEDEXIT( "usage:  debugStatus\n" );
         return NULL;
     }
-    if ( !bCmdGoodArguments( "debugStatus", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT("%s",sUsage );
-        return NULL;
-    }
-
-    oObj = oAssocObject(aaArgs[0]);
-    strcpy( sOption, sOString(oObj) );
-    if ( strcmp( sOption, "testMemoryOn" ) == 0 ) {
-#if MEMORY_DEBUG == MEM_NO_DEBUG
-        VPWARN("Memory debugging disabled at compile time, command ignored.\n");
+#ifdef DEBUG
+    VP0("DEBUG build\n");
+    VP0("Messages will be displayed from the files (if any):\n" );
+    MessageFileList();
 #else
-        TEST_MEMORY_ON( TRUE );
+    VP0("Release build, no debugging\n");
 #endif
-    } else if ( strcmp( sOption, "testMemoryOff" ) == 0 ) {
-        TEST_MEMORY_ON( FALSE );
-    } else {
-        VPFATAL("%s: Invalid option: %s\n", sCmd, sOption );
-        VPFATALDELAYEDEXIT("%s",sUsage );
-    }
-
+    PrintMemoryStats();
     return NULL;
 }
-
-
-
-
 
 
 /*
@@ -581,8 +550,41 @@ HELP            hTemp;
 }
 
 
+struct timespec StimeStart;
+OBJEKT
+oCmd_startTimer( int iArgCount, ASSOC aaArgs[] )
+{
+     clock_gettime(CLOCK_MONOTONIC, &StimeStart);
+    return NULL;
+}
 
+OBJEKT
+oCmd_stopTimer( int iArgCount, ASSOC aaArgs[] )
+{
+    struct timespec end;
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
+    double dt = (double)(end.tv_sec - StimeStart.tv_sec)
+              + (double)(end.tv_nsec - StimeStart.tv_nsec) / 1e9;
+    VP0("Elapsed time: %g\n",dt);
+
+    return NULL;
+}
+
+#ifdef DEBUG
+
+OBJEKT
+oCmd_lex( int iArgCount, ASSOC aaArgs[] )
+{
+    VP0("num args = %d\n",iArgCount);
+    for (int i=0;i<iArgCount;i++) {
+       VP0("Arg %d name=%s, desc=",i,sAssocName(aaArgs[i]));
+        Describe( oAssocObject(aaArgs[i]) );
+    }
+    return NULL;
+}
+
+#endif
 
 /*
  *      oCmd_list
@@ -1605,6 +1607,7 @@ char            *sCmd = "loadAmberPrep";
             rRes = RESIDUE_from(oNext(&lResidues));
             ContainerSetName( CONTAINER_from( rRes), sName );
             VariableSet( sName, OBJEKT_from( uUnit ));       /* adds 1 REF */
+            DEREF(uUnit);
         }
         DictionaryDestroy(&dUnits);
     }
@@ -2749,21 +2752,71 @@ bool            bAbsoluteDist = TRUE;
 static void
 getUsage()
 {
-        VPFATALDELAYEDEXIT("usage: variable = get <container> <parameter>\n");
+        VPFATALDELAYEDEXIT("usage: variable = get <container> <parameter> [sum|ave|elem]\n");
 }
 
 OBJEKT
 oCmd_get( int iArgCount, ASSOC aaArgs[] )
 {
-char            *sCmd = "get";
-
-    if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "umra s" ) ) {
+char    *sCmd = "get";
+OBJEKT  oResult;
+int     iMode=0;
+    if ( iArgCount == 2 && !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "lumra s" ) ) {
         getUsage();
         return NULL;
+    } else if ( iArgCount == 3 ) {
+        if (!bCmdGoodArguments( sCmd, iArgCount, aaArgs, "lumra s s" ) ) {
+            getUsage();
+            return NULL;
+        }
+        char *mode = sOString(oAssocObject(aaArgs[2]));
+        if (!strcasecmp(mode,"ave")) iMode=1;
+        else if (!strcasecmp(mode,"elem")) iMode=2;
+        else if (strcasecmp(mode,"sum")) {
+            getUsage();
+            return NULL;
+        }
     }
-
-    OBJEKT oResult = oContainerGetAttribute( CONTAINER_from( oAssocObject(aaArgs[0])),
-                        sOString(oAssocObject(aaArgs[1])) );
+    OBJEKT oQuery = oAssocObject(aaArgs[0]);
+    char *sItem = sOString(oAssocObject(aaArgs[1]));
+    if (iObjectType(oQuery)==LISTid) {
+        OBJEKT oElement;
+        oResult = NULL;
+        LISTLOOP llElements = llListLoop(LIST_from(oQuery));
+        int iCount=0;
+        while ( (oElement=oListNext(&llElements)) ) {
+            ASSOC aAssoc = NULL;
+            if (iObjectType(oElement)==ASSOCid) {
+                aAssoc = ASSOC_from(oElement);
+                oElement = oAssocObject(aAssoc);
+                MESSAGE("Getting attribute for: %s\n", sAssocName(aAssoc) );
+            }
+            if ( !bObjectInClass( oElement, CONTAINERid ) ) {
+                VPFATALEXIT("%s: Cannot get attribute for %s - not a 'container'\n"
+                        "\ttype %s\n", sCmd, 
+                         (iObjectType(oElement)==ASSOCid ? sAssocName(aAssoc) : "object"),
+                         sObjectType(oElement) );
+                continue;
+            }
+            iCount++;
+            CONTAINER cElem = CONTAINER_from(oElement);
+            OBJEKT oElemResult = oContainerGetAttribute(cElem, sItem);
+            STRING sTemp;
+            if (iObjectType(oElemResult)==OSTRINGid)
+                VP2("%s: \"%s\"\n",sContainerFullDescriptor(cElem,sTemp),sOString(oElemResult));
+            else if (iObjectType(oElemResult)==ODOUBLEid)
+                VP2("%s: %g\n",sContainerFullDescriptor(cElem,sTemp),dODouble(oElemResult));
+            else
+                VP2("%s: object type %c\n",sContainerFullDescriptor(cElem,sTemp),iObjectType(oElemResult));
+            if (!oResult) { oResult = oElemResult; }
+            else if (iObjectType(oElemResult)==ODOUBLEid)  {
+               ODoubleSet(oResult, dODouble(oResult)+dODouble(oElemResult));
+            }
+            if (iMode==2) break;
+            // TODO: how to combine strings?? add vectors, vector GET
+        }
+        if (iMode==1 && iCount > 0) ODoubleSet(oResult, dODouble(oResult) / (double)iCount);
+    } else oResult = oContainerGetAttribute(CONTAINER_from(oQuery), sItem);
     if (iObjectType(oResult)==OSTRINGid)
         VP2("Result: \"%s\"\n",sOString(oResult));
     else if (iObjectType(oResult)==ODOUBLEid)
@@ -2799,7 +2852,7 @@ OBJEKT
 oCmd_set( int iArgCount, ASSOC aaArgs[] )
 {
 LISTLOOP        llElements;
-ASSOC           aAssoc;
+OBJEKT          oObject;
 char            *sString;
 char            *sCmd = "set";
 
@@ -2809,6 +2862,7 @@ char            *sCmd = "set";
         return NULL;
     }
 
+    /************ process   set [default] <setting> <value> ************/
     if ( iArgCount == 2 ) {
         return SetDefault(sOString(oAssocObject(aaArgs[0])), oAssocObject(aaArgs[1]));
     } else if (iObjectType(oAssocObject(aaArgs[0])) == OSTRINGid ) {
@@ -2831,28 +2885,31 @@ char            *sCmd = "set";
         /*
         **  handle the default
         */
-        if ( iObjectType(oAssocObject(aaArgs[1])) != OSTRINGid ) {
-            VPFATAL("%s: expected 'default <type> <value>'\n", sString );
-                setUsage();
-            return NULL;
-        }
         return SetDefault(sOString(oAssocObject(aaArgs[1])), oAssocObject(aaArgs[2]));
     }
 
+    /************ process   set <object> <value> ************/
     DisplayerAccumulateUpdates();
-    // List of objects
+    // object is List of objects
+    char *sParam = sOString(oAssocObject(aaArgs[1]));
+    OBJEKT oValue = oAssocObject(aaArgs[2]);
     if ( iObjectType(oAssocObject(aaArgs[0])) == LISTid ) {
+   
         llElements = llListLoop(LIST_from(oAssocObject(aaArgs[0])));
-        while ( (aAssoc = ASSOC_from(oListNext(&llElements))) ) {
-            MESSAGE("Setting attribute for: %s\n", sAssocName(aAssoc) );
-            if ( bObjectInClass( oAssocObject(aAssoc), CONTAINERid ) ) {
-                ContainerSetAttribute( CONTAINER_from(oAssocObject(aAssoc)),
-                        sOString(oAssocObject(aaArgs[1])),
-                        oAssocObject(aaArgs[2]) );
+        while ( (oObject = oListNext(&llElements)) ) {
+            ASSOC aAssoc=NULL;
+            if (iObjectType(oObject)==ASSOCid) {
+                aAssoc = ASSOC_from(oObject);
+                oObject = oAssocObject(aAssoc);
+                MESSAGE("Setting attribute for: %s\n", sAssocName(aAssoc) );
+            }
+            if ( bObjectInClass( oObject, CONTAINERid ) ) {
+                ContainerSetAttribute( CONTAINER_from(oObject),sParam,oValue);
             } else {
                 VPFATALEXIT("%s: Cannot set attribute for %s - not a 'container'\n"
-                        "\ttype %s\n", sCmd, sAssocName(aAssoc),
-                         sObjectType(oAssocObject(aAssoc)) );
+                        "\ttype %s\n", sCmd, 
+                        (iObjectType(oObject)==ASSOCid ?  sAssocName(aAssoc) : "object"),
+                         sObjectType(oObject) );
             }
         }
     }
@@ -3594,7 +3651,7 @@ ATOM            aAtom;
     return NULL;
 }
 
-#include "selection.h"
+#include "select_mask.h"
 OBJEKT
 oCmd_selectMask( int iArgCount, ASSOC aaArgs[] )
 {
@@ -3602,17 +3659,23 @@ oCmd_selectMask( int iArgCount, ASSOC aaArgs[] )
         VPFATALDELAYEDEXIT("usage:  selectMask <unit> <string>\n" );
         return NULL;
     }
-    UNIT uUnit = UNIT_from(oAssocObject(aaArgs[0]));
-    SELNODE selNode = selParseAtomMask(sOString(oAssocObject(aaArgs[1])));
-    VARARRAY vaAtoms = vaUnitEvalSelection(selNode, uUnit);
-    SelFree(selNode);
+    VARARRAY vaAtoms = vaAtomMaskSelect(
+                             UNIT_from(oAssocObject(aaArgs[0])),
+                             sOString(oAssocObject(aaArgs[1])));
     ATOM *aPAtom = PVAI( vaAtoms, ATOM, 0 );
     int iNumAtoms = iVarArrayElementCount(vaAtoms);
+    int iSet = 0;
     for (int i=0; i<iNumAtoms; i++, aPAtom++) {
-        AtomSetFlags( *aPAtom, ATOMSELECTED );
-        STRING sTemp;
-        VP0("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+        if (!bAtomFlagsSet( *aPAtom, ATOMSELECTED )) {
+           iSet++;
+           AtomSetFlags( *aPAtom, ATOMSELECTED );
+        }
+        if (iVerbosity()>2) {
+            STRING sTemp;
+            VP0("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+        }
     }
+    VP0("%d atoms match Atom Mask; %d atoms added to selected status\n",iNumAtoms, iSet);
     VarArrayDestroy(&vaAtoms);
     return NULL;
 }
@@ -3630,11 +3693,18 @@ oCmd_deSelectMask( int iArgCount, ASSOC aaArgs[] )
     SelFree(selNode);
     ATOM *aPAtom = PVAI( vaAtoms, ATOM, 0 );
     int iNumAtoms = iVarArrayElementCount(vaAtoms);
+    int iReset = 0;
     for (int i=0; i<iNumAtoms; i++, aPAtom++) {
-        AtomResetFlags( *aPAtom, ATOMSELECTED );
-        STRING sTemp;
-        VP0("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+        if (bAtomFlagsSet( *aPAtom, ATOMSELECTED )) {
+           iReset++;
+           AtomResetFlags( *aPAtom, ATOMSELECTED );
+        }
+        if (iVerbosity()>2) {
+            STRING sTemp;
+            VP0("%d) %s\n",i, sContainerFullDescriptor(&(*aPAtom)->cHeader,sTemp));
+        }
     }
+    VP0("%d atoms match Atom Mask; %d atoms removed from selected status\n",iNumAtoms, iReset);
     VarArrayDestroy(&vaAtoms);
     return NULL;
 }
@@ -4807,7 +4877,7 @@ char            *sUsage = "usage:  bondByDistance <unit> [maxdistance]\n";
 OBJEKT
 oCmd_groupSelectedAtoms( int iArgCount, ASSOC aaArgs[] )
 {
-STRING          sGroup;
+char            *sGroup;
 UNIT            uUnit;
 LOOP            lAtoms;
 ATOM            aAtom;
@@ -4822,7 +4892,7 @@ char            *sCmd = "groupSelectedAtoms";
     DisplayerAccumulateUpdates();
 
     uUnit = UNIT_from(oAssocObject(aaArgs[0]));
-    strcpy( sGroup, sOString(oAssocObject(aaArgs[1])));
+    sGroup = sOString(oAssocObject(aaArgs[1]));
 
     if ( lUnitGroup( uUnit, sGroup ) ) {
         bUnitGroupDestroy( uUnit, sGroup );
@@ -4838,7 +4908,7 @@ char            *sCmd = "groupSelectedAtoms";
             iAtoms++;
         }
     }
-    VP0("Added %d atoms.\n", iAtoms );
+    VP0("Group %s contains %d atoms.\n", sGroup, iAtoms );
 
     DisplayerReleaseUpdates();
 
@@ -6552,7 +6622,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
 
   TurnOffDisplayerUpdates();
   if( dMinSeparation )
-    MALLOC(aIons, ATOM*, (iIon1+iIon2)*sizeof(ATOM));
+    aIons = (ATOM*)MALLOC((iIon1+iIon2)*sizeof(ATOM));
 
   // now actually add the ions
   while ( iIon1 || iIon2 )
@@ -7231,6 +7301,9 @@ COMMANDt        cCommands[] = {
         { "groupSelectedAtoms", oCmd_groupSelectedAtoms },
         { "help",               oCmd_help },
         { "impose",             oCmd_impose },
+#ifdef DEBUG
+        { "lex",                oCmd_lex },
+#endif
         { "list",               oCmd_list },
         { "listOff",            oCmd_listOff },
         { "listParmSets",       oCmd_listParmSets },
@@ -7280,6 +7353,8 @@ COMMANDt        cCommands[] = {
         { "solvateOct",         oCmd_solvateOct },
         { "solvateShell",       oCmd_solvateShell },
         { "source",             oCmd_source },
+        { "startTimer",         oCmd_startTimer },
+        { "stopTimer",          oCmd_stopTimer },
         { "translate",          oCmd_translate },
         { "transform",          oCmd_transform },
 /*      { "update",             oCmd_update },          */

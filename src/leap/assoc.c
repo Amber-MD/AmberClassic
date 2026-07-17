@@ -91,7 +91,7 @@ aAssocCreate()
 {
 ASSOC   aNew;
 
-    MALLOC( aNew, ASSOC, sizeof(ASSOCt) );
+    aNew = (ASSOC)MALLOC(sizeof(ASSOCt) );
     AssocSetName( aNew, "" );
     AssocSetObject( aNew, NULL );
     return(aNew);

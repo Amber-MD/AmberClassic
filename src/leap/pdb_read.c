@@ -240,8 +240,8 @@ HETATMA4CPY MG    MG 1A60P     323.184 175.418 297.328  1.00 30.00          MG
 ATOM  33998  CG  LYSag 338     210.492 325.105 205.495  1.00 43.06           C
 */
                 /* Default is hybrid36, which by design supports all standard integers */
-                int atom_overflow = isdigit(buffer[11]);
-                int residue_overflow = isdigit(buffer[26]);
+                int atom_overflow = isdigit((unsigned char)buffer[11]);
+                int residue_overflow = isdigit((unsigned char)buffer[26]);
                 r.pdb.atom.leap_expanded = atom_overflow || residue_overflow;
                 if (atom_overflow  &&  !residue_overflow) {
                         fmt = "%6 %6d%4s%c%3s%2c%4d%c   %8f%8f%8f%6f%6f          %2s%2s";
@@ -476,8 +476,8 @@ ATOM  33998  CG  LYSag 338     210.492 325.105 205.495  1.00 43.06           C
         case PDB_TER:
         {
                 /* Default is hybrid36, which by design supports all standard integers */
-                int atom_overflow = isdigit(buffer[11]);
-                int residue_overflow = isdigit(buffer[26]);
+                int atom_overflow = isdigit((unsigned char)buffer[11]);
+                int residue_overflow = isdigit((unsigned char)buffer[26]);
                 if (atom_overflow  &&  !residue_overflow) {
                         fmt = "%6 %6h%5 %3s%2c%4d%c";
                 } else if (!atom_overflow  &&  residue_overflow) {

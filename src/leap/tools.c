@@ -217,7 +217,8 @@ ToolSanityCheckBox( UNIT uUnit )
          *  do a minimal sanity check just to be sure..
          */
         UnitGetBox( uUnit, &dX, &dY, &dZ);
-        if ( dX < 0.1  ||  dY < 0.1  ||  dZ < 0.1  ||  
+ // NOTE: changed from  < 0.1  to   <= 1.0
+        if ( dX <= 1.0  ||  dY <= 1.0  ||  dZ <= 1.0  ||  
                         dUnitBeta( uUnit ) < 0.05 ) {
                 /*
                  *  failed sanity check - clean it up 
@@ -229,7 +230,7 @@ ToolSanityCheckBox( UNIT uUnit )
                                 dUnitBeta( uUnit ), dX, dY, dZ );
                 }
                 UnitSetBox( uUnit, 0.0, 0.0, 0.0 );
-                UnitSetBeta( uUnit, 90.0*DEGTORAD );
+                UnitSetBeta( uUnit, 0.0*DEGTORAD ); // FIXME 90 degree default elsewhere
                 UnitSetUseBox( uUnit, FALSE );
         }
 }
@@ -271,7 +272,7 @@ ToolCenterUnitByRadii( UNIT uUnit, bool bOrient )
 {
 LOOP            lTemp;
 ATOM            aAtom;
-double          dR, dXmin, dYmin, dZmin, dXmax, dYmax, dZmax;
+double          dR, dXmin=0, dYmin=0, dZmin=0, dXmax=0, dYmax=0, dZmax=0;
 double          dX, dY, dZ;
 VECTOR          vPos;
 int             iFirst = 1;
@@ -367,7 +368,7 @@ ToolSetUnitBoxByCenters( UNIT uUnit )
 {
 LOOP            lTemp;
 ATOM            aAtom;
-double          dXmin, dYmin, dZmin, dXmax, dYmax, dZmax;
+double          dXmin=0, dYmin=0, dZmin=0, dXmax=0, dYmax=0, dZmax=0;
 double          dX, dY, dZ;
 VECTOR          vPos;
 int             iFirst = 1;
@@ -935,28 +936,29 @@ ATOM            aAtom;
 
     lRes = lLoop( (OBJEKT)uSolvent, RESIDUES );
     while ( ( rRes = (RESIDUE)oNext(&lRes) ) != NULL ) {
-            /*
-             *  check each atom in the solvent residue against the
-             *  solute using fast neighbor grid
-             */
-            lTemp = lLoop( (OBJEKT)rRes, ATOMS );
-            while ( ( aAtom = (ATOM)oNext(&lTemp)) != NULL ) {
-                if ( zbToolAtomFailsCriteria( aAtom, iCriteria, cPCriteria,
-                                ngSolute, dCloseness, dFarness2 ) ) {
+        // Mark bulk solvent residues
+        ResidueSetFlags(rRes, RESIDUEBULKSOLVENT); 
+        /*
+         *  check each atom in the solvent residue against the
+         *  solute using fast neighbor grid
+         */
+        lTemp = lLoop( (OBJEKT)rRes, ATOMS );
+        while ( ( aAtom = (ATOM)oNext(&lTemp)) != NULL ) {
+            if ( zbToolAtomFailsCriteria( aAtom, iCriteria, cPCriteria,
+                            ngSolute, dCloseness, dFarness2 ) ) {
 
-                        /* Remove the RESIDUE from the solvent unit */
-                    MESSAGE("Removing a residue\n" );                
+                    /* Remove the RESIDUE from the solvent unit */
+                MESSAGE("Removing a residue\n" );                
 
-                    REF( rRes );  /* bContainerRemove() needs this */
-                    bContainerRemove( (CONTAINER)uSolvent, (OBJEKT)rRes );
-                    ContainerDestroy((CONTAINER *) &rRes );
-                    break;
-                }
-                // Also mark BULK solvent atoms
-                AtomSetFlags(aAtom, ATOMBULKSOLVENT);
+                REF( rRes );  /* bContainerRemove() needs this */
+                bContainerRemove( (CONTAINER)uSolvent, (OBJEKT)rRes );
+                ContainerDestroy((CONTAINER *) &rRes );
+                break;
             }
+            // Also mark BULK solvent atoms
+            AtomSetFlags(aAtom, ATOMBULKSOLVENT);
+        }
     }
-
 }
 
 
@@ -1285,7 +1287,7 @@ CRITERIAt       cCriteria;
                         zToolFindBoundingBoxRadii( uSolute, &dMaxX, &dMaxY, 
                                                                 &dMaxZ );
                         EwaldRotate( uSolute, &dAngle );
-                        UnitSetBeta( uSolute, dAngle*DEGTORAD );
+                        UnitSetAlphaBetaGamma( uSolute, dAngle*DEGTORAD );
                         dAngle = ( dMaxX + dMaxY + dMaxZ ) / 3.0;
                         /* MFC just add an angstrom to the desired box size
                            rather than using the bounding box size */
@@ -1512,8 +1514,6 @@ RESIDUE         rRes, *PrSolvRes;
 LOOP            lResidues, lAtoms;
 double          dMinPot, dMaxPot;
 
-TMem();
-
         iSolvRes = iVarArrayElementCount( vaSolvent );
         PrSolvRes = PVAI( vaSolvent, RESIDUE, 0);
         for ( i=0; i<iSolvRes; i++, PrSolvRes++ ) {
@@ -1702,11 +1702,11 @@ BONDSEARCHt*            bsPAtom1;
 BONDSEARCHt*            bsPAtom2;
 VECTOR                  vPos, vMin, vMax;
 double                  dR, dX, dY, dZ;
-double                  dDist;
+double                  dDist=0;
 STRING                  sTemp, sTemp1, sTemp2;
 int                     iCount;
 VARARRAY                vaPairs;
-PAIRt                   *Ppair;
+PAIRt                   *Ppair=NULL;
 int                     iPairs;
 
 
@@ -1718,9 +1718,6 @@ int                     iPairs;
     lTemp = lLoop( (OBJEKT)cCont, ATOMS );
     while ( oNext(&lTemp) != NULL ) iAtoms++;
     
-    vaAtoms = vaVarArrayCreate( sizeof(BONDSEARCHt) );
-    VarArraySetSize( vaAtoms, iAtoms );
- 
     if ( iAtoms == 0 ) {
         VPWARN("No atoms to bond\n" );
         return( 0 );
@@ -1730,6 +1727,9 @@ int                     iPairs;
         return( 0 );
     }
 
+    vaAtoms = vaVarArrayCreate( sizeof(BONDSEARCHt) );
+    VarArraySetSize( vaAtoms, iAtoms );
+ 
     lTemp = lLoop( (OBJEKT)cCont, ATOMS );
     bsPAtom1= PVAI( vaAtoms, BONDSEARCHt, 0 );
     for (i=0; i<iAtoms; i++, bsPAtom1++ ) {
@@ -1927,6 +1927,8 @@ int                     iPairs;
         }
         VarArrayDestroy( &vaPairs );
     }
+
+    VarArrayDestroy( &vaAtoms );
 
     return(iCount);
 }

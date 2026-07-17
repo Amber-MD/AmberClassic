@@ -27,7 +27,7 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
         },
         {                                       /* 2 PDB_ATOM */
                 "%6 %5h %4s%c%3s%2s%4h%c   %8f%8f%8f%6f%6f          %2s%2s",
-                "ATOM  %5h %-4s%C%3s%2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
+                "ATOM  %5h %-4s%C%3s%2.2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
         },
         {                                       /* 3 PDB_AUTHOR, COMPND, JRNL, SOURCE */
                 "%9 %c%60s", "AUTHOR   %C%-60s" },
@@ -55,7 +55,7 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "HET    %3s %2s%4d%C  %5d     %-40s" },
         {                                       /* 13 PDB_HETATM */
                 "%6 %5h %4s%c%3s%2c%4h%c   %8f%8f%8f%6f%6f          %2s%2s",
-                "HETATM%5h %-4s%C%3s%.2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
+                "HETATM%5h %-4s%C%3s%2.2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
         },
         {                                       /* 14 PDB_JRNL */
                 "%9 %c%60s", "JRNL     %C%-60s" },

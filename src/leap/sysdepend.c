@@ -134,7 +134,7 @@ SysdependDirectoryList( char *cPPath, STRING *saPNames[], int *iPNumber)
   FindClose(findHandle);
   findHandle = FindFirstFile(pathWithSuffix, &findData);
 
-  MALLOC ((*saPNames), STRING *, sizeof (STRING) * fileCount);
+  (*saPNames) = (STRING *)MALLOC(sizeof (STRING) * fileCount);
 
   int index = 0;
 
@@ -177,7 +177,7 @@ SysdependDirectoryList( char *cPPath, STRING *saPNames[], int *iPNumber)
 
   rewinddir(dp);
 
-  MALLOC ((*saPNames), STRING *, sizeof (STRING) * iNumber);
+  (*saPNames) = (STRING *)MALLOC(sizeof (STRING) * iNumber);
 
   i = 0;
   while ((namelist = readdir(dp)) != NULL) {
@@ -205,7 +205,7 @@ SysdependDirectoryList( char *cPPath, STRING *saPNames[], int *iPNumber)
     	return;
   }
 
-  MALLOC ((*saPNames), STRING *, sizeof (STRING) * iNumber);
+  (*saPNames) = (STRING *)MALLOC(sizeof (STRING) * iNumber);
   for (i = 0; i < iNumber; i++) {
     (void) strcpy ((char*)((*saPNames)[i]), (char*)(namelist[i]->d_name));
     FREE(namelist[i]);

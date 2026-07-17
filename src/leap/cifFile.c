@@ -52,15 +52,16 @@ zcPCifGetItem(CIFCATEGORYt *cifCat, int iRow, int iColumn) {
 void
 CifReadFile( PDBREADt *prPRead )
 {
-int             iPdbSequence; // previous resSeq
+int             iPdbSequence=0; // previous resSeq
 bool            bLastReadPdbRecordWasTer = FALSE;
 bool            bNewChain = TRUE, bNewRes;
 RESIDUENAMEt    rnName;
 ATOMNAMEt       anAtom;
 int             iTerm, iLast, iSerialNumMax=0;
-char            c2CurrChain[3]={0},cInsertionCode=' ';
+char            sCurrChain[3]="", cInsertionCode=' ';
 int             iMultipleResName=0;
 int             iCurrentModel=0;
+
 CIFCATEGORYt cifAtoms = {
     "atom_site", NULL,
     {
@@ -76,9 +77,11 @@ CIFCATEGORYt cifAtoms = {
         { "Cartn_z" }, /* z-coord */
         //{ "occupancy" },
         //{ "B_iso_or_equiv" },
-        { "type_symbol" },
+        { "type_symbol" }, // Element name, *not* force field type
+                                   // Note: FF type is .type_energy
         //{ "pdbx_formal_charge" }, /* formal charge */
         { "pdbx_PDB_model_num", NULL, TRUE },
+        //{ "group_PDB", NULL, TRUE }, -> "ATOM", "HETATM"
         {NULL}
     }
 }, cifConn = {
@@ -103,10 +106,11 @@ CIFCATEGORYt cifAtoms = {
         {NULL}
     }
 }, cifMtrix = {
+    // converted to "pdbx_struct_oper_list" if GDefaults.iPdbReadBioMT
     "struct_ncs_oper", NULL,
     {
         { "id" },
-        { "code" },
+        { "code" }, // converted to "type" if GDefaults.iPdbReadBioMT
         { "matrix[1][1]" },
         { "matrix[2][1]" },
         { "matrix[3][1]" },
@@ -124,7 +128,8 @@ CIFCATEGORYt cifAtoms = {
 };
     VPTRACEENTER("zCifReadFile" );
 
-    // 1990s simple NDB CIF reader, modified to give caller direct access via globals
+    // NOTE: 1990s simple NDB CIF reader, modified to give caller direct access via globals
+    // Hacked for antechamber use, still seems to work OK for mmCIF coordinate files
     ndb_cif_init();
     int nBlocks = ndb_cif_read_file(prPRead->fPdbFile);
     if (!nBlocks) {
@@ -139,26 +144,53 @@ CIFCATEGORYt cifAtoms = {
 
     bNewChain = TRUE;
 
-    if (GDefaults.bPdbExpandBioMt) {
+    if (GDefaults.iPdbReadBioMT) {
         cifMtrix.sName = "pdbx_struct_oper_list";
         cifMtrix.field[1].name = "type";
+/* FIXME: we need to parse
+_pdbx_struct_assembly_gen.assembly_id       1
+_pdbx_struct_assembly_gen.oper_expression   1
+_pdbx_struct_assembly_gen.asym_id_list      A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,AA,BA,CA,DA,EA,FA,GA,HA,IA,JA
+               Operation expressions may have the forms:
+
+                (1)        the single operation 1
+                (1,2,5)    the operations 1, 2, 5
+                (1-4)      the operations 1,2,3 and 4
+                (1,2)(3,4) the combinations of operations
+                           3 and 4 followed by 1 and 2 (i.e.
+                           the cartesian product of parenthetical
+                           groups applied from right to left)
+example 6O3H.cif data:
+loop_
+_pdbx_struct_assembly_gen.assembly_id
+_pdbx_struct_assembly_gen.oper_expression
+_pdbx_struct_assembly_gen.asym_id_list
+1 '(1-60)'           A,B,C,D,E,F,G,H,I,J,K,L,M,N
+2 1                  A,B,C,D,E,F,G,H,I,J,K,L,M,N
+3 '(1-5)'            A,B,C,D,E,F,G,H,I,J,K,L,M,N
+4 '(1,2,6,10,23,24)' A,B,C,D,E,F,G,H,I,J,K,L,M,N
+5 P                  A,B,C,D,E,F,G,H,I,J,K,L,M,N
+
+*/
     }
     if (!( zbCifLookup(&cifAtoms,iCifBlock,GDefaults.bCIFReadAuth)
              && zbCifLookup(&cifConn,iCifBlock,GDefaults.bCIFReadAuth)
              && zbCifLookup(&cifMtrix,iCifBlock,GDefaults.bCIFReadAuth) ) ) {
         return;
     }
-
+    // Collect atom-site data corresponding to ATOM, HETATM
     for (int i = 0; i < cifAtoms.pCategory->numRow; i++) {
         int iCol=0;
         anAtom.iAtomSerial = atoi(zcPCifGetItem(&cifAtoms, i, iCol++));
-        strncpy(anAtom.sName, zcPCifGetItem(&cifAtoms, i, iCol++),sizeof(anAtom.sName));
+        memcpy(anAtom.sName, zcPCifGetItem(&cifAtoms, i, iCol++),sizeof(anAtom.sName));
         anAtom.sName[sizeof(anAtom.sName)-1]=0;
         char altLoc = zcPCifGetItem(&cifAtoms, i, iCol++)[0];
         if (altLoc != 0 && altLoc != GDefaults.cPdbAltLocSelect) continue;
         const char *resName = zcPCifGetItem(&cifAtoms, i, iCol++);
-        char c2ChainID[3] = "  ";
-        strncpy(c2ChainID, zcPCifGetItem(&cifAtoms, i, iCol++), 2);
+        char sChainId[3];
+        memcpy(sChainId,zcPCifGetItem(&cifAtoms, i, iCol++),sizeof(sChainId));
+        sChainId[2]=0;
+        if (!strcmp(sChainId," ")) strcpy(sChainId, "");
         int resSeq = atoi(zcPCifGetItem(&cifAtoms, i, iCol++));
         char iCode = zcPCifGetItem(&cifAtoms, i, iCol++)[0];
         if (!iCode) iCode = ' ';
@@ -171,34 +203,29 @@ CIFCATEGORYt cifAtoms = {
         iCurrentModel = atoi(zcPCifGetItem(&cifAtoms, i, iCol++));
 
         if (anAtom.iAtomSerial > iSerialNumMax) iSerialNumMax = anAtom.iAtomSerial;
-        // Convert chainID to fixed width 2-char, right justified
-        if (c2ChainID[0]==0) strcpy(c2ChainID,"  ");
-        else if (c2ChainID[1]==0) {
-            c2ChainID[1]=c2ChainID[0];
-            c2ChainID[0]=' ';
-            c2ChainID[2]=0;
-        }
         if (iCurrentModel) {
             if (!GDefaults.iPdbReadModel) GDefaults.iPdbReadModel = iCurrentModel;
             if (GDefaults.iPdbReadModel > 0 && GDefaults.iPdbReadModel != iCurrentModel) continue;
-            if (GDefaults.iPdbReadModel < 0) {
-                if (c2ChainID[0]==' ' && iCurrentModel <= CHAINID_LIST_LEN) {
-                    c2ChainID[0] = GsChainIdList[iCurrentModel-1];
-                } else {
-                    VPFATAL("iPDB_Read_Model < 0: Unable to relabel MODEL=%d ChainID='%s'\n",iCurrentModel, c2ChainID);
-                }
+            if (GDefaults.iPdbReadModel < 0 && strlen(sChainId)<2) {
+                int j = iCurrentModel-1;
+                if (j < CHAINID_LIST_LEN) {
+                    char c = (sChainId[0] == 0) ? '_':sChainId[0];
+                    sChainId[0] = GsChainIdList[j];
+                    sChainId[1] = c;
+                    sChainId[2] = 0;
+                } else VPFATAL("ChainID overflow for iPDB_Read_Model < 0:"
+                               " Unable to relabel MODEL=%d ChainID='%s'\n",iCurrentModel, sChainId);
             }
         }
 
         iTerm = NOEND;
-        bNewChain = bNewChain || memcmp(c2CurrChain,c2ChainID,2);
+        bNewChain = bNewChain || strcmp(sCurrChain,sChainId);
         if ( bNewChain ) {
-            VP2(" (starting new molecule for chain \"%.2s\")\n", c2ChainID );
+            VP2(" (starting new molecule for chain \"%.2s\")\n", sChainId );
             iTerm = FIRSTEND;
             iLast = iVarArrayElementCount( prPRead->vaResidues );
             if (iLast >= 0) PVAI( (prPRead->vaResidues), RESIDUENAMEt,iLast-1)->iTerminator = LASTEND;
-            memcpy(c2CurrChain,c2ChainID,2);
-            if (!c2CurrChain[0]) c2CurrChain[1]=0; // double NUL for blank chain
+            strcpy(sCurrChain,sChainId);
         }
         //TODO bLastReadPdbRecordWasTer == change in entity_id
         bNewRes = (bNewChain || resSeq != iPdbSequence ||
@@ -210,7 +237,7 @@ CIFCATEGORYt cifAtoms = {
              */
             VPWARN("Name change in pdb file residue %.2s %d%c;\n"
                 "this residue is split into %s and %s.\n",
-                c2CurrChain, iPdbSequence, cInsertionCode, rnName.sName, resName);
+                sCurrChain, iPdbSequence, cInsertionCode, rnName.sName, resName);
             bNewRes = TRUE;
             iMultipleResName++;
         }
@@ -218,8 +245,10 @@ CIFCATEGORYt cifAtoms = {
             VPTRACE("Detected a new residue.\n" );
             rnName.iTerminator = iTerm;
             rnName.iPdbSequence = resSeq;
-            strcpy( rnName.sChainId, c2ChainID);
-            strcpy( rnName.sName, resName );
+            strncpy(rnName.sChainId, sChainId, sizeof(rnName.sChainId));
+            rnName.sChainId[sizeof(rnName.sChainId)-1]=0;
+            memcpy(rnName.sName, resName, sizeof(rnName.sName));
+            rnName.sName[sizeof(rnName.sName)-1]=0;
             rnName.iCode = iCode;
             rnName.iFirstAtom = iVarArrayElementCount(prPRead->vaAtomRecs); // zero based array
 
@@ -236,12 +265,19 @@ CIFCATEGORYt cifAtoms = {
         VarArrayAdd( prPRead->vaAtomRecs, (GENP)&anAtom );
     }
     if (cifMtrix.pCategory) {
+        // Convert struct_ncs_oper to MTRIXn form
         for (int i = 0; i < cifMtrix.pCategory->numRow; i++) {
             int iCol=0;
             const char *pItem = zcPCifGetItem(&cifMtrix, i, iCol++);
-            if (!isdigit(*pItem)) continue;
+            // Crude filtering: assume all numerically named transforms applied to all chains
+            // And assumes first entrey is identity matrix !!FIXME!!
+            if (!isdigit((unsigned char)*pItem)) continue;
             int iSerial = atoi(pItem);
-            pItem = zcPCifGetItem(&cifMtrix, i, iCol++); // code: given or identity = self, always 1?
+            //pItem = zcPCifGetItem(&cifMtrix, i, iCol++); // ncs "code": given or identity = self, always 1?
+                                                         // or BioMT "type"
+            // FIXME: how to use code/type info
+            // e.g. 6O3H P='transform to point frame', 1='identity operation', 2='point symmetry operation'
+            iCol++;
             PDBMATRIXt matrix = { (iSerial != 1), {
                  {
                      atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
@@ -267,13 +303,15 @@ CIFCATEGORYt cifAtoms = {
     }
 
     if (cifConn.pCategory && GDefaults.bPdbUseLinkRecords) {
+        // Convert struct_conn to LINK record format
         for (int i = 0; i < cifConn.pCategory->numRow; i++) {
             int iCol=0;
             const char *type = zcPCifGetItem(&cifConn, i, iCol++);
             if (type[0] != 'c' && type[0] != 'd') continue;
             struct pdb_link pdbLink = {0};
             for (int j=0; j<2; j++) {
-                strcpy(pdbLink.residues[j].chain_id, zcPCifGetItem(&cifConn, i, iCol++) );
+                strncpy(pdbLink.residues[j].chain_id,zcPCifGetItem(&cifConn, i, iCol++), sizeof(pdbLink.residues[j].chain_id));
+                pdbLink.residues[j].chain_id[sizeof(pdbLink.residues[j].chain_id)-1]=0;
                 strcpy(pdbLink.residues[j].name, zcPCifGetItem(&cifConn, i, iCol++) );
                 pdbLink.residues[j].seq_num = atoi( zcPCifGetItem(&cifConn, i, iCol++) );
                 strcpy(pdbLink.name[j], zcPCifGetItem(&cifConn, i, iCol++) );

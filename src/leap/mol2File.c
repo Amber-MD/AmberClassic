@@ -161,7 +161,7 @@ static void zMol2FileWriteContainer(MOL2WRITEt * pwPFile, CONTAINER cCont,
     char *cPTemp;
 
     cPTemp = sContainerName(cCont);
-    strncpy(pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH);
+    memcpy(pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH);
 
     pwPFile->sResidueName[RESIDUE_NAME_LENGTH] = '\0';
     if (strlen(cPTemp) > RESIDUE_NAME_LENGTH) {
@@ -201,7 +201,7 @@ static char *zMol2FileWriteResidueContainer(MOL2WRITEt * pwPFile,
     char *cPTemp;
 
     cPTemp = sContainerName(cCont);
-    strncpy(pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH);
+    memcpy(pwPFile->sResidueName, cPTemp, RESIDUE_NAME_LENGTH);
     /* The intentional side effect is to truncate long names. */
     pwPFile->sResidueName[RESIDUE_NAME_LENGTH] = '\0';
     if (strlen(cPTemp) > RESIDUE_NAME_LENGTH) {

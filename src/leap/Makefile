@@ -34,7 +34,7 @@ OO2= collection.o container.o internal.o
 OO3= list.o loop.o molecule.o 
 OO4= oDouble.o oInteger.o oString.o
 OO5= objekt.o parmSet.o residue.o unit.o unitio.o tripos.o unitio_prmtop.o unitio_netcdf.o unitio_cmap.o
-OO6= graphUtil.o select.o selection.tab.o lex.selection.o select_atoms.o
+OO6= graphUtil.o select.o selection.tab.o lex.selection.o select_mask.o
 OO = $(OO1) $(OO2) $(OO3) $(OO4) $(OO5) $(OO6)
 
 # 
@@ -153,8 +153,8 @@ clean::
 	-rm -f helptext.c parser.c
 	-rm -f selection.tab.c selection.tab.h lex.selection.c
 
-lex.selection.o: selection.tab.h selection.h
-selection.tab.o: selection.h
+lex.selection.o: selection.tab.h select_mask.h
+selection.tab.o: select_mask.h
 
 lex.selection.c: selection.l
 	$(VB)$(LEX) -P sel -o $@ $<

@@ -78,7 +78,7 @@ typedef struct  {
 
 // ATOM info: name, xyz, element, atomSerial (only for CONECT), rest go to RESIDUENAMEt
 typedef struct  {
-        float   x,y,z;
+        double   x,y,z;
         char    sName[6];
         uint8_t iElement;
         int     iAtomSerial;
@@ -104,6 +104,7 @@ typedef struct {
     char    iCode; //, altLoc;
     char    name[5];
 } ATOMKEYt;
+_Static_assert(sizeof(ATOMKEYt)==sizeof(int)+8,"ATOMKEYt must not be padded");
 
 typedef struct  {
         bool    bUsed;

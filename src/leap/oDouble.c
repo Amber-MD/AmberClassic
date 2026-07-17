@@ -64,7 +64,7 @@ odODoubleCreate()
 {
 ODOUBLE         odNew;
 
-    MALLOC( odNew, ODOUBLE, sizeof(ODOUBLEt) );
+    odNew = (ODOUBLE)MALLOC(sizeof(ODOUBLEt) );
 
     return(odNew);
 }

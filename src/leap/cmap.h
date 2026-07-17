@@ -1,59 +1,26 @@
 #ifndef CMAP_H
 #define CMAP_H
 
-typedef struct CMNT_t {
-    char *record;
-    struct CMNT_t *next;
-} CMNT;
-
 typedef char WRD[8];
 
-typedef struct MAPANM_t {
-    WRD atmname[5];
-    struct MAPANM_t *next;
-} MAPANM;
-
-typedef struct MAPRDX_t {
-    int residx[5];
-    struct MAPRDX_t *next;
-} MAPRDX;
-
+// There are CMAP_TYPES number of CMAPs in a PRMTOP 
 typedef struct {
     char title[256];
-    WRD *reslist;
-    WRD *creslist;
-    WRD *nreslist;
+    WRD *reslist; // [nres]
     int nres;
-    CMNT *cmnt;
-    int resolution;
-    double *map;
-    int active;
-    int mapidx;
-    int termmap;  // applicable to terminal
+    // linked list CMNT struct replaced by a single \n joined multiline string (up to 1068 chars)
+    STRING comments; // accumulated comments stripped of trailing space, '\n'-joined
+    int resolution; // Written to CMAP_RESOLUTION (size=CMAP_TYPES, var 'maptypes' in old code), entry number iParmIndex
+    double *map; // [resolution * resolution]
+                   // Written to "CMAP_PARAMETER_%02d",iParmIndex  -- includes %COMMENT comments
     WRD atmname[5];
-    WRD catmname[5];
-    WRD natmname[5];
-    int residx[5];
-    int cresidx[5];
-    int nresidx[5];
-} CMAP;
+    int residx[5]; // relative residue index typcially 1 through 3 are zero
+                   // indices with 0 mark central residue and SHOULD all have the same resname,
+                   // (but we do not verify this). The first entry with 0 marks the atom from
+                   // which we compare the residue name to reslist.
+                   // In ParmSetFindCMAP, even though only 1 resName is matched per CMAP lookup,
+                   // which resName matches varies by CMAP so all 5 must be sent
+} CMAPt;
+typedef CMAPt *CMAP;
 
-typedef struct {
-    WRD res;
-    int atoms[5];
-    int mapid;
-} PHIPSI;
-
-typedef struct CMAPLST_t {
-    CMAP *cmap;
-    struct CMAPLST_t *next;
-} CMAPLST;
-
-extern CMAP *Gcmap;
-extern CMAPLST *Gcmaplst;
-extern int GiCmapNum;
-
-//extern int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid);
-//extern void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut);
-
-#endif
+#endif // CMAP_H

@@ -56,7 +56,7 @@
 */
 
 
-typedef struct  {
+typedef struct MOLECULESTRUCT {
 	CONTAINERt      cHeader;
 } MOLECULEt;
 

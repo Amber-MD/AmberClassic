@@ -66,7 +66,7 @@ static CellRange *build_ranges(const KeyedIdx *kidx, unsigned int n, unsigned in
 
     unsigned int est = n / 4 + 4;
     CellRange *ranges;
-    MALLOC(ranges, CellRange *, est * sizeof(CellRange));
+    ranges = (CellRange *)MALLOC(est * sizeof(CellRange));
 
     unsigned int rcount = 0;
     unsigned int i = 0;
@@ -151,7 +151,7 @@ NeighborGrid *neighbor_grid_setup(const Point *points,
     zmin -= eps;
 
     KeyedIdx *kidx;
-    MALLOC(kidx, KeyedIdx *, total_points * sizeof(KeyedIdx));
+    kidx = (KeyedIdx *)MALLOC(total_points * sizeof(KeyedIdx));
 
     const float cell = r_cut;
 
@@ -172,7 +172,7 @@ NeighborGrid *neighbor_grid_setup(const Point *points,
     CellRange *ranges = build_ranges(kidx, total_points, &ranges_count);
 
     NeighborGrid *grid;
-    MALLOC(grid, NeighborGrid *, sizeof(*grid));
+    grid = (NeighborGrid *)MALLOC(sizeof(*grid));
 
     grid->points = points;
     grid->total_points = total_points;
@@ -192,7 +192,7 @@ NeighborGrid *neighbor_grid_setup(const Point *points,
 
     grid->results_cap = 1024;
     grid->results_count = 0;
-    MALLOC(grid->results, Pair *, grid->results_cap * sizeof(Pair));
+    grid->results = (Pair *)MALLOC(grid->results_cap * sizeof(Pair));
 
     return grid;
 }
@@ -202,7 +202,7 @@ static void append_result(NeighborGrid *grid, const Pair *p)
     if (grid->results_count == grid->results_cap) {
         unsigned int newcap = grid->results_cap * 2;
         Pair *tmp;
-        REALLOC(tmp, Pair *, grid->results, newcap * sizeof(Pair));
+        tmp = (Pair *)REALLOC(grid->results,newcap * sizeof(Pair));
         grid->results = tmp;
         grid->results_cap = newcap;
     }

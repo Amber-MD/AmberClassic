@@ -305,7 +305,8 @@ zbDBReadLine( DATABASE db, char *sLine )
 	    fgets( sLine, MAXDATALINELEN, db->fDataBase );
 	} while ( sLine[0] != '\0' && sLine[0] == '\n' );
 	if ( sLine[0] == '\0' ) return(FALSE);
-	strcpy( db->sLookAhead, sLine );
+        if (db->sLookAhead != sLine)
+	    strcpy( db->sLookAhead, sLine );
 	return(TRUE);
     }
     return(FALSE);
@@ -354,7 +355,7 @@ eEntryCreate( char *sName, int iType, long lOffset )
 {
 ENTRY   eEntry;
 
-    MALLOC( eEntry, ENTRY, sizeof(ENTRYt) );
+    eEntry = (ENTRY)MALLOC(sizeof(ENTRYt) );
     
     eEntry->iType = iType; 
     strcpy( eEntry->sName, sName );
@@ -388,8 +389,8 @@ STRING		sModifier, sType;
 		
     if ( sRawLine[0] == '\0' ) return(FALSE);
    
-    iType = 0; 
     if ( sRawLine[0] == '!' ) {
+        iType = 0; 
 
         sRemoveControlAndPadding( sRawLine, sLine );
         sscanf( sLine, "!%s %s %s", cPName, sModifier, sType );
@@ -1041,7 +1042,7 @@ char		cFirst;
                 /* Create the database and open the file */
 
 
-    MALLOC( db, DATABASE, sizeof(DATABASEt) );
+    db = (DATABASE)MALLOC(sizeof(DATABASEt) );
 
                 /* If the file cannot be opened read then open it write */
 
@@ -1219,7 +1220,7 @@ DATABASE        db;
 
                 /* Create the database and open the file */
 
-    MALLOC( db, DATABASE, sizeof(DATABASEt) );
+    db = (DATABASE)MALLOC(sizeof(DATABASEt) );
 
                 /* If the file cannot be opened read then open it write */
 
@@ -1238,7 +1239,10 @@ DATABASE        db;
 	    break;
     }
 
-    if ( db->fDataBase == NULL ) return(NULL);
+    if ( db->fDataBase == NULL ) {
+        FREE(db);
+        return(NULL);
+    }
 
     strcpy( db->sFileName, sFileName );
     db->iOpenMode = iOpenMode;
@@ -1432,7 +1436,7 @@ bDBGetValue( DATABASE dbData, char *sOrgEntry, int *iPLength, GENP PBuffer,
 ENTRY           eEntry;
 char            sHeader[MAXDATALINELEN];
 STRING          sEntry;
-int		iType;
+int		iType=0;
 
     MESSAGE("Getting value\n" );
 

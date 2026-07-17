@@ -1,14 +1,25 @@
 %{
-#include "selection.h"
+#include "basics.h"
+#include "select_mask.h"
 #include "selection.tab.h"
-#include <stdlib.h>
-#include <string.h>
 
 int selparse(void);
+
+/* Last token text seen — updated automatically via YY_USER_ACTION before
+ * every rule fires. Used by selerror() to report context. 256 is generous
+ * for any molecular name or operator token.                               */
+char sel_error_token[256] = "";
+
 %}
 
 %option prefix="sel"
 %option noyywrap noinput nounput
+
+/* Update sel_error_token before every rule — no per-rule boilerplate needed */
+%{
+#define YY_USER_ACTION strncpy(sel_error_token, yytext, sizeof(sel_error_token)-1); \
+                       sel_error_token[sizeof(sel_error_token)-1] = '\0';
+%}
 
 %x TILDE_MODE
 
@@ -24,13 +35,15 @@ NUM        [0-9]+
    * needed in practice — [A-Z] covers the same ground.                   */
 BRACKET    \[[^\]]*\]
 
-  /* A name starts with a letter, single-quote (nucleic acid atoms: O3', C5'),
-   * a glob wildcard, or a bracket expression e.g. [ABC]CA.
-   * Leading digits are NOT allowed — bare integers lex as INTEGER for index
-   * selection. Legacy leading-digit atom names like 1HG1 require ~: ~1HG1.
-   * Continuation allows letters, digits, and common punctuation found in
-   * real molecular names. # added for force field atom types.            */
-NAMESTART  [A-Za-z'*?]
+  /* A name starts with:
+   *   - a letter, single-quote, or glob wildcard, OR
+   *   - one or more digits immediately followed by a letter or glob char
+   *     (covers legacy atom names like 1HG1, 2CA etc.)
+   * This means bare integers (no following alpha/glob) still lex as INTEGER.
+   * 2-3 → INTEGER DASH INTEGER (range), 2CA → NAME, 1HG1 → NAME, 2* → NAME.
+   * Continuation allows letters, digits, and common punctuation in mol names.
+   * # added for force field atom types.                                    */
+NAMESTART  ([A-Za-z'*?]|[0-9]+[A-Za-z'*?])
 NAMECONT   [A-Za-z0-9_+\-*.'?#]
 NAME       ({BRACKET}|{NAMESTART})({NAMECONT}|{BRACKET})*
 
@@ -69,6 +82,8 @@ TILDENAME  ({TILDECHAR}|{BRACKET})+
 "&"                     return AND;
 "|"                     return OR;
 "-"                     return DASH;
+  /* '*' and '?' are valid NAMESTART chars — they lex as part of NAME tokens
+   * via the NAMESTART/NAME regex. No separate STAR token needed.            */
 
 "~"                     { BEGIN(TILDE_MODE); return TILDE; }
 

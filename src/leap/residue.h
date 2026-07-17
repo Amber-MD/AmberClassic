@@ -89,7 +89,7 @@
 #define	RESTYPEION              'i'    // HETAI
 #define	RESTYPELIGAND           'l'    // HETAD=drug,HETAIN=inhibitor,HETAC=coenzyme
 #define	RESTYPEOTHER            'o'    // non-standard polymer, anything else
-#define RESTYPECLASSPOLYMER  "nops"
+#define RESTYPECLASSPOLYMER     "nops"
 #define RESTYPECLASSNONPOLYMER  "ilw"
 
                 /* Residue flags */
@@ -113,7 +113,7 @@ typedef struct {
 	char	sName4[ATOMNAMELEN];
 } IMPROPERt;
 
-typedef struct  {
+typedef struct RESIDUESTRUCT {
 	CONTAINERt      cHeader;
 	FLAGS           fFlags;
 	char		cResType;
@@ -205,9 +205,8 @@ extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);
 #define	ResidueSetPdbSequence(r,i) (RESIDUE_from(r)->iPdbResSeq=(i))
 #define	sResidueChainId(r) (RESIDUE_from(r)->sChainId)
 #define	ResidueSetChainId(r,s) do { \
-        memcpy(RESIDUE_from(r)->sChainId,s,2); \
-        RESIDUE_from(r)->sChainId[2]=0; \
+        if ((s)[0]==' ' && (s)[1]==0) strcpy(RESIDUE_from(r)->sChainId,""); \
+        else strcpy(RESIDUE_from(r)->sChainId,s); \
      } while (0);
-#define	sResidueChainId(r)      (RESIDUE_from(r)->sChainId)
 
 #endif /* RESIDUE_H */

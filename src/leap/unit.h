@@ -88,7 +88,7 @@
 
 
 
-typedef struct  {
+typedef struct UNITSTRUCT {
         CONTAINERt      cHeader;
         OBJEKT          aHead;
         OBJEKT          aTail;
@@ -132,6 +132,7 @@ typedef struct  {
         VARARRAY        vaConnect;     // int
         VARARRAY        vaGroupNames;  // STRING
         VARARRAY        vaGroupAtoms;  // SAVEGROUPSt
+        VARARRAY        vaCMAPs;       // SAVECMAPt
 
 // from  zUnitIOFindAndCountMolecules()
         int             iFirstSolvent;
@@ -282,6 +283,8 @@ extern bool     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
 #define UnitSetSolventCap( u, x, y, z, r ) {\
         VectorDef( &(u->vCapOrigin), x, y, z );\
         u->dCapRadius = r;CDU(u); }
+#define UnitSetAlphaBetaGamma( u, d )     ( UNIT_from(u)->dBeta = \
+        UNIT_from(u)->dAlpha = UNIT_from(u)->dGamma = (d), CDU(u))
 #define UnitSetBeta( u, d )     ( UNIT_from(u)->dBeta = d, \
         UNIT_from(u)->dAlpha = UNIT_from(u)->dGamma = 90.0*DEGTORAD, CDU(u))
 #define dUnitBeta( u )          ( UNIT_from(u)->dBeta )

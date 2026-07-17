@@ -119,10 +119,7 @@ lListCreate()
 {
 LIST    lList;
 
-        MALLOC( lList, LIST, sizeof(LISTt) );
-        CollectionSetSize( lList, 0 );
-        lList->nPFirstNode = NULL;
-        lList->nPLastNode = NULL;
+        lList = (LIST)CALLOC(sizeof(LISTt) );
         return(lList);
 }
 
@@ -133,27 +130,28 @@ LIST    lList;
  *	Author:	Christian Schafmeister (1991)
  *
  *      Destroy the list.  The caller is responsible for destroying the
- *      contents of the list.
+ *      contents of the list. UNLESS bFreeChildren has been set.
  */
 void
 ListDestroy( LIST *lPList )
 {
-NODEP   nPTempPtr, nPFree;
+NODEP   nPNext, nPFree;
+LIST    l = *lPList;
 
         /* Destroy the LIST nodes */
 
-    nPTempPtr = (*lPList)->nPFirstNode;
-    while ( nPTempPtr != NULL ) {
-        nPFree = nPTempPtr;
-        nPTempPtr = nPTempPtr->nPNextNode;
+    nPNext = l->nPFirstNode;
+    while ( nPNext != NULL ) {
+        if (l->bFreeChildren && nPNext->PObject) DEREF(nPNext->PObject);
+        nPFree = nPNext;
+        nPNext = nPNext->nPNextNode;
         
                 /* Free the node memory. */
         FREE(nPFree);
     }
 
         /* Now destroy the LIST itself */
-
-    FREE( *lPList );
+    FREE( l );
     *lPList = NULL;
 
 }
@@ -180,7 +178,7 @@ NODEP   nPTempList;
                 /* Insert the new node at the head of the list */
 
     nPTempList = lList->nPFirstNode;
-    MALLOC( lList->nPFirstNode, NODEP, sizeof(NODE) );
+    lList->nPFirstNode = (NODEP)MALLOC(sizeof(NODE) );
 
                 /* Keep up to date the last node of the list */
 
@@ -220,7 +218,7 @@ NODEP   nPTempList;
                 /* Insert the new node at the tail of the list */
 
     nPTempList = lList->nPLastNode;
-    MALLOC( lList->nPLastNode, NODEP, sizeof(NODE) );
+    lList->nPLastNode = (NODEP)MALLOC(sizeof(NODE) );
 
                 /* Keep up to date the last node of the list */
 
@@ -250,11 +248,11 @@ NODEP   nPTempList;
  *	there.
  */
 void
-ListAddUnique( LIST lList, GENP PData )
+ListAddUnique( LIST lList, OBJEKT oObject )
 {
-    if ( bListContains( lList, PData ) ) 
+    if ( bListContains( lList, oObject ) ) 
 	return;
-    ListAddToEnd( lList, (OBJEKT)PData );
+    ListAddToEnd( lList, oObject);
 }
 
 
@@ -357,7 +355,7 @@ LISTLOOP        llL;
  *              FALSE if the element is not in the list.
  */
 bool
-bListRemove( LIST lList, GENP PPtr )
+bListRemove( LIST lList, OBJEKT oObject )
 {
 NODEP   *nPPPrev;
 NODEP   nPNode;
@@ -368,7 +366,7 @@ NODEP	nPPrevious;
     if ( lList->nPFirstNode==NULL ) return(FALSE);
 
                 /* Search the list for the object */
-    nPPPrev = searchList( &(lList->nPFirstNode), (OBJEKT)PPtr, &nPPrevious );
+    nPPPrev = searchList( &(lList->nPFirstNode), oObject, &nPPrevious );
     if ( nPPPrev == NULL ) return(FALSE);
 
                 /* Now actually remove the object from the list */
@@ -389,7 +387,7 @@ NODEP	nPPrevious;
 
                 /* DEREF the object */
 
-    DEREF( PPtr );
+    DEREF( oObject );
 
     return(TRUE);
 }
@@ -410,7 +408,7 @@ NODEP	nPPrevious;
  *              FALSE if the element is not in the list.
  */
 bool
-bListContains( LIST lList, GENP PPtr )
+bListContains( LIST lList, OBJEKT oObject )
 {
 NODEP   *nPPPrev;
 NODEP	nPPrevious;
@@ -420,7 +418,7 @@ NODEP	nPPrevious;
     if ( lList->nPFirstNode==NULL ) return(FALSE);
 
                 /* Search the list for the object */
-    nPPPrev = searchList( &(lList->nPFirstNode), (OBJEKT)PPtr, &nPPrevious );
+    nPPPrev = searchList( &(lList->nPFirstNode), oObject, &nPPrevious );
     if ( nPPPrev == NULL ) return(FALSE);
     return(TRUE);
 }

@@ -66,7 +66,7 @@ zrnPRingCreateNode()
 {
 RINGNODEt	*rnPNew;
 
-    MALLOC( rnPNew, RINGNODEt*, sizeof(RINGNODEt) );
+    rnPNew = (RINGNODEt*)MALLOC(sizeof(RINGNODEt) );
 
     rnPNew->PData = NULL;
     rnPNew->rnPPrev = NULL;
@@ -142,7 +142,7 @@ rRingCreate()
 {
 RING	rNew;
 
-    MALLOC( rNew, RING, sizeof(RINGt) );
+    rNew = (RING)MALLOC(sizeof(RINGt) );
 
     rNew->iElements = 0;
     rNew->rnPFirst = NULL;

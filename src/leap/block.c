@@ -122,10 +122,10 @@ int	iSize;
 
     if ( (bBlock->iTextSize-1) <= bBlock->iTextNext ) {
 	if ( bBlock->cPText == NULL ) {
-	    MALLOC( cPText, char*, iSize );
+	    cPText = (char*)MALLOC(iSize );
 	    MESSAGE("MALLOCed the BLOCK text\n" );
         } else {
-	    REALLOC( cPText, char*, bBlock->cPText, iSize );
+	    cPText = (char*)REALLOC(bBlock->cPText,iSize );
 	    MESSAGE("REALLOCed the BLOCK text\n" );
 	}
 	bBlock->cPText = cPText;
@@ -164,7 +164,7 @@ bBlockCreate()
 {
 BLOCK	bNew;
 
-    MALLOC( bNew, BLOCK, sizeof(BLOCKt) );
+    bNew = (BLOCK)MALLOC(sizeof(BLOCKt) );
 
     bNew->cPText = NULL;
     bNew->iTextSize = 0;
