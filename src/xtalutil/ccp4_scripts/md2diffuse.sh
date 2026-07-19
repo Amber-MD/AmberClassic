@@ -32,22 +32,22 @@
 #=============================================================================
 #  Input variables: edit these to match your problem:
 
-pdbprefix="/media/case/gamow1/PDBdata/tag8"     # pdbfiles will be called
+pdbprefix="../PDBdata/alt18wat"     # pdbfiles will be called
                                       # $pdbprefix.$frame.pdb
-save_hkl="/media/case/gamow1/save_hkl"  # folder for intermediate hkl files
-dprefix="TAG8"                         # basename for final output files
-numframes=2500                       # number of pdb-format snapshots
+save_hkl="./save_hkl"  # folder for intermediate hkl files
+dprefix="alt18wat"                  # basename for final output files
+numframes=500                       # number of pdb-format snapshots
 
-cell="CRYST1  200.282  200.282  200.282  80.85  80.85  80.85 P 1\n"
-cell2="200.282  200.282  200.282  80.85  80.85  80.85\n"
+cell="CRYST1   82.272   64.268   69.026  88.66 108.46 111.88 P 1\n"
+cell2="82.272   64.268   69.026  88.66 108.46 111.88\n"
                                 # should take this from the first pdb file
-title="Diffuse/Bragg for TAG8"  # for mtz and map files
+title="Diffuse/Bragg for 6o2h bulk water"  # for mtz and map files
 vf000=""                              # cell volume and number of electrons
 grid="SAMPLE 4"                       # grid dimensions for final map
                                       # (see step 7 for vf000 and grid)
 
-resolution=2.05
-resolutionm=1.95                  # give a slightly better resolution to
+resolution=1.12
+resolutionm=1.05                  # give a slightly better resolution to
                                   # sfall to esure that no hkl points get
                                   # omitted
 
@@ -62,34 +62,12 @@ if false; then
 cpptraj <<EOF
 #  sample cpptraj script to create pdb snapshots for diffuse scattering analysis
 # 
-parm ../tagr.parm7
-reference ../tagr.rst7
-trajin ../tagr_007.nc
-trajin ../tagr_008.nc
-trajin ../tagr_009.nc
-trajin ../tagr_010.nc
-trajin ../tagr_011.nc
-trajin ../tagr_012.nc
-trajin ../tagr_013.nc
-trajin ../tagr_014.nc
-trajin ../tagr_015.nc
-trajin ../tagr_016.nc
-trajin ../tagr_017.nc
-trajin ../tagr_018.nc
-trajin ../tagr_019.nc
-trajin ../tagr_020.nc
-trajin ../tagr_021.nc
-trajin ../tagr_022.nc
-trajin ../tagr_023.nc
-trajin ../tagr_024.nc
-trajin ../tagr_025.nc
-trajin ../tagr_026.nc
-trajin ../tagr_027.nc
-trajin ../tagr_028.nc
-trajin ../tagr_029.nc
-trajin ../tagr_030.nc
-trajin ../tagr_031.nc
-rms reference bb '@C,CA,N' norotate out fit.dat time 0.4
+parm ../alt18wat.parm7
+reference ../alt18wat.rst7
+trajin ../alt18wat.md3.nc
+rms reference nofit @C,CA,N&!:NO3 nofit out drift.dat time 0.2
+rms reference fitbb @C,CA,N&!:NO3 norotate out drift.dat time 0.2
+strip @1-26700
 image byatom
 trajout $pdbprefix.pdb pdb multi pdbv3 keepext sg "P 1"
 go
@@ -103,7 +81,7 @@ fi
 #=============================================================================
 # Step  2. Get a reference mtz file so each frame can have the same hkl values:
 
-if false; then
+if true; then
 
 sfall xyzin $pdbprefix.1.pdb hklout tmp.mtz memsize 10000000 <<EOF > sfall.log
 mode sfcalc xyzin
@@ -151,7 +129,7 @@ fi
 #=============================================================================
 #  Step 3.  On each frame, run sfall to get structure factors:
 
-if false; then
+if true; then
 
 mkdir -p $save_hkl
 
@@ -284,7 +262,7 @@ fi
 #=============================================================================
 #  Step 4.  Run the "diffuse1" program to compute block averages:
 
-if false; then
+if true; then
 
 cat <<EOF > diffuse1.c
 #include <stdlib.h>
@@ -417,7 +395,7 @@ fi
 #=============================================================================
 #  Step 5.  combine one or more intermediate .ihkl files into a total:
 
-if false; then
+if true; then
 
 cat <<EOF > diffuse2.c
 #include <stdlib.h>
@@ -567,13 +545,13 @@ fi
 #=============================================================================
 #  Step 6.  convert the .dhkl file above to mtz:
 
-if false; then
+if true; then
 
 f2mtz hklin $dprefix.dhkl hklout $dprefix.mtz <<EOF > makemap.log
 CELL  $cell2
 SYMMETRY P1
-LABOUT H K L Q IDIFFUSE FC PHIC
-CTYPOUT H H H R J F P
+LABOUT H K L Q IDIFFUSE IBRAGG FC PHIC
+CTYPOUT H H H R J J F P
 SKIP 2
 TITLE $title
 END
