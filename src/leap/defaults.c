@@ -40,10 +40,10 @@ typedef struct {
 
 static char opt_null[]="null";
 char *PBRadii_options[] =
-     {"bondi", "amber6", "mbondi", opt_null /*"pbamber"*/ ,opt_null,opt_null, "mbondi2", "parse", "mbondi3", NULL};
+     {"bondi", "amber6", "mbondi", "mbondi2", "parse", "mbondi3", NULL};
 char *PBRadii_optionDesc[] =
-     {"Bondi radii","Amber6 modified Bondi radii","modified Bondi radii","","","", 
-     //{"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii","","","", 
+     {"Bondi radii","amber6 modified Bondi radii","modified Bondi radii",
+     //{"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii",
        "H(N)-modified Bondi radii", "PARSE radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
 static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
 static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
@@ -57,7 +57,7 @@ zSDefaultSettings[] = {
     { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
     { 'B', "nocenter", "NoCenter", &GDefaults.nocenter },
     { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.reorder_residues, .defval.integer=1 },
-    { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.reorder_molecules, .defval.integer=0 }, // TODO default to 1?
+    { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.reorder_molecules }, //TODO: , .defval.integer=1 },
     { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.reverse_lists, .defval.integer=1 },
     { 'B', "original_cmap_order", "Original_CMAP_Order", &GDefaults.orig_cmap_order, .defval.integer=1 },
     { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.iOldPrmtopFormat },
@@ -106,6 +106,7 @@ zSDefaultSettings[] = {
     { 'D', "pdb_bulk_q","PDB_Bulk_Q", &GDefaults.dPdbBulkQ, .defval.real=1.0 },
     { 'B', "prmtop_netcdf","PrmTop_NetCDF", &GDefaults.bPrmtopNetcdf },
     { 'B', "mask_pdb_mode","Mask_PDB_Mode", &GDefaults.bMaskPDBMode },
+    { 'B', "timing","Timing", &GDefaults.bTiming },
     { 0 }
 };
 

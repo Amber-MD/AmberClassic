@@ -215,19 +215,17 @@ typeStr sTemp;
  *        If the first and fourth are the same then the
  *        second type must be less than the third type.
  */
-static void
+static inline void
 zParmSetOrderTorsionAtoms( typeStr sAtom1, typeStr sAtom2,
                 typeStr sAtom3, typeStr sAtom4 )
  {
-int                iCmp14;
-
-    iCmp14 = strcmp( sAtom1, sAtom4 );
+    int iCmp14 = strcmp( sAtom1, sAtom4 );
     if ( iCmp14 == 0 ) {
         /* 
          *  end types are the same, so can order inner pair
          */
         zParmSetOrderBondAtoms( sAtom2, sAtom3 );
-    } else if ( iCmp14 > 0 ) {
+    } else if ( iCmp14 > 0 && sAtom1[0]!=WILD_CARD_TYPE_CHAR) { // extra test for '?' comes before leading digit type name
         /*
          *  reorder end-to-end: ABCD->DCBA
          */
@@ -259,10 +257,9 @@ zParmSetOrderImproperAtoms( typeStr sAtom1, typeStr sAtom2,
         typeStr sAtom3, typeStr sAtom4, char *sOrder )
 {
     typeStr saAtoms[4];     /* 0-based: 0,1,3 used; 2 is central, unused */
-
-    strcpy( saAtoms[0], sAtom1 ? sAtom1 : WILD_CARD_TYPE );
-    strcpy( saAtoms[1], sAtom2 ? sAtom2 : WILD_CARD_TYPE );
-    strcpy( saAtoms[3], sAtom4 ? sAtom4 : WILD_CARD_TYPE );
+    strcpy( saAtoms[0], sAtom1 );
+    strcpy( saAtoms[1], sAtom2 );
+    strcpy( saAtoms[3], sAtom4 );
 
 #define SWAP_ATOMS(i, j)                                \
     do {                                                \
@@ -277,7 +274,6 @@ zParmSetOrderImproperAtoms( typeStr sAtom1, typeStr sAtom2,
     if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) SWAP_ATOMS(0, 1);
     if ( strcmp( saAtoms[1], saAtoms[3] ) > 0 ) SWAP_ATOMS(1, 3);
     if ( strcmp( saAtoms[0], saAtoms[1] ) > 0 ) SWAP_ATOMS(0, 1);
-
 #undef SWAP_ATOMS
 
     strcpy( sAtom1, saAtoms[0] );
@@ -900,13 +896,10 @@ static int iAtomNamesMatch4(const char *an[4], WRD *cmapAtmName)
    ================================================================ */
 int iParmSetAddCMAP(PARMSET psLib, CMAP cmap)
 {
-    printf("AddCMAPs = %p\n",psLib->vaCMAPs);
     if (!psLib->vaCMAPs) {
         psLib->vaCMAPs = vaVarArrayCreate(sizeof(CMAPt));
-        printf("Alloc CMAPs = %p\n",psLib->vaCMAPs);
     }
     VarArrayAdd(psLib->vaCMAPs, (GENP)cmap);
-    printf("CMAP added '%s', size=%d, map #%d\n",cmap->title,cmap->resolution, iVarArrayElementCount(psLib->vaCMAPs));
     return iVarArrayElementCount(psLib->vaCMAPs) - 1;
 }
 
@@ -924,7 +917,6 @@ bool iParmSetHasCMAP(PARMSET psLib)
    ================================================================ */
 int iParmSetTotalCMAPParms(PARMSET psLib)
 {
-    printf("get total cmaps pCMAPs = %p\n",psLib->vaCMAPs);
     if (!psLib->vaCMAPs) return 0;
     return iVarArrayElementCount(psLib->vaCMAPs);
 }
@@ -2390,8 +2382,8 @@ typeStr         s1, s2;
     bFoundOne = FALSE;
     hpPHBond = PVAI( psLib->vaHBonds, HBONDPARMt, 0 );
     for ( i=0; i<iMax; hpPHBond++, i++ ) {
-        if ( strcmp( hpPHBond->sType1, sType1 ) == 0 ) {
-            if ( strcmp( hpPHBond->sType2, sType2 ) == 0 ) {
+        if ( strcmp( hpPHBond->sType1, s1 ) == 0 ) {
+            if ( strcmp( hpPHBond->sType2, s2 ) == 0 ) {
                     bFoundOne = TRUE;
                     break;
             }

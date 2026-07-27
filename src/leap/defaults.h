@@ -53,6 +53,7 @@ typedef struct {
         bool    bPdbExpandSymm;
         bool    bCIFReadAuth;
         bool    bMaskPDBMode;
+        bool    bTiming;
         char    cPdbAltLocSelect;
         STRING  sPdbPatchFilename;
 } defaultstruct ;
@@ -65,12 +66,12 @@ extern void PrintDefaultSettings(char *cPParam);
 
 extern char *PBRadii_options[], *PBRadii_optionDesc[];
 
-#define GBPARM_BONDII 0
+#define GBPARM_BONDI 0
 #define GBPARM_AMBER6 1
 #define GBPARM_MBONDI 2
-#define GBPARM_MBONDI2 6
-#define GBPARM_PARSE 7
-#define GBPARM_MBONDI3 8
-
+#define GBPARM_MBONDI2 3
+#define GBPARM_PARSE 4
+#define GBPARM_MBONDI3 5
+#define GBPARM_MAX 5
 
 #endif

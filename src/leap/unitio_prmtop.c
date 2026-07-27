@@ -490,7 +490,6 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // Mark main chain atoms where possible, noting the 
     // number of atoms in the largest residue. keep
     // track of residues which can't be marked.
-    VP0("Not Marking per-residue atom chain types.\n"); // FIXME: remove this
     create_index(&iResIx, IX_DUPKEYREC, IX_LEN_CSTRING);
     VP0("Marking per-residue atom chain types.\n");
     iMaxAtoms = 0;
@@ -952,11 +951,19 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
         FortranWriteInt(j);
       }
       FortranEndLine();
+#if 0
+      FortranFormat(1, "%-80s");
+      FortranWriteString("%FLAG RESIDUE_SEQUENCE");
+      COMMENT_DIM(NRES)
+      FortranWriteString("%FORMAT(10" INTFORMAT_F ")");
+      FortranFormat(10, INTFORMAT_C);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
+        int j = iContainerSequence(PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->rResidue);
+        FortranWriteInt(j);
+      }
+      FortranEndLine();
+#endif
   }
-
-  // -10- Pointer list for all the residues
-  FortranDebug("-10-");
-
 
   // -10- Pointer list for all the residues
   FortranDebug("-10-");
@@ -1810,7 +1817,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG RADIUS_SET");
   COMMENT_SIZE(1)
   FortranWriteString("%FORMAT(1a80)");
-  if (GDefaults.iGBparm>=0 && GDefaults.iGBparm<=8 && PBRadii_optionDesc[GDefaults.iGBparm])
+  if (GDefaults.iGBparm >= 0 && GDefaults.iGBparm <= GBPARM_MAX)
       sprintf(sComment,"%s (%s)", PBRadii_optionDesc[GDefaults.iGBparm], PBRadii_options[GDefaults.iGBparm]);
   else
       sprintf(sComment,"Unknown radius set %d (programming error)",GDefaults.iGBparm );

@@ -47,7 +47,7 @@
 #include        "zMatrix.h"
 #include        "cmap.h"
 
-#define FGETS(s,f)      { strcpy(s,""); fgets(s,sizeof(s),f); }
+#define FGETS(s,f)      { (s)[0]=0; fgets(s,sizeof(s),f); }
 
 /*
  *      Mapping of AMBER types to ELEMENT names used by iAtomTypesToElement
@@ -112,9 +112,9 @@ typedef struct  {
  *      Author: Christian Schafmeister (1991)
  *
  *      If the atom type is an "X", an old AMBER wild card
- *      character then convert it to the new wild card character.
+ *      character then convert it to the new wild card character '?'.
  */
-static void
+static inline void
 zAmberConvertWildCard( char *sType )
 {
     if ( strcmp( sType, AMBER_WILD_CARD ) == 0 ) {
@@ -551,8 +551,8 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
         dKp /= dDivisions;
         iN = (int)floor(dN+0.5);
         zAmberConvertWildCard( saStr[0] );
-        zAmberConvertWildCard( saStr[1] );
-        zAmberConvertWildCard( saStr[2] );
+        zAmberConvertWildCard( saStr[1] ); // FIXME: can these be wildcard in proper?
+        zAmberConvertWildCard( saStr[2] ); // FIXME: can these be wildcard ever? 
         zAmberConvertWildCard( saStr[3] );
 
         MESSAGE("Read %d DIHEDRAL terms from: %s", iRead, sLine );
@@ -647,8 +647,8 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
             VP0("Here is the Improper Torsion line in question:\n%s", sLine );
 
         iParmSetAddImproperTerm( psParms, 
-                                saStr[0], saStr[1], saStr[2], saStr[3],
-                                iN, dKp, dP0*DEGTORAD, dScEE, dScNB, &sLine[iDesc] );
+                       saStr[0], saStr[1], saStr[2], saStr[3],
+                       iN, dKp, dP0*DEGTORAD, dScEE, dScNB, &sLine[iDesc] );
     }
     if ( iRead > 0 ){
         VPWARN("Incomplete Improper Torsion line:\n%s", sLine );
@@ -1038,7 +1038,7 @@ int             i, j, k, iRead, iSet;
                                               :iAtomTypeToElement(saStr[0]),
                                 iHybridization!=HUNDEFINED?iHybridization
                                               :iAtomTypeHybridization(saStr[0]),
-                                "" );
+                                nbNonBondP->sDesc );
         }
         EquivP = PVAI(vaEquivs,EQUIVt,0);
         for ( j=0; j<iVarArrayElementCount(vaEquivs); j++, EquivP++ ) {
@@ -1056,7 +1056,7 @@ int             i, j, k, iRead, iSet;
                                     :iAtomTypeToElement(saStr[0]),
                        iHybridization!=HUNDEFINED?iHybridization
                                     :iAtomTypeHybridization(saStr[0]),
-                       "" );
+                       nbNonBondP->sDesc );
                 }
             }
         }
@@ -1124,11 +1124,13 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
             zAmberReadParmSetHBonds( psParms, fIn );
         } else if ( strncmp( sLine, "NONB", 4 ) == 0 ) {
             zAmberReadParmSetNonBonds( &vaNonBonds, fIn );
-        } else if ( strncmp( sLine, "CMAP", 4 ) == 0 ) {
+        } else if ( strncmp( sLine, "CMAP", 4 ) == 0 ||
+                    strncmp( sLine, "PHIPSI", 6 ) == 0 ) {
             zAmberReadParmSetCMAP( psParms, fIn );
         } else if ( strncmp( sLine, "IPOL", 4 ) == 0 ) {
             zAmberReadParmSetIPOL( fIn );
-        } else if ( strncmp( sLine, "LJEDIT", 6 ) == 0 ) {
+        } else if ( strncmp( sLine, "LJEDIT", 6 ) == 0 ||
+                    strncmp( sLine, "NBEDIT", 6 ) == 0 ) {
             zAmberReadParmSetNBPairEdits( psParms, fIn, 1 );
         } else if ( strncmp( sLine, "END", 3 ) == 0 ) {
             continue;

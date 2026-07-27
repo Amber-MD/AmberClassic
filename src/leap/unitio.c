@@ -2353,7 +2353,8 @@ UnitLabelMolecules(UNIT uUnit) {
     int     iResidueCount=0, iMolecule=0;
 
     /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
-    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
+    /* Also clear the imaging atom flag which will be updated */
+    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED|RESIDUEIMAGEATOM);
     LOOPOVERALL(uUnit,ATOMS,aAtom,ATOM,lAtoms) AtomSetSeenId(aAtom, -1);
 
     /* Loop through solvent RESIDUEs and:
@@ -2366,16 +2367,20 @@ UnitLabelMolecules(UNIT uUnit) {
      *     but must be repeated after residue ordering
      *     TODO: zUnitIOFindAndCountMolecules can use labels instead
      *     of repeating the full spanning tree search
+     * 4) set image atom flag if present; only valid if solvent residue
     */
-    LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lResidues) {
+    LOOPOVERALL(uUnit,DIRECTCONTENTSBYSEQNUM,rRes,RESIDUE,lResidues) {
         iResidueCount++;
         if (cResidueType(rRes) == RESTYPESOLVENT) {
             if (bUnitCapContainsContainer(uUnit, CONTAINER_from(rRes)))
                 ResidueSetFlags(rRes, RESIDUEINCAP);
             else
                 ResidueResetFlags(rRes, RESIDUEINCAP);
+            if (aResidueImagingAtom(rRes))
+                AtomSetFlags(aResidueImagingAtom(rRes),RESIDUEIMAGEATOM);
         }
-        /* Search for the next RESIDUE whose first ATOM has not */
+        /* Search for the next RESIDUE whose first ATOM has:w
+ * not */
         /* been touched */
         aAtom = ATOM_from(oContainerFirstObject(rRes));
         if (bAtomFlagsSet(aAtom, ATOMTOUCHED)) continue;
@@ -2913,10 +2918,8 @@ void UnitIOBuildFromTables(UNIT uUnit)
             mMol = MOLECULE_from(oCreate(MOLECULEid));
             ContainerSetName(mMol, smPMolecule->sName);
             ContainerSetSequence(mMol, smPMolecule->iSequenceNumber);
-            // FIXME: added rRes=NULL initialization, may be used here; but is this dead code? --JMK
             ContainerSetNextChildsSequence(rRes,
-                                           smPMolecule->
-                                           iNextChildSequence);
+                                   smPMolecule-> iNextChildSequence);
             smPMolecule->mMolecule = mMol;
         }
     }
@@ -3879,7 +3882,6 @@ void UnitIOSaveAmberPrep(UNIT uUnit, FILE * fOut)
 
 }
 
-
 double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAtom)
 {
     double dGBrad = 1.5;
@@ -3890,29 +3892,35 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
     size_t l=strlen(sResName);
     if (l > 3) sResName += l - 3;
 
-    if (GDefaults.iGBparm < 3 || GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
-        // Currently, this is all modes but 7
+    if (GDefaults.iGBparm == GBPARM_PARSE) {
+        switch (iElement) {
+        case 1:  dGBrad = 1.00; break;  case 6:  dGBrad = 1.70; break;
+        case 7:  dGBrad = 1.50; break;  case 8:  dGBrad = 1.40; break;
+        case 16: dGBrad = 1.85; break;  default: dGBrad = 1.50; break;
+        }
+    } else {
+        // Currently, this is all modes but PARSE
         switch (iElement) {
         case 1:
             dGBrad = 1.2;
             if (iAtomCoordination(aAtom) > 0) {
                 ATOM aAtomA = aAtomBondedNeighbor(aAtom, 0);
-                if (GDefaults.iGBparm == 1 || GDefaults.iGBparm == 2) {
+                if (GDefaults.iGBparm == GBPARM_AMBER6 || GDefaults.iGBparm == GBPARM_MBONDI) {
                     switch (aAtomA[0].iAtomicNumber) {
                     case 6:  dGBrad = 1.3; break;
                     case 8:  dGBrad = 0.8; break;
                     case 16: dGBrad = 0.8; break;
-                    case 7:  if (GDefaults.iGBparm == 2) dGBrad = 1.3; break;
+                    case 7:  if (GDefaults.iGBparm == GBPARM_MBONDI) dGBrad = 1.3; break;
                     case 1:
                         if (cLower(sAtomType(aAtomA)[0])=='h' &&
                             cLower(sAtomType(aAtomA)[1])=='w')
                             dGBrad = 0.8;
                         break;
                     }
-                } else if (GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
+                } else if (GDefaults.iGBparm == GBPARM_MBONDI2 || GDefaults.iGBparm == GBPARM_MBONDI3) {
                     if (aAtomA[0].iAtomicNumber == 7) {
                         dGBrad = 1.3;
-                        if (GDefaults.iGBparm == 8) {
+                        if (GDefaults.iGBparm == GBPARM_MBONDI3) {
                             if (!strcmp(sResName,"ARG") &&
                                 (!strncmp(sAtomName(aAtom),"HH",2) ||
                                   !strcmp(sAtomName(aAtom),"HE")))
@@ -3936,7 +3944,7 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
         case 7:  dGBrad = 1.55; break;
         case 8:
             dGBrad = 1.5;
-            if (GDefaults.iGBparm == 8) {
+            if (GDefaults.iGBparm == GBPARM_MBONDI3) {
                 if ( ( (!strcmp(sResName,"ASP") || !strcmp(sResName,"AS4"))
                         && !strncmp(sAtomName(aAtom),"OD",2) ) ||
                      ( (!strcmp(sResName,"GLU") || !strcmp(sResName,"GL4"))
@@ -3953,7 +3961,9 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
         case 17: dGBrad = 1.7;  break;
         default: dGBrad = 1.5;  break;
         }
-    } else if (GDefaults.iGBparm == 3) {
+    }
+#if 0 // obsolete
+    } else if (GDefaults.iGBparm == 3) { // pbamber
         switch (iElement) {
         case 1:  dGBrad = 1.15; break;  case 6:  dGBrad = 1.85; break;
         case 7:  dGBrad = 1.64; break;  case 8:  dGBrad = 1.53; break;
@@ -3962,26 +3972,22 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
         case 35: dGBrad = 2.03; break;  case 53: dGBrad = 2.10; break;
         default: dGBrad = 1.5;  break;
         }
-    } else if (GDefaults.iGBparm == 7) {
-        switch (iElement) {
-        case 1:  dGBrad = 1.00; break;  case 6:  dGBrad = 1.70; break;
-        case 7:  dGBrad = 1.50; break;  case 8:  dGBrad = 1.40; break;
-        case 16: dGBrad = 1.85; break;  default: dGBrad = 1.50; break;
-        }
-    }
+#endif
     return dGBrad;
 }
 
 double dGBScreenForElement(int iElement)
 {
     double s = 0.0;
-    if (GDefaults.iGBparm < 4 || GDefaults.iGBparm == 6 || GDefaults.iGBparm == 8) {
+    if (GDefaults.iGBparm != GBPARM_PARSE) {
         switch (iElement) {
         case 1:  s = 0.85; break;  case 6:  s = 0.72; break;
         case 7:  s = 0.79; break;  case 8:  s = 0.85; break;
         case 9:  s = 0.88; break;  case 15: s = 0.86; break;
         case 16: s = 0.96; break;  default: s = 0.80; break;
         }
+    }
+#if 0 // obsolete
     } else if (GDefaults.iGBparm == 4) {
         switch (iElement) {
         case 1:  s = 0.8461; break;  case 6:  s = 0.9615; break;
@@ -3999,6 +4005,7 @@ double dGBScreenForElement(int iElement)
         default: s = 0.8000; break;
         }
     }
+#endif
     return s;
 }
 

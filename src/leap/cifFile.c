@@ -147,7 +147,7 @@ CIFCATEGORYt cifAtoms = {
     if (GDefaults.iPdbReadBioMT) {
         cifMtrix.sName = "pdbx_struct_oper_list";
         cifMtrix.field[1].name = "type";
-/* FIXME: we need to parse
+/* FIXME: we need to parse this data to process correctly
 _pdbx_struct_assembly_gen.assembly_id       1
 _pdbx_struct_assembly_gen.oper_expression   1
 _pdbx_struct_assembly_gen.asym_id_list      A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,AA,BA,CA,DA,EA,FA,GA,HA,IA,JA
@@ -270,7 +270,7 @@ _pdbx_struct_assembly_gen.asym_id_list
             int iCol=0;
             const char *pItem = zcPCifGetItem(&cifMtrix, i, iCol++);
             // Crude filtering: assume all numerically named transforms applied to all chains
-            // And assumes first entrey is identity matrix !!FIXME!!
+            // And assumes first entry is identity matrix !!FIXME!!
             if (!isdigit((unsigned char)*pItem)) continue;
             int iSerial = atoi(pItem);
             //pItem = zcPCifGetItem(&cifMtrix, i, iCol++); // ncs "code": given or identity = self, always 1?

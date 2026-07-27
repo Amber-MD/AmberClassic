@@ -368,7 +368,7 @@ STRING          sTemp;
                 sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) );
     }
 
-    if ( cResidueType( rRes ) ==  RESTYPEUNDEFINED) {
+    if ( cResidueType( rRes ) ==  RESTYPEUNDEFINED && iVerbosity()>1) {
         (*iPWarnings)++;
         VPWARN("Unknown residue type: %s\n", 
                 sContainerFullDescriptor( (CONTAINER)rRes, sTemp ) );

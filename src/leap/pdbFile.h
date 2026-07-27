@@ -64,7 +64,6 @@ typedef struct  {
         int     iRecordNumber;
         int     iResidueSeq;
         STRING  sResidueName;
-        IX_DESC ixResCount; // Count unique residues
 } PDBWRITEt;
 
 typedef struct  {
@@ -137,7 +136,7 @@ typedef struct  {
         VARARRAY        vaLinkRecs;      // struct pdb_link (OR converted pdb_ssbond)
 
         FILE            *fpPatchFileOut; // generated auto-link patch file
-
+        bool            bSymmOps, bNCS, bBIOMT; // which transform to use
         int  iSubstRes1, iSubstRes2;
         char sSubstAtom1[32], sSubstAtom2[32];
 

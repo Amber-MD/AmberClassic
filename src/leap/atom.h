@@ -101,6 +101,7 @@ typedef struct  ATOMSTRUCT {
         int                     iPertAtomicNumber;
         CONTAINERNAMEt          sPertName;
         ATOMTYPEt               sType;
+        char                    iCode, altLoc;
         ATOMTYPEt               sPertType;
         double                  dCharge;
         double                  dPertCharge;
@@ -279,9 +280,10 @@ static inline ATOM atom_from_atom(ATOM a,const char *file,int line) { return a; 
 #define bAtomHasPosition(a)     (bAtomFlagsSet(a,ATOMPOSITIONKNOWN)||\
                                 bAtomFlagsSet(a,ATOMPOSITIONDRAWN))
 
-#define sAtomSegid(a)           ((a)->siSegid)
-#define AtomSetSegid(a,s)       (strncpy((a)->siSegid,(s),ATOM_SEGID_LEN-1), \
-                                (a)->siSegid[ATOM_SEGID_LEN-1]='\0')
+#define cAtomAltLoc(a)           ((a)->cAltLoc)
+#define AtomSetAltLoc(a,c)       ((a)->cAltLoc=(c==' ')?c:0)
+#define cAtomInsertCode(a)       ((a)->cInsertCode)
+#define AtomSetInsertCode(a,c)   ((a)->cInsertCode=(c==' ')?c:0)
 
 
 /*  atom.c  */

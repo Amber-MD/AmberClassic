@@ -489,6 +489,8 @@ iLoopContainerMatch(const void *A, const void *B)
 
 /*
  *      iLoopParmOrder
+ *      Prerequisite: run UnitLabelMolecules() (for molecule sort and imaging atom flag)
+ *      XXX Sorts contained UNITs and ATOMs to the end, which may be wrong
  */
 static int
 iLoopParmOrder(const void *A, const void *B)
@@ -496,16 +498,10 @@ iLoopParmOrder(const void *A, const void *B)
     OBJEKT oA = *((OBJEKT*)A);
     OBJEKT oB = *((OBJEKT*)B);
     if (iObjectType(oA) == ATOMid) {
-        // If A is atom and B is not, A is a raw ATOM in a UNIT
-        // Raw ATOMs come last (and are excluded from UNITs) so A > B
-        if (iObjectType(oB) != ATOMid) return 1;
-        ATOM aA = (ATOM)oA;
-        ATOM aB = (ATOM)oB;
-        // Check if imaging atom this way because RESIDUEIMAGEATOM flag never implemented
-        bool bImagingA = aResidueImagingAtom(cContainerWithin(aA)) == aA;
-        bool bImagingB = aResidueImagingAtom(cContainerWithin(aB)) == aB;
-        if (bImagingA && !bImagingB) return -1;
-        if (bImagingB && !bImagingA) return 1;
+        if (iObjectType(oB) != ATOMid) return 1; // Sort bare atoms to the end
+        bool bImagingA = bAtomFlagsSet(ATOM_from(oA),RESIDUEIMAGEATOM);
+        bool bImagingB = bAtomFlagsSet(ATOM_from(oB),RESIDUEIMAGEATOM);
+        if (bImagingA != bImagingB) return bImagingB - bImagingA;
     } else if (iObjectType(oA) == RESIDUEid) {
         if (iObjectType(oB) != RESIDUEid) return 1;
         RESIDUE rA = (RESIDUE)oA;

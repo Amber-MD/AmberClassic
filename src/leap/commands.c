@@ -549,28 +549,6 @@ HELP            hTemp;
     return NULL;
 }
 
-
-struct timespec StimeStart;
-OBJEKT
-oCmd_startTimer( int iArgCount, ASSOC aaArgs[] )
-{
-     clock_gettime(CLOCK_MONOTONIC, &StimeStart);
-    return NULL;
-}
-
-OBJEKT
-oCmd_stopTimer( int iArgCount, ASSOC aaArgs[] )
-{
-    struct timespec end;
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    double dt = (double)(end.tv_sec - StimeStart.tv_sec)
-              + (double)(end.tv_nsec - StimeStart.tv_nsec) / 1e9;
-    VP0("Elapsed time: %g\n",dt);
-
-    return NULL;
-}
-
 #ifdef DEBUG
 
 OBJEKT
@@ -7353,8 +7331,6 @@ COMMANDt        cCommands[] = {
         { "solvateOct",         oCmd_solvateOct },
         { "solvateShell",       oCmd_solvateShell },
         { "source",             oCmd_source },
-        { "startTimer",         oCmd_startTimer },
-        { "stopTimer",          oCmd_stopTimer },
         { "translate",          oCmd_translate },
         { "transform",          oCmd_transform },
 /*      { "update",             oCmd_update },          */

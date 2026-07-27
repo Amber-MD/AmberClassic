@@ -49,6 +49,8 @@ typedef struct {
  *  - CMAP is supplemental — not found is normal, not an error
  *  - iParmSetFindCMAP on unit parmset handles deduplication
  *  - ParmSetGetCMAP with bCopy=true for transfer to local parmset
+ *
+ *  Note: CMAP = Correction map
  */
 static int dest_cmap_index[256];
 void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
@@ -59,11 +61,8 @@ void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
     for (i=0;i<256;i++) dest_cmap_index[i]=-1;
 
     /* ── destroy any previous CMAP table ── */
-    if (uUnit->vaCMAPs) {
-        VP0("Rebuilding CMAP parameters.\n");
+    if (uUnit->vaCMAPs)
         VarArrayDestroy(&uUnit->vaCMAPs);
-    } else
-        VP0("Building CMAP parameters.\n");
     uUnit->vaCMAPs = vaVarArrayCreate(sizeof(SAVECMAPt));
 
     if (!GDefaults.iCMAP) return;
@@ -328,20 +327,20 @@ int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid)
 
         NC_CHECK(nc_redef(ncid));
 
-        NC_CHECK(nc_def_dim(ncid, "CMAP_TYPES", CMAP_TYPES, &dimid_types));
-        NC_CHECK(nc_def_dim(ncid, "CMAP_KINDS", CMAP_KINDS, &dimid_kinds));
+        NC_CHECK(nc_def_dim(ncid, "phi_psi_types", CMAP_TYPES, &dimid_types));
+        NC_CHECK(nc_def_dim(ncid, "phi_psi", CMAP_KINDS, &dimid_kinds));
         NC_CHECK(nc_def_dim(ncid, "atom_quint", 5, &dimid_quint));
 
         dims2[0] = dimid_kinds; dims2[1] = dimid_quint;
-        NC_CHECK(nc_def_var(ncid, "CMAP_INDEX_ATOMS", NC_INT, 2, dims2, &vid_atoms));
+        NC_CHECK(nc_def_var(ncid, "phi_psi_atoms", NC_INT, 2, dims2, &vid_atoms));
         NC_CHECK(nc_put_att_text(ncid, vid_atoms, "long_name", 50,
                                  "5 raw 1-based atom indices: atoms 1-4=phi, 2-5=psi"));
-        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "reference_dimension", 6, "NTOTAT"));
+        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "reference_dimension", 6, "atoms"));
 
-        NC_CHECK(nc_def_var(ncid, "CMAP_INDEX_MAP", NC_INT, 1, &dimid_kinds, &vid_map));
+        NC_CHECK(nc_def_var(ncid, "phi_psi_parm", NC_INT, 1, &dimid_kinds, &vid_map));
         NC_CHECK(nc_put_att_text(ncid, vid_map, "long_name", 79,
-                "1-based index into CMAP_RESOLUTION_<nn> dimension and CMAP_PARAMETER_<nn> data"));
-        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "reference_dimenson", 10, "CMAP_TYPES"));
+                "1-based index into phi_psi_cmap_resolution_<nn> and phi_psi_cmap_<nn>"));
+        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "reference_dimenson", 10, "phi_psi_types"));
         NC_CHECK(nc_enddef(ncid));
 
         for (int i=0, idx=0; i < CMAP_KINDS; i++, idx+=5) {
@@ -367,13 +366,13 @@ int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid)
 
         /* RESOLUTION_nn dimension shared by both phi and psi axes. */
         STRING sResolution;
-        sprintf(sResolution,"CMAP_RESOLUTION_%02d",i+1);
+        sprintf(sResolution,"phi_psi_cmap_resolution_%02d",i+1);
         NC_CHECK(nc_def_dim(ncid, sResolution, cmap.resolution, &dimid_res));
 
         /* GRID(RESOLUTION, RESOLUTION) — same dim for both axes */
         dims2[0] = dims2[1] = dimid_res;
         STRING sParam;
-        sprintf(sParam,"CMAP_PARAMETER_%02d",i+1);
+        sprintf(sParam,"phi_psi_cmap_%02d",i+1);
         NC_CHECK(nc_def_var(ncid, sParam, NC_DOUBLE, 2, dims2, &vid_grid));
         NC_CHECK(nc_put_att_text(ncid, vid_grid, "units",      8, "kcal/mol"));
         NC_CHECK(nc_put_att_text(ncid, vid_grid, "long_name",  36,

@@ -97,6 +97,7 @@
 #include        "select_mask.h"
 
 #include        "help.h"
+#include        "defaults.h"
 
 #define         MESSAGEFILTER   MESSPARSER
 
@@ -355,7 +356,13 @@ function:       cmdname
                         } 
                     args  
                         {
-                                /* Execute the command */
+                            struct timespec tsStart, tsEnd;
+                            clock_t ctStart, ctEnd;
+                            if(GDefaults.bTiming ){
+                                clock_gettime(CLOCK_MONOTONIC, &tsStart);
+                                ctStart = clock();
+                            }
+                            /* Execute the command */
 			    MESSAGE("executing function\n");
                             /* Command execute;returns with counted REF */
                             o0 = $<fCallback>1( iArgCount, aaArgs );
@@ -371,6 +378,14 @@ function:       cmdname
                             for (int i=0; i<iArgCount; i++ ) {
 				MESSAGE("DEREF (function) - %s\n", sAssocName(aaArgs[i]));
                                 DEREF( aaArgs[i] );
+                            }
+                            if(GDefaults.bTiming ){
+                                clock_gettime(CLOCK_MONOTONIC, &tsEnd);
+                                ctEnd = clock();
+                                double dt = (double)(tsEnd.tv_sec - tsStart.tv_sec)
+                                          + (double)(tsEnd.tv_nsec - tsStart.tv_nsec) / 1e9;
+                                double dCPU = ((double) (ctEnd - ctStart)) / (double)CLOCKS_PER_SEC;
+                                VP0("Command: %12s Elapsed time: %8g sec   CPU time: %8g sec\n",$<sVal>1,dt,dCPU);
                             }
                         }
         ;
@@ -1432,7 +1447,7 @@ OBJEKT oArg2 = oAssocObject(arg2);
         double d2 = dODouble(oArg2);
         switch (operator) {
             case '*': ODoubleSet(oResult,d1*d2); break;
-            case '/': ODoubleSet(oResult,d1/d2); break; // FIXME check for divide by zero? Or just let NaN take over?
+            case '/': ODoubleSet(oResult,d1/d2); break; // check for divide by zero? Or just let NaN take over?
             case '+': ODoubleSet(oResult,d1+d2); break;
             case '-': ODoubleSet(oResult,d1-d2); break;
             case '^': ODoubleSet(oResult,pow(d1,d2)); break;

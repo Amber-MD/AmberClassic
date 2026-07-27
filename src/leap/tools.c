@@ -217,7 +217,7 @@ ToolSanityCheckBox( UNIT uUnit )
          *  do a minimal sanity check just to be sure..
          */
         UnitGetBox( uUnit, &dX, &dY, &dZ);
- // NOTE: changed from  < 0.1  to   <= 1.0
+ // NOTE: changed from  < 0.1  to   <= 1.0 to disallow 1x1x1 box
         if ( dX <= 1.0  ||  dY <= 1.0  ||  dZ <= 1.0  ||  
                         dUnitBeta( uUnit ) < 0.05 ) {
                 /*
@@ -227,10 +227,10 @@ ToolSanityCheckBox( UNIT uUnit )
                         VPWARN(" (turning off box flag on %s - bad param(s)\n", 
                                 sContainerName((CONTAINER) uUnit ) );
                         VP0("   beta %e  XYZ %e %e %e)\n",
-                                dUnitBeta( uUnit ), dX, dY, dZ );
+                                dUnitBeta( uUnit )/DEGTORAD, dX, dY, dZ );
                 }
                 UnitSetBox( uUnit, 0.0, 0.0, 0.0 );
-                UnitSetBeta( uUnit, 0.0*DEGTORAD ); // FIXME 90 degree default elsewhere
+                UnitSetBeta( uUnit, 0.0 ); // FIXME 90 degree default elsewhere
                 UnitSetUseBox( uUnit, FALSE );
         }
 }
@@ -1079,7 +1079,7 @@ double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
 /* for isotropic octbox only */
 
   tetra_angl=2*acos(1./sqrt(3.));
-  pi=3.1415927;
+  pi=PI;
   phi=pi/4.;
   cos1=cos(phi);
   sin1=sin(phi);
@@ -1309,13 +1309,15 @@ CRITERIAt       cCriteria;
                 VP0("  Total vdw box size:%s%5.3lf %5.3lf %5.3lf angstroms.\n", 
                     "                   ", dMaxX, dMaxY, dMaxZ );
         dVolume = dMaxX * dMaxY * dMaxZ;
-        double ca = cos(uSolute->dAlpha*DEGTORAD);
-        double cb = cos(uSolute->dBeta *DEGTORAD);
-        double cg = cos(uSolute->dGamma*DEGTORAD);
-        dVolume *= sqrt(1.0 - ca*ca - cb*cb - cg*cg + 2.0*ca*cb*cg);
+        double ca = cos(uSolute->dAlpha);
+        double cb = cos(uSolute->dBeta );
+        double cg = cos(uSolute->dGamma);
+        double scale = sqrt(1.0 - ca*ca - cb*cb - cg*cg + 2.0*ca*cb*cg);
+        dVolume *= scale;
         //if ( bOct )
         //        dVolume *= 0.7698004;   /* = sqrt(1 - 3*cost^2 - 2*cost^3),
         //                            where cost = -1/3 = cos(109.471)   */
+        //        actual scale for 109.47122063449069136902 = 0.76980035891950101940
 
         VP0("  Volume: %5.3lf A^3 %s\n", dVolume, (bOct ? "(oct)" : "") );
 

@@ -152,6 +152,12 @@ int main(int argc, char *argv[])
     strcpy(GsProgramName, argv[0]);
 
     BasicsInitialize();
+#ifdef DEBUG
+    printf("sizeof(CONTAINERt)=%d\n",(int)sizeof(CONTAINERt));
+    printf("sizeof(UNITt)=%d\n",(int)sizeof(UNITt));
+    printf("sizeof(RESIDUEt)=%d\n",(int)sizeof(RESIDUEt));
+    printf("sizeof(ATOMt)=%d\n",(int)sizeof(ATOMt));
+#endif
 
     GbGraphicalEnvironment = FALSE;
 

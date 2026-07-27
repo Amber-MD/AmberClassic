@@ -47,11 +47,13 @@ AtomMaskPrepare(UNIT uUnit)
         if (iObjectType(oObj) != RESIDUEid) continue;
         rRes = RESIDUE_from(oObj);
         ContainerSetTempInt(rRes, ++iResIndex);
+        int iAtomResIndex = 0;
         ATOM aAtom; LOOP lAtoms;
         LOOPOVERALL(rRes, GDefaults.reorder_residues ?
                 DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
                 aAtom, ATOM, lAtoms) {
             ContainerSetTempInt(aAtom, ++iAtomIndex);
+            AtomSetIndex(aAtom,++iAtomResIndex);
         }
     }
 }
@@ -285,6 +287,8 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
         return bSelMatchText(node, sElementName(iAtomElement(atom), NULL));
     case SEL_NODE_ELEMENT_NUM:
         return iAtomElement(atom) == node->a;
+    case SEL_NODE_RANGE_ELEM:
+        RANGE_CHECK(iAtomElement(atom));
 
     case SEL_NODE_MOL_CONTAINS:
         {
@@ -314,54 +318,36 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
             return node->cache_result;
         }
 
-    /* Atom index: cpptraj compat = global flat (TempInt), PDB mode = within residue (sequence) */
-    case SEL_NODE_INDEX:
-        if (cpptraj_compatible)
-            return iContainerTempInt(atom) == node->a;
-        /* fallthrough */
-    case SEL_NODE_ATOM_RESIDX:
-        return iContainerSequence(atom) == node->a;
-    case SEL_NODE_ATOM_INDEX:
-        return iContainerTempInt(atom) == node->a;
-
-    /* Residue number: cpptraj compat = flat index (TempInt), PDB mode = PDB resSeq */
-    case SEL_NODE_RESNUM:
-        if (cpptraj_compatible)
-            return iContainerTempInt(cContainerWithin(atom)) == node->a;
-        /* fallthrough */
-    case SEL_NODE_RES_PDBSEQ:
-        return iResiduePdbSequence(cContainerWithin(atom)) == node->a;
-    case SEL_NODE_RES_INDEX:
-        return iContainerTempInt(cContainerWithin(atom)) == node->a;
-
-    case SEL_NODE_MOLNUM:
-        return RESIDUE_from(cContainerWithin(atom))->iMolecule == node->a;
-
-    case SEL_NODE_RANGE_MOL:
-        RANGE_CHECK(RESIDUE_from(cContainerWithin(atom))->iMolecule);
-
-    /* Atom range: cpptraj compat = global flat, PDB mode = within residue */
+    case SEL_NODE_INDEX:       // @<number>
+        return iContainerTempInt(atom) == node->a; // PDB global index
+    case SEL_NODE_ATOM_RESIDX: // @;
+        return iAtomIndex(atom) == node->a; // PDB index within residue
+    case SEL_NODE_ATOM_INDEX:  // @#
+        return iContainerSequence(atom) == node->a; // LEAP index within residue
     case SEL_NODE_RANGE_ATOM:
-        if (cpptraj_compatible)
-            RANGE_CHECK(iContainerTempInt(atom));
-        /* fallthrough */
-    case SEL_NODE_RANGE_ATOM_RESIDX:
-        RANGE_CHECK(iContainerSequence(atom));
-    case SEL_NODE_RANGE_ATOM_INDEX:
         RANGE_CHECK(iContainerTempInt(atom));
+    case SEL_NODE_RANGE_ATOM_RESIDX:
+        RANGE_CHECK(iAtomIndex(atom));
+    case SEL_NODE_RANGE_ATOM_INDEX:
+        RANGE_CHECK(iContainerSequence(atom));
 
-    case SEL_NODE_RANGE_ELEM:
-        RANGE_CHECK(iAtomElement(atom));
-
-    /* Residue range: cpptraj compat = flat index, PDB mode = PDB resSeq */
+    case SEL_NODE_RESNUM:      // :<number>
+        return iContainerTempInt(cContainerWithin(atom)) == node->a;
+    case SEL_NODE_RES_PDBSEQ:  // :;
+        return iResiduePdbSequence(cContainerWithin(atom)) == node->a;
+    case SEL_NODE_RES_INDEX:   // :#
+        return iContainerSequence(cContainerWithin(atom)) == node->a;
     case SEL_NODE_RANGE_RESNUM:
-        if (cpptraj_compatible)
-            RANGE_CHECK(iContainerTempInt(cContainerWithin(atom)));
-        /* fallthrough */
+        RANGE_CHECK(iContainerTempInt(cContainerWithin(atom)));
     case SEL_NODE_RANGE_RES_PDBSEQ:
         RANGE_CHECK(iResiduePdbSequence(cContainerWithin(atom)));
     case SEL_NODE_RANGE_RES_INDEX:
         RANGE_CHECK(iContainerTempInt(cContainerWithin(atom)));
+
+    case SEL_NODE_MOLNUM:
+        return RESIDUE_from(cContainerWithin(atom))->iMolecule == node->a;
+    case SEL_NODE_RANGE_MOL:
+        RANGE_CHECK(RESIDUE_from(cContainerWithin(atom))->iMolecule);
 
     case SEL_NODE_RESTYPE:
         {

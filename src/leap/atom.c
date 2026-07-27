@@ -471,12 +471,14 @@ so the 'earlier' mol1 residue #s are < mol2 residues
         }
     }
      */
-    if (!bIsConnectAtom(aAtom1))
-        VPWARN("Bond: %s is not a CONNECT atom\n",
+    if (iVerbosity()>2) {
+        if (!bIsConnectAtom(aAtom1))
+            VPWARN("Bond: %s is not a CONNECT atom\n",
                         sContainerFullDescriptor(CONTAINER_from(aAtom1), sTemp) );
-    if (!bIsConnectAtom(aAtom2))
-        VPWARN("Bond: %s is not a CONNECT atom\n",
+        if (!bIsConnectAtom(aAtom2))
+            VPWARN("Bond: %s is not a CONNECT atom\n",
                         sContainerFullDescriptor(CONTAINER_from(aAtom2), sTemp ) );
+    }
 
     /*
      *  make the bond
