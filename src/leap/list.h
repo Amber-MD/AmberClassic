@@ -44,6 +44,7 @@
 
 typedef struct  NodeStruct      {
 	struct NodeStruct       *nPNextNode;
+	struct NodeStruct       *nPPrevNode;
 	OBJEKT                  PObject;
 } NODE;
 
@@ -66,10 +67,12 @@ static inline LIST list_from_genp(GENP p)
 static inline LIST list_from_objekt(OBJEKT o)
   { assert ( iObjectType(o)==LISTid ); return (LIST)o; }
 static inline OBJEKT objekt_from_list(LIST l) { return &(l->oSuper.oObjectHeader); }
+static inline LIST list_from_list(LIST l) { return l; }
 
 #define LIST_from(x) _Generic((x), \
     OBJEKT: list_from_objekt, \
-    GENP: list_from_genp \
+    GENP: list_from_genp, \
+    LIST: list_from_list \
 )(x)
 #else
 #define LIST_from(x) ((LIST)(x))

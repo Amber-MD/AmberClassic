@@ -2023,6 +2023,8 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       if (((stPTorsion->fFlags & PERTURBED) != 0) && ((stPTorsion->fFlags & BOUNDARY) == 0)) {
         if ((AMBERINDEX(stPTorsion->iAtom3) == 0) || (AMBERINDEX(stPTorsion->iAtom4) == 0)) {
           MESSAGE("Had to turn torsion around to avoid K,L == 0\n");
+          aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
+          aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
           MESSAGE("Outer atoms: %s --- %s\n", sContainerName(aA), sContainerName(aD));
           SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
           SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
@@ -2052,6 +2054,8 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       if (((stPTorsion->fFlags & PERTURBED) != 0) && ((stPTorsion->fFlags & BOUNDARY) != 0)) {
         if ((AMBERINDEX(stPTorsion->iAtom3) == 0) || (AMBERINDEX(stPTorsion->iAtom4) == 0)) {
           MESSAGE("Had to turn torsion around to avoid K,L == 0\n");
+          aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
+          aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
           MESSAGE("Outer atoms: %s --- %s\n", sContainerName(aA), sContainerName(aD));
           SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
           SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
@@ -3732,6 +3736,8 @@ IX_DESC         iResIx;
                 if ( (AMBERINDEX(stPTorsion->iAtom3) == 0) ||
                      (AMBERINDEX(stPTorsion->iAtom4) == 0) ) {
                     MESSAGE( "Had to turn torsion around to avoid K,L == 0\n" );
+                    aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
+                    aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
                     MESSAGE( "Outer atoms: %s --- %s\n", 
                                     sContainerName(aA), sContainerName(aD) );
                     SWAP( stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp );
@@ -3756,6 +3762,8 @@ IX_DESC         iResIx;
                 if ( (AMBERINDEX(stPTorsion->iAtom3) == 0) ||
                      (AMBERINDEX(stPTorsion->iAtom4) == 0) ) {
                     MESSAGE( "Had to turn torsion around to avoid K,L == 0\n" );
+                    aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
+                    aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
                     MESSAGE( "Outer atoms: %s --- %s\n", 
                                     sContainerName(aA), sContainerName(aD) );
                     SWAP( stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp );

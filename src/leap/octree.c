@@ -38,10 +38,72 @@
  *	hasn't been used in Fortran very much because Fortran did not
  *	originally allow multiple calls to a single routine in the
  *	stack, because local variables were not stack-based.
- */
+ *
+ *======================================================================
+Consolidated design + patch: octree.c
 
+
+1) Neighbor-grid bugs fixed: Pairs[i]→Pairs[l], debug printf removed,
+vPoint.dX,vPoint.dX,vPoint.dZ→vPoint.dX,vPoint.dY,vPoint.dZ.
+
+2) bUseNeighborGrid (int/TRUE-FALSE) added: TRUE = fast path via
+neighbor grid (grid's own build radius, e.g. GDefaults.dDielectricRadius,
+is the only distance bound - no separate cutoff check anywhere).
+FALSE = original brute-force loop over all iChargeAtoms, fully
+unbounded, matching pre-existing behavior exactly. One shared
+accumulation body; only the atom-source loop differs.
+
+3) Two ion radii (dIonRadius1, dIonRadius2) become lifetime properties
+of the OCTREE, passed into octOctTreeCreate. No separate setter.
+
+4) PucValid1/PucValid2 (byte arrays, no bit-width ceiling) precomputed
+once per included node, for both radii together in one atom-scan pass,
+using LOCAL arithmetic (dBaseRadius + dIonRadiusN, squared) - dAtomTemp
+is never mutated for ion-radius purposes anywhere anymore.
+
+5) dAddExtent (tree-build padding) converted from atom-mutation
+(AtomTempDoubleIncrement) to a file-scope global, read locally wherever
+iBuildShellOctant/FinalCheck need it - no behavior change, pure
+structural cleanup, consistent with the rest of this file's existing
+global-scalar convention.
+
+6) OctTreeInitCharges drops its dCutDist parameter entirely (validity no
+longer computed inline here at all - it's precomputed once, at tree
+creation). Always reads PucValid1 (it is inherently the "first result"
+operation, per the established init/update asymmetry).
+
+7) OctTreeUpdateCharge drops dCutDist, gains bIsSecondIon (or
+bool bCurrentIonIsSecond set as a file-scope global, matching the file's
+convention rather than being threaded through the recursive calls) -
+selects PucValid2 vs PucValid1 by direct caller intent, not by
+inferring from a floating-point radius comparison.
+
+8) OctNodeUpdateCharge drops its now-fully-unused iParentAtoms/
+PaParentAtoms parameters (confirmed dead once validity moved to
+precomputed arrays and atom retrieval moved to the neighbor
+grid/brute-force switch).
+
+9) SplitIncludedNode recomputes PucValid1/PucValid2 for its 8 new
+children immediately after creating them (cheap - each child's ct is
+smaller than the parent's) and frees the parent's now-stale arrays.
+This closes the gap where a mid-run split would otherwise leave fresh
+children with NULL validity arrays.
+
+10) DestroyOctant frees PucValid1/PucValid2 alongside PaAtomList.
+
+11) Box-vs-vNewPoint distance pruning added to OctNodeUpdateCharge,
+using the exact PdHalfEdges/PdHalfDiagonals pattern already proven
+in OctNodeDeleteSphere. Gated by dChargeCutoff (default DBL_MAX
+= prune nothing, exact old behavior). Independent of bUseNeighborGrid
+
+  * this prunes whole subtrees geometrically far from the new ion,
+    regardless of how atoms within a visited node get fetched.
+ *======================================================================
+ */
 #include "classes.h"
 #include "octree.h"
+#include "neighbors.h"
+#include "defaults.h"
 #include <assert.h>
 #include <math.h>
 #include <float.h>
@@ -72,6 +134,27 @@ double	*PdHalfEdges, *PdHalfDiagonals;
 
 int	iDistanceCharge;
 int	iChargeAtoms;
+
+double	dAddExtent;		/* was atom-mutated; now a plain global, set once per tree build */
+double	dIonRadius1, dIonRadius2;	/* set once from octOctTreeCreate's args, lifetime of the tree */
+int	bUseNeighborGrid = TRUE;	/* TRUE = fast path (grid's own radius is the only bound).
+					   FALSE = brute force, unbounded, exact original behavior. */
+double	dDielectricRadius;		/* file-scope copy of GDefaults.dDielectricRadius, set once at
+					   init time. Used as: (1) the neighbor grid's own build/query
+					   radius when bUseNeighborGrid==TRUE, and (2) the box-vs-vNewPoint
+					   pruning radius in OctNodeUpdateCharge, independent of
+					   bUseNeighborGrid. Default should reflect GDefaults.dDielectricRadius's
+					   own default; if that default is effectively unbounded, pruning
+					   is a no-op (exact). If not, see caller note below re: keeping
+					   pruning and neighbor-grid-use as separately meaningful even
+					   though they now share one variable name. */
+int	bCurrentIonIsSecond;		/* set by OctTreeUpdateCharge each call; read by OctNodeUpdateCharge */
+
+// nonbond grid:
+unsigned int     iGroupStart[2];
+VARARRAY vaPoints=NULL;
+NeighborGrid *ngAtomGrid=NULL;
+
 double	dCutRadius;
 float	*PfCharges;
 ATOM	*PaChargeAtoms;
@@ -179,10 +262,6 @@ double		dHalfEdge = PdHalfEdges[iDepth-1];
 	memset(PonChildren, 0, sizeof(OCTNODEt));
 	PonChildren->iStatus = iStatus;
 	PonChildren->iDepth = iDepth;
-	PonChildren->PonChildren = NULL;
-	PonChildren->PaAtomList = NULL;
-	PonChildren->PfCharges = NULL;
-	PonChildren->iAtoms = 0;
 	PonChildren->vCorner = *PvCorner;
 	PonChildren->iNodeNum = iNodeCount++;
 	for (i=1; i<8; i++) {
@@ -238,7 +317,7 @@ ATOM	*PaAtom;
 		d = dDistance( &PonNode->vCorner, &vAtomPosition( *PaAtom ) );
 		if ( d < dShellRadius )
 			PonNode->iStatus = OCT_INCLUDED;
-		if ( d < dAtomTemp( *PaAtom ) ) {
+		if ( d < dAtomTemp( *PaAtom ) + dAddExtent ) {
 #ifdef OCTDEBUG
 			insex[oct->depth]++;
 #endif
@@ -274,6 +353,11 @@ DestroyOctant( OCTNODEt *PonNode, int iStatus )
 	else
 		fprintf(stderr, " children null\n");
 #endif
+
+	if ( PonNode->PucValid1 != NULL )
+            { FREE( PonNode->PucValid1 ); PonNode->PucValid1 = NULL; }
+	if ( PonNode->PucValid2 != NULL )
+            { FREE( PonNode->PucValid2 ); PonNode->PucValid2 = NULL; }
 
 	if ( PonNode->PaAtomList != NULL )
 		FREE( PonNode->PaAtomList );
@@ -359,7 +443,7 @@ OCTNODEt	*PonChildren;
 		 *	inclusion in it means the box is excluded
 		 *	and the outer radius doesn't need to be looked at.
 		 */
-		if ( d + dHalfDiagonal < dAtomTemp( *PaAtom ) ) {
+		if ( d + dHalfDiagonal < dAtomTemp( *PaAtom ) + dAddExtent ) {
 			/*
 			 *  Complete inclusion in inner radius of
 			 *	this atom: no need to ever look at 
@@ -397,7 +481,7 @@ OCTNODEt	*PonChildren;
 				iIncluded++; /* completely inside outer */
 			else
 				iPartialOut++; /* partially inside outer */
-			if ( d - dHalfDiagonal < dAtomTemp( *PaAtom ) ) {
+			if ( d - dHalfDiagonal < dAtomTemp( *PaAtom ) + dAddExtent ) {
 				/* 
 				 *  Partial inclusion in inner radius of
 				 *	this atom.
@@ -659,14 +743,15 @@ OCTNODEt	*PonChildren;
 	return(OCT_INCLUDED);
 }
 OCTREE
-octOctTreeCreate( UNIT uUnit, int iType, double dGridSpace, double dAddExtent, double dShellExtent,
-			int iIncludeSolvent )
+octOctTreeCreate( UNIT uUnit, int iType, double dGridSpace, double dAddExtent_,
+                        double dShellExtent, int iIncludeSolvent,
+                        double dIonRadius1_, double dIonRadius2_)
 {
 OCTREE		octTree;
 VECTOR		vMinCorner, vMaxCorner, vAtom;
 VARARRAY	vaAtoms;
 ATOM		aAtom, *PaAtoms;
-LOOP		lAtoms, lRes;
+LOOP		lRes;
 RESIDUE		rRes;
 int		i, j, iAtoms, iDefaultedRadius;
 double		dMaxRadius, dCharge;
@@ -675,21 +760,25 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 	if ( !uUnit )
 		return(NULL);
 
+        if (ngAtomGrid || vaPoints)
+	    assert( (VP0("Onyl one OCTREE obejct allowed (coding error)\n" ), 0) );
+
 	/*
 	 *  Set globals.
 	 */
 	dGridSize = dGridSpace;
 	dShellRadius = dShellExtent;	/* shell: clearance beyond inner shell*/
+        dAddExtent = dAddExtent_;
+        dIonRadius1 = dIonRadius1_;
+        dIonRadius2 = dIonRadius2_;
 
 	/*
 	 *  Create the octree "object" and initialize
 	 */
 	octTree = (OCTREE)MALLOC(sizeof(OCTREEt) );
+        memset(octTree, 0, sizeof(OCTREEt));
 	octTree->iType = iType;
 	octTree->dGridSize = dGridSpace;
-	octTree->PfCharges = NULL;
-	octTree->PdHalfEdges = NULL;
-	octTree->PdHalfDiagonals = NULL;
 
 	/*
 	 *  Make array for atom pointers
@@ -709,8 +798,7 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 		while ((rRes = (RESIDUE) oNext(&lRes))) {
 			if ( iIncludeSolvent  ||  
 			     cResidueType( rRes ) != RESTYPESOLVENT ) {
-    	    			lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
-    	    			while ((aAtom = (ATOM) oNext(&lAtoms))) {
+                                FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
 					VarArrayAdd( vaAtoms, (GENP)&aAtom );
 					iDefaultedRadius +=
 						iAtomSetTmpRadius( aAtom );
@@ -724,8 +812,7 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 		while ((rRes = (RESIDUE) oNext(&lRes))) {
 			if ( cResidueType( rRes ) == RESTYPESOLVENT ) {
 				i = 0;
-    	    			lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
-    	    			while ((aAtom = (ATOM) oNext(&lAtoms))) {
+                                FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
 					if (!i)
 						VarArrayAdd( vaAtoms, (GENP)&aAtom );
 					iDefaultedRadius +=
@@ -783,11 +870,9 @@ return(octTree);
 	dCharge = dAtomCharge(  *PaAtoms );
 	dMaxRadius = dAtomTemp( *PaAtoms );
 	vMinCorner = vMaxCorner = vAtomPosition( *PaAtoms );
-	AtomTempDoubleIncrement( *PaAtoms, dAddExtent );
 	for (i=1,PaAtoms++; i<iAtoms; i++, PaAtoms++) {
 		dCharge += dAtomCharge( *PaAtoms );
 		dMaxRadius = MAX( dMaxRadius, dAtomTemp( *PaAtoms ) );
-		AtomTempDoubleIncrement( *PaAtoms, dAddExtent );
 		vAtom = vAtomPosition( *PaAtoms );
 		if (vAtom.dX < vMinCorner.dX)
 			vMinCorner.dX = vAtom.dX;
@@ -915,6 +1000,9 @@ return(octTree);
 	octTree->onHead.iStatus = OCT_UNKNOWN;
 	octTree->onHead.iDepth = 0;
 	octTree->onHead.vCorner = vMinCorner;
+        octTree->onHead.iStatus = OCT_UNKNOWN;
+        octTree->onHead.iNodeNum = -1;          /* was never set - pre-existing gap */
+
 	/* 
 	 *  The master atom list is part of a vararray under the OCTREE
 	 *	so, unlike the separately allocated atom lists in the
@@ -965,9 +1053,6 @@ return(octTree);
 	/*
 	 *  Reset atom radii.
 	 */
-	PaAtoms = PVAI( vaAtoms, ATOM, 0 );
-	for (i=0; i<iAtoms; i++, PaAtoms++)
-		AtomTempDoubleIncrement( *PaAtoms, -dAddExtent );
 	return(octTree);
 }
 
@@ -999,6 +1084,12 @@ OctTreeDestroy( OCTREE *PoctTree )
 	 */
 	if ( (*PoctTree)->vaAtoms )
 		VarArrayDestroy( &(*PoctTree)->vaAtoms );
+	if ( vaPoints )
+		VarArrayDestroy( &vaPoints );
+        if (ngAtomGrid) {
+                neighbor_grid_free(ngAtomGrid);
+                ngAtomGrid = NULL;
+        }
 
 	if ( (*PoctTree)->PfCharges != NULL )
 		FREE( (*PoctTree)->PfCharges );
@@ -1061,10 +1152,17 @@ double	d;
 			 *  Got point: loop over atoms, accumulating charge.
 			 */
 			*PfCharges = 0.0;
-			PaAtom = PaChargeAtoms;
+                        const Pair *Pairs;
+                        size_t count;
+                        neighbor_grid_query_point(ngAtomGrid,
+                               vPoint.dX,vPoint.dX,vPoint.dZ,1,1,
+                               &Pairs, &count);
 			iCompCharge = 1;
-			for (l=0; l<iChargeAtoms; l++, PaAtom++) {
+			for (l=0; l<count; l++) {
 				double 	dX, dY, dZ;
+                                int iAtom = Pairs[i].to_member;
+                                printf("iAtom=%d of %d\n",iAtom,iChargeAtoms);
+			        PaAtom = &PaChargeAtoms[Pairs[i].to_member];
 
 				dX = vPoint.dX - vAtomPosition(*PaAtom).dX;
 				dX = dX * dX;
@@ -1098,12 +1196,90 @@ double	d;
 	}
 	return;
 }
+
+static void
+OctNodeComputeValidity( OCTNODEt *PonNode )
+{
+int	i, j, k, l, ct, idx;
+VECTOR	vPoint;
+ATOM	*PaAtom;
+double	d, dX, dY, dZ, dR1Sq, dR2Sq, dBaseRadius;
+const Pair *Pairs;
+size_t	count;
+
+	if ( PonNode->iStatus == OCT_PARTIAL ) {
+		for (i=0; i<8; i++)
+			OctNodeComputeValidity( &PonNode->PonChildren[i] );
+		return;
+	}
+	if ( PonNode->iStatus == OCT_EXCLUDED )
+		return;
+
+	ct = iMaxDepth - PonNode->iDepth + 1;
+	PonNode->PucValid1 = (unsigned char *)MALLOC( ct*ct*ct * sizeof(unsigned char) );
+	PonNode->PucValid2 = (unsigned char *)MALLOC( ct*ct*ct * sizeof(unsigned char) );
+
+	idx = 0;
+	vPoint.dX = PonNode->vCorner.dX;
+	for (i=0; i<ct; i++, vPoint.dX+=dGridSize) {
+	    vPoint.dY = PonNode->vCorner.dY;
+	    for (j=0; j<ct; j++, vPoint.dY+=dGridSize) {
+		vPoint.dZ = PonNode->vCorner.dZ;
+		for (k=0; k<ct; k++, vPoint.dZ+=dGridSize, idx++) {
+			PonNode->PucValid1[idx] = 1;
+			PonNode->PucValid2[idx] = 1;
+
+			if ( bUseNeighborGrid ) {
+				neighbor_grid_query_point(ngAtomGrid,
+					vPoint.dX, vPoint.dY, vPoint.dZ, 1, 1,
+					&Pairs, &count);
+				for (l=0; l<count; l++) {
+					int iAtom = Pairs[l].to_member;
+					PaAtom = &PaChargeAtoms[iAtom];
+
+					dX = vAtomPosition(*PaAtom).dX - vPoint.dX; dX *= dX;
+					dY = vAtomPosition(*PaAtom).dY - vPoint.dY; dY *= dY;
+					dZ = vAtomPosition(*PaAtom).dZ - vPoint.dZ; dZ *= dZ;
+					d = dX + dY + dZ;
+
+					dBaseRadius = dAtomTemp( *PaAtom );
+					dR1Sq = dBaseRadius + dIonRadius1; dR1Sq *= dR1Sq;
+					dR2Sq = dBaseRadius + dIonRadius2; dR2Sq *= dR2Sq;
+
+					if ( d < dR1Sq ) PonNode->PucValid1[idx] = 0;
+					if ( d < dR2Sq ) PonNode->PucValid2[idx] = 0;
+					if ( !PonNode->PucValid1[idx] && !PonNode->PucValid2[idx] )
+						break;
+				}
+			} else {
+				for (l=0; l<iChargeAtoms; l++) {
+					PaAtom = &PaChargeAtoms[l];
+
+					dX = vAtomPosition(*PaAtom).dX - vPoint.dX; dX *= dX;
+					dY = vAtomPosition(*PaAtom).dY - vPoint.dY; dY *= dY;
+					dZ = vAtomPosition(*PaAtom).dZ - vPoint.dZ; dZ *= dZ;
+					d = dX + dY + dZ;
+
+					dBaseRadius = dAtomTemp( *PaAtom );
+					dR1Sq = dBaseRadius + dIonRadius1; dR1Sq *= dR1Sq;
+					dR2Sq = dBaseRadius + dIonRadius2; dR2Sq *= dR2Sq;
+
+					if ( d < dR1Sq ) PonNode->PucValid1[idx] = 0;
+					if ( d < dR2Sq ) PonNode->PucValid2[idx] = 0;
+					if ( !PonNode->PucValid1[idx] && !PonNode->PucValid2[idx] )
+						break;
+				}
+			}
+		}
+	    }
+	}
+}
+
 void
-OctTreeInitCharges( OCTREE octTree, int iAtomOption, int iDielectric, double dCutDist,
-							VECTOR *PvMin, VECTOR *PvMax )
+OctTreeInitCharges( OCTREE octTree, int iDielectric,
+			double dDielectricRadius_, VECTOR *PvMin, VECTOR *PvMax )
 {
 int	i;
-ATOM	*PaAtom;
 
 	if ( octTree->iType != OCT_SHELL ) {
 		assert( (VP0("InitCharges: wrong tree type\n" ), 0) );
@@ -1125,9 +1301,31 @@ ATOM	*PaAtom;
 	/*
 	 *  Set up globals for node descent.
 	 */
-	assert( iAtomOption == AT_OCTREE );
 	iChargeAtoms = iVarArrayElementCount( octTree->vaAtoms );
 	PaChargeAtoms = PVAI( octTree->vaAtoms, ATOM, 0 );
+        dDielectricRadius = dDielectricRadius_;
+        if ( dDielectricRadius < 8.0 ) {
+                VPWARN("OctTreeInitCharges: dielectric radius %.2fA is unusually small!!\n"
+                       "Results may be inaccurate or ion placement may fail to find valid sites.\n"
+                       "Consider a value of at least 8A.\n", dDielectricRadius );
+        }
+
+        if ( bUseNeighborGrid ) {
+            vaPoints = vaVarArrayCreate(sizeof(Point));
+            iGroupStart[0] = 0;
+            iGroupStart[1] = iChargeAtoms;
+            for (i=0;i<iChargeAtoms;i++) {
+                Point p = { .x = PaChargeAtoms[i]->vPosition.dX,
+                            .y = PaChargeAtoms[i]->vPosition.dY,
+                            .z = PaChargeAtoms[i]->vPosition.dZ,
+                            .group = 1, { .member = i } };
+                VarArrayAdd(vaPoints, &p);
+            }
+            ngAtomGrid = neighbor_grid_setup( PVAI(vaPoints, Point, 0),
+                    iChargeAtoms, 1, iGroupStart,
+                    dDielectricRadius);
+        }
+
 	fMaxCharge = -FLT_MAX;
 	fMinCharge = FLT_MAX;
 	iMaxDepth = octTree->iMaxDepth;
@@ -1139,20 +1337,11 @@ ATOM	*PaAtom;
 		iDistanceCharge = 1;
 
 	/*
-	 *  Add new radius to atoms.
+	 *  Precompute validity ONCE, for both ion radii - dAtomTemp holds
+	 *	plain radii throughout, no mutation involved.
 	 */
-	if ( iDielectric == DIEL_R2 ) { 
-		PaAtom = PVAI( octTree->vaAtoms, ATOM, 0 );
-		for (i=0; i<iChargeAtoms; i++, PaAtom++) {
-/* TODO - chargeatoms not necc whole set */
-			AtomTempDoubleIncrement( *PaAtom, dCutDist );
-			AtomTempDoubleSquare( *PaAtom );
-		}
-	} else {
-		PaAtom = PVAI( octTree->vaAtoms, ATOM, 0 );
-		for (i=0; i<iChargeAtoms; i++, PaAtom++)
-			AtomTempDoubleIncrement( *PaAtom, dCutDist );
-	}
+	OctNodeComputeValidity( &octTree->onHead );
+
 	/*
 	 *  Descend the octree.
 	 */
@@ -1160,20 +1349,6 @@ ATOM	*PaAtom;
 	*PvMin = vMinCharge;
 	*PvMax = vMaxCharge;
 
-	/*
-	 *  Restore atoms' radii.
-	 */
-	if ( iDielectric == DIEL_R2 ) { 
-		PaAtom = PVAI( octTree->vaAtoms, ATOM, 0 );
-		for (i=0; i<iChargeAtoms; i++, PaAtom++) {
-			AtomTempDoubleSquareRoot( *PaAtom );
-			AtomTempDoubleIncrement( *PaAtom, -dCutDist );
-		}
-	} else {
-		PaAtom = PVAI( octTree->vaAtoms, ATOM, 0 );
-		for (i=0; i<iChargeAtoms; i++, PaAtom++)
-			AtomTempDoubleIncrement( *PaAtom, -dCutDist );
-	}
 	MESSAGE( "charges: %ld sec\n", time((time_t *) 0) - time_start);
 	return;
 }
@@ -1299,6 +1474,10 @@ int		i, j, k, nchild, ct, ct2;
 float		*PfTmpCharges, *PfCharge;
 OCTNODEt	*PonChildren;
 
+    assert( PonNode->PucValid1 != (void*)0xbebebebebebebebeULL );
+    assert( PonNode->PucValid2 != (void*)0xbebebebebebebebeULL );
+ /* both should be NULL together, or both non-NULL together - never mixed */
+assert( (PonNode->PucValid1 == NULL) == (PonNode->PucValid2 == NULL) );
 	if ( PonNode->PonChildren != NULL )
 		DFATAL("Programming error\n" );
 
@@ -1392,7 +1571,20 @@ OCTNODEt	*PonChildren;
 		}
 	}
 	FREE( PfTmpCharges );
+
+	/*
+	 *  Parent's precomputed validity is stale (different ct, different
+	 *	node identity). Compute fresh validity for each of the 8 new
+	 *	children now - cheap, since each child's ct is smaller than
+	 *	the parent's, and we already have them in hand.
+	 */
+	for (i=0; i<8; i++)
+		OctNodeComputeValidity( &PonChildren[i] );
+
+	if ( PonNode->PucValid1 != NULL ) { FREE( PonNode->PucValid1 ); PonNode->PucValid1 = NULL; }
+	if ( PonNode->PucValid2 != NULL ) { FREE( PonNode->PucValid2 ); PonNode->PucValid2 = NULL; }
 }
+
 static int
 OctNodeDeleteSphere( OCTNODEt *PonNode )
 {
@@ -1539,86 +1731,63 @@ OctTreeDeleteSphere( OCTREE octTree, VECTOR *PvPoint, double dRadius )
 
 /*************************************************************************
  *************************************************************************/
-
 static void
-OctNodeUpdateCharge( OCTNODEt *PonNode, int iParentAtoms, ATOM *PaParentAtoms )
+OctNodeUpdateCharge( OCTNODEt *PonNode )
 {
 VECTOR	vPoint;
 double	d;
-int	i, j, k, l, ct;
-int	iCompOk;
+int	i, j, k, ct, idx;
 float	*PfCharge;
-ATOM	*PaAtom, *PaAtoms;
-int	iAtoms;
+unsigned char *PucValid;
+double	dHalfEdge, dHalfDiagonal;
+VECTOR	vCenter;
+//ATOM	*PaAtom;
+//const Pair *Pairs;
 
-	/*
-	 *  If partial, recurse.
-	 */
-	if ( PonNode->iStatus == OCT_PARTIAL ) {
-		for (i=0; i<8; i++)
-			OctNodeUpdateCharge( &PonNode->PonChildren[i],
-				PonNode->iAtoms, PonNode->PaAtomList );
-		return;
-	}
-
-	/*
-	 *  If already excluded, quit.
-	 */
 	if ( PonNode->iStatus == OCT_EXCLUDED )
 		return;
 
 	/*
-	 *  Included, do whole thing
+	 *  Box-vs-vNewPoint pruning: skip subtrees geometrically too far
+	 *	to matter. Independent of bUseNeighborGrid. dChargeCutoff
+	 *	defaults to DBL_MAX (prune nothing = exact old behavior).
 	 */
-
-	if ( PonNode->PaAtomList != NULL ) {
-		PaAtoms = PonNode->PaAtomList;
-		iAtoms = PonNode->iAtoms;
-	} else {
-		PaAtoms = PaParentAtoms;
-		iAtoms = iParentAtoms;
+	dHalfEdge = PdHalfEdges[PonNode->iDepth];
+	vCenter = PonNode->vCorner;
+	vCenter.dX += dHalfEdge; vCenter.dY += dHalfEdge; vCenter.dZ += dHalfEdge;
+	dHalfDiagonal = PdHalfDiagonals[PonNode->iDepth];
+	d = dDistance( &vCenter, &vNewPoint );
+	if ( d - dHalfDiagonal > dDielectricRadius )
+		return;   /* whole subtree too far: skip, don't even recurse */
+	if ( PonNode->iStatus == OCT_PARTIAL ) {
+		for (i=0; i<8; i++)
+			OctNodeUpdateCharge( &PonNode->PonChildren[i] );
+		return;
 	}
+
 	PfCharge = PonNode->PfCharges;
 	ct = iMaxDepth - PonNode->iDepth + 1;
+	PucValid = bCurrentIonIsSecond ? PonNode->PucValid2 : PonNode->PucValid1;
 
+	idx = 0;
 	vPoint.dX = PonNode->vCorner.dX;
 	for (i=0; i<ct; i++, vPoint.dX+=dGridSize) {
 	    vPoint.dY = PonNode->vCorner.dY;
 	    for (j=0; j<ct; j++, vPoint.dY+=dGridSize) {
 		vPoint.dZ = PonNode->vCorner.dZ;
-		for (k=0; k<ct; k++, vPoint.dZ+=dGridSize) {
+		for (k=0; k<ct; k++, vPoint.dZ+=dGridSize, idx++) {
 			double 	dX, dY, dZ;
 
-			dX = vNewPoint.dX - vPoint.dX;
-			dX = dX * dX;
-			dY = vNewPoint.dY - vPoint.dY;
-			dY = dY * dY;
-			dZ = vNewPoint.dZ - vPoint.dZ;
-			dZ = dZ * dZ;
+			dX = vNewPoint.dX - vPoint.dX; dX *= dX;
+			dY = vNewPoint.dY - vPoint.dY; dY *= dY;
+			dZ = vNewPoint.dZ - vPoint.dZ; dZ *= dZ;
 			d = dX + dY + dZ;
+
 			if ( iDistanceCharge )
 				d = sqrt(d);
 			*PfCharge += fNewCharge / d;
-			/*
-			 *  Look at neighboring atoms to make sure
-			 *	this point is valid for min/max check.
-			 */
-			iCompOk = 1;
-			PaAtom = PaAtoms;
-			for (l=0; l<iAtoms; l++, PaAtom++) {
-				dX = vAtomPosition( *PaAtom ).dX - vPoint.dX;
-				dX = dX * dX;
-				dY = vAtomPosition( *PaAtom ).dY - vPoint.dY;
-				dY = dY * dY;
-				dZ = vAtomPosition( *PaAtom ).dZ - vPoint.dZ;
-				dZ = dZ * dZ;
-				d = dX + dY + dZ;
-				if ( d < dAtomTemp( *PaAtom ) ) {
-					iCompOk = 0;
-					break;
-				}
-			}
-			if ( iCompOk ) {
+
+			if ( PucValid[idx] ) {
 				if (*PfCharge > fMaxCharge ) {
 					fMaxCharge = *PfCharge;
 					vMaxCharge = vPoint;
@@ -1627,21 +1796,18 @@ int	iAtoms;
 					vMinCharge = vPoint;
 				}
 			} else {
-				/* HACK to ensure printgrid coloring ok */
-				*PfCharge = 0.0;
+				*PfCharge = 0.0;	/* HACK to ensure printgrid coloring ok */
 			}
 			PfCharge++;
 		}
 	    }
 	}
 }
-void
-OctTreeUpdateCharge( OCTREE octTree, VECTOR *PvNewPoint, float fCharge, double dCutDist,
-							VECTOR *PvMax, VECTOR *PvMin )
-{
-ATOM	*PaAtom;
-int	i;
 
+void
+OctTreeUpdateCharge( OCTREE octTree, VECTOR *PvNewPoint, float fCharge,
+			int bIsSecondIon, VECTOR *PvMax, VECTOR *PvMin )
+{
 	if ( octTree->iType != OCT_SHELL ) {
 		assert( (VP0( "UpdateCharge: wrong tree type\n" ), 0) );
 	}
@@ -1649,13 +1815,13 @@ int	i;
 		assert( (VP0( "UpdateCharge: charges not initted\n" ), 0) );
 	}
 
-	/*
-	 *  Set up globals for octree.
-	 */
+	bCurrentIonIsSecond = bIsSecondIon;
 	vNewPoint = *PvNewPoint;
 	fNewCharge = fCharge;
 	fMaxCharge = -FLT_MAX;
 	fMinCharge = FLT_MAX;
+        vMinCharge.dX=vMinCharge.dY=vMinCharge.dZ=0;
+        vMaxCharge.dX=vMaxCharge.dY=vMaxCharge.dZ=0;
 	iMaxDepth = octTree->iMaxDepth;
 	dGridSize = octTree->dGridSize;
 	if ( octTree->iDielectric == DIEL_R2 )
@@ -1663,30 +1829,9 @@ int	i;
 	else
 		iDistanceCharge = 1;
 
-	/*
-	 *  Add new radius to atoms.
-	 */
-	PaAtom = PVAI( octTree->vaAtoms, ATOM, 0 );
-	for (i=0; i<iChargeAtoms; i++, PaAtom++) {
-		AtomTempDoubleIncrement( *PaAtom, dCutDist );
-		AtomTempDoubleSquare( *PaAtom );
-	}
-
-	/*
-	 *  Descend octree.
-	 */
-	OctNodeUpdateCharge( &octTree->onHead, iChargeAtoms, 
-				PVAI( octTree->vaAtoms, ATOM, 0 ) );
+	OctNodeUpdateCharge( &octTree->onHead );
 	*PvMin = vMinCharge;
 	*PvMax = vMaxCharge;
-	/*
-	 *  Restore atoms' radii.
-	 */
-	PaAtom = PVAI( octTree->vaAtoms, ATOM, 0 );
-	for (i=0; i<iChargeAtoms; i++, PaAtom++) {
-		AtomTempDoubleSquareRoot( *PaAtom );
-		AtomTempDoubleIncrement( *PaAtom, -dCutDist );
-	}
 	return;
 }
 

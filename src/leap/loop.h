@@ -234,5 +234,29 @@ extern void		LoopDestroyMemory(LOOP *lPLoop);
         loop = lLoop(OBJEKT_from(over),goal);\
         while ( (element=type##_from(oNext(&loop))) )
 
+/*
+ *      FOR_<type>_IN_CONTAINER pattern
+ *
+ *      Fast, unfiltered iteration over the direct children of any
+ *      CONTAINER, bypassing LOOP/oNext entirely.
+ *
+ *      CALLER CONTRACT: no visibility filtering, no subloops needed --
+ *      every NODE in the container's direct contents list is genuinely
+ *      of the target type (ATOM for a RESIDUE's contents, RESIDUE for
+ *      a UNIT's contents). Does not descend into grandchildren -- a
+ *      UNIT's ATOMs-not-in-a-RESIDUE (if any existed) would be
+ *      visited by FOR_RESIDUES_IN_UNIT, and assumed to be RESIDUE objexts.
+ *      (Bare atoms are possible to create, but not really supported.)
+ */
+#define FOR_ATOMS_IN_RESIDUE( aVar, rResidue ) \
+    for ( LISTLOOP _llAtoms_ = \
+              llListLoop(LIST_from(CONTAINER_from(rResidue)->lContents) ); \
+          ( (aVar) = ATOM_from(oListNext(&_llAtoms_))) != NULL ; )
 
-#endif/* LOOP_H */
+#define FOR_RESIDUES_IN_UNIT( rVar, uUnit ) \
+    for ( LISTLOOP _llResidues_ = \
+              llListLoop(LIST_from(CONTAINER_from(uUnit)->lContents) ); \
+          ( (rVar) = RESIDUE_from(oListNext(&_llResidues_))) != NULL ; )
+
+
+#endif // LOOP_H

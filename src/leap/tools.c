@@ -418,7 +418,6 @@ int             iFirst = 1;
 UNIT
 zToolSetupSolvent( UNIT uSolvent )
 {
-LOOP            lResidues;
 RESIDUE         rRes;
 
     uSolvent = (UNIT)oCopy( (OBJEKT)uSolvent );
@@ -440,8 +439,9 @@ RESIDUE         rRes;
      *  Make sure that all solvent residues are marked as solvent
      *  and stuff the atom radii for solvent screening
      */
-    lResidues = lLoop( (OBJEKT)uSolvent, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lResidues)) )
+    //lResidues = lLoop( (OBJEKT)uSolvent, RESIDUES );
+    //while ( (rRes = (RESIDUE)oNext(&lResidues)) )
+    FOR_RESIDUES_IN_UNIT(rRes,uSolvent)
         ResidueSetType( rRes, RESTYPESOLVENT);
 
     /*
@@ -920,11 +920,10 @@ size_t          npairs;
  *      solute, whether they fall outside of a shell around
  *      the solute, or if they fall outside of a solvent sphere.
  */
-static void
+static inline void
 zToolDiscardInvalidSolvent( UNIT uSolvent, int iCriteria, CRITERIAt *cPCriteria,
         NeighborGrid *ngSolute, double dCloseness, double dFarness2 )
 {
-LOOP            lRes, lTemp;
 RESIDUE         rRes;
 ATOM            aAtom;
 
@@ -933,17 +932,18 @@ ATOM            aAtom;
                 /* an atom in the solute then discard the entire */
                 /* molecule of solvent */
 
-
-    lRes = lLoop( (OBJEKT)uSolvent, RESIDUES );
-    while ( ( rRes = (RESIDUE)oNext(&lRes) ) != NULL ) {
+    //lRes = lLoop( (OBJEKT)uSolvent, RESIDUES );
+    //while ( ( rRes = (RESIDUE)oNext(&lRes) ) != NULL ) {
+    FOR_RESIDUES_IN_UNIT(rRes,uSolvent) {
         // Mark bulk solvent residues
         ResidueSetFlags(rRes, RESIDUEBULKSOLVENT); 
         /*
          *  check each atom in the solvent residue against the
          *  solute using fast neighbor grid
          */
-        lTemp = lLoop( (OBJEKT)rRes, ATOMS );
-        while ( ( aAtom = (ATOM)oNext(&lTemp)) != NULL ) {
+        //lTemp = lLoop( (OBJEKT)rRes, ATOMS );
+        //while ( ( aAtom = (ATOM)oNext(&lTemp)) != NULL ) {
+        FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
             if ( zbToolAtomFailsCriteria( aAtom, iCriteria, cPCriteria,
                             ngSolute, dCloseness, dFarness2 ) ) {
 
@@ -1043,7 +1043,7 @@ NeighborGrid    *ngSolute;
         for ( iy=0; iy<iY; iy++, dY -= dYSolvent ) {
             dZ = dZStart;
             for ( iz=0; iz<iZ; iz++, dZ -= dZSolvent ) {
-                MESSAGE("Adding box at: x=%d  y=%d  z=%d\n", ix, iy, iz);
+                MESSAGE("Adding box at: ix=%d  iy=%d  iz=%d\n", ix, iy, iz);
                 VectorDef( &vPos, dX, dY, dZ );
 
                 /*
@@ -1051,8 +1051,7 @@ NeighborGrid    *ngSolute;
                  */
                 uSolventDup = (UNIT)oCopy( (OBJEKT)uSolvent );
                 ContainerCenterAt((CONTAINER) uSolventDup, vPos );
-                MESSAGE("Center of solvent box is: %lf, %lf, %lf\n",
-                                dX, dY, dZ );
+                MESSAGE("Center of solvent box is: %lf, %lf, %lf\n", dX, dY, dZ );
 
                 /*
                  *  discard unwanted residues from solvent box
@@ -1064,6 +1063,7 @@ NeighborGrid    *ngSolute;
                 UnitJoin( uSolute, uSolventDup );
             }
         }
+        VP3("Adding solvent boxes, ix=%d\n",ix);
     }
     neighbor_grid_free(ngSolute);
 }
@@ -1260,6 +1260,14 @@ CRITERIAt       cCriteria;
     else 
         dBuffer = 0.0;
 
+
+    { //FIXME: check this -- Is this really the best way to get atom count??
+        LOOP lTemp;
+        ATOM aAtom;
+        int iAtomCount = 0;
+        LOOPOVERALL(uSolute,ATOMS,aAtom,ATOM,lTemp) iAtomCount++;
+        uSolute->iFirstBulkSolvent = iAtomCount+1;
+    }
 
                 /* Add all of the boxes of solvent */
 
@@ -1513,7 +1521,6 @@ ToolInitSolventPotential( UNIT uUnit, VARARRAY vaSolvent,
 {
 int             i, iSolvRes;
 RESIDUE         rRes, *PrSolvRes;
-LOOP            lResidues, lAtoms;
 double          dMinPot, dMaxPot;
 
         iSolvRes = iVarArrayElementCount( vaSolvent );
@@ -1531,8 +1538,9 @@ if ( aSolvAtom == NULL )
                 dZSolv = vAtomPosition( aSolvAtom ).dZ;
 
                 dPot = 0.0;
-                lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
-                while ( (rRes = (RESIDUE)oNext( &lResidues )) != NULL) {
+                //lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
+                //while ( (rRes = (RESIDUE)oNext( &lResidues )) != NULL) {
+                FOR_RESIDUES_IN_UNIT(rRes,uUnit) {
                         ATOM    aSoluteAtom;
 
                         /* TODO - maybe possible to break here? */
@@ -1544,8 +1552,9 @@ if ( aSolvAtom == NULL )
                          *      contributions to solvent residue's 
                          *      potential
                          */
-                        lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
-                        while ( (aSoluteAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+                        //lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
+                        //while ( (aSoluteAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+                        FOR_ATOMS_IN_RESIDUE(aSoluteAtom, rRes) {
                                 double  dX, dY, dZ, dR;
 
                                 dX = dXSolv - vAtomPosition(aSoluteAtom).dX;
@@ -1700,25 +1709,58 @@ LOOP                    lTemp;
 VARARRAY                vaAtoms;
 int                     iAtoms, i, j;
 ATOM                    aAtom;
-BONDSEARCHt*            bsPAtom1;
-BONDSEARCHt*            bsPAtom2;
-VECTOR                  vPos, vMin, vMax;
+BONDSEARCHt             *bsPAtom1, *bsPAtom2;
+VECTOR                  vPos, vPos2;
 double                  dR, dX, dY, dZ;
-double                  dDist=0;
+double                  dDist, dMaxR;
 STRING                  sTemp, sTemp1, sTemp2;
 int                     iCount;
+// Identified bonding pairs:
 VARARRAY                vaPairs;
-PAIRt                   *Ppair=NULL;
+PAIRt                   pair, *Ppair;
 int                     iPairs;
+// Neighbor grid points:
+VARARRAY                vaPoints;
+// Neighbor grid pairs:
+const Pair              *pairGrid;
+size_t                  npairs;
 
 
                 /* Collect all of the atoms in the CONTAINER cCont */
                 /* into an array of positions and Rs for faster */
                 /* checking of close contacts */
 
+    vaPoints = vaVarArrayCreate( sizeof(Point) );
+    vaAtoms = vaVarArrayCreate( sizeof(BONDSEARCHt) );
+    dMaxR = 0;
     iAtoms = 0;
     lTemp = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( oNext(&lTemp) != NULL ) iAtoms++;
+    while ( (aAtom = (ATOM) oNext(&lTemp)) ) {
+        Point p = {
+                vAtomPosition( aAtom ).dX,
+                vAtomPosition( aAtom ).dY,
+                vAtomPosition( aAtom ).dZ,
+                1, // one big group
+                { .member = iAtoms }};
+        VarArrayAdd(vaPoints, &p);
+        dR = dToolAtomR( aAtom );
+        if ( dR < 0.1 )       {
+            /* R unknown or 0 */
+            if ( iAtomElement( aAtom ) == HYDROGEN )
+                dR = 1.0;
+            else
+                dR = ATOM_DEFAULT_RADIUS;
+        }
+        dR *= dCloseness;
+        BONDSEARCHt b = { vAtomPosition(aAtom), dR, aAtom };
+        VarArrayAdd(vaAtoms, &b);
+        if (dR > dMaxR) dMaxR = dR;
+        iAtoms++;
+    }
+    if (iAtoms < 2) {
+        VarArrayDestroy(&vaPoints);
+        VarArrayDestroy(&vaAtoms);
+    }
     
     if ( iAtoms == 0 ) {
         VPWARN("No atoms to bond\n" );
@@ -1729,80 +1771,10 @@ int                     iPairs;
         return( 0 );
     }
 
-    vaAtoms = vaVarArrayCreate( sizeof(BONDSEARCHt) );
-    VarArraySetSize( vaAtoms, iAtoms );
- 
-    lTemp = lLoop( (OBJEKT)cCont, ATOMS );
-    bsPAtom1= PVAI( vaAtoms, BONDSEARCHt, 0 );
-    for (i=0; i<iAtoms; i++, bsPAtom1++ ) {
-        aAtom = (ATOM) oNext(&lTemp);
-        bsPAtom1->vPos = vAtomPosition(aAtom);
-        bsPAtom1->aAtom = aAtom;
-        bsPAtom1->dR = dToolAtomR( aAtom );
-        if ( bsPAtom1->dR < 0.1 )       {
-            /* R unknown or 0 */
-            if ( iAtomElement( aAtom ) == HYDROGEN )
-                bsPAtom1->dR = 1.0;
-            else
-                bsPAtom1->dR = ATOM_DEFAULT_RADIUS;
-        }
-        bsPAtom1->dR *= dCloseness;
-    }
-
-    if ( iOperation == DISTANCE_SEARCH_CREATE_BONDS ) {
-        /*
-         *  make an array for sorting distances; since
-         *      a simple sizing of N^2/2 can exhaust
-         *      memory for large #s of atoms, do a
-         *      quick grid-based count to establish a 
-         *      reasonable upper bound.
-         */
-        iCount = 0;
-        bsPAtom1 = PVAI( vaAtoms, BONDSEARCHt, 0 );
-        for ( i=0; i<iAtoms; i++, bsPAtom1++ ) {
-                vPos = bsPAtom1->vPos;
-                bsPAtom2 = bsPAtom1 + 1;
-                for ( j=i+1; j<iAtoms; j++, bsPAtom2++ ) {
-                        VECTOR  vPos2;
-
-                        if ( bAtomBondedTo( bsPAtom1->aAtom, bsPAtom2->aAtom ) )
-                                continue;
-                        if ( iAtomElement(bsPAtom1->aAtom) == HYDROGEN &&
-                             iAtomElement(bsPAtom2->aAtom) == HYDROGEN )
-                                continue;
-
-                        vPos2 = bsPAtom2->vPos;
-
-                        if ( bAbsoluteDistance ) 
-                                dR = dCloseness;
-                        else
-                                dR = 0.5 * (bsPAtom1->dR + bsPAtom2->dR);
-
-                        VectorDef( &vMin, 
-                                        dVX(&vPos2) - dR, 
-                                        dVY(&vPos2) - dR, 
-                                        dVZ(&vPos2) - dR );
-                        VectorDef( &vMax, 
-                                        dVX(&vPos2) + dR, 
-                                        dVY(&vPos2) + dR, 
-                                        dVZ(&vPos2) + dR );
-
-                        if ( (dVX(&vPos) > dVX(&vMax))  ||
-                             (dVY(&vPos) > dVY(&vMax))  ||
-                             (dVZ(&vPos) > dVZ(&vMax)) ) 
-                                continue;
-                        if ( (dVX(&vPos) < dVX(&vMin))  ||
-                             (dVY(&vPos) < dVY(&vMin))  ||
-                             (dVZ(&vPos) < dVZ(&vMin)) )
-                                continue;
-                        iCount++;
-                }
-        }
-        vaPairs = vaVarArrayCreate( sizeof(PAIRt) );
-        VarArraySetSize( vaPairs, iCount );
-        Ppair = PVAI( vaPairs, PAIRt, 0 );
-        iPairs = 0;
-    }
+    NeighborGrid    *ngAtoms;
+    unsigned int nbgroups[2]={0,iAtoms};
+    ngAtoms = neighbor_grid_setup(PVAI(vaPoints, Point, 0), nbgroups[1], 1, nbgroups,
+            bAbsoluteDistance ? dCloseness : dMaxR);
 
                 /* Compare the position of every atom with every other */
                 /* atom, looking for possible bonding contacts.  If one */
@@ -1812,9 +1784,13 @@ int                     iPairs;
     bsPAtom1 = PVAI( vaAtoms, BONDSEARCHt, 0 );
     for ( i=0; i<iAtoms; i++, bsPAtom1++ ) {
         vPos = bsPAtom1->vPos;
-        bsPAtom2 = bsPAtom1 + 1;
-        for ( j=i+1; j<iAtoms; j++, bsPAtom2++ ) {
-            VECTOR      vPos2;
+        if (neighbor_grid_query_point(ngAtoms,vPos.dX,vPos.dY,vPos.dZ,
+                          -1, 0, &pairGrid, &npairs))
+            VPFATAL("Problem with Neighbor Grid query\n");
+        for (j=0;j<npairs;j++) {
+            bsPAtom2 = PVAI( vaAtoms, BONDSEARCHt, pairGrid[j].to_member );
+
+            if (bsPAtom1 == bsPAtom2) continue;
 
             if ( bAtomBondedTo( bsPAtom1->aAtom, bsPAtom2->aAtom ) )
                 continue;
@@ -1825,30 +1801,11 @@ int                     iPairs;
                 dR = dCloseness;
             else
                 dR = 0.5 * (bsPAtom1->dR + bsPAtom2->dR);
-
-           /*
-            *  quick grid check to save cpu
-            */
-            VectorDef( &vMin, 
-                        dVX(&vPos2) - dR, dVY(&vPos2) - dR, dVZ(&vPos2) - dR );
-            VectorDef( &vMax, 
-                        dVX(&vPos2) + dR, dVY(&vPos2) + dR, dVZ(&vPos2) + dR );
-
-            if (  (dVX(&vPos) > dVX(&vMax)) ||
-                  (dVY(&vPos) > dVY(&vMax)) ||
-                  (dVZ(&vPos) > dVZ(&vMax)) || 
-                  (dVX(&vPos) < dVX(&vMin)) ||
-                  (dVY(&vPos) < dVY(&vMin)) ||
-                  (dVZ(&vPos) < dVZ(&vMin)) )
-                continue;
-
-                /* Now check the actual distance between the centers */
-        
-            dX = dVX(&vPos) - dVX(&(bsPAtom2->vPos));
-            dY = dVY(&vPos) - dVY(&(bsPAtom2->vPos));
-            dZ = dVZ(&vPos) - dVZ(&(bsPAtom2->vPos));
-
             dR *= dR;
+
+            dX = dVX(&vPos) - dVX(&vPos2);
+            dY = dVY(&vPos) - dVY(&vPos2);
+            dZ = dVZ(&vPos) - dVZ(&vPos2);
             dDist = dX*dX + dY*dY + dZ*dZ;
 
             if ( dDist < dR ) {
@@ -1872,11 +1829,10 @@ int                     iPairs;
                                                 (CONTAINER)bsPAtom2->aAtom, sTemp2 ) );
                                 continue;
                             }
-                            Ppair->aAtom1 = bsPAtom1->aAtom;
-                            Ppair->aAtom2 = bsPAtom2->aAtom;
-                            Ppair->dDist = dDist;
-                            Ppair++;
-                            iPairs++;
+                            pair.aAtom1 = bsPAtom1->aAtom;
+                            pair.aAtom2 = bsPAtom2->aAtom;
+                            pair.dDist = dDist;
+                            VarArrayAdd(vaPairs,&pair);
                             break;
                         case DISTANCE_SEARCH_PRINT_WARNINGS:
 			  if ( strcmp( sAtomName( bsPAtom1->aAtom ), "EPW" ) == 0 ||
@@ -1905,10 +1861,12 @@ int                     iPairs;
          *  assign bonds starting with the shortest distances
          */
 
+        Ppair = PVAI( vaPairs, PAIRt, 0 );
+        iPairs = iVarArrayElementCount( vaPairs );
+
         VP0("%d pairs of atoms within potential bonding distance\n", iCount);
         VP0("%d are not H-H pairs\n", iPairs );
 
-        Ppair = PVAI( vaPairs, PAIRt, 0 );
         SortByDouble( Ppair, iPairs, sizeof(PAIRt), &Ppair->dDist, TRUE );
         iCount = 0;
         for (i=0; i<iPairs; i++, Ppair++ ) {

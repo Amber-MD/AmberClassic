@@ -76,26 +76,13 @@
  *	argument.  Return a pointer to the pointer to the node
  *	which points to the object.
  */
-static NODEP *
-searchList( NODEP *nPPList, OBJEKT oObj, NODEP *nPPPrevious )
+static NODEP
+searchList( NODEP nPPList, OBJEKT oObj )
 {
-NODEP   nPCur, *nPPPrev;
-
-        nPPPrev = nPPList;
-        nPCur = (*nPPPrev);
-	*nPPPrevious = NULL;
-                /* search for the node that contains the object */
-        while ( nPCur != NULL ) {
-                if ( nPCur->PObject == oObj ) break;
-		*nPPPrevious = nPCur;
-                nPPPrev = &(nPCur->nPNextNode);
-                nPCur = (*nPPPrev);
-        }
-
-        if ( nPCur == NULL ) return(NULL);
-        return(nPPPrev);
+        for (NODEP nPCur = nPPList; nPCur; nPCur = nPCur->nPNextNode)
+            if ( nPCur->PObject == oObj ) return nPCur;
+        return NULL;
 }
-
         
 
 
@@ -185,9 +172,11 @@ NODEP   nPTempList;
     if ( nPTempList == NULL ) {
         lList->nPLastNode = lList->nPFirstNode;
     }
+    else nPTempList->nPPrevNode = lList->nPFirstNode;
 
     (lList->nPFirstNode)->PObject = oObj;
     (lList->nPFirstNode)->nPNextNode = nPTempList;
+    (lList->nPFirstNode)->nPPrevNode = NULL;
     CollectionSetSize( lList, iCollectionSize(lList)+1 );
 
                 /* Reference the object because it is being added */
@@ -230,6 +219,7 @@ NODEP   nPTempList;
 
     (lList->nPLastNode)->PObject = oObj;
     (lList->nPLastNode)->nPNextNode = NULL;
+    (lList->nPLastNode)->nPPrevNode = nPTempList;
     CollectionSetSize( lList, iCollectionSize(lList)+1 );
 
                 /* Reference the object because it is being added */
@@ -288,6 +278,7 @@ ListConcat( LIST lList1, LIST lList2 )
 
     if ( lList1->nPLastNode != NULL ) {
 	lList1->nPLastNode->nPNextNode = lList2->nPFirstNode;
+	lList2->nPFirstNode->nPPrevNode = lList1->nPLastNode;
     } else {
 	lList1->nPFirstNode = lList2->nPFirstNode;
     }
@@ -357,28 +348,28 @@ LISTLOOP        llL;
 bool
 bListRemove( LIST lList, OBJEKT oObject )
 {
-NODEP   *nPPPrev;
 NODEP   nPNode;
-NODEP	nPPrevious;
 
                 /* If the list is empty then return */
 
     if ( lList->nPFirstNode==NULL ) return(FALSE);
-
+    if (bObjectInClass( oObject, CONTAINERid ) && CONTAINER_from(oObject)->nPListNode ) {
+        nPNode = CONTAINER_from(oObject)->nPListNode;
+    } else {
                 /* Search the list for the object */
-    nPPPrev = searchList( &(lList->nPFirstNode), oObject, &nPPrevious );
-    if ( nPPPrev == NULL ) return(FALSE);
-
-                /* Now actually remove the object from the list */
-    nPNode = *nPPPrev;
-    (*nPPPrev) = (*nPPPrev)->nPNextNode;
-
-                /* If the node is the last node then update the last node */
-
-    if ( nPNode == lList->nPLastNode ) {
-	if ( *nPPPrev == NULL ) lList->nPLastNode = nPPrevious;
-	else 			lList->nPLastNode = *nPPPrev;
+        nPNode = searchList( lList->nPFirstNode, oObject);
+        if ( !nPNode ) return(FALSE);
     }
+
+                /* Now remove the object from the list */
+    if ( nPNode == lList->nPFirstNode ) {
+        lList->nPFirstNode = nPNode->nPNextNode;
+        if (nPNode->nPNextNode) nPNode->nPNextNode->nPPrevNode = NULL;
+    } else nPNode->nPPrevNode->nPNextNode = nPNode->nPNextNode;
+    if ( nPNode == lList->nPLastNode ) {
+        lList->nPLastNode = nPNode->nPPrevNode;
+        if (nPNode->nPPrevNode) nPNode->nPPrevNode->nPNextNode = NULL;
+    } else nPNode->nPNextNode->nPPrevNode = nPNode->nPPrevNode;
 
                 /* Destroy the node itself */
     FREE(nPNode);
@@ -386,7 +377,6 @@ NODEP	nPPrevious;
     CollectionSetSize( lList, iCollectionSize(lList) - 1 );
 
                 /* DEREF the object */
-
     DEREF( oObject );
 
     return(TRUE);
@@ -410,17 +400,11 @@ NODEP	nPPrevious;
 bool
 bListContains( LIST lList, OBJEKT oObject )
 {
-NODEP   *nPPPrev;
-NODEP	nPPrevious;
-
                 /* If the list is empty then return */
-
     if ( lList->nPFirstNode==NULL ) return(FALSE);
 
                 /* Search the list for the object */
-    nPPPrev = searchList( &(lList->nPFirstNode), oObject, &nPPrevious );
-    if ( nPPPrev == NULL ) return(FALSE);
-    return(TRUE);
+    return searchList( lList->nPFirstNode, oObject ) != NULL;
 }
 
 
@@ -493,8 +477,13 @@ LISTLOOP        llLoop;
     while ( ( oObj = oListNext(&llLoop) ) != NULL ) {
         oNew = oObjectDuplicate(oObj);
         /* Call ListAddTeEnd() to maintain the same order! JMK 2026 */
-        if (GDefaults.reverse_lists) ListAdd( (LIST)lNew, oNew );
-        else ListAddToEnd( (LIST)lNew, oNew );
+        if (GDefaults.reverse_lists) {
+            ListAdd( (LIST)lNew, oNew );
+            CONTAINER_from(oNew)->nPListNode = LIST_from(lNew)->nPFirstNode;
+        } else {
+            ListAddToEnd( (LIST)lNew, oNew );
+            CONTAINER_from(oNew)->nPListNode = LIST_from(lNew)->nPLastNode;
+        }
 	oNew->iReferences = 1;	/* since ListAdd() increments */
     }
     return((LIST)lNew);

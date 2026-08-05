@@ -20,6 +20,7 @@ typedef struct {
                    // which we compare the residue name to reslist.
                    // In ParmSetFindCMAP, even though only 1 resName is matched per CMAP lookup,
                    // which resName matches varies by CMAP so all 5 must be sent
+    int iRefResIndex; // save in CMAP so we don't calculate repeatedly
 } CMAPt;
 typedef CMAPt *CMAP;
 

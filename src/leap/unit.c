@@ -192,7 +192,7 @@ int             iTemp = PARM_NOT_FOUND;
 /* TODO:Allow the user to specify interactions that should be ignored */
 /* TODO:Like HW-HW-OW angles for TIP3 waters */
 
-        if ( zbUnitIgnoreAngle( sAtom1, sAtom2, sAtom3 )) goto IGNORE1;
+        if ( bUnitIgnoreAngle( sAtom1, sAtom2, sAtom3 )) goto IGNORE1;
 
         PARMLIB_LOOP( plLib, psTemp, 
                 ( iTemp = iParmSetFindAngle( psTemp, sAtom1, 
@@ -239,7 +239,7 @@ IGNORE1:
 /* TODO:Allow the user to specify interactions that should be ignored */
 /* TODO:Like HW-HW-OW angles for TIP3 waters */
 
-            if ( zbUnitIgnoreAngle( sAtom1, sAtom2, sAtom3 )) 
+            if ( bUnitIgnoreAngle( sAtom1, sAtom2, sAtom3 )) 
                         goto IGNORE2;
 
             PARMLIB_LOOP( plLib, psTemp, 
@@ -416,7 +416,7 @@ bool    bMissing = FALSE;
 
 
 /*
- *      zbUnitIgnoreAngle
+ *      bUnitIgnoreAngle
  *
  *      Author: Christian Schafmeister (1991)
  *
@@ -426,7 +426,7 @@ bool    bMissing = FALSE;
  *      This will allow LEAP to handle TIP3 waters.
  */
 bool
-zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC )
+bUnitIgnoreAngle( STRING sA, STRING sB, STRING sC )
 {
 
     if ( strcmp( sA, "OW" ) == 0 ) {
@@ -1960,5 +1960,65 @@ double  dXMax, dYMax, dZMax;
     VectorDef( vPLower, dXMin, dYMin, dZMin );
     VectorDef( vPUpper, dXMax, dYMax, dZMax );
 
+}
+
+
+int
+UnitLabelMolecules(UNIT uUnit) {
+    LOOP    lResidues, lSpanning, lAtoms;
+    RESIDUE rRes;
+    ATOM    aAtom;
+    int     iAtomCount=0, iResidueCount=0, iMolecule=0;
+
+    /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
+    /* Also clear the imaging atom flag which will be updated */
+    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED|RESIDUEIMAGEATOM);
+    LOOPOVERALL(uUnit,ATOMS,aAtom,ATOM,lAtoms) AtomSetSeenId(aAtom, -1);
+
+    /* Loop through solvent RESIDUEs and:
+     * 1) Count them
+     *      Normally iResidueCount == iCollectionSize(cContainerContents(uUnit)))
+     *      but leap allows container abuse, and it can contain anything.
+     * 2) set the temp flag saying if they are in the cap or not
+     * 3) label all molecule groups.
+     *     ==> This is repeated in zUnitIOFindAndCountMolecules()
+     *     but must be repeated after residue ordering
+     *     TODO: zUnitIOFindAndCountMolecules can use labels instead
+     *     of repeating the full spanning tree search
+     * 4) set image atom flag if present; only valid if solvent residue
+    */
+    LOOPOVERALL(uUnit,DIRECTCONTENTSBYSEQNUM,rRes,RESIDUE,lResidues) {
+        iResidueCount++;
+        if (cResidueType(rRes) == RESTYPESOLVENT) {
+            if (bUnitCapContainsContainer(uUnit, CONTAINER_from(rRes)))
+                ResidueSetFlags(rRes, RESIDUEINCAP);
+            else
+                ResidueResetFlags(rRes, RESIDUEINCAP);
+            if (aResidueImagingAtom(rRes))
+                AtomSetFlags(aResidueImagingAtom(rRes),RESIDUEIMAGEATOM);
+        }
+        /* Search for the next RESIDUE whose first ATOM has not */
+        /* been touched */
+        aAtom = ATOM_from(oContainerFirstObject(rRes));
+        if (bAtomFlagsSet(aAtom, ATOMTOUCHED)) continue;
+        iMolecule++; // inrement first: molecule index is 1-based
+
+        /* Touch all of the ATOMs within the molecule that */
+        /* contains the current RESIDUE */
+        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
+            AtomSetFlags(aAtom, ATOMTOUCHED);
+            iAtomCount++;
+            CONTAINER cParent = cContainerWithin(aAtom);
+            if (iObjectType(cParent) == RESIDUEid)
+                RESIDUE_from(cParent)->iMolecule = iMolecule;
+        }
+    }
+
+    uUnit->iMoleculeCount = iMolecule;
+    uUnit->iResidueCount = iResidueCount;
+    uUnit->iAtomCount = iAtomCount;
+    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
+
+    return iResidueCount;
 }
 

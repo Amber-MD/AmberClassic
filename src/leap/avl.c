@@ -37,7 +37,7 @@ typedef char	way3; /* -1, 0, 1 */
 typedef struct _node {
 	struct _node 	*ptr[2]; /* left, right */
 	way3 		balance, trace; /* trace flags where left off, for prev/next */
-	rectype 	data;
+	IX_REC 	        data;
 } node;
 
 #define stepway(n,x) (((n)->ptr)[way3ix(x)])
@@ -94,7 +94,7 @@ freenode(node *n)
 
 
 static int
-compkey(rectype *r1, rectype *r2)
+compkey(IX_REC *r1, IX_REC *r2)
 {
 	int n= ix_keylength ?
        		memcmp(r1->key,r2->key,ix_keylength) :
@@ -104,7 +104,7 @@ compkey(rectype *r1, rectype *r2)
 }
 
 static void
-copydata(rectype *r1, rectype *r2)
+copydata(IX_REC *r1, IX_REC *r2)
 {
 	r1->recptr = r2->recptr;
 	r1->count = r2->count;
@@ -115,7 +115,7 @@ copydata(rectype *r1, rectype *r2)
 }
 
 static void
-duprec(rectype *r)
+duprec(IX_REC *r)
 {
 	if (r->count++==UINT_MAX) {
 		fprintf(stderr,"avltrees: repeat count exceeded\n");
@@ -192,8 +192,8 @@ else
 	return g;
 }
 
-static rectype *
-avltree_search(node **tt, rectype *key, unsigned short searchflags)
+static IX_REC *
+avltree_search(node **tt, IX_REC *key, unsigned short searchflags)
 {
 	way3 aa;
 	node *p,*q,*pp;
@@ -253,8 +253,8 @@ avltree_last(node **tt)
    	}
 }
 
-static rectype *
-avltree_insert(node **tt, rectype *key)
+static IX_REC *
+avltree_insert(node **tt, IX_REC *key)
 {
 	way3 aa,b;
 	node *p,*q,*pp;
@@ -291,8 +291,8 @@ avltree_insert(node **tt, rectype *key)
 	return &(q->data);
 }
 
-static rectype *
-avltree_delete(node **tt, rectype *key, unsigned short searchflags)
+static IX_REC *
+avltree_delete(node **tt, IX_REC *key, unsigned short searchflags)
 {
 	way3 aa,aaa,b,bb;
 	node *p,*q,*pp,*p1;
@@ -410,7 +410,7 @@ destroy_index(IX_DESC *pix)
 int
 find_key(IX_REC *pe, IX_DESC *pix, int direction)
 {
-	rectype *ptr;
+	IX_REC *ptr;
 
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
         int flags = SRF_FINDEQUAL|SRF_SETMARK;
@@ -431,7 +431,7 @@ find_key(IX_REC *pe, IX_DESC *pix, int direction)
 int
 locate_key(IX_REC *pe, IX_DESC *pix, int direction)
 {
-	rectype *ptr; int ret;
+	IX_REC *ptr; int ret;
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
         int flags = SRF_FINDEQUAL|SRF_SETMARK;
         if (direction<0) {
@@ -470,7 +470,7 @@ add_key(IX_REC *pe, IX_DESC *pix)
 int
 delete_key(IX_REC *pe, IX_DESC *pix)
 {
-	rectype *ptr;
+	IX_REC *ptr;
 
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
 	ptr=avltree_search((node **)&(pix->root),pe,SRF_FINDEQUAL|SRF_SETMARK);
@@ -497,7 +497,7 @@ last_key(IX_DESC *pix)
 int
 next_key(IX_REC *pe, IX_DESC *pix)
 {
-	rectype *ptr;
+	IX_REC *ptr;
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
 	if ((ptr=avltree_search((node **)&(pix->root),pe, /* pe not used */
                        SRF_FROMMARK|SRF_SETMARK|SRF_FINDGREAT))==NULL)
@@ -508,7 +508,7 @@ next_key(IX_REC *pe, IX_DESC *pix)
 int
 prev_key(IX_REC *pe, IX_DESC *pix)
 {
-	rectype *ptr;
+	IX_REC *ptr;
 	ix_keylength=pix->keylength; ix_dupkeys=pix->dup_keys;
 	if ((ptr=avltree_search((node **)&(pix->root),pe, /* pe not used */
                        SRF_FROMMARK|SRF_SETMARK|SRF_FINDLESS))==NULL)

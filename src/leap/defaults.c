@@ -47,9 +47,9 @@ char *PBRadii_optionDesc[] =
        "H(N)-modified Bondi radii", "PARSE radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
 static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
 static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
-static char *PdbConvertResname_options[] = {"none","keep","variant","standard",NULL};
-static char *PdbConvertResname_optionDesc[] = {"PdbResMap","Retain all names",
-                                      "Variant names","Standard names",NULL };
+static char *PdbConvertResname_options[] = {"standard","keep","variant",NULL};
+static char *PdbConvertResname_optionDesc[] = {"Standard names","Retain input names",
+                                      "Variant names",NULL };
 
 // NOTE: uninitialzed values get zero, and most defaults are zero
 static DefaultSetting
@@ -75,6 +75,8 @@ zSDefaultSettings[] = {
     { 'D', "searchdistance", "SearchDistance", &GDefaults.dDSearchDistance,
                .defval.real=DEFAULT_DISTANCE_SEARCH },
     { 'D', "gridspace", "GridSpace", &GDefaults.dGridSpace, .defval.real=1.0 },
+    { 'D', "dielectric_radius", "Dielectric_Radius", &GDefaults.dDielectricRadius, .defval.real=999.0 },
+    { 'D', "nbgrid", "NBGrid", &GDefaults.bNBGrid, .defval.integer=1 },
     { 'D', "shellextent", "ShellExtent", &GDefaults.dShellExtent, .defval.real=4.0 },
     { 'D', "dipole_damp_factor", "Dipole Damping Factor", &GDefaults.dDipoleDampFactor },
     { 'D', "scee", "SCEE 1-4 Scale Factor", &GDefaults.dSceeScaleFactor, .defval.real=1.2 },
@@ -86,6 +88,7 @@ zSDefaultSettings[] = {
     { 'B', "residueimpropers", "ResidueImpropers", &GDefaults.iResidueImpropers },
     { 'B', "pdb_auto_match","PDB_Auto_Match", &GDefaults.bPdbAutoMatch },
     { 'B', "pdb_auto_link","PDB_Auto_Link", &GDefaults.bPdbAutoLink },
+    { 'B', "pdb_match_exact","PDB_Match_Exact", &GDefaults.bPdbExactMatch },
     { 'D', "pdb_link_cutoff","PDB_Link_Cutoff", &GDefaults.dPdbLinkCovalentCutoff, .defval.real=1.2 },
     { 'D', "pdb_crosslink_cutoff","PDB_CrossLink_Cutoff", &GDefaults.dPdbCrosslinkCovalentCutoff,
                .defval.real=1.1 },

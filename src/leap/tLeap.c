@@ -191,5 +191,7 @@ int main(int argc, char *argv[])
 
     ParseShutdown();
 
+    BasicsFinalize();
+
     return 0;
 }

@@ -340,7 +340,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
 {
     STRING sLine;
     char tok1[32], tok2[32];
-    int i, ipos;
+    int ipos;
     int iMaxCount = 0;       /* max seen in CMAP_COUNT */
     bool bReading = FALSE;   /* TRUE between CMAP_TITLE and CMAP_PARAMETER */
     CMAPt cmap;
@@ -412,6 +412,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
             /* defaults — standard backbone phi/psi */
             cmap.residx[0] = -1;
             cmap.residx[4] =  1;
+            cmap.iRefResIndex = 2; // default reference residue
             strcpy(cmap.atmname[0], "C");
             strcpy(cmap.atmname[1], "N");
             strcpy(cmap.atmname[2], "CA");
@@ -422,7 +423,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
             if (cmap.reslist) free(cmap.reslist);
             cmap.nres = atoi(&sLine[ipos]);
             cmap.reslist = malloc(sizeof(WRD) * cmap.nres);
-            for (i = 0; i < cmap.nres; i++)
+            for (int i = 0; i < cmap.nres; i++)
                 fscanf(fIn, "%7s", cmap.reslist[i]);
 
         } else if (strcmp("CMAP_RESOLUTION", tok2) == 0) {
@@ -440,7 +441,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
                 cmap.map = malloc(sizeof(double) *
                               cmap.resolution * cmap.resolution);
                 int m = cmap.resolution * cmap.resolution;
-                for (i = 0; i < m; i++)
+                for (int i = 0; i < m; i++)
                     fscanf(fIn, "%lf", &cmap.map[i]);
             }
             /* PARAMETER is always last — commit and reset */
@@ -460,6 +461,8 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
             sscanf(&sLine[ipos], "%d%d%d%d%d",
                    &cmap.residx[0], &cmap.residx[1], &cmap.residx[2],
                    &cmap.residx[3], &cmap.residx[4]);
+            for (int i=0;i<4;i++)
+                if (!cmap.residx[i]) { cmap.iRefResIndex = i; break; }
 
         } else if (strcmp("CMAP_TERMMAP", tok2) == 0) {
             int iTermMap = atoi(&sLine[ipos]);

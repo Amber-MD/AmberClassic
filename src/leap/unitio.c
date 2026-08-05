@@ -1034,9 +1034,12 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
  *        for sharing between routines, the impropers to keep
  *        the 1-4's company.
  */
-static IX_REC e14, *ePImp = NULL;
+static IX_REC ix14, ixImp;
 static IX_DESC scr14_index, improper_index;
-static int *Pint1, *Pint2;
+typedef struct {
+  int iAtom1, iAtom2;
+} ATOMPAIRt;
+ATOMPAIRt *ix14Key = (ATOMPAIRt *)&ix14.key;
 
 
 /*
@@ -1071,11 +1074,11 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, bool * bPCalc14,
      *  order the 1st, last pointers by atom #
      */
     if (stPTorsion->iAtom1 < stPTorsion->iAtom4) {
-        *Pint1 = stPTorsion->iAtom1;
-        *Pint2 = stPTorsion->iAtom4;
+        ix14Key->iAtom1 = stPTorsion->iAtom1;
+        ix14Key->iAtom2 = stPTorsion->iAtom4;
     } else {
-        *Pint1 = stPTorsion->iAtom4;
-        *Pint2 = stPTorsion->iAtom1;
+        ix14Key->iAtom1 = stPTorsion->iAtom4;
+        ix14Key->iAtom2 = stPTorsion->iAtom1;
     }
 
     stPTorsion->bCalc14 = FALSE;
@@ -1092,9 +1095,9 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, bool * bPCalc14,
     if (!bCheck)
         return;
 
-    switch (find_key(&e14, &scr14_index,1)) {
+    switch (find_key(&ix14, &scr14_index,1)) {
     case IX_OK:
-        if (e14.recptr != NULL) {
+        if (ix14.recptr != NULL) {
             /*
              *  bond or angle
              */
@@ -1114,10 +1117,10 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, bool * bPCalc14,
         /*
          *  a new torsion - add to index
          */
-        e14.recptr = (void *) NULL;
-        if (!add_key(&e14, &scr14_index))
+        ix14.recptr = (void *) NULL;
+        if (!add_key(&ix14, &scr14_index))
             DFATAL("1-4 torsions: cannot add key %d %d\n",
-                    *Pint1, *Pint2);
+                    ix14Key->iAtom1, ix14Key->iAtom2);
         break;
     default:
         DFATAL("unexpected index error\n");
@@ -1152,9 +1155,9 @@ zUnitIOSetCalc14Flags(SAVETORSIONt * stPTorsion, bool * bPCalc14,
 bool
 bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 {
-    int iCount, iIndex, iTemp;
+    int iIndex, iTemp;
     LOOP lTemp;
-    SAVEBONDt *sbPBond;
+    SAVEBONDt sbBond;
     ATOM aAtom1, aAtom2;
     bool bFailedGeneratingParameters;
     double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0;
@@ -1175,114 +1178,104 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
         VP0("Building bond parameters.\n");
 
     uUnit->vaBonds = vaVarArrayCreate(sizeof(SAVEBONDt));
-    iCount = 0;
-    lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
-    while (oNext(&lTemp)) iCount++;
-    VarArraySetSize((uUnit->vaBonds), iCount);
-    if (iCount) {
-        sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-        if (sbPBond == NULL)
-            DFATAL(" ?? null\n");
-        for (lTemp=lLoop(OBJEKT_from(uUnit), BONDS); oNext(&lTemp); sbPBond++) {
-            LoopGetBond(&lTemp, &aAtom1, &aAtom2);
-            sbPBond->iAtom1 = iContainerTempInt(aAtom1);
-            sbPBond->iAtom2 = iContainerTempInt(aAtom2);
-            sbPBond->iParmIndex = 0;
-            sbPBond->iPertParmIndex = 0;
-            sbPBond->fFlags = 0;
-            strcpy(sAtom1, sAtomType(aAtom1));
-            strcpy(sAtom2, sAtomType(aAtom2));
-            VPTRACE("Searching for bond parameter for atom type %s with name %s,\n"
-                    "       atomic number %i, Id %i, and Index %i \n"
-                    "       at position %8.3f,%8.3f,%8.3f \n",
-                    sAtom1, sContainerName( aAtom1), iAtomElement(aAtom1),
-                    iAtomId(aAtom1), iAtomIndex(aAtom1), vAtomPosition(aAtom1).dX,
-                    vAtomPosition(aAtom1).dY, vAtomPosition(aAtom1).dZ );
-            iIndex = iParmSetFindBond(uUnit->psParameters, sAtom1, sAtom2);
+    for (lTemp=lLoop(OBJEKT_from(uUnit), BONDS); oNext(&lTemp); ) {
+        LoopGetBond(&lTemp, &aAtom1, &aAtom2);
+        sbBond.iAtom1 = iContainerTempInt(aAtom1);
+        sbBond.iAtom2 = iContainerTempInt(aAtom2);
+        sbBond.fFlags = 0;
+        strcpy(sAtom1, sAtomType(aAtom1));
+        strcpy(sAtom2, sAtomType(aAtom2));
+        VPTRACE("Searching for bond parameter for atom type %s with name %s,\n"
+                "       atomic number %i, Id %i, and Index %i \n"
+                "       at position %8.3f,%8.3f,%8.3f \n",
+                sAtom1, sContainerName( aAtom1), iAtomElement(aAtom1),
+                iAtomId(aAtom1), iAtomIndex(aAtom1), vAtomPosition(aAtom1).dX,
+                vAtomPosition(aAtom1).dY, vAtomPosition(aAtom1).dZ );
+        iIndex = iParmSetFindBond(uUnit->psParameters, sAtom1, sAtom2);
+        if (iIndex == PARM_NOT_FOUND) {
+            iTemp = PARM_NOT_FOUND;
+            PARMLIB_LOOP(plLib, psTemp,
+                    (iTemp = iParmSetFindBond(psTemp, sAtom1, sAtom2)));
+            if (iTemp != PARM_NOT_FOUND) {
+                ParmSetBond(psTemp, iTemp, sAtom1, sAtom2, &dKb, &dR0,
+                        &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
+                iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2,
+                        dKb, dR0, dKpull, dRpull0, dKpress, dRpress0, sDesc);
+            } else {
+                bFailedGeneratingParameters = TRUE;
+                iIndex = 0;
+                VECTOR vPos1 = vAtomPosition(aAtom1);
+                VECTOR vPos2 = vAtomPosition(aAtom2);
+                RESIDUE rRes1 = RESIDUE_from(cContainerWithin(aAtom1));
+                RESIDUE rRes2 = RESIDUE_from(cContainerWithin(aAtom2));
+                VPERROR("Could not find bond parameter for atom types: %s - %s\n"
+                        "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f \n"
+                        "        and atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f.\n",
+                        sAtom1, sAtom2,
+                        sContainerName(rRes1),sResidueChainId(rRes1),iResiduePdbSequence(rRes1),sContainerName(aAtom1),
+                        vPos1.dX, vPos1.dY, vPos1.dZ,
+                        sContainerName(rRes2),sResidueChainId(rRes2),iResiduePdbSequence(rRes2),sContainerName(aAtom2),
+                        vPos2.dX, vPos2.dY, vPos2.dZ );
+            }
+        }
+        sbBond.iParmIndex = iIndex + 1;
+
+        if (bPert &&
+            (bAtomFlagsSet(aAtom1, ATOMPERTURB) ||
+             bAtomFlagsSet(aAtom2, ATOMPERTURB))) {
+
+            /* Note that the bond is perturbed and whether or */
+            /* not it is on the boundary between perturbed and */
+            /* non-perturbed */
+            MESSAGE("Pert interaction between: %s-%s\n",
+                     sFullDescriptor(aAtom1, sTemp1),
+                     sFullDescriptor(aAtom2, sTemp2));
+            MESSAGE("Indexes = %d-%d\n", sbBond.iAtom1,
+                     sbBond.iAtom2);
+            sbBond.fFlags |= PERTURBED;
+            if (!(bAtomFlagsSet(aAtom1, ATOMPERTURB) &&
+                  bAtomFlagsSet(aAtom2, ATOMPERTURB))) {
+                sbBond.fFlags |= BOUNDARY;
+                MESSAGE("-Boundary\n");
+            }
+
+            if (bAtomFlagsSet(aAtom1, ATOMPERTURB)) {
+                if (strlen(sAtomPertType(aAtom1)) != 0)
+                    strcpy(sAtom1, sAtomPertType(aAtom1));
+                else
+                    strcpy(sAtom1, sAtomType(aAtom1));
+            } else
+                strcpy(sAtom1, sAtomType(aAtom1));
+            if (bAtomFlagsSet(aAtom2, ATOMPERTURB)) {
+                if (strlen(sAtomPertType(aAtom2)) != 0)
+                    strcpy(sAtom2, sAtomPertType(aAtom2));
+                else
+                    strcpy(sAtom2, sAtomType(aAtom2));
+            } else
+                strcpy(sAtom2, sAtomType(aAtom2));
+            iIndex = iParmSetFindBond(uUnit->psParameters,
+                                      sAtom1, sAtom2);
             if (iIndex == PARM_NOT_FOUND) {
                 iTemp = PARM_NOT_FOUND;
                 PARMLIB_LOOP(plLib, psTemp,
-                        (iTemp = iParmSetFindBond(psTemp, sAtom1, sAtom2)));
+                             (iTemp = iParmSetFindBond(psTemp,
+                                                       sAtom1,
+                                                       sAtom2)));
                 if (iTemp != PARM_NOT_FOUND) {
-                    ParmSetBond(psTemp, iTemp, sAtom1, sAtom2, &dKb, &dR0,
-                            &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
-                    iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2,
-                            dKb, dR0, dKpull, dRpull0, dKpress, dRpress0, sDesc);
+                    ParmSetBond(psTemp, iTemp, sAtom1, sAtom2,
+                                &dKb, &dR0, &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
+                    iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2, dKb, dR0,
+                                             dKpull, dRpull0, dKpress, dRpress0, sDesc);
                 } else {
                     bFailedGeneratingParameters = TRUE;
                     iIndex = 0;
-                    VECTOR vPos1 = vAtomPosition(aAtom1);
-                    VECTOR vPos2 = vAtomPosition(aAtom2);
-                    RESIDUE rRes1 = RESIDUE_from(cContainerWithin(aAtom1));
-                    RESIDUE rRes2 = RESIDUE_from(cContainerWithin(aAtom2));
-                    VPERROR("Could not find bond parameter for atom types: %s - %s\n"
-                            "        for atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f \n"
-                            "        and atom %s.%s:%d.%s at position %8.3f,%8.3f,%8.3f.\n",
-                            sAtom1, sAtom2,
-                            sContainerName(rRes1),sResidueChainId(rRes1),iResiduePdbSequence(rRes1),sContainerName(aAtom1),
-                            vPos1.dX, vPos1.dY, vPos1.dZ,
-                            sContainerName(rRes2),sResidueChainId(rRes2),iResiduePdbSequence(rRes2),sContainerName(aAtom2),
-                            vPos2.dX, vPos2.dY, vPos2.dZ );
+                    VPERROR("No bond parameter for: %s - %s\n",
+                            sAtom1, sAtom2);
                 }
             }
-            sbPBond->iParmIndex = iIndex + 1;
-
-            if (bPert &&
-                (bAtomFlagsSet(aAtom1, ATOMPERTURB) ||
-                 bAtomFlagsSet(aAtom2, ATOMPERTURB))) {
-
-                /* Note that the bond is perturbed and whether or */
-                /* not it is on the boundary between perturbed and */
-                /* non-perturbed */
-                MESSAGE("Pert interaction between: %s-%s\n",
-                         sFullDescriptor(aAtom1, sTemp1),
-                         sFullDescriptor(aAtom2, sTemp2));
-                MESSAGE("Indexes = %d-%d\n", sbPBond->iAtom1,
-                         sbPBond->iAtom2);
-                sbPBond->fFlags |= PERTURBED;
-                if (!(bAtomFlagsSet(aAtom1, ATOMPERTURB) &&
-                      bAtomFlagsSet(aAtom2, ATOMPERTURB))) {
-                    sbPBond->fFlags |= BOUNDARY;
-                    MESSAGE("-Boundary\n");
-                }
-
-                if (bAtomFlagsSet(aAtom1, ATOMPERTURB)) {
-                    if (strlen(sAtomPertType(aAtom1)) != 0)
-                        strcpy(sAtom1, sAtomPertType(aAtom1));
-                    else
-                        strcpy(sAtom1, sAtomType(aAtom1));
-                } else
-                    strcpy(sAtom1, sAtomType(aAtom1));
-                if (bAtomFlagsSet(aAtom2, ATOMPERTURB)) {
-                    if (strlen(sAtomPertType(aAtom2)) != 0)
-                        strcpy(sAtom2, sAtomPertType(aAtom2));
-                    else
-                        strcpy(sAtom2, sAtomType(aAtom2));
-                } else
-                    strcpy(sAtom2, sAtomType(aAtom2));
-                iIndex = iParmSetFindBond(uUnit->psParameters,
-                                          sAtom1, sAtom2);
-                if (iIndex == PARM_NOT_FOUND) {
-                    iTemp = PARM_NOT_FOUND;
-                    PARMLIB_LOOP(plLib, psTemp,
-                                 (iTemp = iParmSetFindBond(psTemp,
-                                                           sAtom1,
-                                                           sAtom2)));
-                    if (iTemp != PARM_NOT_FOUND) {
-                        ParmSetBond(psTemp, iTemp, sAtom1, sAtom2,
-                                    &dKb, &dR0, &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
-                        iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2, dKb, dR0,
-                                                 dKpull, dRpull0, dKpress, dRpress0, sDesc);
-                    } else {
-                        bFailedGeneratingParameters = TRUE;
-                        iIndex = 0;
-                        VPERROR("No bond parameter for: %s - %s\n",
-                                sAtom1, sAtom2);
-                    }
-                }
-                sbPBond->iPertParmIndex = iIndex + 1;
-            }
-        }
+            sbBond.iPertParmIndex = iIndex + 1;
+        } else sbBond.iPertParmIndex = 0;
+        VarArrayAdd(uUnit->vaBonds, (GENP)&sbBond);
     }
 
     VPTRACEEXIT("bUnitIOIndexBondParameters" );
@@ -1347,7 +1340,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 /* TODO:Allow the user to specify interactions that should be ignored */
 /* TODO:Like HW-HW-OW angles for TIP3 waters */
 
-        if (zbUnitIgnoreAngle(sAtom1, sAtom2, sAtom3))
+        if (bUnitIgnoreAngle(sAtom1, sAtom2, sAtom3))
             goto IGNORE1;
 
         iIndex = iParmSetFindAngle(uUnit->psParameters,
@@ -1430,7 +1423,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 /* TODO:Allow the user to specify interactions that should be ignored */
 /* TODO:Like HW-HW-OW angles for TIP3 waters */
 
-            if (zbUnitIgnoreAngle(sAtom1, sAtom2, sAtom3))
+            if (bUnitIgnoreAngle(sAtom1, sAtom2, sAtom3))
                 goto IGNORE2;
 
             iIndex = iParmSetFindAngle(uUnit->psParameters,
@@ -1510,7 +1503,6 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
  *          ..plug params in for molecule
  *        end/molecule_dihedrals
  */
-extern int itest;
 static bool
 zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                bool bProper, bool bPert )
@@ -1519,10 +1511,10 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     LOOP lTemp;
     SAVETORSIONt stTorsion;
     ATOM aAtom1, aAtom2, aAtom3, aAtom4;
-    STRING sAtom1, sAtom2, sAtom3, sAtom4;
-    STRING sPert1, sPert2, sPert3, sPert4;
-    STRING sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4;
-    STRING sOrigPert1, sOrigPert2, sOrigPert3, sOrigPert4;
+    typeStr sAtom1, sAtom2, sAtom3, sAtom4;
+    typeStr sPert1, sPert2, sPert3, sPert4;
+    typeStr sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4;
+    typeStr sOrigPert1, sOrigPert2, sOrigPert3, sOrigPert4;
     TORSION tTorsion, tPertTorsion;
     bool bPerturbTorsion;
     PARMSET psTemp;
@@ -1532,11 +1524,12 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     double dKp, dP0, dPertKp, dPertP0;
     double dScEE, dScNB, dPScEE, dPScNB;
     bool bCalc14, bCalcPert14;
+//#define DEBUG2
 #ifdef  DEBUG2
     STRING s1, s2, s3, s4;
     int iTParm, iTmp;
-    double dTK, dTP;
-    STRING sT1, sT2, sT3, sT4, sTemp;
+    double dTK, dTP, dTScEE, dTScNB;
+    typeStr sT1, sT2, sT3, sT4;
 #endif
     STRING sDesc;
     bool bFailedGeneratingParameters;
@@ -1544,9 +1537,17 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
     int iaIndexes[4];
     char *cPaTypes[4];
     int iImproper = 0, iParmOffset = 0, iTorsionOffset = 0;
-    int iCount = 0, i, iIndex;
+    int iCount = 0, iIndex;
 
 #define                MAX_N                9999
+
+#define CACHE
+#ifdef CACHE
+    bool bFromCache; // true if torsion came from cache
+    IX_REC ixTorsionKey;
+    IX_DESC ixTorsionCache;
+    if (bProper) create_index(&ixTorsionCache, IX_NODUPKEY, IX_LEN_CSTRING);
+#endif
 
     bFailedGeneratingParameters = FALSE;
 
@@ -1565,6 +1566,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
      */
     if (bProper) {
         int iMax;
+        int iFirstBulkSolvent = uUnit->iFirstBulkSolvent;
 
         /*
          *  set up 1-4 checking stuff by initializing index with bond
@@ -1575,34 +1577,28 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         create_index(&scr14_index, IX_NODUPKEY, 2 * sizeof(int));
 
         /*
-         *  set up convenience pointers for stuffing key
-         *      with 2 ints
-         */
-        Pint1 = (int *) &e14.key;
-        Pint2 = Pint1 + 1;
-
-        /*
          *  Using the index pointer as a flag; 1==bond,angle, 0==torsion.
          *      The bonds should all be unique pairs. An angle could
          *      duplicate a bond if there is a 'triangle', and could
          *      duplicate an angle if there is a 'square'.
          */
-        e14.recptr = (IX_RECPOS) 1;
+        ix14.recptr = (IX_RECPOS) 1;
 
         /* plop in bonded pairs if any */
+        printf("Add bond 1,2 pairs to 1-4 exclusion list\n");
         if ((iMax = iVarArrayElementCount(uUnit->vaBonds))) {
             SAVEBONDt *sbPBondT = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-
-            for (i = 0; i < iMax; i++, sbPBondT++) {
+            for (int i = 0; i < iMax; i++, sbPBondT++) {
+                if (iFirstBulkSolvent && sbPBondT->iAtom1 > iFirstBulkSolvent) break;
                 if (sbPBondT->iAtom1 < sbPBondT->iAtom2) {
-                    *Pint1 = sbPBondT->iAtom1;
-                    *Pint2 = sbPBondT->iAtom2;
+                    ix14Key->iAtom1 = sbPBondT->iAtom1;
+                    ix14Key->iAtom2 = sbPBondT->iAtom2;
                 } else {
-                    *Pint1 = sbPBondT->iAtom2;
-                    *Pint2 = sbPBondT->iAtom1;
+                    ix14Key->iAtom1 = sbPBondT->iAtom2;
+                    ix14Key->iAtom2 = sbPBondT->iAtom1;
                 }
-                if (add_key(&e14, &scr14_index) != IX_OK)
-                    DFATAL("1-4: cannot add bond %d %d\n%s", *Pint1, *Pint2,
+                if (add_key(&ix14, &scr14_index) != IX_OK)
+                    DFATAL("1-4: cannot add bond %d %d\n%s", ix14Key->iAtom1, ix14Key->iAtom2,
                             "This may be caused by duplicate bond "
                             "specifications;\n"
                             "for example, explicit bond commands in addition "
@@ -1610,24 +1606,27 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
             }
         }
         /* plop in angle pairs */
+        printf("Add angle 1,3 pairs to 1-4 exclusion list\n");
         if ((iMax = iVarArrayElementCount(uUnit->vaAngles))) {
             SAVEANGLEt *saPAngleT = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-            for (i = 0; i < iMax; i++, saPAngleT++) {
+            for (int i = 0; i < iMax; i++, saPAngleT++) {
+                if (iFirstBulkSolvent && saPAngleT->iAtom1 > iFirstBulkSolvent) break;
                 if (saPAngleT->iAtom1 < saPAngleT->iAtom3) {
-                    *Pint1 = saPAngleT->iAtom1;
-                    *Pint2 = saPAngleT->iAtom3;
+                    ix14Key->iAtom1 = saPAngleT->iAtom1;
+                    ix14Key->iAtom2 = saPAngleT->iAtom3;
                 } else {
-                    *Pint1 = saPAngleT->iAtom3;
-                    *Pint2 = saPAngleT->iAtom1;
+                    ix14Key->iAtom1 = saPAngleT->iAtom3;
+                    ix14Key->iAtom2 = saPAngleT->iAtom1;
                 }
-                if (add_key(&e14, &scr14_index) != IX_OK){
+                if (add_key(&ix14, &scr14_index) != IX_OK){
                     VPNOTE("1-4: angle %d %d %s %s\n",
-                         *Pint1, *Pint2,
+                         ix14Key->iAtom1, ix14Key->iAtom2,
                          "duplicates bond ('triangular' bond)",
                          "or angle ('square' bond)\n");
                 }
             }
         }
+        printf("done.\n");
     } else {
         /*
          *  Impropers - use an index to track instantiations of
@@ -1641,13 +1640,12 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
          *  create record w/ key portion longer than the default
          */
         create_index(&improper_index, IX_DUPKEYREC, IX_LEN_CSTRING);
-        ePImp = (IX_REC *)MALLOC(sizeof(IX_REC) + 80);
         /*
          *  set recptr to avoid mem check complaint
          *      (since this index doesn't use its
          *      recptr)
          */
-        ePImp->recptr = NULL;
+        ixImp.recptr = NULL;
     }
 
     lTemp = lLoop(OBJEKT_from(uUnit), (bProper ? PROPERS : IMPROPERS));
@@ -1658,6 +1656,8 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         } else {
             LoopGetImproper(&lTemp, &aAtom1, &aAtom2, &aAtom3, &aAtom4);
         }
+        //OBJEKT o = lTemp.oaObj[0];
+        //if (iObjectType(o)==ATOMid && bAtomFlagsSet((ATOM)o,ATOMBULKSOLVENT) ) break;
 
 /*
         fprintf( stderr, "%s torsion %s %s %s %s\n",
@@ -1758,7 +1758,24 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         /* torsion parameters that we need. */
 
         tTorsion = tParmSetTORSIONCreate();
-
+#ifdef CACHE
+        bFromCache = FALSE;
+        // First check cache:
+        sprintf(ixTorsionKey.key,"%.8s-%.8s-%.8s-%.8s", sAtom1, sAtom2, sAtom3, sAtom4);
+        ixTorsionKey.recptr = NULL;
+        int status = find_key(&ixTorsionKey,&ixTorsionCache,0);
+        if (status == IX_OK) {
+            TORSION tCache = (TORSION)ixTorsionKey.recptr;
+            if (tCache) {
+                int count = iVarArrayElementCount(tCache);
+                int size = iVarArrayElementSize(tCache);
+                VarArraySetSize(tTorsion, count);
+                memcpy(tTorsion->data, tCache->data, count*size);
+            }
+            iTN = PARM_FOUND_EXACT;
+            bFromCache = TRUE;
+        } else
+#endif
         if (bProper) {
             iTN = iParmSetFindProperTerms(uUnit->psParameters,
                                           tTorsion, TRUE,
@@ -1830,12 +1847,9 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                                             sPert4);
                     }
                 }
-                if (iTN == PARM_FOUND_EXACT) {
-                    if (bPerturbTorsion) {
-                        if (iTNPert == PARM_FOUND_EXACT)
-                            break;
-                    } else
-                        break;
+                if (iTN == PARM_FOUND_EXACT &&
+                        (!bPerturbTorsion || iTNPert == PARM_FOUND_EXACT) ) {
+                    break;
                 }
             }
         }
@@ -1844,11 +1858,11 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                  (bProper ? "PROPER" : "IMPROPER"),
                  sAtom1, sAtom2, sAtom3, sAtom4,
                  iParmSetTORSIONTermCount(tTorsion));
-        for (i = 0; i < iParmSetTORSIONTermCount(tTorsion); i++) {
+        for (int i = 0; i < iParmSetTORSIONTermCount(tTorsion); i++) {
             ParmSetTORSIONTerm(tTorsion, i,
                                &iTParm,
                                sT1, sT2, sT3, sT4,
-                               &iTmp, &dTK, &dTP, sTemp);
+                               &iTmp, &dTK, &dTP, &dTScEE, &dTScNB, s1);
             MESSAGE("Term %3d  %d %s-%s-%s-%s  %d  %lf  %lf\n",
                      i, iTParm, sT1, sT2, sT3, sT4, iTmp, dTK, dTP);
         }
@@ -1857,22 +1871,41 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                      (bProper ? "PROPER" : "IMPROPER"),
                      sPert1, sPert2, sPert3, sPert4,
                      iParmSetTORSIONTermCount(tPertTorsion));
-            for (i = 0; i < iParmSetTORSIONTermCount(tPertTorsion); i++) {
+            for (int i = 0; i < iParmSetTORSIONTermCount(tPertTorsion); i++) {
                 ParmSetTORSIONTerm(tPertTorsion, i,
                                    &iTParm,
                                    sT1, sT2, sT3, sT4,
-                                   &iTmp, &dTK, &dTP, sTemp);
+                                   &iTmp, &dTK, &dTP, &dTScEE, &dTScNB, s1);
                 MESSAGE("Term %3d  %d %s-%s-%s-%s  %d  %lf  %lf\n",
                          i, iTParm, sT1, sT2, sT3, sT4, iTmp, dTK, dTP);
             }
         }
 #endif
 
-
         /* Now we have a complete TORSION in tTorsion, and */
         /* if the torsion is being perturbed we have another */
         /* complete TORSION in tPertTorsion */
         /* The (stTorsion) terms must now be created */
+
+#ifdef CACHE
+        // cache the result:
+        if (!bFromCache) {
+            int count = iVarArrayElementCount(tTorsion);
+            if (!count) { // empty result (common for Impropers, fatal for Propers)
+                ixTorsionKey.recptr = NULL;
+                add_key(&ixTorsionKey,&ixTorsionCache);
+            } else {
+                // Hack: peek at first member of opaque TORSION_MATCHt, an int,
+                // to know if tPertTorsion came from UNIT parmset (bUseIndex=TRUE)
+                // or if it came from PARMLIB (bUseIndex=FALSE, int = PARM_FOUND_* flag)
+                int iParmIndex = *(PVAI(tTorsion,int,0));
+                if (iParmIndex >=0) {
+                    ixTorsionKey.recptr = (IX_RECPOS)vaVarArrayCopy(tTorsion);
+                    add_key(&ixTorsionKey,&ixTorsionCache);
+                }
+            }
+        }
+#endif
 
         iTerm = 0;
         iPertTerm = 0;
@@ -1895,7 +1928,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                sAtom1, sAtom2, sAtom3, sAtom4,
                                &iN, &dKp, &dP0, &dScEE, &dScNB,
 			       sDesc);
-            MESSAGE("First non-perturbed multiplicity: %d\n", iN);
+            MESSAGE("First non-perturbed multiplicity: %d, iIndex=%d\n", iN,iIndex);
         } else {
             if (bProper) {
                 VPTRACE("sOrigAtom vs sAtom: %s, %s, %s, %s;\n"
@@ -2037,12 +2070,13 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
             /* they are not already there */
 
             if (bCopy) {
-                if (bProper)
+                if (bProper) {
                     iIndex = iParmSetAddProperTerm(uUnit->psParameters,
                                                    sAtom1, sAtom2, sAtom3,
                                                    sAtom4, iN, dKp, dP0,
 						   dScEE, dScNB,
                                                    sDesc);
+                }
 /*                else if ( !GDefaults.iCharmm )    ???---should I do this????     */
                 else
                     iIndex = iParmSetAddImproperTerm(uUnit->psParameters,
@@ -2162,19 +2196,20 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 AtomDescStr(aAtom2, FALSE, sDesc2);
                 AtomDescStr(aAtom3, FALSE, sDesc3);
                 AtomDescStr(aAtom4, FALSE, sDesc4);
-                sprintf(ePImp->key, "%s - %s - %s - %s",
+                sprintf(ixImp.key, "%.32s - %.32s - %.32s - %.32s",
                         sDesc1, sDesc2, sDesc3, sDesc4);
-                if (add_key(ePImp, &improper_index) != IX_OK)
+                if (add_key(&ixImp, &improper_index) != IX_OK)
                     DFATAL("add_key() impropers\n");
 
                 iImproper++;
             }
 #ifdef        DEBUG2
-            MESSAGE("Adding %s : %s - %s - %s - %s\n", bProper ? "PROPER" : "IMPROPER"),
+            MESSAGE("Adding %s : %s - %s - %s - %s\n",
+                     (bProper ? "PROPER" : "IMPROPER"),
                      sFullDescriptor(aAtom1, s1),
                      sFullDescriptor(aAtom2, s2),
                      sFullDescriptor(aAtom3, s3),
-                     sFullDescriptor(aAtom4, s4);
+                     sFullDescriptor(aAtom4, s4));
             MESSAGE("Perturbed: %s\n", sBOOL(bPerturbTorsion));
 #endif
             if (!bPerturbTorsion) {
@@ -2203,17 +2238,47 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         /*
          *  'boil down' numerically redundant params
          */
-        BoilTorsions(&uUnit->psParameters->vaTorsions, 0,        /* parm table */
-                     uUnit->vaTorsions, 0);        /* atom lists */
+        START(iBoil);
+        {
+        iParmOffset = 0;
+        iTorsionOffset = 0;
+        int *iIndexMap = BoilTorsions(&uUnit->psParameters->vaTorsions,iParmOffset);
+        SAVETORSIONt *stP = PVAI( uUnit->vaTorsions, SAVETORSIONt, iTorsionOffset );
+        int iTorsionCount = iVarArrayElementCount(uUnit->vaTorsions);
+        for (int i = 0; i < iTorsionCount; i++, stP++ ) {
+            if ( stP->iParmIndex )
+                stP->iParmIndex = iIndexMap[ stP->iParmIndex - iParmOffset - 1 ];
+            if ( stP->iPertParmIndex )
+                stP->iPertParmIndex = iIndexMap[ stP->iPertParmIndex - iParmOffset - 1 ];
+        }
+        FREE( iIndexMap );
+        }
+        //BoilTorsions(&uUnit->psParameters->vaTorsions, 0,        /* parm table */
+        //             uUnit->vaTorsions, 0);        /* atom lists */
+        STOP(iBoil,"Proper (BoilTorsions)");
 
     } else {
         RESIDUE rRes;
         IMPROPERt *IP;
         int iImproper2 = 0, iPrep = 0;
 
-        BoilTorsions(&uUnit->psParameters->vaImpropers,        /* parm table */
-                     iParmOffset, uUnit->vaTorsions,        /* atom lists */
-                     iTorsionOffset);
+        START(iBoil);
+        {
+        int *iIndexMap = BoilTorsions(&uUnit->psParameters->vaImpropers, iParmOffset );
+        SAVETORSIONt *stP = PVAI( uUnit->vaTorsions, SAVETORSIONt, iTorsionOffset );
+        int iTorsionCount = iVarArrayElementCount(uUnit->vaTorsions);
+        for (int i = iTorsionOffset; i < iTorsionCount; i++, stP++ ) {
+            if ( stP->iParmIndex )
+                stP->iParmIndex = iIndexMap[ stP->iParmIndex - iParmOffset - 1 ];
+            if ( stP->iPertParmIndex )
+                stP->iPertParmIndex = iIndexMap[ stP->iPertParmIndex - iParmOffset - 1 ];
+        }
+        FREE( iIndexMap );
+        }
+        //BoilTorsions(&uUnit->psParameters->vaImpropers,        /* parm table */
+        //             iParmOffset, uUnit->vaTorsions,        /* atom lists */
+        //             iTorsionOffset);
+        STOP(iBoil,"Improper (BoilTorsions)");
 
         LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lTemp) {
             if (rRes->vaImpropers) {
@@ -2223,7 +2288,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
             if ((iCount = iVarArrayElementCount(rRes->vaImpropers))) {
                 sContainerDescriptor(CONTAINER_from(rRes), sDesc);
                 IP = PVAI(rRes->vaImpropers, IMPROPERt, 0);
-                for (i = 0; i < iCount; i++, IP++) {
+                for (int i = 0; i < iCount; i++, IP++) {
                     iImproper2++;
                     VP0(" %s:  %.4s %.4s %.4s %.4s\n", sDesc + 1,
                          IP->sName1, IP->sName2, IP->sName3, IP->sName4);
@@ -2234,17 +2299,26 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
 
             VP0("--Impropers:\n");
             first_key(&improper_index);
-            while (next_key(ePImp, &improper_index) == IX_OK)
-                VP1("  %d\t%s\n", ePImp->count, ePImp->key);
+            while (next_key(&ixImp, &improper_index) == IX_OK)
+                VP1("  %d\t%s\n", ixImp.count, ixImp.key);
         }
         VP0(" total %d improper torsion%s applied\n",
              iImproper, (iImproper != 1 ? "s" : ""));
         if (iPrep)
             VP0(" %d improper torsions in old prep form\n", iImproper2);
         destroy_index(&improper_index);
-        FREE(ePImp);
     }
 
+#ifdef CACHE
+    first_key(&ixTorsionCache);
+    while (next_key(&ixTorsionKey, &ixTorsionCache) == IX_OK) {
+        VARARRAY vaTemp = (VARARRAY) ixTorsionKey.recptr;
+        if (ixTorsionKey.recptr) {
+            VarArrayDestroy(&vaTemp);
+        }
+    }
+    destroy_index(&ixTorsionCache);
+#endif
 
     VPTRACEEXIT("zbUnitIOIndexTorsionParameters" );
     return (bFailedGeneratingParameters);
@@ -2345,63 +2419,6 @@ UnitIOAmberOrderResidues( UNIT uUnit )
     return(iResidueCount);
 }
 
-int
-UnitLabelMolecules(UNIT uUnit) {
-    LOOP    lResidues, lSpanning, lAtoms;
-    RESIDUE rRes;
-    ATOM    aAtom;
-    int     iResidueCount=0, iMolecule=0;
-
-    /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
-    /* Also clear the imaging atom flag which will be updated */
-    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED|RESIDUEIMAGEATOM);
-    LOOPOVERALL(uUnit,ATOMS,aAtom,ATOM,lAtoms) AtomSetSeenId(aAtom, -1);
-
-    /* Loop through solvent RESIDUEs and:
-     * 1) Count them
-     *      Normally iResidueCount == iCollectionSize(cContainerContents(uUnit)))
-     *      but leap allows container abuse, and it can contain anything.
-     * 2) set the temp flag saying if they are in the cap or not
-     * 3) label all molecule groups.
-     *     ==> This is repeated in zUnitIOFindAndCountMolecules()
-     *     but must be repeated after residue ordering
-     *     TODO: zUnitIOFindAndCountMolecules can use labels instead
-     *     of repeating the full spanning tree search
-     * 4) set image atom flag if present; only valid if solvent residue
-    */
-    LOOPOVERALL(uUnit,DIRECTCONTENTSBYSEQNUM,rRes,RESIDUE,lResidues) {
-        iResidueCount++;
-        if (cResidueType(rRes) == RESTYPESOLVENT) {
-            if (bUnitCapContainsContainer(uUnit, CONTAINER_from(rRes)))
-                ResidueSetFlags(rRes, RESIDUEINCAP);
-            else
-                ResidueResetFlags(rRes, RESIDUEINCAP);
-            if (aResidueImagingAtom(rRes))
-                AtomSetFlags(aResidueImagingAtom(rRes),RESIDUEIMAGEATOM);
-        }
-        /* Search for the next RESIDUE whose first ATOM has:w
- * not */
-        /* been touched */
-        aAtom = ATOM_from(oContainerFirstObject(rRes));
-        if (bAtomFlagsSet(aAtom, ATOMTOUCHED)) continue;
-        iMolecule++; // inrement first: molecule index is 1-based
-
-        /* Touch all of the ATOMs within the molecule that */
-        /* contains the current RESIDUE */
-        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
-            AtomSetFlags(aAtom, ATOMTOUCHED);
-            CONTAINER cParent = cContainerWithin(aAtom);
-            if (iObjectType(cParent) == RESIDUEid)
-                RESIDUE_from(cParent)->iMolecule = iMolecule;
-        }
-    }
-
-    uUnit->iMoleculeCount = iMolecule;
-    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
-
-    return iResidueCount;
-}
-
 /*
  *      UnitIOBuildTables
  *
@@ -2425,11 +2442,11 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
             bool bPert,
             bool bCheck)
 {
-    SAVECONNECTIVITYt *scPCon;
+    //SAVECONNECTIVITYt *scPCon;
     SAVEMOLECULEt *smPMolecule;
     SAVERESTRAINTt *srPRestraint;
     SAVERESIDUEt *srPResidue;
-    SAVEHIERARCHYt *shPHierarchy;
+    //SAVEHIERARCHYt *shPHierarchy;
     SAVEGROUPSt sgAtomGroup;
     BAGLOOP blRestraint;
     RESTRAINT rRest;
@@ -2446,7 +2463,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     LISTLOOP llAtoms;
     LIST lGroup;
     int i, j, iAtomCount, iMoleculeCount, iResidueCount;
-    int iIndex, iCount, iGroup, iErrors = 0, iWarnings = 0;
+    int iIndex, iGroup, iErrors = 0, iWarnings = 0;
     double dKx, dX0, dN, dA, dB, dEI, dEJ, dRI, dRJ;
 
     if (bCheck) {
@@ -2470,6 +2487,9 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     }
 
     VP0("Building topology.\n");
+#ifdef TIMING
+    clock_t ctTopologyStart = clock();
+#endif
 
     bFailedGeneratingParameters = FALSE;
     if (iUnitMode(uUnit) != UNITNORMAL) {
@@ -2484,7 +2504,8 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         bGenerateParameters = TRUE;
     }
 
-    /* NOTE: molecules are not used, iMoleculeCount is always zero */
+    /* NOTE: molecules OBJEKTs are not used, iMoleculeCount is always zero */
+    /* The value uUnit->iMoleculeCount is counted-by-connectivity molecules, not MOLECULE objects */
     /* Build the molecule information */
 
     iMoleculeCount = 0;
@@ -2509,7 +2530,6 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         }
     }
 
-
     /* Build the residue information */
 
     /* UnitIOAmberOrderResidues generates the vaResidues array,
@@ -2525,9 +2545,9 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
         VP0("Building atom parameters.\n");
 
-        iAtomCount = 0;
-        lTemp = lLoop(OBJEKT_from(uUnit), ATOMS);
-        while (oNext(&lTemp)) iAtomCount++;
+        iAtomCount = uUnit->iAtomCount;
+        //lTemp = lLoop(OBJEKT_from(uUnit), ATOMS);
+        //while (oNext(&lTemp)) iAtomCount++;
 
         if (iAtomCount) {
             uUnit->vaAtoms = vaVarArrayCreate(sizeof(SAVEATOMt));
@@ -2544,7 +2564,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
             uUnit->iCapTempInt=0;
             LOOPOVERALL(uUnit, (GDefaults.reorder_residues ?
                     DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM),
-                    rRes,RESIDUE, lResidues) {
+                    rRes, RESIDUE, lResidues) {
                 /* Set the uUnit->iCapTempInt integer to point to */
                 /* the last ATOM that is not CAP solvent */
                 if ( !uUnit->iCapTempInt &&
@@ -2641,52 +2661,35 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
     /* Now generate the connectivity table */
 
-    iCount = 0;
-    lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
-    while (oNext(&lTemp)) iCount++;
     uUnit->vaConnectivity = vaVarArrayCreate(sizeof(SAVECONNECTIVITYt));
-    VarArraySetSize((uUnit->vaConnectivity), iCount);
-    if (iCount) {
-        i = 0;
-        scPCon = PVAI(uUnit->vaConnectivity, SAVECONNECTIVITYt, 0);
-        lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
-        while (oNext(&lTemp)) {
-            LoopGetBond(&lTemp, &aAtom1, &aAtom2);
-            scPCon->fFlags = fAtomFindBondFlags(aAtom1, aAtom2);
-            scPCon->iAtom1 = iContainerTempInt(aAtom1);
-            scPCon->iAtom2 = iContainerTempInt(aAtom2);
-            i++;
-            scPCon++;
-        }
+    lTemp = lLoop(OBJEKT_from(uUnit), BONDS);
+    while (oNext(&lTemp)) {
+        SAVECONNECTIVITYt scCon;
+        LoopGetBond(&lTemp, &aAtom1, &aAtom2);
+        scCon.fFlags = fAtomFindBondFlags(aAtom1, aAtom2);
+        scCon.iAtom1 = iContainerTempInt(aAtom1);
+        scCon.iAtom2 = iContainerTempInt(aAtom2);
+        VarArrayAdd(uUnit->vaConnectivity, (GENP)&scCon);
     }
-
 
     /* Build a table for the Hierarchy information */
 
-    iCount = 0;
+    uUnit->vaHierarchy = vaVarArrayCreate(sizeof(SAVEHIERARCHYt));
     lTemp = lLoop(OBJEKT_from(uUnit), CONTAINERS);
-    while (oNext(&lTemp)) iCount++;
-    if (iCount) {
-        uUnit->vaHierarchy = vaVarArrayCreate(sizeof(SAVEHIERARCHYt));
-        VarArraySetSize((uUnit->vaHierarchy), iCount);
-        lTemp = lLoop(OBJEKT_from(uUnit), CONTAINERS);
-        i = 0;
-        shPHierarchy = PVAI(uUnit->vaHierarchy, SAVEHIERARCHYt, 0);
-        while ((oBelow = oNext(&lTemp)) != NULL) {
-            oAbove = OBJEKT_from(cContainerWithin(oBelow));
-            shPHierarchy->sAboveType[0] = iObjectType(oAbove);
-            shPHierarchy->sAboveType[1] = '\0';
-            shPHierarchy->sBelowType[0] = iObjectType(oBelow);
-            shPHierarchy->sBelowType[1] = '\0';
-            if (iObjectType(oAbove) == UNITid) {
-                shPHierarchy->iAboveIndex = 0;
-            } else {
-                shPHierarchy->iAboveIndex = iContainerTempInt(oAbove);
-            }
-            shPHierarchy->iBelowIndex = iContainerTempInt(oBelow);
-            i++;
-            shPHierarchy++;
+    while ( (oBelow = oNext(&lTemp)) ) {
+        SAVEHIERARCHYt shHierarchy;
+        oAbove = OBJEKT_from(cContainerWithin(oBelow));
+        shHierarchy.sAboveType[0] = iObjectType(oAbove);
+        shHierarchy.sAboveType[1] = '\0';
+        shHierarchy.sBelowType[0] = iObjectType(oBelow);
+        shHierarchy.sBelowType[1] = '\0';
+        if (iObjectType(oAbove) == UNITid) {
+            shHierarchy.iAboveIndex = 0;
+        } else {
+            shHierarchy.iAboveIndex = iContainerTempInt(oAbove);
         }
+        shHierarchy.iBelowIndex = iContainerTempInt(oBelow);
+        VarArrayAdd(uUnit->vaHierarchy, (GENP)&shHierarchy);
     }
 
     /* Build a table for the UNIT Connect information */
@@ -2737,16 +2740,19 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
     if (bFailedGeneratingParameters == FALSE && bGenerateParameters) {
 
-
         /* Now generate the BOND table */
 
+        START(iBonds);
         bFailedGeneratingParameters |=
             bUnitIOIndexBondParameters(plParameters, uUnit, bPert);
+        STOP(iBonds,"Generate bonds");
 
         /* Now generate the ANGLE table */
 
+        START(iAngles);
         bFailedGeneratingParameters |=
             zbUnitIOIndexAngleParameters(plParameters, uUnit, bPert);
+        STOP(iAngles,"Generate angles");
 
 
         /* Now generate the TORSION and IMPROPER tables */
@@ -2756,12 +2762,17 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
             VP0("Regenerating proper and improper torsions.\n");
             VarArrayDestroy(&(uUnit->vaTorsions));
         }
+
         uUnit->vaTorsions = vaVarArrayCreate(sizeof(SAVETORSIONt));
+        START(iProp);
         bFailedGeneratingParameters |=
             zbUnitIOIndexTorsionParameters(plParameters, uUnit, TRUE, bPert);
+        STOP(iProp,"Generate propers");
+
+        START(iImpr);
         bFailedGeneratingParameters |=
             zbUnitIOIndexTorsionParameters(plParameters, uUnit, FALSE, bPert);
-
+        STOP(iImpr,"Generate impropers");
 
         /* Generate the potential H-Bond parameters             */
         /* Do this by looping through ALL H-Bond parameters     */
@@ -2769,6 +2780,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
         /* within this UNITs atom list                          */
         /* If there is one then add it to this UNITs PARMSET    */
 
+        START(iHbond);
         VP0("Building H-Bond parameters.\n");
         PARMLIB_LOOP_ALL(plParameters, psTemp) {
             for (i = 0; i < iParmSetTotalHBondParms(psTemp); i++) {
@@ -2786,9 +2798,11 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                 }
             }
         }
+        STOP(iHbond,"Generate H-bonds");
 
 	/* Carry LJ edits into the unit topology */
 
+        START(iNBFIX);
 	VP0("Incorporating Non-Bonded adjustments.\n");
 	PARMLIB_LOOP_ALL(plParameters, psTemp) {
 	  for (i = 0; i < iParmSetTotalNBEdits(psTemp); i++) {
@@ -2806,8 +2820,16 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 	    }
 	  }
 	}
+        STOP(iNBFIX,"Generate Nonbond Edits");
+
+        START(iCmaps);
+        UnitIOBuildCMAPTables(uUnit, plParameters);
+        STOP(iCmaps,"Generate CMAPs");
     }
-    UnitIOBuildCMAPTables(uUnit, plParameters);
+#ifdef TIMING
+    printf("Total build topology CPU time = %g\n",
+          ((double) (clock() - ctTopologyStart)) / (double)CLOCKS_PER_SEC);
+#endif
 
     if (bFailedGeneratingParameters == FALSE)
         *bPGeneratedParameters = TRUE;

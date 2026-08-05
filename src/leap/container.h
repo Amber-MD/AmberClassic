@@ -83,7 +83,8 @@ typedef struct  CONTAINERSTRUCT {
         int                     iTempInt;
         int                     iSequence;
         struct CONTAINERSTRUCT  *cLoopNext;     /* Used for LOOPing over DIRECTCONTENTSBYSEQNUM */
-        OBJEKT                  lContents;
+        OBJEKT                  lContents;   // Should be  struct LISTSTRUCT *lContents;
+        struct NodeStruct       *nPListNode;  // tracks member node in lContents
 } CONTAINERt;
 
 typedef CONTAINERt      *CONTAINER;
@@ -120,8 +121,11 @@ static inline OBJEKT objekt_from_container(CONTAINER c) { return c ? &(c->oHeade
         of this class that it will eventually make it into these routines.
 */
 
-
+#ifdef NOGUI
+#define CDU(c) ((void)0)
+#else
 #define CDU(c)  ContainerDisplayerUpdate(CONTAINER_from(c))
+#endif
 
 #define sContainerName( c )     ( CONTAINER_from(c)->sName )
 #define ContainerSetName( c, n ) ( StringCopyMax( CONTAINER_from(c)->sName, n,\

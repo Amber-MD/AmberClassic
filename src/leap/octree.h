@@ -46,6 +46,8 @@ typedef struct oc {
 	int             iAtoms;
 	ATOM		*PaAtomList;
 	float		*PfCharges;	/* float to save space */
+	unsigned char	*PucValid1;	/* validity vs ion radius 1, NULL until computed */
+	unsigned char	*PucValid2;	/* validity vs ion radius 2, NULL until computed */
 	struct oc	*PonChildren;
 } OCTNODEt;
 
@@ -73,10 +75,6 @@ typedef OCTREEt		*OCTREE;
 #define OCT_INTERIOR_SOLUTE 	2
 #define OCT_INTERIOR_SOLVENT	3
 
-/* atom selection options */
-
-#define AT_OCTREE	1
-
 /* dielectric options */
 
 #define DIEL_R2		1
@@ -90,16 +88,16 @@ typedef OCTREEt		*OCTREE;
 #define COLOR_NONE	4
 
 extern OCTREE	octOctTreeCreate(UNIT uUnit, int iType, double dGridSpace, 
-			double dAddExtent, double dShellExtent, int iIncludeSolvent);
+			double dAddExtent, double dShellExtent, int iIncludeSolvent,
+                        double dIonRadius1, double dIonRadius2);
 extern void	OctTreeDestroy( OCTREE *PoctTree );
 
-extern void	OctTreeInitCharges(OCTREE octTree, int iAtomOption, int iDielectric, 
-			double dCutDist, VECTOR *PvMin, VECTOR *PvMax);	
+extern void	OctTreeInitCharges(OCTREE octTree, int iDielectric, 
+			double dDielectricRadius, VECTOR *PvMin, VECTOR *PvMax);	
 
-extern void	OctTreeDescribe(void);	/* ( OCTREE ) */
 extern void	OctTreeDeleteSphere(OCTREE octTree, VECTOR *PvPoint, double dRadius);
 extern void	OctTreeUpdateCharge(OCTREE octTree, VECTOR *PvNewPoint, 
-			float fCharge, double dCutDist, VECTOR *PvMax, VECTOR *PvMin);
+			float fCharge, int bIsSecondIon, VECTOR *PvMax, VECTOR *PvMin);
 extern RESIDUE	rOctTreeCheckSolvent(OCTREE octTree, VECTOR *PvPoint);
 
 extern void	OctTreePrintGrid(OCTREE octTree, char *sFileName, int iColor);

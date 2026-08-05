@@ -68,6 +68,7 @@
 #include        <stdio.h>
 #include        <math.h>
 #include        <ctype.h>
+#include        <stddef.h>
 #include        <time.h>
 #include        <errno.h>
 #include        <string.h>
@@ -500,12 +501,22 @@ extern int     GiVPerrorCount;   /* Count the number of Fatal errors */
 extern int     GiVPwarningCount; /* Count the number of Warnings */
 extern int     GiVPnoteCount;    /* Count the number of Notes */
 
+#ifdef TIMING
+#define START(var) clock_t var = clock()
+#define STOP(var,name) VP0( name " CPU time = %gs\n", \
+        ((double) (clock() - var)) / (double)CLOCKS_PER_SEC);
+#else
+#define START(var)
+#define STOP(var,name)
+#endif
+
 /*
  *      VPEPILOG emits the numbers of errors, warnings, and notes.
  */
-#define VPEPILOG() \
-    myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
-             GiVPerrorCount, GiVPwarningCount, GiVPnoteCount)
+#define VPEPILOG() do { \
+        myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
+                 GiVPerrorCount, GiVPwarningCount, GiVPnoteCount); \
+    } while(0)
 
 /*
  *      VPERROR is for the uncommon case of error reporting where immediate
@@ -538,8 +549,8 @@ extern int     GiVPnoteCount;    /* Count the number of Notes */
 #define VPFATALDELAYEDEXIT( fmt, ... ) do { \
         myPrintf(0, fmt, ##__VA_ARGS__); \
         if ( fINPUTFILE() != NULL ) { \
-            myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
-                     GiVPerrorCount, GiVPwarningCount, GiVPnoteCount); \
+            VPEPILOG(); \
+            BasicsFinalize(); \
             exit(21); \
         } \
     } while (0)
@@ -555,8 +566,8 @@ extern int     GiVPnoteCount;    /* Count the number of Notes */
             myPrintf(0, "\nError: " fmt, ##__VA_ARGS__); \
         } else { \
             myPrintf(0, "\n%s: Fatal Error!\n" fmt, GsProgramName, ##__VA_ARGS__); \
-            myPrintf(0, "\nExiting LEaP: Errors = %i; Warnings = %i; Notes = %i.\n", \
-                     GiVPerrorCount, GiVPwarningCount, GiVPnoteCount); \
+            VPEPILOG(); \
+            BasicsFinalize(); \
             exit(31); \
         } \
     } while (0)
@@ -794,6 +805,7 @@ extern void             DestroyPrintSink( int iHandle );
 extern void             PushCurrentPrintSink( int iSink );
 extern void             PopCurrentPrintSink(void);
 extern void             BasicsInitialize(void);
+extern void             BasicsFinalize(void);
 extern void             BasicsKlassMismatchPanic( GENP PObj, char *cPFile,
                                 int iLine );
 

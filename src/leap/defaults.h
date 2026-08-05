@@ -19,6 +19,8 @@ typedef struct {
 	double	dGridSpace;
 	double	dShellExtent;
 	int	iDielectricFlag;
+	double  dDielectricRadius;
+	bool    bNBGrid;
 	int	iGBparm;
 	int	iGibbs;
 	int 	iCharmm; 
@@ -43,6 +45,7 @@ typedef struct {
         int     iPdbConvertResName;
         bool    bPrmtopNetcdf;
         bool    bPdbAutoMatch;
+        bool    bPdbExactMatch;
         bool    bPdbAutoLink;
         bool    bPdbAutoLoadRes;
         bool    bPdbUseLinkRecords;

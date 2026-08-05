@@ -1018,6 +1018,8 @@ myPrintString(const char *cPString, int iVerbosity)
     }
 }
 
+static struct timespec StsElapsedStart;
+static clock_t SctCPUStart;
 /*
  *	BasicsInitialize
  *
@@ -1028,6 +1030,8 @@ myPrintString(const char *cPString, int iVerbosity)
 void	
 BasicsInitialize(void)
 {
+        clock_gettime(CLOCK_MONOTONIC, &StsElapsedStart);
+        SctCPUStart=clock();
 	(void)zMatrixInit();
         InitializeDefaults();
 /*
@@ -1039,6 +1043,26 @@ BasicsInitialize(void)
 #endif
 
 } 
+
+void	
+BasicsFinalize(void)
+{
+    if (iVerbosity()>1) PrintMemoryStats();
+    if (!GDefaults.bTiming) return;
+    struct timespec tsElapsedEnd;
+    clock_t ctCPUEnd = clock();
+    clock_gettime(CLOCK_MONOTONIC, &tsElapsedEnd);
+    double dt = (double)(tsElapsedEnd.tv_sec - StsElapsedStart.tv_sec)
+              + (double)(tsElapsedEnd.tv_nsec - StsElapsedStart.tv_nsec) / 1e9;
+    double dCPU = ((double) (ctCPUEnd - SctCPUStart)) / (double)CLOCKS_PER_SEC;
+    int elapsed_m   = (int)(dt / 60.0);
+    double elapsed_s = fmod(dt, 60.0);
+    int cpu_m   = (int)(dCPU / 60.0);
+    double cpu_s = fmod(dCPU, 60.0);
+    VP0("Elapsed time: %d:%05.2fs   CPU time: %d:%05.2fs\n",
+           elapsed_m, elapsed_s, cpu_m, cpu_s);
+}
+
 
 /*
  *	BasicsKlassMisMatchPanic

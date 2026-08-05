@@ -809,6 +809,7 @@ int		iConnect;
     }
     VPFATALEXIT("%s: non-existent attribute for a residue.\n", sAttr );
     VP0("\tResidue attributes: restype, name, imagingAtom, chainid, pdbSeq (resId)\n" );
+    VP0("\t            connect0 ... connect5 (firstend, lastend, nend, cend, send)\n" );
     return;
 
 DONE:

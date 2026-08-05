@@ -118,13 +118,6 @@
 
 */
 
-// gcc object poiner tracker! TODO
-//#if defined(__GNUC__) && defined(__analyzer__)
-//    // Explicitly pair these functions together for the analyzer
-//    __attribute__((malloc(decref, 1))) Object* create_object(int initial_value);
-//    __attribute__((malloc(decref, 1))) Object* addref(Object* obj);
-//#endif
-
 typedef struct OBJEKTSTRUCT {
 	char            cObjType;
 #ifdef DEBUG

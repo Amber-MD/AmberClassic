@@ -76,6 +76,7 @@
  *
  * Returns IX_OK if found, IX_FAIL if not.
  */
+#include <stddef.h>  // for size_t
 
 /* NOTE: IX_REC with IX_LEN_CSTRING means it is in reality variable-length
  * C struct, but we just use a fixed size good enough for the code base
@@ -87,11 +88,10 @@ typedef void *IX_RECPOS;
 
 typedef struct {
 	IX_RECPOS recptr;           /* User data pointer */
-	unsigned int count;      /* duplication count (dupkeys==2), decrement with delete */
+	size_t count;               /* duplication count (dupkeys==2), decrement with delete */
+                                    /* size_t used to make key start on pointer-sized alignment for binary keys */
 	char key[IX_DEFAULTKEYLEN]; /* actually can be of any length */
-} rectype;
-
-typedef rectype	IX_REC;
+} IX_REC;
 
 typedef struct {
 	void *root;

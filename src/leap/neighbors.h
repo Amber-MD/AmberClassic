@@ -10,7 +10,7 @@ typedef struct {
     float x,y,z;
     int group;        // residue number, can be groups by whole molecule
     union {
-        int member;   // Atom number
+        intptr_t member;   // Atom number
         float r;      // or covalent radius
         void *p;      // or pointer
     };
@@ -18,9 +18,9 @@ typedef struct {
 
 typedef struct {
     int from_idx, from_group;
-    union { int from_member; float from_r; };
+    union { intptr_t from_member; float from_r; void *from_p; };
     int to_idx,   to_group;
-    union { int to_member; float to_r; };
+    union { intptr_t to_member; float to_r; void *to_p; };
     double d2;
 } Pair;
 

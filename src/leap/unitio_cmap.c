@@ -23,12 +23,6 @@
 
 #endif
 
-// Data written to CMAP_INDEX, size=CMAP_KINDS (var 'mk' in old code)
-typedef struct {
-    int iAtom[5];
-    int iParmIndex;
-} SAVECMAPt;
-
 /*
  *  UnitIOBuildCMAPTables
  *
@@ -53,16 +47,35 @@ typedef struct {
  *  Note: CMAP = Correction map
  */
 static int dest_cmap_index[256];
+/*
+ *  UnitIOBuildCMAPTables
+ *
+ *  Build uUnit->vaCMAP (VarArray of SAVECMAPt) from the torsion list.
+ *
+ *  Algorithm:
+ *  1. Loop over all torsions, skip multi-term duplicates.
+ *  2. Screen each torsion as a phi candidate (atoms 1-4) using
+ *     bParmSetCMAPHasTorsion — atom names only, fast pre-filter.
+ *  3. For each phi match, enumerate atom5 candidates directly from
+ *     the bond graph: neighbors of atom4, excluding atom3.
+ *  4. Do full 5-atom iParmSetFindCMAP for each (phi, atom5) pair.
+ *  5. If found, add to unit parmset and store SAVECMAPt entry.
+ *
+ *  No prospect lists needed — bond graph replaces psi torsion search.
+ *  CMAP is supplemental — not found is normal, not an error.
+ */
 void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
 {
-    int i, j, k, iNumDIH;
-    int nPhi = 0, nPsi = 0;
+    int i, k, iNumDIH;
     PARMSET psTemp;
     for (i=0;i<256;i++) dest_cmap_index[i]=-1;
 
     /* ── destroy any previous CMAP table ── */
-    if (uUnit->vaCMAPs)
+    if (uUnit->vaCMAPs) {
+        VP0("Rebuilding CMAP parameters.\n");
         VarArrayDestroy(&uUnit->vaCMAPs);
+    } else
+        VP0("Building CMAP parameters.\n");
     uUnit->vaCMAPs = vaVarArrayCreate(sizeof(SAVECMAPt));
 
     if (!GDefaults.iCMAP) return;
@@ -74,107 +87,93 @@ void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
     SAVEATOMt    *saAtoms    = PVAI(uUnit->vaAtoms,    SAVEATOMt,    0);
     SAVETORSIONt *saTorsions = PVAI(uUnit->vaTorsions, SAVETORSIONt, 0);
 
-    SAVETORSIONt **stdptPhi = malloc(iNumDIH * sizeof(SAVETORSIONt*));
-    SAVETORSIONt **stdptPsi = malloc(iNumDIH * sizeof(SAVETORSIONt*));
-
-    /* ── pre-filter: build phi and psi prospect lists ──
-       Skip multi-term torsions (same 4 atoms as previous entry).
-       bParmSetCMAPHasTorsion checks atom names only — fast pre-filter.
-       Only searches parmlib — no local cache yet at this stage.       */
     for (i = 0; i < iNumDIH; i++) {
-        SAVETORSIONt *t = &saTorsions[i];
+        SAVETORSIONt *saTor = &saTorsions[i];
 
         /* skip multi-term: same 4 atoms as previous torsion */
         if (i > 0 && !memcmp(&saTorsions[i-1].iAtom1,
-                              &t->iAtom1,
+                              &saTor->iAtom1,
                               4 * sizeof(int)))
             continue;
 
-        const char *an[4];
-        an[0] = sAtomName(saAtoms[t->iAtom1-1].aAtom);
-        an[1] = sAtomName(saAtoms[t->iAtom2-1].aAtom);
-        an[2] = sAtomName(saAtoms[t->iAtom3-1].aAtom);
-        an[3] = sAtomName(saAtoms[t->iAtom4-1].aAtom);
+        /* atom pointers for phi torsion (atoms 1-4) */
+        SAVEATOMt *sa1 = &saAtoms[saTor->iAtom1 - 1];
+        SAVEATOMt *sa2 = &saAtoms[saTor->iAtom2 - 1];
+        SAVEATOMt *sa3 = &saAtoms[saTor->iAtom3 - 1];
+        SAVEATOMt *sa4 = &saAtoms[saTor->iAtom4 - 1];
 
-        bool bPhi = FALSE, bPsi = FALSE;
+        /* an5[0..3] filled here, [4] filled per bond-graph neighbor below */
+        const char *rn5[5], *an5[5];
+        int absres5[5], ri5[5], iAtom5[5];
+
+        iAtom5[0] = saTor->iAtom1;
+        iAtom5[1] = saTor->iAtom2;
+        iAtom5[2] = saTor->iAtom3;
+        iAtom5[3] = saTor->iAtom4;
+
+        an5[0] = sAtomName(sa1->aAtom);
+        an5[1] = sAtomName(sa2->aAtom);
+        an5[2] = sAtomName(sa3->aAtom);
+        an5[3] = sAtomName(sa4->aAtom);
+
+        rn5[0] = sContainerName(cContainerWithin(sa1->aAtom));
+        rn5[1] = sContainerName(cContainerWithin(sa2->aAtom));
+        rn5[2] = sContainerName(cContainerWithin(sa3->aAtom));
+        rn5[3] = sContainerName(cContainerWithin(sa4->aAtom));
+
+        absres5[0] = iContainerTempInt(cContainerWithin(sa1->aAtom));
+        absres5[1] = iContainerTempInt(cContainerWithin(sa2->aAtom));
+        absres5[2] = iContainerTempInt(cContainerWithin(sa3->aAtom));
+        absres5[3] = iContainerTempInt(cContainerWithin(sa4->aAtom));
+
+        /* ── screen as phi: an5[0..3], fast ── */
+        bool bPhi = FALSE;
         ParmLibParmSetLoop(plLib);
         while (bParmLibNextParmSet(plLib, &psTemp)) {
-            bool bP1 = FALSE, bP2 = FALSE;
-            bParmSetCMAPHasTorsion(psTemp, an, &bP1, &bP2);
-            bPhi |= bP1; bPsi |= bP2;
-            if (bPhi && bPsi) break;
+            if (bParmSetCMAPHasPhi(psTemp, an5, rn5)) { bPhi = TRUE; break; }
         }
+        if (!bPhi) continue;
 
-        if (bPhi) stdptPhi[nPhi++] = t;
-        if (bPsi) stdptPsi[nPsi++] = t;
-    }
+        /* ── enumerate atom5 candidates from bond graph ──
+           neighbors of atom4, excluding atom3               */
+        int nBonded = iAtomCoordination(sa4->aAtom);
+        for (int nb = 0; nb < nBonded; nb++) {
+            ATOMt *aAtom5 = aAtomBondedNeighbor(sa4->aAtom, nb);
+            if (aAtom5 == sa3->aAtom) continue;  /* exclude atom3 */
 
-    /* ── pair-match: phi (outer) × psi (inner) ── */
-    for (i = 0; i < nPhi; i++) {
-        SAVETORSIONt *stPhi = stdptPhi[i];
-
-        /* build phi 4-atom data — reused across all psi candidates */
-        const char *rn5[5], *an5[5];
-        int absres5[5], ri5[5], iAtom[5];
-
-        iAtom[0] = stPhi->iAtom1;
-        iAtom[1] = stPhi->iAtom2;
-        iAtom[2] = stPhi->iAtom3;
-        iAtom[3] = stPhi->iAtom4;
-        for (k = 0; k < 4; k++) {
-            SAVEATOMt *sa = &saAtoms[iAtom[k] - 1];
-            an5[k]     = sAtomName(sa->aAtom);
-            rn5[k]     = sContainerName(cContainerWithin(sa->aAtom));
-            absres5[k] = iContainerTempInt(cContainerWithin(sa->aAtom));
-        }
-
-        for (j = 0; j < nPsi; j++) {
-            SAVETORSIONt *stPsi = stdptPsi[j];
-
-            /* ── central bond cutoff: psi iAtom1,2,3 == phi iAtom2,3,4 ── */
-            if (stPsi->iAtom1 != iAtom[1] ||
-                stPsi->iAtom2 != iAtom[2] ||
-                stPsi->iAtom3 != iAtom[3])
-                continue;
-
-            /* ── fill atom5: psi's iAtom4 ── */
-            iAtom[4] = stPsi->iAtom4;
-            SAVEATOMt *sb = &saAtoms[iAtom[4] - 1];
-            an5[4]     = sAtomName(sb->aAtom);
-            rn5[4]     = sContainerName(cContainerWithin(sb->aAtom));
-            absres5[4] = iContainerTempInt(cContainerWithin(sb->aAtom));
+            iAtom5[4] = iContainerTempInt(aAtom5);  /* 1-based atom index */
+            SAVEATOMt *sa5 = &saAtoms[iAtom5[4] - 1];
+            an5[4] = sAtomName(sa5->aAtom);
+            rn5[4] = sContainerName(cContainerWithin(sa5->aAtom));
+            absres5[4] = iContainerTempInt(cContainerWithin(sa5->aAtom));
 
             for (k = 0; k < 5; k++)
                 ri5[k] = absres5[k] - absres5[0];
 
-            int iIndex = iParmSetFindCMAP(uUnit->psParameters,
-                                          rn5, an5, ri5);
+            /* ── lookup: unit parmset first, then parmlib ── */
+            int iIndex = iParmSetFindCMAP(uUnit->psParameters, rn5, an5, ri5);
             if (iIndex == PARM_NOT_FOUND) {
                 int iTemp = PARM_NOT_FOUND;
                 PARMLIB_LOOP(plLib, psTemp,
                     (iTemp = iParmSetFindCMAP(psTemp, rn5, an5, ri5)));
 
-                // CMAP is supplemental — not found anywhere is normal so no error.
+                /* CMAP is supplemental — not found anywhere is normal so no error. */
                 if (iTemp == PARM_NOT_FOUND) continue;
 
-                /* fetch deep copy and add to unit parmset */
+                /* fetch deep copy (bCopy=TRUE) and add to unit parmset */
                 CMAPt cmap;
                 ParmSetCMAP(psTemp, iTemp, &cmap, TRUE);
-                
                 iIndex = iParmSetAddCMAP(uUnit->psParameters, &cmap);
-                dest_cmap_index[iTemp] = iIndex;
+                dest_cmap_index[iTemp] = iIndex; // compaitibility hack
             }
 
             /* ── store SAVECMAPt entry ── */
             SAVECMAPt entry;
-            for (k = 0; k < 5; k++) entry.iAtom[k] = iAtom[k];
-            entry.iParmIndex = iIndex + 1;   /* 1-based, same as bonds */
+            for (k = 0; k < 5; k++) entry.iAtom[k] = iAtom5[k];
+            entry.iParmIndex = iIndex + 1;   /* 1-based */
             VarArrayAdd(uUnit->vaCMAPs, (GENP)&entry);
         }
     }
-
-    free(stdptPhi);
-    free(stdptPsi);
 }
 
 void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
@@ -279,110 +278,4 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     FortranEndLine();
 }
 
-#ifdef BINTRAJ
-/* ================================================================
-   6. SaveAmberParmCMAPNetcdf()
-   NetCDF equivalent of SaveAmberParmCMAP().
-   Differences from Fortran path:
-   - CMAP_COUNT: 2-element NC_INT array, not formatted string
-   - CMAP_PARAMETER_nn: 2D NC_DOUBLE grid [res][res]
-   - CMAP_INDEX: raw atom indices, (originally direct index with CMAP_INDEX)
-   ================================================================ */
-/* ================================================================
-   SaveAmberParmCMAPNetcdf()
 
-   Dimensions:
-     CMAP_KINDS  — number of unique phi/psi interaction pairs (mk)
-     CMAP_TYPES  — number of unique map parameter sets (maptypes)
-     CMAP_RESOLUTION_nn  — scalar int, grid size (res x res) for maptype nn
-
-   Index arrays:
-     CMAP_INDEX_ATOMS(CMAP_KINDS, cmap_atom_quint)
-       5 raw 1-based atom indices defining two adjacent torsions.
-       Atoms 1-4 = phi torsion, atoms 2-5 = psi torsion.
-       Shared central bond atoms 2-3 defines the phi/psi junction.
-       No /3+1 AMBERINDEX transform — reader applies at runtime.
-     CMAP_INDEX_MAP(CMAP_KINDS)
-       1-based index into /cmap/map_nn/ subgroup.
-   Parameter arrays:
-     CMAP_PARAMETER_nn(CMAP_RESOLUTION_nn,CMAP_RESOLUTION_nn) — energy surface in kcal/mol
-   ================================================================ */
-int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid)
-{
-    int CMAP_TYPES = iParmSetTotalCMAPParms(uUnit->psParameters);
-    int CMAP_KINDS = iVarArrayElementCount(uUnit->vaCMAPs); // = NumPhiPsi
-    if (!(CMAP_TYPES && CMAP_KINDS)) return NC_NOERR;
-    if (!GDefaults.iCMAP) return NC_NOERR;
-
-    /* ── write CMAP_KINDS and CMAP_TYPES scalars ── */
-    {
-
-    /* ── CMAP_INDEX_ATOMS and CMAP_INDEX_MAP ── */
-
-        int dimid_types, dimid_kinds, dimid_quint;
-        int vid_atoms, vid_map;
-        int dims2[2];
-        int *atoms_buf = malloc(CMAP_KINDS * 5 * sizeof(int));
-        int *map_buf   = malloc(CMAP_KINDS * sizeof(int));
-
-        NC_CHECK(nc_redef(ncid));
-
-        NC_CHECK(nc_def_dim(ncid, "phi_psi_types", CMAP_TYPES, &dimid_types));
-        NC_CHECK(nc_def_dim(ncid, "phi_psi", CMAP_KINDS, &dimid_kinds));
-        NC_CHECK(nc_def_dim(ncid, "atom_quint", 5, &dimid_quint));
-
-        dims2[0] = dimid_kinds; dims2[1] = dimid_quint;
-        NC_CHECK(nc_def_var(ncid, "phi_psi_atoms", NC_INT, 2, dims2, &vid_atoms));
-        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "long_name", 50,
-                                 "5 raw 1-based atom indices: atoms 1-4=phi, 2-5=psi"));
-        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "reference_dimension", 6, "atoms"));
-
-        NC_CHECK(nc_def_var(ncid, "phi_psi_parm", NC_INT, 1, &dimid_kinds, &vid_map));
-        NC_CHECK(nc_put_att_text(ncid, vid_map, "long_name", 79,
-                "1-based index into phi_psi_cmap_resolution_<nn> and phi_psi_cmap_<nn>"));
-        NC_CHECK(nc_put_att_text(ncid, vid_atoms, "reference_dimenson", 10, "phi_psi_types"));
-        NC_CHECK(nc_enddef(ncid));
-
-        for (int i=0, idx=0; i < CMAP_KINDS; i++, idx+=5) {
-            SAVECMAPt *saveCMAP = PVAI(uUnit->vaCMAPs, SAVECMAPt, i);
-            for (int j=0;j<5;j++) atoms_buf[idx+j]=saveCMAP->iAtom[j];
-            map_buf[i]=saveCMAP->iParmIndex;
-        }
-        NC_CHECK(nc_put_var_int(ncid, vid_atoms, atoms_buf));
-        NC_CHECK(nc_put_var_int(ncid, vid_map,   map_buf));
-        free(atoms_buf); free(map_buf);
-    }
-
-    /* ── subgroups — one per active map type ──
-       Each contains coordinate variables phi and psi (angle values
-       in degrees) plus the GRID energy surface.                     */
-    for (int i = 0; i < CMAP_TYPES; i++) {
-        int dimid_res, dims2[2];
-        int vid_grid;
-        CMAPt cmap;
-        ParmSetCMAP(uUnit->psParameters, i, &cmap, FALSE);
-
-        NC_CHECK(nc_redef(ncid));
-
-        /* RESOLUTION_nn dimension shared by both phi and psi axes. */
-        STRING sResolution;
-        sprintf(sResolution,"phi_psi_cmap_resolution_%02d",i+1);
-        NC_CHECK(nc_def_dim(ncid, sResolution, cmap.resolution, &dimid_res));
-
-        /* GRID(RESOLUTION, RESOLUTION) — same dim for both axes */
-        dims2[0] = dims2[1] = dimid_res;
-        STRING sParam;
-        sprintf(sParam,"phi_psi_cmap_%02d",i+1);
-        NC_CHECK(nc_def_var(ncid, sParam, NC_DOUBLE, 2, dims2, &vid_grid));
-        NC_CHECK(nc_put_att_text(ncid, vid_grid, "units",      8, "kcal/mol"));
-        NC_CHECK(nc_put_att_text(ncid, vid_grid, "long_name",  36,
-                                 "CMAP energy grid: rows=phi, cols=psi"));
-        NC_CHECK(nc_put_att_text(ncid, vid_grid, "coordinates", 18, sResolution));
-        NC_CHECK(nc_put_att_text(ncid, vid_grid, "title", strlen(cmap.title), cmap.title));
-        NC_CHECK(nc_enddef(ncid));
-
-        NC_CHECK(nc_put_var_double(ncid, vid_grid, cmap.map));
-    }
-    return NC_NOERR;
-}
-#endif

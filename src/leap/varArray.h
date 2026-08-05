@@ -51,10 +51,22 @@ typedef struct {
         char    *data;
 } HeaderStruct, *VARARRAY;
 
+extern int      iVarArrayPointerToIndex(VARARRAY header, char *data);
+#ifdef DEBUGx
 extern int      iVarArrayElementSize(VARARRAY header);
 extern int      iVarArrayElementCount(VARARRAY header);
-extern int      iVarArrayPointerToIndex(VARARRAY header, char *data);
 extern char     *PVarArrayIndex( VARARRAY header, int pos);
+#else
+static inline int iVarArrayElementSize(VARARRAY header) {
+    return (header->size);
+}
+static inline int iVarArrayElementCount(VARARRAY header) {
+    return header ? header->count : 0;
+}
+static inline char * PVarArrayIndex( VARARRAY header, int pos ) {
+    return (char*)(header->data + ((size_t)pos)*((size_t)header->size));
+}
+#endif
 
 extern VARARRAY vaVarArrayCreate(int size);
 extern void     VarArrayDestroy(VARARRAY *header);
@@ -71,7 +83,6 @@ extern void     VarArrayInsertBeforeMore(VARARRAY header, int pos, int num);
 #define VarArrayDelete(t,i) VarArrayDeleteMore(t,i,1)
 
 #define PVAI(va,tc,i) ((tc*)PVarArrayIndex(va,(i)))
-
 
 #endif  /* VARARRAY_H */
 

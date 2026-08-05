@@ -266,6 +266,8 @@ ContainerAdd( CONTAINER cContainer, OBJEKT oObject )
         ContainerSetSequence( oObject, 
                 iContainerNextChildsSequenceInc(cContainer) );
         ContainerSetWithin( oObject, cContainer );
+        // And track which node points this object
+        CONTAINER_from(oObject)->nPListNode =  ((LIST)cContainer->lContents)->nPLastNode;
     }
     
     CDU(cContainer);
@@ -413,6 +415,7 @@ ContainerResetPointers( CONTAINER cContainer )
 {
     cContainer->cContainedBy = 
         cContainerCopyPointer(cContainer->cContainedBy);
+    //cContainer->nPListNode = NULL;
 
     switch ( iObjectType(cContainer) ) {
         case UNITid:

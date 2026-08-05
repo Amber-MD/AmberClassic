@@ -67,11 +67,11 @@ extern void     UnitIOSaveAmberPrep( UNIT uUnit, FILE *fOut );
 extern int UnitIOAmberOrderResidues(UNIT);
 extern int UnitLabelMolecules(UNIT);
 
-extern int UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit, bool bPert, bool bPolar,
-                                      VARARRAY vaExcludedAtoms, VARARRAY vaExcludedCount, VARARRAY vaNBIndexMatrix,
-                                      VARARRAY vaNBParameters, VARARRAY vaNBIndex);
+extern void UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit, bool bPert, bool bPolar,
+                       VARARRAY vaExcludedAtoms, VARARRAY vaExcludedCount, VARARRAY vaNBIndexMatrix,
+                       VARARRAY vaNBParameters, VARARRAY vaNBIndex);
 extern void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut);
-extern int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid);
+//extern int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid);
 extern void UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *crdName);
 extern void UnitIOSaveAmberCoord(UNIT uUnit, char *crdName);
 extern int BondAugmentationFound(UNIT uUnit);
@@ -236,6 +236,12 @@ typedef struct {
     int iGroupIndex;
     int iIndexAtom;
 } SAVEGROUPSt;
+
+// Data written to CMAP_INDEX, size=CMAP_KINDS (var 'mk' in old code)
+typedef struct {
+    int iAtom[5];
+    int iParmIndex;
+} SAVECMAPt;
 
 extern double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAtom);
 extern double dGBScreenForElement(int iElement);

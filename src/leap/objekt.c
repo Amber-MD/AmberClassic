@@ -416,6 +416,16 @@ int             iObjClass;
     iObjClass = iObjectType(oObject);
     
     switch ( iClass ) {
+        case CONTAINERid: // common case
+            switch ( iObjClass ) {
+                case ATOMid:
+                case RESIDUEid:
+                case UNITid:
+                case MOLECULEid:
+                case CONTAINERid:
+                    return(TRUE);
+            }
+            break;
         case OBJEKTid:
             return(TRUE);
         case ASSOCid:
@@ -443,16 +453,6 @@ int             iObjClass;
         case LISTid:
             switch ( iObjClass ) {
                 case LISTid:
-                    return(TRUE);
-            }
-            break;
-        case CONTAINERid:
-            switch ( iObjClass ) {
-                case ATOMid:
-                case RESIDUEid:
-                case UNITid:
-                case MOLECULEid:
-                case CONTAINERid:
                     return(TRUE);
             }
             break;

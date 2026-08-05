@@ -105,6 +105,7 @@ int iVarArrayPointerToIndex(VARARRAY header, char *data)
     return ((data - header->data) / header->size);
 }
 
+#ifdef DEBUGx // otherwise inline form header
 /*-----------------------------------------------------
  *                iVarArrayElementSize
  *
@@ -141,6 +142,7 @@ char *PVarArrayIndex(VARARRAY header, int pos)
     return (element(header, pos));
 
 }
+#endif
 
 /*-----------------------------------------------------
  *      vaVarArrayCreate

@@ -179,9 +179,8 @@ static bool bSelWithinResidue(SELNODE node, ATOM atom)
     if (node->cache_object == (void*)rRes) return node->cache_result;
     node->cache_object = (void*)rRes;
     node->cache_result = false;
-    LOOP lAtoms = lLoop(OBJEKT_from(rRes), ATOMS);
     ATOM aAtom;
-    while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
+    FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
         if (bNodeSelectionWithin(node, aAtom)) {
             node->cache_result = true;
             break;
@@ -197,9 +196,8 @@ static bool bSelWithinResCenter(SELNODE node, ATOM atom)
     node->cache_object = (void*)rRes;
     double cx = 0, cy = 0, cz = 0;
     int n = 0;
-    LOOP lAtoms = lLoop(OBJEKT_from(rRes), ATOMS);
     ATOM aAtom;
-    while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
+    FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
         cx += dVX(&vAtomPosition(aAtom));
         cy += dVY(&vAtomPosition(aAtom));
         cz += dVZ(&vAtomPosition(aAtom));
@@ -224,9 +222,8 @@ static bool bSelWithinMolecule(SELNODE node, ATOM atom)
     RESIDUE rRes;
     while ( (rRes = RESIDUE_from(oNext(&lResidues))) ) {
         if (rRes->iMolecule != iMol) continue;
-        LOOP lAtoms = lLoop(OBJEKT_from(rRes), ATOMS);
         ATOM aAtom;
-        while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
+        FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
             if (neighbor_grid_query_point_bool(node->ngGrid,
                     dVX(&vAtomPosition(aAtom)),
                     dVY(&vAtomPosition(aAtom)),
@@ -246,11 +243,11 @@ static bool bSelMolContains(const SELNODE node, const UNIT uUnit, long iMol)
     RESIDUE rRes;
     while ( (rRes = RESIDUE_from(oNext(&lResidues))) ) {
         if (rRes->iMolecule != iMol) continue;
-        LOOP lAtoms = lLoop(OBJEKT_from(rRes), ATOMS);
         ATOM aAtom;
-        while ( (aAtom = ATOM_from(oNext(&lAtoms))) )
+        FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
             if (bAtomEvalSelection(node->left, aAtom))
                 return true;
+        }
     }
     return false;
 }
@@ -307,9 +304,8 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
             if (node->cache_object == (void*)rRes) return node->cache_result;
             node->cache_object = (void*)rRes;
             node->cache_result = false;
-            LOOP lAtoms = lLoop(OBJEKT_from(rRes), ATOMS);
             ATOM aAtom;
-            while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
+            FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
                 if (bAtomEvalSelection(node->left, aAtom)) {
                     node->cache_result = true;
                     break;

@@ -506,7 +506,7 @@ LOOP		lTemp;
 	    MESSAGE("Got chirality from external coordinates\n" );
 	    MESSAGE("++++Chirality INTERNAL: %lf  for %s\n", 
 		dValue,
-		sContainerFullDescriptor((CONTAINER)a1,s1) );
+		sContainerFullDescriptor((CONTAINER)aAtom,s1) );
 	} else {
 	    MESSAGE("Left chirality undefined\n" );
 	}
@@ -1286,8 +1286,7 @@ MOLECULE        mMol;
 
     lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
     while ( ( rRes = (RESIDUE)oNext(&lResidues) ) != NULL ) {
-        lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
-        while ( ( aAtom=(ATOM)oNext(&lAtoms)) != NULL ) 
+        FOR_ATOMS_IN_RESIDUE(aAtom, rRes)
             AtomSetFlags( aAtom, ATOMTOUCHED );
     }
 

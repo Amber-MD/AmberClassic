@@ -118,7 +118,7 @@ typedef struct UNITSTRUCT {
                         /* to store interactions and pointers to parameters */
                         /* for writing UNITs to DATABASEs and for writing */
                         /* UNITs with parameters for SPASMS */
-        int             iMoleculeCount;
+        int             iMoleculeCount, iResidueCount, iAtomCount;
         int             iCapTempInt;
         VARARRAY        vaAtoms;       // SAVEATOMt
         VARARRAY        vaBonds;       // SAVEBONDt
@@ -136,6 +136,7 @@ typedef struct UNITSTRUCT {
 
 // from  zUnitIOFindAndCountMolecules()
         int             iFirstSolvent;
+        int             iFirstBulkSolvent; // atom index
         VARARRAY        vaAtomsPerMolecule; // int (was also called vaMolecules and not part of UNIT struct)
 } UNITt;
 
@@ -230,8 +231,8 @@ extern void     UnitSetUseBox(UNIT uUnit, bool b);
 extern void     UnitSetBoxOct(UNIT uUnit, bool b);
 extern void     UnitSetUseSolventCap(UNIT uUnit, bool b);
 extern void     UnitDestroy( UNIT *uPUnit );
-extern bool     zbUnitIgnoreHwHwOwAngle( STRING sA, STRING sB, STRING sC );
-extern bool     zbUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
+extern bool     bUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
+extern int      UnitLabelMolecules(UNIT uUnit);
 
 #define uCopyUnit(u) UNIT_from(oCopy(OBJEKT_from(u)))
 

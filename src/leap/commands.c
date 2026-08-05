@@ -3154,10 +3154,8 @@ double                  dCharge, dPertCharge;
     while ( ( rRes = RESIDUE_from(oNext(&lRes)) ) != NULL ) {
             double charge=0;
             ATOM aAtom;
-            LOOP lAtom = lLoop( OBJEKT_from(rRes), ATOMS );
-            while ( ( aAtom = ATOM_from(oNext(&lAtom))) != NULL ) {
+            FOR_ATOMS_IN_RESIDUE(aAtom,rRes) 
                 charge += dAtomCharge(aAtom);
-            }
             crResidues[iCount].dFrac = fabs(charge - round(charge));
             crResidues[iCount].dCharge = charge;
             crResidues[iCount++].rRes = rRes;
@@ -5385,42 +5383,32 @@ RESIDUE         rRes;
         return  vaSolvent ;
 }
 
+// Find closest vaSolvent atom to PvIon coordinate. If d < 3A,
+// delete it from both uUnit (removed) and vaSolvent (destroy -> NULL, fast)
 static void
-CheckSolvent( UNIT uUnit, VARARRAY vaSolvent, UNIT uIon, VECTOR *PvIon )
+CheckSolvent( UNIT uUnit, VARARRAY vaSolvent, UNIT uIon, VECTOR *PvIon, NeighborGrid *ngSolvent )
 {
-RESIDUE         *PrRes, *PrClosest;
-LOOP            lAtoms;
-ATOM            aAtom;
+RESIDUE         *PrRes=NULL, *PrClosest=NULL;
 VECTOR          vClosest;
-double          d2, dmin2, x, y, z;
-int             i, iCount;
-
+double          dmin2;
         /*
          *  PrRes (pointer to residue pointer) is used so that
          *      the residue pointer can be set null if the residue
          *      is deleted
          */
         dmin2 = FLT_MAX;
-        iCount = iVarArrayElementCount( vaSolvent );
-        PrRes = PVAI( vaSolvent, RESIDUE, 0 );
-        PrClosest = PrRes;
-        for (i=0; i<iCount; i++, PrRes++) {
-                if ( *PrRes == NULL ) /* already deleted */
-                        continue;
-                lAtoms = lLoop( OBJEKT_from(*PrRes), ATOMS );
-                aAtom = ATOM_from(oNext( &lAtoms ));
-                x = PvIon->dX - vAtomPosition( aAtom ).dX;
-                x = x * x;
-                y = PvIon->dY - vAtomPosition( aAtom ).dY;
-                y = y * y;
-                z = PvIon->dZ - vAtomPosition( aAtom ).dZ;
-                z = z * z;
-                d2 = x + y + z;
-                if ( d2 < dmin2 ) {
-                        PrClosest = PrRes;
-                        vClosest = vAtomPosition( aAtom );
-                        dmin2 = d2;
+        const Pair *Pairs;
+        size_t count;
+        neighbor_grid_query_point(ngSolvent,PvIon->dX,PvIon->dY,PvIon->dZ,1,1,&Pairs,&count);
+        for (int i=0;i<count;i++) {
+            if (Pairs[i].d2 < dmin2) {
+                PrRes = PVAI( vaSolvent, RESIDUE, Pairs[i].to_group );
+                if ( *PrRes ) {
+                    dmin2 = Pairs[i].d2;
+                    PrClosest = PrRes;
+                    vClosest = vAtomPosition( (ATOM)Pairs[i].to_p );
                 }
+            }
         }
         if ( dmin2 < 9 ) {  /* HACK test */
                 VP0("(Replacing solvent molecule)\n");
@@ -5438,23 +5426,27 @@ int             i, iCount;
 }
 
 OBJEKT
-oCmd_addIons( int iArgCount, ASSOC aaArgs[] )
+addIons( int iArgCount, ASSOC aaArgs[], bool bRandom, bool bIncludeSolvent, char *sCmd)
 {
 UNIT            uUnit=NULL, uIon1=NULL, uIon2=NULL, uPlace=NULL;
 int             iIon1=0, iIon2=0;
 double          dCharge, dPertCharge, dICharge1, dICharge2;
-double          dIonSize1, dIonSize2, dMinSize;
-int             i, iUnknown, ierr;
+double          dIonSize1, dIonSize2, dMinSize, dMinSeparation = 0.0;
+int             i, iUnknown, ierr, iSystemCharge;
 VECTOR          vNewPoint, vMaxPot, vMinPot;
 HELP            hTemp;
 LOOP            lAtoms;
 ATOM            aAtom;
-OCTREE          octTreeSolute;
+OCTREE          octTreeSolute = NULL;
 VARARRAY        vaSolvent = NULL;
-char            *sCmd = "addIons";
+ATOM            *aIons=NULL;
+NeighborGrid    *ngSolventAtoms = NULL;
+unsigned int    *iGroupStart = NULL;
+VARARRAY        vaSolventPoints = NULL;
+char            *sName1, *sName2;
 
-    VPTRACEENTER("oCmd_addIons" );
-    VPTRACEMULTIPLEEXIT("oCmd_addIons" );
+    VPTRACEENTER("addIons" );
+    VPTRACEMULTIPLEEXIT("addIons" );
     BasicsResetInterrupt();
 
     /*
@@ -5462,35 +5454,56 @@ char            *sCmd = "addIons";
      */
     ierr = 0;
     switch( iArgCount ) {
-        case 3:
-          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
-                ierr++;
+        case 3:  // One ion and desired number
+          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" )) ierr++;
           break;
-        case 5:
-          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" )) {
-                ierr++;
-                break;
-          }
-          /*
-           *  Translate the 2 extra args
-           */
+        case 4:  // One ion and desired number and minimum separation
+          if (!bRandom) { ++ierr; break; }
+          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n n" ))
+          { ++ierr; break; }
+          // Get the minimum separation
+          dMinSeparation = dODouble( oAssocObject( aaArgs[3] ));
+          break;
+        case 5:  // Two ions and desired number of each of them
+          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" ))
+          { ierr++; break; }
+          // Get the arguments for the second ion
           uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
           iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
-          if ( uIon2  &&  iIon2 == 0 ) {
-              VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
-                                                sCmd );
-              ierr++;
-          }
           break;
+
+        case 6: // Two ions and number of each of them and minimum separation
+          if (!bRandom) { ++ierr; break; }
+          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n n" ))
+          { ++ierr; break; }
+          // Get the arguments for the second ion
+          uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
+          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
+          // Get the minimum separation
+          dMinSeparation = dODouble( oAssocObject( aaArgs[3] ));
+          break;
+
         default:
           ierr++;
           break;
     } /* end of switch */
 
+    if ( uIon2  &&  iIon2 == 0 && iIon1 != 0)
+    {
+      VPFATAL("%s: '0' is not allowed as the value for the second ion.\n", sCmd );
+      ++ierr;
+    }
+    if (dMinSeparation < 0.0)
+    {
+      VPFATAL("%s: %d is not a valid minimum distance between ions.\n",
+            sCmd, dMinSeparation );
+      ++ierr;
+    }
+
     if ( ierr ) {
-          hTemp = hHelp( "addions" );
+          hTemp = hHelp( sCmd );
           if ( hTemp == NULL ) {
-                VPFATALDELAYEDEXIT("No help available on addIons\n" );
+                VPFATALDELAYEDEXIT("No help available on %s\n", sCmd );
           } else {
                 VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
           }
@@ -5504,17 +5517,21 @@ char            *sCmd = "addIons";
     uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
     iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
 
+    sName1 = sAssocName( aaArgs[1] );
+    sName2 = sAssocName( aaArgs[3] );
+
     /*
      *  Consider target unit's charge
      */
     ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
-    if ( !dCharge ) {
-        VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
+    iSystemCharge = (int)round( dCharge );
+    if ( !iSystemCharge ) {
+        VP0("%s has a unit charge of 0.\n", sName1);
         if ( iIon1 == 0 ) {
                 VP0("%s: Can't neutralize.\n", sCmd );
                 return NULL;
         }
-        VP0("Adding the ions anyway.\n");
+        //VP0("Adding the ions anyway.\n");
     } else
         MESSAGE("dCharge:  %4.2lf\n", dCharge );
 
@@ -5524,14 +5541,18 @@ char            *sCmd = "addIons";
     ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
     if ( !dICharge1 ) {
         VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[1] ));
+                sCmd, sName1);
         return NULL;
     }
     if ( uIon2 ) {
         ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
         if ( !dICharge2 ) {
            VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[3] ));
+                sCmd, sName2);
+           return NULL;
+        }
+        if (dICharge1 * dICharge2 >0) {
+           VPFATALEXIT("%s: Ion1 and Ion2 must have opposit sign.\n", sCmd);
            return NULL;
         }
     }
@@ -5540,21 +5561,16 @@ char            *sCmd = "addIons";
      *  Consider neutralization
      */
     if ( iIon1 == 0 ) {
-        if ( (dICharge1 < 0  &&  dCharge < 0) ||
-             (dICharge1 > 0  &&  dCharge > 0)) {
-    /*
-     *  As a general rule it is poor floating point programming to compare
-     *  directly with 0; in practice this test can fail as in Run.parm7:
-     *  > addions prot CL 0
-     *  Trace: unit charge = -2.4869e-14; ion1 charge = -1
-     */
-                VPTRACE("unit charge = %g; ion1 charge = %g\n",
-                          dCharge, dICharge1 );
-                VPWARN("%s: 1st Ion & target unit have charges of the same "
-                         "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
-                            "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 );
-                return NULL;
+        if ( dICharge1 * dCharge > 0) {
+            VPWARN("%s: 1st Ion & target unit have charges of the same "
+                   "sign:\n" "     unit charge = %g; ion1 charge = %g; ion2 charge = %g\n"
+                   "     Swapping Ion1 & Ion2.\n" , sCmd,
+                         dCharge, dICharge1, dICharge2 );
+            uIon1 = uIon2;
+            dICharge1 = dICharge2;
+            char *s = sName1;
+            sName1 = sName2;
+            sName2 = s;
         }
         /*
          *  Get the nearest integer number of ions that
@@ -5566,12 +5582,11 @@ char            *sCmd = "addIons";
             VP0(" %f %d %d %d\n", fabs( dCharge),
                 (int)fabs( dCharge), (int)fabs( dICharge1 ),
                 (int)(fabs( dCharge) / fabs( dICharge1 )) );
-        if ( uIon2 ) {
-                VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
+        if ( iIon2 ) {
+                VP0("%s: Neutralization - can't specify 2nd ion count.\n", sCmd );
                 return NULL;
         }
-        VP0("%d %s ion%s required to neutralize.\n", iIon1,
-                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
+        VP0("%d %s ion%s required to neutralize.\n", iIon1, sName1,(iIon1 > 1 ? "s" : "") );
     }
 
     /*
@@ -5583,7 +5598,7 @@ char            *sCmd = "addIons";
     for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
         if ( iAtomSetTmpRadius( aAtom ) )
                 VP0("Using default radius %5.2f for ion %s\n",
-                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
+                        ATOM_DEFAULT_RADIUS, sName1);
         dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
         if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                 iUnknown++;
@@ -5591,11 +5606,11 @@ char            *sCmd = "addIons";
     if ( i > 1 ) {
         if ( iUnknown ) {
             VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
-                sAssocName( aaArgs[1] ), iUnknown );
+                sName1, iUnknown );
             return  NULL ;
         }
         VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
-                sAssocName( aaArgs[1] ), dIonSize1 );
+                sName1, dIonSize1 );
         dIonSize1 *= (double) i;
     } else if ( iUnknown ) {
         VECTOR          vPos;
@@ -5614,7 +5629,7 @@ char            *sCmd = "addIons";
         for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
                 if ( iAtomSetTmpRadius( aAtom ) )
                         VP0("Using default radius %5.2f for ion %s\n",
-                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
+                                ATOM_DEFAULT_RADIUS, sName2 );
                 dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
                 if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
                     iUnknown++;
@@ -5622,11 +5637,11 @@ char            *sCmd = "addIons";
         if ( i > 1 ) {
             if ( iUnknown ) {
                 VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
-                    sAssocName( aaArgs[1] ), iUnknown );
+                    sName1, iUnknown );
                 return  NULL ;
             }
             VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
-                sAssocName( aaArgs[3] ), dIonSize2 );
+                sName2, dIonSize2 );
             dIonSize2 *= (double) i;
         } else if ( iUnknown ) {
             VECTOR              vPos;
@@ -5640,40 +5655,229 @@ char            *sCmd = "addIons";
         dMinSize = MIN( dIonSize1, dIonSize2 );
     }
 
-    VP0("Adding %d counter ions to \"%s\" using 1A grid\n",
-                iIon1 + iIon2, sAssocName( aaArgs[0] ));
+    VP0("Adding %d counter ions to \"%s\" using %gÅ grid, shell extent %gÅ, and dielectric radius %gÅ\n",
+                iIon1 + iIon2, sAssocName( aaArgs[0] ),
+                GDefaults.dGridSpace,GDefaults.dShellExtent);
 
-    if (iIon1 + iIon2 > 5) {
-        const double xx = (double) (iIon1 + iIon2);
-        const double ff = exp(log(xx + 1.0)/3.0);
-        dMinSize = (dIonSize1 > dIonSize2 ? dIonSize1 : dIonSize2);
-        dMinSize *= (ff > 1.0 ? ff : 1.0);
+    int iTotalIons = iIon1 + iIon2;
+    if ( !iTotalIons ) return NULL;
+
+    if (!bIncludeSolvent) {// IncludeSolvent option groups solvent as part of solute
+        vaSolvent = vaSolventResidues( uUnit );
+
+        if ( vaSolvent ) {
+            VP0("Solvent present: replacing closest with ion\n" );
+            VP0("\t when steric overlaps occur ( < 3Å )\n" );
+            int count = iVarArrayElementCount(vaSolvent);
+            vaSolventPoints = vaVarArrayCreate(sizeof(Point));
+            iGroupStart = MALLOC(sizeof(*iGroupStart)*(count+1));
+            for ( i=0; i<count; i++) {
+                iGroupStart[i] = iVarArrayElementCount(vaSolventPoints);
+                RESIDUE *rPRes = PVAI(vaSolvent,RESIDUE,i);
+                FOR_ATOMS_IN_RESIDUE(aAtom, *rPRes) {
+                    Point p= {
+                        vAtomPosition(aAtom).dX,
+                        vAtomPosition(aAtom).dY,
+                        vAtomPosition(aAtom).dZ,
+                        i, { .p = (void*)aAtom } };
+                    //printf("Add ATOM %p=%p, name=%s\n",aAtom,p.p,sContainerName(aAtom));
+                    VarArrayAdd(vaSolventPoints, &p);
+                }
+            }
+            iGroupStart[count] = iVarArrayElementCount(vaSolventPoints);
+            printf("count=%d,points=%d\n",count, iGroupStart[count]);
+            ngSolventAtoms = neighbor_grid_setup(
+                   PVAI(vaSolventPoints, Point, 0),
+                  iVarArrayElementCount(vaSolventPoints),count,iGroupStart,3.0);
+        } else
+            VP0(" (no solvent present)\n" );
     }
+    TurnOffDisplayerUpdates();
+////////////////////////////// RANDOM //////////////////////////////////
+//     oCmd_addIonsRand, Robin Betz (2011)
+  if (bRandom) {
+  int iFailCounter=0, iIonCount=0, iRandom;
+  RESIDUE *rPRes;
+  if ( !vaSolvent )
+  {
+    VPFATALEXIT("No solvent present. Add solvent first.\n");
+    return NULL;
+  }
+  if ( iVarArrayElementCount(vaSolvent)-iIon1-iIon2 <= 0)
+  {
+    VPFATALEXIT("Too few solvent molecules to replace with ions.\n" );
+    return NULL;
+  }
+  if( dMinSeparation )
+    aIons = (ATOM*)MALLOC((iIon1+iIon2)*sizeof(ATOM));
 
-    if ( iIon1 + iIon2 == 0 )
-        return NULL;
+  // now actually add the ions
+  while ( iIon1 || iIon2 )
+  {
+    if ( bBasicsInterrupt() ) goto CANCEL;
+    if ( iIon1 )
+    {
+      // Pick random solvent molecule to replace
+      iRandom = rand() % iVarArrayElementCount( vaSolvent );
 
+      // Get position of solvent residue atom
+      rPRes = (RESIDUE*)PVarArrayIndex ( vaSolvent, iRandom );
+      aAtom = ATOM_from(oContainerFirstObject(*rPRes));
+      vNewPoint = vAtomPosition( aAtom );
+
+      // Check that new point isn't too close to other ions
+      bool bPlaceIon = TRUE;
+      for (i=0; i<iIonCount; ++i)
+      {
+        VECTOR vDiff = vVectorSub(&vAtomPosition( aIons[i] ), &vNewPoint);
+        double dIonDist = dVectorLen(&vDiff);
+        if (dIonDist < dMinSeparation)
+        {
+          ++iFailCounter;
+          bPlaceIon = FALSE;
+          break;
+        }
+      }
+
+      if ( bPlaceIon )
+      {
+        if (dMinSeparation) VP0("%d: ", iIonCount);
+        VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+              sName1, sAssocName( aaArgs[0] ),
+              dVX(&(vNewPoint)),
+              dVY(&(vNewPoint)),
+              dVZ(&(vNewPoint)));
+
+        // Save this ion's position if desired
+        uPlace = uCopyUnit(uIon1);
+        ContainerCenterAt(CONTAINER_from( uPlace), vNewPoint );
+        if ( dMinSeparation ) {
+          lAtoms = lLoop( OBJEKT_from(uPlace), ATOMS);
+          aIons[iIonCount++] = ATOM_from(oNext(&lAtoms));
+        }
+        // Copy ion unit, position, and add it to the unit
+        UnitJoin( uUnit, uPlace );
+
+        // Delete the solvent residue that was replaced
+        REF( *rPRes );  /* bContainerRemove() needs this */
+        ResidueYouAreBeingRemoved( *rPRes );
+        if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*rPRes )) == FALSE)
+          DFATAL("rmv solv %d failed\n", iRandom );
+        ContainerDestroy((CONTAINER *) rPRes );
+        rPRes = NULL;
+        VarArrayDelete(vaSolvent, iRandom);
+
+        --iIon1;
+      }
+      if ( iFailCounter > 100 )
+      {
+        VarArrayDelete(vaSolvent, iRandom);
+        FREE( aIons );
+        DFATAL("Impossible to place %d ions with minimum separation of %f.\n",
+                 iIon1 + iIon2, dMinSeparation );
+      }
+    }
+    if ( iIon2 )
+    {
+      // Pick random solvent molecule to replace
+      iRandom = rand() % iVarArrayElementCount( vaSolvent );
+
+      // Get position of solvent residue atom
+      rPRes = PVAI( vaSolvent, RESIDUE, iRandom );
+      aAtom = ATOM_from(oContainerFirstObject(*rPRes));
+      vNewPoint = vAtomPosition( aAtom );
+
+      // Check that new point isn't too close to other ions
+      bool bPlaceIon = TRUE;
+      for (i=0; i<iIonCount; ++i)
+      {
+        VECTOR vDiff = vVectorSub(&vAtomPosition( aIons[i] ), &vNewPoint);
+        double dIonDist = dVectorLen(&vDiff);
+        if (dIonDist < dMinSeparation)
+        {
+          ++iFailCounter;
+          bPlaceIon = FALSE;
+          break;
+        }
+      }
+
+      if ( bPlaceIon )
+      {
+        VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+              sName2, sAssocName( aaArgs[0] ),
+              dVX(&(vNewPoint)),
+              dVY(&(vNewPoint)),
+              dVZ(&(vNewPoint)));
+
+        // Save this ion's position
+        uPlace = uCopyUnit(uIon2);
+        ContainerCenterAt(CONTAINER_from( uPlace), vNewPoint );
+        if (dMinSeparation) {
+        lAtoms = lLoop( OBJEKT_from(uPlace), ATOMS);
+        aIons[iIonCount++] = ATOM_from(oNext(&lAtoms));
+        }
+        // Copy ion unit, position, and add it to the unit
+        UnitJoin( uUnit, uPlace );
+
+        // Delete the solvent residue that was replaced
+        REF( *rPRes );  /* bContainerRemove() needs this */
+        ResidueYouAreBeingRemoved( *rPRes );
+        if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*rPRes )) == FALSE)
+          DFATAL("rmv solv %d failed\n", iRandom );
+        ContainerDestroy((CONTAINER *) rPRes );
+        rPRes = NULL;
+        VarArrayDelete(vaSolvent, iRandom);
+
+        iIon2--;
+      }
+      if ( iFailCounter > 100 ) {
+        DFATAL("Impossible to place %d ions with minimum separation of %f.\n",
+                 iIon1 + iIon2, dMinSeparation );
+        goto DONE;
+      }
+    }
+  }
+  }
+////////////////////////// CHARGE BASED ////////////////////////////////
+  else {
+    double dGridSize = GDefaults.dGridSpace;
+    double dShellExtent = GDefaults.dShellExtent;
+    if (iIon1 + iIon2 > 5) {
+        const double dIonCount = (double) (iIon1 + iIon2);
+        const double dDist = exp(log(dIonCount + 1.0)/3.0); // cubed root of total ion count + 1 
+        double dMaxSize = (dIonSize1 > dIonSize2 ? dIonSize1 : dIonSize2);
+        double dMinShellExtent = dMaxSize * (dDist > 1.0 ? dDist : 1.0); // minimum size for saturated close packing
+        if (dShellExtent < dMinShellExtent) {
+            VPWARN("Inflating ion packing shell extent from %g to %g.",
+                    dShellExtent, dMinShellExtent);
+            dShellExtent = dMinShellExtent;
+        }
+    }
     /*
      *  Build grid and calc potential on it.
      */
-    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL,
-                                        GDefaults.dGridSpace, dMinSize, GDefaults.dShellExtent, 0 );
+    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL, dGridSize, dMinSize, dShellExtent,
+                 bIncludeSolvent, dIonSize1, dIonSize2 );
     if ( !octTreeSolute ) {
-        VP0("%s: No solute to add ions to\n", sCmd );
+        VP0("%s: No %s to add ions to\n", sCmd, bIncludeSolvent?"atoms":"solute" );
         return NULL;
     }
-    vaSolvent = vaSolventResidues( uUnit );
+    double dExclusionRadius = dIonSize1 + dIonSize2;
+    double dPointsPerPlacement = (4.0/3.0) * M_PI * pow(dExclusionRadius, 3) / pow(dGridSize, 3);
+    if ( dPointsPerPlacement < 1.0 ) dPointsPerPlacement = 1.0;  /* floor at 1 - can't consume less than the landing point itself */
+    double dSafetyFactor = 2.0;  /* arbitrary but conservative headroom - tune from real test data */
+    double dRequiredPoints = (double)(iIon1 + iIon2) * dPointsPerPlacement;
+    if ( (double)octTreeSolute->iTreePoints < dRequiredPoints * dSafetyFactor) {
+        DFATAL("%s: requested %d ions may not fit - grid has %d candidate points, "
+                 "estimated capacity needed ~%.0f (exclusion radius %.2f vs grid spacing %.2f). "
+                 "Consider a finer grid, larger shell extent, or fewer ions.\n",
+                 sCmd, iIon1+iIon2, octTreeSolute->iTreePoints, dRequiredPoints,
+                 dExclusionRadius, dGridSize );
+        return NULL;
+    }
 
-    if ( vaSolvent ) {
-        VP0("Solvent present: replacing closest with ion\n" );
-        VP0("\t when steric overlaps occur\n" );
-    } else
-        VP0(" (no solvent present)\n" );
-
-    TurnOffDisplayerUpdates();
-
-    OctTreeInitCharges( octTreeSolute, AT_OCTREE, GDefaults.iDielectricFlag,
-                                        dIonSize1, &vMinPot, &vMaxPot );
+    OctTreeInitCharges( octTreeSolute, GDefaults.iDielectricFlag,
+                         GDefaults.dDielectricRadius, &vMinPot, &vMaxPot );
 /*
 OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
 */
@@ -5686,7 +5890,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                 else
                         vNewPoint = vMinPot;
                 if ( vaSolvent )
-                        CheckSolvent( uUnit, vaSolvent, uIon1, &vNewPoint );
+                        CheckSolvent( uUnit, vaSolvent, uIon1, &vNewPoint, ngSolventAtoms );
 
                 /*
                  *  Make a copy of ion unit and give it new point.
@@ -5698,8 +5902,8 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
-                        sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ),
+                VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+                        sName1, sAssocName( aaArgs[0] ),
                         dVX(&(vNewPoint)),
                         dVY(&(vNewPoint)),
                         dVZ(&(vNewPoint)));
@@ -5720,7 +5924,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                 else
                         vNewPoint = vMinPot;
                 if ( vaSolvent )
-                        CheckSolvent( uUnit, vaSolvent, uIon2, &vNewPoint );
+                        CheckSolvent( uUnit, vaSolvent, uIon2, &vNewPoint, ngSolventAtoms );
 
                 /*
                  *  Make a copy of ion unit and give it new point.
@@ -5732,8 +5936,8 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
-                        sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ),
+                VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+                        sName2, sAssocName( aaArgs[0] ),
                         dVX(&(vNewPoint)),
                         dVY(&(vNewPoint)),
                         dVZ(&(vNewPoint)));
@@ -5752,327 +5956,48 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
 /*
 OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
 */
-    VP0("\nDone adding ions.\n" );
-    OctTreeDestroy( &octTreeSolute );
+    }
+//////////////////////////////////////////////////////////////////////////////////
+    VP0("\nDone adding %d ions.\n", iTotalIons );
+DONE:
+    if (octTreeSolute)
+        OctTreeDestroy( &octTreeSolute );
     if ( vaSolvent )
         VarArrayDestroy( &vaSolvent );
+    if (vaSolventPoints)
+        VarArrayDestroy( &vaSolventPoints );
+    if (ngSolventAtoms)
+        neighbor_grid_free(ngSolventAtoms);
+    if (iGroupStart)
+        FREE(iGroupStart);
+    if ( aIons )
+        FREE( aIons );
     TurnOnDisplayerUpdates();
     ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
     return NULL;
 
 CANCEL:
-
     VP0("\n%s: Interrupted.\n", sCmd );
     BasicsResetInterrupt();
-    if ( octTreeSolute )
-        OctTreeDestroy( &octTreeSolute );
-    if ( vaSolvent )
-        VarArrayDestroy( &vaSolvent );
-    DisplayerReleaseUpdates();
-    return NULL;
+    goto DONE;
+}
+
+OBJEKT
+oCmd_addIons( int iArgCount, ASSOC aaArgs[] )
+{
+    return addIons(iArgCount, aaArgs, FALSE, FALSE, "addIons" );
 }
 
 OBJEKT
 oCmd_addIons2( int iArgCount, ASSOC aaArgs[] )
 {
-UNIT            uUnit=NULL, uIon1=NULL, uIon2=NULL, uPlace=NULL;
-int             iIon1=0, iIon2=0;
-double          dCharge, dPertCharge, dICharge1, dICharge2;
-double          dIonSize1, dIonSize2, dMinSize;
-int             i, iUnknown, ierr;
-VECTOR          vNewPoint, vMaxPot, vMinPot;
-HELP            hTemp;
-LOOP            lAtoms;
-ATOM            aAtom;
-OCTREE          octTreeSolute;
-char            *sCmd = "addIons";
+    return addIons(iArgCount, aaArgs, FALSE, TRUE, "addIons2" );
+}
 
-    BasicsResetInterrupt();
-
-    /*
-     *  Test args
-     */
-    ierr = 0;
-    switch( iArgCount ) {
-        case 3:
-          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
-                ierr++;
-          break;
-        case 5:
-          if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" )) {
-                ierr++;
-                break;
-          }
-          /*
-           *  Translate the 2 extra args
-           */
-          uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
-          iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
-          if ( uIon2  &&  iIon2 == 0 ) {
-              VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
-                                                sCmd );
-              ierr++;
-          }
-          break;
-        default:
-          ierr++;
-          break;
-    } /* end of switch */
-
-    if ( ierr ) {
-          hTemp = hHelp( "addions" );
-          if ( hTemp == NULL ) {
-                VPFATALDELAYEDEXIT("No help available on addIons\n" );
-          } else {
-                VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
-          }
-          return NULL;
-    }
-
-    /*
-     *  Translate args common to both cases
-     */
-    uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
-    uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
-    iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
-
-    /*
-     *  Consider target unit's charge
-     */
-    ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
-    if ( !dCharge ) {
-        VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
-        if ( iIon1 == 0 ) {
-                VP0("%s: Can't neutralize.\n", sCmd );
-                return NULL;
-        }
-        VP0("Adding the ions anyway.\n");
-    } else
-        MESSAGE("dCharge:  %4.2lf\n", dCharge );
-
-    /*
-     *  Consider ion(s) charge
-     */
-    ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
-    if ( !dICharge1 ) {
-        VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[1] ));
-        return NULL;
-    }
-    if ( uIon2 ) {
-        ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
-        if ( !dICharge2 ) {
-           VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
-                sCmd, sAssocName( aaArgs[3] ));
-           return NULL;
-        }
-    }
-
-    /*
-     *  Consider neutralization
-     */
-    if ( iIon1 == 0 ) {
-        if ( (dICharge1 < 0  &&  dCharge < 0) ||
-             (dICharge1 > 0  &&  dCharge > 0)) {
-                VPWARN("%s: 1st Ion & target unit have charges of the same "
-                         "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
-                            "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 );
-                return NULL;
-        }
-        /*
-         *  Get the nearest integer number of ions that
-         *      we need to add to get as close as possible
-         *      to neutral
-         */
-        iIon1 = (int)lrint( fabs(dCharge) / fabs(dICharge1) );
-        if ( iIon1 == 0 )
-            VP0(" %f %d %d %d\n", fabs( dCharge),
-                (int)fabs( dCharge), (int)fabs( dICharge1 ),
-                (int)(fabs( dCharge) / fabs( dICharge1 )) );
-        if ( uIon2 ) {
-                VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
-                return NULL;
-        }
-        VP0("%d %s ion%s required to neutralize.\n", iIon1,
-                sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
-    }
-
-    /*
-     *  Consider ion sizes and positions.
-     */
-    dIonSize1 = 0.0;
-    iUnknown = 0;
-    lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
-    for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-        if ( iAtomSetTmpRadius( aAtom ) )
-                VP0("Using default radius %5.2f for ion %s\n",
-                        ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
-        dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
-        if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
-                iUnknown++;
-    }
-    if ( i > 1 ) {
-        if ( iUnknown ) {
-            VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
-                sAssocName( aaArgs[1] ), iUnknown );
-            return  NULL ;
-        }
-        VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms\n",
-                sAssocName( aaArgs[1] ), dIonSize1 );
-        dIonSize1 *= (double) i;
-    } else if ( iUnknown ) {
-        VECTOR          vPos;
-
-        VectorDef( &vPos, 0.0, 0.0, 0.0 );
-        lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
-        aAtom = ATOM_from(oNext(&lAtoms));
-        AtomSetPosition( aAtom, vPos );
-        AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
-    }
-    dMinSize = dIonSize1;
-    dIonSize2 = 0.0;
-    if ( uIon2 ) {
-        iUnknown = 0;
-        lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
-        for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-                if ( iAtomSetTmpRadius( aAtom ) )
-                        VP0("Using default radius %5.2f for ion %s\n",
-                                ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
-                dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
-                if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
-                    iUnknown++;
-        }
-        if ( i > 1 ) {
-            if ( iUnknown ) {
-                VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
-                    sAssocName( aaArgs[1] ), iUnknown );
-                return  NULL ;
-            }
-            VP0("Ion %s is polyatomic; multiplying max radius %5.2f by # atoms",
-                sAssocName( aaArgs[3] ), dIonSize2 );
-            dIonSize2 *= (double) i;
-        } else if ( iUnknown ) {
-            VECTOR              vPos;
-
-            VectorDef( &vPos, 0.0, 0.0, 0.0 );
-            lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
-            aAtom = ATOM_from(oNext(&lAtoms));
-            AtomSetPosition( aAtom, vPos );
-            AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
-        }
-        dMinSize = MIN( dIonSize1, dIonSize2 );
-    }
-
-    VP0("Adding %d counter ions to \"%s\" using 1A grid\n",
-                iIon1 + iIon2, sAssocName( aaArgs[0] ));
-
-    if ( iIon1 + iIon2 == 0 )
-        return NULL;
-
-    /*
-     *  Build grid and calc potential on it.
-     */
-    octTreeSolute = octOctTreeCreate( uUnit, OCT_SHELL,
-                                        GDefaults.dGridSpace, dMinSize, GDefaults.dShellExtent, 1 );
-    if ( !octTreeSolute ) {
-        VP0("%s: No atoms to add ions to\n", sCmd );
-        return NULL;
-    }
-
-
-    TurnOffDisplayerUpdates();
-
-    OctTreeInitCharges( octTreeSolute, AT_OCTREE, GDefaults.iDielectricFlag,
-                                        dIonSize1, &vMinPot, &vMaxPot );
-/*
-OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
-*/
-
-    while ( iIon1 || iIon2 ) {
-        if ( bBasicsInterrupt() ) goto CANCEL;
-        if ( iIon1 ) {
-                if ( dICharge1 < 0 )
-                        vNewPoint = vMaxPot;
-                else
-                        vNewPoint = vMinPot;
-
-                /*
-                 *  Make a copy of ion unit and give it new point.
-                 */
-                uPlace = uCopyUnit(uIon1);
-                ContainerCenterAt( CONTAINER_from( uPlace), vNewPoint );
-
-                /*
-                 *  Add ion to solute.
-                 */
-                UnitJoin( uUnit, uPlace );
-                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
-                        sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ),
-                        dVX(&(vNewPoint)),
-                        dVY(&(vNewPoint)),
-                        dVZ(&(vNewPoint)));
-                /*
-                 *  Delete ion from grid (allowing clearance to most likely
-                 *      future adjacent ion) and update esp.
-                 */
-                OctTreeDeleteSphere( octTreeSolute, &vNewPoint,
-                                dIonSize1 + (iIon2 ? dIonSize2 : dIonSize1) );
-                OctTreeUpdateCharge( octTreeSolute, &vNewPoint,
-                        (float)dICharge1, (iIon2 ? dIonSize2 : dIonSize1),
-                        &vMaxPot, &vMinPot );
-                iIon1--;
-        }
-        if ( iIon2 ) {
-                if ( dICharge2 < 0 )
-                        vNewPoint = vMaxPot;
-                else
-                        vNewPoint = vMinPot;
-
-                /*
-                 *  Make a copy of ion unit and give it new point.
-                 */
-                uPlace = uCopyUnit(uIon2);
-                ContainerCenterAt( CONTAINER_from( uPlace), vNewPoint );
-
-                /*
-                 *  Add ion to solute.
-                 */
-                UnitJoin( uUnit, uPlace );
-                VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
-                        sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ),
-                        dVX(&(vNewPoint)),
-                        dVY(&(vNewPoint)),
-                        dVZ(&(vNewPoint)));
-                /*
-                 *  Delete ion from grid (allowing clearance to most likely
-                 *      future adjacent ion) and update esp.
-                 */
-                OctTreeDeleteSphere( octTreeSolute, &vNewPoint,
-                                dIonSize2 + (iIon1 ? dIonSize1 : dIonSize2) );
-                OctTreeUpdateCharge( octTreeSolute, &vNewPoint,
-                        (float)dICharge2, (iIon1 ? dIonSize1 : dIonSize2),
-                        &vMaxPot, &vMinPot );
-                iIon2--;
-        }
-    }
-/*
-OctTreePrintGrid( octTreeSolute, "Charge2", COLOR_RANGE );
-*/
-    VP0("\nDone adding ions.\n" );
-    OctTreeDestroy( &octTreeSolute );
-    TurnOnDisplayerUpdates();
-    ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
-    return NULL;
-
-CANCEL:
-
-    VP0("\n%s: Interrupted.\n", sCmd );
-    BasicsResetInterrupt();
-    if ( octTreeSolute )
-        OctTreeDestroy( &octTreeSolute );
-    DisplayerReleaseUpdates();
-    return NULL;
+OBJEKT
+oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
+{
+    return addIons(iArgCount, aaArgs, TRUE, FALSE, "addIonsRand" );
 }
 
 OBJEKT
@@ -6349,413 +6274,6 @@ oCmd_addIonsNear( int iArgCount, ASSOC aaArgs[] )
         VP0("Not implemented\n");
         return NULL;
 }
-
-/*
- *     oCmd_addIonsRand
- *
- *     Robin Betz (2011)
- */
-OBJEKT
-oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
-{
-  UNIT            uUnit=NULL, uIon1=NULL, uIon2=NULL, uPlace=NULL;
-  int             iIon1=0, iIon2=0;
-  double          dCharge, dPertCharge, dICharge1, dICharge2;
-  double          dMinSeparation = 0.0;
-  int             i, iUnknown, ierr, random;
-  VECTOR          vNewPoint;
-  HELP            hTemp;
-  RESIDUE         *rPRes;
-  LOOP            lAtoms;
-  ATOM            aAtom;
-  VARARRAY        vaSolvent = NULL;
-  ATOM*           aIons = NULL;
-  bool            bPlaceIon;
-  int             counter = 0;
-  int             iFailCounter = 0;
-  double dIonDist;
-
-  VECTOR vPoint;
-  char            *sCmd = "addIonsRand";
-
-  // Setup
-  BasicsResetInterrupt();
-  srand(time(NULL));
-
-  // Test arguments
-  ierr = 0;
-  switch( iArgCount )
-  {
-    case 3:  // One ion and desired number / charge
-      if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n" ))
-          ++ierr;
-        break;
-    case 4:  // One ion and desired number / charge and minimum separation
-      if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n n" ))
-      {
-        ++ierr;
-        break;
-      }
-      // Get the minimum separation
-      dMinSeparation = dODouble( oAssocObject( aaArgs[3] ));
-      if (dMinSeparation < 0.0)
-      {
-        VPFATAL("%s: %d is not a valid minimum distance between ions.\n",
-              sCmd, dMinSeparation );
-        ++ierr;
-      }
-        break;
-    case 5: // Two ions and number of each of them
-      if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n" ))
-      {
-        ++ierr;
-        break;
-      }
-      // Get the arguments for the second ion
-      uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
-      iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
-      if ( uIon2  &&  iIon2 == 0 )
-      {
-        VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
-              sCmd );
-        ++ierr;
-      }
-      break;
-
-    case 6: // Two ions and number of each of them and minimum separation
-      if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u n u n n" ))
-      {
-        ++ierr;
-        break;
-      }
-      // Get the arguments for the second ion
-      uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
-      iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
-      if ( uIon2  &&  iIon2 == 0 )
-      {
-        VPFATAL("%s: '0' is not allowed as the value for the second ion.\n",
-              sCmd );
-        ++ierr;
-      }
-      // Get the minimum separation
-      dMinSeparation = dODouble( oAssocObject( aaArgs[3] ));
-      if (dMinSeparation < 0.0)
-      {
-        VPFATAL("%s: %d is not a valid minimum distance between ions.\n",
-              sCmd, dMinSeparation );
-        ++ierr;
-      }
-      break;
-
-    default:
-      ++ierr;
-      break;
-  }
-
-  // Display help if command is malformed
-  if ( ierr )
-  {
-    hTemp = hHelp( "addionsrand" );
-    if ( hTemp == NULL )
-      VPFATALDELAYEDEXIT("No help available on addIons\n" );
-    else
-      VPFATALDELAYEDEXIT("\n%s\n", sHelpText(hTemp) );
-    return NULL;
-  }
-
-  // Translate unit, ion, and charge arguments
-  uUnit = UNIT_from(oAssocObject( aaArgs[0] ));
-  uIon1 = UNIT_from(oAssocObject( aaArgs[1] ));
-  iIon1 = (int)dODouble( oAssocObject( aaArgs[2] ));
-
-  // Check the unit's validity
-  ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
-  if ( !dCharge )
-  {
-    VP0("%s has a charge of 0.\n", sAssocName( aaArgs[1] ));
-    if ( iIon1 == 0 )
-    {
-      VP0("%s: Can't neutralize.\n", sCmd );
-      return NULL;
-    }
-    VP0("Adding the ions anyway.\n");
-  }
-  else
-    MESSAGE("dCharge:  %4.2lf\n", dCharge );
-
-  // Make sure the ions are actually ions
-  ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
-  if ( !dICharge1 )
-  {
-    VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
-          sCmd, sAssocName( aaArgs[1] ));
-    return NULL;
-  }
-  if ( uIon2 )
-  {
-    ContainerTotalCharge(CONTAINER_from(uIon2), &dICharge2, &dPertCharge );
-    if ( !dICharge2 )
-    {
-      VPFATALEXIT("%s: %s is not an ion and is not appropriate for placement.\n",
-            sCmd, sAssocName( aaArgs[3] ));
-      return NULL;
-    }
-  }
-
-  // Check validity of neutralization
-  if ( iIon1 == 0 ) {
-    if ( (dICharge1 < 0  &&  dCharge < 0) ||
-      (dICharge1 > 0  &&  dCharge > 0)) {
-                VPWARN("%s: 1st Ion & target unit have charges of the same "
-                         "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
-                            "     can't neutralize.\n" , sCmd,
-                         dCharge, dICharge1 );
-      return NULL;
-    }
-    /*
-     *  Get the nearest integer number of ions that
-     *      we need to add to get as close as possible
-     *      to neutral
-     */
-    iIon1 = (int)lrint( fabs(dCharge) / fabs(dICharge1) );
-    if ( iIon1 == 0 ) {
-      VP0(" %f %d %d %d\n", fabs( dCharge),
-            (int)fabs( dCharge), (int)fabs( dICharge1 ),
-            (int)(fabs( dCharge) / fabs( dICharge1 )) );
-    }
-    if ( uIon2 ) {
-        VP0("%s: Neutralization - can't do 2nd ion.\n", sCmd );
-        return NULL;
-    }
-    VP0("%d %s ion%s required to neutralize.\n", iIon1,
-          sAssocName( aaArgs[1] ), (iIon1 > 1 ? "s" : "") );
-  }
-
-  // Check ion size and position
-  iUnknown = 0;
-  lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
-  for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-    if ( iAtomSetTmpRadius( aAtom ) )
-      VP0("Using default radius %5.2f for ion %s\n",
-            ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
-    if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
-      iUnknown++;
-  }
-  if ( i > 1 ) {
-    if ( iUnknown ) {
-      VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
-            sAssocName( aaArgs[1] ), iUnknown );
-      return  NULL ;
-    }
-  } else if ( iUnknown ) {
-    VECTOR          vPos;
-
-    VectorDef( &vPos, 0.0, 0.0, 0.0 );
-    lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
-    aAtom = ATOM_from(oNext(&lAtoms));
-    AtomSetPosition( aAtom, vPos );
-    AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
-  }
-  if ( uIon2 ) {
-    iUnknown = 0;
-    lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
-    for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-      if ( iAtomSetTmpRadius( aAtom ) )
-        VP0("Using default radius %5.2f for ion %s\n",
-              ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
-      if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
-        iUnknown++;
-    }
-    if ( i > 1 ) {
-      if ( iUnknown ) {
-        VPFATALEXIT("Ion %s is polyatomic and has %d atoms w/ no position\n",
-              sAssocName( aaArgs[1] ), iUnknown );
-        return  NULL ;
-      }
-    } else if ( iUnknown ) {
-      VECTOR              vPos;
-      VectorDef( &vPos, 0.0, 0.0, 0.0 );
-      lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
-      aAtom = ATOM_from(oNext(&lAtoms));
-      AtomSetPosition( aAtom, vPos );
-      AtomSetFlags( aAtom, ATOMPOSITIONKNOWN );
-    }
-  }
-
-  vaSolvent = vaSolventResidues( uUnit );
-  if ( !vaSolvent )
-  {
-    VPFATALEXIT("No solvent present. Add solvent first.\n");
-    return NULL;
-  }
-  if ( iIon1 + iIon2 == 0 )
-    return NULL;
-  if ( iVarArrayElementCount(vaSolvent)-iIon1-iIon2 <= 0)
-  {
-    VPFATALEXIT("Too few solvent molecules to add ions.\n" );
-    return NULL;
-  }
-  VP0("Adding %d counter ions to \"%s\". %d solvent molecules will remain.\n",
-        iIon1 + iIon2, sAssocName( aaArgs[0] ), iVarArrayElementCount(vaSolvent)-iIon1-iIon2);
-
-  TurnOffDisplayerUpdates();
-  if( dMinSeparation )
-    aIons = (ATOM*)MALLOC((iIon1+iIon2)*sizeof(ATOM));
-
-  // now actually add the ions
-  while ( iIon1 || iIon2 )
-  {
-    if ( bBasicsInterrupt() ) goto CANCEL;
-    if ( iIon1 )
-    {
-      // Pick random solvent molecule to replace
-      random = rand() % iVarArrayElementCount( vaSolvent );
-
-      // Get position of solvent residue atom
-      rPRes = (RESIDUE*)PVarArrayIndex ( vaSolvent, random );
-      lAtoms = lLoop( OBJEKT_from(*rPRes), ATOMS);
-      aAtom = ATOM_from(oNext(&lAtoms));
-      vNewPoint = vAtomPosition( aAtom );
-
-      // Check that new point isn't too close to other ions
-      bPlaceIon = TRUE;
-      for (i=0; i<counter; ++i)
-      {
-        vPoint = vAtomPosition( aIons[i] );
-        vPoint = vVectorSub(&vPoint, &vNewPoint);
-        dIonDist = dVectorLen(&vPoint);
-        if (dIonDist < dMinSeparation)
-        {
-          ++iFailCounter;
-          bPlaceIon = FALSE;
-          break;
-        }
-      }
-
-      if ( bPlaceIon )
-      {
-        VP0("%d: Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n", counter,
-              sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ),
-              dVX(&(vNewPoint)),
-              dVY(&(vNewPoint)),
-              dVZ(&(vNewPoint)));
-
-        // Save this ion's position if desired
-        uPlace = uCopyUnit(uIon1);
-        ContainerCenterAt(CONTAINER_from( uPlace), vNewPoint );
-        if ( dMinSeparation ) {
-          lAtoms = lLoop( OBJEKT_from(uPlace), ATOMS);
-          aIons[counter] = ATOM_from(oNext(&lAtoms));
-          ++counter;
-        }
-        // Copy ion unit, position, and add it to the unit
-        UnitJoin( uUnit, uPlace );
-
-        // Delete the solvent residue that was replaced
-        REF( *rPRes );  /* bContainerRemove() needs this */
-        ResidueYouAreBeingRemoved( *rPRes );
-        if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*rPRes )) == FALSE)
-          DFATAL("rmv solv %d failed\n", random );
-        ContainerDestroy((CONTAINER *) rPRes );
-        rPRes = NULL;
-        VarArrayDelete(vaSolvent, random);
-
-        --iIon1;
-      }
-      if ( iFailCounter > 100 )
-      {
-        VarArrayDelete(vaSolvent, random);
-        FREE( aIons );
-        DFATAL("Impossible to place %d ions with minimum separation of %f.\n",
-                 iIon1 + iIon2, dMinSeparation );
-      }
-    }
-    if ( iIon2 )
-    {
-      // Pick random solvent molecule to replace
-      random = rand() % iVarArrayElementCount( vaSolvent );
-
-      // Get position of solvent residue atom
-      rPRes = PVAI( vaSolvent, RESIDUE, random );
-      lAtoms = lLoop( OBJEKT_from(*rPRes), ATOMS);
-      aAtom = ATOM_from(oNext(&lAtoms));
-      vNewPoint = vAtomPosition( aAtom );
-
-      // Check that new point isn't too close to other ions
-      bPlaceIon = TRUE;
-      for (i=0; i<counter; ++i)
-      {
-        vPoint = vAtomPosition( aIons[i] );
-        vPoint = vVectorSub(&vPoint, &vNewPoint);
-        dIonDist = dVectorLen(&vPoint);
-        if (dIonDist < dMinSeparation)
-        {
-          ++iFailCounter;
-          bPlaceIon = FALSE;
-          break;
-        }
-      }
-
-      if ( bPlaceIon )
-      {
-        VP0("Placed %s in %s at (%4.2lf, %4.2lf, %4.2lf).\n",
-              sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ),
-              dVX(&(vNewPoint)),
-              dVY(&(vNewPoint)),
-              dVZ(&(vNewPoint)));
-
-        // Save this ion's position
-        uPlace = uCopyUnit(uIon2);
-        ContainerCenterAt(CONTAINER_from( uPlace), vNewPoint );
-        if (dMinSeparation) {
-        lAtoms = lLoop( OBJEKT_from(uPlace), ATOMS);
-        aIons[counter] = ATOM_from(oNext(&lAtoms));
-        ++counter;
-        }
-        // Copy ion unit, position, and add it to the unit
-        UnitJoin( uUnit, uPlace );
-
-        // Delete the solvent residue that was replaced
-        REF( *rPRes );  /* bContainerRemove() needs this */
-        ResidueYouAreBeingRemoved( *rPRes );
-        if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*rPRes )) == FALSE)
-          DFATAL("rmv solv %d failed\n", random );
-        ContainerDestroy((CONTAINER *) rPRes );
-        rPRes = NULL;
-        VarArrayDelete(vaSolvent, random);
-
-        iIon2--;
-      }
-      if ( iFailCounter > 100 )
-      {
-        VarArrayDelete(vaSolvent, random);
-        FREE( aIons );
-        DFATAL("Impossible to place %d ions with minimum separation of %f.\n",
-                 iIon1 + iIon2, dMinSeparation );
-      }
-    }
-  }
-
-  // cleanup
-  if ( vaSolvent )
-    VarArrayDestroy( &vaSolvent );
-  if ( aIons )
-    FREE( aIons );
-  TurnOnDisplayerUpdates();
-  ContainerDisplayerUpdate( CONTAINER_from( uUnit ));
-  return NULL;
-
-  // Error handling
-  CANCEL:
-
-  VP0("\n%s: Interrupted.\n", sCmd );
-  BasicsResetInterrupt();
-  if ( vaSolvent )
-    VarArrayDestroy( &vaSolvent );
-  DisplayerReleaseUpdates();
-  return NULL;
-}
-
 
 /*
  *      oCmd_alias
