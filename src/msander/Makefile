@@ -76,18 +76,21 @@ XRAY_OBJS = \
 
 .PHONY: dummy
 
-msander$(SFX): $(BINDIR)/msander$(SFX)
+msander: $(BINDIR)/msander
 
-msander.LES$(SFX): $(BINDIR)/msander.LES$(SFX)
+msander.LES: $(BINDIR)/msander.LES
 
-msander.cuda$(SFX): $(BINDIR)/msander.cuda$(SFX)
+msander.cuda: $(BINDIR)/msander.cuda
 
-msander.LES.cuda$(SFX): $(BINDIR)/msander.LES.cuda$(SFX)
+msander.LES.cuda: $(BINDIR)/msander.LES.cuda
+
+msanderapi: $(LIBDIR)/libmsander.a $(LIBDIR)/libmsanderles.a \
+            $(INCDIR)/msander.h
 
 dummy:
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander$(SFX): libs $(MMOBJ) \
+$(BINDIR)/msander: libs $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) $(PLUMED_DEPENDENCIES) \
          dummy
 	@echo "[MSANDER]  FC $@"
@@ -96,7 +99,7 @@ $(BINDIR)/msander$(SFX): libs $(MMOBJ) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
+$(BINDIR)/msander.cuda: libs lib_cuda $(MMOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
@@ -107,7 +110,7 @@ $(BINDIR)/msander.cuda$(SFX): libs lib_cuda $(MMOBJ) \
          -lcurand -lcufft -lcudart -lcudadevrt -lgfortran -lstdc++
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
+$(BINDIR)/msander.LES: libs $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER_LES]  FC $@"
@@ -116,7 +119,7 @@ $(BINDIR)/msander.LES$(SFX): libs $(LESOBJ) \
 	     -L$(LIBDIR) $(NETCDFLIBF) $(FLIBSF) $(LDFLAGS) $(PLUMED_LOAD)
 
 #---------------------------------------------------------------------------
-$(BINDIR)/msander.LES.cuda$(SFX): libs lib_cuda $(LESOBJ) \
+$(BINDIR)/msander.LES.cuda: libs lib_cuda $(LESOBJ) \
          $(NFE_OBJECTS) $(XRAY_OBJS) xray_interface_impl_gpu.o \
          $(PLUMED_DEPENDENCIES) dummy
 	@echo "[MSANDER]  FC $@"
@@ -128,8 +131,8 @@ $(BINDIR)/msander.LES.cuda$(SFX): libs lib_cuda $(LESOBJ) \
 
 #---------------------------------------------------------------------------
 
-$(INCDIR)/sander.h: sander.h
-	$(VB)/bin/cp sander.h $(INCDIR)
+$(INCDIR)/msander.h: msander.h
+	$(VB)/bin/cp msander.h $(INCDIR)
 
 #---------------------------------------------------------------------------
 libs:
