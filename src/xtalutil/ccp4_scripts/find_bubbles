@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#  James Holton script to find solvent bubbles
+#      (from email of 22jan24)
+#   single argument is the pdb basename
+
+basename=$1
+pdbfile=$basename.pdb
+
+gemmi mask $pdbfile void.msk
+gemmi map2sf void.msk void.mtz Fbulk PHIbulk
+gemmi blobs -f Fbulk -p PHIbulk void.mtz $pdbfile --mask-radius=2.4 > ${basename}_blobs.txt
+
+# voids only count if more than 3 waters fit
+
+awk '$3=="el"{print $5/92}' ${basename}_blobs.txt |\
+awk '$1>1' > ${basename}_void_hist.txt
+
+/bin/rm -f void.msk void.mtz

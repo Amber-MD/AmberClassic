@@ -446,7 +446,7 @@ char		*cPBlock;
                 /* Malloc what the user wants and a header and trailer */
                 
     mPMem = (MEMHEADER*)malloc( lSize + sizeof(MEMHEADER) + TRAILERLEN );
-    FILEMESSAGE( "MEMORY", ( "In: %s:%d Malloc at: %lX,  %ld bytes\n", 
+    FILEMESSAGE( "MEMORY", ( "In: %s:%d Malloc at: %p,  %ld bytes\n",
 				sFile, iLine, mPMem, lSize ));
     if ( mPMem == NULL ) {
         DFATAL(( "Could not malloc: %s\n", strerror(errno) ));
@@ -501,7 +501,7 @@ char		*sTrailer;
                 /* Find where the actual memory block begins */
 
     mPMem = (MEMHEADER*)( cPBlock - sizeof(MEMHEADER) );
-    FILEMESSAGE( "MEMORY", ( "<<<In %s:%d  Realloc at: %lX,  %ld bytes\n", 
+    FILEMESSAGE( "MEMORY", ( "<<<In %s:%d  Realloc at: %p,  %ld bytes\n",
 			sFile, iLine, cPBlock, mPMem->lSize ));
     DebugCheckMemoryBlock(mPMem);
 
@@ -529,7 +529,7 @@ char		*sTrailer;
 
     mPPrevious = mPMem;
     mPMem = (MEMHEADER*)malloc( lSize+sizeof(MEMHEADER)+TRAILERLEN );
-    FILEMESSAGE( "MEMORY", ( "In %s:%d  >>>Realloc at: %lX,  %ld bytes\n",
+    FILEMESSAGE( "MEMORY", ( "In %s:%d  >>>Realloc at: %p,  %ld bytes\n",
 				sFile, iLine, mPMem, lSize ));
     if ( mPMem == NULL ) {
         DFATAL(( "Could not malloc in REALLOC: %s\n", strerror(errno) ));
@@ -579,7 +579,7 @@ MEMHEADER	*mPMem, *mPCur, *mPPrevious;
                 /* Find where the actual memory block begins */
 
     mPMem = (MEMHEADER*)( cPBlock - sizeof(MEMHEADER) );
-    FILEMESSAGE( "MEMORY", ( "In %s:%d Free at: %lX  %ld bytes\n", 
+    FILEMESSAGE( "MEMORY", ( "In %s:%d Free at: %p  %ld bytes\n",
 			sFile, iLine, cPBlock, mPMem->lSize));
     DebugCheckMemoryBlock(mPMem);
 
@@ -787,6 +787,25 @@ struct passwd 	*pw, *getpwnam();
 /* 
 TODO: add string size protection
 */
+    if ( sOriginal[0] == '$' ) {
+        for (i=0; i<99; i++) {
+	    if ( sOriginal[i+1] == '\0' || sOriginal[i+1] == '/' ) {
+		user[i] = '\0';
+		break;
+	    }
+	    user[i] = sOriginal[i+1];
+        }
+        i++;
+        char *var = getenv(user);
+        if ( var == NULL ) {
+	    VP0(( "Could not get environment value for: %s\n", user));
+            return 0;
+        }
+        strcpy( sExpanded, var );
+        if ( sOriginal[i] == '/' )
+	    strcat( sExpanded, &sOriginal[i] );
+        return(0);
+    }
     if ( sOriginal[0] != '~' ) {
 	/*
 	**	nothing to expand
@@ -1325,13 +1344,10 @@ BasicsInitialize()
 	GDefaults.iCharmm = 0;
 	GDefaults.iResidueImpropers = 0;
 	GDefaults.iDeleteExtraPointAngles = 1;
-	GDefaults.iPdbLoadSequential = 1;
-	GDefaults.iHaveResIds = 0;
-	GDefaults.iUseResIds = 0;
+	GDefaults.bPdbHybrid36 = TRUE;
+	GDefaults.bPdbKeepChainId = FALSE;
+	GDefaults.iPdbReadBioMT = 0;
 	GDefaults.iFlexibleWater = 0;
-	for( i=0; i<MAXRESID; i++ ){
-		GDefaults.sResidueId[i][0] = '\0';
-	}
 	GDefaults.iCMAP = 0;
 	GDefaults.iIPOL = 0;
 	GDefaults.iIPOLset = 0;

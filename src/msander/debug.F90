@@ -58,7 +58,7 @@ subroutine load_debug(nf)
          atomn,nranatm, &
          ranseed,chkvir,dumpfrc,rmsfrc,do_tgt,&
          do_charmm_dump_gold, &
-         do_pbdir,do_pbnp,do_pbfd
+         do_pbdir,do_pbnp,do_pbfd, do_cmap
          
 
    ! default flow control all force routines turned on
@@ -73,6 +73,7 @@ subroutine load_debug(nf)
    doxconst = 1
    do_cap = 1
    do_14 = 1
+   do_cmap = 1
    do_tgt = 1
    do_pbdir = 1
    do_pbnp = 1
@@ -108,6 +109,8 @@ subroutine load_debug(nf)
       do_bond = 1
       do_angle = 1
       do_ephi = 1
+      do_14 = 1
+      do_cmap = 1
       doxconst = 1
       do_tgt = 1
       do_cap = 1

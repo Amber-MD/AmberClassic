@@ -22,12 +22,12 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
         {                                       /* 0 PDB_UNKNOWN */
                 "%80s", "UNKNOWN:  ??%-6.6s??" },
         {                                       /* 1 PDB_ANISOU, SIGUIJ */
-                "%6 %5d %4s%c%3s %c%4d%c %7d%7d%7d%7d%7d%7d",
-                "ANISOU%5d %-4s%C%-3s %C%4d%C %7d%7d%7d%7d%7d%7d"
+                "%6 %5h %4s%c%3s  %c%4h%c %7d%7d%7d%7d%7d%7d",
+                "ANISOU%5h %-4s%C%3s %C%4h%C %7d%7d%7d%7d%7d%7d"
         },
         {                                       /* 2 PDB_ATOM, HETATM, SIGATM */
-                "%6 %5d %4s%c%3s %c%4d%c   %8f%8f%8f%6f%6f %3d",
-                "ATOM  %5d %-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
+                "%6 %5h %4s%c%3s%2s%4h%c   %8f%8f%8f%6f%6f          %2s%2s",
+                "ATOM  %5h %-4s%C%3s%2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
         },
         {                                       /* 3 PDB_AUTHOR, COMPND, JRNL, SOURCE */
                 "%9 %c%60s", "AUTHOR   %C%-60s" },
@@ -42,20 +42,20 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
         {                                       /* 7 PDB_END */
                 "", "END   " },
         {                                       /* 8 PDB_FORMUL */
-                "%8 %2d  %3s %2d%c%51s", "FORMUL  %2D  %-3s %2D%C%-51s" },
+                "%8 %2d  %3s %2d%c%51s", "FORMUL  %2D  %3s %2D%C%-51s" },
         {                                       /* 9 PDB_FTNOTE, REMARK */
                 "%7 %3d %59s", "FTNOTE %3D %-59s" },
         {                                       /* 10 PDB_HEADER */
                 "%10 %40s%9s%3 %4s", "HEADER    %-40s%-12s%-4s" },
         {                                       /* 11 PDB_HELIX */
                 "%7 %3d %3s %3s %c %4d%c %3s %c %4d%c%2d%30s",
-                "HELIX  %3D %3s %-3s %C %4d%C %-3s %C %4d%C%2d%-30s" },
+                "HELIX  %3D %3s %3s %C %4d%C %3s %C %4d%C%2d%-30s" },
         {                                       /* 12 PDB_HET */
-                "%7 %3s  %c%4d%c  %5d%5 %40s",
-                "HET    %-3s  %C%4d%C  %5d     %-40s" },
+                "%7 %3s %2s%4d%c  %5d%5 %40s",
+                "HET    %3s %2s%4d%C  %5d     %-40s" },
         {                                       /* 13 PDB_HETATM */
-                "%6 %5d %4s%c%3s %c%4d%c   %8f%8f%8f%6f%6f %3d",
-                "HETATM%5d %-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
+                "%6 %5h %4s%c%3s%2c%4h%c   %8f%8f%8f%6f%6f          %2s%2s",
+                "HETATM%5h %-4s%C%3s%.2s%4h%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s"
         },
         {                                       /* 14 PDB_JRNL */
                 "%9 %c%60s", "JRNL     %C%-60s" },
@@ -80,24 +80,24 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "%5 %d%4 %10f%10f%10f%5 %10f",
                 "SCALE%d    %10.5f%10.5f%10.5f     %10.5f" },
         {                                       /* 22 PDB_SEQRES */
-        "%6 %4d %c %4d  %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s",
-        "SEQRES%4d %C %4d  %-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-4s%-3s"
+        "%6 %4d%2s %4d  %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s",
+        "SEQRES%4d%2s %4d  %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s %3s"
         ,},
         {                                       /* 23 PDB_SHEET */
-        "%6 %4d %3s%2d %3s %c%4d%c %3s %c%4d%c%2d %4s%3s %c%4d%c %4s%3s %c%4d%c",
-        "SHEET %4D %3s%2d %-3s %C%4d%C %-3s %C%4d%C%2d %-4s%-3s %C%4D%C %-4s%-3s %C%4D%C"
+        "%6 %4d %3s%2d %3s%2s%4d%c %3s%2s%4d%c%2d %4s%3s %c%4d%c %4s%3s %c%4d%c",
+        "SHEET %4D %3s%2d %3s%2s%4d%C %3s%2s%4d%C%2d %-4s%3s %C%4D%C %-4s%3s %C%4D%C"
         },
         {                                       /* 24 PDB_SIGATM */
-                "%6 %5d %4s%c%3s %c%4d%c   %8f%8f%8f%6f%6f %3d",
-                "SIGATM%5d %-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
+                "%6 %5d %4s%c%3s%2s%4d%c   %8f%8f%8f%6f%6f %3d",
+                "SIGATM%5d %-4s%C%3s%2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
         },
         {                                       /* 25 PDB_SIGUIJ */
-                "%6 %5d %4s%c%3s %c%4d%c %7d%7d%7d%7d%7d%7d",
-                "SIGUIJ%5d %-4s%C%-3s %C%4d%C %7D%7D%7D%7D%7D%7D"
+                "%6 %5d %4s%c%3s%2s%4d%c %7d%7d%7d%7d%7d%7d",
+                "SIGUIJ%5d %-4s%C%3s%2s%4d%C %7D%7D%7D%7D%7D%7D"
         },
         {                                       /* 26 PDB_SITE */
         "%7 %3d %3s %2d %3s %c%4d%c %3s %c%4d%c %3s %c%4d%c %3s %c%4d%c",
-        "SITE   %3d %3s %2d %-3s %C%4D%C %-3s %C%4D%C %-3s %C%4D%C %-3s %C%4D%C"
+        "SITE   %3d %3s %2d %3s %C%4D%C %3s %C%4D%C %3s %C%4D%C %3s %C%4D%C"
         },
         {                                       /* 27 PDB_SOURCE */
                 "%9 %c%60s", "SOURCE   %C%-60s" },
@@ -105,14 +105,14 @@ struct  pdb_format      pdb_record_format[PDB_NUM_R]    = {
                 "%8 %2d %9s %4s%6 %4s %4s %4s %4s %4s %4s %4s %4s",
                 "SPRSDE  %2D %-9s %-10s%-5s%-5s%-5s%-5s%-5s%-5s%-5s%-4s" },
         {                                       /* 29 PDB_SSBOND */
-                "%7 %3d %3s %c %4d%c   %3s %c %4d%c%4 %30s",
-                "SSBOND %3D %3s %C %4d%C   %3s %C %4D%C    %-30s" },
+                "%7 %3d %3s %c %4h%c   %3s %c %4h%c%4 %30s",
+                "SSBOND %3D %3s %C %4h%C   %3s %C %4h%C    %-30s" },
         {                                       /* 30 PDB_TER */
-                "%6 %5d%6 %3s %c%4d%c",
-                "TER   %5d      %-3s %C%4d%C" },
+                "%6 %5h%6 %3s%2c%4h%c",
+                "TER   %5h      %3s%.2s%4h%C" },
         {                                       /* 31 PDB_TURN */
-                "%7 %3d %3s %3s %c%4d%c %3s %c%4d%c%4 %30s",
-                "TURN   %3D %3s %-3s %C%4d%C %-3s %C%4d%C    %-30s" },
+                "%7 %3d %3s %3s%2s%4d%c %3s%2s%4d%c%4 %30s",
+                "TURN   %3D %3s %3s%2s%4d%C %3s%2s%4d%C    %-30s" },
         {                                       /* 32 PDB_TVECT */
                 "%7 %3d%10f%10f%10f%30s",
                 "TVECT  %3D%10.5f%10.5f%10.5f%-30s" },

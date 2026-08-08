@@ -86,10 +86,12 @@ EOF
 
 
 #============================================================================
-echo "Done. Created 3 files:"
+echo "Done. Created several files:"
 echo "   ${id}-sf.dat          Use as reflections_infile"
+echo "   ${id}-sf.mtz          Same info in mtz format"
 if [ "x$spacegroup" != "xP1" ]; then
    echo "   ${id}-P1-sf.dat       Use as alternate reflections_infile"
+   echo "   ${id}-P1-sf.mtz       Same info in mtz format"
 fi
 echo "   ${id}-prep.log        Log file: examine this if problems arise"
 

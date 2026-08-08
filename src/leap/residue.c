@@ -58,6 +58,7 @@
 #include        "classes.h"
 
 #include        "build.h"
+#include        "defaults.h"
 
 /*
  *----------------------------------------------------------
@@ -141,6 +142,7 @@ int     i;
     ResidueSetType( m, RESTYPEUNDEFINED );
     ResidueSetImagingAtom( m, NULL );
     ResidueSetPdbSequence( m, 0 );
+    ResidueSetChainId( m, "  " );
     return(m);
 }
 
@@ -201,6 +203,7 @@ STRING          sTemp;
     }
     VP0(( "RESIDUE sequence number: %d\n", 
                         iContainerSequence(rResidue) ));
+    VP0(( "RESIDUE PDB chainId: %s\n", rResidue->sChainId));
     VP0(( "RESIDUE PDB sequence number: %d\n",
 			iResiduePdbSequence(rResidue) ));
     VP0(( "Type: %s\n", 
@@ -650,14 +653,17 @@ bResidueCrossLink( RESIDUE rA, int iConnectA,
 	RESIDUE rB, int iConnectB, int iOrder )
 {
 ATOM		aA, aB;
+STRING          sTemp;
 
     aA = aResidueConnectAtom( rA, iConnectA );
     if ( aA == NULL ){
-	    VPFATALEXIT(( " %s: no such connect atom\n", rA->sDescription ));
+           sContainerDescriptor( (CONTAINER)rA, sTemp );
+	   VPFATALEXIT(( " %s: no such connect atom\n", sTemp));
     }
     aB = aResidueConnectAtom( rB, iConnectB );
     if ( aB == NULL ){
-	   VPFATALEXIT(( " %s: no such connect atom\n", rB->sDescription ));
+           sContainerDescriptor( (CONTAINER)rB, sTemp );
+	   VPFATALEXIT(( " %s: no such connect atom\n", sTemp));
     }
     if ( aA == NULL || aB == NULL ) {
 	return(FALSE);
@@ -777,9 +783,18 @@ int		iConnect;
 	}
 	ResidueSetImagingAtom( rRes, oAttr );
 	goto DONE;
+    } else if ( strcmp( sAttr, "chainid" ) == 0 ) {
+	if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
+	ResidueSetChainId( rRes, sOString(oAttr) );
+	goto DONE;
+    } else if ( strcmp( sAttr, "pdbseq" ) == 0 ||
+                strcmp( sAttr, "resid" ) == 0 ) {
+	if ( !bObjektWarnType( oAttr, ODOUBLEid ) ) return;
+	ResidueSetPdbSequence( rRes, dODouble(oAttr) );
+	goto DONE;
     }
     VPFATALEXIT(( "%s: non-existent attribute for a residue.\n", sAttr ));
-    VP0(( "\tResidue attributes: restype, name, imagingAtom\n" ));
+    VP0(( "\tResidue attributes: restype, name, imagingAtom, chainid, pdbSeq (resId)\n" ));
     return;
 
 DONE:

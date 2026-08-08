@@ -1,0 +1,51 @@
+Hmm.  OK. Maybe Claude was helpful after all.  Have not tried it, but it 
+says:
+
+> for each reflection (h, k, l) with complex structure factor F(h,k,l):
+>
+>     # Step 1: apply reciprocal-space index permutation
+>     h' = -h
+>     k' =  k
+>     l' = -l
+>
+>     # Step 2: compute phase shift from real-space fractional 
+> translation t = (0, 1/2, 0)
+>     delta_phi = 2*pi * (h*0 + k*0.5 + l*0)
+>               = 2*pi * (k * 0.5)
+>               = pi * k
+>
+>     # Step 3: apply phase shift to complex structure factor
+>     F(h', k', l') = F(h, k, l) * exp(i * delta_phi)
+>
+>     # equivalently in terms of amplitude and phase:
+>     amplitude(h', k', l') = amplitude(h, k, l)      # unchanged
+>     phase(h', k', l')     = phase(h, k, l) + delta_phi
+
+And for the general case:
+> function apply_symmetry_operator(F, h, k, l, R, t):
+>     # R is 3x3 integer rotation matrix
+>     # t is fractional translation vector (t1, t2, t3)
+>
+>     # Step 1: rotate indices
+>     (h', k', l') = R * (h, k, l)
+>
+>     # Step 2: compute phase correction from translation
+>     delta_phi = 2*pi * (h*t1 + k*t2 + l*t3)
+>
+>     # Step 3: apply to structure factor
+>     F(h', k', l') = F(h, k, l) * exp(i * delta_phi)
+>
+>     return F(h', k', l')
+
+Says that R is the reciprocal-space rotation
+> # given real-space operator R_real, t:
+> R_recip = inverse_transpose(R_real)
+>
+> (h', k', l') = R_recip * (h, k, l)
+>
+> # phase shift uses real-space translation t and ORIGINAL (unpermuted) 
+> indices
+> delta_phi = 2*pi * dot((h, k, l), t)
+>
+> F(h', k', l') = F(h, k, l) * exp(i * delta_phi)
+

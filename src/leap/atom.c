@@ -140,7 +140,7 @@ int     i, j;
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Create a molecule.
+ *      Create an atom.
  *
  *      Return:
  *              Return a pointer to the ATOM created.
@@ -163,7 +163,6 @@ int     i;
     strcpy( a->sType, "" );
     strcpy( a->sPertType, "" );
     strcpy( a->sPertName, "" );
-    strcpy( a->siSegid, "" );
     a->iUniqueId = SiUniqueId++;
     a->fFlags = 0;
     a->dCharge = 0.0;

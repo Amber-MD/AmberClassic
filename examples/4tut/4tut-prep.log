@@ -1,0 +1,190 @@
+XrayPrep log file for id 4tut
+
+file_name: 4tut_final.mtz
+file_type: ccp4_mtz
+
+Miller array info: 4tut_final.mtz:FREE
+Observation type: None
+Type of data: int, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FP,SIGFP
+Observation type: xray.amplitude
+Type of data: double, size=1862
+Type of sigmas: double, size=1862
+Number of Miller indices: 1862
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FC_ALL,PHIC_ALL
+Observation type: None
+Type of data: complex_double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FWT,PHWT
+Observation type: None
+Type of data: complex_double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:DELFWT,PHDELWT
+Observation type: None
+Type of data: complex_double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FOM
+Observation type: None
+Type of data: double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Selected data:
+  4tut_final.mtz:FP,SIGFP
+  Observation type: xray.amplitude
+
+Input crystal symmetry:
+  Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+  Space group: P 1 21 1 (No. 4)
+
+Expanding symmetry and resetting space group to P1:
+  Miller array info: None
+  Observation type: xray.amplitude
+  Type of data: double, size=3506
+  Type of sigmas: double, size=3506
+  Number of Miller indices: 3506
+  Anomalous flag: False
+  Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+  Space group: P 1 (No. 1)
+  Systematic absences: 0
+  Centric reflections: 0
+  Resolution range: 9.99551 0.899616
+  Completeness in resolution range: 0.720214
+  Completeness with d_max=infinity: 0.720066
+
+Generating a new array of R-free flags:
+  fraction: 0.1
+  max_free: 2000
+  convention: CCP4 (test=0, work=1-9)
+  Number of work/free reflections by resolution:
+                                      work free  %free
+    bin  1: 9.9961 - 1.9339 [458/484]  418   40   8.7%
+    bin  2: 1.9339 - 1.5368 [439/482]  413   26   5.9%
+    bin  3: 1.5368 - 1.3431 [432/492]  395   37   8.6%
+    bin  4: 1.3431 - 1.2205 [403/493]  382   21   5.2%
+    bin  5: 1.2205 - 1.1332 [394/487]  346   48  12.2%
+    bin  6: 1.1332 - 1.0664 [384/489]  356   28   7.3%
+    bin  7: 1.0664 - 1.0131 [323/486]  301   22   6.8%
+    bin  8: 1.0131 - 0.9690 [263/459]  239   24   9.1%
+    bin  9: 0.9690 - 0.9317 [252/514]  230   22   8.7%
+    bin 10: 0.9317 - 0.8996 [158/482]  148   10   6.3%
+                              overall 3228  278   7.9%
+
+
+Writing MTZ file: tmp-P1.mtz
+
+
+file_name: 4tut_final.mtz
+file_type: ccp4_mtz
+
+Miller array info: 4tut_final.mtz:FREE
+Observation type: None
+Type of data: int, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FP,SIGFP
+Observation type: xray.amplitude
+Type of data: double, size=1862
+Type of sigmas: double, size=1862
+Number of Miller indices: 1862
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FC_ALL,PHIC_ALL
+Observation type: None
+Type of data: complex_double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FWT,PHWT
+Observation type: None
+Type of data: complex_double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:DELFWT,PHDELWT
+Observation type: None
+Type of data: complex_double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Miller array info: 4tut_final.mtz:FOM
+Observation type: None
+Type of data: double, size=2599
+Type of sigmas: None
+Number of Miller indices: 2599
+Anomalous flag: False
+Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+Space group: P 1 21 1 (No. 4)
+
+Selected data:
+  4tut_final.mtz:FP,SIGFP
+  Observation type: xray.amplitude
+
+Input crystal symmetry:
+  Unit cell: (10.395, 9.731, 17.382, 90, 105.936, 90)
+  Space group: P 1 21 1 (No. 4)
+
+Generating a new array of R-free flags:
+  fraction: 0.1
+  max_free: 2000
+  convention: CCP4 (test=0, work=1-9)
+  Number of work/free reflections by resolution:
+                                      work free  %free
+    bin  1: 9.9961 - 1.9339 [260/277]  241   19   7.3%
+    bin  2: 1.9339 - 1.5368 [238/263]  207   31  13.0%
+    bin  3: 1.5368 - 1.3431 [230/263]  210   20   8.7%
+    bin  4: 1.3431 - 1.2205 [212/264]  185   27  12.7%
+    bin  5: 1.2205 - 1.1332 [208/258]  184   24  11.5%
+    bin  6: 1.1332 - 1.0664 [201/258]  180   21  10.4%
+    bin  7: 1.0664 - 1.0131 [166/257]  150   16   9.6%
+    bin  8: 1.0131 - 0.9690 [135/240]  122   13   9.6%
+    bin  9: 0.9690 - 0.9317 [131/269]  116   15  11.5%
+    bin 10: 0.9317 - 0.8996 [ 81/253]   74    7   8.6%
+                              overall 1669  193  10.4%
+
+
+Writing MTZ file: tmp.mtz
+

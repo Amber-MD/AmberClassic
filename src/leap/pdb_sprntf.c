@@ -5,12 +5,16 @@
 #include       <ctype.h>
 #include       <stdarg.h>
 #include       <string.h>
-
+#include       "hybrid36.h"
 
 static  char scratch[BUFSIZ];
 static  char *outint(), *outunsigned(), *outstr(), *outfloat(), *outexp();
 static  void e_outfloat();
-
+/*
+ * added fields:
+ *    h    encode a hybrid36 string, 4 or 5 digits
+ *    ' '  add blank space
+ */
 
 void 
 pdb_sprintf(char *outbuf, char *fmt, ...)
@@ -23,6 +27,7 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
         unsigned        unum;
         double          fnum;
         int             left_justify;
+        int             i;
 
         va_start(argv, fmt);
         f = fmt;
@@ -57,7 +62,7 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
                         else
                                 field2 = -1;
 
-                        if (*f == 'l' || *f == 'h')
+                        if (*f == 'l')
                                 f++;
 
                         while (isspace(*f))
@@ -80,6 +85,11 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
                                 inum = va_arg(argv, int);
                                 p = outint(inum, field1, 10, fill_char, 'a',
                                         left_justify, p, (*f == 'D') ? ' ':'0');
+                                break;
+                          case 'h':
+                                inum = va_arg(argv, int);
+                                hy36encode(field1,inum,p);
+                                p += field1;
                                 break;
                           case 'e':
                                 fnum = va_arg(argv, double);
@@ -118,6 +128,9 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
                                 inum = va_arg(argv, int);
                                 p = outint(inum, field1, 16, fill_char, 'A',
                                         left_justify, p, '0');
+                                break;
+                          case ' ':
+                                for (i=0;i<field1;i++) *(p++) = ' ';
                                 break;
                           default:
                                 if (left_justify)
@@ -199,6 +212,8 @@ char            zero;
         else
                 *s++ = zero;
         n = s - scratch;
+        /* Truncate overflow */
+        if (n>width) { n = width; s = scratch + width; }
 
         if (negative && fill_char == '0')
                 *p++ = '-';

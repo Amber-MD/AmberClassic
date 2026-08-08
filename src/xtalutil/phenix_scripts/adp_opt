@@ -1,0 +1,203 @@
+#!/bin/bash
+
+#--------------------------------------------------------------------
+#  Tool to run adp refinment in phenix
+#--------------------------------------------------------------------
+
+in=$1
+
+let out=$in+1
+out=$(printf "%03d" $out)
+
+id="alt17"
+supercell="82.272   64.268   69.026"
+origcell="27.424   32.134   34.513"
+spacegroup=" P 1"
+residuesperchain=159
+mtz="alt17-ext.mtz"
+
+#--------------------------------------------------------------------------
+#  Prepare pdb file for phenix.refine: each chain gets its own altloc;
+#     set occ to about 1/12.
+#--------------------------------------------------------------------------
+
+cat <<EOF > set_occ
+#
+#   first, read in a pdb file line and unpack
+#
+
+\$residuesperchain = $residuesperchain;
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop(\$_);
+\$_ .= "                                                                    ";
+
+( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno, \$iCode,
+      \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+#
+#  do modifications necessary here:
+#
+if    (\$resno <=    \$residuesperchain ){ \$alt = "A"}
+elsif (\$resno <=  2*\$residuesperchain ){ \$alt = "B"}
+elsif (\$resno <=  3*\$residuesperchain ){ \$alt = "C"}
+elsif (\$resno <=  4*\$residuesperchain ){ \$alt = "D"}
+elsif (\$resno <=  5*\$residuesperchain ){ \$alt = "E"}
+elsif (\$resno <=  6*\$residuesperchain ){ \$alt = "F"}
+elsif (\$resno <=  7*\$residuesperchain ){ \$alt = "G"}
+elsif (\$resno <=  8*\$residuesperchain ){ \$alt = "H"}
+elsif (\$resno <=  9*\$residuesperchain ){ \$alt = "I"}
+elsif (\$resno <= 10*\$residuesperchain ){ \$alt = "J"}
+elsif (\$resno <= 11*\$residuesperchain ){ \$alt = "K"}
+elsif (\$resno <= 12*\$residuesperchain ){ \$alt = "L"}
+
+\$occ = 0.08;
+\$resname = "CYS" if \$resname eq "CYX";
+\$resname = "HOH" if \$resname eq "WAT";
+\$resname = "HIS" if \$resname eq "HID";
+\$resname = "HIS" if \$resname eq "HIE";
+\$resname = "HIS" if \$resname eq "HIP";
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+
+} else {
+   s/$supercell/$origcell/;  #set cell to original lengths
+   print;
+}
+
+EOF
+
+#--------------------------------------------------------------------------
+#  Run adp refinement in phenix:
+#--------------------------------------------------------------------------
+
+perl < ${id}_$out.min1.pdb -n -f ./set_occ > tmp.pdb
+
+cat <<EOF > cdl.eff
+data_manager {
+  miller_array {
+    file = "$mtz"
+  }
+  default_miller_array = "$mtz"
+  model {
+    file = "tmp.pdb"
+  }
+  default_model = "tmp.pdb"
+}
+refinement {
+# input {
+#   bulk_solvent_map {
+#     file_name = Fuser_phenix.mtz
+#     amplitudes_label = Fpart
+#     phases_label = PHIpart
+#   }
+# }
+  output {
+    write_eff_file = False
+    write_geo_file = False
+    write_def_file = False
+    write_model_cif_file = False
+    write_map_coefficients = False
+    export_final_f_model = False
+  }
+  refine {
+    strategy = individual_sites individual_sites_real_space rigid_body \
+               *individual_adp group_adp tls occupancies group_anomalous
+    sites {
+    }
+#   adp { 
+#     individual {
+#        anisotropic = not H
+#     }
+#   }
+  }
+  main {
+    nqh_flips = True
+    number_of_macro_cycles = 5
+    target = auto *ml mlhl ml_sad ls mli
+    use_experimental_phases = False
+    scattering_table = wk1995 *it1992 n_gaussian electron neutron
+  }
+  hydrogens {
+    refine = individual *riding Auto
+  }
+  pdb_interpretation {
+    c_beta_restraints = False
+     clash_guard {
+       nonbonded_distance_threshold=None  
+     }
+  }
+  mask {
+    ignore_hydrogens = True
+  }
+  structure_factors_and_gradients_accuracy {
+    algorithm = *fft direct
+  }
+  gui {
+    skip_rsr = True
+    skip_kinemage = True
+  }
+}
+output {
+  prefix = "$id"
+  serial = "$out"
+  overwrite = True
+}
+EOF
+
+phenix.refine  cdl.eff > phenix.log
+/bin/rm -f cdl.eff 
+
+
+#--------------------------------------------------------------------------
+#  Undo most of the changes made by set_occ:
+#--------------------------------------------------------------------------
+cat <<EOF > reset_occ
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+#  expand to 80+ characters (really hokey version):
+chop(\$_);
+\$_ .= "                                                                    ";
+
+( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno, \$iCode,
+      \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+    unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+#
+#  do modifications necessary here:
+#
+
+\$occ = 1.0;
+\$alt = ' ';
+
+#
+#  write back out
+#
+printf 
+"%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+      \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+
+} else {
+   s/$origcell/$supercell/;  #set cell to expanded lengths
+   s/$spacegroup/ P 1/;      #set spacegroup back to P1
+   print;
+}
+EOF
+perl -i.bak -n -f ./reset_occ ${id}_$out.pdb  # gets file for next msander run
+
+/bin/rm -f ${id}_$out.eff tmp.pdb phenix.log set_occ reset_occ
+

@@ -54,7 +54,7 @@ cat > mdin.rism <<EOF
 EOF
 
 export OMP_NUM_THREADS=20
-msander -O -i mdin.rism -o $id.kh.r3d \
+$AMBERCLASSICHOME/bin/msander -O -i mdin.rism -o $id.kh.r3d \
     -p $idp.parm7 -c $id.min1.x -xvv cSPCE_kh.xvv -guv $id.kh
 
 /bin/rm -f mdin.rism restrt mdinfo $id.kh.H1.0.dx

@@ -1285,7 +1285,7 @@ uAmberReadUnitFromPrep( FILE *fIn )
 {
 TREENODEt       *cPCoor;
 TREENODEt       cCoor;
-STRING          sLine, sChain;
+STRING          sLine, sChain, sDesc;
 STRING          saStr[15];
 int             iRead, iIndex;
 UNIT            uUnit = NULL;
@@ -1314,27 +1314,25 @@ BOOL            bUseFirstColumn;
 #define         bTREEATTOP()    ( iTreeStackTop == 0 )
 
                 /* Read the long name of the UNIT and null-terminate it */
-    FGETS( sLine, fIn );
-    if ( strncmp( sLine, "STOP", 4 ) == 0 ) {
+
+    FGETS( sDesc, fIn );
+    if ( strncmp( sDesc, "STOP", 4 ) == 0 ) {
         return(NULL);
     }
     if ( feof( fIn ) ) {
         VPWARN(( "Unexpected EOF: Assuming STOP\n" ));
         return(NULL);
     }
-    sLine[strlen(sLine)-1] = '\0';
+    sDesc[strlen(sDesc)-1] = '\0';
 
     uUnit = (UNIT)oCreate(UNITid);
     rRes  = (RESIDUE)oCreate(RESIDUEid);
     ContainerAdd( (CONTAINER)uUnit, (OBJEKT)rRes );
 
-    ResidueSetDescription( rRes, sLine );
-
                 /* Skip a line */
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", 
-                                                sResidueDescription(rRes) ));
+        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",  sDesc ));
         goto ERROR;
     }
 
@@ -1347,8 +1345,7 @@ BOOL            bUseFirstColumn;
 
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                                sResidueDescription(rRes) ));
+        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
         goto ERROR;
     }
     sscanf( sLine, "%s %s %s", saStr[1], saStr[2], saStr[3] );
@@ -1359,8 +1356,7 @@ BOOL            bUseFirstColumn;
 
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                                sResidueDescription(rRes) ));
+        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
         goto ERROR;
     }
     sscanf( sLine, "%s", saStr[1] );
@@ -1373,8 +1369,7 @@ BOOL            bUseFirstColumn;
 
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) {
-        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                                sResidueDescription(rRes) ));
+        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
         goto ERROR;
     }
     sscanf( sLine, "%lf", &dCutoff );
@@ -1388,8 +1383,7 @@ BOOL            bUseFirstColumn;
     for (;;) {
         FGETS( sLine, fIn );
         if ( feof( fIn ) ) {
-                VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                                sResidueDescription(rRes) ));
+                VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
                 return(NULL);
         }
         iRead = sscanf( sLine, "%s %s %s %s %s %s %s %s %s %s %s",
@@ -1474,8 +1468,7 @@ MESSAGE(( "============\n" ));
         strcpy( sName, saStr[2] );
         iLen = strlen( sName );
         if ( iLen > 4 ) {
-            VPERROR(( "residue %s atom %s: name must be <= 4 characters\n",
-                                sResidueDescription(rRes), sName ));
+            VPERROR(( "residue %s atom %s: name must be <= 4 characters\n", sDesc, sName ));
             iErrors++;
         }
 
@@ -1483,16 +1476,14 @@ MESSAGE(( "============\n" ));
         iLen = strlen( sType );
         if ( iLen > 2 ) {
             VPERROR(( 
-                "residue %s atom %s type %s: type must be 1 or 2 characters\n",
-                sResidueDescription(rRes), sName, sType ));
+                "residue %s atom %s type %s: type must be 1 or 2 characters\n", sDesc, sName, sType ));
             iErrors++;
         }
 
         strcpy( sChain, saStr[4] );
         iLen = strlen( sChain );
         if ( iLen > 1 ) {
-            VPERROR(( "residue %s atom %s: chain type [%s] must be 1 character\n",
-                                sResidueDescription(rRes), sName, sChain ));
+            VPERROR(( "residue %s atom %s: chain type [%s] must be 1 character\n", sDesc, sName, sChain ));
             iErrors++;
         }
 
@@ -1646,12 +1637,11 @@ MESSAGE(( "============\n" ));
     }
 
     if ( iCharges == 0 ) {
-        VPNOTE(( "(no charges read on atoms lines in %s)\n",
-                                                sResidueDescription(rRes) ));
+        VPNOTE(( "(no charges read on atoms lines in %s)\n", sDesc ));
     } else {
         if ( iCharges != iAtoms ){
             VPWARN(( "%d of %d atoms missing charges on atoms lines: %s\n",
-                    iAtoms-iCharges, iAtoms, sResidueDescription(rRes) ));
+                    iAtoms-iCharges, iAtoms, sDesc ));
         }
         iChgWarn = 1;
         iCharges = 0;
@@ -1669,8 +1659,7 @@ MESSAGE(( "============\n" ));
         if ( bFirstTime ) bFirstTime = FALSE;
         else            FGETS( sLine, fIn );
         if ( feof( fIn ) ) {
-                VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                                sResidueDescription(rRes) ));
+                VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
                 return(NULL);
         }
         iRead = sscanf( sLine, "%s", saStr[1] );
@@ -1683,8 +1672,7 @@ MESSAGE(( "============\n" ));
             while (1) {
                 FGETS( sLine, fIn );
                 if ( feof( fIn ) ) {
-                        VPERROR(( "Unexpected EOF: discarding (%s)\n",
-                                                sResidueDescription(rRes) ));
+                        VPERROR(( "Unexpected EOF: discarding (%s)\n", sDesc ));
                         goto ERROR;
                 }
                 iRead = sscanf( sLine, "%s %s", saStr[1], saStr[2] );
@@ -1712,27 +1700,23 @@ MESSAGE(( "============\n" ));
                     continue;
                 }
                 if (bAtomBondedTo(aAtom, aAtom2)) {
-                    VPWARN(( "%s:  LOOP: redundant bond  %s--%s  ignored\n",
-                        sResidueDescription(rRes), saStr[1], saStr[2] ));
+                    VPWARN(( "%s:  LOOP: redundant bond  %s--%s  ignored\n", sDesc, saStr[1], saStr[2] ));
                 } else
                         AtomBondTo( aAtom, aAtom2 );
             }
             if (problem) {
-                VPERROR(( "Discarding residue (%s) to EOF\n",
-                                        sResidueDescription(rRes) ));
+                VPERROR(( "Discarding residue (%s) to EOF\n", sDesc ));
                 goto ERROR;
             }
         } else if ( strcmp( saStr[1], "CHARGE" )==0 ) {
             if ( iChgWarn ){
-                VPWARN(( "Per-line charges being overridden by CHARGE block in %s\n",
-                        sResidueDescription(rRes) ));
+                VPWARN(( "Per-line charges being overridden by CHARGE block in %s\n", sDesc ));
             }
             iCharge = 3;
             while (1) {
                 FGETS( sLine, fIn );
                 if ( feof( fIn ) ) {
-                        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                sResidueDescription(rRes) ));
+                        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
                         goto ERROR;
                 }
                 iRead = sscanf( sLine, "%lf %lf %lf %lf %lf", 
@@ -1741,8 +1725,7 @@ MESSAGE(( "============\n" ));
                 if ( iRead<=0 ) break;
                 for ( i=0; i<iRead; i++ ) {
                     if ( iCharge >= iIndex ) {
-                        VPWARN(( "Skipping extra charge in: %s\n",
-                                sResidueDescription(rRes) ));
+                        VPWARN(( "Skipping extra charge in: %s\n", sDesc ));
                         continue;
                     }
                     AtomSetCharge( PVAI( vaCoor, TREENODEt, iCharge )->aAtom,
@@ -1751,8 +1734,7 @@ MESSAGE(( "============\n" ));
                 }
             }
             if ( iCharge < iAtoms ) {
-                    VPERROR(( "Incomplete CHARGE block in: %s: %d/%d\n",
-                            sResidueDescription(rRes), iCharge, iAtoms ));
+                    VPERROR(( "Incomplete CHARGE block in: %s: %d/%d\n", sDesc, iCharge, iAtoms ));
                     goto ERROR;
             }
         } else if ( strcmp( saStr[1], "IMPROPER" )==0 ) {
@@ -1767,8 +1749,7 @@ MESSAGE(( "============\n" ));
             while (1) {
                 FGETS( sLine, fIn );
                 if ( feof( fIn ) ) {
-                        VPERROR(( "Unexpected EOF: discarding residue (%s)\n",
-                                                sResidueDescription(rRes) ));
+                        VPERROR(( "Unexpected EOF: discarding residue (%s)\n", sDesc ));
                         goto ERROR;
                 }
                 iRead = sscanf( sLine, "%s %s %s %s", 
@@ -1784,8 +1765,7 @@ MESSAGE(( "============\n" ));
                 for ( i=1; i<=4; i++ ) {
                     if ( strcmp(saStr[i], "-M") && strcmp(saStr[i], "+M") &&
                              !cContainerFindName( (CONTAINER)rRes, ATOMid, saStr[i] ) ) {
-                        VPNOTE(( "** %s: 'IMPROPER' atom %s not found\n", 
-                                sResidueDescription(rRes), saStr[i] ));
+                        VPNOTE(( "** %s: 'IMPROPER' atom %s not found\n",  sDesc, saStr[i] ));
                         problem++;
                     }
                 }
@@ -1799,8 +1779,7 @@ MESSAGE(( "============\n" ));
                 }
             }
             if (problem && 0) {
-                VPERROR(( "Discarding residue (%s) to EOF\n",
-                                        sResidueDescription(rRes) ));
+                VPERROR(( "Discarding residue (%s) to EOF\n", sDesc ));
                 goto ERROR;
             }
         }

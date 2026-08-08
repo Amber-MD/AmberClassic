@@ -87,9 +87,6 @@
 #define	RESTYPENUCLEIC		'n'
 #define	RESTYPESACCHARIDE	's'
 
-#define	SEGIDLEN		(6+1)
-typedef	char		resSEGIDt[SEGIDLEN];
-
                 /* Residue flags */
 
 #define	RESIDUEPERM	0x0000FFFF
@@ -109,12 +106,10 @@ typedef struct  {
 	CONTAINERt      cHeader;
 	FLAGS           fFlags;
 	char		cResType;
-	STRING          sDescription;
 	OBJEKT          aaConnect[MAXCONNECT];
 	OBJEKT		aSolventImagingAtom;	/* ATOM */
-	int		iPdbSequenceNumber;
-	char		cPdbChain;
-	resSEGIDt	siPdbSegId;
+	int		iPdbResSeq;
+	char		sChainId[3], cICode;
 	VARARRAY	vaImpropers;
 	double		dTemp;
 	int		iTemp;
@@ -122,16 +117,17 @@ typedef struct  {
 
 typedef RESIDUEt	*RESIDUE;
 
-
+// SAVE items contain printable data (no pointers) derived from RESIDUE
 typedef struct {
-    STRING sName;
+    CONTAINERNAMEt sName; // was STRING
     int iSequenceNumber;
     int iaConnectIndex[MAXCONNECT];
     int iNextChildSequence;
-    int iPdbSequenceNumber;
     int iAtomStartIndex;
     int iImagingAtomIndex;
-    char sResidueType[3];
+    int	iPdbResSeq;
+    char sChainId[3], sICode[2];
+    char sResidueType[2];
     RESIDUE rResidue;
 } SAVERESIDUEt;
 
@@ -188,9 +184,11 @@ extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);
 #define	cResidueType(r)		(((RESIDUE)(r))->cResType)
 #define ResidueSetImagingAtom(r,a) (((RESIDUE)r)->aSolventImagingAtom=(OBJEKT)(a),CDU(r))
 #define aResidueImagingAtom(r)     (ATOM)(((RESIDUE)r)->aSolventImagingAtom)
-#define	iResiduePdbSequence(r)	(((RESIDUE)r)->iPdbSequenceNumber)
-#define	ResidueSetPdbSequence(r,i)	(((RESIDUE)r)->iPdbSequenceNumber=(i))
-
-
+#define	iResiduePdbSequence(r)	(((RESIDUE)r)->iPdbResSeq)
+#define	ResidueSetPdbSequence(r,i) (((RESIDUE)r)->iPdbResSeq=(i))
+#define	ResidueSetChainId(r,s) do { \
+        strncpy(((RESIDUE)(r))->sChainId,s,2); \
+        ((RESIDUE)(r))->sChainId[2]=0; \
+     } while (0);
 
 #endif /* RESIDUE_H */

@@ -524,7 +524,7 @@
       integer  NNBCHR
 
       logical, save ::  FIRST = .TRUE.
-      logical, save ::  PRINTINFO = .TRUE.
+      logical, save ::  PRINTINFO = .FALSE.
 !
 !   MXNXFL is maximum number of %FLAG cards that can be specified
 !

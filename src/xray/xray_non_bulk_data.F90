@@ -18,6 +18,6 @@ module xray_non_bulk_data_module
   real(real_kind), allocatable :: f(:)
   real(real_kind), allocatable :: angle(:)
 
-  integer ixp, iyp, izp
+  integer na, nb, nc
   
 end module xray_non_bulk_data_module

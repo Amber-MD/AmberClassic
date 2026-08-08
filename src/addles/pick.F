@@ -131,7 +131,7 @@ c start processing:
           end do
         end do
 c
-c  side chain rotamer about CA-CB: all but c,o,n,h,ca,ha,cb,h1,h2,h3)
+c  side chain starting at CB: all but c,o,n,h,ca,ha,h1,h2,h3)
 c
       else if (nxt('#sid',4)) then
         i1 = intgr()
@@ -146,14 +146,13 @@ c
      &        igraph(i).ne.'N   ' .and. igraph(i).ne.'HN  ' .and.
      &        igraph(i).ne.'H   ' .and. igraph(i).ne.'H1  ' .and.
      &        igraph(i).ne.'H2  ' .and. igraph(i).ne.'H3  ' .and.
-     &        igraph(i).ne.'CA  ' .and. igraph(i).ne.'HA  ' .and.
-     &        igraph(i).ne.'CB  ') then
+     &        igraph(i).ne.'CA  ' .and. igraph(i).ne.'HA  ') then
               ipick1(i) = j
           endif
         end do
 c
-c  side chain rotamer about CB-CG: all but
-c                          c,o,n,h,h1,h2,h3,ca,ha,cb,hb2,hb3,cg)
+c  side chain rotamer starting at CG: all but
+c                          c,o,n,h,h1,h2,h3,ca,ha,cb,hb2,hb3)
 c
       else if (nxt('#sig',4)) then
         i1 = intgr()
@@ -170,7 +169,7 @@ c
      &        igraph(i).ne.'H2  ' .and. igraph(i).ne.'H3  ' .and.
      &        igraph(i).ne.'CA  ' .and. igraph(i).ne.'HA  ' .and.
      &        igraph(i).ne.'CB  ' .and. igraph(i).ne.'HB2 ' .and.
-     &        igraph(i).ne.'HB3 ' .and. igraph(i).ne.'CG  ') then
+     &        igraph(i).ne.'HB3 ' ) then
               ipick1(i) = j
           endif
         end do

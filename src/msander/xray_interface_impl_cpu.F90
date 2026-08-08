@@ -39,7 +39,7 @@ module xray_cpu_module
          ntwsf, &
          sf_outfile, &
          atom_selection_mask, &
-         k_sol, b_sol, ls_r3, ls_r4, ixp, iyp, izp, &
+         k_sol, b_sol, ls_r3, ls_r4, na, nb, nc, &
          mask_update_period, scale_update_period, &
          ml_update_period, bulk_solvent_model
    
@@ -283,10 +283,21 @@ contains
       lname = adjustl(name)
       ! first find the matching residue; no need to match resname:
       do i=1,num_residues
+#if 0
+         write(0,*) 'findres:', i, ires
+         write(0,'(a3,2i6)') '   ',resSeq, residue_number(ires)
+         write(0,'(a3,a1,1x,a1)') '   ',chainID, residue_chainid(ires)
+         write(0,'(a3,a1,1x,a1)') '   ',iCode, residue_icode(ires)
+#endif
          if (        resSeq==mod(residue_number(ires),10000)  &
                .and. chainID==residue_chainid(ires) &
                .and. iCode==residue_icode(ires)) then
             ! then find the matching atom name:
+#if 0
+            write(0,*) 'findatom'
+            write(0,*) '  ', lname, atom_name(j)
+            write(0,*) '  ', altLoc, atom_altLoc(j)
+#endif
             do j = residue_pointer(ires),residue_pointer(ires+1)-1
                if (lname==atom_name(j) .and. altLoc==atom_altLoc(j)) then
                   atom_serial = j
@@ -373,7 +384,7 @@ contains
                   coordinate(1:3,iatom), &
                   atom_occupancy(iatom), &
                   atom_bfactor(iatom), &
-                  atom_element(iatom)(3:4)
+                  atom_element(iatom)(1:2)
          end do
       end do
       write(unit,'(A)') 'END'
@@ -568,7 +579,7 @@ contains
          & mask_update_period, scale_update_period, &
          & ml_update_period, k_sol, b_sol, &
          & solvent_mask_adjustment, solvent_mask_probe_radius, ls_r3, ls_r4, &
-         & spacegroup_number, ixp, iyp, izp )
+         & spacegroup_number, has_Fuser, na, nb, nc )
       
       ! should be able to do some deallocations here:
       deallocate(hkl_index,Fobs,sigFobs, &

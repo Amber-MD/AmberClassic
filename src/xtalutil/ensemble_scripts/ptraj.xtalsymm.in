@@ -1,4 +1,5 @@
-# example from 5whp/collapse
+# example from 5whp/collapse; makes a multi model PDB file, with everything
+#    moved back to the reference ASU
 parm alt1_uc.parm7
 reference alt1_uc.rst7
 trajin alt1_010.min1.pdb

@@ -10,7 +10,7 @@ id=$4
 resolution=$5
 
 export OMP_NUM_THREADS=25
-sander=/home/case/msander/bin/msander
+sander=$AMBERCLASSICHOME/bin/msander
 
 cat > mdin.rism <<EOF
   single-point 3D-RISM calculation using the sander interface

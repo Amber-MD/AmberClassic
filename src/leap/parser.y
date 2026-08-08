@@ -340,6 +340,9 @@ function:       cmdname
                                 /* Execute the command */
 			    MESSAGE(( "executing function\n"));
 			    bCmdDeleteObj = FALSE;
+                            // XXX bCmdDeleteObj is never set to true. This causes small memory leaks
+                            // with literal that coccurs on the command line. Note that OBJEKTs by design
+                            // are refernce tracked but parsing is a bit hard to track and the leaks are small
                             o0 = $<fCallback>1( iArgCount, aaArgs );
 			    if ( o0 != NULL ) {
                             	aAssoc = (ASSOC)oCreate(ASSOCid);
@@ -795,6 +798,14 @@ notnum:
         return(LSTRING);
     }
 
+    /*
+     *  see if it's a variable reference prefixed w/ '@'
+     */
+    if ( sStr[0] == '@' ) {
+        strcpy( yylval.sVal, &sStr[1] );
+        MESSAGE(( "Parsed a @variable: %s\n", sStr ));
+        return(LVARIABLE);
+    }
                 /* LASTLY!!!!!!!! */
     /* 
      *  see if it's a variable/command 
@@ -1034,6 +1045,8 @@ String:
     *	   return the whole string as a OSTRING
     *	   -- need to set refs to 0 so that
     *	      it will be freed later.. HACK
+    *   XXX This is done because the parser tokens are never
+    *   freed, and bits of memory are leaked, except this one.
     */
 
     osString = (OSTRING)oCreate(OSTRINGid);

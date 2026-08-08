@@ -62,7 +62,7 @@ extern LIST     lToolListOfResidues( UNIT uUnit, LIST lResidues );
 extern void     ToolCenterUnitByRadii( UNIT uUnit, BOOL bOrient );
 extern void     ToolInitSolventPotential( UNIT uUnit, VARARRAY vaSolvent,
                         int *iPMinPotRes, int *iPMaxPotRes );
-extern void     ToolOctBoxCheck( UNIT uSolute, double *dPBuf, BOOL bMsg );
+extern void     ToolOctBoxCheck( UNIT uSolute, double *dPBuf, BOOL bMsg, BOOL bIsotropic );
 extern void     ToolOrientPrincipleAxisAlongCoordinateAxis( UNIT uUnit );
 extern void     ToolReplaceSolvent( UNIT uUnit, VARARRAY vaSolvent, int iSolv,
                         UNIT uIon, double dCharge, 

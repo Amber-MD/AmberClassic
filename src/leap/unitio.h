@@ -81,9 +81,9 @@ extern BOOL     zbUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, BOOL bPer
 extern BOOL     zbUNitIOIndexC4Pairwise(UNIT uUnit, double daC4Pairwise); //New
 extern void     zUnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos, BOOL * bPFailed, BOOL bPert);
 extern void     zUnitIOSaveAmberParmFormat(UNIT uUnit, FILE *fOut,
-                        char *crdName, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ); //NewT
+                        char *crdName, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ); //NewT
 extern void     zUnitIOSaveAmberParmFormat_old(UNIT uUnit, FILE *fOut,
-                        char *crdName, BOOL bPolar, BOOL bPert, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ); //NewT
+                        char *crdName, BOOL bPolar, BOOL bPert, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ); //NewT
 extern void     zUnitIOSaveAmberNetcdf( UNIT uUnit, char *filename );
 
 extern void     UnitIOSaveAmberPrep( UNIT uUnit, FILE *fOut );

@@ -17,6 +17,7 @@
 # include       <ctype.h>
 # include       "pdb_int.h"
 # include       "unit.h"
+# include       "defaults.h"
 
 /*
  *      For each pdb record type, there is a format for reading the
@@ -67,34 +68,36 @@ pdb_write_record(FILE *f, pdb_record *r, char *name, int line_num)
         case PDB_HETATM:
         case PDB_SIGATM:
 /*
-"ATOM  %5d %-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
+"ATOM  %5d %-4s%C%3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D"
 ATOM      1  N   GLY   204      16.233  16.706  11.826  1.00  0.00
 ATOM      6  HA2 GLY   204      15.123  14.988  11.463  1.00  0.00
 
 ATOM  150015 Na+  Na+  1443     -17.714  -6.411   7.833  1.00  0.00
 
-"ATOM  %6d%-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D";
+"ATOM  %6d%-4s%C%3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D";
 ATOM  150009Na+  Na+  1439     -23.630   8.766 -18.151  1.00  0.00
 
 ATOM  41150  H1  WAT  8081      21.760   0.196  43.791  1.00  0.00
 ATOM  51150  H1  WAT  10581      21.703 -29.969  47.175  1.00  0.00
+
+hybrid36 and chainId2 fields:
+ATOM  A3AE9  CB  ALAAk 300     300.704 253.529 174.255  1.00 91.98           C
+ATOM  A3AEA  N   TYRBP -45     351.130 172.789 312.980  1.00 43.62           N
+
 */
         {
-                int             atom_overflow = 0, residue_overflow = 0;
-
-                if (r->pdb.atom.serial_num > 99999)
-                        atom_overflow = 1;
-                if (r->pdb.atom.residue.seq_num > 9999)
-                        residue_overflow = 1;
-                if (atom_overflow  &&  !residue_overflow) {
-                        fmt =
-                  "ATOM  %6d%-4s%C%-3s %C%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f %3D";
-                } else if (!atom_overflow  &&  residue_overflow) {
-                        fmt =
-                  "ATOM  %5d %-4s%C%-3s %C%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f %3D";
-                } else if (atom_overflow  &&  residue_overflow) {
-                        fmt =
-                  "ATOM  %6d%-4s%C%-3s %C%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f %3D";
+                if (!GDefaults.bPdbHybrid36) {
+                        int atom_overflow = (r->pdb.atom.serial_num > 99999);
+                        int residue_overflow = (r->pdb.atom.residue.seq_num > 9999);
+                        if (atom_overflow  &&  !residue_overflow) {
+                                fmt = "ATOM  %6d%-4s%C%3s%.2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f         %2s%2s";
+                        } else if (!atom_overflow  &&  residue_overflow) {
+                                fmt = "ATOM  %5d %-4s%C%3s%.2s%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
+                        } else if (atom_overflow  &&  residue_overflow) {
+                                fmt = "ATOM  %6d%-4s%C%3s%.2s%5d%C  %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
+                        } else {
+                                fmt = "ATOM  %5d %-4s%C%3s%.2s%4d%C   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s";
+                        }
                 }
                 pdb_sprintf(buffer, fmt, r->pdb.atom.serial_num,
                         r->pdb.atom.name, r->pdb.atom.alt_loc,
@@ -104,7 +107,7 @@ ATOM  51150  H1  WAT  10581      21.703 -29.969  47.175  1.00  0.00
                         r->pdb.atom.residue.insert_code,
                         r->pdb.atom.x, r->pdb.atom.y, r->pdb.atom.z,
                         r->pdb.atom.occupancy, r->pdb.atom.temp_factor,
-                        r->pdb.atom.ftnote_num);
+                        r->pdb.atom.element,r->pdb.atom.fcharge);
                 break;
         }
         case PDB_AUTHOR:
@@ -295,22 +298,20 @@ TER   150016      WAT  35296
 */
 
 #ifdef ELABORATE_PDB_TER
-
-                int             atom_overflow = 0, residue_overflow = 0;
-
-                if (r->pdb.atom.serial_num > 99999)
-                        atom_overflow = 1;
-                if (r->pdb.atom.residue.seq_num > 9999)
-                        residue_overflow = 1;
-                if (atom_overflow  &&  !residue_overflow) {
-                        fmt = "TER   %6d     %-3s %C%4d%C";
-                } else if (!atom_overflow  &&  residue_overflow) {
-                        fmt = "TER   %5d      %-3a %C%5d%C";
-                } else if (atom_overflow  &&  residue_overflow) {
-                        fmt = "TER   %6d     %-3s %C%5d%C";
+                if (!GDefaults.bPdbHybrid36) {
+                        int atom_overflow = (r->pdb.atom.serial_num > 99999);
+                        int residue_overflow = (r->pdb.atom.residue.seq_num > 9999);
+                        if (atom_overflow  &&  !residue_overflow) {
+                                fmt = "TER   %6d     %3s%%.2s%4d%C";
+                        } else if (!atom_overflow  &&  residue_overflow) {
+                                fmt = "TER   %5d      %3s%.2s%5d%C";
+                        } else if (atom_overflow  &&  residue_overflow) {
+                                fmt = "TER   %6d     %3s%.2s%4d%C";
+                        }
                 }
                 pdb_sprintf(buffer, fmt, r->pdb.ter.serial_num,
-                        r->pdb.ter.residue.name, r->pdb.ter.residue.chain_id,
+                        r->pdb.ter.residue.name,
+                        r->pdb.ter.residue.chain_id,
                         r->pdb.ter.residue.seq_num,
                         r->pdb.ter.residue.insert_code);
 #else
@@ -392,4 +393,3 @@ TER   150016      WAT  35296
                 }
         }
 }
-
