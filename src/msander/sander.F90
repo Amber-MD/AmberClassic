@@ -113,12 +113,8 @@ subroutine sander()
 
   ! AMBER/MPI
 #ifdef MPI
-#  ifdef MPI_DOUBLE_PRECISION
-#    undef MPI_DOUBLE_PRECISION
-#  endif
 !  REMD: loop is the current exchange. runmd is called numexchg times.
   integer loop
-
   _REAL_ emtmd
 #endif /* MPI */
   ! End of declarations and inclues for AMBER/MPI
@@ -588,6 +584,11 @@ subroutine sander()
       end if
     !end if
 
+    ! Prepare for EMAP constraints: needs to be done before mpi_orig block
+    if (temap) then
+      call pemap(dt,temp0,x,ix,ih)
+    end if
+
     ! Use old parallelism for energy minimization
     if (imin .ne. 0) then
       mpi_orig = .true.
@@ -648,6 +649,7 @@ subroutine sander()
 
     ! End of AMBER/MPI work in this block
 
+
 #else
 
     ! For debugging, the charges must be copied at the start so that
@@ -656,6 +658,11 @@ subroutine sander()
     call check_neutral(x(l15),natom)
     call amrset(ig+1)
     call stack_setup()
+
+    ! Prepare for EMAP constraints:  non-MPI branch:
+    if (temap) then
+      call pemap(dt,temp0,x,ix,ih)
+    end if
 
 #endif /* MPI */
 
@@ -685,11 +692,6 @@ subroutine sander()
     ! Prepare for SGLD simulation
     if (isgld > 0) then
       call psgld(natom,ix(i08), ix(i10), x(lmass),x(lcrd),x(lvel), rem)
-    end if
-
-    ! Prepare for EMAP constraints
-    if (temap) then
-      call pemap(dt,temp0,x,ix,ih)
     end if
 
     if (master) then
