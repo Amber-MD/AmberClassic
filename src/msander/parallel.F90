@@ -31,7 +31,7 @@ subroutine startup(xx,ix,ih)
    use mbar, only : ifmbar, bar_intervall, bar_l_min, bar_l_max, bar_l_incr
    use linear_response, only : ilrt, lrt_interval, lrtmask
 ! SGLD
-   use sgld, only : isgld, isgsta,isgend,nsgsize, &
+   use sgld, only : isgld, isgsta,isgend,sgtype,sgsize, &
                     sgft,sgff,sgfg,tsgavg,tsgavp
 ! EMAP parameters
    use emap, only : temap,gammamap,nemap,nrigid
@@ -190,7 +190,8 @@ subroutine startup(xx,ix,ih)
    call mpi_bcast(isgld,1,MPI_INTEGER,0,commsander,ier)
    call mpi_bcast(isgsta,1,MPI_INTEGER,0,commsander,ier)
    call mpi_bcast(isgend,1,MPI_INTEGER,0,commsander,ier)
-   call mpi_bcast(nsgsize,1,MPI_INTEGER,0,commsander,ier)
+   call mpi_bcast(sgtype,1,MPI_INTEGER,0,commsander,ier)
+   call mpi_bcast(sgsize,1,MPI_DOUBLE_PRECISION,0,commsander,ier)
    call mpi_bcast(tsgavg,1,MPI_DOUBLE_PRECISION,0,commsander,ier)
    call mpi_bcast(tsgavp,1,MPI_DOUBLE_PRECISION,0,commsander,ier)
    call mpi_bcast(sgft,1,MPI_DOUBLE_PRECISION,0,commsander,ier)
