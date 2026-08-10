@@ -691,7 +691,7 @@ subroutine sander()
 
     ! Prepare for SGLD simulation
     if (isgld > 0) then
-      call psgld(natom,ix(i08), ix(i10), x(lmass),x(lcrd),x(lvel), rem)
+      call psgld(natom,ix,ih, ix(i08), ix(i10), x(lmass),x(lcrd),x(lvel), rem)
     end if
 
     if (master) then
