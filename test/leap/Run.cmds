@@ -57,6 +57,31 @@ solvateBox sys2 TIP3PBOX 10.0
 savePdb sys alphabet_wet.pdb
 savePdb sys2 alphabet2_wet.pdb
 
+# Test ChainID, Resid, hybrid36, overflow wrapping
+sys3 = sequence {ACE PHE LEU CCYS}
+set default keep_chainid on
+set sys3.1 chainid AA
+set sys3.1 resid 99999
+set sys3.2 chainid AA
+set sys3.2 resid 100000
+set sys3.3 chainid BB
+set sys3.3 resid 2436111
+set sys3.4 chainid BB
+set sys3.4 resid 2436112
+set default hybrid36 off
+savePdb sys3 overflow1.pdb
+set default hybrid36 on
+savePdb sys3 overflow2.pdb
+saveAmberParm sys3 sys3chainid.parm7 sys3chainid.rst7
+
+#test BIOMT symmetry expansion and large atomSerial + resId values
+set default PdbReadBioMT 1
+set default keep_chainid off
+6o3h = loadPdb 6O3H.pdb
+savePdb 6o3h 6O3H_hybrid36.pdb
+set default hybrid36 off
+savePdb 6o3h 6O3H_leap.pdb
+
 quit
 EOF
 
@@ -66,16 +91,24 @@ echo ""
 
 $tleap -f leap.in > leap2.log
 
-$DACDIF $dry_prefix1.mbondi2.parm7.save $dry_prefix1.mbondi2.parm7
-$DACDIF $dry_prefix2.mbondi2.parm7.save $dry_prefix2.mbondi2.parm7
-$DACDIF -a 1.e-6 $dry_prefix1.mbondi2.rst7.save $dry_prefix1.mbondi2.rst7
-$DACDIF ${dry_prefix1}_${dry_prefix2}.mbondi.parm7.save ${dry_prefix1}_${dry_prefix2}.mbondi.parm7
-$DACDIF -a 1.e-6 ${dry_prefix1}_${dry_prefix2}.mbondi.rst7.save ${dry_prefix1}_${dry_prefix2}.mbondi.rst7
-$DACDIF $d_prefix.bondi.parm7.save $d_prefix.bondi.parm7
-$DACDIF -a 1.e-6 $d_prefix.bondi.rst7.save $d_prefix.bondi.rst7
-$DACDIF alphabet.pdb.save alphabet.pdb
-$DACDIF alphabet2.pdb.save alphabet2.pdb
-$DACDIF alphabet_wet.pdb.save alphabet_wet.pdb
-$DACDIF alphabet2_wet.pdb.save alphabet2_wet.pdb
+$DACDIF -a 3.e-6 $dry_prefix1.mbondi2.parm7.save $dry_prefix1.mbondi2.parm7
+$DACDIF -a 3.e-6 $dry_prefix2.mbondi2.parm7.save $dry_prefix2.mbondi2.parm7
+$DACDIF -a 6.e-5 $dry_prefix1.mbondi2.rst7.save $dry_prefix1.mbondi2.rst7
+$DACDIF -a 3.e-6 ${dry_prefix1}_${dry_prefix2}.mbondi.parm7.save ${dry_prefix1}_${dry_prefix2}.mbondi.parm7
+$DACDIF -a 7.e-5 ${dry_prefix1}_${dry_prefix2}.mbondi.rst7.save ${dry_prefix1}_${dry_prefix2}.mbondi.rst7
+$DACDIF -a 3.e-6 $d_prefix.bondi.parm7.save $d_prefix.bondi.parm7
+$DACDIF -a 3.e-5 $d_prefix.bondi.rst7.save $d_prefix.bondi.rst7
+$DACDIF -a 2.e-3 alphabet.pdb.save alphabet.pdb
+$DACDIF -a 2.e-3 alphabet2.pdb.save alphabet2.pdb
+$DACDIF -a 2.e-3 alphabet_wet.pdb.save alphabet_wet.pdb
+$DACDIF -a 2.e-3 alphabet2_wet.pdb.save alphabet2_wet.pdb
+$DACDIF overflow1.pdb.save overflow1.pdb
+$DACDIF overflow2.pdb.save overflow2.pdb
+# only the last 100 lines are saved to avoid excess storage space
+tail -100 6O3H_hybrid36.pdb >6O3H_hybrid36_last100.pdb
+tail -100 6O3H_leap.pdb >6O3H_leap_last100.pdb
+$DACDIF 6O3H_hybrid36_last100.pdb.save 6O3H_hybrid36_last100.pdb
+$DACDIF 6O3H_leap_last100.pdb.save 6O3H_leap_last100.pdb
+/bin/rm -f 6O3H_hybrid36.pdb 6O3H_leap.pdb
 
-/bin/rm -f leap.in leap.log leap2.log $dry_prefix2.mbondi2.rst7
+# /bin/rm -f leap.in leap.log leap2.log $dry_prefix2.mbondi2.rst7

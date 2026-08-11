@@ -1,4 +1,4 @@
-log started: Thu Mar 11 20:29:14 2021
+log started: Mon Mar 23 22:43:11 2026
 
 Log file: ./leap.log
 >> #
@@ -97,14 +97,14 @@ Log file: ./leap.log
 >> #	Load the main parameter set.
 >> #
 >> parm10 = loadamberparams parm10.dat
-Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/parm10.dat
+Loading parameters: /store1/schott/ambergit/amber24/dat/leap/parm/parm10.dat
 Reading title:
 PARM99 + frcmod.ff99SB + frcmod.parmbsc0 + OL3 for RNA
 >> #
 >> #	Load main chain and terminating amino acid libraries, nucleic acids
 >> #
 >> loadOff amino10.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/amino10.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/amino10.lib
 Loading: ALA
 Loading: ARG
 Loading: ASH
@@ -134,7 +134,7 @@ Loading: TRP
 Loading: TYR
 Loading: VAL
 >> loadOff aminoct10.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/aminoct10.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/aminoct10.lib
 Loading: CALA
 Loading: CARG
 Loading: CASN
@@ -161,7 +161,7 @@ Loading: CVAL
 Loading: NHE
 Loading: NME
 >> loadOff aminont10.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/aminont10.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/aminont10.lib
 Loading: ACE
 Loading: NALA
 Loading: NARG
@@ -187,7 +187,7 @@ Loading: NTRP
 Loading: NTYR
 Loading: NVAL
 >> loadOff oldff/phosphoaa10.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/oldff/phosphoaa10.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/oldff/phosphoaa10.lib
 Loading: H2D
 Loading: PTR
 Loading: S1P
@@ -196,7 +196,7 @@ Loading: T1P
 Loading: TPO
 Loading: Y1P
 >> loadOff nucleic10.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/nucleic10.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/nucleic10.lib
 Loading: A
 Loading: A3
 Loading: A5
@@ -234,7 +234,7 @@ Loading: UN
 >> #       Load water and ions
 >> # 
 >> loadOff atomic_ions.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/atomic_ions.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/atomic_ions.lib
 Loading: AG
 Loading: AL
 Loading: Ag
@@ -303,7 +303,7 @@ Loading: YB2
 Loading: ZN
 Loading: Zr
 >> loadOff solvents.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/solvents.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/solvents.lib
 Loading: CHCL3BOX
 Loading: DC4
 Loading: FB3
@@ -434,8 +434,8 @@ Loading: TPF
 >> CHIS = CHIE
 > 
 > source leaprc.water.tip3p
------ Source: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd/leaprc.water.tip3p
------ Source of /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/cmd/leaprc.water.tip3p done
+----- Source: /store1/schott/ambergit/amber24/dat/leap/cmd/leaprc.water.tip3p
+----- Source of /store1/schott/ambergit/amber24/dat/leap/cmd/leaprc.water.tip3p done
 >> #
 >> #       Load water and ions for TIP3P + Li/Merz monovalent ions 
 >> #       + Joung-Chetham monovalent ions
@@ -513,7 +513,7 @@ Loading: TPF
 >>     { "Th4+" "Th"  "sp3" }
 >> }
 >> loadOff atomic_ions.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/atomic_ions.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/atomic_ions.lib
 Loading: AG
 Loading: AL
 Loading: Ag
@@ -582,7 +582,7 @@ Loading: YB2
 Loading: ZN
 Loading: Zr
 >> loadOff solvents.lib
-Loading library: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/lib/solvents.lib
+Loading library: /store1/schott/ambergit/amber24/dat/leap/lib/solvents.lib
 Loading: CHCL3BOX
 Loading: DC4
 Loading: FB3
@@ -618,29 +618,29 @@ Loading: TPF
 >> HOH = TP3
 >> WAT = TP3
 >> loadAmberParams frcmod.tip3p
-Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.tip3p
+Loading parameters: /store1/schott/ambergit/amber24/dat/leap/parm/frcmod.tip3p
 Reading force field modification type file (frcmod)
 Reading title:
 This is the additional/replacement parameter set for TIP3P water
 >> loadAmberParams frcmod.ions1lm_126_tip3p
-Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ions1lm_126_tip3p
+Loading parameters: /store1/schott/ambergit/amber24/dat/leap/parm/frcmod.ions1lm_126_tip3p
 Reading force field modification type file (frcmod)
 Reading title:
 Li/Merz ion parameters of monovalent ions for TIP3P water model (12-6 normal usage set)
 >> loadAmberParams frcmod.ionsjc_tip3p
-Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ionsjc_tip3p
+Loading parameters: /store1/schott/ambergit/amber24/dat/leap/parm/frcmod.ionsjc_tip3p
 Reading force field modification type file (frcmod)
 Reading title:
 Monovalent ion parameters for Ewald and TIP3P water from Joung & Cheatham JPCB (2008)
 >> loadAmberParams frcmod.ions234lm_126_tip3p
-Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ions234lm_126_tip3p
+Loading parameters: /store1/schott/ambergit/amber24/dat/leap/parm/frcmod.ions234lm_126_tip3p
 Reading force field modification type file (frcmod)
 Reading title:
 Li/Merz ion parameters of divalent to tetravalent ions for TIP3P water model (12-6 normal usage set)
 >> 
 > 
-> loadamberparams /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ionsjc_tip3p
-Loading parameters: /mnt/raidc2/kbelfon/amber2020/amber/dat/leap/parm/frcmod.ionsjc_tip3p
+> loadamberparams /store1/schott/ambergit/amber24/dat/leap/parm/frcmod.ionsjc_tip3p
+Loading parameters: /store1/schott/ambergit/amber24/dat/leap/parm/frcmod.ionsjc_tip3p
 Reading force field modification type file (frcmod)
 Reading title:
 Monovalent ion parameters for Ewald and TIP3P water from Joung & Cheatham JPCB (2008)
@@ -661,10 +661,10 @@ Mapped residue ALA, term: Terminal/last, seq. number: 107 to: CALA.
 > saveamberparm prot trx.parm7 trx.rst7
 Checking Unit.
 
-/mnt/raidc2/kbelfon/amber2020/amber/bin/teLeap: Warning!
+/store1/schott/ambergit/amber24/bin/teLeap: Warning!
 The unperturbed charge of the unit (-4.000000) is not zero.
 
-/mnt/raidc2/kbelfon/amber2020/amber/bin/teLeap: Note.
+/store1/schott/ambergit/amber24/bin/teLeap: Note.
 Ignoring the warning from Unit Checking.
 
 Building topology.
@@ -690,15 +690,15 @@ Marking per-residue atom chain types.
 > 
 > # Solvate, add ions, and save a new topology file
 > solvateoct prot TIP3PBOX 10.0
-Scaling up box by a factor of 1.227697 to meet diagonal cut criterion
+Scaling up box by a factor of 1.189424 to meet diagonal cut criterion
   Solute vdw bounding box:              37.126 42.056 40.334
-  Total bounding box for atom centers:  66.610 66.610 66.610
-      (box expansion for 'iso' is  10.9%)
+  Total bounding box for atom centers:  73.811 73.811 73.811
+      (box expansion for 'iso' is   9.7%)
   Solvent unit box:                     18.774 18.774 18.774
 The number of boxes:  x= 4  y= 4  z= 4
-  Volume: 154525.920 A^3 (oct)
-  Total mass 79031.260 amu,  Density 0.849 g/cc
-  Added 3739 residues.
+  Volume: 209345.953 A^3 (oct)
+  Total mass 109532.348 amu,  Density 0.869 g/cc
+  Added 5432 residues.
 > 
 > addions prot NA 0
 4 NA ions required to neutralize.
@@ -706,8 +706,8 @@ Adding 4 counter ions to "prot" using 1A grid
 Total solute charge:  -4.00  Max atom radius:   2.00
 Grid extends from solute vdw + 1.37  to  7.37
 Box:
-   enclosing:  -27.02 -27.34 -23.63   27.24 25.97 28.67
-   sized:			      36.98 36.66 40.37
+   enclosing:  -26.85 -27.31 -23.83   27.41 25.99 28.47
+   sized:			      37.15 36.69 40.17
    edge:        64.00
 Resolution:      1.00 Angstrom.
 Tree depth: 6
@@ -716,18 +716,18 @@ Solvent present: replacing closest with ion
 	 when steric overlaps occur
 Calculating grid charges
 (Replacing solvent molecule)
-Placed NA in prot at (-12.02, -4.49, -1.88).
+Placed NA in prot at (-11.84, -4.47, -2.08).
 (Replacing solvent molecule)
-Placed NA in prot at (-18.59, 0.13, 8.58).
+Placed NA in prot at (-18.42, 0.15, 8.38).
 (Replacing solvent molecule)
-Placed NA in prot at (-11.68, -9.48, -5.66).
+Placed NA in prot at (-11.50, -9.46, -5.86).
 (Replacing solvent molecule)
-Placed NA in prot at (-5.94, 19.16, 5.21).
+Placed NA in prot at (-5.76, 19.19, 5.02).
 
 Done adding ions.
 > addions prot CL 0
 
-/mnt/raidc2/kbelfon/amber2020/amber/bin/teLeap: Warning!
+/store1/schott/ambergit/amber24/bin/teLeap: Warning!
 addIons: 1st Ion & target unit have charges of the same sign:
      unit charge = -2.4869e-14; ion1 charge = -1;
      can't neutralize.
@@ -752,7 +752,7 @@ Marking per-residue atom chain types.
 
 	CALA	1
 	NSER	1
-	WAT	3735
+	WAT	5428
   )
  (no restraints)
 > 

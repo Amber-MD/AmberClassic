@@ -1,0 +1,33 @@
+#!/bin/csh -f
+
+set DIF     = ../dacdif
+set leapin  = loadpdb.in
+set leapout = loadpdb.out
+set tleap   = ../../bin/tleap
+
+echo ""
+echo "         Test of LEaP PDB reading"
+echo ""
+
+cat > $leapin << EOF
+# Source the force field
+source leaprc.water.spce
+# Read screwy but valid PDB file
+x = loadPdb wat3.pdb
+# Best practice is to check the unit to identify potential problems
+check x
+# Best practice is to describe the unit to verify its contents
+desc x
+quit
+EOF
+
+$tleap -f $leapin >& $leapout || goto leap_error
+$DIF -t 4 $leapout.save $leapout
+
+/bin/rm -f $leapin $leapout leap.log
+exit(0)
+
+leap_error:
+echo "${0}:  Program error in leap"
+exit(1)
+
