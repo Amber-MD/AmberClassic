@@ -111,4 +111,4 @@ $DACDIF 6O3H_hybrid36_last100.pdb.save 6O3H_hybrid36_last100.pdb
 $DACDIF 6O3H_leap_last100.pdb.save 6O3H_leap_last100.pdb
 /bin/rm -f 6O3H_hybrid36.pdb 6O3H_leap.pdb
 
-# /bin/rm -f leap.in leap.log leap2.log $dry_prefix2.mbondi2.rst7
+/bin/rm -f leap.in leap.log leap2.log $dry_prefix2.mbondi2.rst7
