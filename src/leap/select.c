@@ -74,7 +74,7 @@ SelectAtom( ATOM aAtom, bool bOn )
  *	Author:	Christian Schafmeister (1991)
  *
  *	Select the RINGs that contain the ATOM.
- *	If there are no RINGs then return FALSE, otherwise TRUE.
+ *	If there are no RINGs then return false, otherwise true.
  */
 bool
 bSelectRingWithAtom( UNIT uUnit, ATOM aAtom, bool bOn )
@@ -84,7 +84,7 @@ ATOM		aCur;
 INTERNAL	iRing;
 LOOP		lInternals, lAtoms;
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
     GraphUtilFindAllSmallestRings( uUnit );
 
 	/* Now check if the ATOM contains ring INTERNALs */
@@ -92,7 +92,7 @@ LOOP		lInternals, lAtoms;
     lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
     while ( (iRing = (INTERNAL)oNext(&lInternals)) ) {
 	if ( iInternalType(iRing) == INTERNALRING ) {
-	    bFoundOne = TRUE;
+	    bFoundOne = true;
 	    InternalRingLoopAtoms(iRing);
 	    while ( (aCur = aInternalRingNextAtom(iRing)) ) {
 		if ( bOn ) AtomSetFlags( aCur, ATOMSELECTED );
@@ -186,7 +186,7 @@ ATOM		aAtom;
  *	Author:	Christian Schafmeister (1991)
  *
  *	Select the shortest chain of ATOMs between aA and aB.
- *	Return FALSE if no chain was found.
+ *	Return false if no chain was found.
  */
 bool
 bSelectChainBetween( UNIT uUnit, ATOM aA, ATOM aB, bool bOn )
@@ -200,7 +200,7 @@ ATOM		aCur;
     while ( (aCur = (ATOM)oNext(&lSpan)) ) {
 	if ( aCur == aB ) break;
     }
-    if ( aCur == NULL ) return(FALSE);
+    if ( aCur == NULL ) return(false);
 
 		/* Select the chain back to aA */
 
@@ -208,7 +208,7 @@ ATOM		aCur;
 	if ( bOn ) AtomSetFlags( aCur, ATOMSELECTED );
 	else	AtomResetFlags( aCur, ATOMSELECTED );
     }
-    return(TRUE);
+    return(true);
 }
 
 

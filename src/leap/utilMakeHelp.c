@@ -141,14 +141,14 @@ if ( strlen(s)>0 && s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }
 	fflush(stdout);
         if ( feof(fIn) ) break;
         iLine = 0;
-	bBlank = FALSE;
-        while ( TRUE ) {
+	bBlank = false;
+        while ( true ) {
             FGETS( sLine, sizeof(STRING), fIn );
 	    if ( !*sLine && !bBlank ) {
-		bBlank = TRUE;
+		bBlank = true;
 		continue;
 	    }
-	    bBlank = FALSE;
+	    bBlank = false;
 	    if ( *sLine == '\f' ) continue;
 	    if ( strncmp( sLine, ENDHELP, strlen(ENDHELP) ) == 0 ) break;
 	    strcpy( taText[iKeyword][iLine], sLine );

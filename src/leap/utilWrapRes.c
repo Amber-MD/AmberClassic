@@ -85,7 +85,7 @@ int		iStart, iStop, i;
  *	Author:	Christian Schafmeister (1991)
  *
  *	Read a single resource from the input file.
- *	Return FALSE if there are no more.
+ *	Return false if there are no more.
  */
 bool	bReadResource( fIn, sResource )
 FILE*		fIn;
@@ -99,9 +99,9 @@ bool		bOnlySpaces;
     strcpy( sResource, "" );
     do {
 	fgets( sLine, MAX_LONG_STRING, fIn );
-	if ( feof(fIn) ) return(FALSE);
+	if ( feof(fIn) ) return(false);
 
-        bOnlySpaces = TRUE;
+        bOnlySpaces = true;
 
 		/* Look for comment characters */
 	for ( i=0; i<strlen(sLine); i++ ) {
@@ -115,7 +115,7 @@ bool		bOnlySpaces;
 		break;
 	    }
 
-	    if ( sLine[i] != ' ' && sLine[i] != '\t' ) bOnlySpaces = FALSE;
+	    if ( sLine[i] != ' ' && sLine[i] != '\t' ) bOnlySpaces = false;
 
 		/* Insert '\\' infront of every double quote */
 	    if ( sLine[i] == '"' ) {
@@ -137,7 +137,7 @@ bool		bOnlySpaces;
 
     } while ( 1==1 );
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -174,7 +174,7 @@ bool		bFirst;
     fprintf( fOut, "\n\n\n" );
     fprintf( fOut, "String	GsaResources[] = {\n" );
    
-    bFirst = TRUE; 
+    bFirst = true; 
     while ( bReadResource( fIn, sResource ) ) {
 	fprintf( fOut, "\"%s\", \n", sResource );
     }

@@ -89,7 +89,7 @@ dDisplayerCreate( GENP PObject )
 {
 DISPLAYER	dNew;
 
-    if ( GbGraphicalEnvironment == FALSE ) 
+    if ( GbGraphicalEnvironment == false ) 
 	return(NULL);
 
     dNew = (DISPLAYER)MALLOC(sizeof(DISPLAYERt) );
@@ -117,7 +117,7 @@ DisplayerDestroy( DISPLAYER *dPOld )
 DISPLAYERNODE	dnCur, dnNext;
 DISPLAYER	dPrev, dCur;
 
-    if ( GbGraphicalEnvironment == FALSE ) 
+    if ( GbGraphicalEnvironment == false ) 
 	return;
 
 		/* Check if the DISPLAYER is in the accumulated */
@@ -183,7 +183,7 @@ DISPLAYERNODE	dnNew;
  *	Author:	Christian Schafmeister (1991)
  *
  *	Remove a callback function from the DISPLAYER list.
- *	Return TRUE if it was found.
+ *	Return true if it was found.
  */
 bool
 bDisplayerRemove( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
@@ -209,11 +209,11 @@ DISPLAYERNODE	dnCur, dnPrev;
 	}
 
 	FREE( dnCur );
-	return(TRUE);
+	return(true);
     }
 
     DFATAL("DISPLAYER could not find callback/data pair\n" );
-    return(FALSE);
+    return(false);
 
 }
 
@@ -238,7 +238,7 @@ DISPLAYERNODE	dnCur;
 
     if ( dDisp == NULL ) 
 	return;
-    if ( GbGraphicalEnvironment == FALSE ) 
+    if ( GbGraphicalEnvironment == false ) 
 	return;
     if ( GiUnitEditors == 0 )
 	return;
@@ -302,7 +302,7 @@ DISPLAYER	dCur, dPrev;
 
     GiDisplayerAccumulateUpdates--;
 
-    if ( GbGraphicalEnvironment == FALSE )
+    if ( GbGraphicalEnvironment == false )
 	return;
 
     if ( GiDisplayerAccumulateUpdates == 0 ) {
@@ -334,7 +334,7 @@ TurnOffDisplayerUpdates()
 		if ( iOffed )
 			DFATAL(" programmer error - TurnOffDisplayerUpdates\n" );
 		iOffed++;
-		GbGraphicalEnvironment = FALSE;
+		GbGraphicalEnvironment = false;
 	}
 }
 
@@ -343,6 +343,6 @@ TurnOnDisplayerUpdates()
 {
 	if ( iOffed ) {
 		iOffed = 0;
-		GbGraphicalEnvironment = TRUE;
+		GbGraphicalEnvironment = true;
 	}
 }

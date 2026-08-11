@@ -242,7 +242,7 @@ bLibraryRemove( LIBRARY ul, char *sName )
 STRING		sPrefix, sEntry;
 
     if ( yPDictionaryFind( ul->dLibrary, sName ) == NULL ) {
-	return(FALSE);
+	return(false);
     }
 
     strcpy( sPrefix, "entry." );
@@ -262,7 +262,7 @@ STRING		sPrefix, sEntry;
 	bDBRndDeleteEntry( ul->dbLibrary, sEntry );
     }
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -334,7 +334,7 @@ LibraryClose( LIBRARY *lPLibrary )
  *
  *	Return the prefix used to access the 
  *	object whose name is (sStr).
- *	Return TRUE if the object is found, otherwise FALSE.
+ *	Return true if the object is found, otherwise false.
  */
 bool
 bLibraryDBPrefix( LIBRARY lLib, char *cPResult, char *sStr )
@@ -344,13 +344,13 @@ STRING          sPrefix;
                 /* Check if the UNIT is even in the library */
 
     if ( yPDictionaryFind( lLib->dLibrary, sStr ) == NULL ) 
-	return(FALSE);
+	return(false);
 
     strcpy( sPrefix, "entry." );
     strcat( sPrefix, sStr );
     strcat( sPrefix, "." );
     strcpy( cPResult, sPrefix );
-    return(TRUE);
+    return(true);
 }
 
     

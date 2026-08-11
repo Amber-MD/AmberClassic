@@ -102,16 +102,28 @@ const char *GsChainIdList="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
  *
  *        Private routines
  */
+static void PrintMatrix(MATRIX M) {
+
+  for (int r=0;r<4;r++) {
+     VP0("%10.6f, %10.6f, %10.6f, %10.3f\n", M[0][r],
+                        M[1][r],M[2][r],M[3][r]);
+  }
+  VP0("---------------------------------------\n");
+}
+
+// compute if two atoms are within bonding distance by covalent radii
+// versus distance squared (dist2) and a relative bond-length rejection cutoff 
 static bool
-bAtomsBondedDist(int iElem1, int iElem2, float dist2, float cutoff) {
+bAtomsBondedDist(int iElem1, int iElem2, float dist2, float cutoff, float *dPCutoff_return) {
     if (iElem1 <= 0 || iElem1 >= iMaxCovalentElement) iElem1 = 0;
     if (iElem2 <= 0 || iElem2 >= iMaxCovalentElement) iElem2 = 0;
 
     float r1 = dCovalentRadius[iElem1];
     float r2 = dCovalentRadius[iElem2];
-    if (!r1 || !r2) return FALSE;
+    if (!r1 || !r2) return false;
 
     float cd = (r1 + r2) * cutoff;
+    if (dPCutoff_return) *dPCutoff_return = cd;
     return dist2 < cd * cd;
 }
 
@@ -326,7 +338,7 @@ int             iInt;
 
     if ( iObjectType(lEntry) != LISTid ) {
         VPWARN("Map entry %d is not a list. Ignored.\n", iMap );
-        return(FALSE);
+        return(false);
     }
     aA = NULL;
     aB = NULL;
@@ -377,13 +389,13 @@ int             iInt;
         zPdbToNameMapKey( NOEND, sTempKey, sKey, NULL );
     }
 
-    return(TRUE);
+    return(true);
 
 BADTYPE:
     VPWARN("Residue Map entry %d must have the form %s. Ignored\n",
                 iMap,
                 "{ [0 or 1] string string }" );
-    return(FALSE);
+    return(false);
 }
 
 static bool
@@ -397,7 +409,7 @@ LISTLOOP        llEntry;
 
     if ( iObjectType(lEntry) != LISTid ) {
         VPWARN("Map entry %d is not a list. Ignored.\n", iMap );
-        return(FALSE);
+        return(false);
     }
     aA = NULL;
     aB = NULL;
@@ -435,12 +447,12 @@ LISTLOOP        llEntry;
 
     zPdbToNameMapKey( NOEND, sTempKey, sKey, sResName);
 
-    return(TRUE);
+    return(true);
 
 BADTYPE:
     VPWARN("Atom Map entry %d must have the form %s. Ignored\n",
                 iMap, "{ string string }" );
-    return(FALSE);
+    return(false);
 }
 
 
@@ -593,7 +605,7 @@ RESIDUENAMEt    *rnPName;
  *      Make a copy of UNIT from the (vaUnits) VARARRAY unless
  *      it is not a valid UNIT when we print a message and create
  *      a UNIT with a single RESIDUE.
- *      Return TRUE in *bPStart if this new RESIDUE starts
+ *      Return true in *bPStart if this new RESIDUE starts
  *      a new chain.
  */
 static UNIT
@@ -613,9 +625,9 @@ RESIDUE         rRes;
             PVAI( prPPdb->vaResidues, RESIDUENAMEt, iCurUnit-1 )->iTerminator;
     }
     if ( iTerm == LASTEND )
-        *bPStart = TRUE;
+        *bPStart = true;
     else
-        *bPStart = FALSE;
+        *bPStart = false;
 
     if ( iObjectType(uOrig) != UNITid ) {
         VP0("Creating new UNIT for residue: %s sequence: %d\n",
@@ -691,8 +703,8 @@ STRING          sSpan;
             LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
             BuildExternalsUsingFlags( &lSpan,
                                         0, ATOMPOSITIONKNOWN,
-                                        ATOMPOSITIONKNOWN, 0,
-                                        iPAddH, iPAddHeavy, iPAddUnk, TRUE );
+                                        ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
+                                        iPAddH, iPAddHeavy, iPAddUnk, true );
         } else {
             for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
                 aSpan = aAtomBondedNeighbor(aAtom,i);
@@ -704,9 +716,9 @@ STRING          sSpan;
                     LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
                     BuildExternalsUsingFlags( &lSpan,
                                                 0, ATOMPOSITIONKNOWN,
-                                                ATOMPOSITIONKNOWN, 0,
+                                                ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
                                                 iPAddH, iPAddHeavy, iPAddUnk,
-                                                TRUE );
+                                                true );
                 }
             }
         }
@@ -751,6 +763,10 @@ LOOP            lAtoms;
 
         /* --- build fractional transforms from the unit cell --- */
         BuildFractionalTransforms( prPPdb->uUnit, M, Mi );
+        if (iVerbosity()>2) {
+            VP0("Fractionalize=\n"); PrintMatrix(M);
+            VP0("Inverse=\n"); PrintMatrix(Mi);
+        }
 
         /* --- get center of original monomer once, before any transforms --- */
         vCenOrig = vContainerGeometricCenter( (CONTAINER)prPPdb->uUnit );
@@ -766,20 +782,6 @@ LOOP            lAtoms;
         vCenWrap.dX = vCenFrac.dX - floor(vCenFrac.dX);
         vCenWrap.dY = vCenFrac.dY - floor(vCenFrac.dY);
         vCenWrap.dZ = vCenFrac.dZ - floor(vCenFrac.dZ);
-
-        if (!GDefaults.nocenter) {
-            // Move primary UNIT into primary cell if possible
-            bool bMono = fabs(prPPdb->uUnit->dAlpha - 90.0) < 1e-4 &&
-                   fabs(prPPdb->uUnit->dGamma - 90.0) < 1e-4;
-            bool bOrtho = bMono && fabs(prPPdb->uUnit->dBeta  - 90.0) < 1e-4;
-            if (!bOrtho) {
-                vCenWrap.dY = 0.5;
-                if (!bMono) {
-                    vCenWrap.dX = 0.5;
-                    vCenWrap.dZ = 0.5;
-                }
-            }
-        }
 
         vShift.dX = M[0][0]*vCenWrap.dX + M[1][0]*vCenWrap.dY + M[2][0]*vCenWrap.dZ - vCen.dX;
         vShift.dY = M[0][1]*vCenWrap.dX + M[1][1]*vCenWrap.dY + M[2][1]*vCenWrap.dZ - vCen.dY;
@@ -811,6 +813,10 @@ LOOP            lAtoms;
     uOrig = (UNIT)oCopy((OBJEKT)prPPdb->uUnit);
 
     for (int i = 0; i < iTransforms; i++ ) {
+        if (iVerbosity()>3) {
+            VP0("Symmetry operation %d\n",i);
+            PrintMatrix(mTransform);
+        }
         if ( !PVAI(prPPdb->vaMatrices,PDBMATRIXt,i)->bUsed ) continue;
         VP1("Building symmetry related monomer %d.\n", i+1);
 
@@ -838,11 +844,6 @@ LOOP            lAtoms;
             vShift.dX = M[0][0]*vCenWrap.dX + M[1][0]*vCenWrap.dY + M[2][0]*vCenWrap.dZ - vCen.dX;
             vShift.dY = M[0][1]*vCenWrap.dX + M[1][1]*vCenWrap.dY + M[2][1]*vCenWrap.dZ - vCen.dY;
             vShift.dZ = M[0][2]*vCenWrap.dX + M[1][2]*vCenWrap.dY + M[2][2]*vCenWrap.dZ - vCen.dZ;
-        }
-        if (iVerbosity()>3) {
-            for (int r=0;r<3;r++)
-                VP0("%10.6f x + %10.6f y + %10.6f z + %10.3f\n", mTransform[0][r],
-                        mTransform[1][r],mTransform[2][r],mTransform[3][r]);
         }
         /* --- transform all atoms and apply wrapping shift in one pass --- */
         LOOPOVERALL(uCopy,ATOMS,aAtom,ATOM,lAtoms) {
@@ -1209,7 +1210,8 @@ PdbWrite( FILE *fOut, UNIT uUnit )
                 for ( int i=0; i<iAtomCoordination(aAtom); i++ ) {
                     aNeighbor = aAtomBondedNeighbor( aAtom, i );
                     rNeighbor = (RESIDUE)cContainerWithin((CONTAINER) aNeighbor);
-                    if (iContainerSequence(cContainerWithin((CONTAINER) aNeighbor))-iResSeq > 1 ) {
+                    int diff = iContainerSequence(rNeighbor) - iResSeq;
+                    if (diff > 1 || (diff == 1 && aAtom !=aResidueConnectAtom(rResidue, CONNECT1)) ) {
                         // forward LINK or SSBOND
                         //
                         // Include leading space in atom name as for ATOM/HETAM
@@ -1219,7 +1221,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
                             iElement = iAtomElement(aAtom);
                             if (iElement != NOELEMENT) pad1 = GeaElements[iElement].sName[1] == 0;
                         }
-                        if (strlen(sContainerName(aNeighbor))>3) pad2=FALSE;
+                        if (strlen(sContainerName(aNeighbor))>3) pad2=false;
                         else {
                             iElement = iAtomElement(aNeighbor);
                             if (iElement != NOELEMENT) pad2 = GeaElements[iElement].sName[1] == 0;
@@ -1340,7 +1342,7 @@ bool            bOk;
                                         iMap, sKey, sData );
             VP0(" map is %d, Res %d Atom %d\n",
                                 PSdNameMap, &SdResidueNameMap, &SdAtomNameMap);
-            bOk = FALSE;
+            bOk = false;
         }
         if ( bOk ) /* Add the name map entry */
                 zPdbNameMapAdd( PSdNameMap, sKey, sData );
@@ -1542,7 +1544,7 @@ zPdbReadFile( PDBREADt *prPRead )
 {
 pdb_record      p;
 int             iPdbSequence=0; // previous resSeq
-bool            bLastReadPdbRecordWasTer = FALSE;
+bool            bLastReadPdbRecordWasTer = false;
 bool            bNewChain, bNewRes;
 RESIDUENAMEt    rnName;
 ATOMNAMEt       anAtom;
@@ -1558,7 +1560,7 @@ int             iCurrentModel=0;
 int             iCurrentBioMT=0;
     VPTRACEENTER("zPdbReadFile" );
 
-    bNewChain = TRUE;
+    bNewChain = true;
     iSerialNum = 0, iSerialNumMax = 0; // Tracks previous and maximum atomSerial in FILE
     iAtomSerialMax = HY36_WIDTH_5_MAX; // MAX allowed in PDB format
     iResIdMax = HY36_WIDTH_4_MAX;
@@ -1712,7 +1714,7 @@ int             iCurrentBioMT=0;
                     VPWARN("Name change in pdb file residue %.2s %d%c;\n"
                         "this residue is split into %s and %s.\n",
                         sCurrChain, iPdbSequence, cInsertionCode, rnName.sName, cPResName);
-                    bNewRes = TRUE;
+                    bNewRes = true;
                     iMultipleResName++;
                 }
                 if (bNewRes) {
@@ -1720,22 +1722,23 @@ int             iCurrentBioMT=0;
                     if (p.pdb.atom.residue.seq_num == 0 && iPdbSequence == iResIdMax)
                          iPdbResSeqOffset += iResIdMax + 1;
                     rnName.iPdbSequence = p.pdb.atom.residue.seq_num + iPdbResSeqOffset; // ResSeq overflow unwrapping
+                    rnName.cICode = p.pdb.atom.residue.insert_code;
                     rnName.iTerminator = iTerm;
                     strcpy( rnName.sChainId, p.pdb.atom.residue.chain_id);
                     strcpy( rnName.sName, cPResName );
-                    rnName.iCode = p.pdb.atom.residue.insert_code;
-
+                    rnName.cICode = p.pdb.atom.residue.insert_code;
                     rnName.iFirstAtom = iVarArrayElementCount(prPRead->vaAtomRecs); // zero based array
 
                     anAtom.iResNameIndex = iVarArrayElementCount( prPRead->vaResidues );
                     VarArrayAdd( prPRead->vaResidues, (GENP)&rnName );
-                    bLastReadPdbRecordWasTer = FALSE;
+                    bLastReadPdbRecordWasTer = false;
 
                     MESSAGE("Reading residue: <%s>\n", rnName.sName );
                     iPdbSequence = p.pdb.atom.residue.seq_num;
+                    cInsertionCode = p.pdb.atom.residue.insert_code;
 
                 }
-                bNewChain = FALSE;
+                bNewChain = false;
 
                 // Un-wrap old style names
                 if (isdigit(p.pdb.atom.name[0])) {
@@ -1762,12 +1765,12 @@ int             iCurrentBioMT=0;
 
             case PDB_TER:
                 VPTRACE("Read PDB_TER record.\n" );
-                bLastReadPdbRecordWasTer = TRUE;
+                bLastReadPdbRecordWasTer = true;
                         /* If you read a TER card then make the */
                         /* last RESIDUE read a terminating RESIDUE */
                 iLast = iVarArrayElementCount( prPRead->vaResidues );
                 if (iLast > 0) PVAI( (prPRead->vaResidues), RESIDUENAMEt,iLast-1)->iTerminator = LASTEND;
-                bNewChain = TRUE;
+                bNewChain = true;
                 break;
 
             case PDB_CRYST1:
@@ -1775,23 +1778,20 @@ int             iCurrentBioMT=0;
                 prPRead->uUnit->dAlpha = p.pdb.cryst1.alpha * DEGTORAD;
                 prPRead->uUnit->dBeta = p.pdb.cryst1.beta * DEGTORAD;
                 prPRead->uUnit->dGamma = p.pdb.cryst1.gamma * DEGTORAD;
-                UnitSetUseBox(prPRead->uUnit, TRUE );
-                STRING sDesc;
-                sprintf(sDesc,"SG:%s",p.pdb.cryst1.space_grp);
-                if (sUnitDescription(prPRead->uUnit)[0])
-                    strcat(sUnitDescription(prPRead->uUnit),";SG:");
-                else
-                    strcpy(sUnitDescription(prPRead->uUnit),"SG:");
-                strcat(sUnitDescription(prPRead->uUnit),p.pdb.cryst1.space_grp);
+                UnitSetUseBox(prPRead->uUnit, true );
+                sprintf(sUnitDescription(prPRead->uUnit),"SG: %s;",p.pdb.cryst1.space_grp);
                 if (!prPRead->bSymmOps) break;
 
                 SPACEGROUPt sg;
-                if (!parse_spacegroup_file(-1,p.pdb.cryst1.space_grp, &sg)) {
+                if (parse_spacegroup_file(-1,p.pdb.cryst1.space_grp, &sg)) {
                     VPWARN("Failed to find spacegroup info\n");
                     break;
                 }
                 VP0("Parsed spacegroup info for \"%s\"\n",p.pdb.cryst1.space_grp);
                 VP0("Number of symmetry ops = %d\n",sg.n_symops);
+                STRING sDesc;
+                sprintf(sDesc," PG: %s;",sg.pgrp);
+                strcat(sUnitDescription(prPRead->uUnit),sDesc);
                 VarArraySetSize( prPRead->vaMatrices, sg.n_symops );
                 MATRIX  M, Mi, mFrac, mTmp;
                 PDBMATRIXt  *maPSymops = PVAI(prPRead->vaMatrices,PDBMATRIXt,0);
@@ -1805,14 +1805,15 @@ int             iCurrentBioMT=0;
                     for (int r = 0; r < 3; r++ )
                         for (int c = 0; c < 3; c++ )
                             mFrac[c][r] = (double)sg.symops[i].rot[r][c];  /* col-major */
-
                     mFrac[3][0] = (double)sg.symops[i].trans[0] / 12.0;
                     mFrac[3][1] = (double)sg.symops[i].trans[1] / 12.0;
                     mFrac[3][2] = (double)sg.symops[i].trans[2] / 12.0;
-
-                    mFrac[3][0] = mFrac[3][1] = mFrac[3][2] = 0.0;
+                    mFrac[0][3] = mFrac[1][3] = mFrac[2][3] = 0.0;
                     mFrac[3][3] = 1.0;
-
+                    if (iVerbosity()>3) {
+                        VP0("Fractional symmetry operation # %d\n",i+1);
+                        PrintMatrix(mFrac);
+                    }
                     /* Convert fractional symmop transform to cartesian matrix */
                     /* Mcart = M * Mfrac * Mi  where M,Mi are the frac<->cart conversions */
                     MatrixMultiply( mTmp, M, mFrac );
@@ -1875,7 +1876,7 @@ REMARK 350   BIOMT1   3 -0.809017 -0.500000  0.309017     1084.41630
                 if ( iSerial>iStart ) {
                     VarArraySetSize( (prPRead->vaMatrices), iSerial );
                     for (int i=iStart; i<iSerial; i++ ) {
-                        PVAI(prPRead->vaMatrices,PDBMATRIXt,i)->bUsed = FALSE;
+                        PVAI(prPRead->vaMatrices,PDBMATRIXt,i)->bUsed = false;
                         MatrixDiagonal(
                             PVAI(prPRead->vaMatrices,PDBMATRIXt,i)->mTransform,
                             0.0, 0.0, 0.0 );
@@ -1897,8 +1898,13 @@ REMARK 350   BIOMT1   3 -0.809017 -0.500000  0.309017     1084.41630
                 break;
 
             case PDB_LINK:
-                if (GDefaults.bPdbUseLinkRecords)
+                if (GDefaults.bPdbUseLinkRecords) {
+                    for (int r=0;r<2;r++) {
+                        if (p.pdb.link.residues[r].chain_id[0]==' ')
+                            memmove(p.pdb.link.residues[r].chain_id,p.pdb.link.residues[r].chain_id+1,2);
+                    }
                     VarArrayAdd( prPRead->vaLinkRecs, (GENP)&p.pdb.link );
+                }
                 break;
 
             case PDB_SSBOND:
@@ -1949,8 +1955,8 @@ static bool
 zbFileReadable(char *sFilename)
 {
     FILE *fp = FOPENNOCOMPLAIN(sFilename, "r");
-    if (fp) { fclose(fp); return TRUE; }
-    return FALSE;
+    if (fp) { fclose(fp); return true; }
+    return false;
 }
 
 static void
@@ -1992,7 +1998,10 @@ zLoadUnit(char *name) {
 #define NFORMATS 4
     char *format_ext[NFORMATS] = {"lib","prepc","prepi","mol2"};
     int i;
-    if (!GDefaults.bPdbAutoLoadRes) return NULL;
+    if (!GDefaults.bPdbAutoLoadRes) {
+       VP2("Not searching for topology (PDB_Auto_Load=off)\n");
+       return NULL;
+    }
     for (i=0;i<NFORMATS;i++) {
         sprintf(sFilename,"%s.%s",name,format_ext[i]);
         VP2("Search for residue parameter file: %s\n", sFilename);
@@ -2047,12 +2056,24 @@ zLoadUnit(char *name) {
         VPFATAL("Loaded object is not a Template Residue\n");
         return NULL;
     }
+
+    ATOM aAtom; LOOP lAtoms;
+    int nH=0;
+    LOOPOVERALL(rRes,ATOMS,aAtom,ATOM,lAtoms)
+        if (aAtom->iAtomicNumber == HYDROGEN) nH++;
+    ContainerSetTempInt(uTemplate,nH);
+
     if (i==1 || i==2 ) zDetectResidueType(uTemplate);
     else if (i==3) ResidueSetType(rRes,RESTYPELIGAND);
 
     sprintf(sFilename,"%s.frcmod",name);
     VP2("Search for FRCMOD file: %s\n", sFilename);
-    if ( zbFileReadable(sFilename) ) {
+    bool bFound = zbFileReadable(sFilename);
+    if (!bFound ) {
+        sprintf(sFilename,"%c/%s.frcmod",cLower(name[0]),name);
+        bFound = zbFileReadable(sFilename);
+    }
+    if (bFound) {
         OStringDefine( (OSTRING) oFilename, sFilename );
         oCmd_loadAmberParams( 1, &aAssoc );
         VP2("Loading FRCMOD file: %s\n", GsBasicsFullName);
@@ -2118,22 +2139,24 @@ typedef struct {
     int extra_head_tail;
     int missing_atoms;
     int missing_connect;
-    int extra_atoms;   // raw count; patch logic checks == 1 for deprotonation
+    int extra_h_atoms;   // raw count; patch logic checks == 1 for deprotonation
+    int extra_nonh_atoms;   // raw count; patch logic checks == 1 for deprotonation
     int pdb_seq;
 } MatchScore;
 
-char *sPMatchResNames[MAXCANDIDATES];
+char sMatchResNames[MAXCANDIDATES][32];
 
 typedef struct MatchCandidate {
     UNIT        uTemplate;
     const Pair *pairPMatched[MAXCONNECT];   // detected bonds matching CONNECT
     const Pair *pairPUnmatched[MAXCONNECTPAIRS]; // detected bonds not matching CONNECT
-    bool        atomMatched[MAXATOMS];      // TRUE if this PDB atom matched the template
+    bool        atomMatched[MAXATOMS];      // true if this PDB atom matched the template
     char        sUnmatchedNames[80];        // List of PDB names not matched
     bool        bHeadIsCrossLink;           // Flag: HEAD bond to non-TAIL
     bool        bTailIsCrossLink;           // Flag: TAIL bonds to non-HEAD
     bool        bHasPendingForwardLinks;    // Flag: CONNECT links to forward atoms
                                             // (CONNECT status of forward atom is unknown)
+    bool        bMatchedHydrogens;          // flag to keep track of whether PDB residue had hydrogens
     MatchScore  score;
 } MatchCandidate;
 
@@ -2150,14 +2173,16 @@ ziCompareCandidates(const MatchCandidate *A, const MatchCandidate *B)
     CMP(missing_head_tail)
     if (GDefaults.bPdbExactMatch) {
         CMP(missing_atoms)
-        CMP(extra_atoms)
+        CMP(extra_nonh_atoms)
+        CMP(extra_h_atoms)
         CMP(extra_head_tail)
         CMP(missing_connect)
     } else {
         CMP(extra_head_tail)
         CMP(missing_atoms)
         CMP(missing_connect)
-        CMP(extra_atoms)
+        CMP(extra_nonh_atoms)
+        CMP(extra_h_atoms)
     }
     CMP(pdb_seq)
     return 0;
@@ -2172,38 +2197,28 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
     if (iVerbosity() < 3) return;
     RESIDUE rW = (RESIDUE)oContainerFirstObject(winner->uTemplate);
     RESIDUE rL = (RESIDUE)oContainerFirstObject(loser->uTemplate);
-    #define EXPLAIN(field) \
+    #define EXPLAIN(field,name,extra) \
         if (winner->score.field < loser->score.field) { \
-            VP2("  CANDIDATE DROP: %s.%s loses to %s.%s on " #field " (%d > %d)\n", \
+            VP2("  CANDIDATE DROP: %s.%s loses to %s.%s on " name " (%d > %d)\n", \
                    sContainerName(loser->uTemplate), sContainerName(rL), \
                    sContainerName(winner->uTemplate), sContainerName(rW), \
                    loser->score.field, winner->score.field); \
             return; \
         }
-    EXPLAIN(mismatched_head_restype)
-    EXPLAIN(extra_connect)
-    EXPLAIN(missing_head_tail)
-    if (!GDefaults.bPdbExactMatch) EXPLAIN(extra_head_tail)
-    if (winner->score.missing_atoms < loser->score.missing_atoms) {
-        VP2("  CANDIDATE DROP: %s.%s loses to %s.%s on missing_atoms (%d > %d)",
-               sContainerName(loser->uTemplate), sContainerName(rL),
-               sContainerName(winner->uTemplate), sContainerName(rW),
-               loser->score.missing_atoms, winner->score.missing_atoms);
-        if (loser->sUnmatchedNames[0])
-            VP2(" missing: %s", loser->sUnmatchedNames);
-        VP2("\n");
-        return;
-    }
-    if (!GDefaults.bPdbExactMatch) EXPLAIN(missing_connect)
-    EXPLAIN(extra_atoms)
+    EXPLAIN(mismatched_head_restype,"mismatch HEAD ResidueType",)
+    EXPLAIN(extra_connect,"extra CONNECT",)
+    EXPLAIN(missing_head_tail,"missing HEAD/TAIL",)
+    if (!GDefaults.bPdbExactMatch) EXPLAIN(extra_head_tail,"extra HEAD/TAIL",)
+    EXPLAIN(missing_atoms,"missing ATOMs", if (loser->sUnmatchedNames[0])
+            VP2("        missing: %s\n", loser->sUnmatchedNames));
+    if (!GDefaults.bPdbExactMatch) EXPLAIN(missing_connect,"missing CONNECT",)
+    EXPLAIN(extra_nonh_atoms,"extra non-H atoms",)
+    EXPLAIN(extra_h_atoms,"extra H atoms",)
     if (GDefaults.bPdbExactMatch) {
-        EXPLAIN(extra_head_tail)
-        EXPLAIN(missing_connect)
+        EXPLAIN(extra_head_tail,"extra HEAD/TAIL",)
+        EXPLAIN(missing_connect,"missing CONNECT",)
     }
-    EXPLAIN(pdb_seq)
-    VP2("  CANDIDATE DROP: %s.%s loses to %s.%s (equal score, first wins)\n",
-           sContainerName(loser->uTemplate), sContainerName(rL),
-           sContainerName(winner->uTemplate), sContainerName(rW));
+    EXPLAIN(pdb_seq,"tie-breaker ranking (pdbseq)",)
     #undef EXPLAIN
 }
 
@@ -2259,7 +2274,7 @@ zProcessPatches(PDBREADt *prPPdb, STRING sPatchName[], int iNumPatchNames)
         VP2("Search for patch file: %s\n", sFilename);
         if (zbFileReadable(sFilename)) break;
     }
-    if (i == iNumPatchNames) { VP2(" ... not found\n"); return FALSE; }
+    if (i == iNumPatchNames) { VP2(" ... not found\n"); return false; }
     VP2("Found patch file: %s\n", GsBasicsFullName);
     VP2("# Patch %s\n",   sPatchName[i]);
     VP2("RESIDUE = %d\n", prPPdb->iSubstRes1);
@@ -2269,7 +2284,7 @@ zProcessPatches(PDBREADt *prPPdb, STRING sPatchName[], int iNumPatchNames)
         fprintf(prPPdb->fpPatchFileOut, "RESIDUE = %d\n", prPPdb->iSubstRes1);
         fprintf(prPPdb->fpPatchFileOut, "source %s\n",    GsBasicsFullName);
     }
-    return TRUE;
+    return true;
 }
 
 static bool
@@ -2283,7 +2298,7 @@ zProcessPatches2(PDBREADt *prPPdb,
         VP2("Search for patch file: %s\n", sFilename);
         if (zbFileReadable(sFilename)) break;
     }
-    if (i == iNumPatchNames) { VP2(" ... not found\n"); return FALSE; }
+    if (i == iNumPatchNames) { VP2(" ... not found\n"); return false; }
     VP2("Found patch file: %s\n", GsBasicsFullName);
     VP2("# Patch %s\n",    sPatchName[i]);
     VP2("RESIDUE1 = %d\n", bPatchReversed[i] ? prPPdb->iSubstRes2 : prPPdb->iSubstRes1);
@@ -2306,7 +2321,7 @@ zProcessPatches2(PDBREADt *prPPdb,
         }
         fprintf(prPPdb->fpPatchFileOut, "source %s\n", GsBasicsFullName);
     }
-    return TRUE;
+    return true;
 }
 
 // -- Bond emission + link patch search ---------------------------------------
@@ -2321,15 +2336,15 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, bool bFromIsConnect,
     ATOMNAMEt    *anTo         = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, p->to_member);
     int           iNumPatchNames = 0;
 
-    bool bToIsConnect = FALSE;
+    bool bToIsConnect = false;
     if (rnTo->rResidue) {
         ATOM *aPToConnect = (ATOM*)rnTo->rResidue->aaConnect;
         for (int jc = 2; jc < MAXCONNECT && aPToConnect[jc]; jc++) {
             if (!strcmp(anTo->sName, sContainerName(aPToConnect[jc])))
-                { bToIsConnect = TRUE; break; }
+                { bToIsConnect = true; break; }
         }
-        if (!bToIsConnect && aPToConnect[0] && !strcmp(anTo->sName, sContainerName(aPToConnect[0]))) bToIsConnect = TRUE;
-        if (!bToIsConnect && aPToConnect[1] && !strcmp(anTo->sName, sContainerName(aPToConnect[0]))) bToIsConnect = TRUE;
+        if (!bToIsConnect && aPToConnect[0] && !strcmp(anTo->sName, sContainerName(aPToConnect[0]))) bToIsConnect = true;
+        if (!bToIsConnect && aPToConnect[1] && !strcmp(anTo->sName, sContainerName(aPToConnect[1]))) bToIsConnect = true;
     }
 
     ATOM    aFrom = (ATOM)cContainerFindName((CONTAINER)prPPdb->rRes,   ATOMid, anFrom->sName);
@@ -2377,23 +2392,23 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, bool bFromIsConnect,
 
     /* name/name sorted -- most specific */
     bPatchReversed[iNumPatchNames] = zBuildLinkPatchName(sPatchName[iNumPatchNames],
-                            sizeof(STRING), TRUE, cPResName, anFrom->sName, rnTo->sName, anTo->sName);
+                            sizeof(STRING), true, cPResName, anFrom->sName, rnTo->sName, anTo->sName);
     iNumPatchNames++;
     if (cPResType) {
         bPatchReversed[iNumPatchNames] = 0;
-        zBuildLinkPatchName(sPatchName[iNumPatchNames], sizeof(STRING), FALSE,
+        zBuildLinkPatchName(sPatchName[iNumPatchNames], sizeof(STRING), false,
                             cPResType, anFrom->sName, rnTo->sName, anTo->sName);
         iNumPatchNames++;
     }
     if (cPRes2Type) {
         bPatchReversed[iNumPatchNames] = 1;
-        zBuildLinkPatchName(sPatchName[iNumPatchNames], sizeof(STRING), FALSE,
+        zBuildLinkPatchName(sPatchName[iNumPatchNames], sizeof(STRING), false,
                             cPRes2Type, anTo->sName, cPResName, anFrom->sName);
         iNumPatchNames++;
     }
     if (cPResType && cPRes2Type) {
         bPatchReversed[iNumPatchNames] = zBuildLinkPatchName(sPatchName[iNumPatchNames],
-                            sizeof(STRING), TRUE, cPResType, anFrom->sName, cPRes2Type, anTo->sName);
+                            sizeof(STRING), true, cPResType, anFrom->sName, cPRes2Type, anTo->sName);
         iNumPatchNames++;
     }
 
@@ -2420,38 +2435,43 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
 {
     if (!match->uTemplate) return;
 
-    RESIDUE rResidue   = (RESIDUE)oContainerFirstObject(match->uTemplate);
+    RESIDUE rResidue   = prPPdb->rRes;
     char   *cPResName  = sContainerName(rResidue);
     char    cResType   = cResidueType(rResidue);
     char   *cPResType  = strchr(RESTYPECLASSPOLYMER, cResType)
                          ? sResidueTypeNameFromChar(cResType) : NULL;
-    int     iResGlobal = iContainerSequence(prPPdb->rRes);
+    int     iResGlobal = iContainerSequence(rResidue);
 
-    if (match->pairPMatched[0] && match->bHeadIsCrossLink &&
+    if (GDefaults.bPdbAutoLink) {
+        if (match->pairPMatched[0] && match->bHeadIsCrossLink &&
                 match->pairPMatched[0]->to_group < match->pairPMatched[0]->from_group)
-        zMakeBond(prPPdb, match->pairPMatched[0], TRUE, cPResName, cPResType, iResGlobal);
-    if (match->pairPMatched[1] && match->bTailIsCrossLink &&
+            zMakeBond(prPPdb, match->pairPMatched[0], true, cPResName, cPResType, iResGlobal);
+        if (match->pairPMatched[1] && match->bTailIsCrossLink &&
                 match->pairPMatched[1]->to_group < match->pairPMatched[1]->from_group)
-        zMakeBond(prPPdb, match->pairPMatched[1], TRUE, cPResName, cPResType, iResGlobal);
-    for (int i = 2; i < MAXCONNECT; i++) {
-        if (match->pairPMatched[i] &&
-                match->pairPMatched[i]->to_group < match->pairPMatched[i]->from_group)
-            zMakeBond(prPPdb, match->pairPMatched[i], TRUE, cPResName, cPResType, iResGlobal);
+            zMakeBond(prPPdb, match->pairPMatched[1], true, cPResName, cPResType, iResGlobal);
+        for (int i = 2; i < MAXCONNECT; i++) {
+            if (match->pairPMatched[i] &&
+                    match->pairPMatched[i]->to_group < match->pairPMatched[i]->from_group)
+                zMakeBond(prPPdb, match->pairPMatched[i], true, cPResName, cPResType, iResGlobal);
+        }
     }
 
+    if (!GDefaults.bPdbAutoMatch) return;
     if (!(match->score.mismatched_head_restype ||
           match->score.extra_head_tail         ||
           match->score.missing_head_tail        ||
           match->score.extra_connect            ||
           match->score.missing_atoms            ||
           match->score.missing_connect          ||
-          match->score.extra_atoms == 1)) return;
+          (match->score.extra_nonh_atoms==0 && match->score.extra_h_atoms==1)  // Only allow single proton for missing atom patch searching
+        )) return;
 
     if (match->bHasPendingForwardLinks)
         VP0("PATCH MAY BE REQUIRED (unresolved forward links pending):\n");
     else
         VP0("PATCH REQUIRED:\n");
-    VP0(" UNIT=%s, RESIDUE=%s\n", sContainerName(match->uTemplate), cPResName);
+    if (match->uTemplate) VP0(" UNIT=%s, RESIDUE=%s\n", sContainerName(match->uTemplate), cPResName);
+    else VP0(" RESIDUE=%s\n", cPResName);
 
     if (match->score.extra_connect)
         VPFATAL("Template residue with extra connects should never happen. A residue version\n"
@@ -2462,7 +2482,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
         match->pairPMatched[0] = NULL;
     }
 
-    bool bStructuralPatchEmitted = FALSE;
+    bool bStructuralPatchEmitted = false;
     STRING sPatchName[10];
 
     if (match->score.missing_head_tail) {
@@ -2472,7 +2492,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
             prPPdb->iSubstRes1 = iResGlobal;
             sprintf(sPatchName[0], "%s@%s_head", cPResName, an->sName);
             if (cPResType) sprintf(sPatchName[1], "%s@%s_head", cPResType, an->sName);
-            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = TRUE;
+            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = true;
         }
         if (match->pairPMatched[1] && !aUnitTail(match->uTemplate)) {
             ATOMNAMEt *an = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt,
@@ -2480,7 +2500,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
             prPPdb->iSubstRes1 = iResGlobal;
             sprintf(sPatchName[0], "%s@%s_tail", cPResName, an->sName);
             if (cPResType) sprintf(sPatchName[1], "%s@%s_tail", cPResType, an->sName);
-            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = TRUE;
+            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = true;
         }
     }
 
@@ -2491,57 +2511,58 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
             prPPdb->iSubstRes1 = iResGlobal;
             sprintf(sPatchName[0], "%s@%s_cap", cPResName, sContainerName(aHead));
             if (cPResType) sprintf(sPatchName[1], "%s@%s_cap", cPResType, sContainerName(aHead));
-            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = TRUE;
+            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = true;
         }
         if (!match->pairPMatched[1] && aTail) {
             prPPdb->iSubstRes1 = iResGlobal;
             sprintf(sPatchName[0], "%s@%s_cap", cPResName, sContainerName(aTail));
             if (cPResType) sprintf(sPatchName[1], "%s@%s_cap", cPResType, sContainerName(aTail));
-            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = TRUE;
+            if (zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1)) bStructuralPatchEmitted = true;
         }
     }
 
-    ATOM aExtraAtom = NULL;
-    if (match->score.extra_atoms == 1) {
-        ATOM aCand;
-        LOOP lAtoms;
-        LOOPOVERALL(rResidue,ATOMS,aCand,ATOM,lAtoms) {
-            bool found = FALSE;
-            for (int i = iFirstAtom; i <= iLastAtom; i++) {
-                if (!strcmp(sContainerName(aCand),
-                            PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName))
-                    { found = TRUE; break; }
+    if (!bStructuralPatchEmitted) {
+        if (match->score.extra_nonh_atoms == 0 && match->score.extra_h_atoms == 1) {
+            ATOM aExtraAtom = NULL;
+            ATOM aCand;
+            LOOP lAtoms;
+            LOOPOVERALL(rResidue,ATOMS,aCand,ATOM,lAtoms) {
+                bool found = false;
+                for (int i = iFirstAtom; i <= iLastAtom; i++) {
+                    if (!strcmp(sContainerName(aCand),
+                                PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName))
+                        { found = true; break; }
+                }
+                if (!found) { aExtraAtom = aCand; break; }
             }
-            if (!found) { aExtraAtom = aCand; break; }
+            if (!aExtraAtom)
+                VPFATAL("Programming error looking for extra template atom in %s, %s:%d\n",
+                         __func__, __FILE__, __LINE__);
+            else {
+                sprintf(sPatchName[0], "%s_del_%s", cPResName, sContainerName(aExtraAtom));
+                if (cPResType) sprintf(sPatchName[1], "%s_del_%s", cPResType, sContainerName(aExtraAtom));
+                prPPdb->iSubstRes1 = iResGlobal;
+                zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1);
+            }
         }
-        if (!aExtraAtom)
-            VPFATAL("Programming error looking for extra template atom in %s, %s:%d\n",
-                     __func__, __FILE__, __LINE__);
-    }
 
-    if (match->score.extra_atoms == 1 && aExtraAtom && !bStructuralPatchEmitted) {
-        sprintf(sPatchName[0], "%s_del_%s", cPResName, sContainerName(aExtraAtom));
-        if (cPResType) sprintf(sPatchName[1], "%s_del_%s", cPResType, sContainerName(aExtraAtom));
-        prPPdb->iSubstRes1 = iResGlobal;
-        zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1);
-    }
-
-    if (match->score.missing_atoms && !bStructuralPatchEmitted) {
-        char *names[MAXATOMS];
-        int   nNames = 0;
-        for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
-            if (!match->atomMatched[n])
-                names[nNames++] = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName;
+        if (match->score.missing_atoms) {
+            char *names[MAXATOMS];
+            int   nNames = 0;
+            for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
+                if (!match->atomMatched[n])
+                    names[nNames++] = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName;
+            }
+            qsort(names, nNames, sizeof(char *), qsort_strcmp);
+            sprintf(sPatchName[0], "%s_add_%s", cPResName, names[0]);
+            if (cPResType) sprintf(sPatchName[1], "%s_add_%s", cPResType, names[0]);
+            for (int i = 1; i < nNames; i++) {
+                strcat(sPatchName[0], ","); strcat(sPatchName[0], names[i]);
+                if (cPResType) { strcat(sPatchName[1], ","); strcat(sPatchName[1], names[i]); }
+            }
+            prPPdb->iSubstRes1 = iResGlobal;
+            zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1);
         }
-        qsort(names, nNames, sizeof(char *), qsort_strcmp);
-        sprintf(sPatchName[0], "%s_add_%s", cPResName, names[0]);
-        if (cPResType) sprintf(sPatchName[1], "%s_add_%s", cPResType, names[0]);
-        for (int i = 1; i < nNames; i++) {
-            strcat(sPatchName[0], ","); strcat(sPatchName[0], names[i]);
-            if (cPResType) { strcat(sPatchName[1], ","); strcat(sPatchName[1], names[i]); }
-        }
-        prPPdb->iSubstRes1 = iResGlobal;
-        zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1);
     }
 
     if (match->score.missing_connect) {
@@ -2549,7 +2570,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
             if (!match->pairPUnmatched[i]) continue;
             if (match->pairPUnmatched[i]->from_member <
                     match->pairPUnmatched[i]->to_member) continue;
-            zMakeBond(prPPdb, match->pairPUnmatched[i], FALSE,
+            zMakeBond(prPPdb, match->pairPUnmatched[i], false,
                       cPResName, cPResType, iResGlobal);
         }
     }
@@ -2557,12 +2578,14 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
 
 
 static void
-zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResIndex,
-        ATOMNAMEt *anPAtoms, int iFirstAtom, int iLastAtom, bool bPDBHasHydrogens, // PDB info
-        const Pair *pairPDetected[], int iNumDetected,           // bonding info
+zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
+        int iFirstAtom, int iLastAtom,
+        const Pair *pairPDetected[], int iNumDetected,     // bonding info
         char *key, UNIT uTemplate,                         // template info
         MatchCandidate *cnPCandidate)                      // result
 {
+    RESIDUENAMEt *rnPResidues  = PVAI(prPPdb->vaResidues, RESIDUENAMEt, 0);
+    ATOMNAMEt *anPAtoms = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, 0);
     RESIDUE rTemplateRes = (RESIDUE)oContainerFirstObject(uTemplate);
     ATOM aHead = aUnitHead(uTemplate);
     ATOM aTail = aUnitTail(uTemplate);
@@ -2616,7 +2639,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
                     key, sContainerName(uTemplate),
                     sContainerName(rTemplateRes), sResidueTypeNameFromChar(cResidueType(rTemplateRes)));
                 cnPCandidate->score.mismatched_head_restype = 1;
-                cnPCandidate->bHeadIsCrossLink = TRUE;
+                cnPCandidate->bHeadIsCrossLink = true;
             }
             continue;
         }
@@ -2632,12 +2655,12 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
             continue;
         }
         /* -- CONNECT2 ... CONNECT5 -- */
-        bool match=FALSE;
+        bool match=false;
         for (int jc = 2; jc < MAXCONNECT && aPTemplateConnect[jc]; jc++) {
             if (!strcmp(sFromAtom, sContainerName(aPTemplateConnect[jc]))) {
                 cnPCandidate->pairPMatched[jc] = p;
                 matched_conn++;
-                match=TRUE;
+                match=true;
                 break;
             }
         }
@@ -2645,10 +2668,10 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
 
         // Analyze non-CONNECT atom bonding contacts
         if (GDefaults.iPdbIgnoreNonConnect >= 2) continue;
-        bool bToIsConnect = FALSE;
+        bool bToIsConnect = false;
         bool bForwardLink = (pairPDetected[id]->to_group > iResIndex);
         if (bForwardLink) {
-            bToIsConnect = TRUE; /* assume connect -- verified when partner is processed */
+            bToIsConnect = true; /* assume connect -- verified when partner is processed */
         } else {
             RESIDUENAMEt *rnTo = &rnPResidues[pairPDetected[id]->to_group];
             if (rnTo->rResidue) {
@@ -2657,12 +2680,12 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
                 ATOM      *aPToConnect = (ATOM *)rnTo->rResidue->aaConnect;
                 for (int jc = 0; jc < MAXCONNECT && aPToConnect[jc]; jc++) {
                     if (!strcmp(anTo->sName, sContainerName(aPToConnect[jc])))
-                        { bToIsConnect = TRUE; break; }
+                        { bToIsConnect = true; break; }
                 }
             }
         }
         if (bToIsConnect && GDefaults.iPdbIgnoreNonConnect >= 1) continue;
-        if (bForwardLink) cnPCandidate->bHasPendingForwardLinks = TRUE;
+        if (bForwardLink) cnPCandidate->bHasPendingForwardLinks = true;
         if (unmatched_conn < MAXCONNECTPAIRS)
             cnPCandidate->pairPUnmatched[unmatched_conn++] = p;
     }
@@ -2681,38 +2704,79 @@ zMatchResidueCandidate(PDBREADt *prPPdb, RESIDUENAMEt *rnPResidues, int iResInde
 
     int  num_unmatched = 0; // Number of atoms in residue not found in template
     cnPCandidate->sUnmatchedNames[0] = 0; // String list
+    // number of atoms in template
+    int na_h_template = iContainerTempInt(uTemplate);
+    int na_nonh_template = iContainerNumberOfChildren(rTemplateRes) - na_h_template;
 
+    //int na_residue = iLastAtom - iFirstAtom + 1;
+    int num_h_matched = 0;
+    int num_nonh_matched = 0;
     for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
-        cnPCandidate->atomMatched[n] = TRUE;
+        cnPCandidate->atomMatched[n] = true;
         const char *name    = anPAtoms[i].sName;
-        bool found = (cContainerFindName((CONTAINER)rTemplateRes, ATOMid, name) != NULL);
+        CONTAINER found = cContainerFindName((CONTAINER)rTemplateRes, ATOMid, name);
         if (!found) {
             // Try atom name aliases
             char *cPAtomName = zcPPdbMapName(SdAtomNameMap, NOEND, name, rTemplateRes);
             if (cPAtomName)
-                found = (cContainerFindName((CONTAINER)rTemplateRes, ATOMid, cPAtomName) != NULL);
-            if (!found) {
-                // Atom not in template, mark and append to string list
-                cnPCandidate->atomMatched[n] = FALSE;
-                if (strlen(cnPCandidate->sUnmatchedNames) <= sizeof(cnPCandidate->sUnmatchedNames)-10) {
-                    if (strlen(cnPCandidate->sUnmatchedNames)+strlen(name) <= sizeof(cnPCandidate->sUnmatchedNames)-10) {
-                        if (num_unmatched) strcat(cnPCandidate->sUnmatchedNames, ",");
-                        strcat(cnPCandidate->sUnmatchedNames, name);
-                    } else strcat(cnPCandidate->sUnmatchedNames, "...");
-                }
-                num_unmatched++;
-            }
+                found = cContainerFindName((CONTAINER)rTemplateRes, ATOMid, cPAtomName);
         }
+        if (!found) {
+            // Atom not in template, mark and append to string list
+            cnPCandidate->atomMatched[n] = false;
+            if (strlen(cnPCandidate->sUnmatchedNames) <= sizeof(cnPCandidate->sUnmatchedNames)-10) {
+                if (strlen(cnPCandidate->sUnmatchedNames)+strlen(name) <= sizeof(cnPCandidate->sUnmatchedNames)-10) {
+                    if (num_unmatched) strcat(cnPCandidate->sUnmatchedNames, ",");
+                    strcat(cnPCandidate->sUnmatchedNames, name);
+                } else strcat(cnPCandidate->sUnmatchedNames, "...");
+            }
+            num_unmatched++;
+        } else if (ATOM_from(found)->iAtomicNumber == HYDROGEN ||
+                   ATOM_from(found)->iAtomicNumber == LONEPAIR) num_h_matched++;
+        else num_nonh_matched++;
     }
-
-    // number of atoms in template, excluding hydrogen if not bPDBHasHydrogens
-    int  na_template_counted = iContainerNumberOfChildren(rTemplateRes);
-    if (!bPDBHasHydrogens) na_template_counted -= iContainerTempInt(uTemplate);
-
-    int na_residue = iLastAtom - iFirstAtom + 1;
     cnPCandidate->score.missing_atoms = num_unmatched;
-    cnPCandidate->score.extra_atoms   = na_template_counted - (na_residue - num_unmatched);
-    cnPCandidate->score.pdb_seq       = iResiduePdbSequence(oContainerFirstObject(uTemplate));
+    cnPCandidate->score.extra_h_atoms = na_h_template - num_h_matched;
+    cnPCandidate->score.extra_nonh_atoms = na_nonh_template - num_nonh_matched;
+    cnPCandidate->score.pdb_seq = iResiduePdbSequence(oContainerFirstObject(uTemplate));
+    cnPCandidate->bMatchedHydrogens = num_h_matched;
+}
+
+// -- Link detection ------------------------------------------------------
+static int
+ziDetectLinks(PDBREADt *prPPdb, int iResIndex, const Pair **pairPDetected_return)
+{
+    int iCloseContacts = 0, iNumDetected = 0;
+    const Pair *ptPPairs = NULL;
+    unsigned int iNumPairs;
+    ATOMNAMEt *anPAtoms = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, 0);
+    if (neighbor_grid_query_group(prPPdb->ngBondGrid, iResIndex,
+                                  &ptPPairs, &iNumPairs) != 0) {
+        VPFATAL("neighbor_grid_query_group(%d) failed\n", iResIndex);
+        return -1;
+    }
+    for (unsigned int i = 0; i < iNumPairs; i++) {
+        const Pair *p = &ptPPairs[i];
+        if ( p->d2 < (MINBONDLEN*MINBONDLEN) ) {
+             iCloseContacts++;
+             continue;
+        }
+        if (!bAtomsBondedDist(anPAtoms[p->from_member].iElement,
+                              anPAtoms[p->to_member].iElement, p->d2,
+                              (abs(p->to_group - p->from_group) <= 1)
+                                  ? GDefaults.dPdbLinkCovalentCutoff
+                                  : GDefaults.dPdbCrosslinkCovalentCutoff,NULL) )
+            continue;
+        if (iNumDetected >= MAXCONNECTPAIRS) {
+            VPFATAL("Too many detected bonding contacts in residue %d\n", iResIndex);
+            return -1;
+        }
+        pairPDetected_return[iNumDetected++] = p;
+    }
+    if (iCloseContacts>0) {
+        VPWARN("%d close contacts (< %g Å) encountered\n", iCloseContacts, MINBONDLEN);
+    }
+    return iNumDetected;
 }
 
 // -- Primary residue template matching function ------------------------------
@@ -2733,43 +2797,16 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
     const int       iLastAtom     = (iResIndex < iResidueCount - 1)
                                     ? ((rnPName+1)->iFirstAtom - 1)
                                     : (iVarArrayElementCount(prPPdb->vaAtomRecs) - 1);
-    const Pair     *ptPPairs      = NULL;
-    unsigned int    iNumPairs     = 0;
     const Pair     *pairPDetected[MAXCONNECTPAIRS] = { NULL };
-    int             iNumDetected  = 0;
+    int             iNumDetected;
 
     VPTRACEENTER(__func__);
     VP3("------------------------------\n");
 
     // -- Link detection ------------------------------------------------------
 
-    if (neighbor_grid_query_group(prPPdb->ngBondGrid, iResIndex,
-                                  &ptPPairs, &iNumPairs) != 0) {
-        VPFATAL("neighbor_grid_query_group(%d) failed\n", iResIndex);
-        return NULL;
-    }
-    int iCloseContacts = 0;
-    for (unsigned int i = 0; i < iNumPairs; i++) {
-        const Pair *p = &ptPPairs[i];
-        if ( p->d2 < (MINBONDLEN*MINBONDLEN) ) {
-             iCloseContacts++;
-             continue;
-        }
-        if (!bAtomsBondedDist(anPAtoms[p->from_member].iElement,
-                              anPAtoms[p->to_member].iElement, p->d2,
-                              (abs(p->to_group - p->from_group) <= 1)
-                                  ? GDefaults.dPdbLinkCovalentCutoff
-                                  : GDefaults.dPdbCrosslinkCovalentCutoff))
-            continue;
-        if (iNumDetected >= MAXCONNECTPAIRS) {
-            VPFATAL("Too many detected bonding contacts in residue %d\n", iResIndex);
-            break;
-        }
-        pairPDetected[iNumDetected++] = p;
-    }
-    if (iCloseContacts>0) {
-        VPWARN("%d close contacts (< %g Å) encountered\n", iCloseContacts, MINBONDLEN);
-    }
+    iNumDetected = ziDetectLinks(prPPdb, iResIndex, pairPDetected);
+    if (iNumDetected < 0) return NULL;
 
     // -- Template lookup -----------------------------------------------------
 
@@ -2784,7 +2821,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         status = locate_key(&ix_record, &(prPPdb->ixResMap), 0);
         status = next_key(&ix_record, &(prPPdb->ixResMap));
         if (strcmp(cPResName, ix_record.key)) {
-            VP0("Not found: %s\n", cPResName);
+            VP0("Template Residue not found for: %s\n", cPResName);
             uTemplate = zLoadUnit(cPResName);
             // If template loaded, add record to the index
             if (uTemplate) {
@@ -2802,7 +2839,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         status = locate_key(&ix_record, &(prPPdb->ixResMap), 0);
         status = next_key(&ix_record, &(prPPdb->ixResMap));
         if (strcmp(cPResName, ix_record.key)) {
-            VP0("Not found: %s\n", cPResName);
+            VP0("Template Residue not found for: %s\n", cPResName);
             uTemplate = zLoadUnit(cPResName);
             if (uTemplate) {
                 strcpy(ix_record.key, cPResName);
@@ -2812,30 +2849,29 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         }
     }
 
-    // -- Hydrogen check ------------------------------------------------------
-
-    bool bPDBHasHydrogens = FALSE;
-    for (int i = iFirstAtom; i <= iLastAtom; i++) {
-        if (anPAtoms[i].iElement == HYDROGEN) bPDBHasHydrogens = TRUE;
-        break;
-    }
-
     // -- Candidate scoring loop ----------------------------------------------
 
     if (status != IX_END && !strcmp(cPResName, ix_record.key)) do {
         uTemplate = (UNIT)ix_record.recptr;
 
-        zMatchResidueCandidate(prPPdb, rnPResidues, iResIndex,
-                anPAtoms, iFirstAtom, iLastAtom, bPDBHasHydrogens,
+        zMatchResidueCandidate(prPPdb, iResIndex,
+                iFirstAtom, iLastAtom,
                 pairPDetected, iNumDetected,
                 ix_record.key, uTemplate,
                 &cnCandidate);
 
         zUpdateBestCandidate(&cnMatch, &cnCandidate);
 
-        sPMatchResNames[iNumCandidates] = sContainerName(uTemplate); // FIXME: key name, UNIT name or RESIDUE name?
-        iNumCandidates++;
-        if (iNumCandidates >= MAXCANDIDATES) break;
+        if (iVerbosity() > 2) {
+            if (strcmp(ix_record.key, sContainerName(uTemplate))) {
+                snprintf(sMatchResNames[iNumCandidates],sizeof(sMatchResNames[iNumCandidates]),
+                         "%.24s(%.5s)",ix_record.key, sContainerName(uTemplate));
+            } else {
+                sMatchResNames[iNumCandidates][sizeof(sMatchResNames[iNumCandidates])-1]=0;
+                strncpy(sMatchResNames[iNumCandidates],ix_record.key,sizeof(sMatchResNames[iNumCandidates])-1);
+            }
+        }
+        if (++iNumCandidates >= MAXCANDIDATES) break;
         status = next_key(&ix_record, &(prPPdb->ixResMap));
 
     } while (status != IX_END && !strcmp(cPResName, ix_record.key));
@@ -2845,10 +2881,10 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
     if (iNumCandidates > 0) {
         if (iVerbosity() > 2) {
             VP2("%s.%s:%d Candidates: %s", cPResName,
-                rnPName->sChainId, rnPName->iPdbSequence, sPMatchResNames[0]);
-            for (int i = 1; i < iNumCandidates; i++) VP2(",%s", sPMatchResNames[i]);
+                rnPName->sChainId, rnPName->iPdbSequence, sMatchResNames[0]);
+            for (int i = 1; i < iNumCandidates; i++) VP2(",%s", sMatchResNames[i]);
             VP2(" Match: %s%s\n", sContainerName(cnMatch.uTemplate),
-                bPDBHasHydrogens ? "" : " [non-H match]");
+                cnMatch.bMatchedHydrogens ? "" : " [non-H match]");
         }
 
         uTemplate = cnMatch.uTemplate;
@@ -2860,10 +2896,11 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 cnMatch.score.extra_head_tail         ||
                 cnMatch.score.missing_atoms           ||
                 cnMatch.score.missing_connect         ||
-                cnMatch.score.extra_atoms) {
+                cnMatch.score.extra_nonh_atoms        ||
+                (GDefaults.bPdbExactMatch && cnMatch.score.extra_h_atoms) ) {
             VP0("Imprecise match for residue: %3s %2.2s%4d%c\n",
                 cPResName, rnPName->sChainId,
-                rnPName->iPdbSequence, rnPName->iCode);
+                rnPName->iPdbSequence, rnPName->cICode);
             VP0(" Template: UNIT=%s, RESIDUE=%s\n",
                 sContainerName(cnMatch.uTemplate), sContainerName(rTemplateRes));
             if (cnMatch.score.mismatched_head_restype)
@@ -2871,18 +2908,18 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                     sResidueTypeNameFromChar(cResidueType(prPPdb->rRes)),
                     sResidueTypeNameFromChar(cResidueType(rTemplateRes)));
             if (cnMatch.score.extra_connect)
-                VP0(" Unused connect=%d\n", cnMatch.score.extra_connect);
+                VP0(" Unused connect: %d\n", cnMatch.score.extra_connect);
             if (cnMatch.score.missing_head_tail)
-                VP0(" Head/Tail missing=%d\n", cnMatch.score.missing_head_tail);
+                VP0(" Head/Tail missing: %d\n", cnMatch.score.missing_head_tail);
             if (cnMatch.score.extra_head_tail)
-                VP0(" Head/Tail unused=%d\n", cnMatch.score.extra_head_tail);
+                VP0(" Head/Tail unused: %d\n", cnMatch.score.extra_head_tail);
             if (cnMatch.score.missing_atoms) {
-                VP0(" Missing atoms in template=%d", cnMatch.score.missing_atoms);
+                VP0(" Missing atoms in template: %d", cnMatch.score.missing_atoms);
                 if (cnMatch.sUnmatchedNames[0]) VP0(" (%s)", cnMatch.sUnmatchedNames);
                 VP0("\n");
             }
             if (cnMatch.score.missing_connect) {
-                VP0(" Missing connects=%d:", cnMatch.score.missing_connect);
+                VP0(" Missing connects: %d = ", cnMatch.score.missing_connect);
                 for (int i = 0; i < cnMatch.score.missing_connect && i < MAXCONNECT; i++) {
                     const Pair *p = cnMatch.pairPUnmatched[i];
                     if (!p) continue;
@@ -2895,30 +2932,31 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 }
                 VP0("\n");
             }
-            if (cnMatch.score.extra_atoms) {
-                VP0(" Extra atoms in template=%d", cnMatch.score.extra_atoms);
+            if ( (iVerbosity()>3 && (cnMatch.score.extra_h_atoms+cnMatch.score.extra_nonh_atoms)>0) ||
+                 (cnMatch.score.extra_h_atoms==1 || cnMatch.score.extra_h_atoms==2 || cnMatch.score.extra_nonh_atoms)) {
+                VP0(" Extra atoms in template: %d(H) + %d(non-H)", cnMatch.score.extra_h_atoms,cnMatch.score.extra_nonh_atoms);
                 ATOM    aAtom;
                 LOOP    lAtoms = lLoop((OBJEKT)rTemplateRes, ATOMS);
-                bool    first  = TRUE;
+                bool    first  = true;
                 while ((aAtom = (ATOM)oNext(&lAtoms)) != NULL) {
-                    if (!bPDBHasHydrogens && aAtom->iAtomicNumber == HYDROGEN) continue;
-                    bool found = FALSE;
+                    if (!cnMatch.bMatchedHydrogens && aAtom->iAtomicNumber == HYDROGEN) continue;
+                    bool found = false;
                     for (int i = iFirstAtom; i <= iLastAtom; i++) {
                         if (!strcmp(sContainerName(aAtom),
                                     PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName))
-                            { found = TRUE; break; }
+                            { found = true; break; }
                     }
                     if (!found) {
                         VP0("%s%s", first ? " (" : ",", sContainerName(aAtom));
-                        first = FALSE;
+                        first = false;
                     }
                 }
-                if (!first) VP0(")");
-                VP0("\n");
+                if (!first) VP0(")\n");
+                else VP0("\n");
             }
             if (cnMatch.score.missing_connect > MAX_UNMATCHED_CONNECT) {
                 VP0("Warning: %s.%s:%d has %d unmatched cross-link contacts"
-                    " -- excess likely spurious:\n",
+                    " -- excess likely spurious collisions:\n",
                     cPResName, rnPName->sChainId, rnPName->iPdbSequence,
                     cnMatch.score.missing_connect);
                 for (int i = 0; i < cnMatch.score.missing_connect && i < MAXCONNECT; i++) {
@@ -2962,7 +3000,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
         VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n",
             cPResName, rnPName->sChainId,
-            rnPName->iPdbSequence, rnPName->iCode);
+            rnPName->iPdbSequence, rnPName->cICode);
         uResult = (UNIT)oCreate(UNITid);
         RESIDUE rRes = (RESIDUE)oCreate(RESIDUEid);
         ContainerSetName(rRes, cPResName);
@@ -3102,12 +3140,23 @@ int             iChainCount=0;
     //int iAtomCount = iVarArrayElementCount( prPPdb->vaAtomRecs );
     for (int iRes = 0; iRes < iResidueCount; iRes++) {
         RESIDUENAMEt *rnPName = PVAI( prPPdb->vaResidues, RESIDUENAMEt, iRes);
+        int iFirstAtom = rnPName->iFirstAtom;
+        int iLastAtom = (iRes < iResidueCount - 1) ? ((rnPName + 1)->iFirstAtom - 1)
+                                 : iVarArrayElementCount(prPPdb->vaAtomRecs) - 1;
 
         if (GDefaults.bPdbAutoMatch) {
             uNew = zPdbMatchResidueTemplate(prPPdb, iRes, &cnMatch );
             bStartChain = !cnMatch.pairPMatched[0] || cnMatch.bHeadIsCrossLink;
         } else {
             uNew = zuPdbGetNextUnit( prPPdb, &bStartChain, rnPName->iPdbSequence );
+            if (GDefaults.bPdbAutoLink) {
+                const Pair *pairPDetected[MAXCONNECTPAIRS];
+                int iNumDetected = ziDetectLinks(prPPdb, iRes, pairPDetected);
+                zMatchResidueCandidate(prPPdb, iRes,
+                      iFirstAtom, iLastAtom,
+                      pairPDetected, iNumDetected,
+                      "", uNew, &cnMatch);
+            }
         }
 
         RESIDUE rRes = (RESIDUE) oContainerFirstObject(uNew);
@@ -3167,12 +3216,9 @@ int             iChainCount=0;
             }
         } else strcpy( rRes->sChainId, rnPName->sChainId);
         rRes->iPdbResSeq = rnPName->iPdbSequence;
-        rRes->cICode = rnPName->iCode;
+        rRes->cICode = rnPName->cICode;
 
                 /* Apply ATOM information into the new residue */
-        int iFirstAtom = rnPName->iFirstAtom;
-        int iLastAtom = (iRes < iResidueCount - 1) ? ((rnPName + 1)->iFirstAtom - 1)
-                                 : iVarArrayElementCount(prPPdb->vaAtomRecs) - 1;
         for (int iAtom = iFirstAtom; iAtom <= iLastAtom; iAtom++) {
             // ATOM processing part from AddAtom() // TODO: use already matched index? (faster)
             ATOMNAMEt *anAtom = PVAI( prPPdb->vaAtomRecs, ATOMNAMEt, iAtom);
@@ -3224,15 +3270,15 @@ int             iChainCount=0;
             double dY = vAtomPosition(aTail).dY - vAtomPosition(aHead).dY;
             double dZ = vAtomPosition(aTail).dZ - vAtomPosition(aHead).dZ;
             float d2 = dX*dX + dY*dY + dZ*dZ;
+            float dCut;
             if (!bAtomsBondedDist(iAtomElement(aTail),iAtomElement(aHead), d2,
-                                  GDefaults.dPdbLinkCovalentCutoff )) {
-                VP1("Starting new chain because dist=%g > cutoff=%g\n",
-                                   sqrt(d2), GDefaults.dPdbLinkCovalentCutoff);
+                                  GDefaults.dPdbLinkCovalentCutoff, &dCut )) {
+                VP1("Starting new chain because dist %.2fÅ > %.2fÅ\n", sqrt(d2), dCut);
 	        AtomRemoveBond( aTail, aHead );
             }
         }
 
-        if (GDefaults.bPdbAutoMatch)
+        if (GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink)
             zProcessModifications(prPPdb, &cnMatch, iFirstAtom, iLastAtom);
 
         zPdbBuildCoordinatesForContainer( (CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
@@ -3279,8 +3325,8 @@ int             iChainCount=0;
                     VPWARN("Invalid CONECT record (atomSerial=%d) in pdb file.\n", conect->covalent[j] );
                     continue;
                 }
-                if ( !bAtomBondedTo( aA, aB ) ) {
-                    if (GDefaults.bPdbLinkIons || bAtomsBondedDist(iAtomElement(aA),iAtomElement(aB),1.0,1.0) )
+                if ( !bAtomBondedTo( aA, aB ) ) { //FIXME why did I decide to let d<1 through?
+                    if (GDefaults.bPdbLinkIons) // || bAtomsBondedDist(iAtomElement(aA),iAtomElement(aB),1.0,1.0,NULL) )
                         AtomBondTo( aA, aB );
                     else {
                         RESIDUE rA = (RESIDUE)cContainerWithin(aA);
@@ -3300,7 +3346,7 @@ int             iChainCount=0;
         for (int i=0; i<iVarArrayElementCount(prPPdb->vaLinkRecs); i++) {
             struct pdb_link *link = PVAI( prPPdb->vaLinkRecs, struct pdb_link, i );
             VPTRACE("Process LINK/SSBOND record %i.\n", i );
-            ATOM aAtom[2];
+            ATOM aAtom[2]={NULL,NULL};
             for (int j=0;j<2;j++) {
                 IX_REC rec = { NULL };
                 ATOMKEYt *key = (ATOMKEYt *)rec.key;
@@ -3314,12 +3360,12 @@ int             iChainCount=0;
                     key->chainID[1]=0;
                 }
 
-                key->iCode = link->residues[j].insert_code;
+                key->cICode = link->residues[j].insert_code;
                 memset(key->name,0,sizeof(key->name));
                 if (link->name[j][0]==' ') strcpy(key->name,link->name[j]+1);
                 else strcpy(key->name,link->name[j]);
                 if ( locate_key( &rec,  &prPPdb->ixAtomIndex, 1 ) != IX_OK ) {
-                    VPWARN("Unable to locate atom %d of link record %d: %s.%s:%d.%s\n",j,i,
+                    VPWARN("Unable to locate atom %d of link record %d: %s.%s:%d.%s\n",j+1,i+1,
                             link->residues[j].name,link->residues[j].chain_id,
                             link->residues[j].seq_num,link->name[j]);
                 } else {
@@ -3328,7 +3374,8 @@ int             iChainCount=0;
                 }
             }
             if ( aAtom[0] && aAtom[1] &&!bAtomBondedTo( aAtom[0], aAtom[1] ) ) {
-                if (GDefaults.bPdbLinkIons || bAtomsBondedDist(iAtomElement(aAtom[0]),iAtomElement(aAtom[1]),1.0,1.0) ) {
+                                           //FIXME why did I decide to let d<1 through?
+                if (GDefaults.bPdbLinkIons) { // || bAtomsBondedDist(iAtomElement(aAtom[0]),iAtomElement(aAtom[1]),1.0,1.0) ) {
                     AtomBondTo( aAtom[0], aAtom[1] );
                 } else {
                     RESIDUE rA1 = (RESIDUE)cContainerWithin(aAtom[0]);
@@ -3435,14 +3482,14 @@ int             i;
         VP0("PdbRead:   MODEL %d will be retained\n", GDefaults.iPdbReadModel);
     if (GDefaults.bPdbExpandSymm) {
         VP0("PdbRead:   CRYST1 Spacegroup symmetry will be expanded, MTRIXn will be ignored\n" );
-        prPdb.bSymmOps = TRUE;
+        prPdb.bSymmOps = true;
     } else if (GDefaults.iPdbReadBioMT) {
         VP0("PdbRead:   REMARK BIOMT #%d will be read and processed, MTRIXn will be ignored\n",
                 GDefaults.iPdbReadBioMT );
-        prPdb.bBIOMT = TRUE;
+        prPdb.bBIOMT = true;
     } else if (GDefaults.bPdbExpandNCSMt) {
         VP0("PdbRead:   MTRIXn records will be processed, if present\n" );
-        prPdb.bNCS = TRUE;
+        prPdb.bNCS = true;
     } else
         VP0("PdbRead:   MTRIXn records will not be processed\n" );
 
@@ -3472,7 +3519,7 @@ int             i;
 
     RESIDUENAMEt *rnRes = PVAI( prPdb.vaResidues, RESIDUENAMEt, 0);
     int iNumPdbResidues = iVarArrayElementCount(prPdb.vaResidues);
-    if (GDefaults.bPdbAutoMatch) {
+    if (GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink) {
         prPdb.vaPoints = vaVarArrayCreate( sizeof(Point) );
         prPdb.iPGroupStart = (unsigned int *)MALLOC(sizeof(int)*( iNumPdbResidues + 1) );
         prPdb.iPGroupStart[0] = 0;
@@ -3484,12 +3531,13 @@ int             i;
         if (anAtom->iResNameIndex != iResIndex) {
             iResIndex = anAtom->iResNameIndex;
             rnRes = PVAI( prPdb.vaResidues, RESIDUENAMEt, anAtom->iResNameIndex);
-            if (GDefaults.bPdbAutoMatch) {
+            if (GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink) {
                 prPdb.iPGroupStart[iResIndex] = iVarArrayElementCount(prPdb.vaPoints);
             }
         }
         // Exclude ions (atom name = resName), water, and hydrogen in crosslink analysis
-        if (GDefaults.bPdbAutoMatch && anAtom->iElement != HYDROGEN
+        if ((GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink)
+                && anAtom->iElement != HYDROGEN
                 && strcmp(anAtom->sName, rnRes->sName)
                 && strcmp("HOH", rnRes->sName) // FIXME: better water matching, use SOLVENT template names!
                 && strcmp("WAT", rnRes->sName) // FIXME: better water matching, use SOLVENT template names!
@@ -3509,12 +3557,12 @@ int             i;
         // XXX Drop ChainID, ResID from unique key if they wll not be used
         if (!GDefaults.bPdbKeepChainId && !GDefaults.bPdbUseLinkRecords) {
             key->resSeq=iResIndex;
-            memset(key->chainID,0,8);
+            memset(key->chainID,0,sizeof(key->chainID)+sizeof(key->cICode)+sizeof(key->name));
         } else {
             key->resSeq = rnRes->iPdbSequence;
             if ( (key->chainID[0] = rnRes->sChainId[0]) ) key->chainID[1] = rnRes->sChainId[1];
             else key->chainID[1]=0; // double NUL for blank chain
-            key->iCode = rnRes->iCode;
+            key->cICode = rnRes->cICode;
             memset(key->name,0,sizeof(key->name));
         }
         strcpy(key->name,anAtom->sName);
@@ -3522,13 +3570,13 @@ int             i;
             if (iDuplicates++ < 50) {
                 VP0("-- residue %d: duplicate [%4s %2.2s%4d%c] atom\n",
                         anAtom->iResNameIndex, key->name, key->chainID,
-                             key->resSeq, key->iCode );
+                             key->resSeq, key->cICode );
             }
         }
 
     }
     // add array sentinel for non-bond search grid points
-    if (GDefaults.bPdbAutoMatch) {
+    if (GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink) {
         prPdb.iPGroupStart[iResIndex+1] = iVarArrayElementCount(prPdb.vaPoints);
     }
 
@@ -3539,12 +3587,13 @@ int             i;
         VP0("      Many instances of duplicate atom names usually come\n" );
         VP0("      from alternate conformations in the PDB file.)\n\n" );
     }
-    if (GDefaults.bPdbAutoMatch) {
+    if (GDefaults.bPdbAutoLink || GDefaults.bPdbAutoMatch ) {
         prPdb.ngBondGrid = neighbor_grid_setup( PVAI(prPdb.vaPoints, Point, 0),
                 iVarArrayElementCount(prPdb.vaPoints), iNumPdbResidues, prPdb.iPGroupStart,
                 MAX_BOND_LENGTH * GDefaults.dPdbLinkCovalentCutoff ); // max expected bond length * cutoff multiplier
 
-    } else {
+    }
+    if (!GDefaults.bPdbAutoMatch) {
 
         // Use vaUnits, resName and PdbMap to create RESIDUE array
         zPdbConvertNamesAndSequenceNumbers( &prPdb );
@@ -3589,6 +3638,7 @@ int             i;
         }
     }
 
+
                 /* Clean up */
 
     VarArrayDestroy(&prPdb.vaResidues);
@@ -3596,6 +3646,8 @@ int             i;
     VarArrayDestroy(&prPdb.vaAtomRecs);
     if (prPdb.vaUnits && !vaUnits)  // vaUnits gets allocated in old-style PDB processing
         VarArrayDestroy(&prPdb.vaUnits);
+    if (prPdb.vaLinkRecs)
+        VarArrayDestroy(&prPdb.vaLinkRecs);
     destroy_index(&prPdb.ixAtomIndex );
     if (prPdb.vaAtoms) VarArrayDestroy(&prPdb.vaAtoms);
     if (prPdb.vaConectRecs) VarArrayDestroy(&prPdb.vaConectRecs);

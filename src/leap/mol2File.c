@@ -242,7 +242,7 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
     strcpy(sTemp, sContainerName((CONTAINER) uUnit));
 
     iCount = 0;
-    bPert = FALSE;
+    bPert = false;
     lTemp = lLoop((OBJEKT) uUnit, BONDS);
     while (oNext(&lTemp) != NULL)
         iCount++;

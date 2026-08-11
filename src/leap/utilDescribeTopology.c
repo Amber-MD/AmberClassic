@@ -88,15 +88,15 @@ typedef	struct	{
  *      Global variables
  */
 
-static	bool    SbIncludeAtomNumberInName = FALSE;
-static	bool    SbIncludeAtomTypeInName = FALSE;
-static	bool    SbIncludeAtomName = FALSE;
-static	bool    SbIncludeResidueName = FALSE;
-static	bool    SbIncludeIndices = FALSE;
-static	bool    SbPrintEnergy = FALSE;
-static	bool	SbIgnoreNonbonds = FALSE;
-static	bool	SbDescLoad = FALSE;
-static	bool	SbSortTorsions = FALSE;
+static	bool    SbIncludeAtomNumberInName = false;
+static	bool    SbIncludeAtomTypeInName = false;
+static	bool    SbIncludeAtomName = false;
+static	bool    SbIncludeResidueName = false;
+static	bool    SbIncludeIndices = false;
+static	bool    SbPrintEnergy = false;
+static	bool	SbIgnoreNonbonds = false;
+static	bool	SbDescLoad = false;
+static	bool	SbSortTorsions = false;
 
 int             ntotat, ntypes, nbonh, nbona, ntheth, ntheta, nphih, nphia;
 int             jhparm, jparm, next, ntotrs, mbona, mtheta, mphia, mumbnd;
@@ -470,7 +470,7 @@ BLOCKt*		bPBlock;
         bImproper = (*PVAI(vaLp,int,i)<0);
         sGetName( i, vaLp, sL );
 
-        if ( bImproper ) bCalc14 = FALSE;
+        if ( bImproper ) bCalc14 = false;
 
                 /* Order the four atoms so that the outer ones are */
                 /* in ascending order, if it is a PROPER torsion */
@@ -832,35 +832,35 @@ extern  char    *optarg;
 	usage(argv[0]);
     }
 
-    SbSortTorsions = FALSE;
+    SbSortTorsions = false;
     while ((cc = getopt(argc, argv, "sDnartIei")) != EOF) {
 	switch( cc ) {
 	    case 's':
-		SbSortTorsions = TRUE;
+		SbSortTorsions = true;
 		break;
 	    case 'r':
-		SbIncludeResidueName = TRUE;
+		SbIncludeResidueName = true;
 		break;
 	    case 'I':
-		SbIncludeIndices = TRUE;
+		SbIncludeIndices = true;
 		break;
 	    case 'a':
-		SbIncludeAtomName = TRUE;
+		SbIncludeAtomName = true;
 		break;
             case 'n': 
-                SbIncludeAtomNumberInName = TRUE;
+                SbIncludeAtomNumberInName = true;
                 break;
             case 't':
-                SbIncludeAtomTypeInName = TRUE;
+                SbIncludeAtomTypeInName = true;
                 break;
 	    case 'i':
-		SbIgnoreNonbonds = TRUE;
+		SbIgnoreNonbonds = true;
 		break;
 	    case 'e':
-		SbPrintEnergy = TRUE;
+		SbPrintEnergy = true;
 		break;
 	    case 'D':
-		SbDescLoad = TRUE;
+		SbDescLoad = true;
 		break;
             default:
 		fprintf(stderr, "unprogrammed option: [%c] %d\n", cc, cc);
@@ -1372,7 +1372,7 @@ OVERPERT:
         VarArrayAdd( vaAtoms, (GENP)sEntry );
     }
     SortByString( PVAI(vaAtoms,STRING,0), ntotat, sizeof(STRING),
-                        PVAI(vaAtoms,STRING,0), TRUE );
+                        PVAI(vaAtoms,STRING,0), true );
 
         /* Construct a dictionary of atom type names to atom type IDs */
 
@@ -1389,7 +1389,7 @@ OVERPERT:
     fprintf( stderr, "Building bond information\n" );
     dBonds = dDictionaryCreate();
     for ( i=0; i<nbonh; i++ ) {
-        AddBondInteraction( dBonds, i, vaIgraph, vaIbh, vaJbh, vaIcbh, FALSE );
+        AddBondInteraction( dBonds, i, vaIgraph, vaIbh, vaJbh, vaIcbh, false );
     }
     for ( i=0; i<mbona; i++ ) {
         AddBondInteraction( dBonds, i, vaIgraph, vaIb, vaJb, vaIcb,
@@ -1403,7 +1403,7 @@ OVERPERT:
     dAngles = dDictionaryCreate();
     for ( i=0; i<ntheth; i++ ) {
         AddAngleInteraction( dAngles, i, vaIgraph, 
-                                vaIth, vaJth, vaKth, vaIcth, FALSE );
+                                vaIth, vaJth, vaKth, vaIcth, false );
     }
     for ( i=0; i<mtheta; i++ ) {
         AddAngleInteraction( dAngles, i, vaIgraph, 
@@ -1417,7 +1417,7 @@ OVERPERT:
     d14s = dDictionaryCreate();
     for ( i=0; i<nphih; i++ ) {
         AddTorsion14Interaction( dTorsions, d14s, i, vaIgraph,
-                                vaIph, vaJph, vaKph, vaLph, vaIcph, FALSE );
+                                vaIph, vaJph, vaKph, vaLph, vaIcph, false );
     }
     for ( i=0; i<mphia; i++ ) {
         AddTorsion14Interaction( dTorsions, d14s, i, vaIgraph,
@@ -1653,7 +1653,7 @@ OVERPERT:
     printf( "Please wait, sorting . . .\n" );
     SortByString( PVAI( vaTorsions, STRING, 0 ), 
                 iVarArrayElementCount(vaTorsions),
-                sizeof(STRING), PVAI( vaTorsions, STRING, 0 ), TRUE );
+                sizeof(STRING), PVAI( vaTorsions, STRING, 0 ), true );
     for ( i=0; i<iVarArrayElementCount(vaTorsions); i++ ) {
         printf( "%s\n", PVAI( vaTorsions, STRING, i ) );
     }

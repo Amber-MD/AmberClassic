@@ -404,7 +404,7 @@ Describe( OBJEKT oObject )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Return TRUE if the object has iClass as one of
+ *      Return true if the object has iClass as one of
  *      its superclasses.
  *      The ENTIRE class structure has to be represented here.
  */
@@ -423,76 +423,77 @@ int             iObjClass;
                 case UNITid:
                 case MOLECULEid:
                 case CONTAINERid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case OBJEKTid:
-            return(TRUE);
+            return(true);
         case ASSOCid:
-            if ( iObjClass==ASSOCid ) return(TRUE);
+            if ( iObjClass==ASSOCid ) return(true);
             break;
         case OINTEGERid:
-            if ( iObjClass==OINTEGERid ) return(TRUE);
+            if ( iObjClass==OINTEGERid ) return(true);
             break;
         case ODOUBLEid:
-            if ( iObjClass==ODOUBLEid ) return(TRUE);
+            if ( iObjClass==ODOUBLEid ) return(true);
             break;
         case OSTRINGid:
-            if ( iObjClass==OSTRINGid ) return(TRUE);
+            if ( iObjClass==OSTRINGid ) return(true);
             break;
         case BYTEARRAYid:
-            if ( iObjClass==BYTEARRAYid ) return(TRUE);
+            if ( iObjClass==BYTEARRAYid ) return(true);
             break;
         case COLLECTIONid:
             switch ( iObjClass ) {
                 case COLLECTIONid:
                 case LISTid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case LISTid:
             switch ( iObjClass ) {
                 case LISTid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case UNITid:
             switch ( iObjClass ) {
                 case UNITid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case MOLECULEid:
             switch ( iObjClass ) {
                 case MOLECULEid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case RESIDUEid:
             switch ( iObjClass ) {
                 case RESIDUEid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case ATOMid:
             switch ( iObjClass ) {
                 case ATOMid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case INTERNALid:
             switch ( iObjClass ) {
                 case INTERNALid:
-                    return(TRUE);
+                    return(true);
             }
             break;
         case PARMSETid:
             switch ( iObjClass ) {
                 case PARMSETid:
-                    return(TRUE);
+                    return(true);
             }
     }
-    return(FALSE);
+    MESSAGE("Object type %c is not in class %c\n",iObjClass,iClass);
+    return(false);
 }
           
             
@@ -623,16 +624,16 @@ sObjectType( OBJEKT oObj )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Check the type of the argument, print an error and return FALSE
+ *      Check the type of the argument, print an error and return false
  *      if it is not the correct type.
  */
 bool
 bObjektWarnType( OBJEKT oObj, int iType )
 {
 
-    if ( iObjectType(oObj) == iType ) return(TRUE);
+    if ( iObjectType(oObj) == iType ) return(true);
     VP0("The value must be of the type: %s\n", sObjectIndexType(iType) );
-    return(FALSE);
+    return(false);
 }
 
 

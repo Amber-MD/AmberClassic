@@ -83,7 +83,7 @@ _BEGIN
 	scanf( "%s %s %s %s", s1, s2, s3, s4 );
 	PRINTF("Looking for: %s-%s-%s-%s\n", s1, s2, s3, s4 );
 	tTorsion = tParmSetTORSIONCreate();
-        iParmSetFindImproperTerms( psCur, tTorsion, TRUE,
+        iParmSetFindImproperTerms( psCur, tTorsion, true,
 				    s1, s2, s3, s4 );
 	PRINTF("Found %d terms\n", iParmSetTORSIONTermCount(tTorsion) );
 	for ( i=0; i<iParmSetTORSIONTermCount(tTorsion); i++ ) {

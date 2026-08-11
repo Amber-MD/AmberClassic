@@ -167,7 +167,7 @@ ContainerDestroy( CONTAINER *cPContainer )
  
     /* DEREF the contents of the CONTAINER and destroy the List */
                 
-    LIST_from((*cPContainer)->lContents)->bFreeChildren = TRUE;
+    LIST_from((*cPContainer)->lContents)->bFreeChildren = true;
     ListDestroy((LIST *)&((*cPContainer)->lContents));
     
     switch ( iObjectType(*cPContainer) ) {
@@ -285,7 +285,7 @@ ContainerAdd( CONTAINER cContainer, OBJEKT oObject )
  *      Author: Christian Schafmeister (1991)
  *
  *      Remove an object from this container or it's subcontainers.
- *      Return FALSE if the OBJEKT could not be found
+ *      Return false if the OBJEKT could not be found
  *      within the CONTAINER. 
  *
  *      UNTIL A BETTER FIX IS DEVISED: for safety, always REF() the
@@ -311,19 +311,19 @@ bool            bResult;
             ContainerYouAreBeingRemoved( (CONTAINER)oObject );
             ContainerSetWithin( oObject, NULL );
         }
-        bResult = TRUE;
+        bResult = true;
     } else {
         /* Now try and remove it from a sub-container */
     
         llList = llListLoop( (LIST)cContainer->lContents );
         while ( (cSub = (CONTAINER)oListNext(&llList)) != NULL ) {
-            if ( bContainerRemove( cSub, oObject ) ) return(TRUE);
+            if ( bContainerRemove( cSub, oObject ) ) return(true);
         }
     
         /* None of the sub-containers contained the object */
-        /* so return FALSE                                 */
+        /* so return false                                 */
 
-        bResult = FALSE;
+        bResult = false;
     }
 
     CDU(cContainer);
@@ -979,7 +979,7 @@ ContainerCheck( CONTAINER cCont, int *iPErrors, int *iPWarnings )
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Return TRUE if the first CONTAINER ( cIn ) is contained by
+ *      Return true if the first CONTAINER ( cIn ) is contained by
  *      ( cOut ).  Check this by following up the linked list of
  *      CONTAINERs that contain cIn.
  */
@@ -991,9 +991,9 @@ CONTAINER       cTemp;
     cTemp = cIn;
     while ( cTemp != NULL ) {
         cTemp = cContainerWithin( cTemp );
-        if ( cTemp == cOut ) return(TRUE);
+        if ( cTemp == cOut ) return(true);
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -1280,7 +1280,7 @@ CONTAINER       cCur;
 
     lContainer = lLoop( (OBJEKT)cCont, CONTAINERS );
     while ( (cCur = (CONTAINER)oNext(&lContainer)) ) {
-        DisplayerSetSensitive(dContainerDisplayer(cCur),FALSE);
+        DisplayerSetSensitive(dContainerDisplayer(cCur),false);
     }
 }
 
@@ -1320,7 +1320,7 @@ CONTAINER       cCur;
                 /* Make this CONTAINER sensitive and */
                 /* if it has been modified then update it */
 
-    DisplayerSetSensitive(dContainerDisplayer(cCont),TRUE);
+    DisplayerSetSensitive(dContainerDisplayer(cCont),true);
     if ( bDisplayerModified(dContainerDisplayer(cCont)) ) {
         DisplayerUpdate(dContainerDisplayer(cCont));
     }
@@ -1373,11 +1373,11 @@ ATOM    aAtom1, aAtom2;
         lAtoms2 = lLoop( (OBJEKT)cCont2, ATOMS );
         while (( aAtom2 = (ATOM)oNext( &lAtoms2 ))) {
             if ( bAtomSpaceConflict( aAtom1, aAtom2 )) {
-                return( TRUE );
+                return( true );
             }
         }
     }
-    return(FALSE);
+    return(false);
 }
 
 

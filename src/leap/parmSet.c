@@ -294,7 +294,7 @@ zParmSetOrderImproperAtoms( typeStr sAtom1, typeStr sAtom2,
  *
  *        Author:        Christian Schafmeister (1991)
  *
- *      Return TRUE if the four types match the torsion.
+ *      Return true if the four types match the torsion.
  *
  *      OR if Atom 1 is wildcard and Atoms 2,3 match (forces wildcard at Atom 4)
  */
@@ -304,7 +304,7 @@ zbParmSetMatchTorsion( TORSIONPARMt *tpPTorsion, char *s1, char *s2,
 {
 bool            bFoundOne;
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
 
                 /* Check the torsion only one way, */
                 /* this relies on the types being ordered properly */
@@ -314,14 +314,14 @@ bool            bFoundOne;
         if ( strcmp( tpPTorsion->sType1, s1 ) == 0 &&
              strcmp( tpPTorsion->sType2, s2 ) == 0 &&
              strcmp( tpPTorsion->sType3, s3 ) == 0 &&
-             strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = TRUE;
+             strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = true;
     } else {
         if ( strcmp( s2, s3 ) <= 0 ) {
             if ( strcmp( tpPTorsion->sType2, s2 ) == 0 &&
-                     strcmp( tpPTorsion->sType3, s3 ) == 0 ) bFoundOne = TRUE;
+                     strcmp( tpPTorsion->sType3, s3 ) == 0 ) bFoundOne = true;
         } else {
             if ( strcmp( tpPTorsion->sType3, s2 ) == 0 &&
-                     strcmp( tpPTorsion->sType2, s3 ) == 0 ) bFoundOne = TRUE;
+                     strcmp( tpPTorsion->sType2, s3 ) == 0 ) bFoundOne = true;
         }
     }
 #ifdef        DEBUG
@@ -350,11 +350,11 @@ bool            bFoundOne;
  *        if it is, but is a general torsion rather than a specific
  *        one then replace it.
  *
- *        If (bUseIndex) is TRUE then write the index of the term
+ *        If (bUseIndex) is true then write the index of the term
  *        within the PARMSET into the TORSION.iIndex, otherwise write
  *        PARM_NOT_FOUND.
  *
- *        Return TRUE if the proper term was actually added.
+ *        Return true if the proper term was actually added.
  *
  *TODO: Fix this routine, it will not properly compare proper torsions
  *TODO: with wild cards.
@@ -441,7 +441,7 @@ TORSION_MATCHt        tmNew;
  *
  *        Author:        Christian Schafmeister (1991)
  *
- *        If (bUseIndex) is TRUE then write the index of the term
+ *        If (bUseIndex) is true then write the index of the term
  *        within the PARMSET into the TORSION.iIndex, otherwise write
  *        PARM_NOT_FOUND.
  *
@@ -594,7 +594,7 @@ int                iRet = PARM_NOT_FOUND;
  *
  *        Author:        Christian Schafmeister (1991)
  *
- *      Return TRUE if the four types match the torsion.
+ *      Return true if the four types match the torsion.
  *      If on entry bExact is true then only exact parameters will
  *      match, otherwise wildcards are OK.
  *      The CENTRAL atom MUST be the THIRD ATOM!!!!!!!!!!!!!!!!!!!
@@ -608,10 +608,10 @@ zbParmSetMatchImproper( TORSIONPARMt *tpPTorsion, char *s1, char *s2,
 int             iWild;
 bool            bFoundOne;
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
 
                 /* Check the central atom */
-    if ( strcmp( tpPTorsion->sType3, s3 ) != 0 ) return(FALSE);
+    if ( strcmp( tpPTorsion->sType3, s3 ) != 0 ) return(false);
 
     iWild = iParmSetTorsionGenerality(
                             tpPTorsion->sType1,
@@ -623,22 +623,22 @@ bool            bFoundOne;
         case 0:
             if ( strcmp( tpPTorsion->sType1, s1 ) == 0 &&
                      strcmp( tpPTorsion->sType2, s2 ) == 0 &&
-                 strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = TRUE;
+                 strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = true;
             break;
         case 1:
             if ( strcmp( tpPTorsion->sType2, s1 ) == 0 ) {
                 if ( strcmp( tpPTorsion->sType4, s2 ) == 0 ||
-                     strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = TRUE;
+                     strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = true;
             } else if ( strcmp( tpPTorsion->sType2, s2 ) == 0 &&
-                     strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = TRUE;
+                     strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = true;
             break;
         case 2:
             if ( strcmp( tpPTorsion->sType4, s1 ) == 0 ||
                  strcmp( tpPTorsion->sType4, s2 ) == 0 ||
-                 strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = TRUE;
+                 strcmp( tpPTorsion->sType4, s4 ) == 0 ) bFoundOne = true;
             break;
         case 3:
-            bFoundOne = TRUE;
+            bFoundOne = true;
             break;
         default:
             DFATAL("Invalid number of wildcards (0-3) got: %d\n",
@@ -669,12 +669,12 @@ bool            bFoundOne;
  *        PARMSET for all improper torsions that match the
  *        atom types.
  *
- *        If (bUseIndex) is TRUE then write the index of the term within
+ *        If (bUseIndex) is true then write the index of the term within
  *        the PARMSET into the tTorsion.iIndex field, otherwise write
  *        PARM_NOT_FOUND.
  *
  *        The atom types must be in canonical order.
- *        Return TRUE if the tTorsion was actually changed.
+ *        Return true if the tTorsion was actually changed.
  */
 static bool
 zbParmSetBuildImproperTorsion( PARMSET psParmSet, char *s1, char *s2,
@@ -685,14 +685,14 @@ TORSIONPARMt        *tpPCur;
 bool                bAddedOne;
 int                iMax;
 
-    bAddedOne = FALSE;
+    bAddedOne = false;
     if ( (iMax = iVarArrayElementCount( psParmSet->vaImpropers )) ) {
         tpPCur = PVAI( psParmSet->vaImpropers, TORSIONPARMt, 0 );
         for ( i=0; i<iMax; i++, tpPCur++ ) {
             if ( zbParmSetMatchImproper( tpPCur, s1, s2, s3, s4 ) ) {
                 if ( zbParmSetAddToImproper( tTorsion, i, tpPCur, bUseIndex )
                         != PARM_NOT_FOUND )
-                    bAddedOne = TRUE;
+                    bAddedOne = true;
             }
         }
     }
@@ -922,8 +922,8 @@ static bool bRelResIdxMatch(int *cmapResidx, int *iRelResIdx)
     for (l = 0; l < 5 && cmapResidx[l] != 0; l++);
     shift = iRelResIdx[l];
     for (int j = 0; j < 5; j++)
-        if ((iRelResIdx[j] - shift) != cmapResidx[j]) return FALSE;
-    return TRUE;
+        if ((iRelResIdx[j] - shift) != cmapResidx[j]) return false;
+    return true;
 }
 
 /* ================================================================
@@ -982,8 +982,8 @@ void VarArrayDestroyCMAP(VARARRAY *pva)
 static bool bRefResNameMatch(CMAP cmap, const char *sResName)
 {
     for (int r = 0; r < cmap->nres; r++)
-        if (strcmp(cmap->reslist[r], sResName) == 0) return TRUE;
-    return FALSE;
+        if (strcmp(cmap->reslist[r], sResName) == 0) return true;
+    return false;
 }
 /* ----------------------------------------------------------------
    internal helper: match all 5 atom names against WRD atmname set.
@@ -991,18 +991,18 @@ static bool bRefResNameMatch(CMAP cmap, const char *sResName)
 static inline bool bAtomNamesMatch5(const char *an[5], WRD *cmapAtmName)
 {
     for (int k = 0; k <5; k++)
-        if (strcmp(an[k], cmapAtmName[k])) return FALSE;
-    return TRUE;
+        if (strcmp(an[k], cmapAtmName[k])) return false;
+    return true;
 }
 static inline bool bAtomNamesMatch4(const char *an[4], WRD *cmapAtmName)
 {
-    for (int k = 0; k <4; k++) if (strcmp(an[k], cmapAtmName[k])) return FALSE;
-    return TRUE;
+    for (int k = 0; k <4; k++) if (strcmp(an[k], cmapAtmName[k])) return false;
+    return true;
 }
 static inline bool bAtomNamesMatch4rev(const char *an[4], WRD *cmapAtmName)
 {
-    for (int k = 0; k <4; k++) if (strcmp(an[k], cmapAtmName[4-k])) return FALSE;
-    return TRUE;
+    for (int k = 0; k <4; k++) if (strcmp(an[k], cmapAtmName[4-k])) return false;
+    return true;
 }
 /* ================================================================
    bParmSetCMAPHasPhi:
@@ -1013,18 +1013,18 @@ static inline bool bAtomNamesMatch4rev(const char *an[4], WRD *cmapAtmName)
 bool bParmSetCMAPHasPhi(PARMSET psLib, const char *sAtomNames[4],
                                        const char *sResNames[4])
 {
-    if (!iParmSetHasCMAP(psLib)) return FALSE;
+    if (!iParmSetHasCMAP(psLib)) return false;
 
     int n = iVarArrayElementCount(psLib->vaCMAPs);
     CMAPt *cmaps = PVAI(psLib->vaCMAPs, CMAPt, 0);
 
     for (int i = 0; i < n; i++) {
         if (bRefResNameMatch(&cmaps[i], sResNames[cmaps[i].iRefResIndex]) && 
-            bAtomNamesMatch4(sAtomNames, cmaps[i].atmname)) return TRUE;
+            bAtomNamesMatch4(sAtomNames, cmaps[i].atmname)) return true;
         if (bRefResNameMatch(&cmaps[i], sResNames[4-cmaps[i].iRefResIndex]) && 
-            bAtomNamesMatch4rev(sAtomNames, cmaps[i].atmname)) return TRUE;
+            bAtomNamesMatch4rev(sAtomNames, cmaps[i].atmname)) return true;
     }
-    return FALSE;
+    return false;
 }
 
 /* ================================================================
@@ -1121,7 +1121,7 @@ PARMSET psNew;
     psNew->vaNBEdits     = vaVarArrayCreate( sizeof(NBEDITt) );
     psNew->vaCMAPs       = vaVarArrayCreate( sizeof(CMAPt) );
 
-    psNew->bBeingEdited  = FALSE; /* V. Romanovski */
+    psNew->bBeingEdited  = false; /* V. Romanovski */
 
     return(psNew);
 }
@@ -1142,7 +1142,7 @@ PARMSET        psNew;
 
     psNew = (PARMSET)MALLOC(sizeof(PARMSETt) );
     memcpy( psNew, psOld, sizeof(PARMSETt) );
-    psNew->bBeingEdited = FALSE;
+    psNew->bBeingEdited = false;
 
     psNew->vaAtoms = vaVarArrayCopy( psOld->vaAtoms );
     psNew->vaBonds = vaVarArrayCopy( psOld->vaBonds );
@@ -2211,11 +2211,11 @@ bool            bFoundOne;
     if ( !iMax )
         return(PARM_NOT_FOUND);
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
     apPAtom = PVAI( psLib->vaAtoms, ATOMPARMt, 0 );
     for ( i=0; i<iMax; apPAtom++, i++ ) {
         if ( strcmp( apPAtom->sType, sType ) == 0 ) {
-                    bFoundOne = TRUE;
+                    bFoundOne = true;
                     break;
         }
     }
@@ -2254,12 +2254,12 @@ typeStr         s1, s2;
     strcpy( s2, sType2 );
     zParmSetOrderBondAtoms(s1, s2);
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
     bpPBond = PVAI( psLib->vaBonds, BONDPARMt, 0 );
     for ( i=0; i<iMax; bpPBond++, i++ ) {
         if ( strcmp( bpPBond->sType1, s1 ) == 0 ) {
             if ( strcmp( bpPBond->sType2, s2 ) == 0 ) {
-                    bFoundOne = TRUE;
+                    bFoundOne = true;
                     break;
             }
         }
@@ -2329,7 +2329,7 @@ STRING                s1, s2, s3;
  *        is not a term for that multiplicity or, the term in the
  *        TORSION is less specific than the term found within the PARMSET.
  *
- *        If bUseIndex is TRUE then the index of the term within
+ *        If bUseIndex is true then the index of the term within
  *        the PARMSET will be written into the TORSION.iIndex, otherwise
  *        PARM_NOT_FOUND will be written.
  *
@@ -2377,7 +2377,7 @@ typeStr       s1, s2, s3, s4;
  *        If terms are found and added then return PARM_FOUND_TERMS,
  *        otherwise return PARM_NOT_FOUND.
  *
- *        If bUseIndex is TRUE then write the index of the term within
+ *        If bUseIndex is true then write the index of the term within
  *        the PARMSET into the tTorsion.iIndex field, otherwise write
  *        PARM_NOT_FOUND.
  *
@@ -2436,12 +2436,12 @@ typeStr         s1, s2;
     strcpy( s2, sType2 );
     zParmSetOrderBondAtoms( s1, s2 );
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
     hpPHBond = PVAI( psLib->vaHBonds, HBONDPARMt, 0 );
     for ( i=0; i<iMax; hpPHBond++, i++ ) {
         if ( strcmp( hpPHBond->sType1, s1 ) == 0 ) {
             if ( strcmp( hpPHBond->sType2, s2 ) == 0 ) {
-                    bFoundOne = TRUE;
+                    bFoundOne = true;
                     break;
             }
         }
@@ -2483,12 +2483,12 @@ typeStr         s1, s2;
     strcpy( s2, sType2 );
     zParmSetOrderBondAtoms( s1, s2 );
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
     hpPNBEdit = PVAI( psLib->vaNBEdits, NBEDITt, 0 );
     for ( i=0; i<iMax; hpPNBEdit++, i++ ) {
         if ( strcmp( hpPNBEdit->sType1, s1 ) == 0 ) {
             if ( strcmp( hpPNBEdit->sType2, s2 ) == 0 ) {
-                    bFoundOne = TRUE;
+                    bFoundOne = true;
                     break;
             }
         }
@@ -2589,10 +2589,10 @@ TORSIONPARMt        tpTorsion;
     else tpTorsion.sDesc[0]=0;
     strcpy( tpTorsion.sOrder, "0123" );
 
-    if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, FALSE )
+    if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, false )
                 != PARM_NOT_FOUND )
-        return(TRUE);
-    return(FALSE);
+        return(true);
+    return(false);
 }
 
 
@@ -2629,10 +2629,10 @@ orderStr        sOrder="0123";
     else tpTorsion.sDesc[0]=0;
     strcpy( tpTorsion.sOrder, sOrder );
 
-    if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, FALSE )
+    if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, false )
                 != PARM_NOT_FOUND )
-        return(TRUE);
-    return(FALSE);
+        return(true);
+    return(false);
 }
 
 
@@ -2874,7 +2874,7 @@ int                iTemp, iBetter, iBetterIndex;
  *
  *        Author:        Christian Schafmeister (1991)
  *
- *      Return TRUE if the atom type is capable of being involved
+ *      Return true if the atom type is capable of being involved
  *      in a HBond.
  */
 bool
@@ -2886,17 +2886,17 @@ int                iCount, iTotal;
         /* If there are no HBONDS then nothing can HBOND */
 
     if ( iVarArrayElementCount(psParms->vaHBonds) == 0 ) {
-        return(FALSE);
+        return(false);
     }
     iTotal = iVarArrayElementCount(psParms->vaHBonds);
 
     hbPCur = PVAI( psParms->vaHBonds, HBONDPARMt, 0 );
     for ( iCount = 0; iCount < iTotal; iCount++) {
-        if ( strcmp( hbPCur->sType1, sType ) == 0 ) return(TRUE);
-        if ( strcmp( hbPCur->sType2, sType ) == 0 ) return(TRUE);
+        if ( strcmp( hbPCur->sType1, sType ) == 0 ) return(true);
+        if ( strcmp( hbPCur->sType2, sType ) == 0 ) return(true);
         hbPCur++;
     }
-    return(FALSE);
+    return(false);
 }
 
 

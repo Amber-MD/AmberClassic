@@ -337,7 +337,7 @@ int		i, j;
     bOrigNull = ( aaOrig[3] == NULL );
     if ( bNewNull && !bOrigNull ) {
 	for ( i=0; i<4; i++ ) {
-	    bFound = FALSE;
+	    bFound = false;
 	    for ( j=0; j<3; j++ ) bFound |= (aaOrig[i] == aaNew[j]); 
 	    if ( !bFound ) {
 		aaNew[3] = aaOrig[i];
@@ -395,7 +395,7 @@ int		i, j;
     bOrigNull = ( aaOrig[3] == NULL );
     if ( !bNewNull && bOrigNull ) {
 	for ( i=0; i<4; i++ ) {
-	    bFound = FALSE;
+	    bFound = false;
 	    for ( j=0; j<3; j++ ) bFound |= (aaNew[i] == aaOrig[j]); 
 	    if ( !bFound ) {
 		aaOrig[3] = aaNew[i];

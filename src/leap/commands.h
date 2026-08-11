@@ -48,11 +48,11 @@
 #include	"varArray.h"
 #endif
 
-typedef OBJEKT  (*FUNCTION)(int iArgCount, ASSOC aaArgs[]);
+typedef OBJEKT  (*CMD_FUNCTION)(int iArgCount, ASSOC aaArgs[]);
 
 typedef struct {
         STRING          sName;
-        FUNCTION        fCallback;
+        CMD_FUNCTION        fCallback;
 } COMMANDt;
 
 extern  COMMANDt        cCommands[];

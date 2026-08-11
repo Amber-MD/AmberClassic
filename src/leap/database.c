@@ -292,7 +292,7 @@ WriteDataLine( DATABASE db, char *sLine )
  *      Read a line from the database file.
  *	Copy the line into the sLookAhead field.
  *
- *	Return FALSE if no data line was read,
+ *	Return false if no data line was read,
  *	which occurs if end of file is hit or a new
  *	header line is hit.
  */
@@ -304,12 +304,12 @@ zbDBReadLine( DATABASE db, char *sLine )
 	    sLine[0] = '\0';
 	    fgets( sLine, MAXDATALINELEN, db->fDataBase );
 	} while ( sLine[0] != '\0' && sLine[0] == '\n' );
-	if ( sLine[0] == '\0' ) return(FALSE);
+	if ( sLine[0] == '\0' ) return(false);
         if (db->sLookAhead != sLine)
 	    strcpy( db->sLookAhead, sLine );
-	return(TRUE);
+	return(true);
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -321,7 +321,7 @@ zbDBReadLine( DATABASE db, char *sLine )
  *
  *      Read a line of data from the database file.
  *
- *	Return FALSE if no data line was read,
+ *	Return false if no data line was read,
  *	which occurs if end of file is hit or a new
  *	header line is hit.
  */
@@ -329,10 +329,10 @@ static bool
 zbDBReadDataLine( DATABASE db, char *sLine )
 {
     if ( zbDBReadLine( db, sLine ) ) {
-	if ( sLine[0] == '!' ) return(FALSE);
-	return(TRUE);
+	if ( sLine[0] == '!' ) return(false);
+	return(true);
     } 
-    return(FALSE);
+    return(false);
 }
 
 
@@ -387,7 +387,7 @@ STRING		sModifier, sType;
 		/* This is used by SEQUENTIAL access files */
 		/* with the lDBSeqCurPos and DBSeqGoto routines */
 		
-    if ( sRawLine[0] == '\0' ) return(FALSE);
+    if ( sRawLine[0] == '\0' ) return(false);
    
     if ( sRawLine[0] == '!' ) {
         iType = 0; 
@@ -409,7 +409,7 @@ STRING		sModifier, sType;
             iType = ENTRYTABLE;
         } else {
 	    ReportError( db, "Unknown modifier" );
-	    return(FALSE);
+	    return(false);
 	}
         
                 /* Define the type of the object */
@@ -422,7 +422,7 @@ STRING		sModifier, sType;
 		iType |= ENTRYSTRING;
 	    } else {
 		ReportError( db, "Unknown entry type" );
-		return(FALSE);
+		return(false);
 	    }
 	}
 
@@ -432,7 +432,7 @@ STRING		sModifier, sType;
 	DFATAL("Tried to parse:%s: as a header",
 		sRawLine );
     }
-    return(TRUE);
+    return(true);
 }
 
 
@@ -446,7 +446,7 @@ STRING		sModifier, sType;
  *      Scan through the database file searching for
  *      data headers, and create dictionary entries for them.
  *
- *	Return TRUE if everything went alright, otherwise FALSE.
+ *	Return true if everything went alright, otherwise false.
  */
 static bool
 bScanDataBase( DATABASE db )
@@ -480,7 +480,7 @@ ENTRY           eEntry;
         if ( sRawLine[0] == '!' ) {
 
 	    if ( !zbDBParseSimpleHeader( db, sRawLine, sName, &iType ) ) {
-		return(FALSE);
+		return(false);
 	    }
 
                 /* If we just finished an entry then define its */
@@ -511,7 +511,7 @@ ENTRY           eEntry;
         } else if ( sRawLine[0] == ' ' ) {
 	    iLineCount++;
 	} else {
-	    return(FALSE);
+	    return(false);
 	}
     }
 
@@ -519,7 +519,7 @@ ENTRY           eEntry;
 
     if ( eEntry != NULL ) eEntry->iRows = iLineCount;
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -769,7 +769,7 @@ STRING          sLine;
             break;
     }
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -955,7 +955,7 @@ ENTRY           eEntry;
     db->fDataBase = FOPENCOMPLAIN( db->sFileName, "r+" );
     if ( db->fDataBase == NULL ) 
 	VP0("\tDatabase compaction failed\n" );
-    db->bCompactFileAtClose = FALSE;
+    db->bCompactFileAtClose = false;
     
     MESSAGE("Compacting DONE!!!!!\n" );
 }
@@ -1000,7 +1000,7 @@ ENTRY           eEntry;
         eEntry->iRows   = iRows;
         eEntry->lFileOffset = lOffset;
 
-        db->bCompactFileAtClose = TRUE;
+        db->bCompactFileAtClose = true;
 	MESSAGE("Updated existing entry: %s\n", sEntry );
     }
     return(eEntry);
@@ -1048,13 +1048,13 @@ char		cFirst;
 
     GiDBLastError = DB_ERROR_NONE;
 
-    bExists = FALSE;
+    bExists = false;
     switch( iOpenMode ) {
 	case OPENREADONLY:
 	    db->fDataBase = FOPENCOMPLAIN( sFileName, "r" );
 	    if ( !db->fDataBase ) {
 		GiDBLastError = DB_ERROR_INVALID_FILE;
-	    } else bExists = TRUE;
+	    } else bExists = true;
 	    break;
 	case OPENREADWRITE:
 			/* Check if file exists */
@@ -1074,7 +1074,7 @@ char		cFirst;
 		    GiDBLastError = DB_ERROR_INVALID_FILE;
 		}
 	    } else {
-		bExists = TRUE;
+		bExists = true;
 	    }
 	    break;
 	default:
@@ -1102,7 +1102,7 @@ char		cFirst;
     db->iAccessMode = DB_RANDOM_ACCESS;
 
     DBZeroPrefix( db );
-    db->bCompactFileAtClose = FALSE;
+    db->bCompactFileAtClose = false;
 
                 /* Scan through the database to find where each */
                 /* variable starts                              */
@@ -1125,7 +1125,7 @@ char		cFirst;
  *	Author:	Christian Schafmeister (1991)
  *
  *      Search for an entry in the database, if it is found,
- *      delete it and return TRUE, otherwise return FALSE.
+ *      delete it and return true, otherwise return false.
  *      The entry will be removed when the file is compressed at the end.
  *
  */
@@ -1147,10 +1147,10 @@ STRING          sEntry;
     sDataBaseName( db, sOrgEntry, sEntry );
 
     eEntry = (ENTRY)yPDictionaryFind( db->dEntries, sEntry );
-    if ( eEntry == NULL ) return(FALSE);
+    if ( eEntry == NULL ) return(false);
     yPDictionaryDelete( db->dEntries, sEntry );
-    db->bCompactFileAtClose = TRUE;
-    return(TRUE);
+    db->bCompactFileAtClose = true;
+    return(true);
 }
 
 
@@ -1179,7 +1179,7 @@ STRING          sEntry;
  *	bDBRndNextEntryWithPrefix
  *
  *	Return the next entry with the required prefix.
- *	Return FALSE if there are no more.
+ *	Return false if there are no more.
  */
 bool
 bDBRndNextEntryWithPrefix( DATABASE db, char *sEntry )
@@ -1190,10 +1190,10 @@ size_t		iLen;
     while ( yPDictionaryNext( db->dEntries, &(db->dlEntryLoop) )) {
 	strcpy( sEntry, sDictLoopKey(db->dlEntryLoop) );
 	if ( strncmp( sEntry, db->sLoopPrefix, iLen ) == 0 ) {
-	    return(TRUE);
+	    return(true);
 	}
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -1249,7 +1249,7 @@ DATABASE        db;
     db->iAccessMode = DB_SEQUENTIAL_ACCESS;
 
     DBZeroPrefix( db );
-    db->bCompactFileAtClose = FALSE;
+    db->bCompactFileAtClose = false;
 
 		/* Rewind the database to the start of the file */
 		/* and get it ready to read */
@@ -1391,10 +1391,10 @@ STRING          sEntry;
 	    zbDBParseSimpleHeader( db, db->sLookAhead, sOrgEntry, iPType );
 	    *iPLength = LENGTH_NOT_KNOWN;
 	    db->iLastSequentialOperation = DB_READ;
-	    return(TRUE);
+	    return(true);
 	} else {
 	    *iPLength = 0;
-	    return(FALSE);
+	    return(false);
 	}
     }
 
@@ -1403,12 +1403,12 @@ STRING          sEntry;
     eEntry = (ENTRY)yPDictionaryFind( db->dEntries, sEntry );
     if ( eEntry == NULL ) {
 	*iPLength = 0;
-	return(FALSE);
+	return(false);
     }
     
     *iPType = eEntry->iType;
     *iPLength = eEntry->iRows;
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1450,7 +1450,7 @@ int		iType=0;
 		/* Look up the entry in the DICTIONARY */
 
 	eEntry = (ENTRY)yPDictionaryFind( dbData->dEntries, sEntry );
-	if ( eEntry == NULL ) return(FALSE);
+	if ( eEntry == NULL ) return(false);
 	iType = eEntry->iType;
 
 		/* Seek to the entry in the file */
@@ -1462,9 +1462,9 @@ int		iType=0;
         /* Read the data itself */
 
     if ( !zbDBGetValue( dbData, iType, iPLength, PBuffer, iBufferInc ) ) 
-	return(FALSE);
+	return(false);
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1587,7 +1587,7 @@ int             iIntCol, iDoubleCol, iStringCol, iColumn, iType;
 	sDataBaseName( db, sOrgEntry, sEntry );
 
 	eEntry = (ENTRY)yPDictionaryFind( db->dEntries, sEntry );
-	if ( eEntry == NULL ) return(FALSE);
+	if ( eEntry == NULL ) return(false);
 
 	iType = eEntry->iType;
 	*iPType = eEntry->iType;
@@ -1597,9 +1597,9 @@ int             iIntCol, iDoubleCol, iStringCol, iColumn, iType;
 	zbDBReadDataLine( db, sLine );
     }
 
-                /* If the entry exists but is not a table then return TRUE */
+                /* If the entry exists but is not a table then return true */
 
-    if ( (iType & ENTRYMODIFIER) != ENTRYTABLE ) return(TRUE);
+    if ( (iType & ENTRYMODIFIER) != ENTRYTABLE ) return(true);
 
     *iPInt1Column = 0;
     *iPInt2Column = 0;
@@ -1737,7 +1737,7 @@ int             iIntCol, iDoubleCol, iStringCol, iColumn, iType;
         iColumn++;
     }
     
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1796,11 +1796,11 @@ int             iColumn, iType;
 	sDataBaseName( db, sOrgEntry, sEntry );
 
 	eEntry = (ENTRY)yPDictionaryFind( db->dEntries, sEntry );
-	if ( eEntry == NULL ) return(FALSE);
+	if ( eEntry == NULL ) return(false);
 
-                /* If the entry exists but is not a table then return FALSE */
+                /* If the entry exists but is not a table then return false */
 
-	if ( (eEntry->iType & ENTRYMODIFIER) != ENTRYTABLE ) return(FALSE);
+	if ( (eEntry->iType & ENTRYMODIFIER) != ENTRYTABLE ) return(false);
 
                 /* Read the header line and parse it */
 
@@ -1886,7 +1886,7 @@ int             iColumn, iType;
         } while ( strlen(sLine) != 0 );
     }
     
-    return(TRUE);
+    return(true);
 }
 
 

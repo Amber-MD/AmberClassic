@@ -59,8 +59,8 @@
  *
  *	Find the shortest path between two atoms within a UNIT
  *	by generating a spanning tree from the first atom and move
- *	out until you hit the second atom.  Return TRUE if a path
- *	was found, otherwise FALSE.  Call the function fPCallback
+ *	out until you hit the second atom.  Return true if a path
+ *	was found, otherwise false.  Call the function fPCallback
  *	for each atom found.
  */
 bool
@@ -71,16 +71,16 @@ LOOP		lSpanning;
 ATOM		aCur;
 bool		bFound;
 
-    bFound = FALSE;
+    bFound = false;
     lSpanning = lLoop( (OBJEKT)aStart, SPANNINGTREE );
     while ( (aCur = (ATOM)oNext(&lSpanning)) ) {
 	if ( aCur == aStop ) {
-	    bFound = TRUE;
+	    bFound = true;
 	    break;
 	}
     }
 
-	/* Now if bFound is TRUE then we found a path and use the */
+	/* Now if bFound is true then we found a path and use the */
 	/* back pointers that were setup in the spanning tree to */
 	/* find the shortest path */
 
@@ -199,7 +199,7 @@ STRING		sTemp, sA, sB;
     for ( i=0; i<iInternalRingSize(iBig); i++ ) {
 	aAtom = aInternalRingNextAtom(iBig);
 	roPAtom->aAtom = aAtom;
-	roPAtom->bInSmallRing = FALSE;
+	roPAtom->bInSmallRing = false;
 	roPAtom++;
     }
 
@@ -213,13 +213,13 @@ STRING		sTemp, sA, sB;
 	roPAtom = PVAI( vaAtoms, RINGOVERLAPt, 0 );
 	for ( i=0; i<iVarArrayElementCount(vaAtoms); i++ ) {
 	    if ( aAtom == roPAtom->aAtom ) {
-		roPAtom->bInSmallRing = TRUE;
+		roPAtom->bInSmallRing = true;
 		iOverlap++;
 	    }
 	    roPAtom++;
 	}
     }
-    if ( iOverlap < 2 ) return(FALSE);
+    if ( iOverlap < 2 ) return(false);
 
 	/* Now find the two atoms that define the boundary where the */
 	/* larger ring separates from the smaller ring */
@@ -289,7 +289,7 @@ STRING		sTemp, sA, sB;
 	/* If the second ATOM in the shortest path is the same as */
 	/* roPAfter->aAtom then the rings do not need to be separated */
 
-    if ( roPAfter->aAtom == aAtomBackSpan(roPA->aAtom) ) return(FALSE);
+    if ( roPAfter->aAtom == aAtomBackSpan(roPA->aAtom) ) return(false);
 
 	/* Now remove the ATOMs that are not on the boundary but are */
 	/* in the smaller ring from the bigger ring */
@@ -332,7 +332,7 @@ STRING		sTemp, sA, sB;
 			MESSAGE("=============\n" );
 		    } );
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -595,10 +595,10 @@ INTERNAL	inRingBig, inRingSmall;
 	if ( iRingGroupIndex == -1 ) {
 	    iRingGroupIndex = iVarArrayElementCount(vaRingGroups);
 	    lRingGroup = (LIST)oCreate(LISTid);
-	    bNewRingGroup = TRUE;
+	    bNewRingGroup = true;
 	} else {
 	    lRingGroup = *PVAI(vaRingGroups,LIST,iRingGroupIndex);
-	    bNewRingGroup = FALSE;
+	    bNewRingGroup = false;
 	}
 	    
 		/* Now put the atoms into the ring in order of how */
@@ -677,7 +677,7 @@ INTERNAL	inRingBig, inRingSmall;
 				iVarArrayElementCount(vaRingSort),
 				sizeof(RINGSORTt),
 				&(PVAI(vaRingSort,RINGSORTt,0)->iSize),
-				FALSE );
+				false );
 
 	    MESSAGE("About to separate the rings.\n" );
 

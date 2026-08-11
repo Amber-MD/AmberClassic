@@ -314,7 +314,7 @@ RINGNODEt	*rnPNode;
 
     rnPNode = zrnPRingFind( rRing, PData );
     if ( rnPNode == NULL ) 
-	return(FALSE);
+	return(false);
 
 	/* Remove the node from the RING */
 
@@ -331,7 +331,7 @@ RINGNODEt	*rnPNode;
 		rRing->rnPFirst = rnPNode->rnPNext;
 	zRingNodeDestroy( &rnPNode );
     }
-    return(TRUE);
+    return(true);
 }
 
 

@@ -50,7 +50,7 @@
 
 STRING	GsBasicsFullName;
 
-bool	GbInterrupt = FALSE;
+bool	GbInterrupt = false;
 
 int	GiUnitEditors = 0;
 
@@ -146,7 +146,7 @@ iDoubleCompare( double dA, double dB )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Return TRUE if the string passed to this routine is
+ *	Return true if the string passed to this routine is
  *	could be completely converted into a double precision
  *	value.  Only change the value of *dPData if the string
  *	completely represents a double precision value.
@@ -160,9 +160,9 @@ bStringToDouble( char *cPData, double *dPData )
 	dValue = (double)strtod( cPData, &cPEnd );
 	if ( cPEnd - cPData == (long int)strlen(cPData) ) {
 		*dPData = dValue;
-		return(TRUE);
+		return(true);
 	}
-	return(FALSE);
+	return(false);
 }
 
 /*
@@ -170,7 +170,7 @@ bStringToDouble( char *cPData, double *dPData )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Return TRUE if the string passed to this routine is
+ *	Return true if the string passed to this routine is
  *	could be completely converted into a integer
  *	value.  Only change the value of *dPData if the string
  *	completely represents a integer value.
@@ -184,18 +184,18 @@ bStringToInt( char *cPData, int *iPData )
 		if (*cp == '-') {
 			if (cp != cPData) {
 				VP0("'-' embedded in number %s\n", cPData );
-				return(FALSE);
+				return(false);
 			}
 			continue;
 		}
 		if (!isdigit((unsigned char)*cp)) {
 			VP0("non-digit in %s\n", cPData );
-			return(FALSE);
+			return(false);
 		}
 		
 	}
 	*iPData = atoi( cPData );
-	return(TRUE);
+	return(true);
 }
 
 
@@ -344,16 +344,16 @@ bMessageCheck( char *sFile )
 {
 int     i;
     if ( SiMessageFiles == 0 ) 
-	return FALSE;
+	return false;
 
     for ( i=0; i<SiMessageFiles; i++ ) {
         if ( SsaMessageFiles[i][0] == '*' ) 
-		return TRUE;
+		return true;
         if ( strncmp( sFile, SsaMessageFiles[i], 
                         strlen(SsaMessageFiles[i]) ) == 0 ) 
-		return TRUE;
+		return true;
     }
-    return FALSE;
+    return false;
 }
 
 
@@ -767,10 +767,10 @@ bool		bFoundOne;
 
 	/* First check if there isn't a free sink */
 
-    bFoundOne = FALSE;
+    bFoundOne = false;
     for ( i=0; i<SiNumberOfSinks; i++ ) {
 	if ( !SsiPSinks[i].bSinkUsed ) {
-	    bFoundOne = TRUE;
+	    bFoundOne = true;
 	    break;
 	}
     }
@@ -801,8 +801,8 @@ bool		bFoundOne;
 
 		/* Define the information */
 
-    SsiPSinks[i].bSinkUsed = TRUE;
-    SsiPSinks[i].bPrintPrefix = TRUE;
+    SsiPSinks[i].bSinkUsed = true;
+    SsiPSinks[i].bPrintPrefix = true;
     SsiPSinks[i].fCallback = fOutputCallback;
     strcpy( SsiPSinks[i].sPrefix, sPrefix );
     SsiPSinks[i].PData = PData;
@@ -864,7 +864,7 @@ DestroyPrintSink( int iHandle )
     MESSAGE("Destroying print sink: %d\n", iHandle );
 
     if ( SsiPSinks[iHandle].bSinkUsed ) {
-	SsiPSinks[iHandle].bSinkUsed = FALSE;
+	SsiPSinks[iHandle].bSinkUsed = false;
     } else {
 	DFATAL("Unused print sink: %d\n", iHandle );
     }
@@ -934,7 +934,7 @@ FILE	*GfLog = NULL;
 int     GiTraceIndentationLevel = 0;
 int     GiVerbosityLevel = 0;
 int     GiVerbosity;                    /* This changes for every P# */
-bool	GbPrintPrefix = TRUE;
+bool	GbPrintPrefix = true;
 char	*GcPPrefix = NULL;
 
 
@@ -989,12 +989,12 @@ myPrintString(const char *cPString, int iVerbosity)
             memcpy(sTempBuf, cPStart, len);
             sTempBuf[len] = '\0';
             cPPrint      = sTempBuf;
-            bPrintPrefix = TRUE;
+            bPrintPrefix = true;
             cPStart      = ++cPStop;                 /* next segment */
         } else {
             /* End of string — print remainder as-is (no copy needed) */
             cPPrint      = (char *)cPStart;          /* cast: read-only use */
-            bPrintPrefix = FALSE;
+            bPrintPrefix = false;
         }
 
         /* Emit prefix if required */
@@ -1016,6 +1016,21 @@ myPrintString(const char *cPString, int iVerbosity)
         if (GfLog != NULL && iVerbosity >= 0)
             fputs(cPPrint, GfLog);
     }
+}
+
+double
+dUniformRandom( void )
+{
+    return drand48();
+}
+
+int
+iUniformRandom( int iRange )
+{
+    if ( iRange <= 0 ) {
+        DFATAL("iRandom() called with non-positive range: %d\n", iRange);
+    }
+    return (int)( dUniformRandom() * (double)iRange );
 }
 
 static struct timespec StsElapsedStart;

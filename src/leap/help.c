@@ -68,7 +68,6 @@ static  DICTLOOP        SdlLoop;        /* Used to loop through help keywords*/
 
 
 
-
 /*
  *      HelpInitialize
  *

@@ -16,6 +16,8 @@ typedef enum {
     SEL_NODE_RESNUM,
     SEL_NODE_RES_PDBSEQ,
     SEL_NODE_RES_INDEX,
+    SEL_NODE_RES_FLAG,
+    SEL_NODE_RES_FLAG_NOT,
     SEL_NODE_RESNAME,
     SEL_NODE_RESTYPE,
     SEL_NODE_CHAINID,
@@ -23,6 +25,8 @@ typedef enum {
     SEL_NODE_ATOMTYPE,
     SEL_NODE_ATOM_INDEX,
     SEL_NODE_ATOM_RESIDX,
+    SEL_NODE_ATOM_FLAG,
+    SEL_NODE_ATOM_FLAG_NOT,
     SEL_NODE_ELEMENT,
     SEL_NODE_ELEMENT_NUM,
     SEL_NODE_INDEX,
@@ -75,5 +79,7 @@ extern VARARRAY vaAtomMaskSelect(UNIT uUnit, char *sMask );
 extern LIST lUnitEvalSelection(const SELNODE node, const UNIT uUnit);
 extern VARARRAY vaUnitEvalSelection(const SELNODE node, const UNIT uUnit);
 extern bool bAtomEvalSelection(const SELNODE node, const ATOM atom);
+extern FLAGS fAtomFlagNameToBit(const char *name);
+extern FLAGS fResFlagNameToBit(const char *name);
 
 #endif // SELECT_MASK_H

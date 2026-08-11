@@ -203,6 +203,16 @@ STRING          sTemp;
     while ( (aAtom = (ATOM)oNext(&lAtoms)) )
         dSum += aAtom->dCharge;
     VP0("Charge: %g\n",dSum); 
+    VP0("Residue flags: (decimal %ld hex 0x%lx)\n", 
+                                fResidueFlags(rResidue), fResidueFlags(rResidue) );
+    VP0("\tunknown %c  bulksolv %c  incap %c\n",
+        ( bResidueFlagsSet( rResidue, RESIDUEUNKNOWN ) ? 'Y' : 'n' ),
+        ( bResidueFlagsSet( rResidue, RESIDUEBULKSOLVENT ) ? 'Y' : 'n' ),
+        ( bResidueFlagsSet( rResidue, RESIDUEINCAP ) ? 'Y' : 'n' ) );
+    VP0("\tnoend %c  firstend %c  lastend %c\n",
+        ( bResidueFlagsSet( rResidue, RESIDUENOEND ) ? 'Y' : 'n' ),
+        ( bResidueFlagsSet( rResidue, RESIDUEFIRSTEND ) ? 'Y' : 'n' ),
+        ( bResidueFlagsSet( rResidue, RESIDUELASTEND ) ? 'Y' : 'n' ) );
     VP0("Type: %s\n", 
 	  sResidueTypeNameFromChar(cResidueType(rResidue)) );
     if ( cResidueType(rResidue) == RESTYPESOLVENT ) {
@@ -503,8 +513,8 @@ FLAGS		fBondFlags;
 	    iDum = 0;	/* for purify */
             BuildExternalsUsingFlags( &lSpan,
                                         0, ATOMPOSITIONKNOWN,
-                                        ATOMPOSITIONKNOWN, 0,
-					&iDum, &iDum, &iDum, TRUE );
+                                        ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
+					&iDum, &iDum, &iDum, true );
 	}
     }
 
@@ -672,10 +682,10 @@ STRING          sTemp;
 	   VPFATALEXIT(" %s: no such connect atom\n", sTemp);
     }
     if ( aA == NULL || aB == NULL ) {
-	return FALSE;
+	return false;
     }
     AtomBondToOrder( aA, aB, iOrder );
-    return TRUE;
+    return true;
 }
 
 
@@ -739,21 +749,21 @@ STRING		sType;
 	return;
     }
     strcpy( sType, sOString(oObj) );
-    if ( strcmp( sType, sResidueTypeNameFromChar(RESTYPEUNDEFINED) ) == 0 ) {
+    if ( strcasecmp( sType, sResidueTypeNameFromChar(RESTYPEUNDEFINED) ) == 0 ) {
 	ResidueSetType( rRes, RESTYPEUNDEFINED );
-    } else if ( strcmp( sType, sResidueTypeNameFromChar(RESTYPESOLVENT) )==0 ){
+    } else if ( strcasecmp( sType, sResidueTypeNameFromChar(RESTYPESOLVENT) )==0 ){
 	ResidueSetType( rRes, RESTYPESOLVENT );
-    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPENUCLEIC) )==0 ) {
+    } else if ( strcasecmp(sType,sResidueTypeNameFromChar(RESTYPENUCLEIC) )==0 ) {
 	ResidueSetType( rRes, RESTYPENUCLEIC );
-    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPEPROTEIN) )==0 ) {
+    } else if ( strcasecmp(sType,sResidueTypeNameFromChar(RESTYPEPROTEIN) )==0 ) {
 	ResidueSetType( rRes, RESTYPEPROTEIN );
-    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPESACCHARIDE) )==0){
+    } else if ( strcasecmp(sType,sResidueTypeNameFromChar(RESTYPESACCHARIDE) )==0){
 	ResidueSetType( rRes, RESTYPESACCHARIDE );
-    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPEION) )==0){
+    } else if ( strcasecmp(sType,sResidueTypeNameFromChar(RESTYPEION) )==0){
 	ResidueSetType( rRes, RESTYPEION );
-    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPELIGAND) )==0){
+    } else if ( strcasecmp(sType,sResidueTypeNameFromChar(RESTYPELIGAND) )==0){
 	ResidueSetType( rRes, RESTYPELIGAND );
-    } else if ( strcmp(sType,sResidueTypeNameFromChar(RESTYPEOTHER) )==0){
+    } else if ( strcasecmp(sType,sResidueTypeNameFromChar(RESTYPEOTHER) )==0){
 	ResidueSetType( rRes, RESTYPEOTHER );
     } else {
 	VPFATALEXIT("Invalid residue type (%s).\n"
@@ -784,25 +794,25 @@ int		iConnect;
     if ( (iConnect = iResidueConnectFromName(sAttr)) != NOEND ) {
 	zSetResidueConnect( rRes, iConnect, (ATOM)oAttr );
 	goto DONE;
-    } else if ( strcmp( sAttr, "restype" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "restype" ) == 0 ) {
 	zSetResidueType( rRes, oAttr );
 	goto DONE;
-    } else if ( strcmp( sAttr, "name" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "name" ) == 0 ) {
 	if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
 	ContainerSetName( rRes, sOString(oAttr) );
 	goto DONE;
-    } else if ( strcmp( sAttr, "imagingAtom" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "imagingAtom" ) == 0 ) {
 	if ( oAttr != NULL ) {
 	    if ( !bObjektWarnType( oAttr, ATOMid ) ) return;
 	}
 	ResidueSetImagingAtom( rRes, oAttr );
 	goto DONE;
-    } else if ( strcmp( sAttr, "chainid" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "chainid" ) == 0 ) {
 	if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
 	ResidueSetChainId( rRes, sOString(oAttr) );
 	goto DONE;
-    } else if ( strcmp( sAttr, "pdbseq" ) == 0 ||
-                strcmp( sAttr, "resid" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "pdbseq" ) == 0 ||
+                strcasecmp( sAttr, "resid" ) == 0 ) {
 	if ( !bObjektWarnType( oAttr, ODOUBLEid ) ) return;
 	ResidueSetPdbSequence( rRes, dODouble(oAttr) );
 	goto DONE;

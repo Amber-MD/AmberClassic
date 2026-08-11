@@ -243,7 +243,7 @@ BagDescribe( BAG bBag )
  *      Remove an object from the bag.
  *      
  *      Return:
- *              FALSE if the element is not in the bag.
+ *              false if the element is not in the bag.
  */
 bool
 bBagRemove( BAG bBag, GENP PPtr )
@@ -253,11 +253,11 @@ BNODEP   bnPNode;
 
                 /* If the bag is empty then return */
 
-    if ( bBag->bnPFirstNode==NULL ) return(FALSE);
+    if ( bBag->bnPFirstNode==NULL ) return(false);
 
                 /* Search the bag for the object */
     bnPPPrev = searchBag( &(bBag->bnPFirstNode), PPtr );
-    if ( bnPPPrev == NULL ) return(FALSE);
+    if ( bnPPPrev == NULL ) return(false);
 
                 /* Now actually remove the object from the bag */
     bnPNode = *bnPPPrev;
@@ -274,7 +274,7 @@ BNODEP   bnPNode;
 
     bBag->iElementCount--;
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -290,7 +290,7 @@ BNODEP   bnPNode;
  *      Find out if a bag contains a particular object.
  *      
  *      Return:
- *              FALSE if the element is not in the bag.
+ *              false if the element is not in the bag.
  */
 bool
 bBagContains( BAG bBag, GENP PPtr )
@@ -299,12 +299,12 @@ BNODEP   *bnPPPrev;
 
                 /* If the bag is empty then return */
 
-    if ( bBag->bnPFirstNode==NULL ) return(FALSE);
+    if ( bBag->bnPFirstNode==NULL ) return(false);
 
                 /* Search the bag for the object */
     bnPPPrev = searchBag( &(bBag->bnPFirstNode), PPtr );
-    if ( bnPPPrev == NULL ) return(FALSE);
-    return(TRUE);
+    if ( bnPPPrev == NULL ) return(false);
+    return(true);
 }
 
 

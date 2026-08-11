@@ -136,7 +136,7 @@ typedef struct UNITSTRUCT {
 
 // from  zUnitIOFindAndCountMolecules()
         int             iFirstSolvent;
-        int             iFirstBulkSolvent; // atom index
+        int             iFirstBulkSolvent; // atom index, from solvation routine in tools.c
         VARARRAY        vaAtomsPerMolecule; // int (was also called vaMolecules and not part of UNIT struct)
 } UNITt;
 
@@ -144,21 +144,21 @@ typedef UNITt   *UNIT;
 
 
 #ifdef DEBUG
-static inline CONTAINER container_from_unit(UNIT u) { return u ? &(u->cHeader) : NULL; }
+static inline CONTAINER container_from_unit(UNIT u, const char*f, int l) { return u ? &(u->cHeader) : NULL; }
 static inline OBJEKT objekt_from_unit(UNIT u) { return u ? &(u->cHeader.oHeader) : NULL; }
-static inline UNIT unit_from_objekt(OBJEKT o)
-  { return o ? (assert(iObjectType(o)==UNITid), (UNIT)o) : NULL; }
-static inline UNIT unit_from_container(CONTAINER c)
-  { return c ? (assert(iObjectType(&(c->oHeader))==UNITid), (UNIT)c) : NULL; }
-static inline UNIT unit_from_genp(void *p)
-  { return p ? (assert(iObjectType((OBJEKT)p)==UNITid),(UNIT)p) : NULL; }
-static inline UNIT unit_from_unit(UNIT u) { return u; }
+static inline UNIT unit_from_objekt(OBJEKT o, const char*f, int l)
+  { return o ? (assert_loc(iObjectType(o)==UNITid,f,l), (UNIT)o) : NULL; }
+static inline UNIT unit_from_container(CONTAINER c, const char*f, int l)
+  { return c ? (assert_loc(iObjectType(&(c->oHeader))==UNITid,f,l), (UNIT)c) : NULL; }
+static inline UNIT unit_from_genp(void *p, const char*f, int l)
+  { return p ? (assert_loc(iObjectType((OBJEKT)p)==UNITid,f,l),(UNIT)p) : NULL; }
+static inline UNIT unit_from_unit(UNIT u, const char*f, int l) { return u; }
 #define UNIT_from(x) _Generic((x), \
     OBJEKT: unit_from_objekt, \
     CONTAINER: unit_from_container, \
     UNIT: unit_from_unit, \
     GENP: unit_from_genp \
-)(x)
+)(x,__FILE__,__LINE__)
 #else
 #define UNIT_from(x) ((UNIT)(x))
 #endif

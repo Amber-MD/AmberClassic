@@ -136,7 +136,7 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
     SAVERESIDUEt *srPRes;
     int iResidues, iAtom, iCount;
     LOOP lSpanning;
-    bool bSeenFirstSolvent = FALSE;
+    bool bSeenFirstSolvent = false;
     ATOM aAtom;
 
     if (uUnit->vaAtomsPerMolecule) VarArrayDestroy(&(uUnit->vaAtomsPerMolecule));
@@ -185,7 +185,7 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
             if ( GDefaults.dPrmtopFormat > 1.0 ?
                      bResidueFlagsSet(srPRes->rResidue, RESIDUEBULKSOLVENT) :
                      cResidueType(srPRes->rResidue) == RESTYPESOLVENT ) {
-                bSeenFirstSolvent = TRUE;
+                bSeenFirstSolvent = true;
                 uUnit->iFirstSolvent = iVarArrayElementCount(uUnit->vaAtomsPerMolecule);
             }
         }
@@ -259,7 +259,7 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 
     /* Now roll up the equivalent NON-BOND parameters */
 
-    if (!GDefaults.iCharmm) {
+    if (!GDefaults.bCharmm) {
         nbPLast = PVAI(vaNonBonds, NONBONDt, iNonBonds - 1);
         for (iNBIndex = 0; iNBIndex < iVarArrayElementCount(vaNBIndex);
              iNBIndex++) {
@@ -365,7 +365,7 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 				&dA, &dB);
             PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA = dA;
             PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dB = dB;
-            if (GDefaults.iCharmm) {
+            if (GDefaults.bCharmm) {
                 dEI = PVAI(vaNonBonds, NONBONDt, i)->dE14;
                 dRI = PVAI(vaNonBonds, NONBONDt, i)->dR14;
                 dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE14;
@@ -402,7 +402,23 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 //   bPert:    flag for the existence of (free energy) perturbation constants
 //   bNetcdf:  flag to write a NetCDF coordinates file rather than the standard %12.7f format
 //---------------------------------------------------------------------------------------------
-
+// PRMTOP entries in cpptraj that are not here (See Parm_Amber.cpp for the full list)
+// LES_NTYP scalar
+// LES_CNUM(natoms) -- copy ID (altLoc)
+// LES_ID(natoms) -- LES group number
+// LES_TYPE(natoms)  -- clssification purely for cross-interactions via LES_FAC
+// LES_FAC(LES_NTYP,LES_NTYP) cross-group energy scaling (auto computed by addles)
+//
+// CHARMM_UREY_BRADLEY_COUNT scalar
+// CHARMM_UREY_BRADLEY(CHARMM_UREY_BRADLEY_COUNT)
+// ...
+//
+// ATOM_ALTLOC --> LES_ID
+// ATOM_BFACTOR, ATOM_OCCUPANCY, ATOM_NUMBER -- coordinate properties
+// important caveat: PDB serial numbers are probably best understood as labels for records in the
+// coordinate-record deck, not as intrinsic identifiers of molecular atoms. Note that TER
+// records get their own index! This was originally for physical punch cards, and then CONECT
+// records used that *coordinate deck* index, but was never really an atom index.
 
 void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
                                 bool bPolar, bool bPert, bool bNetcdf)
@@ -426,7 +442,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
            dKt, dT0, dTkub, dRkub, dKp, dP0, dB, dD, dTemp, dScEE, dScNB, dScreenF;
     atomNameStr sAtom1, sAtom2, sAtom3, sAtom4;
     typeStr sType1, sType2, sType;
-    int iN, iAtoms, iMaxAtoms, iTemp, iAtom, iCalc14, iProper;
+    int iN, iAtoms, iMaxAtoms, iTemp, iAtom;
     int iElement, iHybridization, iStart;
     RESIDUE rRes;
     bool bFoundSome;
@@ -460,7 +476,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
         aAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom;
         if (bAtomFlagsSet(aAtom, ATOMPERTURB)) iCountPerturbed++;
         iCount = 0;
-        bFoundSome = FALSE;
+        bFoundSome = false;
         iStart = iVarArrayElementCount(vaExcludedAtoms);
         LOOPOVERALL(aAtom,SPANNINGTREE,aA,ATOM,lSpan) {
             if (aA == aAtom) continue;
@@ -469,7 +485,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
             if (iAtomBackCount(aA) >= 4) break;
             if (iContainerTempInt(aA) > iContainerTempInt(aAtom)) {
                 VarArrayAdd(vaExcludedAtoms, (GENP) &iContainerTempInt(aA));
-                bFoundSome = TRUE;
+                bFoundSome = true;
                 iCount++;
             }
         }
@@ -481,7 +497,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
             // Sort the part of the VARARRAY just added so that the
             // excluded ATOMs are in ascending order by index
             SortByInteger((GENP) PVAI(vaExcludedAtoms, int, iStart), iCount,
-                          sizeof(int), (GENP) PVAI(vaExcludedAtoms, int, iStart), TRUE);
+                          sizeof(int), (GENP) PVAI(vaExcludedAtoms, int, iStart), true);
         }
         VarArrayAdd(vaExcludedCount, (GENP) &iCount);
     }
@@ -494,7 +510,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     VP0("Marking per-residue atom chain types.\n");
     iMaxAtoms = 0;
     LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lTemp) {
-        iAtoms = iMarkMainChainAtoms(rRes, FALSE);
+        iAtoms = iMarkMainChainAtoms(rRes, false);
         if (iAtoms > 0) MarkSideChainAtoms(rRes);
         if (iAtoms < 0) {
             iAtoms = -iAtoms;
@@ -1453,30 +1469,17 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
         MESSAGE("New order %d %d %d %d\n", stPTorsion->iAtom1, stPTorsion->iAtom2,
                  stPTorsion->iAtom3, stPTorsion->iAtom4);
       }
-      if (stPTorsion->bProper) {
-        iProper = 1;
-      }
-      else {
-        iProper = -1;
-      }
-      if (stPTorsion->bCalc14) {
-        iCalc14 = 1;
-      }
-      else {
-        iCalc14 = -1;
-      }
-      if (GDefaults.iCharmm && iProper == -1) {
+      if (GDefaults.bCharmm && !stPTorsion->bProper) {
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3));
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1) * iCalc14);
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * iProper);
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1)*(stPTorsion->bCalc14 ? 1 : -1));
       }
       else {
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * iCalc14);
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * iProper);
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3)*(stPTorsion->bCalc14 ? 1 : -1));
       }
+      FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4)*(stPTorsion->bProper ? 1 : -1));
       FortranWriteInt(stPTorsion->iParmIndex);
     }
   }
@@ -1510,30 +1513,17 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
         SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
         SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
       }
-      if (stPTorsion->bCalc14) {
-        iCalc14 = 1;
-      }
-      else {
-        iCalc14 = -1;
-      }
-      if (stPTorsion->bProper) {
-        iProper = 1;
-      }
-      else {
-        iProper = -1;
-      }
-      if (GDefaults.iCharmm && iProper == -1) {
+      if (GDefaults.bCharmm && !stPTorsion->bProper) {
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3));
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1) * iCalc14);
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * iProper);
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1)*(stPTorsion->bCalc14 ? 1 : -1));
       }
       else {
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * iCalc14);
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * iProper);
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3)*(stPTorsion->bCalc14 ? 1 : -1));
       }
+      FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4)*(stPTorsion->bProper ? 1 : -1));
       FortranWriteInt(stPTorsion->iParmIndex);
     }
   }
@@ -1716,31 +1706,31 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     int NSPSOL = uUnit->iFirstSolvent + 1;
 
     if (GDefaults.dPrmtopFormat<2.0) {
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG SOLVENT_POINTERS");
-    COMMENT("MEMBERS:IPTRES,NSPM,NSPSOL;")
-    COMMENT_SIZE(3)
-    FortranWriteString("%FORMAT(3" INTFORMAT_F ")");
-    FortranFormat(3, INTFORMAT_C);
-    FortranWriteInt(IPTRES);
-    FortranWriteInt(NSPM);
-    FortranWriteInt(NSPSOL);
-    FortranEndLine();
+      FortranFormat(1, "%-80s");
+      FortranWriteString("%FLAG SOLVENT_POINTERS");
+      COMMENT("MEMBERS:IPTRES,NSPM,NSPSOL;")
+      COMMENT_SIZE(3)
+      FortranWriteString("%FORMAT(3" INTFORMAT_F ")");
+      FortranFormat(3, INTFORMAT_C);
+      FortranWriteInt(IPTRES);
+      FortranWriteInt(NSPM);
+      FortranWriteInt(NSPSOL);
+      FortranEndLine();
     } else {
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG IPTRES");
-    FortranWriteString("%SIZE 1");
-    FortranWriteString("%FORMAT(" INTFORMAT_F ")");
-    FortranFormat(1, INTFORMAT_C);
-    FortranWriteInt(IPTRES);
+      FortranFormat(1, "%-80s");
+      FortranWriteString("%FLAG IPTRES");
+      FortranWriteString("%SIZE 1");
+      FortranWriteString("%FORMAT(" INTFORMAT_F ")");
+      FortranFormat(1, INTFORMAT_C);
+      FortranWriteInt(IPTRES);
 
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG NSPSOL");
-    FortranWriteString("%SIZE 1");
-    FortranWriteString("%FORMAT(" INTFORMAT_F ")");
-    FortranFormat(1, INTFORMAT_C);
-    FortranWriteInt(NSPSOL);
-    FortranEndLine();
+      FortranFormat(1, "%-80s");
+      FortranWriteString("%FLAG NSPSOL");
+      FortranWriteString("%SIZE 1");
+      FortranWriteString("%FORMAT(" INTFORMAT_F ")");
+      FortranFormat(1, INTFORMAT_C);
+      FortranWriteInt(NSPSOL);
+      FortranEndLine();
     }
 
     // -35B- The number of ATOMs in the Ith MOLECULE
@@ -2029,22 +2019,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
           SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
           SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
         }
-        if (stPTorsion->bProper) {
-          iProper = 1;
-        }
-        else {
-          iProper = -1;
-        }
-        if (stPTorsion->bCalc14) {
-          iCalc14 = 1;
-        }
-        else {
-          iCalc14 = -1;
-	}
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * iCalc14);
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * iProper);
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * (stPTorsion->bCalc14 ? 1 : -1));
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * (stPTorsion->bProper ? 1 : -1));
       }
     }
     }
@@ -2060,22 +2038,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
           SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
           SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
         }
-        if (stPTorsion->bProper) {
-          iProper = 1;
-        }
-        else {
-          iProper = -1;
-        }
-        if (stPTorsion->bCalc14) {
-          iCalc14 = 1;
-        }
-        else {
-          iCalc14 = -1;
-	}
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
         FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * iCalc14);
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * iProper);
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * (stPTorsion->bCalc14 ? 1 : -1));
+        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * (stPTorsion->bProper ? 1 : -1));
       }
     }
     }
@@ -2227,7 +2193,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
       aAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom;
-      if (GDefaults.iGibbs) {
+      if (GDefaults.bGibbs) {
         if (bAtomPerturbed(aAtom)) {
           FortranWriteDouble(ELECTRONTOKCAL *
                              dAtomPertCharge(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom));
@@ -2327,7 +2293,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   }
 
   //  Charmm-style parameters
-  if (GDefaults.iCharmm) {
+  if (GDefaults.bCharmm) {
 
     // -19- Lennard jones r**12 term for all 14 interactions
     // CN114 array
@@ -2394,10 +2360,26 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     COMMENT_DIM(NRES)
     FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
     FortranFormat(20, LBLFORMAT_C);
+    bool bHasICodes = false;
     for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
-      FortranWriteString(PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sChainId);
+      SAVERESIDUEt *srRes = PVAI(uUnit->vaResidues, SAVERESIDUEt, i);
+      bHasICodes |= (srRes->sICode[0] != ' ');
+      FortranWriteString(srRes->sChainId);
     }
     FortranEndLine();
+
+    if (bHasICodes) {
+      MESSAGE("Writing residue PDB iCode\n");
+      FortranFormat(1, "%-80s");
+      FortranWriteString("%FLAG RESIDUE_ICODE");
+      COMMENT_DIM(NRES)
+      FortranWriteString("%FORMAT(80A1)");
+      FortranFormat(80, "%1.1s");
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
+        FortranWriteString( PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sICode );
+      }
+      FortranEndLine();
+    }
   }
 
   // CMAP parameters, Mengjuei Hsieh and Yong Duan
@@ -2438,7 +2420,7 @@ void UnitIOSaveAmberCoord(UNIT uUnit, char *crdName) {
     double dX, dY, dZ;
     double dX2, dY2, dZ2;
     UnitGetBox(uUnit, &dX, &dY, &dZ);
-    if (GDefaults.nocenter == 0) {
+    if (GDefaults.bNoCenter == 0) {
       dX2 = dX * 0.5;
       dY2 = dY * 0.5;
       dZ2 = dZ * 0.5;
@@ -2531,7 +2513,7 @@ SAVERESTRAINTt  *srPRestraint;
 double          dMass, dPolar, dR, dKb, dR0, dKt, dT0, dTkub, dRkub, dKp, dP0, dC, dD, dTemp;
  double		dScEE, dScNB, dScreenF, dKpull, dRpull0, dKpress, dRpress0;
 STRING          sAtom1, sAtom2, sAtom3, sAtom4, sType1, sType2;
-int             iN, iAtoms, iMaxAtoms, iTemp, iAtom, iCalc14, iProper;
+int             iN, iAtoms, iMaxAtoms, iTemp, iAtom;
 int             iElement, iHybridization, iStart;
 RESIDUE         rRes;
 bool            bFoundSome;
@@ -2563,7 +2545,7 @@ IX_DESC         iResIx;
 
         lSpan = lLoop( (OBJEKT)aAtom, SPANNINGTREE );
         iCount = 0;
-        bFoundSome = FALSE;
+        bFoundSome = false;
         iStart = iVarArrayElementCount( vaExcludedAtoms );
         while ( (aA = (ATOM)oNext(&lSpan)) ) {
 
@@ -2576,7 +2558,7 @@ IX_DESC         iResIx;
 
             if ( iContainerTempInt(aA) > iContainerTempInt(aAtom) ) { 
                 VarArrayAdd( vaExcludedAtoms, (GENP)&iContainerTempInt(aA) );
-                bFoundSome = TRUE;
+                bFoundSome = true;
                 iCount++;
             }
         }
@@ -2593,7 +2575,7 @@ IX_DESC         iResIx;
                                 iCount,
                                 sizeof(int),
                                (GENP) PVAI( vaExcludedAtoms, int, iStart ),
-                                TRUE );
+                                true );
         } 
 
         VarArrayAdd( vaExcludedCount, (GENP)&iCount );
@@ -2604,7 +2586,7 @@ IX_DESC         iResIx;
      *  number of atoms in the largest residue. keep
      *  track of residues which can't be marked.
      */
-    VP0( "Not Marking per-residue atom chain types.\n" );
+    //VP0( "Not Marking per-residue atom chain types.\n" );
     iMaxAtoms = 0;
     create_index( &iResIx, 2, 0 );
     ePResEnt = (IX_REC *)MALLOC(sizeof(IX_REC)+8 );
@@ -2615,7 +2597,7 @@ IX_DESC         iResIx;
     iMaxAtoms = 0;
     lTemp = lLoop( (OBJEKT)uUnit, RESIDUES );
     while ( (rRes = (RESIDUE)oNext(&lTemp)) ) {
-        iAtoms = iMarkMainChainAtoms( rRes, FALSE );
+        iAtoms = iMarkMainChainAtoms( rRes, false );
         if ( iAtoms > 0 )
                 MarkSideChainAtoms( rRes );
         if ( iAtoms < 0 ) {
@@ -2887,7 +2869,6 @@ IX_DESC         iResIx;
         /* Save the number of atoms in the largest residue */
 
     /*NMXRS*/
-    //printf("iMaxAtoms (2) %i\n",iMaxAtoms);
     FortranWriteInt( iMaxAtoms );
 
         /* Save flag for cap information */
@@ -3328,21 +3309,16 @@ IX_DESC         iResIx;
                                 stPTorsion->iAtom3,
                                 stPTorsion->iAtom4 );
             }
-            if ( stPTorsion->bProper )  iProper = 1;
-            else                        iProper = -1;
-            if ( stPTorsion->bCalc14 )  iCalc14 = 1;
-            else                        iCalc14 = -1;
-            if( GDefaults.iCharmm && iProper == -1 ){
+            if( GDefaults.bCharmm && !stPTorsion->bProper ){
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3) );
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom2) );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1)*iCalc14 );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*iProper );
+              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1)*(stPTorsion->bCalc14 ? 1 : -1));
             } else {
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1) );
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom2) );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*iCalc14 );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*iProper );
+              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*(stPTorsion->bCalc14 ? 1 : -1));
             }
+            FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*(stPTorsion->bProper ? 1 : -1));
             FortranWriteInt( stPTorsion->iParmIndex );
         }
     }
@@ -3375,21 +3351,16 @@ IX_DESC         iResIx;
                 SWAP( stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp );
                 SWAP( stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp );
             }
-            if ( stPTorsion->bCalc14 )  iCalc14 = 1;
-            else                        iCalc14 = -1;
-            if ( stPTorsion->bProper )  iProper = 1;
-            else                        iProper = -1;
-            if( GDefaults.iCharmm && iProper == -1 ){
+            if ( GDefaults.bCharmm && !stPTorsion->bProper ){
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3) );
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom2) );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1)*iCalc14 );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*iProper );
+              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1)*(stPTorsion->bCalc14 ? 1 : -1));
             } else {
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1) );
               FortranWriteInt( AMBERINDEX(stPTorsion->iAtom2) );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*iCalc14 );
-              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*iProper );
+              FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*(stPTorsion->bCalc14 ? 1 : -1));
             }
+            FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*(stPTorsion->bProper ? 1 : -1));
             FortranWriteInt( stPTorsion->iParmIndex );
         }
     }
@@ -3743,14 +3714,10 @@ IX_DESC         iResIx;
                     SWAP( stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp );
                     SWAP( stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp );
                 }
-                if ( stPTorsion->bProper )  iProper = 1;
-                else                        iProper = -1;
-                if ( stPTorsion->bCalc14 )  iCalc14 = 1;
-                else                        iCalc14 = -1;
                 FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1) );
                 FortranWriteInt( AMBERINDEX(stPTorsion->iAtom2) );
-                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*iCalc14 );
-                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*iProper );
+                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*(stPTorsion->bCalc14 ? 1 : -1));
+                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*(stPTorsion->bProper ? 1 : -1));
             }
         }
         stPTorsion = PVAI( uUnit->vaTorsions, SAVETORSIONt, 0 );
@@ -3769,14 +3736,10 @@ IX_DESC         iResIx;
                     SWAP( stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp );
                     SWAP( stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp );
                 }
-                if ( stPTorsion->bProper )  iProper = 1;
-                else                        iProper = -1;
-                if ( stPTorsion->bCalc14 )  iCalc14 = 1;
-                else                        iCalc14 = -1;
                 FortranWriteInt( AMBERINDEX(stPTorsion->iAtom1) );
                 FortranWriteInt( AMBERINDEX(stPTorsion->iAtom2) );
-                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*iCalc14 );
-                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*iProper );
+                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom3)*(stPTorsion->bCalc14 ? 1 : -1));
+                FortranWriteInt( AMBERINDEX(stPTorsion->iAtom4)*(stPTorsion->bProper ? 1 : -1));
             }
         }}
         FortranEndLine();
@@ -3995,7 +3958,7 @@ IX_DESC         iResIx;
 
         /*  Charmm-style parameters  */
 
-        if( GDefaults.iCharmm ){
+        if( GDefaults.bCharmm ){
         /* -19- Lennard jones r**12 term for all 14 interactions */
                 /* CN114 array */
         FortranDebug( "-19-" );

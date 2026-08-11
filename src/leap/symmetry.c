@@ -157,9 +157,12 @@ int parse_spacegroup_file(int number, const char *name, SPACEGROUPt *sg)
         if (strncmp(t, "number", 6) == 0) {
             sg->number = atoi(t + 6);
         } else if (strncmp(t, "symbol xHM", 10) == 0) {
-            extract_quoted(t + 10, sg->xHM, XHM_LEN);
+            extract_quoted(t + 11, sg->xHM, sizeof(sg->xHM));
         } else if (strncmp(t, "symbol old", 10) == 0) {
-            extract_quoted(t + 10, sg->old, XHM_LEN);
+            extract_quoted(t + 11, sg->old, sizeof(sg->old));
+        } else if (strncmp(t, "symbol pgrp", 10) == 0) {
+            extract_quoted(t + 12, sg->pgrp, sizeof(sg->pgrp));
+            extract_quoted(t + 14 + strlen(sg->pgrp), sg->pgrp, sizeof(sg->pgrp));
         } else if (strncmp(t, "symop", 5) == 0) {
             char *ops = trim(t + 5);
             if (sg->n_symops < MAX_SYMOPS) {
@@ -185,5 +188,108 @@ int parse_spacegroup_file(int number, const char *name, SPACEGROUPt *sg)
     /* Fell off end of file without matching end_spacegroup */
     fclose(f);
     return -1;
+}
+
+/* -----------------------------------------------------------------------
+ * BuildSymopMatrices
+ * Converts an array of SYMOPt (fractional integer rot + trans/12)
+ * to Cartesian 4x4 matrices using:  Mcart = M * Mfrac * Mi
+ * The translation (trans/12 fractional) is embedded in column 3 of
+ * Mfrac so it is carried through automatically by the multiply.
+ * --------------------------------------------------------------------- */
+void
+BuildSymopMatrices( UNIT uUnit,
+                     SYMOPt *symmops, int nSymops,
+                     MATRIX **maPSymops )
+{
+MATRIX  M, Mi, mFrac, mTmp;
+MATRIX  *maSymops;
+int     i, j;
+
+    BuildFractionalTransforms( uUnit, M, Mi );
+
+    maSymops = (MATRIX *)malloc( nSymops * sizeof(MATRIX) );
+    *maPSymops = maSymops;
+
+    for ( i = 0; i < nSymops; i++ ) {
+        /* --- build fractional symop as 4x4 ---
+         * rotation in upper-left 3x3, translation in column 3 */
+        for ( j = 0; j < 4; j++ )
+            mFrac[j][0] = mFrac[j][1] = mFrac[j][2] = mFrac[j][3] = 0.0;
+        mFrac[3][3] = 1.0;
+
+        int r, c;
+        for ( r = 0; r < 3; r++ )
+            for ( c = 0; c < 3; c++ )
+                mFrac[c][r] = (double)symmops[i].rot[r][c];  /* col-major */
+
+        mFrac[3][0] = (double)symmops[i].trans[0] / 12.0;
+        mFrac[3][1] = (double)symmops[i].trans[1] / 12.0;
+        mFrac[3][2] = (double)symmops[i].trans[2] / 12.0;
+
+        /* Mcart = M * Mfrac * Mi */
+        MatrixMultiply( mTmp,           M,    mFrac );
+        MatrixMultiply( maSymops[i],    mTmp, Mi    );
+    }
+}
+
+/* -----------------------------------------------------------------------
+ * BuildFractionalTransforms
+ * Builds frac->cart (M) and cart->frac (Mi) as 4x4 matrices.
+ * bOrtho is auto-detected from cell angles.
+ * --------------------------------------------------------------------- */
+void
+BuildFractionalTransforms( UNIT uUnit, MATRIX M, MATRIX Mi )
+{
+double  a, b, c, alpha, beta, gamma;
+int     i, j, bOrtho;
+
+    a     = uUnit->dXWidth;
+    b     = uUnit->dYWidth;
+    c     = uUnit->dZWidth;
+    alpha = uUnit->dAlpha;
+    beta  = uUnit->dBeta;
+    gamma = uUnit->dGamma;
+
+    bOrtho = ( fabs(alpha - 90.0*DEGTORAD) < 1e-6 &&
+               fabs(beta  - 90.0*DEGTORAD) < 1e-6 &&
+               fabs(gamma - 90.0*DEGTORAD) < 1e-6 );
+
+    /* zero everything first */
+    for ( i = 0; i < 4; i++ )
+        for ( j = 0; j < 4; j++ )
+            M[i][j] = Mi[i][j] = 0.0;
+    M[3][3] = Mi[3][3] = 1.0;
+
+    if ( bOrtho ) {
+        M[0][0]=a;    M[1][1]=b;    M[2][2]=c;
+        Mi[0][0]=1.0/a; Mi[1][1]=1.0/b; Mi[2][2]=1.0/c;
+    } else {
+        double ar = alpha;
+        double br = beta;
+        double gr = gamma;
+        double ca = cos(ar), cb = cos(br), cg = cos(gr), sg = sin(gr);
+
+        double cx = cb;
+        double cy = (ca - cb*cg) / sg;
+        double cz = sqrt(1.0 - cx*cx - cy*cy);
+
+        /* frac->cart, column-major: M[col][row] */
+        M[0][0]=a;
+        M[1][0]=b*cg;  M[1][1]=b*sg;
+        M[2][0]=c*cx;  M[2][1]=c*cy;  M[2][2]=c*cz;
+
+        /* analytic inverse of upper-triangular 3x3, stored column-major */
+        double m00=M[0][0];
+        double m10=M[1][0], m11=M[1][1];
+        double m20=M[2][0], m21=M[2][1], m22=M[2][2];
+
+        Mi[0][0] = 1.0/m00;
+        Mi[1][0] = -m10/(m00*m11);
+        Mi[1][1] = 1.0/m11;
+        Mi[2][0] = (m10*m21 - m20*m11)/(m00*m11*m22);
+        Mi[2][1] = -m21/(m11*m22);
+        Mi[2][2] = 1.0/m22;
+    }
 }
 

@@ -123,7 +123,7 @@ int		iScanned, iFunction;
 	    break;
 	case PRINT_TRACE:
 	case PRINT_ALWAYS:
-	    mMess->bPrint = TRUE;
+	    mMess->bPrint = true;
 	    break;
     }
 

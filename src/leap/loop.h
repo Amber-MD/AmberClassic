@@ -223,8 +223,8 @@ extern void		LoopDestroyMemory(LOOP *lPLoop);
 		/* LoopUseMemory starts recording, */
 		/* LoopRewindMemory starts replaying */
 
-#define	LoopUseMemory(lPL)	((lPL)->bUsingMemory = TRUE )
-#define	LoopRewindMemory(lPL)	((lPL)->bReplayingMemory = TRUE,\
+#define	LoopUseMemory(lPL)	((lPL)->bUsingMemory = true )
+#define	LoopRewindMemory(lPL)	((lPL)->bReplayingMemory = true,\
 				 (lPL)->lnLast = (lPL)->lnMemory )
 
                 /* Some macros that make LOOPs a little easier to use */

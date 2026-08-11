@@ -450,7 +450,7 @@ sAtomName(maPX->aAtom));
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Return TRUE if the atom's position is known.
+ *	Return true if the atom's position is known.
  *	An ATOMs position is known if the SfAtomPositionKnownFlag
  *	is set.
  */
@@ -561,20 +561,20 @@ STRING		s1, s2, s3, s4;
 
     VectorDef( &vTemp, 0.0, 0.0, 0.0 );
     mtPTorsions->maX.vPos = vTemp;
-    mtPTorsions->maX.bPosKnown = TRUE;
+    mtPTorsions->maX.bPosKnown = true;
 
     VectorDef( &vTemp, 1.0, 0.0, 0.0 );
     mtPTorsions->maY.vPos = vTemp;
-    mtPTorsions->maY.bPosKnown = TRUE;
+    mtPTorsions->maY.bPosKnown = true;
 
 		/* Tell the outer ATOMs that they dont have */
 		/* positions defined */
 
     for ( i=0; i<mtPTorsions->iXBonds; i++ ) {
-	mtPTorsions->maaXBonds[i].bPosKnown = FALSE;
+	mtPTorsions->maaXBonds[i].bPosKnown = false;
     }
     for ( i=0; i<mtPTorsions->iYBonds; i++ ) {
-	mtPTorsions->maaYBonds[i].bPosKnown = FALSE;
+	mtPTorsions->maaYBonds[i].bPosKnown = false;
     }
 
 		/* Place the first ATOM in the XY plane */
@@ -584,7 +584,7 @@ STRING		s1, s2, s3, s4;
     VectorDef( &vTemp, 1.0, 1.0, 0.0 );
     maPCur = ((MODELATOMt*)PAtomTempPtr(aInternalAtom1(iInt)));
     maPCur->vPos = vTemp;
-    maPCur->bPosKnown = TRUE;
+    maPCur->bPosKnown = true;
 
     MESSAGE("=======  Started mock coords from: %s\n",
 		sContainerFullDescriptor((CONTAINER)aInternalAtom1(iInt),s1) );
@@ -607,7 +607,7 @@ MESSAGEEXECUTE( {
  		} );
 
     for ( i=0; i<iTorsions; i++ ) {
-	bGotOne = FALSE;
+	bGotOne = false;
 	for ( j=0; j<iTorsions; j++ ) {
 	    iInt = iaTorsions[j];
 	    if ( iInt == NULL ) continue;
@@ -621,13 +621,13 @@ MESSAGEEXECUTE( {
 		maPC2 = maPTemp3;
 		maPC3 = maPTemp4;
 	    } else if ( maPTemp1->bPosKnown ) {
-		bGotOne = TRUE;
+		bGotOne = true;
 		maPNew= maPTemp4;
 		maPC1 = maPTemp3;
 		maPC2 = maPTemp2;
 		maPC3 = maPTemp1;
 	    } else continue;
-	    bGotOne = TRUE;
+	    bGotOne = true;
 
 	    MESSAGE("======= Building mock coord for: %s\n",
 			sContainerFullDescriptor((CONTAINER)maPNew->aAtom,s1) );
@@ -646,7 +646,7 @@ MESSAGEEXECUTE( {
 				     1.0,
 				     90.0*DEGTORAD,
 				     dInternalValue(iInt) );
-	    maPNew->bPosKnown = TRUE;
+	    maPNew->bPosKnown = true;
 	    iaTorsions[j] = NULL;
 	    iLeft--;
 	    break;
@@ -772,7 +772,7 @@ this++;
 
 		/* Also set up the MODELTORSIONt record */
 
-    bKnownX = FALSE;
+    bKnownX = false;
     mtTorsions.iXBonds = iAtomCoordination(aX) - 1;
     maPAtom = &(mtTorsions.maaXBonds[0]);
     for ( i=0; i<iAtomCoordination(aX); i++ ) {
@@ -782,8 +782,8 @@ this++;
 	    maPAtom->aAtom = aTemp;
 	    maPAtom->vPos = vAtomPosition(aTemp);
 	    if ( (maPAtom->bPosKnown = 
-		  bAtomFlagsSet(aTemp,ATOMPOSITIONKNOWN)) ) bKnownX = TRUE;
-	    if ( aOnly == NULL ) maPAtom->bBuildInternals = TRUE;
+		  bAtomFlagsSet(aTemp,ATOMPOSITIONKNOWN)) ) bKnownX = true;
+	    if ( aOnly == NULL ) maPAtom->bBuildInternals = true;
 	    else 		 maPAtom->bBuildInternals = ( aOnly==aTemp);
 	    maPAtom++;
 	}
@@ -815,7 +815,7 @@ this++;
     mtTorsions.iYHybridization = iAtomHybridization(aY);
     AtomSetTempPtr( aY, &(mtTorsions.maY) );
 
-    bKnownY = FALSE;
+    bKnownY = false;
     mtTorsions.iYBonds = iAtomCoordination(aY) - 1;
     maPAtom = &(mtTorsions.maaYBonds[0]);
     for ( i=0; i<iAtomCoordination(aY); i++ ) {
@@ -825,8 +825,8 @@ this++;
 	    maPAtom->aAtom = aTemp;
 	    maPAtom->vPos = vAtomPosition(aTemp);
 	    if ( (maPAtom->bPosKnown = 
-		  bAtomFlagsSet(aTemp,ATOMPOSITIONKNOWN)) ) bKnownY = TRUE;
-	    if ( aOnly == NULL ) maPAtom->bBuildInternals = TRUE;
+		  bAtomFlagsSet(aTemp,ATOMPOSITIONKNOWN)) ) bKnownY = true;
+	    if ( aOnly == NULL ) maPAtom->bBuildInternals = true;
 	    else 		 maPAtom->bBuildInternals = ( aOnly==aTemp);
 	    maPAtom++;
 	}

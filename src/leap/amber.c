@@ -278,7 +278,7 @@ double          dKt, dT0, dTkub, dRkub, zero;
     while (1) {
         FGETS( sLine, fIn );
         REPLACEDASHES(sLine);
-        if( GDefaults.iCharmm ){
+        if( GDefaults.bCharmm ){
             iRead = sscanf( sLine, "%s %s %s %lf %lf %lf %lf %n", 
                             saStr[0], saStr[1], saStr[2], &dKt, &dT0, &dTkub, &dRkub, &iDesc );
             if ( iRead != 7 )
@@ -342,7 +342,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
     char tok1[32], tok2[32];
     int ipos;
     int iMaxCount = 0;       /* max seen in CMAP_COUNT */
-    bool bReading = FALSE;   /* TRUE between CMAP_TITLE and CMAP_PARAMETER */
+    bool bReading = false;   /* true between CMAP_TITLE and CMAP_PARAMETER */
     CMAPt cmap;
 
     while (1) {
@@ -401,7 +401,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
 
 
             memset(&cmap, 0, sizeof(CMAPt));
-            bReading = TRUE;
+            bReading = true;
 
             FGETS(sLine, fIn);
             StringTrim(sLine);
@@ -449,7 +449,7 @@ zAmberReadParmSetCMAP(PARMSET psParms, FILE *fIn)
                 VPWARN("CMAP record '%s': missing map data — skipping\n", cmap.title);
             else
                 iParmSetAddCMAP(psParms, &cmap);
-            bReading = FALSE;
+            bReading = false;
         } else if (strcmp("CMAP_ATMLIST", tok2) == 0) {
             NODASHESWL(sLine);
             sscanf(&sLine[ipos], "%7s%7s%7s%7s%7s",
@@ -633,18 +633,18 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
          *  check everything in case a format or other user error
          *      led to wrong values (e.g. IDIVF offset)
          */
-        bPrintLine = FALSE;
+        bPrintLine = false;
         if ( dKp < 0.0 ) {
             VPWARN("Expected Improper Torsion PK>=0 (%f)\n", dKp );
-            bPrintLine = TRUE;
+            bPrintLine = true;
         }
         if ( dP0 < 179.999  ||  dP0 > 180.001 ) {
             VPWARN("Expected Improper Torsion PHASE=180 (%f)\n", dP0 );
-            bPrintLine = TRUE;
+            bPrintLine = true;
         }
         if ( iN < 1  ||  iN > 6 ) {
             VPWARN("Unexpected Improper Torsion PN term (%d)\n", iN );
-            bPrintLine = TRUE;
+            bPrintLine = true;
         }
         if ( bPrintLine )
             VP0("Here is the Improper Torsion line in question:\n%s", sLine );
@@ -710,7 +710,7 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
     MESSAGE("Reading NON-BONDs.\n" );
     while (1) {
         FGETS( sLine, fIn );
-        if( GDefaults.iCharmm ){
+        if( GDefaults.bCharmm ){
             iRead = sscanf( sLine, "%s %lf %lf %lf %lf %n", 
                     saStr[0], &dRStar, &dDepth, &dRStar14, &dDepth14, &iDesc );
             if ( iRead <= 0 )
@@ -805,27 +805,27 @@ zbAmberDetermineParmSetFrcModType( FILE *fIn, bool *bPMass, bool *bPNonBond )
 STRING          sLine;
 bool            bNew;
 
-    bNew = FALSE;
-    *bPMass = FALSE;
-    *bPNonBond = FALSE;
+    bNew = false;
+    *bPMass = false;
+    *bPNonBond = false;
     do {
         FGETS( sLine, fIn );
         if ( strncmp( sLine, "MASS", 4 ) == 0 ) {
-            bNew = TRUE;
-            *bPMass = TRUE;
+            bNew = true;
+            *bPMass = true;
         } else if ( strncmp( sLine, "BOND", 4 ) == 0 ) {
-            bNew = TRUE;
+            bNew = true;
         } else if ( strncmp( sLine, "ANGL", 4 ) == 0 ) {
-            bNew = TRUE;
+            bNew = true;
         } else if ( strncmp( sLine, "DIHE", 4 ) == 0 ) {
-            bNew = TRUE;
+            bNew = true;
         } else if ( strncmp( sLine, "IMPR", 4 ) == 0 ) {
-            bNew = TRUE;
+            bNew = true;
         } else if ( strncmp( sLine, "HBON", 4 ) == 0 ) {
-            bNew = TRUE;
+            bNew = true;
         } else if ( strncmp( sLine, "NONB", 4 ) == 0 ) {
-            bNew = TRUE;
-            *bPNonBond = TRUE;
+            bNew = true;
+            *bPNonBond = true;
         }
     } while ( !feof(fIn) );
     fseek( fIn, 0, 0 );
@@ -1317,9 +1317,9 @@ bool            bUseFirstColumn;
     FGETS( sLine, fIn );
     if ( feof( fIn ) ) goto EOFERROR;
     sscanf( sLine, "%s", saStr[1] );
-    bUseFirstColumn = TRUE;
+    bUseFirstColumn = true;
     if ( strncmp( saStr[1], "CORR", 4 ) == 0 ) {
-        bUseFirstColumn = FALSE;
+        bUseFirstColumn = false;
     }
 
                 /* Read the CUT line */
@@ -1367,7 +1367,7 @@ MESSAGE("============\n" );
         SortByInteger( (GENP) Pil,
                         iVarArrayElementCount(vaLines),
                         sizeof(INPUTLINEt),
-                        (GENP) &Pil->iLineNumber, TRUE );
+                        (GENP) &Pil->iLineNumber, true );
     }
 #ifdef  DEBUG
 MESSAGE("------------\n" );
@@ -1607,9 +1607,9 @@ MESSAGE("============\n" );
     MESSAGE("Parsing commands after atom records\n" );
 
                 /* Parse the commands that follow the atom records */
-    bFirstTime = TRUE;
+    bFirstTime = true;
     while (1) {
-        if ( bFirstTime ) bFirstTime = FALSE;
+        if ( bFirstTime ) bFirstTime = false;
         else            FGETS( sLine, fIn );
         if ( feof( fIn ) ) {
                 VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
@@ -1745,10 +1745,10 @@ MESSAGE("============\n" );
                 /* Check if there was a cutoff value, if there was */
                 /* use it in a Distance Search to create bonds */
 
-    if ( bUseFirstColumn == TRUE  &&  dCutoff > 0.01 ) {
+    if ( bUseFirstColumn  &&  dCutoff > 0.01 ) {
         VP1("Distance search to create bonds for: %s  distance: %10.5lf\n",
                 sContainerName(uUnit), dCutoff );
-        iToolDistanceSearch( (CONTAINER)uUnit, dCutoff, TRUE, /* Absolute distance */
+        iToolDistanceSearch( (CONTAINER)uUnit, dCutoff, true, /* Absolute distance */
                                 DISTANCE_SEARCH_CREATE_BONDS );
     }
 

@@ -39,6 +39,7 @@
 
 
 #include	"basics.h"
+#include	"defaults.h"
 
 #include        "vector.h"
 #include        "matrix.h"
@@ -155,7 +156,7 @@ VECTOR          vTrans, vTemp32, vTemp43, vTempXZ, vNew;
 			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
 
-
+#if 0
 /*
  *      zvZMatrixCalculatePositionFromAngles
  *
@@ -239,7 +240,46 @@ VECTOR		vNew;
                       dBond*sin(dAngleA)*sin(dX) );
     return(vNew);
 }
+#endif
+VECTOR
+zvZMatrixCalculatePositionFromAngles( double dAngleA, double dAngleB,
+                                               double dAngleC, double dBond )
+{
+double		dCosA, dSinA;
+double		dCosB, dCosC, dSinC;
+double		dCosX, dSinX;
+VECTOR		vNew;
 
+    dCosA = cos(dAngleA);
+    dSinA = sin(dAngleA);
+    dCosB = cos(dAngleB);
+    dCosC = cos(dAngleC);
+    dSinC = sin(dAngleC);
+
+    if ( fabs(dSinA) < VERYSMALL || fabs(dSinC) < VERYSMALL ) {
+        DFATAL( "Degenerate geometry: dAngleA or dAngleC is 0 or PI "
+                "(dAngleA=%lf dAngleC=%lf)", dAngleA, dAngleC );
+    }
+
+		/* DOT(vC,vB) = cosA*cosC + sinA*sinC*cosX = cosB   */
+		/* solve directly for cosX -- linear equation       */
+    dCosX = ( dCosB - dCosA*dCosC ) / ( dSinA*dSinC );
+
+    if ( dCosX > 1.0 )  dCosX = 1.0;    /* clamp for roundoff */
+    if ( dCosX < -1.0 ) dCosX = -1.0;
+
+    dSinX = sqrt( 1.0 - dCosX*dCosX );
+
+		/* Two solutions exist (+-dSinX); match whichever    */
+		/* branch the original Newton-Raphson converged to,  */
+		/* i.e. the one nearest dAngleB's own sign convention */
+    if ( sin(dAngleB) < 0.0 ) dSinX = -dSinX;
+
+    VectorDef( &vNew, dBond*dCosA,
+                      dBond*dSinA*dCosX,
+                      dBond*dSinA*dSinX );
+    return(vNew);
+}
 
 
 
@@ -412,6 +452,20 @@ MESSAGE("Rotated around Z = %lf, %lf, %lf\n",
     MESSAGE("Angle around Z=%lf\n", dAngleZ );
  
     VectorDef( &vNew, dBond*cos(dAngle), dBond*sin(dAngle), 0.0 );
+
+    /* If random orientation is requested, spin the new atom randomly
+     * around the atom2->atom3 bond axis (local X) before rotating
+     * back into the lab frame.  This is the dihedral-angle freedom
+     * that's otherwise pinned to 0 by placing vNew in the XY plane.
+     */
+    if ( GDefaults.bRandomOrientation ) {
+        double dDihedral = 2.0 * PI * dUniformRandom();
+        MatrixXRotate( mT, dDihedral );
+        MatrixTimesVector( vNew, mT, vNew );
+        MESSAGE("Random dihedral=%lf -> %lf,%lf,%lf\n",
+                dDihedral, dVX(&vNew), dVY(&vNew), dVZ(&vNew) );
+    }
+
     MatrixZRotate( mT, dAngleZ );
     MatrixTimesVector( vNew, mT, vNew );
     MatrixYRotate( mT, dAngleY );
@@ -441,14 +495,29 @@ void
 ZMatrixBond( VECTOR *vPPos, VECTOR *vPAtom2, double dBond )
 {
 VECTOR          vNew;
+double          dTheta, dPhi, dSinTheta;
 
-    VectorDef( &vNew, dBond, 0.0, 0.0 );
+    if (GDefaults.bRandomOrientation) {
+        /* Pick a uniformly random direction on the unit sphere.
+         * Standard approach: sample cos(theta) uniformly in [-1,1]
+         * and phi uniformly in [0, 2*PI), which avoids clustering
+         * at the poles that you'd get from sampling theta directly.
+         */
+        dTheta = acos( 1.0 - 2.0 * dUniformRandom() );
+        dPhi   = 2.0 * PI * dUniformRandom();
+        dSinTheta = sin(dTheta);
+        VectorDef( &vNew,
+                   dBond * dSinTheta * cos(dPhi),
+                   dBond * dSinTheta * sin(dPhi),
+                   dBond * cos(dTheta) );
+    } else 
+        VectorDef( &vNew, dBond, 0.0, 0.0 );
+
     vNew = vVectorAdd( &vNew, vPAtom2 );
     *vPPos = vNew;
     MESSAGE("ZMatrixBond:  %lf,%lf,%lf\n", 
 			dVX(vPPos), dVY(vPPos), dVZ(vPPos) );
 }
-
 
 
 

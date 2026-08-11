@@ -115,7 +115,7 @@ if ( iObjectType(Ov) == LISTid ) \
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Return TRUE if the atom flags satisfy the
+ *      Return true if the atom flags satisfy the
  *      Visible/Invisible requirements of the loop.
  *      This means that the atom has ALL of the same flags 
  *      set as set in fVisibleFlagsOn and
@@ -128,10 +128,10 @@ FLAGS           fFlags;
 
     fFlags = fAtomFlags(aAtom);
     if ( (fFlags&lPLoop->fVisibleFlagsOn)!=lPLoop->fVisibleFlagsOn )
-        return(FALSE);
+        return(false);
 
     if ( (fFlags|(~(lPLoop->fVisibleFlagsOff)))!=(~(lPLoop->fVisibleFlagsOff)) )
-        return(FALSE);
+        return(false);
 
 			/* If the TempInt field is being used to determine */
 			/* visibility, then check if the ATOM has the */
@@ -141,11 +141,11 @@ FLAGS           fFlags;
     if ( lPLoop->fVisibilityFlags & TEMPINTUSED ) {
 	if ( lPLoop->fVisibilityFlags & TEMPINTINVISIBLE ) {
 	    if ( iAtomTempInt(aAtom) == lPLoop->iTempInt ) {
-		return(FALSE);
+		return(false);
 	    }
 	} else {
 	    if ( iAtomTempInt(aAtom) != lPLoop->iTempInt ) {
-		return(FALSE);
+		return(false);
 	    }
 	}
     }	
@@ -154,9 +154,9 @@ FLAGS           fFlags;
 		/* Used to construct spanning trees that do not pass a */
 		/* certain ATOM, good for looping over side chains */
 
-    if ( lPLoop->aInvisibleAtom == (OBJEKT)aAtom ) return(FALSE);
+    if ( lPLoop->aInvisibleAtom == (OBJEKT)aAtom ) return(false);
 
-    return(TRUE);
+    return(true);
 }
  
 
@@ -167,19 +167,19 @@ FLAGS           fFlags;
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Return TRUE if the atom is visible to a SPANNINGTREE loop.
+ *      Return true if the atom is visible to a SPANNINGTREE loop.
  *      This means that the atom has not been seen before ( Set
- *      bPSeenBefore to TRUE if it has ) and that the atom
+ *      bPSeenBefore to true if it has ) and that the atom
  *      has ALL of the same flags set as set in fVisibleFlagsOn and
  *      ALL the same flags reset as SET in fVisibleFlagsOff.
  */
 static bool
 bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, bool *bPSeenBefore )
 {
-    *bPSeenBefore = FALSE;
+    *bPSeenBefore = false;
     if ( iAtomSeenId(aAtom) == lPLoop->iSeenId ) {
-        *bPSeenBefore = TRUE;
-        return(FALSE);
+        *bPSeenBefore = true;
+        return(false);
     }
 
 		/* If the ATOM in the spanning tree is too far */
@@ -188,7 +188,7 @@ bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, bool *bPSeenBefore )
     if ( lPLoop->iMaxDistanceFromRoot >= 0 ) {
 	if ( lPLoop->iMaxDistanceFromRoot <
 		iAtomBackCount(lPLoop->aCurSpan)+1 ) {
-	    return(FALSE);
+	    return(false);
 	}
     }
     return(bLoopAtomVisible( lPLoop, aAtom ));
@@ -201,7 +201,7 @@ bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, bool *bPSeenBefore )
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Return TRUE if the loop is satisfied by the object.
+ *      Return true if the loop is satisfied by the object.
  */
 static bool
 bLoopSatisfiedBy( LOOP *lPLoop, OBJEKT oObject )
@@ -221,9 +221,9 @@ int             iGoal;
         case CONTAINERS:
             return(( bObjectInClass( oObject, CONTAINERid ) ));
         case DIRECTCONTENTS:
-            return(TRUE);
+            return(true);
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -255,8 +255,8 @@ int             i;
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Return TRUE if there is another BOND, ANGLE, TORSION, IMPROPER
- *      connected to the atom, FALSE if there is not.
+ *      Return true if there is another BOND, ANGLE, TORSION, IMPROPER
+ *      connected to the atom, false if there is not.
  *      If there is such a thing then place information in the loop
  *      so that it may be found again.
  */
@@ -295,7 +295,7 @@ bool            bDone, bAllowDuplicates;
                         lPLoop->oaObj[1] = (OBJEKT)
                                 aAtomBondedNeighbor(cCont,lPLoop->iIndex0);
                         lPLoop->iIndex0++;
-                        return(TRUE);
+                        return(true);
                     }
                     lPLoop->iIndex0++;
                 }
@@ -314,7 +314,7 @@ bool            bDone, bAllowDuplicates;
                         /*the LoopGetAngle routine                      */
         
 	case ANGLES:
-                bDone = FALSE;
+                bDone = false;
                 while ( ! bDone ) {
                                 /* First test if all the indices are valid */
                     if ( lPLoop->iIndex0>=iAtomCoordination(cCont) ) goto ANONE;
@@ -334,7 +334,7 @@ bool            bDone, bAllowDuplicates;
                                 /* If it passed all these tests then    */
                                 /* it is a valid angle                 */
 
-                    bDone = TRUE;
+                    bDone = true;
 
                                 /* Increment everything */
 AINC1:                   
@@ -348,7 +348,7 @@ AINC1:
                 lPLoop->oaObj[0] = (OBJEKT)cCont;
                 lPLoop->oaObj[1] = (OBJEKT)aAtom1;
                 lPLoop->oaObj[2] = (OBJEKT)aAtom2;
-                return(TRUE);
+                return(true);
 ANONE:          break;
 
 
@@ -368,7 +368,7 @@ ANONE:          break;
                         /* The search is done using a test/increment    */
                         /* sequence.                                    */
         case PROPERS:
-                bDone = FALSE;
+                bDone = false;
                 while ( ! bDone ) {
                                 /* First test if all the indices are valid */
                     if ( lPLoop->iIndex0>=iAtomCoordination(cCont) ) goto TNONE;
@@ -386,7 +386,7 @@ ANONE:          break;
                     if ( aAtom1 == aAtom3 ) goto TINC2;
                                 /* If it passed all these tests then    */
                                 /* it is a valid torsion                */
-                    bDone = TRUE;
+                    bDone = true;
                                 /* Increment everything */
 TINC2:
                     lPLoop->iIndex2++;
@@ -405,7 +405,7 @@ TINC1:
                 lPLoop->oaObj[1] = (OBJEKT)aAtom1;
                 lPLoop->oaObj[2] = (OBJEKT)aAtom2;
                 lPLoop->oaObj[3] = (OBJEKT)aAtom3;
-                return(TRUE);
+                return(true);
 TNONE:          break;
 
                         /* When LOOPing over IMPROPERS, use iIndex0 and */
@@ -450,7 +450,7 @@ TNONE:          break;
                         aAtomBondedNeighbor( cCont, lPLoop->iIndex1 );
                     lPLoop->oaObj[3] = (OBJEKT)
                         aAtomBondedNeighbor( cCont, lPLoop->iIndex2 );
-                    return(TRUE);
+                    return(true);
                 }
                 break;
 
@@ -459,7 +459,7 @@ TNONE:          break;
     }
     
     InitLoop(lPLoop);
-    return(FALSE);
+    return(false);
 }
 
 
@@ -512,7 +512,7 @@ iLoopParmOrder(const void *A, const void *B)
                 ((cResidueType(rB) == RESTYPESOLVENT) ? 1 : 0);
         if (iSolA < iSolB) return -1;
         else if (iSolA > iSolB) return 1;
-        if (GDefaults.reorder_molecules) {
+        if (GDefaults.bReorderMolecules) {
             // RESIDUE.iMolecule MUST BE labelled with the molecule number
             if (rA->iMolecule < rB->iMolecule) return -1;
             if (rA->iMolecule > rB->iMolecule) return 1;
@@ -593,14 +593,14 @@ CONTAINER	cTemp;
     memset(&lL, 0, sizeof(lL));		/* for Purify */
 
     MESSAGE("===Creating LOOP\n" );
-    lL.bInitialized 	  = FALSE;
-    lL.bLoopDone          = FALSE;
+    lL.bInitialized 	  = false;
+    lL.bLoopDone          = false;
 
 		/* Initialize the LOOP memory fields to the default */
 		/* of no memory. */
 
-    lL.bUsingMemory	  = FALSE;
-    lL.bReplayingMemory   = FALSE;
+    lL.bUsingMemory	  = false;
+    lL.bReplayingMemory   = false;
     lL.lnMemory  = NULL;
     lL.lnLast = NULL;
 
@@ -841,7 +841,7 @@ ATOM                    aPrev, aBond;
 			/* The OBJECT (oOver) */
 
 	if ( !lPLoop->bInitialized ) {
-	    lPLoop->bInitialized = TRUE;
+	    lPLoop->bInitialized = true;
 	    oObject = lPLoop->oOver;
 	    goto DONE;
 	}
@@ -889,7 +889,7 @@ LOOPNODE	lnCur, lnFree;
 	FREE(lnFree);
     }
     lPLoop->lnMemory = NULL;
-    lPLoop->bUsingMemory = FALSE;
-    lPLoop->bReplayingMemory = FALSE;
+    lPLoop->bUsingMemory = false;
+    lPLoop->bReplayingMemory = false;
 }
 

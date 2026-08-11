@@ -51,24 +51,25 @@ static char *PdbConvertResname_options[] = {"standard","keep","variant",NULL};
 static char *PdbConvertResname_optionDesc[] = {"Standard names","Retain input names",
                                       "Variant names",NULL };
 
-// NOTE: uninitialzed values get zero, and most defaults are zero
+// NOTE: uninitialized values get zero. Most defaults are zero and don't need defaults initialization.
 static DefaultSetting
 zSDefaultSettings[] = {
     { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
-    { 'B', "nocenter", "NoCenter", &GDefaults.nocenter },
-    { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.reorder_residues, .defval.integer=1 },
-    { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.reorder_molecules }, //TODO: , .defval.integer=1 },
-    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.reverse_lists, .defval.integer=1 },
-    { 'B', "original_cmap_order", "Original_CMAP_Order", &GDefaults.orig_cmap_order, .defval.integer=1 },
-    { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.iOldPrmtopFormat },
+    { 'B', "nocenter", "NoCenter", &GDefaults.bNoCenter },
+    { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.bReorderResidues, .defval.integer=1 },
+    { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.bReorderMolecules }, //TODO: , .defval.integer=1 },
+    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.bReverseLists, .defval.integer=1 },
+    { 'B', "original_cmap_order", "Original_CMAP_Order", &GDefaults.bOrigCMAPOrder, .defval.integer=1 },
+    { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.bOldPrmtopFormat },
     { 'D', "prmtopformat", "PrmtopFormat", &GDefaults.dPrmtopFormat, .defval.real=1.0 },
-    { 'B', "gibbs", "Gibbs", &GDefaults.iGibbs },
+    { 'B', "gibbs", "Gibbs", &GDefaults.bGibbs },
     { 'B', "hybrid36", "Hybrid36", &GDefaults.bPdbHybrid36, .defval.integer=1 },
+    { 'B', "keep_input_solvent", "Keep_Input_Solvent", &GDefaults.bKeepInputSolvent, .defval.integer=0 },
     { 'B', "keep_chainid", "Keep_chainId", &GDefaults.bPdbKeepChainId },
     { 'I', "pdbreadbiomt", "PdbReadBioMT", &GDefaults.iPdbReadBioMT },
-    { 'B', "charmm", "Charmm", &GDefaults.iCharmm },
-    { 'B', "flexiblewater", "FlexibleWater", &GDefaults.iFlexibleWater },
-    { 'B', "deleteextrapointangles", "DeleteExtraPointAngles", &GDefaults.iDeleteExtraPointAngles,
+    { 'B', "charmm", "Charmm", &GDefaults.bCharmm },
+    { 'B', "flexiblewater", "FlexibleWater", &GDefaults.bFlexibleWater },
+    { 'B', "deleteextrapointangles", "DeleteExtraPointAngles", &GDefaults.bDeleteExtraPointAngles,
                .defval.integer=1 },
     { 'S', "pbradii", "PB Radii", &GDefaults.iGBparm, .defval.integer=2,
                .options = PBRadii_options, .optionDesc = PBRadii_optionDesc },
@@ -76,16 +77,16 @@ zSDefaultSettings[] = {
                .defval.real=DEFAULT_DISTANCE_SEARCH },
     { 'D', "gridspace", "GridSpace", &GDefaults.dGridSpace, .defval.real=1.0 },
     { 'D', "dielectric_radius", "Dielectric_Radius", &GDefaults.dDielectricRadius, .defval.real=999.0 },
-    { 'D', "nbgrid", "NBGrid", &GDefaults.bNBGrid, .defval.integer=1 },
+    { 'B', "random_orientation", "Random_Orientation", &GDefaults.bRandomOrientation, .defval.integer=0 },
     { 'D', "shellextent", "ShellExtent", &GDefaults.dShellExtent, .defval.real=4.0 },
     { 'D', "dipole_damp_factor", "Dipole Damping Factor", &GDefaults.dDipoleDampFactor },
     { 'D', "scee", "SCEE 1-4 Scale Factor", &GDefaults.dSceeScaleFactor, .defval.real=1.2 },
     { 'D', "scnb", "SCNB 1-4 Scale Factor", &GDefaults.dScnbScaleFactor, .defval.real=2.0 },
-    { 'B', "cmap", "CMAP", &GDefaults.iCMAP },
+    { 'B', "cmap", "CMAP", &GDefaults.bCMAP },
     { 'I', "ipol", "IPOL", &GDefaults.iIPOL },
     { 'S', "dielectric", "Dielectric", &GDefaults.iDielectricFlag, .defval.integer=DIEL_R2,
                .options = Dielectric_options, .optionDesc = Dielectric_optionDesc },
-    { 'B', "residueimpropers", "ResidueImpropers", &GDefaults.iResidueImpropers },
+    { 'B', "residueimpropers", "ResidueImpropers", &GDefaults.bResidueImpropers },
     { 'B', "pdb_auto_match","PDB_Auto_Match", &GDefaults.bPdbAutoMatch },
     { 'B', "pdb_auto_link","PDB_Auto_Link", &GDefaults.bPdbAutoLink },
     { 'B', "pdb_match_exact","PDB_Match_Exact", &GDefaults.bPdbExactMatch },
@@ -100,7 +101,7 @@ zSDefaultSettings[] = {
     { 'B', "pdb_reset_chainids","PDB_Reset_ChainIds", &GDefaults.bPdbResetChainID },
     { 'S', "pdb_convert_resname","PDB_Convert_ResName", &GDefaults.iPdbConvertResName,
                .options = PdbConvertResname_options, .optionDesc = PdbConvertResname_optionDesc  },
-    { 'B', "pdb_ignore_nonconnect","PDB_Ignore_NonConnect", &GDefaults.iPdbIgnoreNonConnect },
+    { 'I', "pdb_ignore_nonconnect","PDB_Ignore_NonConnect", &GDefaults.iPdbIgnoreNonConnect },
     { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
     { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
     { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },
@@ -166,7 +167,7 @@ int iOptIndex;
         int iValue = (int)intpart;
         int iOptionValue = -1;
         char *sValue = NULL;
-        bool bValue = FALSE;
+        bool bValue = false;
         if (iType == OSTRINGid) {
             sValue = sOString(oValue);
             if (!strcmp("?",sValue)) {
@@ -216,13 +217,13 @@ int iOptIndex;
         switch (zSDefaultSettings[iOptIndex].iType) {
         case 'B':
             if ( iType == OSTRINGid && (!strcasecmp( sValue, "on" ) || !strcasecmp(sValue,"true")))
-                bValue = TRUE;
+                bValue = true;
             else if ( iType == OSTRINGid && (!strcasecmp( sValue, "off" ) || !strcasecmp(sValue,"false")))
-                bValue = FALSE;
+                bValue = false;
             else if ( iType == ODOUBLEid && dValue != 0.0 )
-                bValue = TRUE;
+                bValue = true;
             else if ( iType == ODOUBLEid && dValue == 0.0 )
-                bValue = FALSE;
+                bValue = false;
             else {
                 VPFATAL("Set %s: value must be 'on'/'true'/1 or 'off'/'false'/0\n",zSDefaultSettings[iOptIndex].sName);
                 return NULL;

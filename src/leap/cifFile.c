@@ -24,7 +24,7 @@ zbCifLookup(CIFCATEGORYt *cifCat, int iBlock, bool bAltAtomName) {
     if (iCategory < 0) {
         VPFATAL("CIF data block %s does not contain data category %s\n",
                 cifFiles.datablocks[iBlock].datablockName, cifCat->sName);
-        return FALSE;
+        return false;
     }
     cifCat->pCategory = & cifFiles.datablocks[iBlock].categories[iCategory];
     for (int i=0; i<CIF_MAXCOLUMNS && cifCat->field[i].name; i++) {
@@ -36,10 +36,10 @@ zbCifLookup(CIFCATEGORYt *cifCat, int iBlock, bool bAltAtomName) {
         if (cifCat->field[i].iColumn >= 0) continue;
         if (!cifCat->field[i].bOptional) {
             VPFATAL("CIF parse error: Column %s.%s not found\n",cifCat->sName,cifCat->field[i].name);
-                return FALSE;
+                return false;
         }
     }
-    return TRUE;
+    return true;
 }
 
 static const char *
@@ -53,8 +53,8 @@ void
 CifReadFile( PDBREADt *prPRead )
 {
 int             iPdbSequence=0; // previous resSeq
-bool            bLastReadPdbRecordWasTer = FALSE;
-bool            bNewChain = TRUE, bNewRes;
+bool            bLastReadPdbRecordWasTer = false;
+bool            bNewChain = true, bNewRes;
 RESIDUENAMEt    rnName;
 ATOMNAMEt       anAtom;
 int             iTerm, iLast, iSerialNumMax=0;
@@ -67,11 +67,11 @@ CIFCATEGORYt cifAtoms = {
     {
         { "id" },  /* atomSerial */
         { "label_atom_id", "auth_atom_id" },  /* name */
-        { "label_alt_id", NULL, TRUE },   /* altLoc */
+        { "label_alt_id", NULL, true },   /* altLoc */
         { "label_comp_id", "auth_comp_id" },  /* resName */
         { "label_asym_id", "auth_asym_id" },  /* chainID */
         { "label_seq_id", "auth_seq_id" },   /* resSeq */
-        { "pdbx_PDB_ins_code", NULL, TRUE },/* iCode */
+        { "pdbx_PDB_ins_code", NULL, true },/* iCode */
         { "Cartn_x" }, /* x-coord */
         { "Cartn_y" }, /* y-coord */
         { "Cartn_z" }, /* z-coord */
@@ -80,8 +80,8 @@ CIFCATEGORYt cifAtoms = {
         { "type_symbol" }, // Element name, *not* force field type
                                    // Note: FF type is .type_energy
         //{ "pdbx_formal_charge" }, /* formal charge */
-        { "pdbx_PDB_model_num", NULL, TRUE },
-        //{ "group_PDB", NULL, TRUE }, -> "ATOM", "HETATM"
+        { "pdbx_PDB_model_num", NULL, true },
+        //{ "group_PDB", NULL, true }, -> "ATOM", "HETATM"
         {NULL}
     }
 }, cifConn = {
@@ -92,17 +92,17 @@ CIFCATEGORYt cifAtoms = {
         { "ptnr1_label_comp_id", "ptnr1_auth_comp_id" },     // resName, alt=ptnr1_auth_comp_id
         { "ptnr1_label_seq_id", "ptnr1_auth_seq_id" },      // resSeq, alt=ptnr1_auth_seq_id
         { "ptnr1_label_atom_id" },     // name
-        { "pdbx_ptnr1_label_alt_id", NULL, TRUE }, // altLoc (optional)
-        { "pdbx_ptnr1_PDB_ins_code", NULL, TRUE }, // iCode  (optional)
-        { "ptnr1_symmetry", NULL, TRUE },          //<op>_<dx+5><dy+5><dz+5> (optional)
+        { "pdbx_ptnr1_label_alt_id", NULL, true }, // altLoc (optional)
+        { "pdbx_ptnr1_PDB_ins_code", NULL, true }, // iCode  (optional)
+        { "ptnr1_symmetry", NULL, true },          //<op>_<dx+5><dy+5><dz+5> (optional)
         { "ptnr2_label_asym_id", "ptnr2_auth_asym_id" },     // alt=ptnr2_auth_asym_id
         { "ptnr2_label_comp_id", "ptnr2_auth_comp_id" },     // alt=ptnr2_auth_comp_id
         { "ptnr2_label_seq_id", "ptnr2_auth_seq_id" },      // alt=ptnr2_auth_seq_id
         { "ptnr2_label_atom_id" },
-        { "pdbx_ptnr2_label_alt_id", NULL, TRUE },
-        { "pdbx_ptnr2_PDB_ins_code", NULL, TRUE },
-        { "ptnr2_symmetry", NULL, TRUE },
-        { "pdbx_dist_value", NULL, TRUE },
+        { "pdbx_ptnr2_label_alt_id", NULL, true },
+        { "pdbx_ptnr2_PDB_ins_code", NULL, true },
+        { "ptnr2_symmetry", NULL, true },
+        { "pdbx_dist_value", NULL, true },
         {NULL}
     }
 }, cifMtrix = {
@@ -142,7 +142,7 @@ CIFCATEGORYt cifAtoms = {
     int iCifBlock = 0;
     VP0("Reading first CIF datablock: %s\n",cifFiles.datablocks[iCifBlock].datablockName);
 
-    bNewChain = TRUE;
+    bNewChain = true;
 
     if (GDefaults.iPdbReadBioMT) {
         cifMtrix.sName = "pdbx_struct_oper_list";
@@ -192,8 +192,8 @@ _pdbx_struct_assembly_gen.asym_id_list
         sChainId[2]=0;
         if (!strcmp(sChainId," ")) strcpy(sChainId, "");
         int resSeq = atoi(zcPCifGetItem(&cifAtoms, i, iCol++));
-        char iCode = zcPCifGetItem(&cifAtoms, i, iCol++)[0];
-        if (!iCode) iCode = ' ';
+        char cICode = zcPCifGetItem(&cifAtoms, i, iCol++)[0];
+        if (!cICode) cICode = ' ';
         anAtom.x = atof(zcPCifGetItem(&cifAtoms, i, iCol++));
         anAtom.y = atof(zcPCifGetItem(&cifAtoms, i, iCol++));
         anAtom.z = atof(zcPCifGetItem(&cifAtoms, i, iCol++));
@@ -229,7 +229,7 @@ _pdbx_struct_assembly_gen.asym_id_list
         }
         //TODO bLastReadPdbRecordWasTer == change in entity_id
         bNewRes = (bNewChain || resSeq != iPdbSequence ||
-                    iCode != cInsertionCode ||
+                    cICode != cInsertionCode ||
                     bLastReadPdbRecordWasTer );
         if (!bNewRes && strcmp(rnName.sName, resName) ) {
             /* First detection of a residue with the same sequence
@@ -238,7 +238,7 @@ _pdbx_struct_assembly_gen.asym_id_list
             VPWARN("Name change in pdb file residue %.2s %d%c;\n"
                 "this residue is split into %s and %s.\n",
                 sCurrChain, iPdbSequence, cInsertionCode, rnName.sName, resName);
-            bNewRes = TRUE;
+            bNewRes = true;
             iMultipleResName++;
         }
         if (bNewRes) {
@@ -249,18 +249,18 @@ _pdbx_struct_assembly_gen.asym_id_list
             rnName.sChainId[sizeof(rnName.sChainId)-1]=0;
             memcpy(rnName.sName, resName, sizeof(rnName.sName));
             rnName.sName[sizeof(rnName.sName)-1]=0;
-            rnName.iCode = iCode;
+            rnName.cICode = cICode;
             rnName.iFirstAtom = iVarArrayElementCount(prPRead->vaAtomRecs); // zero based array
 
             anAtom.iResNameIndex = iVarArrayElementCount( prPRead->vaResidues );
             VarArrayAdd( prPRead->vaResidues, (GENP)&rnName );
-            bLastReadPdbRecordWasTer = FALSE;
+            bLastReadPdbRecordWasTer = false;
 
             MESSAGE("Reading residue: <%s>\n", rnName.sName );
             iPdbSequence = resSeq;
 
         }
-        bNewChain = FALSE;
+        bNewChain = false;
 
         VarArrayAdd( prPRead->vaAtomRecs, (GENP)&anAtom );
     }

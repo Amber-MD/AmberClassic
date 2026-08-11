@@ -90,11 +90,18 @@ typedef struct  CONTAINERSTRUCT {
 typedef CONTAINERt      *CONTAINER;
 
 #ifdef DEBUG
-static inline CONTAINER container_from_objekt(OBJEKT o)
-  { assert ( bObjectInClass( o, CONTAINERid ) ); return (CONTAINER)o; }
-static inline CONTAINER container_from_genp(void *p)
-  { assert(bIsObjekt(p)); assert(bObjectInClass((OBJEKT)p,CONTAINERid)); return (CONTAINER)p; }
-static inline CONTAINER container_from_container(CONTAINER c) { return c; }
+static inline CONTAINER container_from_objekt(OBJEKT o, const char *f ,int l) {
+  if (!o) return NULL;
+  assert_loc( bObjectInClass( o, CONTAINERid ),f,l);
+  return (CONTAINER)o;
+}
+static inline CONTAINER container_from_genp(void *p, const char *f,int l) {
+  if (!p) return NULL;
+  assert_loc(bIsObjekt(p),f,l);
+  assert_loc(bObjectInClass((OBJEKT)p,CONTAINERid),f,l);
+  return (CONTAINER)p;
+}
+static inline CONTAINER container_from_container(CONTAINER c, const char *f, int l) { return c; }
 static inline OBJEKT objekt_from_container(CONTAINER c) { return c ? &(c->oHeader) : NULL; }
 
 #define CONTAINER_from(x) _Generic((x), \
@@ -105,7 +112,7 @@ static inline OBJEKT objekt_from_container(CONTAINER c) { return c ? &(c->oHeade
     RESIDUE: container_from_residue, \
     ATOM: container_from_atom, \
     GENP: container_from_genp \
-)(x)
+)(x,__FILE__,__LINE__)
 #else
 #define CONTAINER_from(x) ((CONTAINER)(x))
 #endif

@@ -501,7 +501,7 @@ HASH_LISTt	*hlPFree;
 
     hlPPPre = zhlPPHTSearchList( &(htTable->hlPaTable[iPos]), sKey );
 
-    if ( hlPPPre == NULL ) return(FALSE);
+    if ( hlPPPre == NULL ) return(false);
 
     (*PPData) = (*hlPPPre)->heEntry.PData;
     (*cPPKey) = (*hlPPPre)->heEntry.cPKey;
@@ -511,7 +511,7 @@ HASH_LISTt	*hlPFree;
     FREE(hlPFree);
     htTable->iElementCount--;
 
-    return(TRUE);
+    return(true);
 }
 
 

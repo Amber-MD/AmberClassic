@@ -78,7 +78,7 @@ void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
         VP0("Building CMAP parameters.\n");
     uUnit->vaCMAPs = vaVarArrayCreate(sizeof(SAVECMAPt));
 
-    if (!GDefaults.iCMAP) return;
+    if (!GDefaults.bCMAP) return;
 
     iNumDIH = iVarArrayElementCount(uUnit->vaTorsions);
     if (iNumDIH <= 0) return;
@@ -127,10 +127,10 @@ void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
         absres5[3] = iContainerTempInt(cContainerWithin(sa4->aAtom));
 
         /* ── screen as phi: an5[0..3], fast ── */
-        bool bPhi = FALSE;
+        bool bPhi = false;
         ParmLibParmSetLoop(plLib);
         while (bParmLibNextParmSet(plLib, &psTemp)) {
-            if (bParmSetCMAPHasPhi(psTemp, an5, rn5)) { bPhi = TRUE; break; }
+            if (bParmSetCMAPHasPhi(psTemp, an5, rn5)) { bPhi = true; break; }
         }
         if (!bPhi) continue;
 
@@ -160,9 +160,9 @@ void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
                 /* CMAP is supplemental — not found anywhere is normal so no error. */
                 if (iTemp == PARM_NOT_FOUND) continue;
 
-                /* fetch deep copy (bCopy=TRUE) and add to unit parmset */
+                /* fetch deep copy (bCopy=true) and add to unit parmset */
                 CMAPt cmap;
-                ParmSetCMAP(psTemp, iTemp, &cmap, TRUE);
+                ParmSetCMAP(psTemp, iTemp, &cmap, true);
                 iIndex = iParmSetAddCMAP(uUnit->psParameters, &cmap);
                 dest_cmap_index[iTemp] = iIndex; // compaitibility hack
             }
@@ -206,13 +206,13 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     FortranFormat(20, "%4d");
     CMAP cmaps = MALLOC(sizeof(CMAPt)*CMAP_TYPES);
     for (int i = 0; i < CMAP_TYPES; i++) {
-        ParmSetCMAP(uUnit->psParameters, i, &cmaps[i], FALSE);
+        ParmSetCMAP(uUnit->psParameters, i, &cmaps[i], false);
         FortranWriteInt(cmaps[i].resolution);
     }
     FortranEndLine();
 
     int cmap_renum[256]={0};
-    if (GDefaults.orig_cmap_order) { // FIXME: remove this compatibility feature hack
+    if (GDefaults.bOrigCMAPOrder) { // FIXME: remove this compatibility feature hack
         int iIndex=0;
         for (int irenum=0;irenum<256;irenum++) if (dest_cmap_index[irenum]>=0) {
             int i = dest_cmap_index[irenum];
@@ -270,7 +270,7 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     for (int i = 0; i < CMAP_KINDS; i++) {
         SAVECMAPt *saveCMAP = PVAI(uUnit->vaCMAPs, SAVECMAPt, i);
         for (int j=0;j<5;j++) FortranWriteInt(saveCMAP->iAtom[j]);
-      if (GDefaults.orig_cmap_order) // FIXME: remove this compatibility feature hack
+      if (GDefaults.bOrigCMAPOrder) // FIXME: remove this compatibility feature hack
         FortranWriteInt(cmap_renum[saveCMAP->iParmIndex-1]);
       else
         FortranWriteInt(saveCMAP->iParmIndex);

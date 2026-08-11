@@ -65,7 +65,7 @@ typedef MOLECULEt	*MOLECULE;
 
 
 #ifdef DEBUG
-static inline CONTAINER container_from_molecule(MOLECULE m) { return m ? &(m->cHeader) : NULL; }
+static inline CONTAINER container_from_molecule(MOLECULE m, const char *f ,int l) { return m ? &(m->cHeader) : NULL; }
 static inline OBJEKT objekt_from_molecule(MOLECULE m) { return m ? &(m->cHeader.oHeader) : NULL; }
 static inline MOLECULE molecule_from_objekt(OBJEKT o)
   { assert ( iObjectType(o) == MOLECULEid ); return (MOLECULE)o; }

@@ -91,7 +91,7 @@ RestraintDestroy( RESTRAINT *rPRes )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Return TRUE if the RESTRAINT bond has the
+ *	Return true if the RESTRAINT bond has the
  *	same atoms as the user passed in.
  */
 bool
@@ -100,8 +100,8 @@ bRestraintBondMatchAtoms( RESTRAINT rRes, ATOM aAtom1, ATOM aAtom2 )
     if ( (rRes->rType.rbBond.aAtom1 == aAtom1 &&
 	  rRes->rType.rbBond.aAtom2 == aAtom2 ) ||
 	 (rRes->rType.rbBond.aAtom1 == aAtom2 &&
-	  rRes->rType.rbBond.aAtom2 == aAtom1 ) ) return(TRUE);
-    return(FALSE);
+	  rRes->rType.rbBond.aAtom2 == aAtom1 ) ) return(true);
+    return(false);
 }
 
 	
@@ -110,7 +110,7 @@ bRestraintBondMatchAtoms( RESTRAINT rRes, ATOM aAtom1, ATOM aAtom2 )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Return TRUE if the RESTRAINT angle has the
+ *	Return true if the RESTRAINT angle has the
  *	same atoms as the user passed in.
  */
 bool
@@ -123,8 +123,8 @@ bRestraintAngleMatchAtoms( RESTRAINT rRes,
 	  rRes->rType.raAngle.aAtom3 == aAtom3 ) ||
 	 (rRes->rType.raAngle.aAtom1 == aAtom3 &&
 	  rRes->rType.raAngle.aAtom2 == aAtom2 &&
-	  rRes->rType.raAngle.aAtom3 == aAtom1 ) ) return(TRUE);
-    return(FALSE);
+	  rRes->rType.raAngle.aAtom3 == aAtom1 ) ) return(true);
+    return(false);
 }
 
 
@@ -134,7 +134,7 @@ bRestraintAngleMatchAtoms( RESTRAINT rRes,
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Return TRUE if the RESTRAINT torsion has the
+ *	Return true if the RESTRAINT torsion has the
  *	same atoms as the user passed in.
  */
 bool
@@ -148,8 +148,8 @@ bRestraintTorsionMatchAtoms( RESTRAINT rRes,
 	 (rRes->rType.rtTorsion.aAtom1 == aAtom4 &&
 	  rRes->rType.rtTorsion.aAtom2 == aAtom3 &&
 	  rRes->rType.rtTorsion.aAtom3 == aAtom2 &&
-	  rRes->rType.rtTorsion.aAtom4 == aAtom1 ) ) return(TRUE);
-    return(FALSE);
+	  rRes->rType.rtTorsion.aAtom4 == aAtom1 ) ) return(true);
+    return(false);
 }
 
 
@@ -161,7 +161,7 @@ bRestraintTorsionMatchAtoms( RESTRAINT rRes,
  *
  *	Test to see if the atom is one of the atoms of
  *	the RESTRAINT.
- *	If it is return TRUE.
+ *	If it is return true.
  */
 bool
 bRestraintContainsAtom( RESTRAINT rRes, ATOM aAtom )
@@ -171,21 +171,21 @@ bRestraintContainsAtom( RESTRAINT rRes, ATOM aAtom )
 	    if ( rRes->rType.rtTorsion.aAtom1 == aAtom ||
 		 rRes->rType.rtTorsion.aAtom2 == aAtom ||
 		 rRes->rType.rtTorsion.aAtom3 == aAtom ||
-		 rRes->rType.rtTorsion.aAtom4 == aAtom ) return(TRUE);
-	    return(FALSE);
+		 rRes->rType.rtTorsion.aAtom4 == aAtom ) return(true);
+	    return(false);
 	case RESTRAINTANGLE:
 	    if ( rRes->rType.raAngle.aAtom1 == aAtom ||
 		 rRes->rType.raAngle.aAtom2 == aAtom ||
-		 rRes->rType.raAngle.aAtom3 == aAtom ) return(TRUE);
-	    return(FALSE);
+		 rRes->rType.raAngle.aAtom3 == aAtom ) return(true);
+	    return(false);
 	case RESTRAINTBOND:
 	    if ( rRes->rType.rbBond.aAtom1 == aAtom ||
-		 rRes->rType.rbBond.aAtom2 == aAtom ) return(TRUE);
-	    return(FALSE);
+		 rRes->rType.rbBond.aAtom2 == aAtom ) return(true);
+	    return(false);
 	default:
 	    DFATAL("Invalid RESTRAINT type!" );
     }
-    return(FALSE);	/* for lint */
+    return(false);	/* for lint */
 }
 
 

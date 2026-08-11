@@ -174,7 +174,7 @@ if ( s[strlen(s)-1] == '\n' ) {s[strlen(s)-1] = '\0';} }
 		/* Now sort the entries */
 
     SortByString( haHelp, iKeyword, 
-    			sizeof(haHelp[0]), haHelp[0].sKeyword, TRUE );
+    			sizeof(haHelp[0]), haHelp[0].sKeyword, true );
 			
 		/* Then write them out */
 

@@ -755,7 +755,7 @@ int		iKnown;
 LISTLOOP	llList;
 INTERNAL	iRing;
 
-    if ( iListSize(lRingGroup) != 1 ) return(FALSE);
+    if ( iListSize(lRingGroup) != 1 ) return(false);
 
 		/* Get the single ring in the ring group */
 
@@ -768,7 +768,7 @@ INTERNAL	iRing;
 
     iKnown = 0;
     iHybridization = HUNDEFINED;
-    bAllSame = TRUE;
+    bAllSame = true;
     i = 0;
 
     InternalRingLoopAtoms(iRing);
@@ -779,13 +779,13 @@ INTERNAL	iRing;
 	if ( iHybridization == HUNDEFINED ) {
 	    iHybridization = iAtomHybridization(aAtom);
 	}
-	if ( iHybridization != iAtomHybridization(aAtom) ) bAllSame = FALSE;
+	if ( iHybridization != iAtomHybridization(aAtom) ) bAllSame = false;
 	if ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) iKnown++;
     }
 
-    if ( iKnown > 1 ) return(FALSE);
-    if ( !bAllSame ) return(FALSE);
-    if ( i != 6 ) return(FALSE);
+    if ( iKnown > 1 ) return(false);
+    if ( !bAllSame ) return(false);
+    if ( i != 6 ) return(false);
 
 		/* If SP2 ring then create INTERNALs for a BENZENE skeleton */
 
@@ -798,7 +798,7 @@ INTERNAL	iRing;
 	iInternalTorsion( aaA[4], aaA[5], aaA[0], aaA[1], 0.0 );
 	iInternalTorsion( aaA[5], aaA[0], aaA[1], aaA[2], 0.0 );
 
-        return(TRUE);
+        return(true);
     }
 
 		/* If SP3 ring then create INTERNALs for a CYCLOHEXANE */
@@ -813,9 +813,9 @@ INTERNAL	iRing;
 	iInternalTorsion( aaA[4], aaA[5], aaA[0], aaA[1],  60.0*DEGTORAD );
 	iInternalTorsion( aaA[5], aaA[0], aaA[1], aaA[2], -60.0*DEGTORAD );
 
-	return(TRUE);
+	return(true);
     }
-    return(FALSE);
+    return(false);
 }
 	
 
@@ -914,7 +914,7 @@ STRING	sTemp;
 
                 /* Go through each atom and build its coordinates */
 
-    LoopUseMemory(lPLoop); 
+    //LoopUseMemory(lPLoop); 
 
     while ( (aAtom=(ATOM)oNext(lPLoop))!= NULL ) {
 	if ( bAtomFlagsSet( aAtom, fForSet ) &&
@@ -931,9 +931,12 @@ STRING	sTemp;
 		    VP0("  Coordinates built for heavy atom: %s\n",
 			sContainerFullDescriptor( (CONTAINER)aAtom, sTemp ) );
 	    }
+            // FIXME: below does not work because building modifies BUILD/BUILT flags
+	    AtomSetFlags( aAtom, fSetFlags );
+	    AtomResetFlags( aAtom, fResetFlags );
 	}
     }
-
+#if 0
 		/* Change the flags */
 
     LoopRewindMemory(lPLoop);
@@ -948,6 +951,7 @@ STRING	sTemp;
     }
 
     LoopDestroyMemory(lPLoop);
+#endif
 }
 
 
@@ -1184,7 +1188,7 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
                 /* calculated with the IMPROPER and if they are different */
                 /* calculate the difference */
                 
-        bFoundOne = FALSE;
+        bFoundOne = false;
         for ( i=0; i<iNextTorsion; i++ ) {
             iInt = iaTorsions[i];
 	    MESSAGE("Measuring torsion of fixed atoms: %s - %s - %s - %s\n",
@@ -1208,7 +1212,7 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
                 &vAtomPosition(aInternalAtom4(iInt)) );
             if ( dTorsion != dInternalValue(iInt) ) {
                 dSub = dTorsion - dInternalValue(iInt);
-                bFoundOne = TRUE;
+                bFoundOne = true;
             }
         }
 
@@ -1398,7 +1402,7 @@ MOLECULE        mMol;
  *	This function searches through the CONTAINER for the
  *	atom with name sName, and then looks for the other atoms
  *	that are bonded in a chain.  If it doesn't find it, it
- *	returns FALSE, otherwise it finds the INTERNAL that
+ *	returns false, otherwise it finds the INTERNAL that
  *	contains all of the ATOMs and changes the value of
  *	the INTERNAL to what the caller specified.
  */
@@ -1412,12 +1416,12 @@ INTERNAL	iInt;
 		/* Find the first named ATOM within the container */
 
     aAtom1 = (ATOM)cContainerFindName( cCont, ATOMid, sAtom1 );
-    if ( aAtom1 == NULL ) return(FALSE);
+    if ( aAtom1 == NULL ) return(false);
 
 		/* Find the bonded ATOM that has the required name */
 
     aAtom2 = zaBuildFindNextAtomWithNameButNot( aAtom1, sAtom2, NULL );
-    if ( aAtom2 == NULL ) return(FALSE);
+    if ( aAtom2 == NULL ) return(false);
 
 		/* Find the INTERNAL for the ATOMs */
 
@@ -1427,7 +1431,7 @@ INTERNAL	iInt;
 
     InternalSetValue( iInt, dValue );
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1446,7 +1450,7 @@ INTERNAL	iInt;
  *	This function searches through the CONTAINER for the
  *	atom with name sName, and then looks for the other atoms
  *	that are bonded in a chain.  If it doesn't find it, it
- *	returns FALSE, otherwise it finds the INTERNAL that
+ *	returns false, otherwise it finds the INTERNAL that
  *	contains all of the ATOMs and changes the value of
  *	the INTERNAL to what the caller specified.
  */
@@ -1460,14 +1464,14 @@ INTERNAL	iInt;
 		/* Find the first named ATOM within the container */
 
     aAtom1 = (ATOM)cContainerFindName( cCont, ATOMid, sAtom1 );
-    if ( aAtom1 == NULL ) return(FALSE);
+    if ( aAtom1 == NULL ) return(false);
 
 		/* Find the bonded ATOM that has the required name */
 
     aAtom2 = zaBuildFindNextAtomWithNameButNot( aAtom1, sAtom2, NULL );
-    if ( aAtom2 == NULL ) return(FALSE);
+    if ( aAtom2 == NULL ) return(false);
     aAtom3 = zaBuildFindNextAtomWithNameButNot( aAtom2, sAtom3, aAtom1 );
-    if ( aAtom3 == NULL ) return(FALSE);
+    if ( aAtom3 == NULL ) return(false);
 
 		/* Find the INTERNAL for the ATOMs */
 
@@ -1477,7 +1481,7 @@ INTERNAL	iInt;
 
     InternalSetValue( iInt, dValue );
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1497,7 +1501,7 @@ INTERNAL	iInt;
  *	This function searches through the CONTAINER for the
  *	atom with name sName, and then looks for the other atoms
  *	that are bonded in a chain.  If it doesn't find it, it
- *	returns FALSE, otherwise it finds the INTERNAL that
+ *	returns false, otherwise it finds the INTERNAL that
  *	contains all of the ATOMs and twists all torsions
  *	around the central pair of atoms to make the torsion
  *	the caller requested the correct value.
@@ -1517,16 +1521,16 @@ STRING		s1, s2, s3, s4;
 		/* Find the first named ATOM within the container */
 
     aAtom1 = (ATOM)cContainerFindName( cCont, ATOMid, sAtom1 );
-    if ( aAtom1 == NULL ) return(FALSE);
+    if ( aAtom1 == NULL ) return(false);
 
 		/* Find the bonded ATOM that has the required name */
 
     aAtom2 = zaBuildFindNextAtomWithNameButNot( aAtom1, sAtom2, NULL );
-    if ( aAtom2 == NULL ) return(FALSE);
+    if ( aAtom2 == NULL ) return(false);
     aAtom3 = zaBuildFindNextAtomWithNameButNot( aAtom2, sAtom3, aAtom1 );
-    if ( aAtom3 == NULL ) return(FALSE);
+    if ( aAtom3 == NULL ) return(false);
     aAtom4 = zaBuildFindNextAtomWithNameButNot( aAtom3, sAtom4, aAtom2 );
-    if ( aAtom4 == NULL ) return(FALSE);
+    if ( aAtom4 == NULL ) return(false);
 
 		/* Find the INTERNAL for the ATOMs */
 
@@ -1557,7 +1561,7 @@ STRING		s1, s2, s3, s4;
 	InternalSetValue( iaTorsions[i], dTorsion );
     }
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1601,13 +1605,13 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
                 /* Loop over all atoms, adding those that require */
                 /* minimization to the MINIMIZER object */
 
-    bOneMinimizedAtom = FALSE;
+    bOneMinimizedAtom = false;
     MESSAGE("^^^Looping over atoms to add to MINIMIZER\n" );
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
     LoopDefineVisibleAtoms( &lAtoms, ATOMNEEDSMINIMIZER );
     while ( ( aAtom=(ATOM)oNext(&lAtoms) ) != NULL ) {
         MinimizerAddAtom( mStrain, aAtom );
-        bOneMinimizedAtom = TRUE;
+        bOneMinimizedAtom = true;
     }
 
                 /* If there are no atoms to minimize then return */
@@ -1757,7 +1761,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
 
 	tTorsion = tParmSetTORSIONCreate();
 	PARMLIB_DEFAULT_LOOP_ALL( psTemp ) {
-	    iParmSetFindProperTerms( psTemp, tTorsion, FALSE,
+	    iParmSetFindProperTerms( psTemp, tTorsion, false,
 	    				sAtomType(aAtom1),
 					sAtomType(aAtom2),
 					sAtomType(aAtom3),
@@ -1801,7 +1805,7 @@ BuildRelaxInFramework( UNIT uUnit, MINIMIZER mStrain )
  *	Rotate ATOMs around a bond.  The bond is defined from
  *	aInv to aStart.  All of the ATOMs on the aStart side of
  *	the bond are rotated by the angle dRotate.  Special
- *	things are done if the variable bInRing is TRUE.
+ *	things are done if the variable bInRing is true.
  */
 void
 BuildRotateAroundBondFromTo( CONTAINER cCont, ATOM aInv, ATOM aStart, 
@@ -1865,7 +1869,7 @@ int		j;
  *	Once the torsions are flipped, the externals are build
  *	again.
  *
- *	Return TRUE if the chirality was flipped.
+ *	Return true if the chirality was flipped.
  *
  *TODO:	Make this routine handle rings properly.
  *
@@ -1914,7 +1918,7 @@ bool		bPartOfRing;
 	/* Sort the bonds by the number of ATOMs */
 
     SortByInteger( (GENP) caaCount, iAtomCoordination(aFlip),
-                   sizeof(COUNTATOMSt), (GENP) &(caaCount[0].iCount), TRUE );
+                   sizeof(COUNTATOMSt), (GENP) &(caaCount[0].iCount), true );
 
 	/* Figure out which ATOMs are to be moved. */
 	/* This depends on the number of atoms around the central atom */
@@ -1954,13 +1958,13 @@ bool		bPartOfRing;
 	for ( i=0; i<iAtomCoordination(aFlip); i++ ) {
 	    aAtom = aAtomBondedNeighbor( aFlip, i );
 	    lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
-	    bPartOfRing = FALSE;
+	    bPartOfRing = false;
 	    while ( (iRing = (INTERNAL)oNext(&lInternals)) ) {
 		if ( iInternalType(iRing) == INTERNALRING &&
 		     iRing == iFlipRing ) {
 		    if ( aFixA == NULL ) aFixA = aAtom;
 		    else 		 aFixB = aAtom;
-		    bPartOfRing = TRUE;
+		    bPartOfRing = true;
 		} else break;
 	    }
 	    if ( !bPartOfRing ) {
@@ -2070,9 +2074,9 @@ bool		bPartOfRing;
     BuildExternalsUsingFlags( &lSpan,
 				ATOMNEEDSBUILD,
 				0,
-				ATOMPOSITIONKNOWN,
+				ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT,
 				ATOMNEEDSBUILD, 
-				&iDum, &iDum, &iDum, TRUE );
+				&iDum, &iDum, &iDum, true );
 
     if ( aB != NULL ) {
 	lSpan = lLoop( (OBJEKT)aB, SPANNINGTREE );
@@ -2084,9 +2088,9 @@ bool		bPartOfRing;
 	BuildExternalsUsingFlags( &lSpan,
 				ATOMNEEDSBUILD,
 				0,
-				ATOMPOSITIONKNOWN,
+				ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT,
 				ATOMNEEDSBUILD,
-				&iDum, &iDum, &iDum, TRUE );
+				&iDum, &iDum, &iDum, true );
     }
 
 		/* Destroy all of the INTERNALs */
@@ -2141,7 +2145,7 @@ LOOP		lSpan;
 		/* UNITs.  This is only temporary so that we can */
 		/* build a spanning tree across a junction */
 
-	if ( AtomTmpBondTo( aFirst, aLast ) == FALSE ) {
+	if ( AtomTmpBondTo( aFirst, aLast ) == false ) {
 		VP0("Skipping generating internals - effect unknown\n");
 		return;
 	}

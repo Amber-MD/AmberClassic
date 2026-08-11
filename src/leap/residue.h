@@ -132,7 +132,7 @@ typedef RESIDUEt	*RESIDUE;
 
 #ifdef DEBUG
 static inline OBJEKT objekt_from_residue(RESIDUE r) { return r ? &(r->cHeader.oHeader) : NULL; }
-static inline CONTAINER container_from_residue(RESIDUE r) { return r ? &(r->cHeader) : NULL; }
+static inline CONTAINER container_from_residue(RESIDUE r, const char*f, int l) { return r ? &(r->cHeader) : NULL; }
 static inline RESIDUE residue_from_objekt(OBJEKT o)
   { return o ? (assert (iObjectType(o)==RESIDUEid), (RESIDUE)o) : NULL; }
 static inline RESIDUE residue_from_container(CONTAINER c)
@@ -194,6 +194,7 @@ extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);
 					CDU(r))
 #define sResidueDescription(r)          (RESIDUE_from(r)->sDescription)
 #define bResidueFlagsSet(r,f)           ((RESIDUE_from(r)->fFlags & f)!= 0)
+#define fResidueFlags(r)                (RESIDUE_from(r)->fFlags)
 #define ResidueSetFlags(r,f)            (RESIDUE_from(r)->fFlags |= f,CDU(r) )
 #define ResidueDefineFlags(r,f)  (RESIDUE_from(r)->fFlags = f,CDU(r))
 #define ResidueResetFlags(r,f)    (RESIDUE_from(r)->fFlags &= ~f,CDU(r))

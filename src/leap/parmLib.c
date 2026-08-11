@@ -176,17 +176,17 @@ ParmLibParmSetLoop( PARMLIB plLib )
  *	Author:	Christian Schafmeister (1991)
  *
  *      Return each PARMSET one at a time.
- *      Return FALSE if there are no more PARMSETs.
+ *      Return false if there are no more PARMSETs.
  */
 bool
 bParmLibNextParmSet( PARMLIB plLib, PARMSET *psPSet )
 {
     if ( !zbParmLibOk(plLib) ) 
-	return(FALSE);
+	return(false);
     *psPSet = (PARMSET)oListNext(&(plLib->llParmSetLoop));
     if ( *psPSet == NULL ) 
-	return(FALSE);
-    return(TRUE);
+	return(false);
+    return(true);
 }
 
 

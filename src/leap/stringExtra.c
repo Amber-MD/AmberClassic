@@ -220,7 +220,7 @@ StringCopyMax( char *sDest, char *sSource, int iMax )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Return TRUE if the string matches the pattern in
+ *      Return true if the string matches the pattern in
  *      sPattern.  The string sPattern can contain wildcards
  *      like '*' and '?' along with regular text.
  *      The wildcard '*' matches to anything, while '?'
@@ -238,8 +238,8 @@ bStringMatchPattern( char *sString, char *sPattern )
 {
 
     while ( 1 ) {
-        if ( *sPattern == '\0' && *sString == '\0' ) return(TRUE);
-        if ( *sString == '\0' || *sPattern == '\0' ) return(FALSE);
+        if ( *sPattern == '\0' && *sString == '\0' ) return(true);
+        if ( *sString == '\0' || *sPattern == '\0' ) return(false);
         if ( *sString == *sPattern ) {
             sPattern++;
             sString++;
@@ -253,14 +253,14 @@ bStringMatchPattern( char *sString, char *sPattern )
         if ( *sPattern == '*' ) {
             while ( 1 ) {
                 if ( bStringMatchPattern( sString, sPattern+1 ) ) {
-		    return(TRUE);
+		    return(true);
 		} else {
                     sString++;
                     if ( *sString == '\0' ) {
                         if ( *(sPattern+1)=='\0' ) {
-			    return(TRUE);
+			    return(true);
 			} else {
-			    return(FALSE);
+			    return(false);
 			}
                     }
                 }
@@ -268,5 +268,5 @@ bStringMatchPattern( char *sString, char *sPattern )
         }
 	break;
     }
-    return(FALSE);
+    return(false);
 }

@@ -411,3 +411,36 @@ double          dTorsion, dSign;
     return(dTorsion);
 }
 
+double
+dVectorDistanceSq( VECTOR *Pv1, VECTOR *Pv2 )
+{
+double  x, y, z;
+        x = Pv1->dX - Pv2->dX;
+        x = x * x;
+ 
+        y = Pv1->dY - Pv2->dY;
+        y = y * y;
+ 
+        z = Pv1->dZ - Pv2->dZ;
+        z = z * z;
+ 
+        return(x + y + z);
+}
+
+double
+dVectorDistance( VECTOR *Pv1, VECTOR *Pv2 )
+{
+double  x, y, z;
+
+        x = Pv1->dX - Pv2->dX;
+        x = x * x;
+ 
+        y = Pv1->dY - Pv2->dY;
+        y = y * y;
+ 
+        z = Pv1->dZ - Pv2->dZ;
+        z = z * z;
+ 
+        return(sqrt(x + y + z));
+}
+

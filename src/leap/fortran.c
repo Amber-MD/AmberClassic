@@ -84,9 +84,9 @@ static  int     SiOnLine = 0;   /* Stores the # of entries already on line */
 static  bool    SbWroteNothing;
 
 static  STRING  SsInput;
-static  bool    SbNeedInput = TRUE;
+static  bool    SbNeedInput = true;
 
-static	bool	SbFortranDebug = FALSE;
+static	bool	SbFortranDebug = false;
 static	STRING	GsFortranDebug;
 
 
@@ -138,7 +138,7 @@ zFortranGetInputLine()
 void
 FortranFile( FILE *fOut )
 {
-    SbNeedInput = TRUE;
+    SbNeedInput = true;
     SfFile = fOut;
 }
 
@@ -158,7 +158,7 @@ FortranFormat( int iPerLine, char *sFormat )
     SiPerLine = iPerLine;
     strcpy( SsFormat, sFormat );
     SiOnLine = 0;
-    SbWroteNothing = TRUE;
+    SbWroteNothing = true;
 }
 
 
@@ -176,7 +176,7 @@ FortranWriteInt( int iVal )
 {
     fprintf( SfFile, SsFormat, iVal );
     SiOnLine++;
-    SbWroteNothing = FALSE;
+    SbWroteNothing = false;
     if ( SiOnLine >= SiPerLine ) {
         fprintf( SfFile, "\n" );
         SiOnLine = 0;
@@ -200,7 +200,7 @@ FortranWriteDouble( double dVal )
 {
     fprintf( SfFile, SsFormat, dVal );
     SiOnLine++;
-    SbWroteNothing = FALSE;
+    SbWroteNothing = false;
     if ( SiOnLine >= SiPerLine ) {
         fprintf( SfFile, "\n" );
         SiOnLine = 0;
@@ -223,7 +223,7 @@ FortranWriteString( char *sVal )
 {
     fprintf( SfFile, SsFormat, sVal );
     SiOnLine++;
-    SbWroteNothing = FALSE;
+    SbWroteNothing = false;
     if ( SiOnLine >= SiPerLine ) {
         fprintf( SfFile, "\n" );
         SiOnLine = 0;
@@ -246,7 +246,7 @@ FortranEndLine()
 {
     if ( SbWroteNothing || SiOnLine != 0 ) 
 	fprintf( SfFile, "\n" );
-    SbWroteNothing = TRUE;
+    SbWroteNothing = true;
     SiOnLine = 0;
 }
 
@@ -264,7 +264,7 @@ sFortranReadString( char *sString )
 bool            bGotOne;
 int             iLen;
 
-    bGotOne = FALSE;
+    bGotOne = false;
     strcpy( sString, "" );
     while ( !bGotOne ) {
         if ( SbNeedInput ) {
@@ -273,10 +273,10 @@ int             iLen;
 	    zFortranGetInputLine();
             if ( (iLen=strlen(SsInput)) > 0 ) SsInput[iLen-1] = '\0';
         }
-        SbNeedInput = FALSE;
+        SbNeedInput = false;
         sRemoveLeadingSpaces( SsInput );
         sRemoveFirstString( SsInput, sString );
-        if ( strlen(sString)!=0 ) bGotOne = TRUE;
+        if ( strlen(sString)!=0 ) bGotOne = true;
         SbNeedInput = ( strlen(SsInput)==0 );
    }
    return(sString);
@@ -298,7 +298,7 @@ sFortranReadLabel( char *sString )
 bool            bGotOne;
 int             iLen;
 
-    bGotOne = FALSE;
+    bGotOne = false;
     strcpy( sString, "" );
     while ( !bGotOne ) {
         if ( SbNeedInput ) {
@@ -306,11 +306,11 @@ int             iLen;
 	    zFortranGetInputLine();
             if ( (iLen=strlen(SsInput)) > 0 ) SsInput[iLen-1] = '\0';
         }
-        SbNeedInput = FALSE;
+        SbNeedInput = false;
         memcpy( sString, SsInput, 4 );
         sString[4] = '\0';
         strcpy( SsInput, SsInput+4 );
-        if ( strlen(sString)!=0 ) bGotOne = TRUE;
+        if ( strlen(sString)!=0 ) bGotOne = true;
         SbNeedInput = ( strlen(SsInput)==0 );
    }
    return(sString);
@@ -391,13 +391,13 @@ FortranSkipLine()
 void
 FortranDebugOn()
 {
-    SbFortranDebug = TRUE;
+    SbFortranDebug = true;
 }
 
 /*
  *	FortranDebug
  *
- *	If SbFortranDebug is TRUE then write the
+ *	If SbFortranDebug is true then write the
  *	string to the output file with a comment character
  *	prefixed to it.
  */

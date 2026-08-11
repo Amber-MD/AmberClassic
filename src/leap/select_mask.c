@@ -19,10 +19,10 @@
 #include "oDouble.h"
 #endif
 
-bool cpptraj_compatible = TRUE;
+bool cpptraj_compatible = true;
 
 /* AtomMaskPrepare: stamp sequential TempInt on residues and atoms in
- * output order (respecting reorder_residues flag). Must be called before
+ * output order (respecting bReorderResidues flag). Must be called before
  * any selection evaluation on a unit. Always re-runs since LEAP has no
  * per-atom dirty tracking — cost is O(N) traversal which is acceptable
  * even for large systems. Molecule numbers are also refreshed here via
@@ -36,12 +36,12 @@ AtomMaskPrepare(UNIT uUnit)
     int iResidueCount = UnitLabelMolecules(uUnit);
     if (iResidueCount == 0) return;
 
-    if ( !GDefaults.reorder_residues )
+    if ( !GDefaults.bReorderResidues )
         VP2("\"order_residues\" off: keep input residue order.\n");
 
     int iResIndex = 0, iAtomIndex = 0;
     LOOP lResidues; OBJEKT oObj; RESIDUE rRes;
-    LOOPOVERALL(uUnit, GDefaults.reorder_residues ?
+    LOOPOVERALL(uUnit, GDefaults.bReorderResidues ?
             DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
             oObj, OBJEKT, lResidues) {
         if (iObjectType(oObj) != RESIDUEid) continue;
@@ -49,7 +49,7 @@ AtomMaskPrepare(UNIT uUnit)
         ContainerSetTempInt(rRes, ++iResIndex);
         int iAtomResIndex = 0;
         ATOM aAtom; LOOP lAtoms;
-        LOOPOVERALL(rRes, GDefaults.reorder_residues ?
+        LOOPOVERALL(rRes, GDefaults.bReorderResidues ?
                 DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
                 aAtom, ATOM, lAtoms) {
             ContainerSetTempInt(aAtom, ++iAtomIndex);
@@ -351,6 +351,14 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
             if (node->text[1] == '\0') return (cLower(node->text[0]) == cResType);
             return !strcmp(node->text, sResidueTypeNameFromChar(cResType));
         }
+    case SEL_NODE_RES_FLAG:
+        return (fResidueFlags(cContainerWithin(atom)) & node->a) != 0;
+    case SEL_NODE_RES_FLAG_NOT:
+        return (fResidueFlags(cContainerWithin(atom)) & node->a) == 0;
+    case SEL_NODE_ATOM_FLAG:
+        return (fAtomFlags(atom) & node->a) != 0;
+    case SEL_NODE_ATOM_FLAG_NOT:
+        return (fAtomFlags(atom) & node->a) == 0;
 
     case SEL_NODE_DIST_WITHIN_ATOM:   return  bNodeSelectionWithin(node, atom);
     case SEL_NODE_DIST_BEYOND_ATOM:   return !bNodeSelectionWithin(node, atom);
@@ -365,4 +373,51 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
         VPFATAL("bAtomEvalSelection: unhandled node kind %d\n", node->kind);
         return false;
     }
+}
+
+FLAGS fAtomFlagNameToBit(const char *name) {
+    struct { const char *name; FLAGS flag; } flag_names[12] = {
+        { "posfxd", ATOMPOSITIONFIXED },
+        { "posblt", ATOMPOSITIONBUILT },
+        { "posdrwn", ATOMPOSITIONDRAWN },
+        { "selected", ATOMSELECTED },
+        { "pert", ATOMPERTURB },
+        { "notdisp", ATOMNOTDISPLAYED },
+        { "touched", ATOMTOUCHED },
+        { "posknwn", ATOMPOSITIONKNOWN },
+        { "internal", ATOMPOSITIONINTERNAL },
+        { "needsmin", ATOMNEEDSMINIMIZER },
+        { "needsbuild", ATOMNEEDSBUILD },
+        { NULL, 0 }
+    };
+    for (int i=0; flag_names[i].name; i++) {
+        if (!strcasecmp(flag_names[i].name,name)) {
+            return flag_names[i].flag;
+        }
+    }
+    VPWARN("AtomMask: '%s' is not a valid atom flag name. Known flags:\n",name);
+    for (int i=0; flag_names[i].name; i++)
+        VP0("   %s\n", flag_names[i].name);
+    return 0x000080000; // return a bit that cannot be matched
+}
+
+FLAGS fResFlagNameToBit(const char *name) {
+    struct { const char *name; FLAGS flag; } flag_names[7] = {
+        { "unknown",RESIDUEUNKNOWN },
+        { "bulksolv",RESIDUEBULKSOLVENT },
+        { "incap", RESIDUEINCAP },
+        { "noend",RESIDUENOEND },
+        { "firstend",RESIDUEFIRSTEND },
+        { "lastend",RESIDUELASTEND },
+        { NULL, 0 }
+    };
+    for (int i=0; flag_names[i].name; i++) {
+        if (!strcasecmp(flag_names[i].name,name)) {
+            return flag_names[i].flag;
+        }
+    }
+    VPWARN("AtomMask: '%s' is not a valid residue flag name. Known flags:\n",name);
+    for (int i=0; flag_names[i].name; i++)
+        VP0("   %s\n", flag_names[i].name);
+    return 0x000080000; // return a bit that cannot be matched
 }

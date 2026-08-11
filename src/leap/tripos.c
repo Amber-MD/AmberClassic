@@ -128,11 +128,11 @@ see below for usage examples.
 
     /* Search for the TRIPOS_MOLECULE string */
 
-    bGotIt = FALSE;
+    bGotIt = false;
     while ( !feof(fIn) && !ferror(fIn) ) {
         T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sCmd), break);
         if (strcmp(sCmd, TRIPOS_MOLECULE) == 0) {
-            bGotIt = TRUE;
+            bGotIt = true;
             break;
         }
     }
@@ -159,11 +159,11 @@ see below for usage examples.
 
     /* Search for the TRIPOS_ATOM string */
 
-    bGotIt = FALSE;
+    bGotIt = false;
     while ( !feof(fIn) && !ferror(fIn) ) {
         T_FSCANF(iRet, fIn, sLine, (sLine, "%s", sCmd), break);
         if (strcmp(sCmd, TRIPOS_ATOM) == 0) {
-            bGotIt = TRUE;
+            bGotIt = true;
             break;
         }
     }

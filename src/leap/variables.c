@@ -82,7 +82,7 @@ int             i = 1;
 int             iColumns;
 
     /* TODO: figure columns for actual window size & max string size */
-    if ( GbGraphicalEnvironment == TRUE )
+    if ( GbGraphicalEnvironment )
         iColumns = 8;
     else
         iColumns = 8;

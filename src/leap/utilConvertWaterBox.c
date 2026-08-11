@@ -105,7 +105,7 @@ DONE:
 
     uUnit = (UNIT)oCreate(UNITid);
     ContainerSetName( uUnit, "WATBOX216" );
-    UnitSetUseBox( uUnit, TRUE );
+    UnitSetUseBox( uUnit, true );
     UnitSetBeta( uUnit, 90.0 );			/* Beta is stored in degrees */
     UnitSetBox( uUnit, dWidth, dWidth, dWidth );
 

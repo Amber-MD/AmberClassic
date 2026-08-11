@@ -81,5 +81,7 @@ extern double		dVectorAtomAngle( VECTOR *vPA, VECTOR *vPB,
 				VECTOR *vPC );
 extern double		dVectorAtomTorsion( VECTOR *vPA, VECTOR *vPB, 
 				VECTOR *vPC, VECTOR *vPD );
+extern double           dVectorDistance( VECTOR *Pv1, VECTOR *Pv2 );
+extern double           dVectorDistanceSq( VECTOR *Pv1, VECTOR *Pv2 );
 
 #endif          /* ifndef VECTOR_H */

@@ -322,6 +322,7 @@ LISTLOOP        llL;
     llL = (LISTLOOP)PCollectionLoop( (COLLECTION)lList );
     if ( llL == NULL ) 
 	return;
+    VP0("--list contents:\n" );
     while ( (oObj = oCollectionNext( (COLLECTION)lList, (GENP *)&llL )) 
 								!= NULL ) {
         Describe( oObj );
@@ -343,7 +344,7 @@ LISTLOOP        llL;
  *      no more references to it.
  *      
  *      Return:
- *              FALSE if the element is not in the list.
+ *              false if the element is not in the list.
  */
 bool
 bListRemove( LIST lList, OBJEKT oObject )
@@ -352,13 +353,13 @@ NODEP   nPNode;
 
                 /* If the list is empty then return */
 
-    if ( lList->nPFirstNode==NULL ) return(FALSE);
+    if ( lList->nPFirstNode==NULL ) return(false);
     if (bObjectInClass( oObject, CONTAINERid ) && CONTAINER_from(oObject)->nPListNode ) {
         nPNode = CONTAINER_from(oObject)->nPListNode;
     } else {
                 /* Search the list for the object */
         nPNode = searchList( lList->nPFirstNode, oObject);
-        if ( !nPNode ) return(FALSE);
+        if ( !nPNode ) return(false);
     }
 
                 /* Now remove the object from the list */
@@ -379,7 +380,7 @@ NODEP   nPNode;
                 /* DEREF the object */
     DEREF( oObject );
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -395,13 +396,13 @@ NODEP   nPNode;
  *      Find out if a list contains a particular object.
  *      
  *      Return:
- *              FALSE if the element is not in the list.
+ *              false if the element is not in the list.
  */
 bool
 bListContains( LIST lList, OBJEKT oObject )
 {
                 /* If the list is empty then return */
-    if ( lList->nPFirstNode==NULL ) return(FALSE);
+    if ( lList->nPFirstNode==NULL ) return(false);
 
                 /* Search the list for the object */
     return searchList( lList->nPFirstNode, oObject ) != NULL;
@@ -477,7 +478,7 @@ LISTLOOP        llLoop;
     while ( ( oObj = oListNext(&llLoop) ) != NULL ) {
         oNew = oObjectDuplicate(oObj);
         /* Call ListAddTeEnd() to maintain the same order! JMK 2026 */
-        if (GDefaults.reverse_lists) {
+        if (GDefaults.bReverseLists) {
             ListAdd( (LIST)lNew, oNew );
             CONTAINER_from(oNew)->nPListNode = LIST_from(lNew)->nPFirstNode;
         } else {

@@ -55,7 +55,8 @@
 #include        "mathop.h"
 #include        "sort.h"
 #include        "neighbors.h"
-#include        "symmetry.h"
+//#include        "symmetry.h"
+#include        "defaults.h"
 
 /*
  *      dToolAtomR
@@ -231,7 +232,7 @@ ToolSanityCheckBox( UNIT uUnit )
                 }
                 UnitSetBox( uUnit, 0.0, 0.0, 0.0 );
                 UnitSetBeta( uUnit, 0.0 ); // FIXME 90 degree default elsewhere
-                UnitSetUseBox( uUnit, FALSE );
+                UnitSetUseBox( uUnit, false );
         }
 }
 
@@ -291,7 +292,7 @@ int             iFirst = 1;
     if ( bUnitUseBox( uUnit ) )
         return;
 
-    if ( bOrient == TRUE ) {
+    if ( bOrient ) {
         VP0("Orienting unit by principle axis...\n");
         ToolOrientPrincipleAxisAlongCoordinateAxis( uUnit );
     }
@@ -429,9 +430,9 @@ RESIDUE         rRes;
          */
         VP0("Solvent has no box, so preparing by making box including vdw\n");
         VP0("(Use 'setBox centers' first if box was pre-equilibrated)\n");
-        ToolCenterUnitByRadii( uSolvent, FALSE );
+        ToolCenterUnitByRadii( uSolvent, false );
 
-        UnitSetUseBox( uSolvent, TRUE );
+        UnitSetUseBox( uSolvent, true );
         UnitSetBeta( uSolvent, 90.0*DEGTORAD );
     }
 
@@ -439,8 +440,6 @@ RESIDUE         rRes;
      *  Make sure that all solvent residues are marked as solvent
      *  and stuff the atom radii for solvent screening
      */
-    //lResidues = lLoop( (OBJEKT)uSolvent, RESIDUES );
-    //while ( (rRes = (RESIDUE)oNext(&lResidues)) )
     FOR_RESIDUES_IN_UNIT(rRes,uSolvent)
         ResidueSetType( rRes, RESTYPESOLVENT);
 
@@ -508,65 +507,6 @@ Point           *ptPTmp;
  *   - Cell angles in degrees
  * ====================================================================== */
 
-/* -----------------------------------------------------------------------
- * BuildFractionalTransforms
- * Builds frac->cart (M) and cart->frac (Mi) as 4x4 matrices.
- * bOrtho is auto-detected from cell angles.
- * --------------------------------------------------------------------- */
-void
-BuildFractionalTransforms( UNIT uUnit, MATRIX M, MATRIX Mi )
-{
-double  a, b, c, alpha, beta, gamma;
-int     i, j, bOrtho;
-
-    a     = uUnit->dXWidth;
-    b     = uUnit->dYWidth;
-    c     = uUnit->dZWidth;
-    alpha = uUnit->dAlpha;
-    beta  = uUnit->dBeta;
-    gamma = uUnit->dGamma;
-
-    bOrtho = ( fabs(alpha - 90.0) < 1e-4 &&
-               fabs(beta  - 90.0) < 1e-4 &&
-               fabs(gamma - 90.0) < 1e-4 );
-
-    /* zero everything first */
-    for ( i = 0; i < 4; i++ )
-        for ( j = 0; j < 4; j++ )
-            M[i][j] = Mi[i][j] = 0.0;
-    M[3][3] = Mi[3][3] = 1.0;
-
-    if ( bOrtho ) {
-        M[0][0]=a;    M[1][1]=b;    M[2][2]=c;
-        Mi[0][0]=1.0/a; Mi[1][1]=1.0/b; Mi[2][2]=1.0/c;
-    } else {
-        double ar = alpha;
-        double br = beta;
-        double gr = gamma;
-        double ca = cos(ar), cb = cos(br), cg = cos(gr), sg = sin(gr);
-
-        double cx = cb;
-        double cy = (ca - cb*cg) / sg;
-        double cz = sqrt(1.0 - cx*cx - cy*cy);
-
-        /* frac->cart, column-major: M[col][row] */
-        M[0][0]=a;
-        M[1][0]=b*cg;  M[1][1]=b*sg;
-        M[2][0]=c*cx;  M[2][1]=c*cy;  M[2][2]=c*cz;
-
-        /* analytic inverse of upper-triangular 3x3, stored column-major */
-        double m00=M[0][0];
-        double m10=M[1][0], m11=M[1][1];
-        double m20=M[2][0], m21=M[2][1], m22=M[2][2];
-
-        Mi[0][0] = 1.0/m00;
-        Mi[1][0] = -m10/(m00*m11);
-        Mi[1][1] = 1.0/m11;
-        Mi[2][0] = (m10*m21 - m20*m11)/(m00*m11*m22);
-        Mi[2][1] = -m21/(m11*m22);
-        Mi[2][2] = 1.0/m22;
-    }
-}
 
 /* -----------------------------------------------------------------------
  * zdPBCCellVolume
@@ -639,11 +579,9 @@ zToolBuildSoluteArrayWrapped( UNIT uUnit,
         double dCloseness,
         VARARRAY *vaPSolute )
 {
-int         i, iAtoms, iOut;
 LOOP        lTemp;
 VARARRAY    vaSolute;
 ATOM        aAtom;
-Point       *sPTmp;
 MATRIX      M, Mi;
 double      Rf[3];
 
@@ -651,31 +589,17 @@ double      Rf[3];
 
     /* --- fractional buffer thickness per axis (conservative, row-norm) ---
      * Mi is column-major so row i is Mi[0][i], Mi[1][i], Mi[2][i]        */
-    for ( i = 0; i < 3; i++ ) {
+    for (int i = 0; i < 3; i++ ) {
         double rn = sqrt( Mi[0][i]*Mi[0][i] +
                           Mi[1][i]*Mi[1][i] +
                           Mi[2][i]*Mi[2][i] );
         Rf[i] = dCloseness * rn;
     }
 
-    /* --- count atoms --- */
-    iAtoms = 0;
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( oNext(&lTemp) != NULL )
-        iAtoms++;
-
     vaSolute = vaVarArrayCreate( sizeof(Point) );
-    VarArraySetSize( vaSolute, iAtoms * 27 );   /* worst case, shrunk below */
-    *vaPSolute = vaSolute;
 
-    if ( iAtoms == 0 )
-        return;
-
-    iOut  = 0;
     lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-
-    for ( i = 0; i < iAtoms; i++ ) {
-        aAtom = (ATOM) oNext(&lTemp);
+    while ( (aAtom = (ATOM) oNext(&lTemp)) ) {
 
         /* --- atom radius --- */
         double r = dToolAtomR( aAtom );
@@ -707,15 +631,15 @@ double      Rf[3];
         int nx=0, ny=0, nz=0;
 
         dxs[nx++] = 0;
-        if ( wx       <= Rf[0] ) dxs[nx++] = -1;
+        if ( wx      <= Rf[0] ) dxs[nx++] = -1;
         if ( wx > 1.0 - Rf[0] ) dxs[nx++] = +1;
 
         dys[ny++] = 0;
-        if ( wy       <= Rf[1] ) dys[ny++] = -1;
+        if ( wy      <= Rf[1] ) dys[ny++] = -1;
         if ( wy > 1.0 - Rf[1] ) dys[ny++] = +1;
 
         dzs[nz++] = 0;
-        if ( wz       <= Rf[2] ) dzs[nz++] = -1;
+        if ( wz      <= Rf[2] ) dzs[nz++] = -1;
         if ( wz > 1.0 - Rf[2] ) dzs[nz++] = +1;
 
         /* --- emit all image combinations, frac->cart --- */
@@ -727,61 +651,18 @@ double      Rf[3];
             double ify = wy + dys[iy];
             double ifz = wz + dzs[iz];
 
-            sPTmp = PVAI( vaSolute, Point, iOut++ );
-            sPTmp->r     = r;
-            sPTmp->x     = M[0][0]*ifx + M[1][0]*ify + M[2][0]*ifz;
-            sPTmp->y     = M[0][1]*ifx + M[1][1]*ify + M[2][1]*ifz;
-            sPTmp->z     = M[0][2]*ifx + M[1][2]*ify + M[2][2]*ifz;
-            sPTmp->group = 0;
+            Point p = {
+                M[0][0]*ifx + M[1][0]*ify + M[2][0]*ifz,
+                M[0][1]*ifx + M[1][1]*ify + M[2][1]*ifz,
+                M[0][2]*ifx + M[1][2]*ify + M[2][2]*ifz,
+                0, { .r = r }
+            };
+            VarArrayAdd(vaSolute,&p);
         }
     }
-
-    VarArraySetSize( vaSolute, iOut );
+    *vaPSolute = vaSolute;
 }
 
-
-/* -----------------------------------------------------------------------
- * zBuildSymopMatrices
- * Converts an array of SYMOPt (fractional integer rot + trans/12)
- * to Cartesian 4x4 matrices using:  Mcart = M * Mfrac * Mi
- * The translation (trans/12 fractional) is embedded in column 3 of
- * Mfrac so it is carried through automatically by the multiply.
- * --------------------------------------------------------------------- */
-void
-BuildSymopMatrices( UNIT uUnit,
-                     SYMOPt *symmops, int nSymops,
-                     MATRIX **maPSymops )
-{
-MATRIX  M, Mi, mFrac, mTmp;
-MATRIX  *maSymops;
-int     i, j;
-
-    BuildFractionalTransforms( uUnit, M, Mi );
-
-    maSymops = (MATRIX *)malloc( nSymops * sizeof(MATRIX) );
-    *maPSymops = maSymops;
-
-    for ( i = 0; i < nSymops; i++ ) {
-        /* --- build fractional symop as 4x4 ---
-         * rotation in upper-left 3x3, translation in column 3 */
-        for ( j = 0; j < 4; j++ )
-            mFrac[j][0] = mFrac[j][1] = mFrac[j][2] = mFrac[j][3] = 0.0;
-        mFrac[3][3] = 1.0;
-
-        int r, c;
-        for ( r = 0; r < 3; r++ )
-            for ( c = 0; c < 3; c++ )
-                mFrac[c][r] = (double)symmops[i].rot[r][c];  /* col-major */
-
-        mFrac[3][0] = (double)symmops[i].trans[0] / 12.0;
-        mFrac[3][1] = (double)symmops[i].trans[1] / 12.0;
-        mFrac[3][2] = (double)symmops[i].trans[2] / 12.0;
-
-        /* Mcart = M * Mfrac * Mi */
-        MatrixMultiply( mTmp,           M,    mFrac );
-        MatrixMultiply( maSymops[i],    mTmp, Mi    );
-    }
-}
 
 
 /*
@@ -790,7 +671,7 @@ int     i, j;
  *      Author: Christian Schafmeister (1991)
  *      Revised: Bill Ross (1994)
  *
- *      Return TRUE if the atom fails any criteria determined 
+ *      Return true if the atom fails any criteria determined 
  *      by iCriteria 
  */
 static inline bool
@@ -824,9 +705,9 @@ size_t          npairs;
                 /*
                  *  check if atom falls outside of clipped rectangular box
                  */
-                if ( dXabs >= cPCriteria->dX ) return(TRUE);
-                if ( dYabs >= cPCriteria->dY ) return(TRUE);
-                if ( dZabs >= cPCriteria->dZ ) return(TRUE);
+                if ( dXabs >= cPCriteria->dX ) return(true);
+                if ( dYabs >= cPCriteria->dY ) return(true);
+                if ( dZabs >= cPCriteria->dZ ) return(true);
         }
         if ( iCriteria & TOOLOUTSIDEOFOCTBOX ) {
                 /*
@@ -835,7 +716,7 @@ size_t          npairs;
                 if ( (dXabs / cPCriteria->dX) +
                      (dYabs / cPCriteria->dY) +
                      (dZabs / cPCriteria->dZ) > 1.5 )
-                    return TRUE;
+                    return true;
         }
     }
     if ( iCriteria & TOOLOUTSIDEOFCELL ) {
@@ -846,15 +727,15 @@ size_t          npairs;
         double dFX = cPCriteria->mFractionalize[0][0]*dX +
                      cPCriteria->mFractionalize[1][0]*dY +
                      cPCriteria->mFractionalize[2][0]*dZ;
-        if (dFX <=0.0 || dFX >= 1.0) return TRUE;
+        if (dFX <=0.0 || dFX >= 1.0) return true;
         double dFY = cPCriteria->mFractionalize[0][1]*dX +
                      cPCriteria->mFractionalize[1][1]*dY +
                      cPCriteria->mFractionalize[2][1]*dZ;
-        if (dFY <=0.0 || dFY >= 1.0) return TRUE;
+        if (dFY <=0.0 || dFY >= 1.0) return true;
         double dFZ = cPCriteria->mFractionalize[0][2]*dX +
                      cPCriteria->mFractionalize[1][2]*dY +
                      cPCriteria->mFractionalize[2][2]*dZ;
-        if (dFZ <=0.0 || dFZ >= 1.0) return TRUE;
+        if (dFZ <=0.0 || dFZ >= 1.0) return true;
     }
 
 
@@ -866,7 +747,7 @@ size_t          npairs;
         dY = dVY(&vPos) - dVY(&(cPCriteria->vCenter));
         dZ = dVZ(&vPos) - dVZ(&(cPCriteria->vCenter));
         dDist2 = dX * dX  +  dY * dY  +  dZ * dZ;
-        if ( dDist2 > cPCriteria->dRadiusSqd ) return(TRUE);
+        if ( dDist2 > cPCriteria->dRadiusSqd ) return(true);
     }
 
     /*
@@ -891,7 +772,7 @@ size_t          npairs;
             dRadii2 *= dRadii2;
 
             if ( dDist2 < dClosest2 ) dClosest2 = dDist2;
-            if ( dDist2 < dRadii2 && (iCriteria & TOOLSOLUTECOLLISION) ) return TRUE;
+            if ( dDist2 < dRadii2 && (iCriteria & TOOLSOLUTECOLLISION) ) return true;
     }
 
     /* Check if the closest solute atom to the solvent */
@@ -899,9 +780,9 @@ size_t          npairs;
     /* then it will be outside the solvent shell and has */
     /* to be eliminated */
     if ( dClosest2 >= dFarness2 && (iCriteria & TOOLOUTSIDESHELL) )
-        return(TRUE);
+        return(true);
 
-    return(FALSE);
+    return(false);
 }
 
 
@@ -932,8 +813,6 @@ ATOM            aAtom;
                 /* an atom in the solute then discard the entire */
                 /* molecule of solvent */
 
-    //lRes = lLoop( (OBJEKT)uSolvent, RESIDUES );
-    //while ( ( rRes = (RESIDUE)oNext(&lRes) ) != NULL ) {
     FOR_RESIDUES_IN_UNIT(rRes,uSolvent) {
         // Mark bulk solvent residues
         ResidueSetFlags(rRes, RESIDUEBULKSOLVENT); 
@@ -941,8 +820,6 @@ ATOM            aAtom;
          *  check each atom in the solvent residue against the
          *  solute using fast neighbor grid
          */
-        //lTemp = lLoop( (OBJEKT)rRes, ATOMS );
-        //while ( ( aAtom = (ATOM)oNext(&lTemp)) != NULL ) {
         FOR_ATOMS_IN_RESIDUE(aAtom, rRes) {
             if ( zbToolAtomFailsCriteria( aAtom, iCriteria, cPCriteria,
                             ngSolute, dCloseness, dFarness2 ) ) {
@@ -1143,7 +1020,7 @@ double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
  *      solute atom.
  *      Define the bounding box of the solute/solvent system only if
  *      !bShell.
- *      If bClip is TRUE then solvent that falls out of the box centered on
+ *      If bClip is true then solvent that falls out of the box centered on
  *      0,0,0 and with a width of dXW, dYW, dZW in the three
  *      coordinate directions will be thrown out.
  */
@@ -1262,6 +1139,8 @@ CRITERIAt       cCriteria;
 
 
     { //FIXME: check this -- Is this really the best way to get atom count??
+      // Better to loop over residues and sum iContainerNumberOfChildren(res)
+      // *** BUT that skips bare ATOMs which are techically supported even though a bad idea
         LOOP lTemp;
         ATOM aAtom;
         int iAtomCount = 0;
@@ -1285,10 +1164,10 @@ CRITERIAt       cCriteria;
     if ( !bShell ) {
         double  dMaxX, dMaxY, dMaxZ, dVolume, dMass;
 
-        ToolCenterUnitByRadii( uSolute, FALSE );
-        UnitSetUseBox( uSolute, TRUE );
+        ToolCenterUnitByRadii( uSolute, false );
+        UnitSetUseBox( uSolute, true );
         if ( bOct ) {
-                UnitSetBoxOct( uSolute, TRUE );
+                UnitSetBoxOct( uSolute, true );
                 if ( bIsotropic ) {
                         double  dAngle;
 
@@ -1356,6 +1235,37 @@ VARARRAY        vaSolute;
 int             iCriteria;
 CRITERIAt       cCriteria = {0};
 
+    if (!GDefaults.bNoCenter && GDefaults.bPdbExpandSymm) {
+        char *p = strstr("PG: ",sUnitDescription(uSolute));
+        if (p && p[4]>='1' && p[4]<='6' && p[5]==';') {
+            VECTOR vCenterModel = vContainerGeometricCenter((CONTAINER)uSolute);
+            VECTOR vCenterCell = {
+                uSolute->dXWidth * 0.5,
+                uSolute->dYWidth * 0.5,
+                uSolute->dZWidth * 0.5
+            };
+            VECTOR vShift = {0,0,0};
+            if (p[4]=='1')
+                vShift = vVectorSub(&vCenterCell,&vCenterModel);
+            else if (p[4]=='2')
+                vShift.dY = vCenterCell.dY - vCenterModel.dY;
+            else if (p[4]>='3' && p[4]<='6')
+                vShift.dZ = vCenterCell.dZ - vCenterModel.dZ;
+            VP0("Centering Solute along non-fixed primitive axes, by translation: %8.3f,%8.3f,%8.3f\n",
+                     vShift.dX, vShift.dY, vShift.dZ);
+            /* --- apply shift to original */
+            LOOP lAtoms; ATOM aAtom;
+            LOOPOVERALL(uSolute,ATOMS,aAtom,ATOM,lAtoms) {
+                VECTOR vNewPosition = {
+                    vAtomPosition(aAtom).dX + vShift.dX,
+                    vAtomPosition(aAtom).dY + vShift.dY,
+                    vAtomPosition(aAtom).dZ + vShift.dZ
+                };
+                AtomSetPosition(aAtom, vNewPosition);
+            }
+        }
+    }
+
     /*
      *  make temporary array of solute atoms for faster checking
      */
@@ -1419,7 +1329,7 @@ CRITERIAt       cCriteria = {0};
 
                 /* Define the size of the new solute/solvent system */
 
-    UnitSetUseBox( uSolute, TRUE );
+    UnitSetUseBox( uSolute, true );
     double dVolume = zdPBCCellVolume(M);
     VP0("  Volume: %5.3lf A^3 (cell)\n", dVolume );
 
@@ -1538,8 +1448,6 @@ if ( aSolvAtom == NULL )
                 dZSolv = vAtomPosition( aSolvAtom ).dZ;
 
                 dPot = 0.0;
-                //lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
-                //while ( (rRes = (RESIDUE)oNext( &lResidues )) != NULL) {
                 FOR_RESIDUES_IN_UNIT(rRes,uUnit) {
                         ATOM    aSoluteAtom;
 
@@ -1552,8 +1460,6 @@ if ( aSolvAtom == NULL )
                          *      contributions to solvent residue's 
                          *      potential
                          */
-                        //lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
-                        //while ( (aSoluteAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
                         FOR_ATOMS_IN_RESIDUE(aSoluteAtom, rRes) {
                                 double  dX, dY, dZ, dR;
 
@@ -1616,7 +1522,7 @@ double          dMinPot, dMaxPot;
          *  delete the solvent residue & null the pointer in the array
          */
         REF( *rPRes );  /* bContainerRemove() needs this */
-        if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*rPRes ) == FALSE)
+        if ( bContainerRemove( (CONTAINER)uUnit, (OBJEKT)*rPRes ) == false)
                 DFATAL("rmv solv %d failed\n", iSolv );
         ContainerDestroy((CONTAINER *) rPRes );
         *rPRes = NULL;
@@ -1679,8 +1585,8 @@ double          dMinPot, dMaxPot;
  *      pairs that are close enough to create a bond between
  *      them.  The argument bAbsoluteDistance is used to determine
  *      the criteria to use to create bonds.   If bAbsoluteDistance
- *      is TRUE then dCloseness is used as an absolute distance
- *      where atoms closer than that are bonded.  If FALSE then
+ *      is true then dCloseness is used as an absolute distance
+ *      where atoms closer than that are bonded.  If false then
  *      dCloseness is a multiplier of the average of the Van der Waals
  *      distances.
  *
@@ -1867,7 +1773,7 @@ size_t                  npairs;
         VP0("%d pairs of atoms within potential bonding distance\n", iCount);
         VP0("%d are not H-H pairs\n", iPairs );
 
-        SortByDouble( Ppair, iPairs, sizeof(PAIRt), &Ppair->dDist, TRUE );
+        SortByDouble( Ppair, iPairs, sizeof(PAIRt), &Ppair->dDist, true );
         iCount = 0;
         for (i=0; i<iPairs; i++, Ppair++ ) {
                 
@@ -1888,6 +1794,8 @@ size_t                  npairs;
         VarArrayDestroy( &vaPairs );
     }
 
+    neighbor_grid_free( ngAtoms );
+    VarArrayDestroy(&vaPoints);
     VarArrayDestroy( &vaAtoms );
 
     return(iCount);
@@ -1995,7 +1903,7 @@ double          dDot;
  *      If oObject is a LIST of 3 ODOUBLEs then the vector
  *      defined by the three doubles is returned.
  *
- *      Return TRUE if the geometric center was defined.
+ *      Return true if the geometric center was defined.
  *
  */
 bool
@@ -2014,7 +1922,7 @@ double          daElements[3];
     if ( bObjectInClass( oObjekt, CONTAINERid ) ) {
         *vPCenter = vContainerGeometricCenter((CONTAINER)oObjekt);
     } else if ( iObjectType(oObjekt) == LISTid ) {
-        bVector = TRUE;
+        bVector = true;
         llElements = llListLoop((LIST)oObjekt);
         i = 0;
         while ( (oElement = oListNext(&llElements)) ) {
@@ -2025,15 +1933,15 @@ double          daElements[3];
                         daElements[i] = dODouble(oNum);
                         i++;
                     } else {
-                        bVector = FALSE;
+                        bVector = false;
                         break;
                     }
                 } else {
-                    bVector = FALSE;
+                    bVector = false;
                     break;
                 }
             } else {
-                bVector = FALSE;
+                bVector = false;
                 break;
             }
         }
@@ -2052,7 +1960,7 @@ double          daElements[3];
                 } else 
                     cCont = (CONTAINER)oElement;
                 if ( !bObjectInClass( (OBJEKT)cCont, CONTAINERid ) ) 
-                        return(FALSE);
+                        return(false);
                 lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
                 while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
                     vPos = vVectorAdd( &vPos, &vAtomPosition(aAtom) );
@@ -2064,7 +1972,7 @@ double          daElements[3];
             }
         }
     }
-    return(TRUE);
+    return(true);
 }
 
 

@@ -217,7 +217,7 @@ typedef char *          STRINGref;
  *      function.
  */
 
-typedef int             FLAGS;
+typedef unsigned int    FLAGS;
 
 typedef struct  {
         FLAGS           fMode;
@@ -241,12 +241,6 @@ typedef struct  {
 
 #define sBOOL(b)        ( b ? "TRUE" : "FALSE" )
 
-#ifndef TRUE
-# define        TRUE    1
-#endif
-#ifndef FALSE
-# define        FALSE   0
-#endif
 #ifndef MAX
 # define        MAX( x, y )     ( (x) < (y) ? (y) : (x) )
 #endif
@@ -277,8 +271,8 @@ typedef struct  {
 
 #define VERYSMALL       1E-12
 #define TOLERANCE       0.001           /* Used for comparing doubles */
-//#define DEGTORAD      0.017453292519943295769236907684886
-#define DEGTORAD        0.0174533
+#define DEGTORAD      0.017453292519943295769236907684886
+//#define DEGTORAD        0.0174533
 
 #define ELECTRONTOKCAL  18.2223
 // precise value: 1 AMBER charge unit = 18.2226134
@@ -364,8 +358,8 @@ typedef KLASSt  *KLASS;
                         /* BasicsInterrupt will set the interrupt */
 extern  bool    GbInterrupt;
 #define bBasicsInterrupt()      ( GbInterrupt )
-#define BasicsResetInterrupt()  ( GbInterrupt = FALSE )
-#define BasicsSetInterrupt()    ( GbInterrupt = TRUE )
+#define BasicsResetInterrupt()  ( GbInterrupt = false )
+#define BasicsSetInterrupt()    ( GbInterrupt = true )
 
 
 /*
@@ -720,8 +714,8 @@ extern void myPrintTrace(const char *prefix, int depth, const char *fmt, ...);
 
 
 
-#define FOPENCOMPLAIN(a,b)      fBasicsMyFopen(a,b,TRUE)
-#define FOPENNOCOMPLAIN(a,b)    fBasicsMyFopen(a,b,FALSE)
+#define FOPENCOMPLAIN(a,b)      fBasicsMyFopen(a,b,true)
+#define FOPENNOCOMPLAIN(a,b)    fBasicsMyFopen(a,b,false)
 
 extern STRING   GsBasicsFullName;
 
@@ -804,6 +798,8 @@ extern int              iCreatePrintSink( VFUNCTION fOutputCallback,
 extern void             DestroyPrintSink( int iHandle );
 extern void             PushCurrentPrintSink( int iSink );
 extern void             PopCurrentPrintSink(void);
+extern double           dUniformRandom(void);
+extern int              iUniformRandom(int iRange);
 extern void             BasicsInitialize(void);
 extern void             BasicsFinalize(void);
 extern void             BasicsKlassMismatchPanic( GENP PObj, char *cPFile,

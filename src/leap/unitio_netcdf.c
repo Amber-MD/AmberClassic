@@ -224,7 +224,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_put_att_text(ncid, vid_bcoef, "units", 19, "kcal/mol*angstrom^6"));
         NC_CHECK(nc_put_att_text(ncid, vid_acoef, "long_name", 48,
                                  "LJ parm B coefficients, size NTYPES*(NTYPES+1)/2"));
-        if (GDefaults.iCharmm) {
+        if (GDefaults.bCharmm) {
             NC_CHECK(nc_def_var(ncid, "nonbond_LJ14_acoef", NC_DOUBLE, 1, &dimid_nttyp, &vid_14acoef));
             NC_CHECK(nc_put_att_text(ncid, vid_14acoef, "units", 20, "kcal/mol*angstrom^12"));
             NC_CHECK(nc_def_var(ncid, "nonbond_LJ14_Bcoef", NC_DOUBLE, 1, &dimid_nttyp, &vid_14bcoef));
@@ -295,7 +295,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_put_att_text(ncid, vid_angle_eq, "units", 6, "degrees"));
 
         /* CHARMM UB terms */
-        if (GDefaults.iCharmm) {
+        if (GDefaults.bCharmm) {
             NC_CHECK(nc_def_var(ncid, "angle_UB_force_constant", NC_DOUBLE, 1, &dimid_ap, &vid_angle_UB_force));
             NC_CHECK(nc_put_att_text(ncid, vid_angle_UB_force, "units", 19, "kcal/mol/angstrom^2"));
             NC_CHECK(nc_def_var(ncid, "angle_UB_equil_value", NC_DOUBLE, 1, &dimid_ap, &vid_angle_UB_equil));
@@ -421,12 +421,11 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                 }
         }
         int dimid_ah, dimid_anh;
-        int dims2[2] = { dimid_ah, dimid_atom3 };
-
         NC_CHECK(nc_def_dim(ncid, "angles_inc_h", nh,  &dimid_ah));
         NC_CHECK(nc_def_dim(ncid, "angles_excl_h", na-nh, &dimid_anh));
         NC_CHECK(nc_def_dim(ncid, "angles_w_restraints", nnh, &dimid_anh));
 
+        int dims2[2] = { dimid_ah, dimid_atom3 };
         NC_CHECK(nc_def_var(ncid, "angles_inc_hydrogen_atoms", NC_INT, 2, dims2, &vid_ah_atoms));
         NC_CHECK(nc_put_att_text(ncid, vid_ah_atoms, "long_name",          20, "1-based atom indices"));
         NC_CHECK(nc_put_att_text(ncid, vid_ah_atoms, "reference_dimension", 5, "atoms"));
@@ -476,11 +475,17 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                 SWAP(t->iAtom2, t->iAtom3, iTemp);
             }
             int iCalc14 = t->bCalc14 ? 1 : -1;
-            int iProper  = t->bProper  ? 1 : -1;
+            int iProper = t->bProper  ? 1 : -1;
+            int iAtom1, iAtom3;
+            if (GDefaults.bCharmm && ! t->bProper) {
+                iAtom1 = t->iAtom3; iAtom3 = t->iAtom1;
+            } else {
+                iAtom1 = t->iAtom1; iAtom3 = t->iAtom3;
+            }
             if (iAtomElement(aA)==HYDROGEN || iAtomElement(aB)==HYDROGEN ||
                          iAtomElement(aC)==HYDROGEN || iAtomElement(aD)==HYDROGEN) {
-                dihe_ah[nh][0]=t->iAtom1; dihe_ah[nh][1]=t->iAtom2;
-                dihe_ah[nh][2]=t->iAtom3*iCalc14; dihe_ah[nh][3]=t->iAtom4*iProper;
+                dihe_ah[nh][0]=iAtom1; dihe_ah[nh][1]=t->iAtom2;
+                dihe_ah[nh][2]=iAtom3*iCalc14; dihe_ah[nh][3]=t->iAtom4*iProper;
                 dihe_pih[nh]=t->iParmIndex; nh++;
             } else {
                 dihe_anh[nnh][0]=t->iAtom1; dihe_anh[nnh][1]=t->iAtom2;
@@ -654,7 +659,8 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     }
 
     /* PDB chain info */
-    int vid_resSeq, vid_res_chain;
+    int vid_resSeq, vid_res_chain, vid_res_icode;
+    bool bHasICodes = false;
     if (GDefaults.bPdbKeepChainId) {
         NC_CHECK(nc_def_var(ncid, "residue_number", NC_INT, 1, &dimid_res, &vid_resSeq));
         NC_CHECK(nc_put_att_text(ncid, vid_resSeq, "long_name", 10, "PDB resSeq"));
@@ -665,11 +671,25 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
 
         int dims2[2] = { dimid_res, dimid_name4 };
         NC_CHECK(nc_def_var(ncid, "residue_chainid", NC_CHAR, 2, dims2, &vid_res_chain));
-        NC_CHECK(nc_put_att_text(ncid, vid_res_chain, "long_name", 10, "PDB resSeq"));
-        NC_CHECK(nc_put_att_text(ncid, vid_res_chain, "pdb_field",     7, "chainId"));
+        NC_CHECK(nc_put_att_text(ncid, vid_res_chain, "long_name", 10, "PDB chainId"));
+        NC_CHECK(nc_put_att_text(ncid, vid_res_chain, "pdb_field", 7, "chainId"));
         if (GDefaults.bCIFReadAuth)
             NC_CHECK(nc_put_att_text(ncid, vid_res_chain, "mmcif_field",    22, "atom_site.auth_comp_id"));
         else NC_CHECK(nc_put_att_text(ncid, vid_res_chain, "mmcif_field",  23, "atom_site.label_comp_id"));
+        bHasICodes = false;
+        for (int i = 0; i < n_residues; i++) {
+            SAVERESIDUEt *srRes = PVAI(uUnit->vaResidues, SAVERESIDUEt, i);
+            if (srRes->sICode[0] != ' ') {
+                bHasICodes = true;
+                break;
+            }
+        }
+        if (bHasICodes) {
+            NC_CHECK(nc_def_var(ncid, "residue_icode", NC_CHAR, 1, &dimid_res, &vid_res_icode));
+            NC_CHECK(nc_put_att_text(ncid, vid_res_icode, "long_name", 10, "PDB iCode"));
+            NC_CHECK(nc_put_att_text(ncid, vid_res_icode, "pdb_field", 5, "iCode"));
+            NC_CHECK(nc_put_att_text(ncid, vid_res_icode, "mmcif_field", 27, "atom_site.pdbx_PDB_ins_code"));
+        }
     }
 
     /* CMAP -- pending data structure review */
@@ -677,7 +697,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int *vid_cmap_grid = NULL;
     int CMAP_TYPES = iParmSetTotalCMAPParms(uUnit->psParameters);
     int CMAP_KINDS = iVarArrayElementCount(uUnit->vaCMAPs); // = NumPhiPsi
-    if (CMAP_TYPES && CMAP_KINDS && GDefaults.iCMAP) {
+    if (CMAP_TYPES && CMAP_KINDS && GDefaults.bCMAP) {
 
         /* ── write CMAP_KINDS and CMAP_TYPES scalars ── */
         /* ── CMAP_INDEX_ATOMS and CMAP_INDEX_MAP ── */
@@ -693,7 +713,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             NC_CHECK(nc_put_att_text(ncid, vid_phipsi_atoms, "reference_dimension", 6, "atoms"));
 
             NC_CHECK(nc_def_var(ncid, "phi_psi_parm", NC_INT, 1, &dimid_kinds, &vid_phipsi_mapidx));
-            NC_CHECK(nc_put_att_text(ncid, vid_phipsi_mapidx, "long_name", 79,
+            NC_CHECK(nc_put_att_text(ncid, vid_phipsi_mapidx, "long_name", 69,
                     "1-based index into phi_psi_cmap_resolution_<nn> and phi_psi_cmap_<nn>"));
             NC_CHECK(nc_put_att_text(ncid, vid_phipsi_atoms, "reference_dimenson", 10, "phi_psi_types"));
 
@@ -705,7 +725,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         for (int i = 0; i < CMAP_TYPES; i++) {
             int dimid_cmap_res;
             CMAPt cmap;
-            ParmSetCMAP(uUnit->psParameters, i, &cmap, FALSE);
+            ParmSetCMAP(uUnit->psParameters, i, &cmap, false);
 
             /* RESOLUTION_nn dimension shared by both phi and psi axes. */
             STRING sResolution;
@@ -727,7 +747,8 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
 
 
     NC_CHECK(nc_enddef(ncid));
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//====================== write data =======================
 
     /* cell dimensions */
     if (bUnitUseBox(uUnit)) {
@@ -915,7 +936,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         free(kt); free(t0);
 
         /* CHARMM UB terms */
-        if (GDefaults.iCharmm) {
+        if (GDefaults.bCharmm) {
             double *tkub = malloc(na*sizeof(double)), *rkub = malloc(na*sizeof(double));
             for (int i = 0; i < na; i++) {
                 ParmSetAngle(uUnit->psParameters, i, s1, s2, s3, &dKt, &dT0, &dTkub, &dRkub, sDesc);
@@ -975,7 +996,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_put_var_double(ncid, vid_bcoef, B));
 
         /* CHARMM 1-4 terms */
-        if (GDefaults.iCharmm) {
+        if (GDefaults.bCharmm) {
             for (int i = 0; i < nttyp; i++) {
                 A[i] = PVAI(vaNBParameters, NONBONDACt, i)->dA14;
                 B[i] = PVAI(vaNBParameters, NONBONDACt, i)->dB14;
@@ -1147,10 +1168,18 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         }
         NC_CHECK(nc_put_var_text(ncid, vid_res_chain, cbuf));
         free(cbuf);
+
+        if (bHasICodes) {
+            char *sbuf = malloc(n_residues);
+            for (int i = 0; i < n_residues; i++)
+                sbuf[i] = PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sICode[0];
+            NC_CHECK(nc_put_var_text(ncid, vid_res_icode, sbuf));
+            free(sbuf);
+        }
     }
 
     /* CMAP -- pending data structure review */
-    if (CMAP_TYPES && CMAP_KINDS && GDefaults.iCMAP) {
+    if (CMAP_TYPES && CMAP_KINDS && GDefaults.bCMAP) {
     /* ── write CMAP_KINDS and CMAP_TYPES scalars ── */
     /* ── CMAP_INDEX_ATOMS and CMAP_INDEX_MAP ── */
 
@@ -1170,7 +1199,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
        in degrees) plus the GRID energy surface.                     */
         for (int i = 0; i < CMAP_TYPES; i++) {
             CMAPt cmap;
-            ParmSetCMAP(uUnit->psParameters, i, &cmap, FALSE);
+            ParmSetCMAP(uUnit->psParameters, i, &cmap, false);
             NC_CHECK(nc_put_var_double(ncid, vid_cmap_grid[i], cmap.map));
         }
         free(vid_cmap_grid);
@@ -1200,93 +1229,65 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
     int iAtomCount = iVarArrayElementCount(uUnit->vaAtoms);
     VP0("There are %i atoms\n", iAtomCount);
 
-    if (nc_create(filename, NC_64BIT_OFFSET, &ncid) != NC_NOERR)
-        VPFATALEXIT("%s: Error creating file\n", filename);
+    NC_CHECK(nc_create(filename, NC_64BIT_OFFSET, &ncid));
 
-    if (nc_def_dim(ncid, "spatial", 3, &did_spatial) != NC_NOERR)
-        VPFATALEXIT("%s: Error defining spatial dimension\n", filename);
+    NC_CHECK(nc_def_dim(ncid, "spatial", 3, &did_spatial));
 
     dimensionID[0] = did_spatial;
-    if (nc_def_var(ncid, "spatial", NC_CHAR, 1, dimensionID, &vid_spatial) != NC_NOERR)
-        VPFATALEXIT("%s: Error defining spatial variable\n", filename);
+    NC_CHECK(nc_def_var(ncid, "spatial", NC_CHAR, 1, dimensionID, &vid_spatial));
 
-    if (nc_def_dim(ncid, "atom", iAtomCount, &did_atom) != NC_NOERR)
-        VPFATALEXIT("%s: Error defining atom dimension\n", filename);
+    NC_CHECK(nc_def_dim(ncid, "atom", iAtomCount, &did_atom));
 
-    if (nc_def_var(ncid, "time", NC_DOUBLE, 0, dimensionID, &vid_time) != NC_NOERR)
-        VPFATALEXIT("%s: Error defining time variable\n", filename);
-    if (nc_put_att_text(ncid, vid_time, "units", 10, "picosecond") != NC_NOERR)
-        VPFATALEXIT("%s: Error setting time units to picosecond\n", filename);
+    NC_CHECK(nc_def_var(ncid, "time", NC_DOUBLE, 0, dimensionID, &vid_time));
+    NC_CHECK(nc_put_att_text(ncid, vid_time, "units", 10, "picosecond"));
 
     dimensionID[0] = did_atom;
     dimensionID[1] = did_spatial;
-    if (nc_def_var(ncid, "coordinates", NC_DOUBLE, 2, dimensionID, &vid_coord) != NC_NOERR)
-        VPFATALEXIT("%s: Error defining coordinate variable\n", filename);
-    if (nc_put_att_text(ncid, vid_coord, "units", 8, "angstrom") != NC_NOERR)
-        VPFATALEXIT("%s: Error setting coordinate units to angstrom\n", filename);
+    NC_CHECK(nc_def_var(ncid, "coordinates", NC_DOUBLE, 2, dimensionID, &vid_coord));
+    NC_CHECK(nc_put_att_text(ncid, vid_coord, "units", 8, "angstrom"));
 
-    if (bUnitUseBox(uUnit) == TRUE) {
+    if (bUnitUseBox(uUnit)) {
         VP0("Using the unit box\n");
-        if (nc_def_dim(ncid, "cell_spatial", 3, &did_cell_spatial) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining cell spatial dimension\n", filename);
+        NC_CHECK(nc_def_dim(ncid, "cell_spatial", 3, &did_cell_spatial));
         dimensionID[0] = did_cell_spatial;
-        if (nc_def_var(ncid, "cell_spatial", NC_CHAR, 1, dimensionID, &vid_cell_spatial) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining cell spatial variable\n", filename);
+        NC_CHECK(nc_def_var(ncid, "cell_spatial", NC_CHAR, 1, dimensionID, &vid_cell_spatial));
 
-        if (nc_def_dim(ncid, "label", 5, &did_label) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining label dimension\n", filename);
-        if (nc_def_dim(ncid, "cell_angular", 3, &did_cell_angular) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining cell angular dimension\n", filename);
+        NC_CHECK(nc_def_dim(ncid, "label", 5, &did_label));
+        NC_CHECK(nc_def_dim(ncid, "cell_angular", 3, &did_cell_angular));
         dimensionID[0] = did_cell_angular;
         dimensionID[1] = did_label;
-        if (nc_def_var(ncid, "cell_angular", NC_CHAR, 2, dimensionID, &vid_cell_angular) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining cell angular variable\n", filename);
+        NC_CHECK(nc_def_var(ncid, "cell_angular", NC_CHAR, 2, dimensionID, &vid_cell_angular));
 
         dimensionID[0] = did_cell_spatial;
-        if (nc_def_var(ncid, "cell_lengths", NC_DOUBLE, 1, dimensionID, &vid_cell_length) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining cell lengths\n", filename);
-        if (nc_put_att_text(ncid, vid_cell_length, "units", 8, "angstrom") != NC_NOERR)
-            VPFATALEXIT("%s: Error setting cell length units to angstrom\n", filename);
+        NC_CHECK(nc_def_var(ncid, "cell_lengths", NC_DOUBLE, 1, dimensionID, &vid_cell_length));
+        NC_CHECK(nc_put_att_text(ncid, vid_cell_length, "units", 8, "angstrom"));
 
         dimensionID[0] = did_cell_angular;
-        if (nc_def_var(ncid, "cell_angles", NC_DOUBLE, 1, dimensionID, &vid_cell_angle) != NC_NOERR)
-            VPFATALEXIT("%s: Error defining cell angles variable\n", filename);
-        if (nc_put_att_text(ncid, vid_cell_angle, "units", 6, "degree") != NC_NOERR)
-            VPFATALEXIT("%s: Error setting cell angle units to degree\n", filename);
+        NC_CHECK(nc_def_var(ncid, "cell_angles", NC_DOUBLE, 1, dimensionID, &vid_cell_angle));
+        NC_CHECK(nc_put_att_text(ncid, vid_cell_angle, "units", 6, "degree"));
     }
 
-    if (nc_put_att_text(ncid, NC_GLOBAL, "title",
-                        strlen(sContainerName(uUnit)), sContainerName(uUnit)) != NC_NOERR)
-        VPFATALEXIT("%s: Error writing title\n", filename);
-    if (nc_put_att_text(ncid, NC_GLOBAL, "application",      5, "AMBER") != NC_NOERR)
-        VPFATALEXIT("%s: Error writing application string\n", filename);
-    if (nc_put_att_text(ncid, NC_GLOBAL, "program",          4, "leap") != NC_NOERR)
-        VPFATALEXIT("%s: Error writing program string\n", filename);
-    if (nc_put_att_text(ncid, NC_GLOBAL, "programVersion",   3, "1.0") != NC_NOERR)
-        VPFATALEXIT("%s: Error writing program version string\n", filename);
-    if (nc_put_att_text(ncid, NC_GLOBAL, "Conventions",     12, "AMBERRESTART") != NC_NOERR)
-        VPFATALEXIT("%s: Error writing conventions\n", filename);
-    if (nc_put_att_text(ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0") != NC_NOERR)
-        VPFATALEXIT("%s: Error writing conventions version\n", filename);
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "title",
+                        strlen(sContainerName(uUnit)), sContainerName(uUnit)));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "application",      5, "AMBER"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "program",          4, "leap"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "programVersion",   3, "1.0"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "Conventions",     12, "AMBERRESTART"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0"));
 
-    if (nc_set_fill(ncid, NC_NOFILL, dimensionID) != NC_NOERR)
-        VPFATALEXIT("%s: Error setting fill mode\n", filename);
-    if (nc_enddef(ncid) != NC_NOERR)
-        VPFATALEXIT("%s: NetCDF error on ending definitions\n", filename);
+    NC_CHECK(nc_set_fill(ncid, NC_NOFILL, dimensionID));
+    NC_CHECK(nc_enddef(ncid));
 
     size_t start[2]={0}, count[2]={0};
     count[0] = 3;
-    if (nc_put_vara_text(ncid, vid_spatial, start, count, "xyz") != NC_NOERR)
-        VPFATALEXIT("%s: Error writing spatial labels\n", filename);
+    NC_CHECK(nc_put_vara_text(ncid, vid_spatial, start, count, "xyz"));
 
-    if (bUnitUseBox(uUnit) == TRUE) {
+    if (bUnitUseBox(uUnit)) {
         count[1] = 1;
-        if (nc_put_vara_text(ncid, vid_cell_spatial, start, count, "abc") != NC_NOERR)
-            VPFATALEXIT("%s: Error writing cell spatial labels\n", filename);
+        NC_CHECK(nc_put_vara_text(ncid, vid_cell_spatial, start, count, "abc"));
         count[1] = 5;
-        if (nc_put_vara_text(ncid, vid_cell_angular, start, count,
-                             "alpha" "beta " "gamma") != NC_NOERR)
-            VPFATALEXIT("%s: Error writing cell angular labels\n", filename);
+        NC_CHECK(nc_put_vara_text(ncid, vid_cell_angular, start, count,
+                             "alpha" "beta " "gamma"));
     }
 
     double *data;
@@ -1295,12 +1296,11 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
     VECTOR vPos;
 
     double time = 0.0;
-    if (nc_put_var_double(ncid, vid_time, &time) != NC_NOERR)
-        VPFATALEXIT("%s: Error writing start time\n", filename);
+    NC_CHECK(nc_put_var_double(ncid, vid_time, &time));
 
     double dX, dY, dZ, dX2, dY2, dZ2;
     UnitGetBox(uUnit, &dX, &dY, &dZ);
-    if (bUnitUseBox(uUnit) == TRUE && GDefaults.nocenter == 0) {
+    if (bUnitUseBox(uUnit) && GDefaults.bNoCenter == 0) {
         dX2 = dX * 0.5; dY2 = dY * 0.5; dZ2 = dZ * 0.5;
     } else {
         dX2 = dY2 = dZ2 = 0.0;
@@ -1315,29 +1315,17 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
 
     start[0] = start[1] = 0;
     count[0] = iAtomCount; count[1] = 3;
-    if (nc_put_vara_double(ncid, vid_coord, start, count, data) != NC_NOERR) {
-        FREE(data);
-        VPFATALEXIT("%s: Error writing coordinate data\n", filename);
-    }
+    NC_CHECK(nc_put_vara_double(ncid, vid_coord, start, count, data));
 
-    if (bUnitUseBox(uUnit) == TRUE) {
+    if (bUnitUseBox(uUnit)) {
         count[0] = 3; count[1] = 0;
         double lengths[3] = { dX, dY, dZ };
-        if (nc_put_vara_double(ncid, vid_cell_length, start, count, lengths) != NC_NOERR) {
-            FREE(data);
-            VPFATALEXIT("%s: Error writing cell lengths\n", filename);
-        }
+        NC_CHECK(nc_put_vara_double(ncid, vid_cell_length, start, count, lengths));
         lengths[0] = lengths[1] = lengths[2] = dUnitBeta(uUnit) / DEGTORAD;
-        if (nc_put_vara_double(ncid, vid_cell_angle, start, count, lengths) != NC_NOERR) {
-            FREE(data);
-            VPFATALEXIT("%s: Error writing cell angles\n", filename);
-        }
+        NC_CHECK(nc_put_vara_double(ncid, vid_cell_angle, start, count, lengths));
     }
 
-    if (nc_close(ncid) != NC_NOERR) {
-        FREE(data);
-        VPFATALEXIT("%s: Error closing file\n", filename);
-    }
+    NC_CHECK(nc_close(ncid));
     FREE(data);
     VP0("Successfully saved NetCDF inpcrd file \"%s\"\n", filename);
 }

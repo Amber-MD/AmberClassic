@@ -330,9 +330,9 @@ bAtomCoordinationSaturated( ATOM aAtom )
         
         if ( bAtomFlagsSet( aAtom, ATOMPERTURB ) ) {
                 if ( iAtomCoordination( aAtom ) >= MAXBONDS ) {
-                        return(TRUE);
+                        return(true);
                 } else {
-                        return(FALSE);
+                        return(false);
                 }
         }
 
@@ -345,24 +345,24 @@ bAtomCoordinationSaturated( ATOM aAtom )
                 if ( iAtomCoordination( aAtom ) ) {
                         if ( !strncmp( aAtom->sType, "HW", ATOMTYPELEN)
                                         && iAtomCoordination( aAtom ) == 1 )
-                                return(FALSE);
-                        return(TRUE);
+                                return(false);
+                        return(true);
                 }
-                return(FALSE);
+                return(false);
                 break;
             case OXYGEN:
                 if ( iAtomCoordination( aAtom ) >= 4)
-                        return(TRUE);
-                return(FALSE);
+                        return(true);
+                return(false);
                 break;
             default:
                 if ( iAtomCoordination( aAtom ) >= MAXBONDS )
-                        return(TRUE);
-                return(FALSE);
+                        return(true);
+                return(false);
                 break;
         }
 
-        return(FALSE); /* for lint */
+        return(false); /* for lint */
 }
 
 bool
@@ -370,8 +370,8 @@ bIsConnectAtom(ATOM aAtom)
 {
     RESIDUE rParent=RESIDUE_from(cContainerWithin( aAtom ));
     for ( int i=0; i<MAXCONNECT; i++ )
-        if ( aResidueConnectAtom( rParent, i ) == aAtom ) return TRUE;
-    return FALSE;
+        if ( aResidueConnectAtom( rParent, i ) == aAtom ) return true;
+    return false;
 }
 
 
@@ -400,9 +400,9 @@ STRING  sTemp;
     }
     if ( problem ) {
         VPNOTE( "      -- setting atoms pert=true overrides default limits\n" );
-        return( TRUE );
+        return( true );
     }
-    return( FALSE );
+    return( false );
 }
 
 /*
@@ -417,7 +417,6 @@ STRING  sTemp;
 void
 AtomBondTo( ATOM aAtom1, ATOM aAtom2 )
 {
-STRING sTemp;
 
     VERIFYOBJEKT( aAtom1, ATOMid );
     VERIFYOBJEKT( aAtom2, ATOMid );
@@ -471,14 +470,6 @@ so the 'earlier' mol1 residue #s are < mol2 residues
         }
     }
      */
-    if (iVerbosity()>2) {
-        if (!bIsConnectAtom(aAtom1))
-            VPWARN("Bond: %s is not a CONNECT atom\n",
-                        sContainerFullDescriptor(CONTAINER_from(aAtom1), sTemp) );
-        if (!bIsConnectAtom(aAtom2))
-            VPWARN("Bond: %s is not a CONNECT atom\n",
-                        sContainerFullDescriptor(CONTAINER_from(aAtom2), sTemp ) );
-    }
 
     /*
      *  make the bond
@@ -523,7 +514,7 @@ int     ierr = 0;
         ierr = 1;
     }
     if ( ierr )
-        return(FALSE);
+        return(false);
         
     /*
      *  make the bond
@@ -537,7 +528,7 @@ int     ierr = 0;
     AtomSetBondOrder( aAtom2, iAtomCoordination(aAtom2), BONDSINGLE );
     aAtom2->iCoordination++;
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -638,7 +629,7 @@ AtomRemoveBond( ATOM aAtom1, ATOM aAtom2 )
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      Return TRUE if aAtom1 is bonded to aAtom2.
+ *      Return true if aAtom1 is bonded to aAtom2.
  */
 bool
 bAtomBondedTo( ATOM aAtom1, ATOM aAtom2 )
@@ -648,14 +639,14 @@ int             i;
     VERIFYOBJEKT( aAtom1, ATOMid );
     VERIFYOBJEKT( aAtom2, ATOMid );
     
-    if ( iAtomCoordination(aAtom1) <= 0 ) return(FALSE);
-    if ( iAtomCoordination(aAtom2) <= 0 ) return(FALSE);
+    if ( iAtomCoordination(aAtom1) <= 0 ) return(false);
+    if ( iAtomCoordination(aAtom2) <= 0 ) return(false);
     
     for ( i=0; i<iAtomCoordination(aAtom1); i++ )
         if ( aAtom1->aaBonds[i] == aAtom2 ) break;
-    if ( i == iAtomCoordination(aAtom1) ) return(FALSE);
+    if ( i == iAtomCoordination(aAtom1) ) return(false);
     
-    return(TRUE);
+    return(true);
 }
 
 
@@ -972,9 +963,9 @@ STRING          sTemp;
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         strcpy( sTemp, sOString(oAttr) );
         StringLower(sTemp);
-        if ( strcmp( sTemp, "true" ) == 0 ) {
+        if ( strcasecmp( sTemp, "true" ) == 0 ) {
             AtomSetFlags( aAtom, ATOMPERTURB );
-        } else if ( strcmp( sTemp, "false") == 0) {
+        } else if ( strcasecmp( sTemp, "false") == 0) {
             AtomResetFlags( aAtom, ATOMPERTURB );
         } else
             VPFATALEXIT("pert: expected 'true' or 'false'\n" );
@@ -1023,7 +1014,7 @@ STRING          sTemp;
             AtomSetPertType( aAtom, "" );
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         AtomSetPertType( aAtom, sOString(oAttr) );
-        if( !GDefaults.iGibbs ){
+        if( !GDefaults.bGibbs ){
                 if( strcmp( sAtomType( aAtom ), sAtomPertType( aAtom ))){
                         AtomSetFlags( aAtom, ATOMPERTURB );
                 } else {
@@ -1104,7 +1095,7 @@ OBJEKT          oResult = NULL;
     } else if ( strcasecmp( sAttr, "position.z" ) == 0 ) {
         oResult = oCreate(ODOUBLEid);
         ODoubleSet( oResult, vAtomPosition(aAtom).dZ );
-    } else if ( strcmp( sAttr, "hybridization" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "hybridization" ) == 0 ) {
         oResult = oCreate(ODOUBLEid);
         ODoubleSet( oResult, iAtomHybridization(aAtom) );
     } else if ( strcasecmp( sAttr, "seq" ) == 0 ) {
@@ -1259,9 +1250,9 @@ double  dR1, dR2, dDist, dX, dY, dZ;
          *  check actual distance
          */
         if ( dDist * dDist > dX * dX + dY * dY + dZ * dZ )
-            return( TRUE );
+            return( true );
     }
-    return( FALSE );
+    return( false );
 }
 
 /*

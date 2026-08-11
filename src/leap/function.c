@@ -66,7 +66,7 @@ FUNCTIONt	fFunction;
     fFunction.iStart = iStart;
     fFunction.iStop = iStop;
     strcpy( fFunction.sFunction, sFunction );
-    fFunction.bPrint = FALSE;
+    fFunction.bPrint = false;
 
     if ( GvaFunctions == NULL ) {
 	GvaFunctions = vaVarArrayCreate( sizeof(FUNCTIONt) );

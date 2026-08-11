@@ -69,7 +69,7 @@ typedef struct  {
 typedef struct  {
         char    sName[8];
         int     iTerminator;
-        char    sChainId[3], iCode;
+        char    sChainId[3], cICode;
         int     iPdbSequence;
         int     iFirstAtom;
         RESIDUE rResidue; // pointer to residue in growing UNIT, only for auto-link connections
@@ -100,7 +100,7 @@ typedef struct {
 typedef struct {
     int     resSeq;
     char    chainID[2];
-    char    iCode; //, altLoc;
+    char    cICode; //, altLoc;
     char    name[5];
 } ATOMKEYt;
 _Static_assert(sizeof(ATOMKEYt)==sizeof(int)+8,"ATOMKEYt must not be padded");

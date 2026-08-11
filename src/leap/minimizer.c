@@ -56,7 +56,7 @@
  *              the atoms for those objects must already have been
  *              added.
  *
- *		MINIMIZERs have a special flag that are TRUE when
+ *		MINIMIZERs have a special flag that are true when
  *		they are actively minimizing a structure.
  *		This allows code in a graphical user environment to
  *		check whether a MINIMIZER is active and only
@@ -1411,7 +1411,7 @@ MINIMIZER       eNew;
     eNew->bFCallback   = NULL;
     eNew->dEnergy      = 0.0;
     eNew->dRmsGradient = 0.0;
-    eNew->bMinimizing  = FALSE;		/* Flag to figure out if the */
+    eNew->bMinimizing  = false;		/* Flag to figure out if the */
 					/* minimizer is minimizing */
     
     eNew->dMinRmsGradientSquared = MINRMSSQUARED;
@@ -1482,7 +1482,7 @@ int             iAtom;
  *	Author:	Christian Schafmeister (1991)
  *
  *      Add bond interaction to the minimizer minimizer.
- *      Return FALSE if one of the atoms was not defined within the
+ *      Return false if one of the atoms was not defined within the
  *      MINIMIZER object.
  */
 bool
@@ -1496,11 +1496,11 @@ int             iAtom;
                 /* Look up the indices of the atoms in the MINIMIZER object */
 
     iAtom = iFindAtom( mMinimizer, aAtom1 );
-    if ( iAtom == NOTFOUND ) return(FALSE);
+    if ( iAtom == NOTFOUND ) return(false);
     ebBond.iAtom1 = iAtom;
 
     iAtom = iFindAtom( mMinimizer, aAtom2 );
-    if ( iAtom == NOTFOUND ) return(FALSE);
+    if ( iAtom == NOTFOUND ) return(false);
     ebBond.iAtom2 = iAtom;
 
     ebBond.dKb = dKb;
@@ -1513,7 +1513,7 @@ int             iAtom;
         /* Add the bond */
     VarArrayAdd( (mMinimizer->vaBonds), (GENP)&ebBond );
     
-    return(TRUE);
+    return(true);
 }
 
  
@@ -1525,7 +1525,7 @@ int             iAtom;
  *	Author:	Christian Schafmeister (1991)
  *
  *      Add angle interaction to the minimizer minimizer.
- *      Return FALSE if one of the atoms was not defined within the
+ *      Return false if one of the atoms was not defined within the
  *      MINIMIZER object.
  */
 bool
@@ -1539,15 +1539,15 @@ int             iAtom;
 
     iAtom = iFindAtom( mMinimizer, aAtom1 );
     if ( iAtom == NOTFOUND ) 
-	return(FALSE);
+	return(false);
     eaAngle.iAtom1 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom2 );
     if ( iAtom == NOTFOUND ) 
-	return(FALSE);
+	return(false);
     eaAngle.iAtom2 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom3 );
     if ( iAtom == NOTFOUND ) 
-	return(FALSE);
+	return(false);
     eaAngle.iAtom3 = iAtom;
 
     eaAngle.dKt = dKt;
@@ -1560,7 +1560,7 @@ int             iAtom;
         /* Add the angle */
     VarArrayAdd( (mMinimizer->vaAngles), (GENP)&eaAngle );
 
-    return(TRUE);
+    return(true);
 }
 
  
@@ -1572,7 +1572,7 @@ int             iAtom;
  *	Author:	Christian Schafmeister (1991)
  *
  *      Add torsion interaction to the minimizer minimizer.
- *      Return FALSE if one of the atoms was not defined within the
+ *      Return false if one of the atoms was not defined within the
  *      MINIMIZER object.
  */
 bool
@@ -1586,16 +1586,16 @@ int             iAtom;
                 /* Look up the indices of the atoms in the MINIMIZER object */
 
     iAtom = iFindAtom( mMinimizer, aAtom1 );
-    if ( iAtom == NOTFOUND ) return(FALSE);
+    if ( iAtom == NOTFOUND ) return(false);
     etTorsion.iAtom1 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom2 );
-    if ( iAtom == NOTFOUND ) return(FALSE);
+    if ( iAtom == NOTFOUND ) return(false);
     etTorsion.iAtom2 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom3 );
-    if ( iAtom == NOTFOUND ) return(FALSE);
+    if ( iAtom == NOTFOUND ) return(false);
     etTorsion.iAtom3 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom4 );
-    if ( iAtom == NOTFOUND ) return(FALSE);
+    if ( iAtom == NOTFOUND ) return(false);
     etTorsion.iAtom4 = iAtom;
 
     etTorsion.dKp = dKp;
@@ -1616,7 +1616,7 @@ int             iAtom;
         /* Add the torsion */
     VarArrayAdd( (mMinimizer->vaTorsions), (GENP)&etTorsion );
 
-    return(TRUE);
+    return(true);
 }
 
 
@@ -1636,7 +1636,7 @@ NVECTOR nvPosition;
 		/* Set the flag saying that the MINIMIZER is active */
 
 
-    mMinimizer->bMinimizing = TRUE;
+    mMinimizer->bMinimizing = true;
 
     nvPosition = nvGetPositionVector(mMinimizer);
 
@@ -1650,7 +1650,7 @@ NVECTOR nvPosition;
 
 		/* Reset the flag saying that the MINIMIZER is passive */
 
-    mMinimizer->bMinimizing = FALSE;
+    mMinimizer->bMinimizing = false;
 
 
 }

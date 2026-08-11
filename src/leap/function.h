@@ -77,7 +77,7 @@ extern int	iFunctionFilenameFind(char *sFilename);
 #define	sFunctionFunction(i)	(i==NO_FUNCTION \
 	? "(?)" : PVAI(GvaFunctions,FUNCTIONt,i)->sFunction)
 #define	bFunctionPrint(i)	(i==NO_FUNCTION \
-	? TRUE:PVAI(GvaFunctions,FUNCTIONt,i)->bPrint)
+	? true : PVAI(GvaFunctions,FUNCTIONt,i)->bPrint)
 
 #define	FunctionSetPrint(i,b)	(PVAI(GvaFunctions,FUNCTIONt,i)->bPrint=(b))
 

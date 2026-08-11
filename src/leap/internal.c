@@ -495,7 +495,7 @@ INTERNAL        iInt;
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Return TRUE if the INTERNAL specified can be considered
+ *      Return true if the INTERNAL specified can be considered
  *      to be a good torsion.
  *      Goodness is measured in terms of whether or not the
  *      torsion can be used to construct the external coordinates
@@ -516,7 +516,7 @@ bInternalGoodTorsion( INTERNAL iInt, ATOM aAtom, INTERNAL *iPTorsion,
 {
 bool		bFound;
 
-    bFound = FALSE;
+    bFound = false;
     if ( aAtom == aInternalAtom1(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom2(iInt), ATOMPOSITIONKNOWN ) &&
              bAtomFlagsSet( aInternalAtom3(iInt), ATOMPOSITIONKNOWN ) &&
@@ -525,7 +525,7 @@ bool		bFound;
              *iPAngle = iInternalFindAngle( aAtom, aInternalAtom2(iInt),
                                                 aInternalAtom3(iInt) );
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
-             bFound = TRUE;
+             bFound = true;
         }
     } else if ( aAtom == aInternalAtom4(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom1(iInt), ATOMPOSITIONKNOWN ) &&
@@ -535,7 +535,7 @@ bool		bFound;
              *iPAngle = iInternalFindAngle( aAtom, aInternalAtom3(iInt),
                                                 aInternalAtom2(iInt) );
              *iPBond = iInternalFindBond( aAtom, aInternalAtom3(iInt) );
-             bFound = TRUE;
+             bFound = true;
         }
     }
 
@@ -578,7 +578,7 @@ bool		bFound;
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Return TRUE if the INTERNAL specified can be considered
+ *      Return true if the INTERNAL specified can be considered
  *      to be a good angle and another angle can be found that shares
  *      the terminal atom and the middle atom, and all atoms have
  *      coordinates specified.
@@ -608,7 +608,7 @@ LOOP            lInternals;
 INTERNAL        iNew;
 
     aAtom2 = NULL;
-    bGotOne = FALSE;
+    bGotOne = false;
     if ( aAtom == aInternalAtom1(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom2(iInt), ATOMPOSITIONKNOWN ) &&
              bAtomFlagsSet( aInternalAtom3(iInt), ATOMPOSITIONKNOWN ) ) {
@@ -616,7 +616,7 @@ INTERNAL        iNew;
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
              aAtom2 = aInternalAtom2(iInt);
              aAtom3 = aInternalAtom3(iInt);
-             bGotOne = TRUE;
+             bGotOne = true;
         }
     }
     if ( aAtom == aInternalAtom3(iInt) ) {
@@ -626,11 +626,11 @@ INTERNAL        iNew;
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
              aAtom2 = aInternalAtom2(iInt);
              aAtom3 = aInternalAtom1(iInt);
-             bGotOne = TRUE;
+             bGotOne = true;
         }
     }
     UNUSED(aAtom3);
-    if ( !bGotOne ) return(FALSE);
+    if ( !bGotOne ) return(false);
 
                 /* Loop over the internals of the first atom */
     lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
@@ -645,19 +645,19 @@ INTERNAL        iNew;
                     if ( bAtomFlagsSet( aInternalAtom3(iNew), 
                                         ATOMPOSITIONKNOWN ) ) {
                         *iPAngle2 = iNew;
-                        return(TRUE);
+                        return(true);
                     }
                 } else {
                     if ( bAtomFlagsSet( aInternalAtom1(iNew),
                                         ATOMPOSITIONKNOWN ) ) {
                         *iPAngle2 = iNew;
-                        return(TRUE);
+                        return(true);
                     }
                 }
             }
         }
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -668,7 +668,7 @@ INTERNAL        iNew;
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Return TRUE if the INTERNAL specified can be considered
+ *      Return true if the INTERNAL specified can be considered
  *      to be a good angle.
  *      Goodness is measured in terms of whether or not the
  *      angle can be used to construct the external coordinates
@@ -693,7 +693,7 @@ bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle,
              bAtomFlagsSet( aInternalAtom3(iInt), ATOMPOSITIONKNOWN ) ) {
              *iPAngle = iInt;
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
-             return(TRUE);
+             return(true);
         }
     }
     if ( aAtom == aInternalAtom3(iInt) ) {
@@ -701,10 +701,10 @@ bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle,
              bAtomFlagsSet( aInternalAtom2(iInt), ATOMPOSITIONKNOWN )) {
              *iPAngle = iInt;
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
-             return(TRUE);
+             return(true);
         }
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -717,7 +717,7 @@ bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle,
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *      Return TRUE if the INTERNAL specified can be considered
+ *      Return true if the INTERNAL specified can be considered
  *      to be a good bond.
  *      Goodness is measured in terms of whether or not the
  *      bond can be used to construct the external coordinates
@@ -735,16 +735,16 @@ bInternalGoodBond( INTERNAL iInt, ATOM aAtom, INTERNAL *iPBond )
     if ( aAtom == aInternalAtom1(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom2(iInt), ATOMPOSITIONKNOWN )) {
              *iPBond = iInt;
-             return(TRUE);
+             return(true);
         }
     }
     if ( aAtom == aInternalAtom2(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom1(iInt), ATOMPOSITIONKNOWN )) {
              *iPBond = iInt;
-             return(TRUE);
+             return(true);
         }
     }
-    return(FALSE);
+    return(false);
 }
 
 
@@ -882,8 +882,8 @@ aInternalRingNextAtom( INTERNAL iInt )
  *
  *	Author:	Christian Schafmeister (1991)
  *
- *	Remove the ATOM from the ring INTERNAL, return TRUE if it
- *	was found, otherwise FALSE.
+ *	Remove the ATOM from the ring INTERNAL, return true if it
+ *	was found, otherwise false.
  */
 bool
 bInternalRingRemoveAtom( INTERNAL iInt, ATOM aAtom )
@@ -894,9 +894,9 @@ bInternalRingRemoveAtom( INTERNAL iInt, ATOM aAtom )
 	    DFATAL("The ATOM did not contain the INTERNAL" );
 	}
 	DEREF( iInt );  /* reset after bContainerRemove() */
-	return(TRUE);
+	return(true);
     }
-    return(FALSE);
+    return(false);
 }
 
 

@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     printf("sizeof(ATOMt)=%d\n",(int)sizeof(ATOMt));
 #endif
 
-    GbGraphicalEnvironment = FALSE;
+    GbGraphicalEnvironment = false;
 
     ParseArguments(argc, argv);
 

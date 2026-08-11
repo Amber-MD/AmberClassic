@@ -174,7 +174,7 @@ typedef ATOMt   *ATOM;
 
 
 #ifdef DEBUG
-static inline CONTAINER container_from_atom(ATOM a) { return a ? &(a->cHeader) : NULL; }
+static inline CONTAINER container_from_atom(ATOM a,const char *f, int l) { return a ? &(a->cHeader) : NULL; }
 static inline OBJEKT objekt_from_atom(ATOM a) { return a ? &(a->cHeader.oHeader) : NULL; }
 static inline ATOM atom_from_objekt(OBJEKT o, const char *file, int line)
   { return o ? (assert_loc(iObjectType(o)==ATOMid,file,line),(ATOM)o) : NULL; }
@@ -201,48 +201,48 @@ static inline ATOM atom_from_atom(ATOM a,const char *file,int line) { return a; 
         when the message is sent to the most primitive superclass
         of this class that it will eventually make it into these routines.
 */
-#define AtomDefineBondFlags(a,i,f)      (((ATOM)(a))->faBondFlags[i] = f,CDU(a) )
-#define AtomSetBondFlags(a,i,f)         (((ATOM)(a))->faBondFlags[i] |= f,CDU(a) )
+#define AtomDefineBondFlags(a,i,f)      ((ATOM_from(a))->faBondFlags[i] = f,CDU(a) )
+#define AtomSetBondFlags(a,i,f)         ((ATOM_from(a))->faBondFlags[i] |= f,CDU(a) )
 #define AtomResetBondFlags(a,i,f)       \
-                (((ATOM)(a))->faBondFlags[i] &= ~(f),CDU(a) )
+                ((ATOM_from(a))->faBondFlags[i] &= ~(f),CDU(a) )
 #define AtomSetBondOrder(a,i,f) ( AtomResetBondFlags(a,i,BONDORDERONLY),\
                                   AtomSetBondFlags(a,i,f),CDU(a) )
-#define iAtomBondOrder(a,i)     ((((ATOM)(a))->faBondFlags[i])&(BONDORDERONLY))
-#define fAtomBondFlags(a,i)     (((ATOM)(a))->faBondFlags[i])
-#define bAtomBondFlagsSet(a,i,f)        ((((ATOM)(a))->faBondFlags & f)!=0)
-#define aAtomBondedNeighbor(a,i)        (((ATOM)(a))->aaBonds[i])
-#define AtomSetTempPtr( a, p )  (((ATOM)(a))->PTemp = (GENP)(p))
-#define PAtomTempPtr(a)                 (((ATOM)(a))->PTemp)
-#define AtomSetElement( a, n )          (((ATOM)(a))->iAtomicNumber = n,CDU(a))
-#define iAtomElement(a)                 (((ATOM)(a))->iAtomicNumber)
-#define AtomSetPertElement( a, n )      (((ATOM)(a))->iPertAtomicNumber = n,CDU(a))
-#define iAtomPertElement(a)             (((ATOM)(a))->iPertAtomicNumber)
-#define AtomDupPosition(a,vv)   {((ATOM)(a))->fFlags|=ATOMPOSITIONKNOWN;\
-                                        VectorCopy(vv, vAtomPosition((ATOM)(a))); CDU(a);}
-#define AtomSetPosition(a,vv)   (((ATOM)(a))->fFlags|=ATOMPOSITIONKNOWN,\
-                                        vAtomPosition((ATOM)(a)) = vv, CDU(a))
-#define AtomSetPositionNoFlags(a,vv)    {VectorCopy(vv, vAtomPosition((ATOM)(a))); CDU(a);}
-#define vAtomPosition(a)                (((ATOM)(a))->vPosition)
-#define AtomDupVelocity(a,vv)           {VectorCopy(vv, vAtomVelocity((ATOM)(a))); CDU(a);}
-#define AtomSetVelocity(a,vv)           (vAtomVelocity((ATOM)(a)) = vv, CDU(a))
-#define vAtomVelocity(a)                (((ATOM)(a))->vVelocity)
-#define iAtomCoordination(a)            (((ATOM)(a))->iCoordination)
-#define iAtomId(a)                      (((ATOM)(a))->iUniqueId)
-#define AtomSetType( a, x )             (strcpy(((ATOM)(a))->sType,x),CDU(a))
-#define sAtomType( a )                  (((ATOM)(a))->sType )
+#define iAtomBondOrder(a,i)     (((ATOM_from(a))->faBondFlags[i])&(BONDORDERONLY))
+#define fAtomBondFlags(a,i)     ((ATOM_from(a))->faBondFlags[i])
+#define bAtomBondFlagsSet(a,i,f)        (((ATOM_from(a))->faBondFlags & f)!=0)
+#define aAtomBondedNeighbor(a,i)        ((ATOM_from(a))->aaBonds[i])
+#define AtomSetTempPtr( a, p )  ((ATOM_from(a))->PTemp = (GENP)(p))
+#define PAtomTempPtr(a)                 ((ATOM_from(a))->PTemp)
+#define AtomSetElement( a, n )          ((ATOM_from(a))->iAtomicNumber = n,CDU(a))
+#define iAtomElement(a)                 ((ATOM_from(a))->iAtomicNumber)
+#define AtomSetPertElement( a, n )      ((ATOM_from(a))->iPertAtomicNumber = n,CDU(a))
+#define iAtomPertElement(a)             ((ATOM_from(a))->iPertAtomicNumber)
+#define AtomDupPosition(a,vv)   {(ATOM_from(a))->fFlags|=ATOMPOSITIONKNOWN;\
+                                        VectorCopy(vv, vAtomPosition(ATOM_from(a))); CDU(a);}
+#define AtomSetPosition(a,vv)   ((ATOM_from(a))->fFlags|=ATOMPOSITIONKNOWN,\
+                                        vAtomPosition(ATOM_from(a)) = vv, CDU(a))
+#define AtomSetPositionNoFlags(a,vv)    {VectorCopy(vv, vAtomPosition(ATOM_from(a))); CDU(a);}
+#define vAtomPosition(a)                ((ATOM_from(a))->vPosition)
+#define AtomDupVelocity(a,vv)           {VectorCopy(vv, vAtomVelocity(ATOM_from(a))); CDU(a);}
+#define AtomSetVelocity(a,vv)           (vAtomVelocity(ATOM_from(a)) = vv, CDU(a))
+#define vAtomVelocity(a)                ((ATOM_from(a))->vVelocity)
+#define iAtomCoordination(a)            ((ATOM_from(a))->iCoordination)
+#define iAtomId(a)                      ((ATOM_from(a))->iUniqueId)
+#define AtomSetType( a, x )             (strcpy((ATOM_from(a))->sType,x),CDU(a))
+#define sAtomType( a )                  ((ATOM_from(a))->sType )
 #define AtomSetName( a, s )             ContainerSetName( a, s )
 #define sAtomName( a )                  sContainerName( a )
-#define AtomSetPertName( a, s )         (strcpy(((ATOM)(a))->sPertName, s ),CDU(a))
-#define sAtomPertName( a )              (((ATOM)(a))->sPertName)
-#define AtomSetPertType( a, x )         (strcpy(((ATOM)(a))->sPertType,x),CDU(a))
-#define sAtomPertType( a )              (((ATOM)(a))->sPertType )
-#define bAtomPerturbed( a )             (bAtomFlagsSet(((ATOM)(a)),ATOMPERTURB))
-#define AtomDefineFlags(a,f)            (((ATOM)(a))->fFlags = f,CDU(a) )
-#define AtomSetFlags(a,f)               (((ATOM)(a))->fFlags |= f,CDU(a) )
-#define AtomResetFlags(a,f)             (((ATOM)(a))->fFlags &= (~f),CDU(a) )
-#define fAtomFlags(a)                   (((ATOM)(a))->fFlags)
-#define bAtomFlagsSet(a,f)              ((((ATOM)(a))->fFlags&(f))==(f))
-#define bAtomFlagsReset(a,f)     ((~(((ATOM)(a))->fFlags)&(f))==(f))
+#define AtomSetPertName( a, s )         (strcpy((ATOM_from(a))->sPertName, s ),CDU(a))
+#define sAtomPertName( a )              ((ATOM_from(a))->sPertName)
+#define AtomSetPertType( a, x )         (strcpy((ATOM_from(a))->sPertType,x),CDU(a))
+#define sAtomPertType( a )              ((ATOM_from(a))->sPertType )
+#define bAtomPerturbed( a )             (bAtomFlagsSet((ATOM_from(a)),ATOMPERTURB))
+#define AtomDefineFlags(a,f)            ((ATOM_from(a))->fFlags = f,CDU(a) )
+#define AtomSetFlags(a,f)               ((ATOM_from(a))->fFlags |= f,CDU(a) )
+#define AtomResetFlags(a,f)             ((ATOM_from(a))->fFlags &= (~f),CDU(a) )
+#define fAtomFlags(a)                   ((ATOM_from(a))->fFlags)
+#define bAtomFlagsSet(a,f)              (((ATOM_from(a))->fFlags&(f))==(f))
+#define bAtomFlagsReset(a,f)     ((~((ATOM_from(a))->fFlags)&(f))==(f))
 #define aAtomNextSpan(AA)               (ATOM)(((ATOM)(AA))->aNextSpan)
 #define AtomSetNextSpan(AA,SS)          (((ATOM)(AA))->aNextSpan = SS )
 #define aAtomBackSpan(AA)               (ATOM)(((ATOM)(AA))->aBackSpan) 
@@ -253,26 +253,26 @@ static inline ATOM atom_from_atom(ATOM a,const char *file,int line) { return a; 
 #define AtomSetSeenId(AA,II)            (((ATOM)(AA))->iSeenId =(II))
 #define AtomSetTempInt(AA,II)           (ContainerSetTempInt(AA,II))
 #define iAtomTempInt(AA)                (iContainerTempInt(AA))
-#define AtomSetCharge( a, x )           (((ATOM)(a))->dCharge = x,CDU(a))
-#define AtomSetPolar( a, x )            (((ATOM)(a))->dPolar = x,CDU(a))
-#define dAtomCharge( a )                (((ATOM)(a))->dCharge)
-#define dAtomPolar( a )                 (((ATOM)(a))->dPolar)
-#define AtomSetPertCharge( a, x )       (((ATOM)(a))->dPertCharge = x,CDU(a))
-#define AtomSetPertPolar( a, x )        (((ATOM)(a))->dPertPolar = x,CDU(a))
-#define dAtomPertCharge( a )            (((ATOM)(a))->dPertCharge)
-#define dAtomPertPolar( a )             (((ATOM)(a))->dPertPolar)
-#define iAtomIndex( a )                 (((ATOM)(a))->iIndex)
-#define AtomSetIndex( a, i )            (((ATOM)(a))->iIndex = i)
-#define AtomSetGraphicsPointer(a,p) (((ATOM)(a))->PGraphicsData=((GENP)p))
-#define PAtomGraphicsPointer(a)  (((ATOM)(a))->PGraphicsData)
+#define AtomSetCharge( a, x )           ((ATOM_from(a))->dCharge = x,CDU(a))
+#define AtomSetPolar( a, x )            ((ATOM_from(a))->dPolar = x,CDU(a))
+#define dAtomCharge( a )                ((ATOM_from(a))->dCharge)
+#define dAtomPolar( a )                 ((ATOM_from(a))->dPolar)
+#define AtomSetPertCharge( a, x )       ((ATOM_from(a))->dPertCharge = x,CDU(a))
+#define AtomSetPertPolar( a, x )        ((ATOM_from(a))->dPertPolar = x,CDU(a))
+#define dAtomPertCharge( a )            ((ATOM_from(a))->dPertCharge)
+#define dAtomPertPolar( a )             ((ATOM_from(a))->dPertPolar)
+#define iAtomIndex( a )                 ((ATOM_from(a))->iIndex)
+#define AtomSetIndex( a, i )            ((ATOM_from(a))->iIndex = i)
+#define AtomSetGraphicsPointer(a,p) ((ATOM_from(a))->PGraphicsData=((GENP)p))
+#define PAtomGraphicsPointer(a)  ((ATOM_from(a))->PGraphicsData)
 
-#define AtomSetTempDouble(a,v)          (((ATOM)(a))->dTemp = v)
-#define AtomTempDoubleIncrement(a,v)    (((ATOM)(a))->dTemp += v)
-#define AtomTempDoubleSquare(a)         (((ATOM)(a))->dTemp *= \
-                                                ((ATOM)(a))->dTemp)
-#define AtomTempDoubleSquareRoot(a)     (((ATOM)(a))->dTemp = \
-                                                sqrt(((ATOM)(a))->dTemp) )
-#define dAtomTemp(a)                    (((ATOM)(a))->dTemp)
+#define AtomSetTempDouble(a,v)          ((ATOM_from(a))->dTemp = v)
+#define AtomTempDoubleIncrement(a,v)    ((ATOM_from(a))->dTemp += v)
+#define AtomTempDoubleSquare(a)         ((ATOM_from(a))->dTemp *= \
+                                                (ATOM_from(a))->dTemp)
+#define AtomTempDoubleSquareRoot(a)     ((ATOM_from(a))->dTemp = \
+                                                sqrt((ATOM_from(a))->dTemp) )
+#define dAtomTemp(a)                    ((ATOM_from(a))->dTemp)
 
 #define bAtomVisible(a) ((bAtomFlagsSet(a,ATOMPOSITIONKNOWN)||\
                           bAtomFlagsSet(a,ATOMPOSITIONDRAWN))&&\

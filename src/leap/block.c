@@ -186,7 +186,7 @@ BLOCK	bNew;
  *	Author:	Christian Schafmeister (1991)
  *
  *	Add characters to the command buffer.
- *	If the character to add ends the block then return TRUE.
+ *	If the character to add ends the block then return true.
  */
 bool
 bBlockAddChar( BLOCK bBlock, char c )
@@ -194,7 +194,7 @@ bBlockAddChar( BLOCK bBlock, char c )
 bool	bEndOfBlock;
 
 
-    bEndOfBlock = FALSE;
+    bEndOfBlock = false;
     if ( c == '\\' ) {
         MESSAGE("Got continuation\n" );
     } else if ( c == '{' ) {
@@ -204,7 +204,7 @@ bool	bEndOfBlock;
  	if ( bBlock->iUnclosedLists < 0 ) bBlock->iUnclosedLists = 0;
     } else if ( c == '\n' ) {
 	if ( cBlockLastChar(bBlock) != '\\' )
-	    if ( bBlock->iUnclosedLists == 0 ) bEndOfBlock = TRUE;
+	    if ( bBlock->iUnclosedLists == 0 ) bEndOfBlock = true;
     }
 
     zBlockAddOneCharacter( bBlock, c );
@@ -227,19 +227,19 @@ if ( bEndOfBlock ) {
  *	Author:	Christian Schafmeister (1991)
  *
  *	Remove the last character from the BLOCK.
- *	If there are no characters to remove then return FALSE.
+ *	If there are no characters to remove then return false.
  */
 bool
 bBlockRemoveChar( BLOCK bBlock )
 {
     if ( bBlock->iTextNext == 0 ) 
-	return(FALSE);
+	return(false);
     if ( cBlockLastChar(bBlock) == '{' ) 
 	bBlock->iUnclosedLists--;
     else if ( cBlockLastChar(bBlock) == '}' ) 
 	bBlock->iUnclosedLists++;
     bBlock->iTextNext--;
-    return(TRUE);
+    return(true);
 }
 
 
@@ -298,25 +298,25 @@ BlockDestroy( BLOCK *bPBlock )
  *			(Bug Fix)
  *
  *	Read a line from the block into the line buffer.
- *	Return TRUE if the next character in the BLOCK is a '\0'
+ *	Return true if the next character in the BLOCK is a '\0'
  *	meaning that the line is the last line in the block.
  */
 bool
 bBlockReadLine( BLOCK bBlock, char *sLine )
 {
 int		i;
-bool		bQuote = FALSE;
+bool		bQuote = false;
 
     for ( i=0; cBlockPeek( bBlock ) != '\n'; i++) {
 	if (((sLine[i] = cBlockRead( bBlock ))) == '"' ) {
-	    if ( bQuote == TRUE )
-	    	bQuote = FALSE;
+	    if ( bQuote )
+	    	bQuote = false;
 	    else 
-	    	bQuote = TRUE;
+	    	bQuote = true;
 	}
     }
     sLine[i] = cBlockRead(bBlock);
-    if ( bQuote == TRUE ) {
+    if ( bQuote ) {
 	VP0("A close quote was missing.\n" );
 	VP0("I have added quotes to the end of the line and will try it.\n" );
 	sLine[i++] = '"';
