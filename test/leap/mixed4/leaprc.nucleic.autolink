@@ -1,0 +1,80 @@
+loadOff terminal_monophosphate.lib
+# Create unique Unit names, plus standard internal residue names
+# Note: element values are missing
+pDA5 = DA5
+set pDA5 name "pDA5"
+set pDA5.1 name "DA"
+set pDA5.1 restype "nucleic"
+set pDA5.1@O3' element "O"
+pDC5 = DC5
+set pDC5 name "pDC5"
+set pDC5.1 name "DC"
+set pDC5.1 restype "nucleic"
+set pDC5.1@O3' element "O"
+pDG5 = DG5
+set pDG5 name "pDG5"
+set pDG5.1 name "DG"
+set pDG5.1 restype "nucleic"
+set pDG5.1@O3' element "O"
+pDT5 = DT5
+set pDT5 name "pDT5"
+set pDT5.1 name "DT"
+set pDT5.1 restype "nucleic"
+set pDT5.1@O3' element "O"
+pA5 = A5
+set pA5 name "pA5"
+set pA5.1 name "A"
+set pA5.1 restype "nucleic"
+set pA5.1@O3' element "O"
+pC5 = C5
+set pC5 name "pC5"
+set pC5.1 name "C"
+set pC5.1 restype "nucleic"
+set pC5.1@O3' element "O"
+pG5 = G5
+set pG5 name "pG5"
+set pG5.1 name "G"
+set pG5.1 restype "nucleic"
+set pG5.1@O3' element "O"
+pU5 = U5
+set pU5 name "pU5"
+set pU5.1 name "U"
+set pU5.1 restype "nucleic"
+set pU5.1@O3' element "O"
+
+source leaprc.DNA.OL21
+# these have correct head/tail for the unit but not the contained residues
+set DA5.1 name "DA"
+set DA3.1 name "DA"
+set DAN.1 name "DA"
+
+set DG5.1 name "DG"
+set DG3.1 name "DG"
+set DGN.1 name "DG"
+
+set DC5.1 name "DC"
+set DC3.1 name "DC"
+set DCN.1 name "DC"
+
+set DT5.1 name "DT"
+set DT3.1 name "DT"
+set DTN.1 name "DT"
+
+source leaprc.RNA.OL3
+# OHE = 5'P cap -OP3-HOP3
+set A5.1 name "A"
+set A3.1 name "A"
+set AN.1 name "A"
+
+set G5.1 name "G"
+set G3.1 name "G"
+set GN.1 name "G"
+
+set C5.1 name "C"
+set C3.1 name "C"
+set CN.1 name "C"
+
+set U5.1 name "U"
+set U3.1 name "U"
+set UN.1 name "U"
+

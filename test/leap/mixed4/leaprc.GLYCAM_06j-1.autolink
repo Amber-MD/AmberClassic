@@ -1,0 +1,208 @@
+# ----- leaprc for loading the Glycam_06 carbohydrate force field
+# also contains atom types for lipids
+#
+#       load atom type hybridizations
+#	(includes atom types relevant to lipids)
+#
+addAtomTypes {
+        { "C"   "C" "sp2" }
+        { "Cg"  "C" "sp3" }
+        { "Cy"  "C" "sp3" }
+        { "Ck"  "C" "sp2" }
+        { "CT"  "C" "sp3" }
+        { "Cj"  "C" "sp2" }
+        { "Cp"  "C" "sp3" } 
+        { "H"   "H" "sp3" }
+        { "H1"  "H" "sp3" }
+        { "H2"  "H" "sp3" }
+        { "Ha"  "H" "sp3" }
+        { "Hp"  "H" "sp3" } 
+        { "Hc"  "H" "sp3" }
+        { "Ho"  "H" "sp3" }
+        { "HW"  "H" "sp3" }
+	{ "Ng"  "N" "sp2" }
+        { "NT"  "N" "sp3" }
+        { "N3"  "N" "sp3" } 
+        { "Oh"  "O" "sp3" }
+        { "Os"  "O" "sp3" }
+        { "O"   "O" "sp2" }
+        { "O2"  "O" "sp2" }
+        { "OW"  "O" "sp3" }
+        { "Oy"  "O" "sp3" }
+        { "S"   "S" "sp3" }
+        { "Sm"  "S" "sp3" }
+        { "P"   "P" "sp3" } 
+}
+#
+#       load the main paramter set
+#
+glycam_06 = loadamberparams GLYCAM_06j.dat
+##
+#
+#       load all prep files for polysaccharides
+#
+#loadamberprep GLYCAM_06j-1.prep
+loadOff GLYCAM_06j-1.lib
+#
+#	load lib files
+#
+# for attaching glycans to proteins
+# FIXME: TODO: check these
+loadOff GLYCAM_amino_06j_12SB.lib
+verbosity 10
+set HYP.1 restype "protein"
+set NLN.1 restype "protein"
+set NLN.1 name "ASN"
+set NLN.1 connect2 NLN.1.ND2
+set OLP.1 restype "protein"
+set OLP.1 name "HYP"
+set OLP.1.HG2 name "HG"
+set OLP.1 connect2 OLP.1.OD1
+set OLS.1 restype "protein"
+set OLS.1 name "SER"
+set OLS.1 connect2 OLS.1.OG
+set OLT.1 restype "protein"
+set OLT.1 name "THR"
+set OLT.1 connect2 OLT.1.OG1
+loadOff GLYCAM_aminoct_06j_12SB.lib
+desc CHYP.1
+set CHYP.1 restype "protein"
+set CHYP.1 name "HYP"
+set CNLN.1 restype "protein"
+set CNLN.1 name "ASN"
+set CNLN.1 connect2 CNLN.1.ND2
+set COLP.1 restype "protein"
+set COLP.1 name "HYP"
+set COLP.1.HG2 name "HG"
+set COLP.1 connect2 COLP.1.OD1
+set COLS.1 restype "protein"
+set COLS.1 name "SER"
+set COLS.1 connect2 COLS.1.OG
+set COLT.1 restype "protein"
+set COLT.1 name "THR"
+set COLT.1 connect2 COLT.1.OG1
+loadOff GLYCAM_aminont_06j_12SB.lib
+set NHYP.1 restype "protein"
+set NHYP.1 name "HYP"
+set NNLN.1 restype "protein"
+set NNLN.1 name "ASN"
+set NNLN.1 connect2 NNLN.1.ND2
+set NOLP.1 restype "protein"
+set NOLP.1 name "HYP"
+set NOLP.1.HG2 name "HG"
+set NOLP.1 connect2 NOLP.1.OD1
+set NOLS.1 restype "protein"
+set NOLS.1 name "SER"
+set NOLS.1 connect2 NOLS.1.OG
+set NOLT.1 restype "protein"
+set NOLT.1 name "THR"
+set NOLT.1 connect2 NOLT.1.OG1
+
+## add residue maps for linking glycans to proteins
+## Note! use of these requires sourcing the ff12SB leaprc and loading the amino 
+##	libraries commented out in the load libs section 
+addPdbResMap { 
+        { 0 "OLS" "NOLS" } { 1 "OLS" "COLS" }
+        { 0 "OLT" "NOLT" } { 1 "OLT" "COLT" }
+        { 0 "OLP" "NOLP" } { 1 "OLP" "COLP" }
+        { 0 "HYP" "NHYP" } { 1 "HYP" "CHYP" }
+        { 0 "NLN" "NNLN" } { 1 "NLN" "CNLN" }
+} 
+addPdbAtomMap {
+  { "0MA" "HO1" "H1O" }
+  { "0MA" "HO2" "H2O" }
+  { "0MA" "HO3" "H3O" }
+  { "0MA" "HO4" "H4O" }
+  { "0MA" "HO5" "H5O" }
+  { "0MA" "HO6" "H6O" }
+  { "0MA" "HO7" "H7O" }
+  { "0MA" "HO8" "H8O" }
+  { "0MA" "HO9" "H9O" }
+  { "0MA" "H51" "H5A" }
+  { "0MA" "H52" "H5E" }
+}
+#
+# for explicit solvent and ions
+#
+# the following assumes most users want to use tip3p as the 
+# explicit solvent model 
+# this can easily switched by the following commands in leap:
+# WAT = TP5
+# loadamberparams frcmod.tip5p
+#
+loadOff solvents.lib  # solvents 
+HOH = TP3  # set default water model
+WAT = TP3 
+loadOff atomic_ions.lib  # load ions library
+# to use ions for TIP5P, you will need to use a different frcmod below
+# If desired, see the AMBER manual for additional ion force field options.
+ionsff = loadamberparams frcmod.ionsjc_tip3p  # set ion params for TIP3P
+
+set H3O+.1 name H3O
+set AG.1 restype ion
+set AL.1 restype ion
+set Ag.1 restype ion
+set BA.1 restype ion
+set BR.1 restype ion
+set Be.1 restype ion
+set CA.1 restype ion
+set CD.1 restype ion
+set CE.1 restype ion
+set CL.1 restype ion
+set CO.1 restype ion
+set CR.1 restype ion
+set CS.1 restype ion
+set CU.1 restype ion
+set CU1.1 restype ion
+set Ce.1 restype ion
+set Cl-.1 restype ion
+set Cr.1 restype ion
+set Dy.1 restype ion
+set EU.1 restype ion
+set EU3.1 restype ion
+set Er.1 restype ion
+set F.1 restype ion
+set FE.1 restype ion
+set FE2.1 restype ion
+set GD3.1 restype ion
+set H3O+.1 restype ion
+set HE+.1 restype ion
+set HG.1 restype ion
+set HZ+.1 restype ion
+set Hf.1 restype ion
+set IN.1 restype ion
+set IOD.1 restype ion
+set K.1 restype ion
+set K+.1 restype ion
+set LA.1 restype ion
+set LI.1 restype ion
+set LU.1 restype ion
+set MG.1 restype ion
+set MN.1 restype ion
+set NA.1 restype ion
+set NH4.1 restype ion
+set NI.1 restype ion
+set Na+.1 restype ion
+set Nd.1 restype ion
+set PB.1 restype ion
+set PD.1 restype ion
+set PR.1 restype ion
+set PT.1 restype ion
+set Pu.1 restype ion
+set RB.1 restype ion
+set Ra.1 restype ion
+set SM.1 restype ion
+set SR.1 restype ion
+set Sm.1 restype ion
+set Sn.1 restype ion
+set TB.1 restype ion
+set TL.1 restype ion
+set Th.1 restype ion
+set Tl.1 restype ion
+set Tm.1 restype ion
+set U4+.1 restype ion
+set V2+.1 restype ion
+set Y.1 restype ion
+set YB2.1 restype ion
+set ZN.1 restype ion
+set Zr.1 restype ion

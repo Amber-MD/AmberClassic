@@ -1,0 +1,84 @@
+addPath $$AMBERHOME/dat/leap/lib
+addPath $$AMBERHOME/dat/leap/parm
+addPath $$AMBERHOME/dat/leap/cmd
+addPath $$AMBERHOME/dat/leap/prep
+
+set default reorder_residues off
+source leaprc.GLYCAM_06j-1.autolink
+source leaprc.nucleic.autolink
+source leaprc.protein.autolink
+source leaprc.gaff2
+source leaprc.water.opc
+
+set OPCBOX(R:WAT) name "HOH"
+set OPC.1 name "HOH"
+HOH = OPC
+set MG description "Magnesium ion"
+set MG restype ion
+set NA description "Sodium ion"
+set NA restype ion
+set CA description "Calcium ion"
+set CA restype ion
+set CL description "Chloride ion"
+set CL restype ion
+
+source leaprc.xFPchromophores
+# Edit hydrogen names and ResidueType
+set CR2.1.H1 name HA31
+set CR2.1.H2 name HA32
+set CR2.1.H3 name HD2
+set CR2.1.H4 name HE2
+set CR2.1.H5 name HE1
+set CR2.1.H6 name HD1
+set CR2.1.H7 name HB2
+set CR2.1.H8 name HA11
+set CR2.1.H9 name HA12
+set CR2.1.H10 name HN11
+set CR2.1 restype protein
+
+source leaprc.phosaa10
+set Y1P.1 name "PTR"
+set S1P.1 name "SEP"
+set T1P.1 name "TPO"
+set PTR description "O-PHOSPHOTYROSINE"
+
+loadAmberPrep NPO.prepc
+set NPO restype ligand
+set NPO description "P-NITROPHENOL"
+set NPO head null
+set NPO tail null
+
+loadOff saccharides.lib
+
+verbosity 5
+
+set keep_chainid true
+set pdb_auto_link 0
+set pdb_auto_match 1
+set pdb_auto_load 1
+set pdb_link_cutoff 1.2
+set pdb_crosslink_cutoff 1.1
+set pdb_link_ions 0
+set pdb_use_link 0
+set pdb_use_conect 1
+set pdb_patch_file "mixed4.patch"
+set pdb_expand_ncs false
+set pdb_expand_symmetry true
+set reorder_residues off
+set timing on
+showdefault
+struct = loadPdb mixed4.pdb
+source "mixed4.patch"
+check struct
+# over-pack the bulk solvent slightly:
+scaleCoor OPCBOX 0.96
+solvateCell struct OPCBOX
+
+verbosity 0
+savePdb struct mixed4_amber.pdb
+saveAmberParm struct mixed4.prmtop mixed4.crd
+set default PrmTopFormat 2
+saveAmberParm struct mixed4_v2.prmtop mixed4.crd
+set prmtop_netcdf true
+saveAmberParmNetCDF struct mixed4.prmtop.cdf mixed4.crd.cdf
+quit

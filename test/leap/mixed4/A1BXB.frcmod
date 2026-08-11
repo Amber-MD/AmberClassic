@@ -1,0 +1,35 @@
+Remark line goes here
+MASS
+
+BOND
+
+ANGLE
+
+DIHE
+ca-cp-nb-ca   2    9.600       180.000           2.000      same as X -ca-nb-X , penalty score=418.5
+cp-cp-nb-ca   2    9.600       180.000           2.000      same as X -ca-nb-X , penalty score=418.5
+cd-cc-ss-cc   2    2.200       180.000           2.000      same as X -c2-ss-X , penalty score=232.0
+cd-cc-sy-n3   6    7.600       180.000           2.000      same as X -ce-sy-X , penalty score=136.0
+cd-cc-sy-o    6    7.600       180.000           2.000      same as X -ce-sy-X , penalty score=136.0
+n -cc-ss-cc   2    2.200       180.000           2.000      same as X -c2-ss-X , penalty score=232.0
+nd-cc-ss-cc   2    2.200       180.000           2.000      same as X -c2-ss-X , penalty score=232.0
+ss-cc-sy-n3   6    7.600       180.000           2.000      same as X -ce-sy-X , penalty score=136.0
+ss-cc-sy-o    6    7.600       180.000           2.000      same as X -ce-sy-X , penalty score=136.0
+sy-cc-ss-cc   2    2.200       180.000           2.000      same as X -c2-ss-X , penalty score=232.0
+
+IMPROPER
+ca-h4-ca-nb         1.1          180.0         2.0          Same as X -X -ca-ha, penalty score= 44.3 (use general term))
+ca-cp-ca-ha         1.1          180.0         2.0          Using general improper torsional angle  X- X-ca-ha, penalty score=  6.0)
+ca-ca-cp-cp         1.1          180.0         2.0          Using the default value
+ca-ca-ca-ha         1.1          180.0         2.0          Using general improper torsional angle  X- X-ca-ha, penalty score=  6.0)
+c3-n -c -o         10.5          180.0         2.0          Using general improper torsional angle  X- X- c- o, penalty score=  6.0)
+n -nd-cc-ss         1.1          180.0         2.0          Using the default value
+ca-cp-cp-nb         1.1          180.0         2.0          Using the default value
+c3-cc-cd-nd         1.1          180.0         2.0          Using the default value
+cd-ss-cc-sy         1.1          180.0         2.0          Using the default value
+c -c3-n -cc         1.1          180.0         2.0          Same as c2-c2-na-c3, penalty score=290.4)
+
+NONBON
+
+
+

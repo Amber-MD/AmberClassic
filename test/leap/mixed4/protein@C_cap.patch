@@ -1,0 +1,7 @@
+bond PDB_UNIT.$RESIDUE.C PDB_UNIT.$RESIDUE.OXT
+
+set PDB_UNIT.$RESIDUE.OXT type "O"
+set PDB_UNIT.$RESIDUE.OXT element "O"
+set PDB_UNIT.$RESIDUE.OXT charge -0.7
+set PDB_UNIT.$RESIDUE.O charge -0.7
+set PDB_UNIT.$RESIDUE.C charge 0.441
