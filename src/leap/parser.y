@@ -123,8 +123,9 @@
 
 
 char            GsInputLine[MAXINPUT] = "";
-bool		GbLastLine = FALSE;
+bool		GbLastLine = false;
 int             GiInputPos = 0;
+int             GiInputStartPos = 0;
 PARMLIB		GplAllParameters;
 RESULTt		GrMainResult;
 BLOCK		GbCommand = NULL;
@@ -136,8 +137,9 @@ STRING		GsProgramName;
 extern int	iMemDebug;
 
 static	STRING	*SbFirstSourceFiles = NULL;
+static  bool    SbLastTokenWasCommand = false;
 static	int	iFirstSource = 0;
-static	bool	SbUseStartup = TRUE;
+static	bool	SbUseStartup = true;
 
 
 
@@ -189,8 +191,8 @@ OBJEKT          o0;
 double          dTemp;
 ASSOC           aAssoc;
 STRING          sTemp;
-bool		bQuit = FALSE;
-bool		bCommandFound = FALSE;
+bool		bQuit = false;
+bool		bCommandFound = false;
 
                 /* There seems to be a problem with YACC not properly */
                 /* declaring yylval and yyval */
@@ -198,7 +200,7 @@ typedef struct  {
 	ASSOC		aVal;
 	double		dVal;
 	STRING		sVal;
-	FUNCTION	fCallback;
+	CMD_FUNCTION	fCallback;
 } YYSTYPEt;
 
 #define YYSTYPE YYSTYPEt
@@ -242,7 +244,7 @@ input   :       line
 line    :       LENDOFCOMMAND
 	|	instruct
                         {
-                        bCommandFound = FALSE;
+                        bCommandFound = false;
                         }
         |       error LENDOFCOMMAND
                         {
@@ -292,7 +294,7 @@ rawexp  :       LOPENLIST
                             aAssoc = (ASSOC)oCreate(ASSOCid);
                             AssocSetName( aAssoc, "" );
                             OBJEKT oObject = oCreate(LISTid);
-                            LIST_from(oObject)->bFreeChildren=TRUE;
+                            LIST_from(oObject)->bFreeChildren = true;
                             AssocTakeObject( aAssoc, oObject );
                             CURRENTLIST = aAssoc;
                         }
@@ -358,10 +360,8 @@ function:       cmdname
                         {
                             struct timespec tsStart, tsEnd;
                             clock_t ctStart, ctEnd;
-                            if(GDefaults.bTiming ){
-                                clock_gettime(CLOCK_MONOTONIC, &tsStart);
-                                ctStart = clock();
-                            }
+                            clock_gettime(CLOCK_MONOTONIC, &tsStart);
+                            ctStart = clock();
                             /* Execute the command */
 			    MESSAGE("executing function\n");
                             /* Command execute;returns with counted REF */
@@ -516,7 +516,7 @@ arg     :       rawexp
 
 */
 
-static  bool    SbGotUngetc = FALSE;
+static  bool    SbGotUngetc = false;
 static  char    ScUngetc;
 
 
@@ -528,11 +528,14 @@ static  char    ScUngetc;
 int
 yyerror( const char *sStr )
 {
-    VP0("\n%s%*s",GsInputLine,GiInputPos,"^");
-    VPFATALEXIT("Error from the parser: \n       %s.\n"
+    VP0("\n%s%*s%.*s",GsInputLine,GiInputStartPos-1,"",
+              GiInputPos-GiInputStartPos+1,
+              "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...");
+    VPFATALEXIT("\nError from the parser: \n       %s.\n"
             "       Check for typos, misspellings, etc.\n"
+            "       Hint: previous token was%s a command\n"
             "       Try help on the command name and desc on the command arguments.\n",
-            sStr );
+            sStr, SbLastTokenWasCommand? "":" not" );
     return 1;
 }
 
@@ -562,19 +565,19 @@ char		c;
     /* VPTRACEENTER("zbGetLine" ); */
 
     if ( fINPUTFILE() == NULL ) {
-	*bPFromExecute = FALSE;
+	*bPFromExecute = false;
 	/* VPTRACEEXIT("zbGetLine" ); */
 	return(bBlockReadLine( GbCommand, sLine ));
     }
 
-    *bPFromExecute = TRUE;
+    *bPFromExecute = true;
 
 		/* If there is no line in the execute BLOCK */
 		/* then read in another block from the current file */
 
     if ( bBlockEndOfRead(GbExecute) ) {
 	    BlockEmpty( GbExecute );
-	    bGotBlock = FALSE;
+	    bGotBlock = false;
 	    while ( !feof(fINPUTFILE()) && !bGotBlock ) {
 		c = fgetc(fINPUTFILE());
 		if ( feof(fINPUTFILE()) ) break;
@@ -603,7 +606,7 @@ char		c;
 
 void zStripComment(char *s)
 {
-    bool bInQuote = FALSE;
+    bool bInQuote = false;
     for (; *s; s++) {
         if (*s == '"')
             bInQuote = !bInQuote;
@@ -634,7 +637,7 @@ bool		bFromExecute;
                 /* If there is a pushed character then return it */
 
     if ( SbGotUngetc ) {
-        SbGotUngetc = FALSE;
+        SbGotUngetc = false;
         c = ScUngetc;
         goto DONE;
     }
@@ -643,7 +646,7 @@ bool		bFromExecute;
     if ( GsInputLine[GiInputPos] == '\0' ) {
 	if ( GbLastLine ) {
 	    c = '\0';
-	    GbLastLine = FALSE;
+	    GbLastLine = false;
 	    goto DONE;
 	}
 	GbLastLine = zbGetLine( GsInputLine, &bFromExecute );
@@ -675,7 +678,7 @@ DONE:
 void
 zUngetc( char c )
 {
-    SbGotUngetc = TRUE;
+    SbGotUngetc = true;
     ScUngetc = c;
 }
 
@@ -704,6 +707,148 @@ iOneCharToken( int c )
 	}
 }
 
+/////////////////////////////////////////
+//#include <string.h>
+//#include <stdio.h>
+
+/*
+ * Assumed external declarations (adjust to match your actual headers):
+ *
+ *   typedef struct { ... } OBJEKT;
+ *
+ *   OBJEKT *oVariable(const char *sVarName);   // returns NULL if not found
+ *   char   *sOString(OBJEKT *oVar);            // returns string form of oVar
+ */
+
+#define MAX_VARNAME_LEN 128
+
+/*
+ * ReplaceVarPattern
+ * -----------------
+ * Scans sInput for occurrences of "{name}" style placeholders
+ * (a '[', an identifier, a ']'). For each one found:
+ *
+ *   - Extracts the identifier text between the braces -> sVarName
+ *   - Calls oVariable(sVarName) to look up the object
+ *   - If the lookup is NOT NULL, replaces "{sVarName}" in the output
+ *     with the string returned by sOString(oVar)
+ *   - If the lookup IS NULL, the placeholder is left untouched
+ *     (including its braces) in the output
+ *
+ * Parameters:
+ *   sInput      - the source string to scan (unmodified)
+ *   sOutput     - caller-supplied buffer to receive the result
+ *   nOutputSize - size of sOutput buffer, in bytes (including NUL)
+ *
+ * Returns:
+ *   0 on success
+ *  -1 if the output buffer was too small (result is truncated but
+ *     still NUL-terminated)
+ */
+int ReplaceVarPattern(const char *sInput, char *sOutput, size_t nOutputSize)
+{
+    size_t nOutPos = 0;
+    const char *p = sInput;
+    int bTruncated = 0;
+
+    if (!sInput || !sOutput || nOutputSize == 0)
+        return -1;
+
+    #define APPEND_CHAR(c)                                  \
+        do {                                                \
+            if (nOutPos + 1 < nOutputSize) {                \
+                sOutput[nOutPos++] = (c);                    \
+            } else {                                         \
+                bTruncated = 1;                              \
+            }                                                \
+        } while (0)
+
+    #define APPEND_STR(s)                                   \
+        do {                                                \
+            const char *_s = (s);                            \
+            while (*_s) {                                    \
+                APPEND_CHAR(*_s);                             \
+                _s++;                                          \
+            }                                                \
+        } while (0)
+    const char open='[', close=']';
+
+    while (*p != '\0')
+    {
+        if (*p == open)
+        {
+            const char *pOpen  = p;
+            const char *pScan  = p + 1;
+            char sVarName[MAX_VARNAME_LEN];
+            size_t nLen = 0;
+            int bFoundClose = 0;
+
+            /* Try to read an identifier up to a matching '}' */
+            while (*pScan != '\0' && *pScan != open  )
+            {
+                if (*pScan == close)
+                {
+                    bFoundClose = 1;
+                    break;
+                }
+                if (nLen + 1 < sizeof(sVarName))
+                {
+                    sVarName[nLen++] = *pScan;
+                }
+                else
+                {
+                    /* identifier too long to be a valid placeholder;
+                       bail out and treat '{' as a literal char */
+                    break;
+                }
+                pScan++;
+            }
+            sVarName[nLen] = '\0';
+
+            if (bFoundClose && nLen > 0)
+            {
+                OBJEKT oVar = oVariable(sVarName);
+
+                if (oVar != NULL && iObjectType(oVar) == OSTRINGid)
+                {
+                    APPEND_STR(sOString(oVar));
+                    /* advance past the closing '}' */
+                    p = pScan + 1;
+                    continue;
+                }
+                else
+                {
+                    /* oVariable() returned NULL: leave "{name}" as-is */
+                    size_t nSpan = (size_t)(pScan - pOpen) + 1; /* includes braces */
+                    size_t i;
+                    for (i = 0; i < nSpan; i++)
+                    {
+                        APPEND_CHAR(pOpen[i]);
+                    }
+                    p = pScan + 1;
+                    continue;
+                }
+            }
+            /* Not a valid {identifier} pattern; copy '{' literally */
+            APPEND_CHAR(*p);
+            p++;
+        }
+        else
+        {
+            APPEND_CHAR(*p);
+            p++;
+        }
+    }
+
+    sOutput[nOutPos < nOutputSize ? nOutPos : nOutputSize - 1] = '\0';
+
+    #undef APPEND_CHAR
+    #undef APPEND_STR
+
+    return bTruncated ? -1 : 0;
+}
+
+
 /*
  *      yylex
  *
@@ -726,15 +871,15 @@ iOneCharToken( int c )
  *
  */
 int
-yylex()
+yylex(void)
 {
 STRING          sStr;
 int             iMax, tok;
 bool            bGotExp, bGotDot;
 char            c;
-STRING		sCmd;
 STRING		sPossibleCmd;
 
+    SbLastTokenWasCommand = false;
     /*
      * Skip whitespace: blanks, tabs, end of lines, carriage returns, and commas.
      */
@@ -743,6 +888,7 @@ STRING		sPossibleCmd;
     if ( c == '\0' ) 
 	return(LENDOFCOMMAND);
 
+    GiInputStartPos = GiInputPos;
     /*
      *  Check the 1-character possibilities: , ; = * ( ) { }
      */
@@ -830,14 +976,52 @@ STRING		sPossibleCmd;
 	    sStr[j] = '\0';   /* terminate identifier collected so far */
 	    OBJEKT oVar = oVariable( sStr );
 	    if ( oVar != NULL && iObjectType(oVar) == UNITid ) {
+                OBJEKT oResult;
 		char *sMask = zsScanMaskLiteral();   /* consumes up to matching ')' */
+                bool bSelectResidues = false;
+                if (*sMask=='R') {
+                    bSelectResidues = true;
+                    sMask++;
+                }
 		LIST lAtoms = lAtomMaskSelect((UNIT)oVar, sMask );
-                lAtoms->bFreeChildren = TRUE;
+                lAtoms->bFreeChildren = true;
 		aAssoc = (ASSOC)oCreate(ASSOCid);
+                int iSize = iCollectionSize(lAtoms);
+                VP2("AtomMask selected %d atoms\n", iSize );
+                //{
+                //    OBJEKT oObject;
+                //    LISTLOOP llAtoms = llListLoop(lAtoms);
+                //    while ( (oObject = oListNext(&llAtoms)) ) {
+                //        printf("Type = %c\n",iObjectType(oObject));
+                //    }
+                //}
+                if (bSelectResidues) {
+                    RESIDUE rRes = NULL;
+                    OBJEKT oObject;
+                    LIST lResidues = LIST_from(oCreate(LISTid));
+                    LISTLOOP llAtoms = llListLoop(lAtoms);
+                    while ( (oObject = oListNext(&llAtoms)) ) {
+                        ATOM aAtom = ATOM_from(oObject);
+                        RESIDUE rAtomRes = RESIDUE_from(cContainerWithin(aAtom));
+                        if (rAtomRes != rRes) {
+                            rRes = rAtomRes;
+                            ListAddToEnd(lResidues, OBJEKT_from(rAtomRes));
+                        }
+                    }
+                    VP2("AtomMask selected %d residues\n",
+                          iCollectionSize(lResidues));
+                    lResidues->bFreeChildren = true;
+                    ListDestroy(&lAtoms);
+                    oResult = OBJEKT_from(lResidues);
+                } else {
+                    oResult = OBJEKT_from(lAtoms);
+                    VP2("AtomMask selected %d atoms\n",
+                          iCollectionSize(lAtoms));
+                }
                 AssocSetName( aAssoc, "atomMask" );
-                AssocTakeObject( aAssoc, OBJEKT_from(lAtoms) );
+                AssocTakeObject( aAssoc, oResult );
 		yylval.aVal = aAssoc;
-		MESSAGE("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
+		printf /*MESSAGE*/("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
 		return(LASSOC);
 	    }
 	    /* not a UNIT: '(' really is just the single-char token */
@@ -867,8 +1051,8 @@ STRING		sPossibleCmd;
     /*
      *  see if it's a number
      */
-    bGotExp = FALSE;
-    bGotDot = FALSE;
+    bGotExp = false;
+    bGotDot = false;
     if ( isdigit((unsigned char)sStr[0]) || sStr[0] == '-' || sStr[0] == '+' || 
 				( sStr[0] == '.' && isdigit((unsigned char)sStr[1]) ) ) {
 
@@ -893,7 +1077,7 @@ STRING		sPossibleCmd;
 					" token (%s).\n", sStr );
 			goto notnum;
 		    }
-        	    bGotDot = TRUE;
+        	    bGotDot = true;
 		    break;
 		case 'e':
 		case 'E':
@@ -902,7 +1086,7 @@ STRING		sPossibleCmd;
 					"NUMBER-like token (%s).\n", sStr );
 			goto notnum;
 		    }
-                    bGotExp = TRUE;
+                    bGotExp = true;
                     break;
 		case '+':
 		case '-':
@@ -958,6 +1142,10 @@ notnum:
         strcpy( yylval.sVal, sStr );
         return(LSTR);
     }
+
+    /* Check for parser based eval command first */
+    if ( strcasecmp( sStr, "eval" ) == 0 ) return(LEVAL);
+
                 /* LASTLY!!!!!!!! */
     /* 
      *  see if it's a variable/command 
@@ -965,34 +1153,30 @@ notnum:
     strcpy( yylval.sVal, sStr );
     strcpy( sPossibleCmd, sStr );
     StringLower( sPossibleCmd );
-
-                /* Check for parser based eval command first */
-
-    if ( strcasecmp( sStr, "eval" ) == 0 ) return(LEVAL);
     
-    		/* Check if there is an alias that is an exact match */
+    /* Check if there is an alias that is an exact match */
     if ( (iMax = iVarArrayElementCount( GvaAlias )) ) {
 	ALIAS		aAlias;
 	aAlias = PVAI( GvaAlias, ALIASt, 0 );
 	for (int i=0; i<iMax; i++, aAlias++ ) {
-	    if ( strcmp( aAlias->sName, sPossibleCmd ) == 0 ) {
+	    if ( strcasecmp( aAlias->sName, sPossibleCmd ) == 0 ) {
 	    	strcpy( sPossibleCmd, aAlias->sCommand );
 	    }
         }
     }
-                /* Check if there is an exact match of the command */
-                /* If a command has already been found for this input
-                	line, then do not consider the string a command
-                	but rather as a STRING variable */
+
+    /* Check if there is an exact match of the command */
+    /* If a command has already been found for this input
+    	line, then do not consider the string a command
+    	but rather as a STRING variable */
                 	
     if ( !bCommandFound ) {
-	for (int j=0; strlen(cCommands[j].sName) != 0; j++ ) {
-	    strcpy( sCmd, cCommands[j].sName );
-	    StringLower( sCmd );
-            if ( strcmp( sCmd, sPossibleCmd ) == 0 ) {
+	for (int j=0; cCommands[j].fCallback; j++ ) {
+            if ( strcasecmp( sPossibleCmd, cCommands[j].sName ) == 0 ) {
 		yylval.fCallback = cCommands[j].fCallback;
 		MESSAGE("Parsed a command: %s\n", sStr );
-		bCommandFound = TRUE;
+		bCommandFound = true;
+                SbLastTokenWasCommand = true;
 		return(LCOMMAND);
 	    }
         }
@@ -1038,7 +1222,7 @@ zsScanMaskLiteral()
 static char sBuf[NOBODYSMASKWILLOVERRUNME];
 int     j = 0;
 int     iDepth = 1;       /* opening '(' already consumed by caller */
-bool    bInBracket = FALSE;
+bool    bInBracket = false;
 char    c;
 
     for ( ;; ) {
@@ -1054,12 +1238,12 @@ char    c;
 	if ( bInBracket ) {
 	    sBuf[j++] = c;
 	    if ( c == ']' )
-		bInBracket = FALSE;
+		bInBracket = false;
 	    continue;
 	}
 
 	if ( c == '[' ) {
-	    bInBracket = TRUE;
+	    bInBracket = true;
 	    sBuf[j++] = c;
 	    continue;
 	}
@@ -1122,10 +1306,10 @@ char    *next;
 static bool
 zbResidNumeric(const char *s)
 {
-    if (!*s) return FALSE;
+    if (!*s) return false;
     for (const char *p = s; *p; p++)
-        if (!isdigit((unsigned char)*p)) return FALSE;
-    return TRUE;
+        if (!isdigit((unsigned char)*p)) return false;
+    return true;
 }
 
 /*
@@ -1150,7 +1334,7 @@ OBJEKT      oVar;
 const char  *sVal;
 char        sBuf[MAXSTRINGLENGTH];
 char        *cPColon;
-bool        bFromVar = FALSE;
+bool        bFromVar = false;
 
     /* --- expand leading '$' if present --- */
     if (*cPPos == '$') {
@@ -1169,7 +1353,7 @@ bool        bFromVar = FALSE;
             return CTOK_ERROR;
         }
         sVal = sOString(oVar);
-        bFromVar = TRUE;
+        bFromVar = true;
     } else {
         sVal = cPPos;
     }
@@ -1403,6 +1587,7 @@ eContTokenType  eTok;
 static OBJEKT
 zoGetObject(char *sName)
 {
+    printf("get object %s\n",sName);
     OBJEKT oObj;
     OSTRING osString;
 
@@ -1414,7 +1599,9 @@ zoGetObject(char *sName)
      * Return the whole string as an OSTRING.
      */
     osString = (OSTRING)oCreate(OSTRINGid);
-    OStringDefine(osString, sName);
+    STRING sResult;
+    ReplaceVarPattern(sName, sResult, sizeof(sResult));
+    OStringDefine(osString, sResult);
     return (OBJEKT)osString;
 }
 
@@ -1500,7 +1687,7 @@ extern	char	*optarg;
 		exit(0);
 	    case 's':
 		printf( "-s: Ignoring all %s startup files.\n", LEAPRC );
-		SbUseStartup = FALSE;
+		SbUseStartup = false;
 		break;
 	    case 'I':
 		printf( "-I: Adding %s to search path.\n", optarg );
@@ -1659,7 +1846,7 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
 
 	/* Reset the bCommandFound variable as a new command may be
 	   available in a new input */
-    bCommandFound = FALSE;
+    bCommandFound = false;
     
 	/* Copy the RESULT from the global result variable */
 

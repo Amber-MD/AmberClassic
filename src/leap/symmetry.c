@@ -1,4 +1,5 @@
 #include "basics.h"
+#include "unit.h"
 #include "symmetry.h"
 
 /* ------------------------------------------------------------------ */
