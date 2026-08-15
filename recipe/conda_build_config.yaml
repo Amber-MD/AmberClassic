@@ -1,8 +1,8 @@
 c_compiler_version:
-  - 11.4.0 # [linux]
+  - 13.3.0 # [linux]
 
 cxx_compiler_version:
-  - 11.4.0 # [linux]
+  - 13.3.0 # [linux]
 
 fortran_compiler_version:
-  - 11.4.0 # [linux]
+  - 13.3.0 # [linux]

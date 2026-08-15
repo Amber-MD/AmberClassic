@@ -1,4 +1,4 @@
-{% set version = "1.2" %}
+{% set version = "1.3" %}
 {% set mpi = "openmpi" %}
 
 package:
@@ -28,10 +28,9 @@ requirements:
    - {{ compiler('fortran') }}
    - {{ compiler('c') }}
    - {{ compiler('cxx') }}
+   - cuda-toolkit=12.6.3 # [linux]
    - openmpi-mpicc
-   - {{ compiler('nvcc') }} # [ linux and not aarch64 ]
-   - nvcc_linux-64=11.8 # [ linux ]
-   - coreutils
+   - coreutils # [linux]
    - libgomp      # [linux and not aarch64]
    - llvm-openmp  # [osx]
    - openblas
