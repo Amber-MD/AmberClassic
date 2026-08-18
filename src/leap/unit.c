@@ -149,7 +149,7 @@ int             iIndex;
     }
 
     VPTRACEEXIT("zbUnitCheckBondParameters" );
-    return(bFailedGeneratingParameters);
+    return bFailedGeneratingParameters;
 }
 
 /*
@@ -254,7 +254,7 @@ IGNORE1:
 IGNORE2:
         ;
     }
-    return(bFailedGeneratingParameters);
+    return bFailedGeneratingParameters;
 }
 
 /*
@@ -357,7 +357,7 @@ PARMSET         psTemp;
         ParmSetTORSIONDestroy( &tTorsion );
         if ( bPerturbTorsion ) ParmSetTORSIONDestroy( &tPertTorsion );
     }
-    return(false);
+    return false;
 }
 
 
@@ -381,7 +381,7 @@ zbUnitParmsMissing( UNIT uUnit, PARMLIB plParameters)
 bool    bMissing = false;
 
     if ( plParameters == NULL ) {
-        return(true);
+        return true;
     }
     
     if ( !uUnit ) {
@@ -401,7 +401,7 @@ bool    bMissing = false;
     bMissing |=
         zbUnitCheckTorsionParameters( plParameters, uUnit);
 
-    return( bMissing );
+    return  bMissing ;
 }
 
 
@@ -431,25 +431,25 @@ bUnitIgnoreAngle( STRING sA, STRING sB, STRING sC )
 
     if ( strcmp( sA, "OW" ) == 0 ) {
         if ( strcmp( sB, "HW" ) == 0 &&
-             strcmp( sC, "HW" ) == 0 ) return(true);
+             strcmp( sC, "HW" ) == 0 ) return true;
     }
 	if( ! GDefaults.bFlexibleWater ){
 		if ( strcmp( sB, "OW" ) == 0 ) {
 			if ( strcmp( sA, "HW" ) == 0 &&
-				 strcmp( sC, "HW" ) == 0 ) return(true);
+				 strcmp( sC, "HW" ) == 0 ) return true;
 		}
 	}
     if ( strcmp( sC, "OW" ) == 0 ) {
         if ( strcmp( sB, "HW" ) == 0 &&
-             strcmp( sA, "HW" ) == 0 ) return(true);
+             strcmp( sA, "HW" ) == 0 ) return true;
     }
 
 /*  delete all angles related to extra points    */
         if( GDefaults.bDeleteExtraPointAngles ){
-        if ( strcmp( sA, "EP" ) == 0 || strcmp( sC, "EP" ) == 0 ) return(true);
+        if ( strcmp( sA, "EP" ) == 0 || strcmp( sC, "EP" ) == 0 ) return true;
         }
 
-    return(false);
+    return false;
 }
  
 /*
@@ -476,7 +476,7 @@ UNIT    m;
     m->dAtomGroups = dDictionaryCreate();
     m->dHeterogens = dDictionaryCreate();
 
-    return(m);
+    return m;
 }
 
 /*
@@ -616,7 +616,7 @@ STRING          sAtom;
                 fabs(dB  - 90.0) > 1e-4 ||
                 fabs(dG - 90.0) > 1e-4 ) {
             VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
-                    dA/DEGTORAD, dB/DEGTORAD, dG/DEGTORAD );
+                    dA*RADTODEG, dB*RADTODEG, dG*RADTODEG );
         }
     }
     if ( bUnitUseSolventCap(uUnit) ) {
@@ -726,7 +726,7 @@ UNIT            uNew;
     uNew->dAtomGroups = dDictionaryCreate();
     uNew->dHeterogens = dDictionaryCreate();
 
-    return(uNew);
+    return uNew;
 }
 
 
@@ -823,7 +823,7 @@ OBJEKT  cCont;
 
     UnitResetPointers( uNewUnit );
 
-    return(uNewUnit);
+    return uNewUnit;
 }
 #endif
 
@@ -902,23 +902,25 @@ ATOM            aB;
         }
     }
 
+    bool bCreatePdbSeq = true;
     lContents = lLoop( (OBJEKT)uB, DIRECTCONTENTSBYSEQNUM );
     while ( (oObj = oNext(&lContents)) ) {
-        REF( oObj );    /* bContainerRemove() does a DEREF */
+        REF( oObj );    /* bContainerRemove() does a DEREF -- we hold the REF until reassigned */
         bContainerRemove( CONTAINER_from(uB), oObj );
 
-                /* If the object being added is a RESIDUE then set */
-                /* default PDB sequence number to the Container sequence number */
-        if ( iObjectType(oObj) == RESIDUEid ) {
+        /* If the object being added is a RESIDUE */
+        /* then set default PDB sequence number to the new parent Container sequence number */
+        // Attempt to preserver PsbSeq==0, but this check will fail if it is the first residue FIXME
+        if (bCreatePdbSeq && iObjectType(oObj) == RESIDUEid && !iResiduePdbSequence(oObj))
             ResidueSetPdbSequence( oObj,  iContainerNextChildsSequence(uA));
-        }
+        else bCreatePdbSeq = false;
 
         ContainerAdd( (CONTAINER) uA, oObj );
-        DEREF( oObj );  /* ContainerAdd() does a REF */
+        DEREF( oObj );  /* ContainerAdd() does a REF -- release our temprary REF */
     }
 
-                /* If the connect1 atom of the UNIT uB is defined then */
-                /* set up the new UNIT uA to have the same connect1 atom */
+        /* If the connect1 atom of the UNIT uB is defined then */
+        /* set up the new UNIT uA to have the same connect1 atom */
 
     UnitSetTail( uA, aB );
 
@@ -1021,7 +1023,7 @@ UNIT            uNew;
     UnitIOBuildFromTables( uNew );
     UnitIODestroyTables( uNew );
 DONE:
-    return(uNew);
+    return uNew;
 }
 
 
@@ -1164,7 +1166,7 @@ bool            bCanBePerturbed;
     while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
         bCanBePerturbed |= bAtomPerturbed(aAtom);
     }
-    return(bCanBePerturbed);
+    return bCanBePerturbed;
 }
 
         
@@ -1214,7 +1216,7 @@ bool            bReturn;
 
     bReturn = bBagRemove( uUnit->bRestraints, (GENP)rRest );
     CDU(uUnit);    
-    return(bReturn);
+    return bReturn;
 }
 
 
@@ -1270,7 +1272,7 @@ int             iCount;
     while ( (rRest = (RESTRAINT)PBagNext(&blRestraints)) ) {
         if ( iRestraintType(rRest) == iType ) iCount++;
     }
-    return(iCount);
+    return iCount;
 }
 
 
@@ -1290,15 +1292,15 @@ double          dDist2;
 
         /* If there is no cap then return false always */
 
-    if ( !bUnitUseSolventCap(uUnit) ) return(false);
+    if ( !bUnitUseSolventCap(uUnit) ) return false;
     vDiff = vVectorSub( &vAtomPosition(aAtom), &(uUnit->vCapOrigin) );
 
     dDist2 = dVX(&vDiff)*dVX(&vDiff) +
                 dVY(&vDiff)*dVY(&vDiff) +
                 dVZ(&vDiff)*dVZ(&vDiff);
 
-    if ( dDist2 < (uUnit->dCapRadius)*(uUnit->dCapRadius) ) return(true);
-    return(false);
+    if ( dDist2 < (uUnit->dCapRadius)*(uUnit->dCapRadius) ) return true;
+    return false;
 }
 
     
@@ -1320,13 +1322,13 @@ ATOM            aAtom;
         /* If there is no cap then return false always */
 
 
-    if ( !bUnitUseSolventCap(uUnit) ) return(false);
+    if ( !bUnitUseSolventCap(uUnit) ) return false;
 
     lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
     while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
-        if ( bUnitCapContainsAtom( uUnit, aAtom ) ) return(true);
+        if ( bUnitCapContainsAtom( uUnit, aAtom ) ) return true;
     }
-    return(false);
+    return false;
 }
 
 
@@ -1662,12 +1664,12 @@ bUnitGroupCreate( UNIT uUnit, char *cPName )
 LIST    lAtoms;
 
     if ( yPDictionaryFind( uUnit->dAtomGroups, cPName ) ) {
-        return(false);
+        return false;
     }
     lAtoms = (LIST)oCreate(LISTid);
     lAtoms->bFreeChildren=true;
     DictionaryAdd( uUnit->dAtomGroups, cPName, (GENP)lAtoms );  // GENP not ref counted
-    return(true);
+    return true;
 }
 
 
@@ -1685,7 +1687,7 @@ lUnitGroup( UNIT uUnit, char *sGroup )
 LIST    lGroup;
 
     lGroup = (LIST)yPDictionaryFind( uUnit->dAtomGroups, sGroup );
-    return(lGroup);
+    return lGroup;
 }
 
 
@@ -1705,9 +1707,9 @@ bUnitGroupAddAtom( UNIT uUnit, char *sGroup, ATOM aAtom )
 LIST    lGroup;
 
     lGroup = (LIST)yPDictionaryFind( uUnit->dAtomGroups, sGroup );
-    if ( lGroup == NULL ) return(false);
+    if ( lGroup == NULL ) return false;
     ListAddUnique( lGroup, (GENP)aAtom );
-    return(true);
+    return true;
 }
 
 
@@ -1727,13 +1729,13 @@ bUnitGroupFindAtom( UNIT uUnit, char *sGroup, ATOM aAtom, bool *bPFound )
 LIST    lAtoms;
 
     lAtoms = (LIST)yPDictionaryFind( uUnit->dAtomGroups, sGroup );
-    if ( lAtoms == NULL ) return(false);
+    if ( lAtoms == NULL ) return false;
 
     if ( bListContains( lAtoms, (GENP)aAtom ) ) 
         *bPFound = true;
     else                                  *bPFound = false;
     
-    return(true);
+    return true;
 }
 
 
@@ -1752,10 +1754,10 @@ bUnitGroupRemoveAtom( UNIT uUnit, char *sGroup, ATOM aAtom )
 LIST    lAtoms;
 
     lAtoms = (LIST)yPDictionaryFind( uUnit->dAtomGroups, sGroup );
-    if ( lAtoms == NULL ) return(false);
+    if ( lAtoms == NULL ) return false;
 
     bListRemove( lAtoms, OBJEKT_from(aAtom) );
-    return(true);
+    return true;
 }
 
 
@@ -1775,9 +1777,9 @@ bUnitGroupDestroy( UNIT uUnit, char *sGroup )
 LIST    lAtoms;
 
     lAtoms = (LIST)yPDictionaryDelete( uUnit->dAtomGroups, sGroup );
-    if ( lAtoms == NULL ) return(false);
+    if ( lAtoms == NULL ) return false;
     Destroy((OBJEKT *) &lAtoms );
-    return(true);
+    return true;
 }
     
  
@@ -1968,7 +1970,7 @@ double  dXMax, dYMax, dZMax;
 
 
 int
-UnitLabelMolecules(UNIT uUnit) {
+iUnitLabelMolecules(UNIT uUnit) {
     LOOP    lResidues, lSpanning, lAtoms;
     RESIDUE rRes;
     ATOM    aAtom;

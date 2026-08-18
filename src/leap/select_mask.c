@@ -26,14 +26,14 @@ bool cpptraj_compatible = true;
  * any selection evaluation on a unit. Always re-runs since LEAP has no
  * per-atom dirty tracking — cost is O(N) traversal which is acceptable
  * even for large systems. Molecule numbers are also refreshed here via
- * UnitLabelMolecules(). Fine-grained dirty tracking at LEAP command level
+ * iUnitLabelMolecules(). Fine-grained dirty tracking at LEAP command level
  * is a future project.                                                    */
 void
 AtomMaskPrepare(UNIT uUnit)
 {
     cpptraj_compatible = !GDefaults.bMaskPDBMode;
     /* marks molecule number in RESIDUE->iMolecule */
-    int iResidueCount = UnitLabelMolecules(uUnit);
+    int iResidueCount = iUnitLabelMolecules(uUnit);
     if (iResidueCount == 0) return;
 
     if ( !GDefaults.bReorderResidues )

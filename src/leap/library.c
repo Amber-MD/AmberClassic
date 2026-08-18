@@ -114,7 +114,7 @@ DATABASE	dbDatabase;
 	    VPFATALEXIT("File (%s) is not a valid database.\n",
 	            GsBasicsFullName );
 	}
-	return(NULL);
+	return NULL;
     }
    
     ul = (LIBRARY)MALLOC(sizeof(LIBRARYt) );
@@ -140,7 +140,7 @@ DATABASE	dbDatabase;
         VarArrayDestroy( &vaIndex );
     }
     
-    return(ul);
+    return ul;
 }
 
 
@@ -164,7 +164,7 @@ OBJEKT          oObj;
                 /* Check if the UNIT is even in the library */
 
     if ( yPDictionaryFind( ul->dLibrary, sName ) == NULL ) 
-	return(NULL);
+	return NULL;
 
     strcpy( sPrefix, "entry." );
     strcat( sPrefix, sName );
@@ -183,7 +183,7 @@ OBJEKT          oObj;
 
 DONE:
     DBPopPrefix( ul->dbLibrary );
-    return(oObj);
+    return oObj;
 }
 
 
@@ -242,7 +242,7 @@ bLibraryRemove( LIBRARY ul, char *sName )
 STRING		sPrefix, sEntry;
 
     if ( yPDictionaryFind( ul->dLibrary, sName ) == NULL ) {
-	return(false);
+	return false;
     }
 
     strcpy( sPrefix, "entry." );
@@ -262,7 +262,7 @@ STRING		sPrefix, sEntry;
 	bDBRndDeleteEntry( ul->dbLibrary, sEntry );
     }
 
-    return(true);
+    return true;
 }
 
 
@@ -297,7 +297,7 @@ char *
 sLibraryNext( LIBRARY ul )
 {
     yPDictionaryNext( ul->dLibrary, &(ul->dlContents) );
-    if ( ul->dlContents == NULL ) return(NULL);
+    if ( ul->dlContents == NULL ) return NULL;
     return(sDictLoopKey( ul->dlContents ));
 }
 
@@ -344,13 +344,13 @@ STRING          sPrefix;
                 /* Check if the UNIT is even in the library */
 
     if ( yPDictionaryFind( lLib->dLibrary, sStr ) == NULL ) 
-	return(false);
+	return false;
 
     strcpy( sPrefix, "entry." );
     strcat( sPrefix, sStr );
     strcat( sPrefix, "." );
     strcpy( cPResult, sPrefix );
-    return(true);
+    return true;
 }
 
     

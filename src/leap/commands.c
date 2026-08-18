@@ -100,7 +100,6 @@
 #include        <float.h>
 #include        <string.h>
 
-//#include        "atom.h" // New
 #include        "basics.h"
 #include        "vector.h"
 #include        "matrix.h"
@@ -127,6 +126,7 @@
 #include        "minimizer.h"
 #include        "model.h"
 #include        "elements.h"
+#include        "select_mask.h"
 
 int     iMemDebug = 0;
 
@@ -396,7 +396,7 @@ oCmd_quit( int iArgCount, ASSOC aaArgs[] )
         return NULL;
     }
 
-    GrMainResult.iCommand = CQUIT;
+    GrMainResult.iCommand = CMD_QUIT;
     VP0("\tQuit\n" );
     VPEPILOG( );
     return NULL;
@@ -879,12 +879,14 @@ char            *sFileName;
     uUnit = uPdbRead( fPdb, NULL, false );
     fclose(fPdb);
 
-    // TODO:  Name UNIT based on filename?
+    if (!GDefaults.bCompatible) {
+    // Name UNIT based on filename
     size_t len = strlen(sFileName);
     if (len > 4 && !strcasecmp(&sFileName[len-4],".pdb")) sFileName[len-4]=0;
     char *p = strrchr(sFileName,'/');
     if (!p) p = sFileName;
     strcpy(sContainerName(uUnit),p);
+    }
 
     return OBJEKT_from(uUnit);
 }
@@ -2475,7 +2477,7 @@ int     iVerb;
 
     iVerb = (int)dODouble(oAssocObject(aaArgs[0]));
     VerbositySet(iVerb);
-    GrMainResult.iCommand     = CVERBOSITY;
+    GrMainResult.iCommand     = CMD_VERBOSITY;
     GrMainResult.sVariable[0] = (char)iVerb;
 
     VP2("Verbosity level: %d\n", iVerb );
@@ -3586,7 +3588,7 @@ RESIDUE         rRes;
 
     if ( !GbGraphicalEnvironment ) {
         VPWARN("The edit command only works in a graphical environment.\n" );
-        GrMainResult.iCommand = CNONE;
+        GrMainResult.iCommand = CMD_NONE;
         return NULL;
     }
     if ( !bCmdGoodArguments( "edit", iArgCount, aaArgs, "ups" ) ) {
@@ -3594,7 +3596,7 @@ RESIDUE         rRes;
         return NULL;
     }
 
-    GrMainResult.iCommand = CEDIT;
+    GrMainResult.iCommand = CMD_EDIT;
     strcpy( GrMainResult.sVariable, sAssocName(aaArgs[0]) );
 
                 /* Check if the UNIT exists, if it doesn't then */
@@ -3625,7 +3627,7 @@ RESIDUE         rRes;
     } else {
             VPWARN("Can't edit type %s\n",
                                 sObjectType(oAssocObject(aaArgs[0])) );
-            GrMainResult.iCommand = CNONE;
+            GrMainResult.iCommand = CMD_NONE;
     }
 
     return NULL;
@@ -3667,7 +3669,50 @@ oCmd_alignAxes( int iArgCount, ASSOC aaArgs[] )
     return NULL;
 }
 
+OBJEKT
+oCmd_resequence( int iArgCount, ASSOC aaArgs[] )
+{
+OBJEKT oUnit, oResidue, oAtom;
+LOOP lResidues, lAtoms;
+int iResidue, iAtom, iNonResidue=0, iNonAtom=0, iAllAtoms=0;
+STRING sResidue, sAtom;
+char *sUnit;
 
+    if ( !bCmdGoodArguments( "resequence", iArgCount, aaArgs, "u" ) ) {
+        VPFATALDELAYEDEXIT("usage:  resequence <unit>\n" );
+        return NULL;
+    }
+    oUnit = oAssocObject(aaArgs[0]);
+    sUnit = sAssocName(aaArgs[0]);
+
+    iResidue=0;
+    LOOPOVERALL(oUnit,DIRECTCONTENTSBYSEQNUM,oResidue,OBJEKT,lResidues) {
+        ContainerSetSequence(oResidue,++iResidue);
+        if (iObjectType(oResidue)!=RESIDUEid) {
+            VPWARN("UNIT %s contains a non-RESIDUE member %s\n",
+                    sUnit, sContainerFullDescriptor((CONTAINER)oResidue, sResidue));
+            continue;
+        }
+        iAtom=0;
+        LOOPOVERALL(oResidue,DIRECTCONTENTSBYSEQNUM,oAtom,OBJEKT,lAtoms) {
+            ContainerSetSequence(oAtom,++iAtom);
+            if (iObjectType(oAtom)!=ATOMid) {
+                VPWARN("RESIDUE %s contains a non-ATOM member %s\n",
+                        sContainerFullDescriptor((CONTAINER)oResidue, sResidue),
+                        sContainerFullDescriptor((CONTAINER)oAtom, sAtom));
+            }
+        }
+        ContainerSetNextChildsSequence(oResidue,iAtom+1);
+        iAllAtoms += iAtom;
+    }
+    ContainerSetNextChildsSequence(oUnit,iResidue+1);
+    VP0("Unit %s contains %d residues and %d atoms\n", sUnit, iResidue, iAllAtoms);
+    if (iNonResidue || iNonAtom)
+        VP0("Unit contains %d non-residues, with residues containing %d non-atoms\n"
+            "Contents of unexpected objects were not renumbered.\n",
+            sUnit, iNonResidue, iNonAtom);
+    return NULL;
+}
 
 
 
@@ -3706,7 +3751,6 @@ ATOM            aAtom;
     return NULL;
 }
 
-#include "select_mask.h"
 OBJEKT
 oCmd_selectMask( int iArgCount, ASSOC aaArgs[] )
 {
@@ -4068,11 +4112,11 @@ LISTLOOP llElements;
     case RESIDUEid:
     case ATOMid:
         oParent = OBJEKT_from(cContainerWithin(oObject));
-        REF( oParent );  /* bContainerRemove() needs this */
+        REF( oParent );  /* hold reference until transferred */
         if ( !bContainerRemove( CONTAINER_from(oParent), oObject ) ) {
             VPFATALEXIT("Could not remove %s\n", sContainerName(oObject) );
         }
-        DEREF( oParent ); /* reset count after bContainerRemove */
+        DEREF( oParent ); /* release our refernece */
         break;
     case LISTid:
         llElements = llListLoop(LIST_from(oObject));
@@ -4090,11 +4134,11 @@ LISTLOOP llElements;
                 continue;
             }
             oParent = OBJEKT_from(cContainerWithin(oElement));
-            REF( oParent );  /* bContainerRemove() needs this */
+            REF( oParent );  /* hold reference until transferred */
             if ( !bContainerRemove( CONTAINER_from(oParent), oElement ) ) {
                 VPFATALEXIT("Could not remove %s\n", sContainerName(oObject) );
             }
-            DEREF( oParent ); /* reset count after bContainerRemove */
+            DEREF( oParent ); /* release our refernece */
         }
         break;
     default:
@@ -4899,7 +4943,7 @@ char            *sCmd = "measureGeom";
         aD = ATOM_from(oAssocObject(aaArgs[3]));
         dVal = dVectorAtomTorsion(
                 &vAtomPosition(aA), &vAtomPosition(aB),
-                &vAtomPosition(aC), &vAtomPosition(aD) )/DEGTORAD;
+                &vAtomPosition(aC), &vAtomPosition(aD) )*RADTODEG;
         VP0("Torsion angle: %4.2lf degrees\n", dVal );
     } else if ( iArgCount == 3 ) {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a a" ) ) {
@@ -4911,7 +4955,7 @@ char            *sCmd = "measureGeom";
         aC = ATOM_from(oAssocObject(aaArgs[2]));
         dVal = dVectorAtomAngle(
                 &vAtomPosition(aA), &vAtomPosition(aB),
-                &vAtomPosition(aC) )/DEGTORAD;
+                &vAtomPosition(aC) )*RADTODEG;
         VP0("Angle: %4.2lf degrees\n", dVal );
     } else {
         if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "a a" ) ) {
@@ -5243,22 +5287,24 @@ int             iCount=0, iErrorCount=0;
         ATOM aHead = ATOM_from(uUnit->aHead);
         ATOM aTail = ATOM_from(uUnit->aTail);
         ATOM aAtom;
-        bool bNonAtoms=false, bLongAtomName=false, bMissingElements=false;
+        bool bNonAtom=false, bLongAtomName=false;
+        bool bMissingElement=false, bUpdatedElement=false;
         LOOP lContents = lLoop( OBJEKT_from(rRes), DIRECTCONTENTSBYSEQNUM );
         while ( (aAtom = ATOM_from(oNext(&lContents))) ) {
             char *cPAtomName = sContainerName(aAtom);
             if ( iObjectType(aAtom) != ATOMid ) {
-                 bNonAtoms = true;
+                 bNonAtom = true;
                  break;
             }
             if ( iAtomElement(aAtom) < 0 ) {
                  iUpdatedElements++;
                  AtomSetElement(aAtom,iElementNumberFromAmber(cPAtomName));
-                 if ( iAtomElement(aAtom) < 0 ) bMissingElements=true;
+                 if ( iAtomElement(aAtom) < 0 ) bMissingElement=true;
+                 else bUpdatedElement=true;
             }
             if ( strlen(sContainerName(aAtom))>4) bLongAtomName=true;
         }
-        if (bNonAtoms) sprintf(sErrors,"Contains non-Atoms(%c), ",iObjectType(uUnit));
+        if (bNonAtom) sprintf(sErrors,"Contains non-Atoms(%c), ",iObjectType(uUnit));
         else sErrors[0]=0;
         bool bMissingConnect01 = iContainerNumberOfChildren(rRes) > 1 &&
                    !(bResidueConnectUsed(rRes,0) && bResidueConnectUsed(rRes,1));
@@ -5269,7 +5315,8 @@ int             iCount=0, iErrorCount=0;
                  (fEndFlag & RESIDUENOEND && (!aHead) != (!aTail) ) ) {
              strcat(sErrors,"PdbMap mismatch, ");
         }
-        if (bMissingElements) strcat(sErrors,"Undefined elements, ");
+        if (bUpdatedElement) strcat(sErrors,"Updated elem, ");
+        if (bMissingElement) strcat(sErrors,"Undefined elem, ");
         if (bLongAtomName) strcat(sErrors,"name>4, ");
         if (strlen(cPResName)>4 || (strlen(cPResName)==4 &&
                 (cPResName[0] != 'N' &&cPResName[0] != 'C'))) strcat(sErrors,"ResName>3, ");
@@ -5464,7 +5511,7 @@ char            *sCmd = "mutate";
                 /* And add the new RESIDUE, without incrementing */
                 /* the UNITs next child sequence number */
 
-    REF( rOld );  /* bContainerRemove() needs this */
+    REF( rOld );  /* hold temporary refenece */
     bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(rOld ));
     iNext = iContainerNextChildsSequence( CONTAINER_from( uUnit ));
     ContainerAdd( CONTAINER_from(uUnit), OBJEKT_from(rCopy ));
@@ -5472,9 +5519,7 @@ char            *sCmd = "mutate";
                         iContainerSequence(CONTAINER_from( rOld)) );
     ContainerSetNextChildsSequence( CONTAINER_from( uUnit), iNext );
 
-                /* DEREF the old RESIDUE */
-
-    DEREF( rOld );
+    DEREF( rOld ); /* release temorary reference */
     goto RET;
 
 FAIL:
@@ -5564,17 +5609,17 @@ double          dmin2;
             }
         }
         if ( dmin2 < 9 ) {  /* HACK test 3A */
-                VP2("(Replacing solvent molecule)\n");
-                REF( *PrClosest );  /* bContainerRemove() needs this */
+                VP0("(Replacing solvent molecule)\n");
+                REF( *PrClosest );  /* hold temporary refernece */
                 if ( bContainerRemove( CONTAINER_from(uUnit), OBJEKT_from(*PrClosest ))) {
                         ContainerDestroy( (CONTAINER *) PrClosest );
                         *PrClosest = NULL;
                         *PvIon = vClosest;
                 } else
                         VPFATALEXIT("solvent removal failed\n" );
-                DEREF( *PrClosest );  /* after bContainerRemove()/Add */
+                DEREF( *PrClosest );  /* release our temporary reference */
         } else
-                VP2("(No solvent overlap)\n");
+                VP0("(No solvent overlap)\n");
         return;
 }
 
@@ -5595,7 +5640,7 @@ VARARRAY        vaSolvent = NULL;
 NeighborGrid    *ngSolventAtoms = NULL;
 unsigned int    *iGroupStart = NULL;
 VARARRAY        vaSolventPoints = NULL;
-char            *sName1, *sName2, *sUnitName;
+char            *sName1, *sName2=NULL, *sUnitName;
 
     VPTRACEENTER("addIons" );
     VPTRACEMULTIPLEEXIT("addIons" );
@@ -5614,6 +5659,7 @@ char            *sName1, *sName2, *sUnitName;
           { ierr++; break; }
           // Get the arguments for the second ion
           uIon2 = UNIT_from(oAssocObject( aaArgs[3] ));
+          sName2 = sAssocName( aaArgs[3] );
           iIon2 = (int)dODouble( oAssocObject( aaArgs[4] ));
           break;
         default:
@@ -5652,7 +5698,6 @@ char            *sName1, *sName2, *sUnitName;
 
     sUnitName = sAssocName( aaArgs[0] );
     sName1 = sAssocName( aaArgs[1] );
-    sName2 = sAssocName( aaArgs[3] );
 
     /*
      *  Consider target unit's charge
@@ -5660,7 +5705,7 @@ char            *sName1, *sName2, *sUnitName;
     ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
     iSystemCharge = (int)round( dCharge );
     if ( !iSystemCharge ) {
-        VP0("%s has a unit charge of 0.\n", sName1);
+        VP0("%s nominal net charge is zero, with a residual charge of %g\n", sUnitName, dCharge);
         if ( iIon1 == 0 ) {
                 VP0("%s: Can't neutralize.\n", sCmd );
                 return NULL;
@@ -5686,7 +5731,7 @@ char            *sName1, *sName2, *sUnitName;
            return NULL;
         }
         if (dICharge1 * dICharge2 >0) {
-           VPFATALEXIT("%s: Ion1 and Ion2 must have opposit sign.\n", sCmd);
+           VPFATALEXIT("%s: Ion1 and Ion2 charge must have opposite sign.\n", sCmd);
            return NULL;
         }
     }
@@ -5696,6 +5741,13 @@ char            *sName1, *sName2, *sUnitName;
      */
     if ( iIon1 == 0 ) {
         if ( dICharge1 * dCharge > 0) {
+            if (!uIon2) {
+                VPWARN( "%s: 1st Ion & target unit have charges of the same "
+                        "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
+                        "     can't neutralize.\n" , sCmd,
+                              dCharge, dICharge1 );
+                return(NULL);
+            }
             VPWARN("%s: 1st Ion & target unit have charges of the same sign:\n"
                    "     unit charge = %g; ion1 charge = %g; ion2 charge = %g\n"
                    "     Swapping Ion1 & Ion2.\n" , sCmd,
@@ -5728,7 +5780,7 @@ char            *sName1, *sName2, *sUnitName;
     iUnknown = 0;
     lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
     for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-        if ( iAtomSetTmpRadius( aAtom ) )
+        if ( bAtomSetTmpRadius( aAtom ) )
                 VP0("Using default radius %5.2f for ion %s\n",
                         ATOM_DEFAULT_RADIUS, sName1);
         dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
@@ -5759,7 +5811,7 @@ char            *sName1, *sName2, *sUnitName;
         iUnknown = 0;
         lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
         for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-                if ( iAtomSetTmpRadius( aAtom ) )
+                if ( bAtomSetTmpRadius( aAtom ) )
                         VP0("Using default radius %5.2f for ion %s\n",
                                 ATOM_DEFAULT_RADIUS, sName2 );
                 dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
@@ -5787,9 +5839,9 @@ char            *sName1, *sName2, *sUnitName;
         dMinSize = MIN( dIonSize1, dIonSize2 );
     }
 
-    VP0("Adding %d counter ions to \"%s\" using %gÅ grid, shell extent %gÅ, and dielectric radius %gÅ\n",
+    VP0("Adding %d counter ions to \"%s\" using %gÅ grid, shell extent %gÅ\n",
                 iIon1 + iIon2, sUnitName,
-                GDefaults.dGridSpace,GDefaults.dShellExtent,GDefaults.dDielectricRadius);
+                GDefaults.dGridSpace,GDefaults.dShellExtent);
 
     int iTotalIons = iIon1 + iIon2;
     if ( !iTotalIons ) return NULL;
@@ -5803,25 +5855,21 @@ char            *sName1, *sName2, *sUnitName;
             int count = iVarArrayElementCount(vaSolvent);
             vaSolventPoints = vaVarArrayCreate(sizeof(Point));
             iGroupStart = MALLOC(sizeof(*iGroupStart)*(count+1));
+            RESIDUE *rPRes = PVAI(vaSolvent,RESIDUE,0);
             for ( i=0; i<count; i++) {
-                iGroupStart[i] = iVarArrayElementCount(vaSolventPoints);
-                RESIDUE *rPRes = PVAI(vaSolvent,RESIDUE,i);
-                FOR_ATOMS_IN_RESIDUE(aAtom, *rPRes) {
-                    Point p= {
-                        vAtomPosition(aAtom).dX,
-                        vAtomPosition(aAtom).dY,
-                        vAtomPosition(aAtom).dZ,
-                        i, { .p = (void*)aAtom } };
-                    //printf("Add ATOM %p=%p, name=%s\n",aAtom,p.p,sContainerName(aAtom));
-                    VarArrayAdd(vaSolventPoints, &p);
-                }
+                iGroupStart[i] = i;
+                aAtom=ATOM_from(oContainerFirstObject(rPRes[i]));
+                Point p= {
+                    vAtomPosition(aAtom).dX,
+                    vAtomPosition(aAtom).dY,
+                    vAtomPosition(aAtom).dZ,
+                    i, { .p = (void*)aAtom } };
+                VarArrayAdd(vaSolventPoints, &p);
             }
             iGroupStart[count] = iVarArrayElementCount(vaSolventPoints);
-            START(tNG);
             ngSolventAtoms = neighbor_grid_setup(
                    PVAI(vaSolventPoints, Point, 0),
                   iVarArrayElementCount(vaSolventPoints),count,iGroupStart,3.0);
-            STOP(tNG,"addIons setup grid");
         } else
             VP1(" (no solvent present)\n" );
     }
@@ -5866,7 +5914,7 @@ char            *sName1, *sName2, *sUnitName;
 
     START(tOct2);
     OctTreeInitCharges( octTreeSolute, GDefaults.iDielectricFlag,
-                         GDefaults.dDielectricRadius, &vMinPot, &vMaxPot );
+                        dIonSize1, &vMinPot, &vMaxPot );
     STOP(tOct2,"OCTTREE init charges");
 /*
 OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
@@ -5892,7 +5940,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP2("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+                VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
                         sName1, sUnitName,
                         dVX(&(vNewPoint)),
                         dVY(&(vNewPoint)),
@@ -5926,7 +5974,7 @@ OctTreePrintGrid( octTreeSolute, "Charge", COLOR_RANGE );
                  *  Add ion to solute.
                  */
                 UnitJoin( uUnit, uPlace );
-                VP2("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+                VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
                         sName2, sUnitName,
                         dVX(&(vNewPoint)),
                         dVY(&(vNewPoint)),
@@ -6002,7 +6050,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   bool            bPlaceIon;
   int             iIonCount = 0;
   int             iFailCounter = 0;
-  char            *sName1, *sName2, *sUnitName;
+  char            *sName1=NULL, *sName2=NULL, *sUnitName;
   char            *sCmd = "addIonsRand";
 
   // Setup
@@ -6052,6 +6100,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       // Two ions and desired molarity and min sep
       } else if ( bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u u n n" )) {
           uIon2 = UNIT_from(oAssocObject( aaArgs[2] ));
+          sName2 = sAssocName( aaArgs[2] );
           dMolarity = dODouble( oAssocObject( aaArgs[3] ));
           dMinSeparation = dODouble( oAssocObject( aaArgs[4] ));
           break;
@@ -6105,12 +6154,12 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   // Check the unit's validity
   ContainerTotalCharge( CONTAINER_from( uUnit), &dCharge, &dPertCharge );
   int iSystemCharge = (int)round( dCharge );
-  if ( !iSystemCharge && !dMolarity && !iIon1 )
-  {
-    VP0("%s has a unit charge of 0.\n", sUnitName);
+  if ( !iSystemCharge && !dMolarity && !iIon1 ) {
+    VP0("%s nominal net charge is zero, with a residual charge of %g\n", sUnitName, dCharge);
+    VP0("%s: Can't neutralize.\n", sCmd );
+    return NULL;
   }
-  else
-    MESSAGE("dCharge:  %4.2lf\n", dCharge );
+  MESSAGE("dCharge:  %4.2lf\n", dCharge );
 
   // Make sure the ions are actually ions
   ContainerTotalCharge(CONTAINER_from(uIon1), &dICharge1, &dPertCharge );
@@ -6136,8 +6185,15 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   }
 
   // Check validity of neutralization
-  if ( !dMolarity && iIon1 == 0 ) {
+  if ( !dMolarity && iIon1 == 0 && uIon2) {
     if ( dICharge1 * dCharge > 0) {
+        if (!uIon2) {
+            VPWARN( "%s: 1st Ion & target unit have charges of the same "
+                     "sign:\n" "     unit charge = %g; ion1 charge = %g;\n"
+                        "     can't neutralize.\n" , sCmd,
+                     dCharge, dICharge1 );
+            return(NULL);
+        }
         VPWARN("%s: 1st Ion & target unit have charges of the same sign:\n"
                "     unit charge = %g; ion1 charge = %g; ion2 charge = %g\n"
                "     Swapping Ion1 & Ion2.\n" , sCmd,
@@ -6160,7 +6216,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
   iUnknown = 0;
   lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
   for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-    if ( iAtomSetTmpRadius( aAtom ) )
+    if ( bAtomSetTmpRadius( aAtom ) )
       VP0("Using default radius %5.2f for ion %s\n",
             ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
     if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
@@ -6185,7 +6241,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
     iUnknown = 0;
     lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
     for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-      if ( iAtomSetTmpRadius( aAtom ) )
+      if ( bAtomSetTmpRadius( aAtom ) )
         VP0("Using default radius %5.2f for ion %s\n",
               ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
       if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) )
@@ -6233,7 +6289,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
         iIon1 + iIon2, sAssocName( aaArgs[0] ), iVarArrayElementCount(vaSolvent)-iIon1-iIon2);
 
   TurnOffDisplayerUpdates();
-  if( dMinSeparation )
+  if ( dMinSeparation )
     vIonCenters = (VECTOR*)MALLOC((iIon1+iIon2)*sizeof(VECTOR));
 
   // now actually add the ions
@@ -6262,7 +6318,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       } // end min sep
       if ( bPlaceIon ) {
         if (dMinSeparation) VP2("%d: ", iIonCount);
-        VP2("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+        VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
               sName1, sUnitName,
               dVX(&(vNewPoint)),
               dVY(&(vNewPoint)),
@@ -6310,7 +6366,7 @@ oCmd_addIonsRand( int iArgCount, ASSOC aaArgs[] )
       }
       if ( bPlaceIon ) {
         if (dMinSeparation) VP2("%d: ", iIonCount);
-        VP2("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
+        VP0("Placed %s in %s at (%7.2lf,%7.2lf,%7.2lf).\n",
               sName2, sUnitName,
               dVX(&(vNewPoint)),
               dVY(&(vNewPoint)),
@@ -6491,7 +6547,7 @@ char            *sCmd = "addIonSolv";
     iUnknown = 0;
     lAtoms = lLoop( OBJEKT_from(uIon1), ATOMS );
     for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-        if ( iAtomSetTmpRadius( aAtom ) )
+        if ( bAtomSetTmpRadius( aAtom ) )
                 VP0("Using default radius %5.2f for ion %s\n",
                         ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[1] ) );
         dIonSize1 = MAX( dIonSize1, dAtomTemp( aAtom ) );
@@ -6521,7 +6577,7 @@ char            *sCmd = "addIonSolv";
         iUnknown = 0;
         lAtoms = lLoop( OBJEKT_from(uIon2), ATOMS );
         for(i=0; (aAtom = ATOM_from(oNext(&lAtoms))); i++) {
-                if ( iAtomSetTmpRadius( aAtom ) )
+                if ( bAtomSetTmpRadius( aAtom ) )
                         VP0("Using default radius %5.2f for ion %s\n",
                                 ATOM_DEFAULT_RADIUS, sAssocName( aaArgs[3] ) );
                 dIonSize2 = MAX( dIonSize2, dAtomTemp( aAtom ) );
@@ -6580,7 +6636,7 @@ char            *sCmd = "addIonSolv";
                 ToolReplaceSolvent( uUnit, vaSolvent,
                                         iReplace, uIon1, dICharge1,
                                         &iMinPotRes, &iMaxPotRes );
-                VP2("Placed %s in %s.\n",
+                VP0("Placed %s in %s.\n",
                         sAssocName( aaArgs[1] ), sAssocName( aaArgs[0] ) );
 
                 iIon1--;
@@ -6594,7 +6650,7 @@ char            *sCmd = "addIonSolv";
                 ToolReplaceSolvent( uUnit, vaSolvent,
                                         iReplace, uIon2, dICharge2,
                                         &iMinPotRes, &iMaxPotRes );
-                VP2("Placed %s in %s.\n",
+                VP0("Placed %s in %s.\n",
                         sAssocName( aaArgs[3] ), sAssocName( aaArgs[0] ) );
                 iIon2--;
         }
@@ -6688,16 +6744,16 @@ char    *sCmd = "alias";
                 }
 
                 /* Make sure that the alias is not an existing command */
-                for ( i=0; cCommands[i].fCallback; i++ ) {
-                    if ( strcasecmp( sCommand, cCommands[i].sName ) == 0 ) {
+                for ( i=0; cCommands[i].sName[0] != 0; i++ ) {
+                    if ( strcasecmp( sAlias, cCommands[i].sName ) == 0 ) {
                         bOK = false;
                         break;
                     }
                 }
                 if ( !bOK ) {
-                    VPFATALEXIT("%s: '%s' is already one of the commands.\n"
+                    VPFATALEXIT( "%s: '%s' is already one of the commands.\n"
                         "Please try something different.\n", sCmd, sAlias );
-                    return  NULL ;
+                    return( NULL );
                 }
 
                 if ( GvaAlias == 0 ) {
@@ -6720,7 +6776,7 @@ char    *sCmd = "alias";
                         }
                     }
                 }
-                if ( bOK == false ) {
+                if ( !bOK ) {
                     memset(&aAlias, 0, sizeof(aAlias)); /* for Purify */
                     strcpy( aAlias.sName, sAlias );
                     strcpy( aAlias.sCommand, sCommand );
@@ -7163,6 +7219,7 @@ COMMANDt        cCommands[] = {
         { "restrainAngle",      oCmd_restrainAngle },
         { "restrainBond",       oCmd_restrainBond },
         { "restrainTorsion",    oCmd_restrainTorsion },
+        { "resequence",         oCmd_resequence },
         { "saveAmberParm",      oCmd_saveAmberParm },
         { "saveAmberParmNetCDF",oCmd_saveAmberParmNetCDF },
         { "saveAmberParmPert",  oCmd_saveAmberParmPert },

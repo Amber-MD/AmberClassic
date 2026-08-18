@@ -63,7 +63,7 @@ NVECTOR nvNew;
     nvNew = (NVECTOR)MALLOC(sizeof(NVECTORt) + sizeof(double)*iElements-1 );
     nvNew->iSize = iElements;
     NVectorZero(nvNew);
-    return(nvNew);
+    return nvNew;
 }
 
 
@@ -99,7 +99,7 @@ NVECTOR         nvNew;
     nvNew = nvNVectorCreate(iNVectorSize(nvVector));
     for ( i=0; i<iNVectorSize(nvVector); i++ ) 
         NVectorSetElement( nvNew, i, dNVectorElement( nvVector, i ) );
-    return(nvNew);
+    return nvNew;
 }
 
 
@@ -259,7 +259,7 @@ double          dDot;
     dDot = 0.0;
     for ( i=0; i<iNVectorSize(nvX); i++ )
         dDot += dNVectorElement( nvX, i ) * dNVectorElement( nvY, i );
-    return(dDot);
+    return dDot;
 }
 
 

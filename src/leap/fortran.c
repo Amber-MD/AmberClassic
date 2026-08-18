@@ -268,7 +268,7 @@ int             iLen;
     strcpy( sString, "" );
     while ( !bGotOne ) {
         if ( SbNeedInput ) {
-            if ( feof(SfFile) ) return(NULL);
+            if ( feof(SfFile) ) return NULL;
             strcpy( SsInput, "" );
 	    zFortranGetInputLine();
             if ( (iLen=strlen(SsInput)) > 0 ) SsInput[iLen-1] = '\0';
@@ -279,7 +279,7 @@ int             iLen;
         if ( strlen(sString)!=0 ) bGotOne = true;
         SbNeedInput = ( strlen(SsInput)==0 );
    }
-   return(sString);
+   return sString;
 }
 
 
@@ -302,7 +302,7 @@ int             iLen;
     strcpy( sString, "" );
     while ( !bGotOne ) {
         if ( SbNeedInput ) {
-            if ( feof(SfFile) ) return(NULL);
+            if ( feof(SfFile) ) return NULL;
 	    zFortranGetInputLine();
             if ( (iLen=strlen(SsInput)) > 0 ) SsInput[iLen-1] = '\0';
         }
@@ -313,7 +313,7 @@ int             iLen;
         if ( strlen(sString)!=0 ) bGotOne = true;
         SbNeedInput = ( strlen(SsInput)==0 );
    }
-   return(sString);
+   return sString;
 }
 
 
@@ -333,7 +333,7 @@ int             iVal;
 
     sFortranReadString( sInt );
     sscanf( sInt, "%d", &iVal );
-    return(iVal);
+    return iVal;
 }
 
 
@@ -354,7 +354,7 @@ double          dVal;
 
     sFortranReadString( sDouble );
     sscanf( sDouble, "%lf", &dVal );
-    return(dVal); 
+    return dVal; 
 }
 
 

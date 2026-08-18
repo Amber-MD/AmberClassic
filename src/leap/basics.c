@@ -89,9 +89,9 @@ double
 myAcos( double d )
 {
 	if ( d >= 1.0 ) 
-		return(0.0);
+		return 0.0;
 	if ( d <= -1.0 )
-		return(PI);
+		return PI;
 	return(acos(d));
 }
 
@@ -109,7 +109,7 @@ double
 myPow( double x, double y )
 {
 	if ( fabs(x) < VERYSMALL ) 
-		return(0.0);
+		return 0.0;
 	return(pow(x,y));
 }
 
@@ -133,10 +133,10 @@ int
 iDoubleCompare( double dA, double dB )
 {
 	if ( (dA-TOLERANCE<dB) && (dA+TOLERANCE>dB) )
-		return(0);
+		return 0;
 	if ( dA < dB )
-		return(-1);
-	return(1);
+		return -1;
+	return 1;
 }
 
 
@@ -160,9 +160,9 @@ bStringToDouble( char *cPData, double *dPData )
 	dValue = (double)strtod( cPData, &cPEnd );
 	if ( cPEnd - cPData == (long int)strlen(cPData) ) {
 		*dPData = dValue;
-		return(true);
+		return true;
 	}
-	return(false);
+	return false;
 }
 
 /*
@@ -184,18 +184,18 @@ bStringToInt( char *cPData, int *iPData )
 		if (*cp == '-') {
 			if (cp != cPData) {
 				VP0("'-' embedded in number %s\n", cPData );
-				return(false);
+				return false;
 			}
 			continue;
 		}
 		if (!isdigit((unsigned char)*cp)) {
 			VP0("non-digit in %s\n", cPData );
-			return(false);
+			return false;
 		}
 		
 	}
 	*iPData = atoi( cPData );
-	return(true);
+	return true;
 }
 
 
@@ -316,7 +316,34 @@ PrintMemoryStats(void) {
 #endif
 }
 
-
+#ifdef WIN32
+#include <windows.h>
+long GetCurrentRSS(bool bPrint) {
+    long rss = 0;
+    PROCESS_MEMORY_COUNTERS pmc;
+    if ( GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) )
+        rss=(long)(pmc.WorkingSetSize / 1024);
+    if (bPrint) VP0("RSS: %.2f GB\n", (double)rss / (1024.0*1024.0) );
+    return rss;
+}
+#elif defined(__linux__)
+long GetCurrentRSS(bool bPrint) {
+    long rss = 0;
+    FILE *f = fopen("/proc/self/statm", "r");
+    if (!f) return -1;
+    fscanf(f, "%*s %ld", &rss);
+    fclose(f);
+    return rss * (sysconf(_SC_PAGESIZE) / 1024);
+    if (bPrint) VP0("RSS: %.2f GB\n", (double)rss / (1024.0*1024.0) );
+    return rss;
+}
+#else
+long GetCurrentRSS(void) {
+    long rss_pages = 0;
+    if (bPrint) VP0("RSS: Unavailable\n" );
+    return 0;
+}
+#endif
 /*
  *---------------------------------------------------------------
  *
@@ -389,20 +416,20 @@ MessageAddFile( char *sFile )
 void    
 MessageRemoveFile( char *sFile )
 {
-int             i, j;
+int             i;
 
                 /* Find the file */
     for ( i=0; i<SiMessageFiles; i++ ) {
         if ( strcmp( SsaMessageFiles[i], sFile )== 0 ) {
-            for ( j=i;j<SiMessageFiles-1;j++ ) {
-                strcpy( SsaMessageFiles[j], SsaMessageFiles[j+1] );
-            }
             SiMessageFiles--;
+            if (i<SiMessageFiles)
+                memmove( SsaMessageFiles[i], SsaMessageFiles[i+1], sizeof(STRING) * (SiMessageFiles-i) );
             break;
         }
     }
     PRINTF("TURNING OFF MESSAGES FROM: <%s>\n", sFile );
 }
+
 
 
 /*
@@ -499,7 +526,7 @@ iExpandDir( char *sExpanded, char *sOriginal )
 {
 #if (defined WIN32)
     strcpy( sExpanded, sOriginal );
-    return(0);
+    return 0;
 #else
 char		user[100];
 int		i;
@@ -525,14 +552,14 @@ TODO: add string size protection
         strcpy( sExpanded, var );
         if ( sOriginal[i] == '/' )
 	    strcat( sExpanded, &sOriginal[i] );
-        return(0);
+        return 0;
     }
     if ( sOriginal[0] != '~' ) {
 	/*
 	**	nothing to expand
 	*/
     	strcpy( sExpanded, sOriginal );
-    	return(0);
+    	return 0;
     }
 
     /*
@@ -550,12 +577,12 @@ TODO: add string size protection
 	home = (char*)getenv("HOME");
 	if ( home == (char*)NULL ) {
 		VP0("~: Could not get HOME from environment\n" );
-		return(1);
+		return 1;
 	}
 	strcpy( sExpanded, home);
 	if ( sOriginal[1] == '/' )
 		strcat( sExpanded, &sOriginal[1] );
-	return(0);
+	return 0;
     }
 
     /*
@@ -575,14 +602,14 @@ TODO: add string size protection
     if ( pw == NULL ) {
 	VP0("%s: Could not get from password file: %s\n", user,
 						strerror(errno) );
-	return(1);
+	return 1;
     }
 
     strcpy( sExpanded, pw->pw_dir );
     if ( sOriginal[i] == '/' )
 	strcat( sExpanded, &sOriginal[i] );
 	
-    return(0);
+    return 0;
 #endif
 }
 
@@ -604,12 +631,12 @@ FILESTATUSt	fsStatus;
 	VP0("Limit reached on include directories - can't add dir\n" );
 	if ( bomb )
 		exit(1);
-	return(0);
+	return 0;
     }
     if ( iExpandDir( sTmpDir, sDirectory ) ) {
 	if ( bomb )
 		exit(1);
-	return(0);
+	return 0;
     }
     fsStatus = fsSysdependFileStatus(sTmpDir);
     if ( !(fsStatus.fMode & FILEDIRECTORY) ) {
@@ -619,11 +646,11 @@ FILESTATUSt	fsStatus;
 		VP0("%s: not a directory %s\n", sTmpDir );
 	if ( bomb )
 		exit(1);
-	return(0);
+	return 0;
     }
     strcpy( SsaDirectories[SiCurDirectory], sTmpDir );
     SiCurDirectory++;
-    return(1);
+    return 1;
 }
 
 
@@ -654,20 +681,20 @@ int absolutePath;
     VPTRACEENTER("fBasicsMyFopen" );
     VPTRACEMULTIPLEEXIT("fBasicsMyFopen" );
     if ( strlen(sFilename) == 0 ) 
-	return(NULL);
+	return NULL;
 
     if ( strlen(sFilename) == 1 && sFilename[0] == '-' ) {
 	VP2("Reading from standard input.\n" );
-	return(stdin);
+	return stdin;
     }
 
     if ( iExpandDir( sExpanded, sFilename ) )
-	return(NULL);
+	return NULL;
     fsStatus = fsSysdependFileStatus(sExpanded);
 
     if ( fsStatus.fMode & FILEDIRECTORY ) {
 	VP0("%s is a directory\n", sExpanded );
-	return(NULL);
+	return NULL;
     }
 
     #if (defined WIN32)
@@ -684,13 +711,13 @@ int absolutePath;
 		VPFATALEXIT("Could not open file %s: %s\n", 
 						sExpanded, strerror(errno) );
 	}
-	return(fFile);
+	return fFile;
     }
     int len = snprintf ( GsBasicsFullName, sizeof(GsBasicsFullName), "./%s", sExpanded );
     if (len >= (int)sizeof(GsBasicsFullName) ) fFile = NULL;
     else fFile = fopen( sExpanded, sAttributes );
     if ( fFile != NULL ) 
-	return(fFile);
+	return fFile;
     iExistErr = 1;
     for ( i=0; i<SiCurDirectory; i++ ) {
 	strcpy( GsBasicsFullName, SsaDirectories[i] );
@@ -698,7 +725,7 @@ int absolutePath;
 	strcat( GsBasicsFullName, sExpanded );
 	fFile = fopen( GsBasicsFullName, sAttributes );
 	if ( fFile != NULL ) 
-	    return(fFile);
+	    return fFile;
 	if ( errno != ENOENT ) {
 	    VP0("Opening %s: %s\n", GsBasicsFullName, strerror(errno) );
 	    iExistErr = 0;
@@ -708,7 +735,7 @@ int absolutePath;
 	VPFATALEXIT("Could not open file %s: %s\n", sExpanded,
 			( iExistErr ? "not found" : "system error" )  );
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -808,7 +835,7 @@ bool		bFoundOne;
     SsiPSinks[i].PData = PData;
     MESSAGE("Created print sink: %d\n", i );
 
-    return(i);
+    return i;
 }
 
 
@@ -1062,7 +1089,7 @@ BasicsInitialize(void)
 void	
 BasicsFinalize(void)
 {
-    if (iVerbosity()>1) PrintMemoryStats();
+    if (iVerbosity()>0) PrintMemoryStats();
     if (!GDefaults.bTiming) return;
     struct timespec tsElapsedEnd;
     clock_t ctCPUEnd = clock();

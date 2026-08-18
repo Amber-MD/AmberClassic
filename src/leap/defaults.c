@@ -44,7 +44,7 @@ char *PBRadii_options[] =
 char *PBRadii_optionDesc[] =
      {"Bondi radii","amber6 modified Bondi radii","modified Bondi radii",
      //{"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii",
-       "H(N)-modified Bondi radii", "PARSE radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
+       "H(N)-modified Bondi radii", "Parse radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
 static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
 static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
 static char *PdbConvertResname_options[] = {"standard","keep","variant",NULL};
@@ -54,6 +54,7 @@ static char *PdbConvertResname_optionDesc[] = {"Standard names","Retain input na
 // NOTE: uninitialized values get zero. Most defaults are zero and don't need defaults initialization.
 static DefaultSetting
 zSDefaultSettings[] = {
+    { 'B', "compatible", "Compatible", &GDefaults.bCompatible, .defval.integer=1 },
     { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
     { 'B', "nocenter", "NoCenter", &GDefaults.bNoCenter },
     { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.bReorderResidues, .defval.integer=1 },
@@ -76,7 +77,6 @@ zSDefaultSettings[] = {
     { 'D', "searchdistance", "SearchDistance", &GDefaults.dDSearchDistance,
                .defval.real=DEFAULT_DISTANCE_SEARCH },
     { 'D', "gridspace", "GridSpace", &GDefaults.dGridSpace, .defval.real=1.0 },
-    { 'D', "dielectric_radius", "Dielectric_Radius", &GDefaults.dDielectricRadius, .defval.real=999.0 },
     { 'B', "random_orientation", "Random_Orientation", &GDefaults.bRandomOrientation, .defval.integer=0 },
     { 'D', "shellextent", "ShellExtent", &GDefaults.dShellExtent, .defval.real=4.0 },
     { 'D', "dipole_damp_factor", "Dipole Damping Factor", &GDefaults.dDipoleDampFactor },
@@ -210,7 +210,7 @@ int iOptIndex;
             VPWARN("IPOL has already been set to %i in frcmod/parm.dat.\n",
                             GDefaults.iIPOL);
             VP0("Please change the setting in frcmod/parm.dat.\n");
-            return(NULL);
+            return NULL;
         }
 
 
@@ -291,7 +291,7 @@ int iOptIndex;
             }
             break;
         }
-        return(NULL);
+        return NULL;
 }
 
 void

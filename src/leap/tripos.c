@@ -405,7 +405,7 @@ see below for usage examples.
     VarArrayDestroy(&vaAtoms);
     VarArrayDestroy(&vaResidues);
 
-    return (uUnit);
+    return uUnit;
 
   READFAIL:
     VPFATAL("Error during reading of MOL2 file.\n" );
@@ -426,5 +426,5 @@ see below for usage examples.
         VarArrayDestroy(&vaResidues);
     }
     VPFATALDELAYEDEXIT("Last line read: %s", sLine );
-    return (NULL);
+    return NULL;
 }

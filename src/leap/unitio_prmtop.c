@@ -93,24 +93,22 @@ int        ii, iiMax, jj = 0; \
 
 
 //---------------------------------------------------------------------------------------------
-// BondAugmentationFound: test for the existence of bond augmentations.  Return 1 if they are
+// bBondAugmentationFound: test for the existence of bond augmentations.  Return 1 if they are
 //                        found, which will ordeer them to be printed.
 //
 // Arguments:
 //   uUnit:    the tleap Unit to save
 //---------------------------------------------------------------------------------------------
-int BondAugmentationFound(UNIT uUnit)
+bool bBondAugmentationFound(UNIT uUnit)
 {
-  int i, found;
-  STRING sAtom1, sAtom2, sDesc;
-  double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0;
+  double dKpull, dKpress;
+  bool found = false;
 
-  found = 0;
-  for (i = 0; i < iParmSetTotalBondParms(uUnit->psParameters); i++) {
-    ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
-		&dKpress, &dRpress0, sDesc);
+  for (int i = 0; i < iParmSetTotalBondParms(uUnit->psParameters); i++) {
+    ParmSetBond(uUnit->psParameters, i, NULL, NULL, NULL, NULL, &dKpull, NULL,
+		&dKpress, NULL, NULL);
     if (fabs(dKpull) > 1.0e-8 || fabs(dKpress) > 1.0e-8) {
-      found = 1;
+      found = true;
       break;
     }
   }
@@ -223,10 +221,9 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 {
     VARARRAY vaNBIndex, vaNonBonds, vaPNBEdits;
     int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY;
-    int iIndex, iHBondIndex, iNBIndex, iElement, iHybridization;
-    double dMass, dPolar, dE, dR, dE14, dR14, dA, dB, dEI, dRI, dEJ, dRJ;
-    double dScreenF;
-    STRING sType, sTypeI, sTypeJ, sDesc;
+    int iIndex, iHBondIndex, iNBIndex;
+    double dE, dR, dE14, dR14, dA, dB, dEI, dRI, dEJ, dRJ;
+    typeStr sType, sTypeI, sTypeJ;
     NONBONDt *nbPFirst, *nbPCur, *nbPTemp, *nbPLast;
 
     /* Build the NON-BONDED arrays */
@@ -245,8 +242,8 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
     vaPNBEdits = uUnit->psParameters->vaNBEdits;
     for (i = 0; i < iNonBonds; i++) {
         ParmSetAtom(uUnit->psParameters, i,
-                    sType, &dMass, &dPolar, &dE, &dR, &dE14, &dR14,
-                    &dScreenF, &iElement, &iHybridization, sDesc);
+                    sType, NULL, NULL, &dE, &dR, &dE14, &dR14,
+                    NULL, NULL, NULL, NULL );
         PVAI(vaNonBonds, NONBONDt, i)->bCapableOfHBonding =
             bParmSetCapableOfHBonding(uUnit->psParameters, sType);
         PVAI(vaNonBonds, NONBONDt, i)->dE = dE;
@@ -328,16 +325,13 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
             /* interaction, if there is, make iIndex = -iHBondIndex */
             /***ve to signify that the index is into the HBOND tables */
 
-            ParmSetAtom(uUnit->psParameters, i, sTypeI, &dMass, &dPolar,
-                        &dE, &dR, &dE14, &dR14, &dScreenF, &iElement,
-		       	&iHybridization, sDesc);
-            ParmSetAtom(uUnit->psParameters, j, sTypeJ, &dMass, &dPolar,
-                        &dE, &dR, &dE14, &dR14, &dScreenF, &iElement,
-			&iHybridization, sDesc);
-            iHBondIndex =
-                iParmSetFindHBond(uUnit->psParameters, sTypeI, sTypeJ);
+            ParmSetAtom(uUnit->psParameters, i, sTypeI, NULL, NULL, NULL,
+                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            ParmSetAtom(uUnit->psParameters, j, sTypeJ, NULL, NULL, NULL,
+                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL); 
+            iHBondIndex = iParmSetFindHBond(uUnit->psParameters, sTypeI, sTypeJ);
             if (iHBondIndex != PARM_NOT_FOUND) {
-                VPWARN("Atom pair %s, %s is an H-bond pair\n",sTypeI,sTypeJ);
+                VPWARN("Atom pair %s, %s is an H-bond pair\n", sTypeI, sTypeJ);
                 iIndex = -(iHBondIndex + 1);
             }
             *PVAI(*vaPNBIndexMatrix, int, iI * iNonBonds + iJ) = iIndex;
@@ -440,14 +434,12 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     SAVERESTRAINTt *srPRestraint;
     double dMass, dPolar, dR, dKb, dR0, dKpull, dRpull0, dKpress, dRpress0,
            dKt, dT0, dTkub, dRkub, dKp, dP0, dB, dD, dTemp, dScEE, dScNB, dScreenF;
-    atomNameStr sAtom1, sAtom2, sAtom3, sAtom4;
-    typeStr sType1, sType2, sType;
     int iN, iAtoms, iMaxAtoms, iTemp, iAtom;
-    int iElement, iHybridization, iStart;
+    int iElement, iStart;
     RESIDUE rRes;
     bool bFoundSome;
     char *cPTemp = NULL;
-    double dX, dY, dZ, dEpsilon, dRStar, dEpsilon14, dRStar14;
+    double dX, dY, dZ;
     STRING sDesc;
     IX_REC eResEnt = {NULL};
     IX_DESC iResIx;
@@ -506,6 +498,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // Mark main chain atoms where possible, noting the 
     // number of atoms in the largest residue. keep
     // track of residues which can't be marked.
+    START(iTree);
     create_index(&iResIx, IX_DUPKEYREC, IX_LEN_CSTRING);
     VP0("Marking per-residue atom chain types.\n");
     iMaxAtoms = 0;
@@ -534,10 +527,13 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     }
     if (!i) VP0("  )\n");
     destroy_index(&iResIx);
+    STOP(iTree,"Mark chain tree types");
 
     /******* Build the NON-BOND arrays ******/
+    START(iNB);
     zUnitIOBuildNonBondArrays(uUnit, &vaNBIndexMatrix, &vaNBParameters,
                               &vaNBIndex, &vaNonBonds);
+    STOP(iNB,"Generate Nonbond arrays");
 
     /**** Fork: NetCDF or Fortran text ***************************/
     if (bNetcdf) {
@@ -870,8 +866,8 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   for (i = 0; i < iNumAtoms; i++) {
     saPAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i);
     iIndex = iParmSetFindAtom(uUnit->psParameters, saPAtom->sType);
-    ParmSetAtom(uUnit->psParameters, iIndex, sType, &dMass, &dPolar, &dEpsilon, &dRStar,
-		&dEpsilon14, &dRStar14, &dScreenF, &iElement, &iHybridization, sDesc);
+    ParmSetAtom(uUnit->psParameters, iIndex, NULL, &dMass, NULL, NULL, NULL,
+		NULL, NULL, NULL, &iElement, NULL, NULL);
     FortranWriteDouble(dMass);
     dGBRad[i]=dGBRadiusForAtom(saPAtom, iElement, dMass, (i+1==iNumAtoms) );
     dGBScreen[i]=dGBScreenForElement(iElement);
@@ -1002,7 +998,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalBondParms(uUnit->psParameters); i++) {
-    ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+    ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
                 &dKpress, &dRpress0, sDesc);
     FortranWriteDouble(dKb);
   }
@@ -1022,7 +1018,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranFormat(5, DBLFORMAT_C);
   nBondTypes = iParmSetTotalBondParms(uUnit->psParameters);
   for (i = 0; i < nBondTypes; i++) {
-    ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+    ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
                 &dKpress, &dRpress0, sDesc);
     FortranWriteDouble(dR0);
   }
@@ -1033,7 +1029,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranEndLine();
 
   // If (and only if) bond augmentations exist, print them into the topology
-  if (BondAugmentationFound(uUnit) == 1) {
+  if (bBondAugmentationFound(uUnit) == 1) {
 
     // -12B- Bond pulling adjustments: force constants
     FortranDebug("-12B-");
@@ -1044,7 +1040,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < nBondTypes; i++) {
-      ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+      ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
                   &dKpress, &dRpress0, sDesc);
       FortranWriteDouble(dKpull);
     }
@@ -1059,7 +1055,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < nBondTypes; i++) {
-      ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+      ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
                   &dKpress, &dRpress0, sDesc);
       FortranWriteDouble(dRpull0);
     }
@@ -1074,7 +1070,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < nBondTypes; i++) {
-      ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+      ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
                   &dKpress, &dRpress0, sDesc);
       FortranWriteDouble(dKpress);
     }
@@ -1089,7 +1085,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < nBondTypes; i++) {
-      ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+      ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
                   &dKpress, &dRpress0, sDesc);
       FortranWriteDouble(dRpress0);
     }
@@ -1105,7 +1101,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalAngleParms(uUnit->psParameters); i++) {
-    ParmSetAngle(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, &dKt, &dT0,
+    ParmSetAngle(uUnit->psParameters, i, NULL, NULL, NULL, &dKt, &dT0,
                  &dTkub, &dRkub, sDesc);
     FortranWriteDouble(dKt);
   }
@@ -1125,7 +1121,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalAngleParms(uUnit->psParameters); i++) {
-    ParmSetAngle(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, &dKt, &dT0,
+    ParmSetAngle(uUnit->psParameters, i, NULL, NULL, NULL, &dKt, &dT0,
                  &dTkub, &dRkub, sDesc);
     FortranWriteDouble(dT0);
   }
@@ -1147,17 +1143,13 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
           iParmSetTotalTorsionParms(uUnit->psParameters),
           iParmSetTotalImproperParms(uUnit->psParameters));
   for (i = 0; i < iParmSetTotalTorsionParms(uUnit->psParameters); i++) {
-    ParmSetTorsion(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
-                   &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
-    MESSAGE("Torsion %d  %s-%s-%s-%s %d %lf %lf\n", i, sAtom1, sAtom2,
-            sAtom3, sAtom4, iN, dKp, dP0);
+    ParmSetTorsion(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
+                   NULL, &dKp, NULL, NULL, NULL, NULL);
     FortranWriteDouble(dKp);
   }
   for (i = 0; i < iParmSetTotalImproperParms(uUnit->psParameters); i++) {
-    ParmSetImproper(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
-                    &iN, &dKp, &dP0, sDesc);
-    MESSAGE("Improper %d  %s-%s-%s-%s %d %lf %lf\n", i, sAtom1, sAtom2,
-            sAtom3, sAtom4, iN, dKp, dP0);
+    ParmSetImproper(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
+                    NULL, &dKp, NULL, NULL);
     FortranWriteDouble(dKp);
   }
 
@@ -1175,13 +1167,13 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalTorsionParms(uUnit->psParameters); i++) {
-    ParmSetTorsion(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
+    ParmSetTorsion(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
                    &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
     dTemp = iN;
     FortranWriteDouble(dTemp);
   }
   for (i = 0; i < iParmSetTotalImproperParms(uUnit->psParameters); i++) {
-    ParmSetImproper(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
+    ParmSetImproper(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
                     &iN, &dKp, &dP0, sDesc);
     dTemp = iN;
     FortranWriteDouble(dTemp);
@@ -1202,12 +1194,12 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalTorsionParms(uUnit->psParameters); i++) {
-    ParmSetTorsion(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
+    ParmSetTorsion(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
                    &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
     FortranWriteDouble(dP0);
   }
   for (i = 0; i < iParmSetTotalImproperParms(uUnit->psParameters); i++) {
-    ParmSetImproper(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
+    ParmSetImproper(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
                     &iN, &dKp, &dP0, sDesc);
     FortranWriteDouble(dP0);
   }
@@ -1226,7 +1218,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalTorsionParms(uUnit->psParameters); i++) {
-    ParmSetTorsion(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
+    ParmSetTorsion(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
                    &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
     if (dScEE < 0.0) {
       dScEE = GDefaults.dSceeScaleFactor;
@@ -1247,7 +1239,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalTorsionParms(uUnit->psParameters); i++) {
-    ParmSetTorsion(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, sAtom4,
+    ParmSetTorsion(uUnit->psParameters, i, NULL, NULL, NULL, NULL,
                    &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
     if (dScNB < 0.0) {
       dScNB = GDefaults.dScnbScaleFactor;
@@ -1572,7 +1564,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalHBondParms(uUnit->psParameters); i++) {
-    ParmSetHBond(uUnit->psParameters, i, sType1, sType2, &dB, &dD, sDesc);
+    ParmSetHBond(uUnit->psParameters, i, NULL, NULL, &dB, NULL, NULL);
     FortranWriteDouble(dB);
   }
   FortranEndLine();
@@ -1585,7 +1577,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
   FortranFormat(5, DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalHBondParms(uUnit->psParameters); i++) {
-    ParmSetHBond(uUnit->psParameters, i, sType1, sType2, &dB, &dD, sDesc);
+    ParmSetHBond(uUnit->psParameters, i, NULL, NULL, NULL, &dD, NULL);
     FortranWriteDouble(dD);
   }
   FortranEndLine();
@@ -1758,15 +1750,15 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranWriteDouble(dX);
       FortranWriteDouble(dY);
       FortranWriteDouble(dZ);
-      FortranWriteDouble(uUnit->dAlpha / DEGTORAD);
-      FortranWriteDouble(uUnit->dBeta  / DEGTORAD);
-      FortranWriteDouble(uUnit->dGamma / DEGTORAD);
+      FortranWriteDouble(uUnit->dAlpha * RADTODEG);
+      FortranWriteDouble(uUnit->dBeta  * RADTODEG);
+      FortranWriteDouble(uUnit->dGamma * RADTODEG);
     } else {
       FortranWriteString("%FLAG BOX_DIMENSIONS");
       FortranWriteString("%FORMAT(5" DBLFORMAT_F ")");
       COMMENT("SIZE:4; UNITS:angstrom,degrees; MEMBERS:BETA,A,B,C;")
       FortranFormat(4, DBLFORMAT_C);
-      FortranWriteDouble(dUnitBeta(uUnit) / DEGTORAD);
+      FortranWriteDouble(dUnitBeta(uUnit) * RADTODEG);
       FortranWriteDouble(dX);
       FortranWriteDouble(dY);
       FortranWriteDouble(dZ);
@@ -2227,8 +2219,8 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     saPAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, 0);
     for (i = 0; i < iMax; i++, saPAtom++) {
       iIndex = iParmSetFindAtom(uUnit->psParameters, saPAtom->sType);
-      ParmSetAtom(uUnit->psParameters, iIndex, sType, &dMass, &dPolar, &dEpsilon, &dRStar,
-                  &dEpsilon14, &dRStar14, &dScreenF, &iElement, &iHybridization, sDesc);
+      ParmSetAtom(uUnit->psParameters, iIndex, NULL, NULL, &dPolar, NULL, NULL,
+                  NULL, NULL, NULL, NULL, NULL, NULL);
       if (dPolar == -1.0) {
         dPolar = 0.0;
         iCount++;
@@ -2248,11 +2240,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     saPAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, 0);
     for (i = 0; i < iMax; i++, saPAtom++) {
       iIndex = iParmSetFindAtom(uUnit->psParameters, saPAtom->sType);
-      ParmSetAtom(uUnit->psParameters, iIndex, sType, &dMass, &dPolar, &dEpsilon, &dRStar,
-                  &dEpsilon14, &dRStar14, &dScreenF, &iElement, &iHybridization, sDesc);
-      if (dScreenF == 0.0) {
+      ParmSetAtom(uUnit->psParameters, iIndex, NULL, NULL, NULL, NULL, NULL, 
+                  NULL, NULL, &dScreenF, NULL, NULL, NULL);
+      if (dScreenF == 0.0)
         dScreenF = GDefaults.dDipoleDampFactor;
-      }
       FortranWriteDouble(dScreenF);
     }
     FortranEndLine();
@@ -2274,13 +2265,11 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
         else {
           iIndex = iParmSetFindAtom(uUnit->psParameters, saPAtom->sType);
         }
-        ParmSetAtom(uUnit->psParameters, iIndex, sType, &dMass, &dPolar, &dEpsilon, &dRStar,
-                    &dEpsilon14, &dRStar14, &dScreenF, &iElement, &iHybridization, sDesc);
+        ParmSetAtom(uUnit->psParameters, iIndex, NULL, NULL, &dPolar, NULL, NULL, 
+                  NULL, NULL, NULL, NULL, NULL, NULL);
         if (dPolar == -1.0) {
           dPolar = 0.0;
-          if (bTmp) {
-            iCountPerturbed++;
-	  }
+          if (bTmp) iCountPerturbed++;
         }
         FortranWriteDouble(dPolar);
       }
@@ -2323,7 +2312,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     COMMENT_DIM(NUMANG)
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < iParmSetTotalAngleParms(uUnit->psParameters); i++) {
-      ParmSetAngle(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, &dKt,
+      ParmSetAngle(uUnit->psParameters, i, NULL, NULL, NULL, &dKt,
                    &dT0, &dTkub, &dRkub, sDesc);
       FortranWriteDouble(dTkub);
     }
@@ -2335,7 +2324,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     COMMENT_DIM(NUMANG)
     FortranFormat(5, DBLFORMAT_C);
     for (i = 0; i < iParmSetTotalAngleParms(uUnit->psParameters); i++) {
-      ParmSetAngle(uUnit->psParameters, i, sAtom1, sAtom2, sAtom3, &dKt,
+      ParmSetAngle(uUnit->psParameters, i, NULL, NULL, NULL, &dKt,
                    &dT0, &dTkub, &dRkub, sDesc);
       FortranWriteDouble(dRkub);
     }
@@ -2442,9 +2431,9 @@ void UnitIOSaveAmberCoord(UNIT uUnit, char *crdName) {
     FortranWriteDouble(dX);
     FortranWriteDouble(dY);
     FortranWriteDouble(dZ);
-    FortranWriteDouble(dUnitBeta(uUnit) / DEGTORAD);
-    FortranWriteDouble(dUnitBeta(uUnit) / DEGTORAD);
-    FortranWriteDouble(dUnitBeta(uUnit) / DEGTORAD);
+    FortranWriteDouble(dUnitBeta(uUnit) * RADTODEG);
+    FortranWriteDouble(dUnitBeta(uUnit) * RADTODEG);
+    FortranWriteDouble(dUnitBeta(uUnit) * RADTODEG);
     FortranEndLine();
   }
   else {
@@ -2511,16 +2500,15 @@ SAVEATOMt       *saPAtom;
 SAVETORSIONt    *stPTorsion;
 SAVERESTRAINTt  *srPRestraint;
 double          dMass, dPolar, dR, dKb, dR0, dKt, dT0, dTkub, dRkub, dKp, dP0, dC, dD, dTemp;
- double		dScEE, dScNB, dScreenF, dKpull, dRpull0, dKpress, dRpress0;
-STRING          sAtom1, sAtom2, sAtom3, sAtom4, sType1, sType2;
+double		dScEE, dScNB, dKpull, dRpull0, dKpress, dRpress0;
 int             iN, iAtoms, iMaxAtoms, iTemp, iAtom;
-int             iElement, iHybridization, iStart;
+int             iStart;
 RESIDUE         rRes;
 bool            bFoundSome;
 VECTOR          vPos;
 char            *cPTemp;
-double          dX, dY, dZ, dEpsilon, dRStar, dEpsilon14, dRStar14;
-STRING          sDesc, sType;
+double          dX, dY, dZ;
+STRING          sDesc;
 IX_REC          *ePResEnt;
 IX_DESC         iResIx;
 
@@ -2921,10 +2909,8 @@ IX_DESC         iResIx;
     for ( i=0; i<iVarArrayElementCount(uUnit->vaAtoms); i++ ) {
         saPAtom = PVAI( uUnit->vaAtoms, SAVEATOMt, i );
         iIndex = iParmSetFindAtom( uUnit->psParameters, saPAtom->sType );
-        ParmSetAtom( uUnit->psParameters, iIndex, sType,
-                        &dMass, &dPolar, &dEpsilon, &dRStar, &dEpsilon14, &dRStar14, 
-			&dScreenF,
-            &iElement, &iHybridization, sDesc );
+        ParmSetAtom(uUnit->psParameters, iIndex, NULL, &dMass, NULL, NULL, NULL, 
+                  NULL, NULL, NULL, NULL, NULL, NULL);
         FortranWriteDouble( dMass );
     }
     FortranEndLine();
@@ -2992,7 +2978,7 @@ IX_DESC         iResIx;
     MESSAGE( "Writing bond force constants\n" );
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalBondParms(uUnit->psParameters); i++ ) {
-      ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+      ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
 		  &dKpress, &dRpress0, sDesc);
        FortranWriteDouble( dKb );
     }
@@ -3007,7 +2993,7 @@ IX_DESC         iResIx;
     MESSAGE( "Writing equilibrium bond lengths\n" );
     FortranFormat( 5, DBLFORMAT );
     for (i = 0; i < iParmSetTotalBondParms(uUnit->psParameters); i++) {
-      ParmSetBond(uUnit->psParameters, i, sAtom1, sAtom2, &dKb, &dR0, &dKpull, &dRpull0,
+      ParmSetBond(uUnit->psParameters, i, NULL, NULL, &dKb, &dR0, &dKpull, &dRpull0,
 		  &dKpress, &dRpress0, sDesc);
       FortranWriteDouble( dR0 );
     }
@@ -3022,7 +3008,7 @@ IX_DESC         iResIx;
     MESSAGE( "Writing angle force constants\n" );
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalAngleParms(uUnit->psParameters); i++ ) {
-        ParmSetAngle( uUnit->psParameters, i, sAtom1, sAtom2, sAtom3,
+        ParmSetAngle( uUnit->psParameters, i, NULL, NULL, NULL,
                         &dKt, &dT0, &dTkub, &dRkub, sDesc );
         FortranWriteDouble( dKt );
     }
@@ -3037,7 +3023,7 @@ IX_DESC         iResIx;
     MESSAGE( "Writing equilibrium angle values\n" );
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalAngleParms(uUnit->psParameters); i++ ) {
-        ParmSetAngle( uUnit->psParameters, i, sAtom1, sAtom2, sAtom3,
+        ParmSetAngle( uUnit->psParameters, i, NULL, NULL, NULL,
                         &dKt, &dT0, &dTkub, &dRkub, sDesc );
         FortranWriteDouble( dT0 );
     }
@@ -3055,21 +3041,13 @@ IX_DESC         iResIx;
                 iParmSetTotalTorsionParms(uUnit->psParameters),
                 iParmSetTotalImproperParms(uUnit->psParameters) );
     for ( i=0; i<iParmSetTotalTorsionParms(uUnit->psParameters); i++ ) {
-        ParmSetTorsion( uUnit->psParameters, i, sAtom1, sAtom2, 
-                        sAtom3, sAtom4,
-                        &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc );
-        MESSAGE( "Torsion %d  %s-%s-%s-%s %d %lf %lf\n",
-                        i, sAtom1, sAtom2, sAtom3, sAtom4,
-                        iN, dKp, dP0 );
+        ParmSetTorsion( uUnit->psParameters, i, NULL, NULL, 
+                        NULL, NULL, NULL, &dKp, NULL, NULL, NULL, NULL );
         FortranWriteDouble( dKp );
     }
     for ( i=0; i<iParmSetTotalImproperParms(uUnit->psParameters); i++ ) {
-        ParmSetImproper( uUnit->psParameters, i, sAtom1, sAtom2, 
-                        sAtom3, sAtom4,
-                        &iN, &dKp, &dP0, sDesc );
-        MESSAGE( "Improper %d  %s-%s-%s-%s %d %lf %lf\n",
-                        i, sAtom1, sAtom2, sAtom3, sAtom4,
-                        iN, dKp, dP0 );
+        ParmSetImproper( uUnit->psParameters, i, NULL, NULL, 
+                        NULL, NULL, NULL, &dKp, NULL, NULL );
         FortranWriteDouble( dKp );
     }
                 /* Write the torsion RESTRAINT constants AND set the index */
@@ -3083,16 +3061,14 @@ IX_DESC         iResIx;
     MESSAGE( "Writing multiplicity of torsion interaction\n" );
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalTorsionParms(uUnit->psParameters); i++ ) {
-        ParmSetTorsion( uUnit->psParameters, i, sAtom1, sAtom2, 
-                        sAtom3, sAtom4,
-                        &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc );
+        ParmSetTorsion( uUnit->psParameters, i, NULL, NULL, 
+                        NULL, NULL, &iN, NULL, NULL, NULL, NULL, NULL);
         dTemp = iN;
         FortranWriteDouble( dTemp );
     }
     for ( i=0; i<iParmSetTotalImproperParms(uUnit->psParameters); i++ ) {
-        ParmSetImproper( uUnit->psParameters, i, sAtom1, sAtom2, 
-                        sAtom3, sAtom4,
-                        &iN, &dKp, &dP0, sDesc );
+        ParmSetImproper( uUnit->psParameters, i, NULL, NULL, 
+                        NULL, NULL, &iN, NULL, NULL, NULL);
         dTemp = iN;
         FortranWriteDouble( dTemp );
     }
@@ -3107,14 +3083,14 @@ IX_DESC         iResIx;
     MESSAGE( "Writing phase for torsion interactions\n" );
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalTorsionParms(uUnit->psParameters); i++ ) {
-        ParmSetTorsion( uUnit->psParameters, i, sAtom1, sAtom2, 
-                        sAtom3, sAtom4,
+        ParmSetTorsion( uUnit->psParameters, i, NULL, NULL, 
+                        NULL, NULL,
                         &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc );
         FortranWriteDouble( dP0 );
     }
     for ( i=0; i<iParmSetTotalImproperParms(uUnit->psParameters); i++ ) {
-        ParmSetImproper( uUnit->psParameters, i, sAtom1, sAtom2, 
-                        sAtom3, sAtom4,
+        ParmSetImproper( uUnit->psParameters, i, NULL, NULL, 
+                        NULL, NULL,
                         &iN, &dKp, &dP0, sDesc );
         FortranWriteDouble( dP0 );
     }
@@ -3402,7 +3378,7 @@ IX_DESC         iResIx;
 
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalHBondParms(uUnit->psParameters); i++ ) {
-        ParmSetHBond( uUnit->psParameters, i, sType1, sType2, &dC, &dD, sDesc );
+        ParmSetHBond( uUnit->psParameters, i, NULL, NULL, &dC, NULL, NULL );
         FortranWriteDouble( dC );
     }
     FortranEndLine();
@@ -3412,7 +3388,7 @@ IX_DESC         iResIx;
 
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iParmSetTotalHBondParms(uUnit->psParameters); i++ ) {
-        ParmSetHBond( uUnit->psParameters, i, sType1, sType2, &dC, &dD, sDesc );
+        ParmSetHBond( uUnit->psParameters, i, NULL, NULL, NULL, &dD, NULL );
         FortranWriteDouble( dD );
     }
     FortranEndLine();
@@ -3526,7 +3502,7 @@ IX_DESC         iResIx;
 
         FortranDebug( "-35C-" );
         FortranFormat( 4, DBLFORMAT );
-        FortranWriteDouble( dUnitBeta(uUnit)/DEGTORAD );
+        FortranWriteDouble( dUnitBeta(uUnit)*RADTODEG );
         UnitGetBox( uUnit, &dX, &dY, &dZ );
         FortranWriteDouble( dX );
         FortranWriteDouble( dY );
@@ -3892,10 +3868,8 @@ IX_DESC         iResIx;
         saPAtom = PVAI( uUnit->vaAtoms, SAVEATOMt, 0 );
         for ( i=0; i<iMax; i++, saPAtom++ ) {
             iIndex = iParmSetFindAtom( uUnit->psParameters, saPAtom->sType );
-            ParmSetAtom( uUnit->psParameters, iIndex, sType,
-                        &dMass, &dPolar, &dEpsilon, &dRStar, &dEpsilon14, &dRStar14,
-			&dScreenF,
-            &iElement, &iHybridization, sDesc );
+            ParmSetAtom(uUnit->psParameters, iIndex, NULL, NULL, &dPolar, NULL, NULL, 
+                      NULL, NULL, NULL, NULL, NULL, NULL);
             if ( dPolar == -1.0 ) {
                 dPolar = 0.0;
                 iCount++;
@@ -3915,7 +3889,7 @@ IX_DESC         iResIx;
            FortranFormat(5, DBLFORMAT);
            for (i = 0; i < iMax; i++, saPAtom++) {
                iIndex = iParmSetFindAtom(uUnit->psParameters, saPAtom->sType);
-               ParmSetAtom(uUnit->psParameters, iIndex, sType,
+               ParmSetAtom(uUnit->psParameters, iIndex, NULL,
                            &dMass, &dPolar, &dEpsilon, &dRStar, &dEpsilon14,
                            &dRStar14, &dScreenF, &iElement, &iHybridization,
 			   sDesc); 
@@ -3941,9 +3915,8 @@ IX_DESC         iResIx;
                         } else
                                 iIndex = iParmSetFindAtom( uUnit->psParameters, 
                                                         saPAtom->sType );
-                        ParmSetAtom( uUnit->psParameters, iIndex, sType,
-                                        &dMass, &dPolar, &dEpsilon, &dRStar, &dEpsilon14,
-                    &dRStar14, &dScreenF, &iElement, &iHybridization, sDesc );
+                        ParmSetAtom(uUnit->psParameters, iIndex, NULL, NULL, &dPolar, NULL, NULL, 
+                                  NULL, NULL, NULL, NULL, NULL, NULL);
                         if ( dPolar == -1.0 ) {
                                 dPolar = 0.0;
                                 if ( bTmp ) iCountPerturbed++;
@@ -3984,7 +3957,7 @@ IX_DESC         iResIx;
 
                 FortranFormat( 5, DBLFORMAT );
                 for ( i=0; i<iParmSetTotalAngleParms(uUnit->psParameters); i++ ) {
-                        ParmSetAngle( uUnit->psParameters, i, sAtom1, sAtom2, sAtom3,
+                        ParmSetAngle( uUnit->psParameters, i, NULL, NULL, NULL,
                                 &dKt, &dT0, &dTkub, &dRkub, sDesc );
                         FortranWriteDouble( dTkub );
                 }
@@ -3995,7 +3968,7 @@ IX_DESC         iResIx;
 
                 FortranFormat( 5, DBLFORMAT );
                 for ( i=0; i<iParmSetTotalAngleParms(uUnit->psParameters); i++ ) {
-                        ParmSetAngle( uUnit->psParameters, i, sAtom1, sAtom2, sAtom3,
+                        ParmSetAngle( uUnit->psParameters, i, NULL, NULL, NULL,
                                                 &dKt, &dT0, &dTkub, &dRkub, sDesc );
                         FortranWriteDouble( dRkub );
                 }
@@ -4041,9 +4014,9 @@ IX_DESC         iResIx;
         FortranWriteDouble( dX );
         FortranWriteDouble( dY );
         FortranWriteDouble( dZ );
-        FortranWriteDouble( dUnitBeta( uUnit ) / DEGTORAD );
-        FortranWriteDouble( dUnitBeta( uUnit ) / DEGTORAD );
-        FortranWriteDouble( dUnitBeta( uUnit ) / DEGTORAD );
+        FortranWriteDouble( dUnitBeta( uUnit ) * RADTODEG );
+        FortranWriteDouble( dUnitBeta( uUnit ) * RADTODEG );
+        FortranWriteDouble( dUnitBeta( uUnit ) * RADTODEG );
         FortranEndLine();
     } else {
         for ( i = 0; i<iVarArrayElementCount( uUnit->vaAtoms ); i++ ) {

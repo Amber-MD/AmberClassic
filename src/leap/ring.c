@@ -72,7 +72,7 @@ RINGNODEt	*rnPNew;
     rnPNew->rnPPrev = NULL;
     rnPNew->rnPNext = NULL;
 
-    return(rnPNew);
+    return rnPNew;
 }
 
 
@@ -108,14 +108,14 @@ RINGLOOP	rlSearch;
 GENP		PCur;
 
     if ( PData == NULL ) 
-	return(rRing->rnPFirst);
+	return rRing->rnPFirst;
 
     rlRingLoop(rRing, &rlSearch);
     while ( (PCur = PRingNext(&rlSearch)) != NULL ) {
 	if ( PCur == PData ) 
 		return(rnPRingNode(rlSearch));
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -146,7 +146,7 @@ RING	rNew;
 
     rNew->iElements = 0;
     rNew->rnPFirst = NULL;
-    return(rNew);
+    return rNew;
 }
 
 
@@ -290,10 +290,10 @@ PRingNext( RINGLOOP *rlPLoop )
 {
     rlPLoop->iCount--;
     if ( rlPLoop->iCount < 0 ) 
-	return(NULL);
+	return NULL;
     rlPLoop->rnPCur = rlPLoop->rnPNext;
     rlPLoop->rnPNext = rlPLoop->rnPNext->rnPNext;
-    return(rlPLoop->rnPCur->PData);
+    return rlPLoop->rnPCur->PData;
 }
 
 
@@ -314,7 +314,7 @@ RINGNODEt	*rnPNode;
 
     rnPNode = zrnPRingFind( rRing, PData );
     if ( rnPNode == NULL ) 
-	return(false);
+	return false;
 
 	/* Remove the node from the RING */
 
@@ -331,7 +331,7 @@ RINGNODEt	*rnPNode;
 		rRing->rnPFirst = rnPNode->rnPNext;
 	zRingNodeDestroy( &rnPNode );
     }
-    return(true);
+    return true;
 }
 
 

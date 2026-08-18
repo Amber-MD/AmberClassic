@@ -180,7 +180,7 @@ DICTIONARY	dNew;
     dNew->vaSort = NULL;
     dNew->dlLastSort = NULL;
 
-    return(dNew);
+    return dNew;
 }
 
 
@@ -301,9 +301,9 @@ bool		bFound;
     if ( bFound ) {
 		/* Free the memory for the Key */
 	FREE(cPKey);
-	return(PData);
+	return PData;
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -326,7 +326,7 @@ ydlDictionaryLoop( DICTIONARY dDict )
 		/* Cleanup an old sorted array */
 
     zDictionarySortCleanup(dDict);
-    if ( iHTElementCount(dDict->htEntries) == 0 ) return(NULL);
+    if ( iHTElementCount(dDict->htEntries) == 0 ) return NULL;
 
 		/* Setup a static variable for the */
 		/* sort VARARRAY and walk through the */
@@ -350,7 +350,7 @@ ydlDictionaryLoop( DICTIONARY dDict )
 		/* used by PDictionaryNext to get successive */
 		/* sorted elements */
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -369,13 +369,13 @@ GENP
 yPDictionaryNext( DICTIONARY dDict, DICTLOOP *dlPLoop )
 {
     if ( *dlPLoop == NULL ) {
-	if ( dDict->vaSort == NULL ) return(NULL);
+	if ( dDict->vaSort == NULL ) return NULL;
 	*dlPLoop = PVAI( dDict->vaSort, DICTLOOPt, 0 );
     } else {
 	(*dlPLoop)++;
 	if ( *dlPLoop >= dDict->dlLastSort ) {
 	    *dlPLoop = NULL;
-	    return(NULL);
+	    return NULL;
 	} 
     }
     return((*dlPLoop)->PData);

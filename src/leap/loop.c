@@ -128,10 +128,10 @@ FLAGS           fFlags;
 
     fFlags = fAtomFlags(aAtom);
     if ( (fFlags&lPLoop->fVisibleFlagsOn)!=lPLoop->fVisibleFlagsOn )
-        return(false);
+        return false;
 
     if ( (fFlags|(~(lPLoop->fVisibleFlagsOff)))!=(~(lPLoop->fVisibleFlagsOff)) )
-        return(false);
+        return false;
 
 			/* If the TempInt field is being used to determine */
 			/* visibility, then check if the ATOM has the */
@@ -141,11 +141,11 @@ FLAGS           fFlags;
     if ( lPLoop->fVisibilityFlags & TEMPINTUSED ) {
 	if ( lPLoop->fVisibilityFlags & TEMPINTINVISIBLE ) {
 	    if ( iAtomTempInt(aAtom) == lPLoop->iTempInt ) {
-		return(false);
+		return false;
 	    }
 	} else {
 	    if ( iAtomTempInt(aAtom) != lPLoop->iTempInt ) {
-		return(false);
+		return false;
 	    }
 	}
     }	
@@ -154,9 +154,9 @@ FLAGS           fFlags;
 		/* Used to construct spanning trees that do not pass a */
 		/* certain ATOM, good for looping over side chains */
 
-    if ( lPLoop->aInvisibleAtom == (OBJEKT)aAtom ) return(false);
+    if ( lPLoop->aInvisibleAtom == (OBJEKT)aAtom ) return false;
 
-    return(true);
+    return true;
 }
  
 
@@ -179,7 +179,7 @@ bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, bool *bPSeenBefore )
     *bPSeenBefore = false;
     if ( iAtomSeenId(aAtom) == lPLoop->iSeenId ) {
         *bPSeenBefore = true;
-        return(false);
+        return false;
     }
 
 		/* If the ATOM in the spanning tree is too far */
@@ -188,7 +188,7 @@ bSpanAtomVisible( LOOP *lPLoop, ATOM aAtom, bool *bPSeenBefore )
     if ( lPLoop->iMaxDistanceFromRoot >= 0 ) {
 	if ( lPLoop->iMaxDistanceFromRoot <
 		iAtomBackCount(lPLoop->aCurSpan)+1 ) {
-	    return(false);
+	    return false;
 	}
     }
     return(bLoopAtomVisible( lPLoop, aAtom ));
@@ -221,9 +221,9 @@ int             iGoal;
         case CONTAINERS:
             return(( bObjectInClass( oObject, CONTAINERid ) ));
         case DIRECTCONTENTS:
-            return(true);
+            return true;
     }
-    return(false);
+    return false;
 }
 
 
@@ -295,7 +295,7 @@ bool            bDone, bAllowDuplicates;
                         lPLoop->oaObj[1] = (OBJEKT)
                                 aAtomBondedNeighbor(cCont,lPLoop->iIndex0);
                         lPLoop->iIndex0++;
-                        return(true);
+                        return true;
                     }
                     lPLoop->iIndex0++;
                 }
@@ -348,7 +348,7 @@ AINC1:
                 lPLoop->oaObj[0] = (OBJEKT)cCont;
                 lPLoop->oaObj[1] = (OBJEKT)aAtom1;
                 lPLoop->oaObj[2] = (OBJEKT)aAtom2;
-                return(true);
+                return true;
 ANONE:          break;
 
 
@@ -405,7 +405,7 @@ TINC1:
                 lPLoop->oaObj[1] = (OBJEKT)aAtom1;
                 lPLoop->oaObj[2] = (OBJEKT)aAtom2;
                 lPLoop->oaObj[3] = (OBJEKT)aAtom3;
-                return(true);
+                return true;
 TNONE:          break;
 
                         /* When LOOPing over IMPROPERS, use iIndex0 and */
@@ -450,7 +450,7 @@ TNONE:          break;
                         aAtomBondedNeighbor( cCont, lPLoop->iIndex1 );
                     lPLoop->oaObj[3] = (OBJEKT)
                         aAtomBondedNeighbor( cCont, lPLoop->iIndex2 );
-                    return(true);
+                    return true;
                 }
                 break;
 
@@ -459,7 +459,7 @@ TNONE:          break;
     }
     
     InitLoop(lPLoop);
-    return(false);
+    return false;
 }
 
 
@@ -480,10 +480,10 @@ iLoopContainerMatch(const void *A, const void *B)
     CONTAINER *cPA = (CONTAINER *)A;
     CONTAINER *cPB = (CONTAINER *)B;
     if ( iContainerSequence(*cPA)<iContainerSequence(*cPB) ) 
-	return(-1);
+	return -1;
     if ( iContainerSequence(*cPA)==iContainerSequence(*cPB) ) 
-	return(0);
-    return(1);
+	return 0;
+    return 1;
 }
 
 
@@ -663,7 +663,7 @@ CONTAINER	cTemp;
     } else {
 	PushSubLoop( &lL, oOver );
     }
-    return(lL);
+    return lL;
 }
 
 
@@ -865,7 +865,7 @@ DONE:
 	if ( oObject != NULL ) zLoopAddToMemory( lPLoop, oObject );
     }
 
-    return(oObject);
+    return oObject;
 }
 
 

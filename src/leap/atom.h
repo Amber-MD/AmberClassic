@@ -315,7 +315,7 @@ extern int              iAtomHybridization( ATOM aAtom );
 extern int              iAtomBondOrderFromName( char *sName );
 extern bool             bAtomSpaceConflict( ATOM aAtom1, ATOM aAtom2 );
 extern double           dAtomVanderWaals( ATOM aAtom );
-extern int              iAtomSetTmpRadius( ATOM aAtom );
+extern bool             bAtomSetTmpRadius( ATOM aAtom );
 
 extern void             AtomBondTo( ATOM aAtom1, ATOM aAtom2 );
 

@@ -231,7 +231,7 @@ static void zAmberReadParmSetBonds(PARMSET psParms, FILE *fIn)
 {
     int    iRead, iDesc1, iDesc;
     STRING sLine;
-    STRING saStr[10];
+    STRING saStr[2];
     double dKb, dR0, dKpull, dRpull0, dKpress, dRpress0;
 
     // For Purify
@@ -269,7 +269,7 @@ zAmberReadParmSetAngles( PARMSET psParms, FILE *fIn )
 {
 STRING          sLine;
 int             iRead, iDesc;
-STRING          saStr[10];
+STRING          saStr[3];
 double          dKt, dT0, dTkub, dRkub, zero;
 
     zero = 0.0;
@@ -493,7 +493,7 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
 {
     STRING          sLine;
     int             iRead, iN, iDesc, iDesc1, iDesc2;
-    STRING          saStr[10], taStr[10];
+    STRING          saStr[4], taStr[4];
     double          dDivisions, dKp, dP0, dN, dScEE, dScNB;
     char            *cScEE, *cScNB;
 
@@ -598,7 +598,7 @@ zAmberReadParmSetImpropers( PARMSET psParms, FILE *fIn )
 {
     STRING          sLine;
     int             iRead, iN, iDesc;
-    STRING          saStr[10];
+    STRING          saStr[4];
     double          dKp, dP0, dN, dScEE, dScNB;
     bool            bPrintLine;
 
@@ -672,7 +672,7 @@ zAmberReadParmSetHBonds( PARMSET psParms, FILE *fIn )
 {
 STRING          sLine;
 int             iRead, iDesc;
-STRING          saStr[10];
+STRING          saStr[2];
 double          dA, dB;
 
     memset(saStr, 0, sizeof(saStr));                    /* for Purify */
@@ -699,7 +699,7 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
 {
     STRING          sLine;
     int             iRead, iDesc;
-    STRING          saStr[10];
+    STRING          saStr;
     double          dRStar, dDepth, dRStar14, dDepth14;
     NONBONDt        nbNonBond;
     VARARRAY        vaNonBonds;
@@ -712,10 +712,10 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
         FGETS( sLine, fIn );
         if( GDefaults.bCharmm ){
             iRead = sscanf( sLine, "%s %lf %lf %lf %lf %n", 
-                    saStr[0], &dRStar, &dDepth, &dRStar14, &dDepth14, &iDesc );
+                    saStr, &dRStar, &dDepth, &dRStar14, &dDepth14, &iDesc );
             if ( iRead <= 0 )
                 break;
-            strcpy( nbNonBond.sNonBondType, saStr[0] );
+            strcpy( nbNonBond.sNonBondType, saStr );
             nbNonBond.dRStar = dRStar;
             nbNonBond.dDepth = dDepth;
             nbNonBond.dRStar14 = dRStar14;
@@ -723,10 +723,10 @@ zAmberReadParmSetNonBonds( VARARRAY *vaPNonBonds, FILE *fIn )
             strcpy( nbNonBond.sDesc, &sLine[iDesc] );
             VarArrayAdd( vaNonBonds, (GENP)&nbNonBond );
         } else {
-            iRead = sscanf( sLine, "%s %lf %lf %n", saStr[0], &dRStar, &dDepth, &iDesc );
+            iRead = sscanf( sLine, "%s %lf %lf %n", saStr, &dRStar, &dDepth, &iDesc );
             if ( iRead <= 0 )
                 break;
-            strcpy( nbNonBond.sNonBondType, saStr[0] );
+            strcpy( nbNonBond.sNonBondType, saStr );
             nbNonBond.dRStar = dRStar;
             nbNonBond.dDepth = dDepth;
             nbNonBond.dRStar14 = dRStar;
@@ -754,7 +754,7 @@ zAmberReadParmSetNBPairEdits( PARMSET psParms, FILE *fIn, int segfound )
 {
     STRING          sLine;
     int             iRead, iDesc;
-    STRING          saStr[10];
+    STRING          saStr[2];
     double          dEI, dEJ, dRI, dRJ;
 
     memset(saStr, 0, sizeof(saStr));                        /* for Purify */
@@ -829,7 +829,7 @@ bool            bNew;
         }
     } while ( !feof(fIn) );
     fseek( fIn, 0, 0 );
-    return(bNew);
+    return bNew;
 }
 
 /*
@@ -850,7 +850,7 @@ TYPEELEMENTt    *tP;
     iCount = iVarArrayElementCount( vaAtomTypes );
     if ( iCount == 0 ) {
         VP1(" (UNKNOWN ATOM TYPE: %s [no types loaded])\n", sType );
-        return( NOELEMENT );
+        return  NOELEMENT ;
     }
 
     iElement = NOELEMENT;
@@ -868,7 +868,7 @@ TYPEELEMENTt    *tP;
     if ( iElement == NOELEMENT ) {
         VP1("(UNKNOWN ATOM TYPE: %s)\n", sType );
     }
-    return(iElement);
+    return iElement;
 }
 
 
@@ -885,7 +885,7 @@ static PARMSET
 zpsAmberReadParmSetOld( FILE *fIn )
 {
 STRING          sLine;
-STRING          saStr[10];
+STRING          saStr;
 VARARRAY        vaMasses, vaEquivs, vaNonBonds;
 EQUIVt          eEquiv;
 PARMSET         psParms;
@@ -911,10 +911,10 @@ int             i, j, k, iRead, iSet;
         FGETS( sLine, fIn );
         iRead = sscanf( sLine, 
                 "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
-                        saStr[0], saStr[0], saStr[0], saStr[0], saStr[0],
-                        saStr[0], saStr[0], saStr[0], saStr[0], saStr[0],
-                        saStr[0], saStr[0], saStr[0], saStr[0], saStr[0],
-                        saStr[0], saStr[0], saStr[0], saStr[0], saStr[0] );
+                        saStr, saStr, saStr, saStr, saStr,
+                        saStr, saStr, saStr, saStr, saStr,
+                        saStr, saStr, saStr, saStr, saStr,
+                        saStr, saStr, saStr, saStr, saStr );
         if ( iRead < 20 ) break;
     } 
 
@@ -1005,7 +1005,7 @@ int             i, j, k, iRead, iSet;
         MASSt           *MassP;
         EQUIVt          *EquivP;
 
-        strcpy( saStr[0], nbNonBondP->sNonBondType );
+        strcpy( saStr, nbNonBondP->sNonBondType );
         dRStar = nbNonBondP->dRStar;
         dDepth = nbNonBondP->dDepth;
         dRStar14 = nbNonBondP->dRStar14;
@@ -1019,7 +1019,7 @@ int             i, j, k, iRead, iSet;
         iSet = 0;
         MassP = PVAI(vaMasses,MASSt,0);
         for ( j=0; j<iVarArrayElementCount(vaMasses); j++, MassP++ ) {
-            if ( strcmp( saStr[0], MassP->sType )==0 ) {
+            if ( strcmp( saStr, MassP->sType )==0 ) {
                 dMass = MassP->dMass;
                 dPolar = MassP->dPolar;
                 dScreenF = MassP->dScreenF;
@@ -1030,22 +1030,22 @@ int             i, j, k, iRead, iSet;
         }
         if ( iSet == 0 ) {
             VPWARN("No mass was defined for non-bond atom type: %s - ignoring\n",
-                        saStr[0] );
+                        saStr );
         } else {
                 MESSAGE("Adding %d atom type: %s  %lf %lf %lf %lf\n",
-                        i, saStr[0], dMass, dPolar, dRStar, dDepth );
-                iParmSetAddAtom( psParms, saStr[0], dMass, dPolar, 
+                        i, saStr, dMass, dPolar, dRStar, dDepth );
+                iParmSetAddAtom( psParms, saStr, dMass, dPolar, 
                                 dDepth, dRStar, dDepth14, dRStar14,
                                 dScreenF,
                                 iElement!=-10?iElement
-                                              :iAtomTypeToElement(saStr[0]),
+                                              :iAtomTypeToElement(saStr),
                                 iHybridization!=HUNDEFINED?iHybridization
-                                              :iAtomTypeHybridization(saStr[0]),
+                                              :iAtomTypeHybridization(saStr),
                                 nbNonBondP->sDesc );
         }
         EquivP = PVAI(vaEquivs,EQUIVt,0);
         for ( j=0; j<iVarArrayElementCount(vaEquivs); j++, EquivP++ ) {
-            if ( strcmp( saStr[0], EquivP->sName )==0 ) {
+            if ( strcmp( saStr, EquivP->sName )==0 ) {
                 for ( k=0; k<EquivP->iEquivs; k++ ) {
                     if ( iSet == 0 ) {
                         VPWARN("No mass equivalenced type: %s - skipping\n",
@@ -1056,9 +1056,9 @@ int             i, j, k, iRead, iSet;
                        dMass, dPolar, dDepth, dRStar, dDepth14, dRStar14,
                        dScreenF,
                        iElement!=-10?iElement
-                                    :iAtomTypeToElement(saStr[0]),
+                                    :iAtomTypeToElement(saStr),
                        iHybridization!=HUNDEFINED?iHybridization
-                                    :iAtomTypeHybridization(saStr[0]),
+                                    :iAtomTypeHybridization(saStr),
                        nbNonBondP->sDesc );
                 }
             }
@@ -1076,7 +1076,7 @@ int             i, j, k, iRead, iSet;
     VarArrayDestroy( &vaNonBonds );
     fclose(fIn);
 
-    return(psParms);
+    return psParms;
 }
 
 
@@ -1092,7 +1092,7 @@ int             i, j, k, iRead, iSet;
 static PARMSET
 zpsAmberReadParmSetFrcMod( FILE *fIn )
 {
-    STRING          sLine, saStr[10];
+    STRING          sLine, saStr;
     VARARRAY        vaMasses, vaNonBonds;
     PARMSET         psParms;
     int             i, j;
@@ -1110,7 +1110,8 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
     vaMasses = NULL;
     vaNonBonds = NULL;
 
-    // Mass and NonBond are deferred, and saved in ParmSet as a unit
+    // Mass and NonBond are deferred; collected int VARARRAYs
+    // and then saved in ParmSet as a common Atom parameter set
     do {
         FGETS( sLine, fIn );
         if ( strncmp( sLine, "MASS", 4 ) == 0 ) {
@@ -1160,7 +1161,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
             int         iSet = 0;
             MASSt       *mP;
 
-            strcpy( saStr[0], nbP->sNonBondType );
+            strcpy( saStr, nbP->sNonBondType );
             dRStar = nbP->dRStar;
             dDepth = nbP->dDepth;
             dRStar14 = nbP->dRStar14;
@@ -1169,7 +1170,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
                             /* Lookup the MASS if it is defined */
             mP = PVAI(vaMasses,MASSt,0);
             for ( j=0; j<iVarArrayElementCount(vaMasses); j++, mP++ ) {
-                if ( strcmp( saStr[0], mP->sType )==0 ) {
+                if ( strcmp( saStr, mP->sType )==0 ) {
                         dMass = mP->dMass;
                         dPolar = mP->dPolar;
                         dScreenF = mP->dScreenF;
@@ -1181,17 +1182,17 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
             }
             if ( iSet == 0 ) {
                 VPWARN("No mass defined for non-bond atom type: %s - skipping\n",
-                            saStr[0] );
+                            saStr );
                 continue;
             }
             MESSAGE("Adding %d atom type: %s  %lf %lf %lf %lf\n",
-                            i, saStr[0], dMass, dPolar, dRStar, dDepth );
-            iParmSetAddAtom( psParms, saStr[0], dMass, dPolar, dDepth, dRStar,
+                            i, saStr, dMass, dPolar, dRStar, dDepth );
+            iParmSetAddAtom( psParms, saStr, dMass, dPolar, dDepth, dRStar,
                     dDepth14, dRStar14, dScreenF,
                                 iElement!=-10?iElement
-                                             :iAtomTypeToElement(saStr[0]),
+                                             :iAtomTypeToElement(saStr),
                                 iHybridization!=HUNDEFINED?iHybridization
-                                             :iAtomTypeHybridization(saStr[0]),
+                                             :iAtomTypeHybridization(saStr),
                                 nbP->sDesc );
         }
     }
@@ -1203,7 +1204,7 @@ zpsAmberReadParmSetFrcMod( FILE *fIn )
     fclose(fIn);
 
     VPTRACEEXIT("zpsAmberReadParmSetFrcMod" );
-    return(psParms);
+    return psParms;
 }
 
 
@@ -1239,7 +1240,7 @@ uAmberReadUnitFromPrep( FILE *fIn )
 TREENODEt       *cPCoor;
 TREENODEt       cCoor;
 STRING          sLine, sChain, sDesc, sResName;
-STRING          saStr[15];
+STRING          saStr[12];
 int             iRead, iIndex;
 UNIT            uUnit = NULL;
 RESIDUE         rRes;
@@ -1253,7 +1254,7 @@ double          dBond, dAngle, dTorsion;
 VECTOR          vPos, vPos1, vPos2, vPos3;
 ATOM            aMain0, aMain1;
 bool            bFirstTime;
-double          da[10];
+double          da[5];
 int             i, iLen, iErrors, iCharge, iCharges = 0, iChgWarn = 0, iAtoms = 0;
 double          dCutoff;
 INPUTLINEt      ilLine;
@@ -1270,11 +1271,11 @@ bool            bUseFirstColumn;
 
     FGETS( sDesc, fIn );
     if ( strncmp( sDesc, "STOP", 4 ) == 0 ) {
-        return(NULL);
+        return NULL;
     }
     if ( feof( fIn ) ) {
         VPWARN("Unexpected EOF: Assuming STOP\n" );
-        return(NULL);
+        return NULL;
     }
     StringTrim(sDesc);
 
@@ -1613,7 +1614,7 @@ MESSAGE("============\n" );
         else            FGETS( sLine, fIn );
         if ( feof( fIn ) ) {
                 VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
-                return(NULL);
+                return NULL;
         }
         iRead = sscanf( sLine, "%s", saStr[1] );
         if ( iRead <= 0 ) continue;
@@ -1756,7 +1757,7 @@ DONE:
     VarArrayDestroy( &vaCoor );
     VarArrayDestroy( &vaLines );
 
-    return(uUnit);
+    return uUnit;
 
 EOFERROR:
     VPERROR("Unexpected EOF: discarding residue (%s)\n", sResName );
@@ -1766,7 +1767,7 @@ ERROR:
 
     Destroy( (OBJEKT *)&uUnit );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -1906,7 +1907,7 @@ STRING          sTemp;
 
     fIn = FOPENCOMPLAIN( sFilename, "r" );
     if ( fIn == NULL ) 
-        return(NULL);
+        return NULL;
     VP0("Loading Prep file: %s\n", GsBasicsFullName );
 
     dUnits = dDictionaryCreate();
@@ -1922,7 +1923,7 @@ STRING          sTemp;
     }
    
     fclose( fIn ); 
-    return(dUnits);
+    return dUnits;
 }
 
 
@@ -1955,14 +1956,14 @@ PARMSET         psParms;
                     "Could not load parameter set from %s.\n",
                     sFilename );
                 fclose(fIn);
-                return(NULL);
+                return NULL;
         }
         VP0("Reading force field modification type file (frcmod)\n" );
         psParms = zpsAmberReadParmSetFrcMod( fIn );
     }
 
     strcpy( sParmName(psParms), sFilename );
-    return(psParms);
+    return psParms;
 }
 
 
@@ -1985,13 +1986,13 @@ TYPEELEMENTt    *tP;
 
     iCount = iVarArrayElementCount( vaAtomTypes );
     if ( iCount == 0 )
-        return( HUNKNOWN );
+        return  HUNKNOWN ;
 
     tP = PVAI( vaAtomTypes, TYPEELEMENTt, 0 );
     for (i=0; i<iCount; i++, tP++) {
         if ( strcmp( sType, tP->sType ) == 0 ) 
-            return(tP->iHybridization);
+            return tP->iHybridization;
     }
-    return(HUNKNOWN);
+    return HUNKNOWN;
 }
 

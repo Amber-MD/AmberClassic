@@ -72,8 +72,8 @@ BNODEP   bnPCur, *bnPPPrev;
                 bnPCur = (*bnPPPrev);
         }
 
-        if ( bnPCur == NULL ) return(NULL);
-        return(bnPPPrev);
+        if ( bnPCur == NULL ) return NULL;
+        return bnPPPrev;
 }
 
         
@@ -103,7 +103,7 @@ BAG    bBag;
 	bBag->iElementCount = 0;
         bBag->bnPFirstNode = NULL;
         bBag->bnPLastNode = NULL;
-        return(bBag);
+        return bBag;
 }
 
 
@@ -253,11 +253,11 @@ BNODEP   bnPNode;
 
                 /* If the bag is empty then return */
 
-    if ( bBag->bnPFirstNode==NULL ) return(false);
+    if ( bBag->bnPFirstNode==NULL ) return false;
 
                 /* Search the bag for the object */
     bnPPPrev = searchBag( &(bBag->bnPFirstNode), PPtr );
-    if ( bnPPPrev == NULL ) return(false);
+    if ( bnPPPrev == NULL ) return false;
 
                 /* Now actually remove the object from the bag */
     bnPNode = *bnPPPrev;
@@ -274,7 +274,7 @@ BNODEP   bnPNode;
 
     bBag->iElementCount--;
 
-    return(true);
+    return true;
 }
 
 
@@ -299,12 +299,12 @@ BNODEP   *bnPPPrev;
 
                 /* If the bag is empty then return */
 
-    if ( bBag->bnPFirstNode==NULL ) return(false);
+    if ( bBag->bnPFirstNode==NULL ) return false;
 
                 /* Search the bag for the object */
     bnPPPrev = searchBag( &(bBag->bnPFirstNode), PPtr );
-    if ( bnPPPrev == NULL ) return(false);
-    return(true);
+    if ( bnPPPrev == NULL ) return false;
+    return true;
 }
 
 
@@ -354,7 +354,7 @@ BAGLOOP		blNew;
     blNew.bnPCur = bBag->bnPFirstNode;
     if ( blNew.bnPCur == NULL ) blNew.bnPNext = NULL;
     else			 blNew.bnPNext = (blNew.bnPCur)->bnPNextNode;
-    return(blNew);
+    return blNew;
 }
 
 
@@ -373,7 +373,7 @@ PBagNext( BAGLOOP *blPBagLoop )
 {
 BNODEP   bnPNode;
 
-    if ( blPBagLoop->bnPCur == NULL ) return(NULL);
+    if ( blPBagLoop->bnPCur == NULL ) return NULL;
 
 		/* Get the current element */
 
@@ -387,7 +387,7 @@ BNODEP   bnPNode;
 
 		/* Return the current element */
 
-    return(bnPNode->PObject);
+    return bnPNode->PObject;
 }
 
 

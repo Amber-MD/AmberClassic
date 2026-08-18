@@ -79,13 +79,30 @@ VariablesList()
 {
 DICTLOOP        dlLoop;
 int             i = 1;
-int             iColumns;
+int             iColumns, iWidth;
+size_t          iMaxLen = 5;
+#ifdef TIOCGWINSZ
+struct winsize  ws;
+#endif
+
+    dlLoop = ydlDictionaryLoop(GdVariables);
+    while ( yPDictionaryNext( GdVariables, &dlLoop ) ) {
+        size_t iLen = strlen(sDictLoopKey(dlLoop));
+        if (iLen > iMaxLen) iMaxLen = iLen;
+    }
 
     /* TODO: figure columns for actual window size & max string size */
     if ( GbGraphicalEnvironment )
-        iColumns = 8;
+        iWidth = 80;
+#ifdef TIOCGWINSZ
+    else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0)
+        iWidth = ws.ws_col;
+#endif
     else
-        iColumns = 8;
+        iWidth = 80;
+    iMaxLen++;
+    iColumns = iWidth / iMaxLen;
+    if (iColumns < 1) iColumns = 1;
 
     BasicsResetInterrupt();
     dlLoop = ydlDictionaryLoop(GdVariables);
@@ -93,10 +110,10 @@ int             iColumns;
 	if ( bBasicsInterrupt() ) goto CANCEL;
         if ( i % iColumns ) { 
 	    /* columns 0-(end-1) */
-            VP0("%-10s", sDictLoopKey(dlLoop) );
+            VP0("%-*s", iMaxLen, sDictLoopKey(dlLoop) );
         } else {
 	   /* last column in line */
-            VP0("%-10s\n", sDictLoopKey(dlLoop) );
+            VP0("%-*s\n", iMaxLen, sDictLoopKey(dlLoop) );
         }
         i++;
     }
@@ -166,7 +183,7 @@ oVariable(const char *sName )
 OBJEKT  oVar;
 
     oVar = (OBJEKT)yPDictionaryFind( GdVariables, sName );
-    return(oVar);
+    return oVar;
 }
 
 
@@ -210,5 +227,5 @@ DICTLOOP        dlLoop;
 DICTIONARY
 dVariablesDictionary()
 {
-    return(GdVariables);
+    return GdVariables;
 }

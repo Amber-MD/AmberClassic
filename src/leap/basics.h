@@ -133,6 +133,10 @@
 # include <sys/time.h>
 #endif
 
+#ifdef HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
+#endif
+
 // types
 // ---------------------------------------------------------------------
 
@@ -178,17 +182,18 @@ typedef unsigned char   bool;
 
 #include <sys/time.h>
 
-#ifdef __APPLE__
-  // for PATH_MAX
+#ifdef __APPLE__ // for PATH_MAX
 # include <sys/syslimits.h> 
+#endif
+
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || \
+      defined(__OpenBSD__) || defined(__NetBSD__)
+#  define HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
 #endif
 
 // types
 // ---------------------------------------------------------------------
-
-#if !defined(bool) && !defined(APPKIT_H) && !defined(XtSpecificationRelease)
-typedef unsigned char   bool;
-#endif
 
 #ifndef MAXPATHLEN
 # ifdef MAX_PATH
@@ -197,7 +202,6 @@ typedef unsigned char   bool;
 #  define MAXPATHLEN PATH_MAX
 # endif
 #endif
-
 
 #endif /*CMAKE*/
 
@@ -271,8 +275,17 @@ typedef struct  {
 
 #define VERYSMALL       1E-12
 #define TOLERANCE       0.001           /* Used for comparing doubles */
-#define DEGTORAD      0.017453292519943295769236907684886
+
+// selectable precision, see end of file for the inline degtorad()
+// Remove this and see "FIXME" in model.c when converting back to proper constants
+#define DEGTORAD degtorad()
+#define RADTODEG 1.0/degtorad()
+// keep this one only to pass AMBER make tests
 //#define DEGTORAD        0.0174533
+//#define RADTODEG        (1.0/DEGTORAD)
+// use these for precise conversion
+//#define DEGTORAD        (PI/180.0)
+//#define RADTODEG        (180.0/PI)
 
 #define ELECTRONTOKCAL  18.2223
 // precise value: 1 AMBER charge unit = 18.2226134
@@ -496,9 +509,9 @@ extern int     GiVPwarningCount; /* Count the number of Warnings */
 extern int     GiVPnoteCount;    /* Count the number of Notes */
 
 #ifdef TIMING
-#define START(var) clock_t var = clock()
-#define STOP(var,name) VP0( name " CPU time = %gs\n", \
-        ((double) (clock() - var)) / (double)CLOCKS_PER_SEC);
+#define START(var) struct { clock_t c; double r; } var = { clock(), ((double)GetCurrentRSS(false))/1000000.0 };
+#define STOP(var,name) VP0( name " CPU time = %gs, delta RSS=%.3fGB\n", \
+        ((double) (clock() - var.c)) / (double)CLOCKS_PER_SEC, ((double)GetCurrentRSS(true)/1000000.0) - var.r );
 #else
 #define START(var)
 #define STOP(var,name)
@@ -786,6 +799,7 @@ extern void             StringUpper( char *sStr );
 extern void             StringTrim( char *sStr );
 extern void             StringRTrim( char *sStr );
 extern void             PrintMemoryStats(void);
+extern long             GetCurrentRSS(bool bPrint);
 extern bool             bMessageCheck( char *sFile );
 extern void             MessageAddFile( char *sFile );
 extern void             MessageRemoveFile( char *sFile );
@@ -804,6 +818,7 @@ extern void             BasicsInitialize(void);
 extern void             BasicsFinalize(void);
 extern void             BasicsKlassMismatchPanic( GENP PObj, char *cPFile,
                                 int iLine );
-
+#include "defaults.h"
+static inline double degtorad(void) { return GDefaults.bCompatible ? 0.0174533 : (PI/180.0); }
 
 #endif  /* #ifndef BASICS_H */

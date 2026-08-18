@@ -1,4 +1,7 @@
+#ifndef SYMMETRY_H
+#define SYMMETRY_H
 
+#include "classes.h"
 /* ------------------------------------------------------------------ */
 /*  Data structures                                                    */
 /* ------------------------------------------------------------------ */
@@ -25,3 +28,5 @@ extern void BuildSymopMatrices( UNIT uUnit,
                      SYMOPt *symmops, int nSymops,
                      MATRIX **maPSymops );
 extern void BuildFractionalTransforms( UNIT uUnit, MATRIX M, MATRIX Mi);
+
+#endif // SYMMETRY_H

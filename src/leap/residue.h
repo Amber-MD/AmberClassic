@@ -69,7 +69,6 @@
 #define	CONNECT4	4
 #define	CONNECT5	5
 
-
 #define FIRSTEND        CONNECT0	/* This is the end that is bare in */
                                         /* the first RESIDUE */
 #define LASTEND         CONNECT1	/* This is the end that is bare in */

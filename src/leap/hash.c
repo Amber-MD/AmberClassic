@@ -238,7 +238,7 @@ register unsigned int	RiValue = 0;
 register int		RiShift = 0;
 
     if ( sKey == NULL ) 
-	return(0);
+	return 0;
 
     for ( RucPC = (unsigned char*)sKey; *RucPC != 0; RucPC++ ) {
 	RiValue ^= (*RucPC) << RiShift;
@@ -270,7 +270,7 @@ HASH_LISTt	*hlPNew;
     hlPNew->hlPNext = (*hlPPFirst);
     (*hlPPFirst) = hlPNew;
 
-    return( hlPPFirst );
+    return  hlPPFirst ;
 }
 
 
@@ -294,10 +294,10 @@ HASH_LISTt	**hlPPCur;
 
     hlPPCur = hlPPStart;
     while ( (*hlPPCur) ) {
-	if ( strcmp( sKey, (*hlPPCur)->heEntry.cPKey ) == 0 ) return(hlPPCur);
+	if ( strcmp( sKey, (*hlPPCur)->heEntry.cPKey ) == 0 ) return hlPPCur;
 	hlPPCur = &((*hlPPCur)->hlPNext);
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -355,7 +355,7 @@ int		i, iPrimeTableSize;
     htTable->iTableSize = (int)usSize;
     htTable->iElementCount = 0;
 
-    return(htTable);
+    return htTable;
 }
 
 
@@ -467,7 +467,7 @@ HASH_LISTt	**hlPPPre;
     PData = NULL;
     if ( hlPPPre ) PData = (*hlPPPre)->heEntry.PData;
 
-    return(PData);
+    return PData;
 }
 
 
@@ -501,7 +501,7 @@ HASH_LISTt	*hlPFree;
 
     hlPPPre = zhlPPHTSearchList( &(htTable->hlPaTable[iPos]), sKey );
 
-    if ( hlPPPre == NULL ) return(false);
+    if ( hlPPPre == NULL ) return false;
 
     (*PPData) = (*hlPPPre)->heEntry.PData;
     (*cPPKey) = (*hlPPPre)->heEntry.cPKey;
@@ -511,7 +511,7 @@ HASH_LISTt	*hlPFree;
     FREE(hlPFree);
     htTable->iElementCount--;
 
-    return(true);
+    return true;
 }
 
 

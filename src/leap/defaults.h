@@ -3,6 +3,7 @@
 #include "objekt.h"
 
 typedef struct {
+	bool	bCompatible;
 	double	dDSearchDistance;
 	double	dDESPGridSpace;
 	double	dDESPBoxSize;
@@ -20,8 +21,6 @@ typedef struct {
 	double	dGridSpace;
 	double	dShellExtent;
 	int	iDielectricFlag;
-	double  dDielectricRadius;
-	bool    bNBGrid;
 	int	iGBparm;
 	bool	bGibbs;
 	bool 	bCharmm; 

@@ -63,12 +63,12 @@ iHybridNumber( char *sName )
 {
     StringLower(sName);
 
-    if(!strcmp(sName, "undefined"))	return(-1);
-    if(!strcmp(sName, "unknown"))	return(0);
-    if(!strcmp(sName, "sp1"))		return(1);
-    if(!strcmp(sName, "sp2"))		return(2);
-    if(!strcmp(sName, "sp3"))		return(3);
-    return(-1);	/* undefined */
+    if(!strcmp(sName, "undefined"))	return -1;
+    if(!strcmp(sName, "unknown"))	return 0;
+    if(!strcmp(sName, "sp1"))		return 1;
+    if(!strcmp(sName, "sp2"))		return 2;
+    if(!strcmp(sName, "sp3"))		return 3;
+    return -1;	/* undefined */
 }
 
 
@@ -95,6 +95,6 @@ sHybridName( int iHybrid, char *sName )
 	default: strcpy( sName, "unknown" );
 		break;
     }
-    return( sName );		
+    return  sName ;		
 }
 

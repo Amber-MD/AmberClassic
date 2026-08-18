@@ -85,11 +85,11 @@ STRING          sType, sDesc;
         PARMLIB_DEFAULT_LOOP( psTemp,
                 ( iTag = iParmSetFindAtom( psTemp, sAtomType(aAtom) ) ));
         if ( iTag == PARM_NOT_FOUND )
-                return( -1.0 );
+                return  -1.0 ;
         ParmSetAtom( psTemp, iTag, sType,
                    &dMass, &dPolar, &dE, &dR, &dE14, &dR14, &dScreenF,
                                    &iElement, &iHybrid, sDesc );
-        return( dR );
+        return  dR ;
 }
 
 /*
@@ -121,7 +121,7 @@ double          dMaxR, dR;
         if ( dR > dMaxR )
                 dMaxR = dR;
     }
-    return( dMaxR );
+    return  dMaxR ;
 }
 
 /*
@@ -169,7 +169,7 @@ STRING          sType, sDesc;
         }
         if ( iIncomplete )
                 dTotalMass *= -1;
-        return( dTotalMass );
+        return  dTotalMass ;
 }
 
 /*
@@ -228,7 +228,7 @@ ToolSanityCheckBox( UNIT uUnit )
                         VPWARN(" (turning off box flag on %s - bad param(s)\n", 
                                 sContainerName((CONTAINER) uUnit ) );
                         VP0("   beta %e  XYZ %e %e %e)\n",
-                                dUnitBeta( uUnit )/DEGTORAD, dX, dY, dZ );
+                                dUnitBeta( uUnit )*RADTODEG, dX, dY, dZ );
                 }
                 UnitSetBox( uUnit, 0.0, 0.0, 0.0 );
                 UnitSetBeta( uUnit, 0.0 ); // FIXME 90 degree default elsewhere
@@ -448,7 +448,7 @@ RESIDUE         rRes;
      */
     zToolSetTempRadii( uSolvent );
 
-    return( uSolvent );
+    return  uSolvent ;
 }
 
 
@@ -705,9 +705,9 @@ size_t          npairs;
                 /*
                  *  check if atom falls outside of clipped rectangular box
                  */
-                if ( dXabs >= cPCriteria->dX ) return(true);
-                if ( dYabs >= cPCriteria->dY ) return(true);
-                if ( dZabs >= cPCriteria->dZ ) return(true);
+                if ( dXabs >= cPCriteria->dX ) return true;
+                if ( dYabs >= cPCriteria->dY ) return true;
+                if ( dZabs >= cPCriteria->dZ ) return true;
         }
         if ( iCriteria & TOOLOUTSIDEOFOCTBOX ) {
                 /*
@@ -747,7 +747,7 @@ size_t          npairs;
         dY = dVY(&vPos) - dVY(&(cPCriteria->vCenter));
         dZ = dVZ(&vPos) - dVZ(&(cPCriteria->vCenter));
         dDist2 = dX * dX  +  dY * dY  +  dZ * dZ;
-        if ( dDist2 > cPCriteria->dRadiusSqd ) return(true);
+        if ( dDist2 > cPCriteria->dRadiusSqd ) return true;
     }
 
     /*
@@ -780,9 +780,9 @@ size_t          npairs;
     /* then it will be outside the solvent shell and has */
     /* to be eliminated */
     if ( dClosest2 >= dFarness2 && (iCriteria & TOOLOUTSIDESHELL) )
-        return(true);
+        return true;
 
-    return(false);
+    return false;
 }
 
 
@@ -940,7 +940,6 @@ NeighborGrid    *ngSolute;
                 UnitJoin( uSolute, uSolventDup );
             }
         }
-        VP3("Adding solvent boxes, ix=%d\n",ix);
     }
     neighbor_grid_free(ngSolute);
 }
@@ -950,19 +949,20 @@ EwaldRotate( UNIT uUnit, double *dPAngle )
 {
 LOOP    lAtoms;
 ATOM    aAtom;
-double  tetra_angl, pi, phi, cos1, sin1, cos2, sin2;
+double  tetra_angl, phi, cos1, sin1, cos2, sin2, pi;
 double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
 
 /* for isotropic octbox only */
 
   tetra_angl=2*acos(1./sqrt(3.));
-  pi=PI;
+  pi = GDefaults.bCompatible ? 3.1415927 : PI;
   phi=pi/4.;
   cos1=cos(phi);
   sin1=sin(phi);
   phi=pi/2.-tetra_angl/2.;
   cos2=sqrt(2.)/sqrt(3.);
-  sin2=1./sqrt(3.); 
+  sin2=1./sqrt(3.);
+
 
   /********************************************************/
   /*       45 around z axis, (90-tetra/2) around y axis, */
@@ -997,11 +997,9 @@ double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
             t31*dX + t32*dY + t33*dZ
         };
         AtomSetPosition(aAtom, vNewPosition);
-        //vAtomPosition(aAtom).dX = t11*dX + t12*dY + t13*dZ;
-        //vAtomPosition(aAtom).dY = t21*dX + t22*dY + t23*dZ;
-        //vAtomPosition(aAtom).dZ = t31*dX + t32*dY + t33*dZ;
   }
-  *dPAngle = tetra_angl*180./pi;
+  if (GDefaults.bCompatible) *dPAngle = tetra_angl*180./pi;
+  else *dPAngle = tetra_angl * RADTODEG;
 }
 
 /*
@@ -1279,7 +1277,7 @@ CRITERIAt       cCriteria = {0};
     UnitGetCell( uSolute, &dX, &dY, &dZ, &dA, &dB, &dG );
     VP0("\nPeriodic box: %10.5lf, %10.5lf, %10.5lf\n", dX, dY, dZ );
     VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
-                    dA/DEGTORAD, dB/DEGTORAD, dG/DEGTORAD );
+                    dA*RADTODEG, dB*RADTODEG, dG*RADTODEG );
     /* Setup the flags that control what criteria are used */
     /* to reject solvent molecules */
     iCriteria = TOOLSOLUTECOLLISION | TOOLOUTSIDEOFCELL;
@@ -1670,11 +1668,11 @@ size_t                  npairs;
     
     if ( iAtoms == 0 ) {
         VPWARN("No atoms to bond\n" );
-        return( 0 );
+        return  0 ;
     }
     if ( iAtoms < 2 ) {
         VPWARN("Only one atom\n" );
-        return( 0 );
+        return  0 ;
     }
 
     NeighborGrid    *ngAtoms;
@@ -1695,6 +1693,7 @@ size_t                  npairs;
             VPFATAL("Problem with Neighbor Grid query\n");
         for (j=0;j<npairs;j++) {
             bsPAtom2 = PVAI( vaAtoms, BONDSEARCHt, pairGrid[j].to_member );
+            if (iContainerSequence(bsPAtom1->aAtom) > iContainerSequence(bsPAtom2->aAtom)) continue;
 
             if (bsPAtom1 == bsPAtom2) continue;
 
@@ -1745,12 +1744,19 @@ size_t                  npairs;
 			       strcmp( sAtomName( bsPAtom2->aAtom ), "EPW" ) == 0 ) {
 			    /* Lone pair, ignore it  */
 			  } else {
+                            if (iVerbosity()>2)
                             VPWARN("Close contact of %.3lf angstroms between "
-                                "nonbonded atoms %s (%d) and %s (%d)\n-------  %s (R=%g) and %s (R=%g)\n",
+                                "nonbonded atoms %s (iElem=%d) and %s (iElem=%d)\n-------  %s (R=%g) and %s (R=%g)\n",
                                 sqrt( dDist ), sAtomName( bsPAtom1->aAtom ), iAtomElement(bsPAtom1->aAtom),
                                 sAtomName( bsPAtom2->aAtom ),iAtomElement(bsPAtom1->aAtom),
                                 sContainerFullDescriptor( (CONTAINER)bsPAtom1->aAtom, sTemp1 ),bsPAtom1->dR,
                                 sContainerFullDescriptor( (CONTAINER)bsPAtom2->aAtom, sTemp2 ),bsPAtom2->dR  );
+                            else 
+                            VPWARN("Close contact of %.3lf angstroms between "
+                                "nonbonded atoms %s and %s\n-------  %s and %s\n",
+                                sqrt( dDist ), sAtomName( bsPAtom1->aAtom ), sAtomName( bsPAtom2->aAtom ),
+                                sContainerFullDescriptor( (CONTAINER)bsPAtom1->aAtom, sTemp1 ),
+                                sContainerFullDescriptor( (CONTAINER)bsPAtom2->aAtom, sTemp2 ));
 			  }
 			  break;
                         default:
@@ -1798,7 +1804,7 @@ size_t                  npairs;
     VarArrayDestroy(&vaPoints);
     VarArrayDestroy( &vaAtoms );
 
-    return(iCount);
+    return iCount;
 }
 
 
@@ -1960,7 +1966,7 @@ double          daElements[3];
                 } else 
                     cCont = (CONTAINER)oElement;
                 if ( !bObjectInClass( (OBJEKT)cCont, CONTAINERid ) ) 
-                        return(false);
+                        return false;
                 lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
                 while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
                     vPos = vVectorAdd( &vPos, &vAtomPosition(aAtom) );
@@ -1972,7 +1978,7 @@ double          daElements[3];
             }
         }
     }
-    return(true);
+    return true;
 }
 
 
@@ -2040,7 +2046,7 @@ OBJEKT          oObj;
             }
         }
     }
-    return(lList);
+    return lList;
 }
 
 /*

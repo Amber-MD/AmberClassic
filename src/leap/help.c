@@ -159,7 +159,7 @@ STRING	sTmp;
     strcpy( sTmp, sSubject );
     StringLower( sTmp );
     hTemp = (HELP)yPDictionaryFind( SdHelp, sTmp );
-    return(hTemp);
+    return hTemp;
 }
 
 
@@ -199,6 +199,6 @@ hHelpNext()
 HELP    hNext;
 
     hNext = (HELP)yPDictionaryNext( SdHelp, &SdlLoop );
-    return(hNext);
+    return hNext;
 }
 

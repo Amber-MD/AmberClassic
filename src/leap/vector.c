@@ -65,7 +65,7 @@ VECTOR  vA;
     vA.dY = vPX->dY + vPY->dY;
     vA.dZ = vPX->dZ + vPY->dZ;
 
-    return(vA);
+    return vA;
 }
 
 
@@ -87,7 +87,7 @@ VECTOR  vA;
     vA.dY = vPX->dY - vPY->dY;
     vA.dZ = vPX->dZ - vPY->dZ;
 
-    return(vA);
+    return vA;
 }
 
 
@@ -109,7 +109,7 @@ double  dLen;
     dLen = sqrt(  (vPX->dX)*(vPX->dX) 
                 + (vPX->dY)*(vPX->dY) 
                 + (vPX->dZ)*(vPX->dZ) );
-    return(dLen);
+    return dLen;
 } 
 
 
@@ -166,7 +166,7 @@ double  dLen, dAngle;
     dAngle = myAcos(dVectorDot( &vT1, &vT2 ));
     if ( dVectorDot( &vT, vPRef ) < 0.0 ) dAngle = -dAngle;
 
-    return(dAngle);
+    return dAngle;
 }
 
 /*
@@ -183,7 +183,7 @@ VECTOR  V;
     V.dY = vPX->dY * dS;
     V.dZ = vPX->dZ * dS;
 
-    return(V);
+    return V;
 }
 
 
@@ -197,7 +197,7 @@ VECTOR  V;
 double
 dVectorDot( VECTOR *vPX, VECTOR *vPY )
 {
-    return( vPX->dX*vPY->dX + vPX->dY*vPY->dY + vPX->dZ*vPY->dZ );
+    return  vPX->dX*vPY->dX + vPX->dY*vPY->dY + vPX->dZ*vPY->dZ ;
 }
 
 
@@ -217,7 +217,7 @@ VECTOR  vT;
     vT.dX =  vPX->dY*vPY->dZ - vPX->dZ*vPY->dY;
     vT.dY = -vPX->dX*vPY->dZ + vPX->dZ*vPY->dX;
     vT.dZ =  vPX->dX*vPY->dY - vPX->dY*vPY->dX;
-    return(vT);
+    return vT;
 }
 
 
@@ -255,9 +255,9 @@ double          dDot;
     
     vCross = vVectorCross( &vA, &vB );
     dDot = dVectorDot( &vCross, &vC );
-    if ( dDot == 0.0 ) return(0.0);
-    if ( dDot < 0.0 ) return(-1.0);
-    return(1.0);
+    if ( dDot == 0.0 ) return 0.0;
+    if ( dDot < 0.0 ) return -1.0;
+    return 1.0;
 }
 
 
@@ -331,7 +331,7 @@ double          dChi;
     }
     
 DONE:   
-    return(dChi);
+    return dChi;
 }
 
 
@@ -408,7 +408,7 @@ double          dTorsion, dSign;
     dSign = dVectorDot( &vN, &vY );
     if ( dSign < 0.0 ) 
         dTorsion = -dTorsion;
-    return(dTorsion);
+    return dTorsion;
 }
 
 double
@@ -424,7 +424,7 @@ double  x, y, z;
         z = Pv1->dZ - Pv2->dZ;
         z = z * z;
  
-        return(x + y + z);
+        return x + y + z;
 }
 
 double

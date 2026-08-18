@@ -247,7 +247,7 @@ fsSysdependFileStatus (char *cPName)
 
     fsStatus.iSize = buf.st_size;
   }
-  return(fsStatus);
+  return fsStatus;
 }
 
 

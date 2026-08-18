@@ -335,7 +335,7 @@ bool            bFoundOne;
     }
 #endif
 
-    return(bFoundOne);
+    return bFoundOne;
 }
 
 
@@ -381,8 +381,8 @@ TORSION_MATCHt        tmNew;
         tmNew.tpTorsion = *tpPTorsion;
         VarArrayAdd( tTorsion, (GENP)&tmNew );
         if ( !strcmp( tmNew.tpTorsion.sType1, WILD_CARD_TYPE ) )
-                return(PARM_FOUND_WILD);
-        return(PARM_FOUND_EXACT);
+                return PARM_FOUND_WILD;
+        return PARM_FOUND_EXACT;
     }
 
     /*
@@ -400,7 +400,7 @@ TORSION_MATCHt        tmNew;
                 tmNew.iIndex = PARM_NOT_FOUND;
         tmNew.tpTorsion = *tpPTorsion;
         VarArrayAdd( tTorsion, (GENP)&tmNew );
-        return(PARM_FOUND_EXACT);
+        return PARM_FOUND_EXACT;
     }
                 /* First check if it is already in the TORSION */
                 /* VARARRAY */
@@ -409,7 +409,7 @@ TORSION_MATCHt        tmNew;
                     i<iVarArrayElementCount(tTorsion);
                 i++, tmPCur++ ) {
             if ( tmPCur->tpTorsion.iN == tpPTorsion->iN ) {
-                    return(PARM_NOT_FOUND);
+                    return PARM_NOT_FOUND;
             }
     }
 
@@ -431,8 +431,8 @@ TORSION_MATCHt        tmNew;
     }
     VarArrayInsertBefore( tTorsion, i, (GENP)&tmNew );
     if ( !strcmp( tmNew.tpTorsion.sType1, WILD_CARD_TYPE ) )
-            return(PARM_FOUND_WILD);
-    return(PARM_FOUND_EXACT);
+            return PARM_FOUND_WILD;
+    return PARM_FOUND_EXACT;
 }
 
 
@@ -467,8 +467,8 @@ int                i;
         tmNew.tpTorsion = *tpPTorsion;
         VarArrayAdd( tTorsion, (GENP)&tmNew );
         if ( !strcmp( tmNew.tpTorsion.sType1, WILD_CARD_TYPE ) )
-                return(PARM_FOUND_WILD);
-        return(PARM_FOUND_EXACT);
+                return PARM_FOUND_WILD;
+        return PARM_FOUND_EXACT;
     }
 
     /*
@@ -486,7 +486,7 @@ int                i;
                 tmNew.iIndex = PARM_NOT_FOUND;
         tmNew.tpTorsion = *tpPTorsion;
         VarArrayAdd( tTorsion, (GENP)&tmNew );
-        return(PARM_FOUND_EXACT);
+        return PARM_FOUND_EXACT;
     }
                 /* First check if it is already in the (Improper) TORSION */
                 /* VARARRAY */
@@ -516,9 +516,9 @@ int                i;
                         else
                             tmPCur->iIndex = PARM_NOT_FOUND;
                         tmPCur->tpTorsion = *tpPTorsion;
-                        return(PARM_FOUND_EXACT);
+                        return PARM_FOUND_EXACT;
                     }
-                    return(PARM_NOT_FOUND);
+                    return PARM_NOT_FOUND;
             }
     }
 
@@ -540,8 +540,8 @@ int                i;
     }
     VarArrayInsertBefore( tTorsion, i, (GENP)&tmNew );
     if ( !strcmp( tmNew.tpTorsion.sType1, WILD_CARD_TYPE ) )
-            return(PARM_FOUND_WILD);
-    return(PARM_FOUND_EXACT);
+            return PARM_FOUND_WILD;
+    return PARM_FOUND_EXACT;
 }
 
 
@@ -583,7 +583,7 @@ int                iRet = PARM_NOT_FOUND;
         }
     }
 
-    return(iRet);
+    return iRet;
 }
 
 
@@ -611,7 +611,7 @@ bool            bFoundOne;
     bFoundOne = false;
 
                 /* Check the central atom */
-    if ( strcmp( tpPTorsion->sType3, s3 ) != 0 ) return(false);
+    if ( strcmp( tpPTorsion->sType3, s3 ) != 0 ) return false;
 
     iWild = iParmSetTorsionGenerality(
                             tpPTorsion->sType1,
@@ -653,7 +653,7 @@ bool            bFoundOne;
                 tpPTorsion->sType4 );
     }
 
-    return(bFoundOne);
+    return bFoundOne;
 }
 
 
@@ -696,7 +696,7 @@ int                iMax;
             }
         }
     }
-    return(bAddedOne);
+    return bAddedOne;
 }
 
 
@@ -735,7 +735,7 @@ int                iMax;
  *      Does not modify vaTorsions or know anything about SAVETORSIONt --
  *      that remapping is entirely the caller's responsibility.
  */
-static inline double dCanonicalizeZero( double d ) { return( d == 0.0 ? 0.0 : d ); }
+static inline double dCanonicalizeZero( double d ) { return  d == 0.0 ? 0.0 : d ; }
 
 int *
 BoilTorsions( VARARRAY *vaPParms, int iParmOffset )
@@ -782,105 +782,8 @@ intptr_t        *pIndex = (intptr_t *)&ixRec.recptr;
     VarArrayDestroy( vaPParms );
     *vaPParms = vaNew;
 
-    return( iaMap );
+    return  iaMap ;
 }
-
-#if 0
-#include "unitio.h"  // for SAVETORSIONt
-//static void debugtypes(UNIT uUnit, char *str)
-void
-BoilTorsions(VARARRAY *vaPParms, /* array of TORSIONPARMt */
-             int iParmOffset, /* Index base into Parm array for this set (0 for propers, #propers for impropers */
-             VARARRAY vaTorsions, /* array of SAVETORSIONt, should be private to unitio.c */
-             int iTorsionOffset)
-{
-    VARARRAY vaB; // TORSIONPAMRt
-    TORSIONPARMt *tpA, *tpB;
-    int iIndex, iA, iB, iParmCount, iTorsionCount;
-    int iDuplicates=0;
-
-    iParmCount = iVarArrayElementCount(*vaPParms);
-    iTorsionCount = iVarArrayElementCount(vaTorsions);
-
-    iIndex = iParmOffset;
-    vaB = vaVarArrayCreate(sizeof(TORSIONPARMt));
-    tpA = PVAI(*vaPParms, TORSIONPARMt, 0);
-    for (iA = 0; iA < iParmCount; iA++, tpA++) {
-        int i, iOldIndex;
-        SAVETORSIONt *stP;
-
-        if (!strcmp(tpA->sType1, "__"))
-            continue;
-        /*
-         *  torsion hasn't been marked as 'superfluous'
-         *      so add to new array
-         */
-        VarArrayAdd(vaB, (GENP) &tpA);
-        iIndex++;
-        iOldIndex = iParmOffset + iA + 1;
-
-        /*
-         *  update any affected torsions
-         */
-        if (iIndex != iOldIndex) {
-            stP = PVAI(vaTorsions, SAVETORSIONt, iTorsionOffset);
-            for (i = iTorsionOffset; i < iTorsionCount; i++, stP++) {
-                if (stP->iParmIndex == iOldIndex)
-                    stP->iParmIndex = iIndex;
-                if (stP->iPertParmIndex == iOldIndex)
-                    stP->iPertParmIndex = iIndex;
-            }
-        }
-
-        /*
-         *  mark any subsequent duplicates 'superfluous'
-         *      and update indexes into the array
-         */
-        for (tpB = tpA + 1, iB = iA + 1; iB < iParmCount; iB++, tpB++) {
-            if (!strcmp(tpB->sType1, "__"))
-                continue;
-            if (tpB->iN != tpA->iN)
-                continue;
-            if (tpB->dKp != tpA->dKp)
-                continue;
-            if (tpB->dP0 != tpA->dP0)
-                continue;
-	    if (tpB->dScEE != tpA->dScEE)
-		continue;
-	    if (tpB->dScNB != tpA->dScNB)
-		continue;
-
-            /*
-             *  B is a duplicate of A
-             */
-/*
-            printf("Tor(%s,%s,%s,%s)==Tor(%s,%s,%s,%s) n=%d\n",
-                   tpA->sType1,tpA->sType1,tpA->sType3,tpA->sType4,
-                   tpB->sType1,tpB->sType2,tpB->sType3,tpB->sType4,
-                   tpA->iN);
-*/
-            iDuplicates++;
-            strcpy(tpB->sType1, "__");
-            iOldIndex = iParmOffset + iB + 1;
-            stP = PVAI(vaTorsions, SAVETORSIONt, iTorsionOffset);
-            for (i = iTorsionOffset; i < iTorsionCount; i++, stP++) {
-                if (stP->iParmIndex == iOldIndex)
-                    stP->iParmIndex = iIndex;
-                if (stP->iPertParmIndex == iOldIndex)
-                    stP->iPertParmIndex = iIndex;
-            }
-
-        }
-    }
-
-    printf("BoilTorsions found %d duplicates\n",iDuplicates);
-    /*
-     *  throw away the old parms array & put the new one in place
-     */
-    VarArrayDestroy(vaPParms);
-    *vaPParms = vaB;
-}
-#endif
 
 
 
@@ -943,24 +846,6 @@ int iParmSetAddCMAP(PARMSET psLib, CMAP cmap)
 }
 
 /* ================================================================
-   iParmSetHasCMAP
-   ================================================================ */
-bool iParmSetHasCMAP(PARMSET psLib)
-{
-    return psLib->vaCMAPs != NULL &&
-           iVarArrayElementCount(psLib->vaCMAPs) > 0;
-}
-
-/* ================================================================
-   iParmSetTotalCMAPParms
-   ================================================================ */
-int iParmSetTotalCMAPParms(PARMSET psLib)
-{
-    if (!psLib->vaCMAPs) return 0;
-    return iVarArrayElementCount(psLib->vaCMAPs);
-}
-
-/* ================================================================
    VarArrayDestroyCMAP
    Free owned pointers inside each CMAPt, then destroy the array.
    ================================================================ */
@@ -1013,9 +898,8 @@ static inline bool bAtomNamesMatch4rev(const char *an[4], WRD *cmapAtmName)
 bool bParmSetCMAPHasPhi(PARMSET psLib, const char *sAtomNames[4],
                                        const char *sResNames[4])
 {
-    if (!iParmSetHasCMAP(psLib)) return false;
-
     int n = iVarArrayElementCount(psLib->vaCMAPs);
+    if (!n) return false;
     CMAPt *cmaps = PVAI(psLib->vaCMAPs, CMAPt, 0);
 
     for (int i = 0; i < n; i++) {
@@ -1041,9 +925,8 @@ int iParmSetFindCMAP(PARMSET psLib,
                      const char *sAtomNames[5],
                      int   iRelResIdx[5])
 {
-    if (!iParmSetHasCMAP(psLib)) return PARM_NOT_FOUND;
-
     int n = iVarArrayElementCount(psLib->vaCMAPs);
+    if (!n) return PARM_NOT_FOUND;
     CMAPt *cmaps = PVAI(psLib->vaCMAPs, CMAPt, 0);
 
     /* try forward orientation */
@@ -1123,7 +1006,7 @@ PARMSET psNew;
 
     psNew->bBeingEdited  = false; /* V. Romanovski */
 
-    return(psNew);
+    return psNew;
 }
 
 /*
@@ -1153,7 +1036,7 @@ PARMSET        psNew;
     psNew->vaNBEdits = vaVarArrayCopy( psOld->vaNBEdits );
     psNew->vaCMAPs = vaVarArrayCopy( psOld->vaCMAPs );
 
-    return(psNew);
+    return psNew;
 }
 
 
@@ -1461,7 +1344,7 @@ int                i;
          !bDBGetType( db, "parm.angles", &iType, &iLines ) &&
          !bDBGetType( db, "parm.torsions", &iType, &iLines ) &&
          !bDBGetType( db, "parm.hbonds", &iType, &iLines ) )
-        return(NULL);
+        return NULL;
 
     psLib = (PARMSET)oCreate(PARMSETid);
 
@@ -1686,7 +1569,7 @@ int                i;
                 0, NULL, 0,
                 0, NULL, 0 );
 
-      return(psLib);
+      return psLib;
 }
 
 
@@ -1774,7 +1657,7 @@ STRING                sElement;
         for ( i=0; i<iMax; apPAngle++, i++ ) {
             VP0("    %4s - %4s - %4s   Kt=%8.2lf   T0=%8.2lf   Desc:%s\n",
                         apPAngle->sType1, apPAngle->sType2, apPAngle->sType3,
-                        apPAngle->dKt, apPAngle->dT0/DEGTORAD,
+                        apPAngle->dKt, apPAngle->dT0*RADTODEG,
                         apPAngle->sDesc );
             if ( bBasicsInterrupt() )
                 goto QUIT;
@@ -1795,7 +1678,7 @@ STRING                sElement;
                         tpPTorsion->sType3, tpPTorsion->sType4 );
             VP0("        Kp=%8.2lf   N=%d   P0=%8.2lf   Order: %s  Desc:%s\n",
                         tpPTorsion->dKp, tpPTorsion->iN,
-                        tpPTorsion->dP0/DEGTORAD, tpPTorsion->sOrder,
+                        tpPTorsion->dP0*RADTODEG, tpPTorsion->sOrder,
                         tpPTorsion->sDesc );
             if ( bBasicsInterrupt() )
                 goto QUIT;
@@ -1816,7 +1699,7 @@ STRING                sElement;
                         tpPTorsion->sType3, tpPTorsion->sType4 );
             VP0("        Kp=%8.2lf   N=%d   P0=%8.2lf   Order: %s  Desc:%s\n",
                         tpPTorsion->dKp, tpPTorsion->iN,
-                        tpPTorsion->dP0/DEGTORAD, tpPTorsion->sOrder,
+                        tpPTorsion->dP0*RADTODEG, tpPTorsion->sOrder,
                         tpPTorsion->sDesc );
             if ( bBasicsInterrupt() )
                 goto QUIT;
@@ -2209,7 +2092,7 @@ bool            bFoundOne;
     iMax = iVarArrayElementCount( psLib->vaAtoms );
 
     if ( !iMax )
-        return(PARM_NOT_FOUND);
+        return PARM_NOT_FOUND;
 
     bFoundOne = false;
     apPAtom = PVAI( psLib->vaAtoms, ATOMPARMt, 0 );
@@ -2220,8 +2103,8 @@ bool            bFoundOne;
         }
     }
     if ( bFoundOne )
-        return(i);
-    return(PARM_NOT_FOUND);
+        return i;
+    return PARM_NOT_FOUND;
 }
 
 
@@ -2248,7 +2131,7 @@ typeStr         s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaBonds );
     if ( !iMax )
-        return(PARM_NOT_FOUND);
+        return PARM_NOT_FOUND;
 
     strcpy( s1, sType1 );
     strcpy( s2, sType2 );
@@ -2267,9 +2150,9 @@ typeStr         s1, s2;
     if ( bFoundOne ) {
         MESSAGE("-Bond Parameter %s - %s\n",
                 sType1, sType2 );
-        return(i);
+        return i;
     }
-    return(PARM_NOT_FOUND);
+    return PARM_NOT_FOUND;
 }
 
 
@@ -2293,7 +2176,7 @@ STRING                s1, s2, s3;
 
     iMax = iVarArrayElementCount( psLib->vaAngles );
     if ( !iMax )
-        return(PARM_NOT_FOUND);
+        return PARM_NOT_FOUND;
 
     strcpy( s1, sType1 );
     strcpy( s2, sType2 );
@@ -2310,7 +2193,7 @@ STRING                s1, s2, s3;
             return i;
         }
     }
-    return(PARM_NOT_FOUND);
+    return PARM_NOT_FOUND;
 }
 
 
@@ -2403,8 +2286,8 @@ orderStr        sOrder="0123";
     if ( zbParmSetBuildImproperTorsion( psLib,
                                                s1, s2, s3, s4, tTorsion,
                                            bUseIndex ) )
-        return(PARM_FOUND_TERMS);
-    return(PARM_NOT_FOUND);
+        return PARM_FOUND_TERMS;
+    return PARM_NOT_FOUND;
 }
 
 
@@ -2430,7 +2313,7 @@ typeStr         s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaHBonds );
     if ( !iMax )
-        return(PARM_NOT_FOUND);
+        return PARM_NOT_FOUND;
 
     strcpy( s1, sType1 );
     strcpy( s2, sType2 );
@@ -2449,9 +2332,9 @@ typeStr         s1, s2;
     if ( bFoundOne ) {
         MESSAGE("-HBond Parameter %s - %s\n",
                 sType1, sType2 );
-        return(i);
+        return i;
     }
-    return(PARM_NOT_FOUND);
+    return PARM_NOT_FOUND;
 }
 
 
@@ -2477,7 +2360,7 @@ typeStr         s1, s2;
 
     iMax = iVarArrayElementCount( psLib->vaNBEdits );
     if ( !iMax )
-        return(PARM_NOT_FOUND);
+        return PARM_NOT_FOUND;
 
     strcpy( s1, sType1 );
     strcpy( s2, sType2 );
@@ -2495,9 +2378,9 @@ typeStr         s1, s2;
     }
     if ( bFoundOne ) {
         MESSAGE("-HBond Parameter %s - %s\n", sType1, sType2 );
-        return(i);
+        return i;
     }
-    return(PARM_NOT_FOUND);
+    return PARM_NOT_FOUND;
 }
 
 
@@ -2542,17 +2425,17 @@ ParmSetTORSIONTerm( TORSION tTorsion, int iTorsionIndex, int *iPParmSetIndex,
 TORSION_MATCHt        *tmPCur;
 
     tmPCur = PVAI( tTorsion, TORSION_MATCHt, iTorsionIndex );
-    *iPParmSetIndex = tmPCur->iIndex;
-    strcpy( sType1, tmPCur->tpTorsion.sType1 );
-    strcpy( sType2, tmPCur->tpTorsion.sType2 );
-    strcpy( sType3, tmPCur->tpTorsion.sType3 );
-    strcpy( sType4, tmPCur->tpTorsion.sType4 );
-    *iPN = tmPCur->tpTorsion.iN;
-    *dPKp = tmPCur->tpTorsion.dKp;
-    *dPP0 = tmPCur->tpTorsion.dP0;
-    *dPScEE = tmPCur->tpTorsion.dScEE;
-    *dPScNB = tmPCur->tpTorsion.dScNB;
-    strcpy(sDesc, tmPCur->tpTorsion.sDesc);
+    if ( iPParmSetIndex ) *iPParmSetIndex = tmPCur->iIndex;
+    if ( sType1 ) strcpy( sType1, tmPCur->tpTorsion.sType1 );
+    if ( sType2 ) strcpy( sType2, tmPCur->tpTorsion.sType2 );
+    if ( sType3 ) strcpy( sType3, tmPCur->tpTorsion.sType3 );
+    if ( sType4 ) strcpy( sType4, tmPCur->tpTorsion.sType4 );
+    if ( iPN ) *iPN = tmPCur->tpTorsion.iN;
+    if ( dPKp ) *dPKp = tmPCur->tpTorsion.dKp;
+    if ( dPP0 ) *dPP0 = tmPCur->tpTorsion.dP0;
+    if ( dPScEE ) *dPScEE = tmPCur->tpTorsion.dScEE;
+    if ( dPScNB ) *dPScNB = tmPCur->tpTorsion.dScNB;
+    if (sDesc) strcpy( sDesc, tmPCur->tpTorsion.sDesc);
 }
 
 
@@ -2591,8 +2474,8 @@ TORSIONPARMt        tpTorsion;
 
     if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, false )
                 != PARM_NOT_FOUND )
-        return(true);
-    return(false);
+        return true;
+    return false;
 }
 
 
@@ -2631,8 +2514,8 @@ orderStr        sOrder="0123";
 
     if (zbParmSetAddToTorsion( tTorsion, 0, &tpTorsion, false )
                 != PARM_NOT_FOUND )
-        return(true);
-    return(false);
+        return true;
+    return false;
 }
 
 
@@ -2886,17 +2769,17 @@ int                iCount, iTotal;
         /* If there are no HBONDS then nothing can HBOND */
 
     if ( iVarArrayElementCount(psParms->vaHBonds) == 0 ) {
-        return(false);
+        return false;
     }
     iTotal = iVarArrayElementCount(psParms->vaHBonds);
 
     hbPCur = PVAI( psParms->vaHBonds, HBONDPARMt, 0 );
     for ( iCount = 0; iCount < iTotal; iCount++) {
-        if ( strcmp( hbPCur->sType1, sType ) == 0 ) return(true);
-        if ( strcmp( hbPCur->sType2, sType ) == 0 ) return(true);
+        if ( strcmp( hbPCur->sType1, sType ) == 0 ) return true;
+        if ( strcmp( hbPCur->sType2, sType ) == 0 ) return true;
         hbPCur++;
     }
-    return(false);
+    return false;
 }
 
 
@@ -2925,31 +2808,31 @@ ATOMPARMt      *apPAtom;
          *  default values
          */
         VPWARN("Using default atom values (NOELEMENT)\n" );
-        strcpy( sType, WILD_CARD_TYPE );
-        *dPMass = 0.0;
-        *dPPolar = -1.0;
-        *dPEpsilon = 0.0;
-        *dPR = 0.0;
-        *dPEpsilon14 = 0.0;
-        *dPR14 = 0.0;
-        *dPScreenF = 0.0;
-        *iPElement = NOELEMENT;
-        *iPHybridization = 0;
-        strcpy( sDesc, "??" );
+        if (sType) strcpy( sType, WILD_CARD_TYPE );
+        if ( dPMass ) *dPMass = 0.0;
+        if ( dPPolar ) *dPPolar = -1.0;
+        if ( dPEpsilon ) *dPEpsilon = 0.0;
+        if ( dPR ) *dPR = 0.0;
+        if ( dPEpsilon14 ) *dPEpsilon14 = 0.0;
+        if ( dPR14 ) *dPR14 = 0.0;
+        if ( dPScreenF ) *dPScreenF = 0.0;
+        if ( iPElement ) *iPElement = NOELEMENT;
+        if ( iPHybridization ) *iPHybridization = 0;
+        if ( sDesc ) strcpy( sDesc, "??" );
         return;
     }
     apPAtom = PVAI( psLib->vaAtoms, ATOMPARMt, i );
-    strcpy( sType, apPAtom->sType);
-    *dPMass = apPAtom->dMass;
-    *dPPolar = apPAtom->dPolar;
-    *dPEpsilon = apPAtom->dEpsilon;
-    *dPR = apPAtom->dR;
-    *dPEpsilon14 = apPAtom->dEpsilon14;
-    *dPR14 = apPAtom->dR14;
-    *dPScreenF = apPAtom->dScreenF;
-    *iPElement = apPAtom->iElement;
-    *iPHybridization = apPAtom->iHybridization;
-    strcpy( sDesc, apPAtom->sDesc );
+    if (sType) strcpy( sType, apPAtom->sType);
+    if ( dPMass ) *dPMass = apPAtom->dMass;
+    if ( dPPolar ) *dPPolar = apPAtom->dPolar;
+    if ( dPEpsilon ) *dPEpsilon = apPAtom->dEpsilon;
+    if ( dPR ) *dPR = apPAtom->dR;
+    if ( dPEpsilon14 ) *dPEpsilon14 = apPAtom->dEpsilon14;
+    if ( dPR14 ) *dPR14 = apPAtom->dR14;
+    if ( dPScreenF ) *dPScreenF = apPAtom->dScreenF;
+    if ( iPElement ) *iPElement = apPAtom->iElement;
+    if ( iPHybridization ) *iPHybridization = apPAtom->iHybridization;
+    if ( sDesc ) strcpy( sDesc, apPAtom->sDesc );
 }
 
 
@@ -2980,27 +2863,27 @@ void ParmSetBond(PARMSET psLib, int i, typeStr sType1, typeStr sType2, double *d
 
     // Default values
     VPWARN("Using default bond values (0)\n");
-    strcpy(sType1, WILD_CARD_TYPE);
-    strcpy(sType2, WILD_CARD_TYPE);
-    *dPKb      = 0.0;
-    *dPR0      = 0.0;
-    *dPKpull   = 0.0;
-    *dPRpull0  = 0.0;
-    *dPKpress  = 0.0;
-    *dPRpress0 = 0.0;
-    strcpy(sDesc, "??");
+    if (sType1) strcpy(sType1, WILD_CARD_TYPE);
+    if (sType2) strcpy(sType2, WILD_CARD_TYPE);
+    if ( dPKb      ) *dPKb      = 0.0;
+    if ( dPR0      ) *dPR0      = 0.0;
+    if ( dPKpull   ) *dPKpull   = 0.0;
+    if ( dPRpull0  ) *dPRpull0  = 0.0;
+    if ( dPKpress  ) *dPKpress  = 0.0;
+    if ( dPRpress0 ) *dPRpress0 = 0.0;
+    if (sDesc) strcpy( sDesc, "??");
     return;
   }
   bpPBond = PVAI(psLib->vaBonds, BONDPARMt, i);
-  strcpy( sType1, bpPBond->sType1 );
-  strcpy( sType2, bpPBond->sType2 );
-  *dPKb      = bpPBond->dKb;
-  *dPR0      = bpPBond->dR0;
-  *dPKpull   = bpPBond->dKpull;
-  *dPRpull0  = bpPBond->dRpull0;
-  *dPKpress  = bpPBond->dKpress;
-  *dPRpress0 = bpPBond->dRpress0;
-  strcpy(sDesc, bpPBond->sDesc);
+  if ( sType1 ) strcpy( sType1, bpPBond->sType1 );
+  if ( sType2 ) strcpy( sType2, bpPBond->sType2 );
+  if ( dPKb      ) *dPKb      = bpPBond->dKb;
+  if ( dPR0      ) *dPR0      = bpPBond->dR0;
+  if ( dPKpull   ) *dPKpull   = bpPBond->dKpull;
+  if ( dPRpull0  ) *dPRpull0  = bpPBond->dRpull0;
+  if ( dPKpress  ) *dPKpress  = bpPBond->dKpress;
+  if ( dPRpress0 ) *dPRpress0 = bpPBond->dRpress0;
+  if (sDesc) strcpy( sDesc, bpPBond->sDesc);
 }
 
 
@@ -3023,23 +2906,23 @@ ANGLEPARMt     *apPAngle;
          *  default values
          */
         VPWARN("Using default angle values (0)\n" );
-        strcpy( sType1, WILD_CARD_TYPE );
-        strcpy( sType2, WILD_CARD_TYPE );
-        strcpy( sType3, WILD_CARD_TYPE );
-        *dPKt = 0.0;
-        *dPT0 = 0.0;
-        strcpy( sDesc, "??" );
+        if ( sType1 ) strcpy( sType1, WILD_CARD_TYPE );
+        if ( sType2 ) strcpy( sType2, WILD_CARD_TYPE );
+        if ( sType3 ) strcpy( sType3, WILD_CARD_TYPE );
+        if ( dPKt ) *dPKt = 0.0;
+        if ( dPT0 ) *dPT0 = 0.0;
+        if ( sDesc ) strcpy( sDesc, "??" );
         return;
     }
     apPAngle = PVAI( psLib->vaAngles, ANGLEPARMt, i );
-    strcpy( sType1, apPAngle->sType1 );
-    strcpy( sType2, apPAngle->sType2 );
-    strcpy( sType3, apPAngle->sType3 );
-    *dPKt = apPAngle->dKt;
-    *dPT0 = apPAngle->dT0;
-    *dPTkub = apPAngle->dTkub;
-    *dPRkub = apPAngle->dRkub;
-    strcpy( sDesc, apPAngle->sDesc );
+    if ( sType1 ) strcpy( sType1, apPAngle->sType1 );
+    if ( sType2 ) strcpy( sType2, apPAngle->sType2 );
+    if ( sType3 ) strcpy( sType3, apPAngle->sType3 );
+    if ( dPKt ) *dPKt = apPAngle->dKt;
+    if ( dPT0 ) *dPT0 = apPAngle->dT0;
+    if ( dPTkub ) *dPTkub = apPAngle->dTkub;
+    if ( dPRkub ) *dPRkub = apPAngle->dRkub;
+    if ( sDesc ) strcpy( sDesc, apPAngle->sDesc );
 }
 
 
@@ -3063,27 +2946,27 @@ TORSIONPARMt   *tpPTorsion;
          *  default values
          */
         VPWARN("Using default torsion values (0)\n" );
-        strcpy( sType1, WILD_CARD_TYPE );
-        strcpy( sType2, WILD_CARD_TYPE );
-        strcpy( sType3, WILD_CARD_TYPE );
-        strcpy( sType4, WILD_CARD_TYPE );
-        *iPN  = 0;
-        *dPKp = 0;
-        *dPP0 = 0;
-        strcpy( sDesc, "??" );
+        if ( sType1 ) strcpy( sType1, WILD_CARD_TYPE );
+        if ( sType2 ) strcpy( sType2, WILD_CARD_TYPE );
+        if ( sType3 ) strcpy( sType3, WILD_CARD_TYPE );
+        if ( sType4 ) strcpy( sType4, WILD_CARD_TYPE );
+        if ( iPN  ) *iPN  = 0;
+        if ( dPKp ) *dPKp = 0;
+        if ( dPP0 ) *dPP0 = 0;
+        if ( sDesc ) strcpy( sDesc, "??" );
         return;
     }
     tpPTorsion = PVAI( psLib->vaTorsions, TORSIONPARMt, i );
-    strcpy( sType1, tpPTorsion->sType1 );
-    strcpy( sType2, tpPTorsion->sType2 );
-    strcpy( sType3, tpPTorsion->sType3 );
-    strcpy( sType4, tpPTorsion->sType4 );
-    *iPN  = tpPTorsion->iN;
-    *dPKp = tpPTorsion->dKp;
-    *dPP0 = tpPTorsion->dP0;
-    *dPScEE = tpPTorsion->dScEE;
-    *dPScNB = tpPTorsion->dScNB;
-    strcpy( sDesc, tpPTorsion->sDesc );
+    if ( sType1 ) strcpy( sType1, tpPTorsion->sType1 );
+    if ( sType2 ) strcpy( sType2, tpPTorsion->sType2 );
+    if ( sType3 ) strcpy( sType3, tpPTorsion->sType3 );
+    if ( sType4 ) strcpy( sType4, tpPTorsion->sType4 );
+    if ( iPN  ) *iPN  = tpPTorsion->iN;
+    if ( dPKp ) *dPKp = tpPTorsion->dKp;
+    if ( dPP0 ) *dPP0 = tpPTorsion->dP0;
+    if ( dPScEE ) *dPScEE = tpPTorsion->dScEE;
+    if ( dPScNB ) *dPScNB = tpPTorsion->dScNB;
+    if ( sDesc ) strcpy( sDesc, tpPTorsion->sDesc );
 }
 
 
@@ -3106,25 +2989,25 @@ TORSIONPARMt   *tpPImproper;
          *  default values
          */
         VPWARN("Using default improper torsion values (0)\n" );
-        strcpy( sType1, WILD_CARD_TYPE );
-        strcpy( sType2, WILD_CARD_TYPE );
-        strcpy( sType3, WILD_CARD_TYPE );
-        strcpy( sType4, WILD_CARD_TYPE );
-        *iPN  = 0;
-        *dPKp = 0;
-        *dPP0 = 0;
-        strcpy( sDesc, "??" );
+        if ( sType1 ) strcpy( sType1, WILD_CARD_TYPE );
+        if ( sType2 ) strcpy( sType2, WILD_CARD_TYPE );
+        if ( sType3 ) strcpy( sType3, WILD_CARD_TYPE );
+        if ( sType4 ) strcpy( sType4, WILD_CARD_TYPE );
+        if ( iPN  ) *iPN  = 0;
+        if ( dPKp ) *dPKp = 0;
+        if ( dPP0 ) *dPP0 = 0;
+        if ( sDesc ) strcpy( sDesc, "??" );
         return;
     }
     tpPImproper = PVAI( psLib->vaImpropers, TORSIONPARMt, i );
-    strcpy( sType1, tpPImproper->sType1 );
-    strcpy( sType2, tpPImproper->sType2 );
-    strcpy( sType3, tpPImproper->sType3 );
-    strcpy( sType4, tpPImproper->sType4 );
-    *iPN  = tpPImproper->iN;
-    *dPKp = tpPImproper->dKp;
-    *dPP0 = tpPImproper->dP0;
-    strcpy( sDesc, tpPImproper->sDesc );
+    if ( sType1 ) strcpy( sType1, tpPImproper->sType1 );
+    if ( sType2 ) strcpy( sType2, tpPImproper->sType2 );
+    if ( sType3 ) strcpy( sType3, tpPImproper->sType3 );
+    if ( sType4 ) strcpy( sType4, tpPImproper->sType4 );
+    if ( iPN  ) *iPN  = tpPImproper->iN;
+    if ( dPKp ) *dPKp = tpPImproper->dKp;
+    if ( dPP0 ) *dPP0 = tpPImproper->dP0;
+    if ( sDesc ) strcpy( sDesc, tpPImproper->sDesc );
 }
 
 
@@ -3147,19 +3030,19 @@ HBONDPARMt     *hpPHBond;
          *  default values
          */
         VPWARN("Using default hbond values (0)\n" );
-        strcpy( sType1, WILD_CARD_TYPE );
-        strcpy( sType2, WILD_CARD_TYPE );
-        *dPA = 0;
-        *dPB = 0;
-        strcpy( sDesc, "??" );
+        if ( sType1 ) strcpy( sType1, WILD_CARD_TYPE );
+        if ( sType2 ) strcpy( sType2, WILD_CARD_TYPE );
+        if ( dPA ) *dPA = 0;
+        if ( dPB ) *dPB = 0;
+        if ( sDesc ) strcpy( sDesc, "??" );
         return;
     }
     hpPHBond = PVAI( psLib->vaHBonds, HBONDPARMt, i );
-    strcpy( sType1, hpPHBond->sType1 );
-    strcpy( sType2, hpPHBond->sType2 );
-    *dPA = hpPHBond->dA;
-    *dPB = hpPHBond->dB;
-    strcpy( sDesc, hpPHBond->sDesc );
+    if ( sType1 ) strcpy( sType1, hpPHBond->sType1 );
+    if ( sType2 ) strcpy( sType2, hpPHBond->sType2 );
+    if ( dPA ) *dPA = hpPHBond->dA;
+    if ( dPB ) *dPB = hpPHBond->dB;
+    if ( sDesc ) strcpy( sDesc, hpPHBond->sDesc );
 }
 
 
@@ -3173,7 +3056,7 @@ HBONDPARMt     *hpPHBond;
  */
 void
 ParmSetNBEdit( PARMSET psLib, int i, typeStr sType1, typeStr sType2,
-               double *dEI, double *dEJ, double *dRI, double *dRJ,
+               double *dPEI, double *dPEJ, double *dPRI, double *dPRJ,
                char *sDesc )
 {
 NBEDITt     *hpPNBEdit;
@@ -3183,23 +3066,23 @@ NBEDITt     *hpPNBEdit;
          *  default values
          */
         VPWARN("Using zeros for edited Lennard-Jones values (0)\n" );
-        strcpy( sType1, WILD_CARD_TYPE );
-        strcpy( sType2, WILD_CARD_TYPE );
-        *dEI = 0.0;
-        *dEJ = 0.0;
-        *dRI = 0.0;
-        *dRJ = 0.0;
-        strcpy( sDesc, "??" );
+        if ( sType1 ) strcpy( sType1, WILD_CARD_TYPE );
+        if ( sType2 ) strcpy( sType2, WILD_CARD_TYPE );
+        if ( dPEI ) *dPEI = 0.0;
+        if ( dPEJ ) *dPEJ = 0.0;
+        if ( dPRI ) *dPRI = 0.0;
+        if ( dPRJ ) *dPRJ = 0.0;
+        if ( sDesc ) strcpy( sDesc, "??" );
         return;
     }
     hpPNBEdit = PVAI( psLib->vaNBEdits, NBEDITt, i );
-    strcpy( sType1, hpPNBEdit->sType1 );
-    strcpy( sType2, hpPNBEdit->sType2 );
-    *dEI = hpPNBEdit->dEI;
-    *dEJ = hpPNBEdit->dEJ;
-    *dRI = hpPNBEdit->dRI;
-    *dRJ = hpPNBEdit->dRJ;
-    strcpy( sDesc, hpPNBEdit->sDesc );
+    if ( sType1 ) strcpy( sType1, hpPNBEdit->sType1 );
+    if ( sType2 ) strcpy( sType2, hpPNBEdit->sType2 );
+    if ( dPEI ) *dPEI = hpPNBEdit->dEI;
+    if ( dPEJ ) *dPEJ = hpPNBEdit->dEJ;
+    if ( dPRI ) *dPRI = hpPNBEdit->dRI;
+    if ( dPRJ ) *dPRJ = hpPNBEdit->dRJ;
+    if ( sDesc ) strcpy( sDesc, hpPNBEdit->sDesc );
 }
 
 
@@ -3322,12 +3205,12 @@ ParmSetUpdateAngle( PARMSET psLib, int i,
 ANGLEPARMt     *apPAngle;
 
     apPAngle = PVAI( psLib->vaAngles, ANGLEPARMt, i );
-    if(      sType1 != (char*)NULL  ) strcpy( apPAngle->sType1, sType1 );
-    if(      sType2 != (char*)NULL  ) strcpy( apPAngle->sType2, sType2 );
-    if(      sType3 != (char*)NULL  ) strcpy( apPAngle->sType3, sType3 );
-    if(        dPKt != (double*)NULL) apPAngle->dKt = *dPKt;
-    if(        dPT0 != (double*)NULL) apPAngle->dT0 = *dPT0;
-    if(sDescription != (char*)NULL  )
+    if (      sType1 != (char*)NULL  ) strcpy( apPAngle->sType1, sType1 );
+    if (      sType2 != (char*)NULL  ) strcpy( apPAngle->sType2, sType2 );
+    if (      sType3 != (char*)NULL  ) strcpy( apPAngle->sType3, sType3 );
+    if (        dPKt != (double*)NULL) apPAngle->dKt = *dPKt;
+    if (        dPT0 != (double*)NULL) apPAngle->dT0 = *dPT0;
+    if (sDescription != (char*)NULL  )
         StringCopyMax(apPAngle->sDesc, sDescription, sizeof(apPAngle->sDesc));
 
     if ( sType1  ||  sType2 )
@@ -3431,11 +3314,11 @@ ParmSetUpdateHBond( PARMSET psLib, int i, const typeStr sType1, const typeStr sT
 HBONDPARMt     *hpPHBond;
 
     hpPHBond = PVAI( psLib->vaHBonds, HBONDPARMt, i );
-    if(      sType1 != (char*)NULL  )        strcpy( hpPHBond->sType1, sType1 );
-    if(      sType2 != (char*)NULL  )        strcpy( hpPHBond->sType2, sType2 );
-    if(         dPA != (double*)NULL)         hpPHBond->dA = *dPA;
-    if(         dPB != (double*)NULL)         hpPHBond->dB = *dPB;
-    if(sDescription != (char*)NULL  )
+    if (      sType1 != (char*)NULL  )        strcpy( hpPHBond->sType1, sType1 );
+    if (      sType2 != (char*)NULL  )        strcpy( hpPHBond->sType2, sType2 );
+    if (         dPA != (double*)NULL)         hpPHBond->dA = *dPA;
+    if (         dPB != (double*)NULL)         hpPHBond->dB = *dPB;
+    if (sDescription != (char*)NULL  )
         StringCopyMax(hpPHBond->sDesc, sDescription, sizeof(hpPHBond->sDesc));
 
     if ( sType1 || sType2 )
@@ -3594,7 +3477,7 @@ TORSIONPARMt        *tpPCur;
                 fprintf(stderr, " %s %s %s %s   %d   %f %f   %s   %s\n",
                         tpPCur->sType1, tpPCur->sType2,
                         tpPCur->sType3, tpPCur->sType4,
-                        tpPCur->iN, tpPCur->dKp, tpPCur->dP0/DEGTORAD,
+                        tpPCur->iN, tpPCur->dKp, tpPCur->dP0*RADTODEG,
                         tpPCur->sOrder, tpPCur->sDesc );
         }
 }
@@ -3611,7 +3494,7 @@ TORSIONPARMt        *tpPCur;
                 fprintf(stderr, " %d  %s %s %s %s   %d   %f %f   %s\n", i+1,
                         tpPCur->sType1, tpPCur->sType2,
                         tpPCur->sType3, tpPCur->sType4,
-                        tpPCur->iN, tpPCur->dKp, tpPCur->dP0/DEGTORAD,
+                        tpPCur->iN, tpPCur->dKp, tpPCur->dP0*RADTODEG,
                         tpPCur->sDesc );
         }
 }

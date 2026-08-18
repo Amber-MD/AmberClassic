@@ -92,10 +92,10 @@ ATOM		aNeighbor;
 	aNeighbor = aAtomBondedNeighbor( aA, i );
 	if ( aNeighbor == aB ) continue;
 	if ( strcmp(sName,sContainerName(aNeighbor)) == 0 ) {
-	    return(aNeighbor);
+	    return aNeighbor;
 	}
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -144,8 +144,8 @@ STRING		s1, s2, s3, s4;
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
                 sContainerFullDescriptor((CONTAINER)aAtom3,s3), 
 		sContainerFullDescriptor((CONTAINER)aAtom4,s4) );
-    MESSAGE("Torsion = %lf\n", dTorsion/DEGTORAD );
-    MESSAGE("Angle   = %lf\n", dAngle/DEGTORAD );
+    MESSAGE("Torsion = %lf\n", dTorsion*RADTODEG );
+    MESSAGE("Angle   = %lf\n", dAngle*RADTODEG );
     MESSAGE("Bond    = %lf\n", dRadius );
 
     ZMatrixBondAngleTorsion( &vNew, &vAtom2, &vAtom3, &vAtom4, 
@@ -180,7 +180,7 @@ double  dOrient;
     else if ( aNew == aAtomB ) dOrient = - dChirality;
     else if ( aNew == aAtomC ) dOrient = dChirality;
     else if ( aNew == aAtomD ) dOrient = - dChirality;
-    return(dOrient);
+    return dOrient;
 }
    
 
@@ -239,8 +239,8 @@ STRING		s1, s2, s3;
     dBond = dInternalValue(iBond);
     dAngleA = dInternalValue(iAngleA);
     dAngleB = dInternalValue(iAngleB);
-    MESSAGE("AngleA  = %lf\n", dAngleA/DEGTORAD );
-    MESSAGE("AngleB  = %lf\n", dAngleB/DEGTORAD );
+    MESSAGE("AngleA  = %lf\n", dAngleA*RADTODEG );
+    MESSAGE("AngleB  = %lf\n", dAngleB*RADTODEG );
     MESSAGE("Bond    = %lf\n", dBond );
     
                 /* Calculate the chirality of aAtomC */
@@ -332,7 +332,7 @@ STRING		s1, s2, s3;
     dRadius = dInternalValue(iBond);
     dAngle = dInternalValue(iAngle);
 
-    MESSAGE("Angle    = %lf\n", dAngle/DEGTORAD );
+    MESSAGE("Angle    = %lf\n", dAngle*RADTODEG );
     MESSAGE("Bond     = %lf\n", dRadius );
 
     ZMatrixBondAngle( &vNew, &vAtom2, &vAtom3, dRadius, dAngle );
@@ -457,7 +457,7 @@ LOOP		lTemp;
 		MESSAGE("Got bond angle from model builder\n" );
 	    }
 	    MESSAGE("++++Angle INTERNAL: %lf  for %s - %s - %s\n", 
-		dValue/DEGTORAD,
+		dValue*RADTODEG,
 		sContainerFullDescriptor((CONTAINER)a1,s1),
 		sContainerFullDescriptor((CONTAINER)a2,s2),
 		sContainerFullDescriptor((CONTAINER)a3,s3) );
@@ -755,7 +755,7 @@ int		iKnown;
 LISTLOOP	llList;
 INTERNAL	iRing;
 
-    if ( iListSize(lRingGroup) != 1 ) return(false);
+    if ( iListSize(lRingGroup) != 1 ) return false;
 
 		/* Get the single ring in the ring group */
 
@@ -783,9 +783,9 @@ INTERNAL	iRing;
 	if ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) iKnown++;
     }
 
-    if ( iKnown > 1 ) return(false);
-    if ( !bAllSame ) return(false);
-    if ( i != 6 ) return(false);
+    if ( iKnown > 1 ) return false;
+    if ( !bAllSame ) return false;
+    if ( i != 6 ) return false;
 
 		/* If SP2 ring then create INTERNALs for a BENZENE skeleton */
 
@@ -798,7 +798,7 @@ INTERNAL	iRing;
 	iInternalTorsion( aaA[4], aaA[5], aaA[0], aaA[1], 0.0 );
 	iInternalTorsion( aaA[5], aaA[0], aaA[1], aaA[2], 0.0 );
 
-        return(true);
+        return true;
     }
 
 		/* If SP3 ring then create INTERNALs for a CYCLOHEXANE */
@@ -813,9 +813,9 @@ INTERNAL	iRing;
 	iInternalTorsion( aaA[4], aaA[5], aaA[0], aaA[1],  60.0*DEGTORAD );
 	iInternalTorsion( aaA[5], aaA[0], aaA[1], aaA[2], -60.0*DEGTORAD );
 
-	return(true);
+	return true;
     }
-    return(false);
+    return false;
 }
 	
 
@@ -1027,7 +1027,7 @@ double		dValue;
 	    MESSAGE("Got bond angle from model builder\n" );
 	}
 	MESSAGE("++++Angle INTERNAL: %lf  for %s - %s - %s\n", 
-		dValue/DEGTORAD,
+		dValue*RADTODEG,
 		sContainerFullDescriptor((CONTAINER)a1,s1),
 		sContainerFullDescriptor((CONTAINER)a2,s2),
 		sContainerFullDescriptor((CONTAINER)a3,s3) );
@@ -1222,7 +1222,7 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
             MESSAGE("Twisting torsions centered on %s - %s by %lf degrees\n",
                         sContainerFullDescriptor((CONTAINER)aAtom2,sAtom2), 
                         sContainerFullDescriptor((CONTAINER)aAtom3,sAtom3), 
-			dSub/DEGTORAD );
+			dSub*RADTODEG );
             for ( i=0; i<iNextTorsion; i++ ) {
                 dNew = dInternalValue(iaTorsions[i]) + dSub;
 	        MESSAGE("Twisting torsion for atoms: %s-%s-%s-%s\n",
@@ -1231,8 +1231,8 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
 			sContainerName(aInternalAtom3(iaTorsions[i])),
 			sContainerName(aInternalAtom4(iaTorsions[i])) );
                 MESSAGE("------- From %lf to %lf\n", 
-                         dInternalValue(iaTorsions[i])/DEGTORAD, 
-			 dNew/DEGTORAD );
+                         dInternalValue(iaTorsions[i])*RADTODEG, 
+			 dNew*RADTODEG );
 		
                 InternalSetValue( iaTorsions[i], dNew );
             }
@@ -1416,12 +1416,12 @@ INTERNAL	iInt;
 		/* Find the first named ATOM within the container */
 
     aAtom1 = (ATOM)cContainerFindName( cCont, ATOMid, sAtom1 );
-    if ( aAtom1 == NULL ) return(false);
+    if ( aAtom1 == NULL ) return false;
 
 		/* Find the bonded ATOM that has the required name */
 
     aAtom2 = zaBuildFindNextAtomWithNameButNot( aAtom1, sAtom2, NULL );
-    if ( aAtom2 == NULL ) return(false);
+    if ( aAtom2 == NULL ) return false;
 
 		/* Find the INTERNAL for the ATOMs */
 
@@ -1431,7 +1431,7 @@ INTERNAL	iInt;
 
     InternalSetValue( iInt, dValue );
 
-    return(true);
+    return true;
 }
 
 
@@ -1464,14 +1464,14 @@ INTERNAL	iInt;
 		/* Find the first named ATOM within the container */
 
     aAtom1 = (ATOM)cContainerFindName( cCont, ATOMid, sAtom1 );
-    if ( aAtom1 == NULL ) return(false);
+    if ( aAtom1 == NULL ) return false;
 
 		/* Find the bonded ATOM that has the required name */
 
     aAtom2 = zaBuildFindNextAtomWithNameButNot( aAtom1, sAtom2, NULL );
-    if ( aAtom2 == NULL ) return(false);
+    if ( aAtom2 == NULL ) return false;
     aAtom3 = zaBuildFindNextAtomWithNameButNot( aAtom2, sAtom3, aAtom1 );
-    if ( aAtom3 == NULL ) return(false);
+    if ( aAtom3 == NULL ) return false;
 
 		/* Find the INTERNAL for the ATOMs */
 
@@ -1481,7 +1481,7 @@ INTERNAL	iInt;
 
     InternalSetValue( iInt, dValue );
 
-    return(true);
+    return true;
 }
 
 
@@ -1521,16 +1521,16 @@ STRING		s1, s2, s3, s4;
 		/* Find the first named ATOM within the container */
 
     aAtom1 = (ATOM)cContainerFindName( cCont, ATOMid, sAtom1 );
-    if ( aAtom1 == NULL ) return(false);
+    if ( aAtom1 == NULL ) return false;
 
 		/* Find the bonded ATOM that has the required name */
 
     aAtom2 = zaBuildFindNextAtomWithNameButNot( aAtom1, sAtom2, NULL );
-    if ( aAtom2 == NULL ) return(false);
+    if ( aAtom2 == NULL ) return false;
     aAtom3 = zaBuildFindNextAtomWithNameButNot( aAtom2, sAtom3, aAtom1 );
-    if ( aAtom3 == NULL ) return(false);
+    if ( aAtom3 == NULL ) return false;
     aAtom4 = zaBuildFindNextAtomWithNameButNot( aAtom3, sAtom4, aAtom2 );
-    if ( aAtom4 == NULL ) return(false);
+    if ( aAtom4 == NULL ) return false;
 
 		/* Find the INTERNAL for the ATOMs */
 
@@ -1540,14 +1540,14 @@ STRING		s1, s2, s3, s4;
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
 		sContainerFullDescriptor((CONTAINER)aAtom3,s3),
 		sContainerFullDescriptor((CONTAINER)aAtom4,s4),
-		dInternalValue(iInt)/DEGTORAD );
+		dInternalValue(iInt)*RADTODEG );
 
 		/* Find the amount we have to twist all the other torsions */
 
     dAdd = dValue - dInternalValue( iInt );
     MESSAGE("Going to twist all torsions around: %s - %s by %lf\n",
 		sContainerName(aAtom2), sContainerName(aAtom3),
-		dAdd/DEGTORAD );
+		dAdd*RADTODEG );
 
 		/* Get all of the torsions around the center pair of atoms */
 
@@ -1561,7 +1561,7 @@ STRING		s1, s2, s3, s4;
 	InternalSetValue( iaTorsions[i], dTorsion );
     }
 
-    return(true);
+    return true;
 }
 
 

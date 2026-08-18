@@ -206,7 +206,7 @@ STRING		sName;
     }
 
     sRemoveSpaces( sName, sStr );
-    return(sStr);
+    return sStr;
 }
 
 
@@ -1635,15 +1635,15 @@ OVERPERT:
                 	sDictLoopKey(dlLoop),
                 	fabs(*PVAI( vaPn, double, iIndex )),
                 	*PVAI( vaPk, double, iIndex ),
-               		*PVAI( vaPhase, double, iIndex )/DEGTORAD,
-			dAngle/DEGTORAD,
+               		*PVAI( vaPhase, double, iIndex )*RADTODEG,
+			dAngle*RADTODEG,
 			dEnergy );
 	    } else {
 		sprintf( sLine, "%s %1.1lf %9.3lE %5.1lf",
                 	sDictLoopKey(dlLoop),
                 	fabs(*PVAI( vaPn, double, iIndex )),
                 	*PVAI( vaPk, double, iIndex ),
-               		*PVAI( vaPhase, double, iIndex )/DEGTORAD );
+               		*PVAI( vaPhase, double, iIndex )*RADTODEG );
 	    }
 
             VarArrayAdd( vaTorsions, (GENP)sLine );

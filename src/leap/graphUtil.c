@@ -219,7 +219,7 @@ STRING		sTemp, sA, sB;
 	    roPAtom++;
 	}
     }
-    if ( iOverlap < 2 ) return(false);
+    if ( iOverlap < 2 ) return false;
 
 	/* Now find the two atoms that define the boundary where the */
 	/* larger ring separates from the smaller ring */
@@ -289,7 +289,7 @@ STRING		sTemp, sA, sB;
 	/* If the second ATOM in the shortest path is the same as */
 	/* roPAfter->aAtom then the rings do not need to be separated */
 
-    if ( roPAfter->aAtom == aAtomBackSpan(roPA->aAtom) ) return(false);
+    if ( roPAfter->aAtom == aAtomBackSpan(roPA->aAtom) ) return false;
 
 	/* Now remove the ATOMs that are not on the boundary but are */
 	/* in the smaller ring from the bigger ring */
@@ -332,7 +332,7 @@ STRING		sTemp, sA, sB;
 			MESSAGE("=============\n" );
 		    } );
 
-    return(true);
+    return true;
 }
 
 
@@ -402,7 +402,7 @@ LIST		lGroup1, lGroup2, lLarger, lSmaller;
     Destroy( (OBJEKT *) &lSmaller );
     *PVAI(vaRingGroup,LIST,iSmaller) = NULL;
 
-    return(iLarger);
+    return iLarger;
 }
 
 

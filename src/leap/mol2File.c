@@ -236,7 +236,7 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
 
 /* @<TRIPOS>MOLECULE Bloc */
     fprintf(fOut, "@<TRIPOS>MOLECULE\n");
-    iResidueCount = UnitIOAmberOrderResidues(uUnit);
+    iResidueCount = iUnitIOAmberOrderResidues(uUnit);
 
 
     strcpy(sTemp, sContainerName((CONTAINER) uUnit));

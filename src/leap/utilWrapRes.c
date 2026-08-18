@@ -99,7 +99,7 @@ bool		bOnlySpaces;
     strcpy( sResource, "" );
     do {
 	fgets( sLine, MAX_LONG_STRING, fIn );
-	if ( feof(fIn) ) return(false);
+	if ( feof(fIn) ) return false;
 
         bOnlySpaces = true;
 
@@ -137,7 +137,7 @@ bool		bOnlySpaces;
 
     } while ( 1==1 );
 
-    return(true);
+    return true;
 }
 
 

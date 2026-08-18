@@ -66,9 +66,9 @@ int	*iPA, *iPB;
     iPA = (int*)( ((char*)PA) + SiOffset );
     iPB = (int*)( ((char*)PB) + SiOffset );
 
-    if ( *iPA < *iPB ) return(-1*SiAscending);
-    if ( *iPA == *iPB ) return(0);
-    return(SiAscending);
+    if ( *iPA < *iPB ) return -1*SiAscending;
+    if ( *iPA == *iPB ) return 0;
+    return SiAscending;
 }
  
 
@@ -85,9 +85,9 @@ double	*dPA, *dPB;
     dPA = (double*)( ((char*)PA) + SiOffset );
     dPB = (double*)( ((char*)PB) + SiOffset );
 
-    if ( *dPA < *dPB ) return(-1*SiAscending);
-    if ( *dPA == *dPB ) return(0);
-    return(SiAscending);
+    if ( *dPA < *dPB ) return -1*SiAscending;
+    if ( *dPA == *dPB ) return 0;
+    return SiAscending;
 }
  
 

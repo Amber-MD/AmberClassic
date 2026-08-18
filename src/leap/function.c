@@ -93,12 +93,12 @@ FUNCTIONt	*fPFunc;
     for ( iCur = 0; iCur<iVarArrayElementCount(GvaFunctions); iCur++ ) {
 	if ( fPFunc->iStart <= iLine && iLine <= fPFunc->iStop ) {
 	    if ( strcmp( sFilename, fPFunc->sFilename ) == 0 ) {
-		return(iCur);
+		return iCur;
 	    }
 	}
 	fPFunc++;
     }
-    return(NO_FUNCTION);
+    return NO_FUNCTION;
 }
 
 
@@ -118,7 +118,7 @@ FUNCTIONt	*fPFunc;
     fPFunc = PVAI(GvaFunctions,FUNCTIONt,0);
     for ( iCur = 0; iCur<iVarArrayElementCount(GvaFunctions); iCur++ ) {
 	if ( strcmp( sFunction, fPFunc->sFunction ) == 0 ) {
-	    return(iCur);
+	    return iCur;
 	}
 	fPFunc++;
     }
@@ -163,10 +163,10 @@ int		i;
 
     for ( i=0; i<iVarArrayElementCount(GvaFiles); i++ ) {
 	if ( strcmp( sFilename, PVAI(GvaFiles,STRING,i) ) == 0 ) {
-	    return(i);
+	    return i;
 	}
     }
-    return(NO_FUNCTION);
+    return NO_FUNCTION;
 }
 
 

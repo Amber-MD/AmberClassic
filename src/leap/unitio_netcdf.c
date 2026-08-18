@@ -1,6 +1,8 @@
+#include <stdbool.h>
 #ifdef BINTRAJ
 
 #include        "basics.h"
+#include        "unit.h"
 #include        "defaults.h"
 #include        "classes.h"
 #include        "residue.h"
@@ -96,6 +98,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int vid_name, vid_charge, vid_atomic_num, vid_itype;
 
     if (bPert) VPFATALEXIT("Pert atoms not supported\n");
+    START(tNetCDF);
 
     NC_CHECK(nc_create(fname, NC_CLOBBER|NC_64BIT_OFFSET|NC_NOFILL, &ncid));
 
@@ -271,7 +274,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     /* -12B..E- bond augmentation, same NUMBND dimension as above */
     int vid_bond_stiffness_pull_adj, vid_bond_equil_pull_adj;
     int vid_bond_stiffness_press_adj, vid_bond_equil_press_adj;
-    if (BondAugmentationFound(uUnit) == 1) {
+    if (bBondAugmentationFound(uUnit) == 1) {
         NC_CHECK(nc_def_var(ncid, "bond_stiffness_pull_adj", NC_DOUBLE, 1, &dimid_bp, &vid_bond_stiffness_pull_adj));
         NC_CHECK(nc_put_att_text(ncid, vid_bond_stiffness_pull_adj, "units", 19, "kcal/mol/angstrom^2"));
         NC_CHECK(nc_def_var(ncid, "bond_equil_pull_adj", NC_DOUBLE, 1, &dimid_bp, &vid_bond_equil_pull_adj));
@@ -488,8 +491,8 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                 dihe_ah[nh][2]=iAtom3*iCalc14; dihe_ah[nh][3]=t->iAtom4*iProper;
                 dihe_pih[nh]=t->iParmIndex; nh++;
             } else {
-                dihe_anh[nnh][0]=t->iAtom1; dihe_anh[nnh][1]=t->iAtom2;
-                dihe_anh[nnh][2]=t->iAtom3*iCalc14; dihe_anh[nnh][3]=t->iAtom4*iProper;
+                dihe_anh[nnh][0]=iAtom1; dihe_anh[nnh][1]=t->iAtom2;
+                dihe_anh[nnh][2]=iAtom3*iCalc14; dihe_anh[nnh][3]=t->iAtom4*iProper;
                 dihe_pinh[nnh]=t->iParmIndex; nnh++;
             }
         }
@@ -753,9 +756,9 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     /* cell dimensions */
     if (bUnitUseBox(uUnit)) {
         double dX, dY, dZ;
-        double dAlpha = uUnit->dAlpha / DEGTORAD;
-        double dBeta  = uUnit->dBeta  / DEGTORAD;
-        double dGamma = uUnit->dGamma / DEGTORAD;
+        double dAlpha = uUnit->dAlpha * RADTODEG;
+        double dBeta  = uUnit->dBeta  * RADTODEG;
+        double dGamma = uUnit->dGamma * RADTODEG;
         UnitGetBox(uUnit, &dX, &dY, &dZ);
         NC_CHECK(nc_put_var_double(ncid, vid_a,     &dX));
         NC_CHECK(nc_put_var_double(ncid, vid_b,     &dY));
@@ -892,7 +895,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     }
 
     /* -12B..E- bond augmentation, same NUMBND dimension as above */
-    if (BondAugmentationFound(uUnit) == 1) {
+    if (bBondAugmentationFound(uUnit) == 1) {
         int nb = iParmSetTotalBondParms(uUnit->psParameters);
         int nr = iUnitRestraintTypeCount(uUnit, RESTRAINTBOND);
         int n  = nb + nr;
@@ -926,7 +929,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         for (int i = 0; i < na; i++) {
             ParmSetAngle(uUnit->psParameters, i, s1, s2, s3, &dKt, &dT0,
                          &dTkub, &dRkub, sDesc);
-            kt[i] = dKt; t0[i] = dT0 / DEGTORAD;
+            kt[i] = dKt; t0[i] = dT0 * RADTODEG;
         }
         NC_RESTRAINTLOOP(uUnit, RESTRAINTANGLE, dKx, kt, na);
         NC_CHECK(nc_put_var_double(ncid, vid_angle_force, kt));
@@ -964,14 +967,14 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         for (int i = 0; i < nt; i++) {
             ParmSetTorsion(uUnit->psParameters, i, s1, s2, s3, s4,
                            &iN, &dKp, &dP0, &dScEE, &dScNB, sDesc);
-            kp[i]=dKp; per[i]=iN; p0[i]=dP0/DEGTORAD;
+            kp[i]=dKp; per[i]=iN; p0[i]=dP0*RADTODEG;
             scee[i]=(dScEE<0.0)?GDefaults.dSceeScaleFactor:dScEE;
             scnb[i]=(dScNB<0.0)?GDefaults.dScnbScaleFactor:dScNB;
         }
         for (int i = 0; i < ni; i++) {
             ParmSetImproper(uUnit->psParameters, i, s1, s2, s3, s4,
                             &iN, &dKp, &dP0, sDesc);
-            kp[nt+i]=dKp; per[nt+i]=iN; p0[nt+i]=dP0/DEGTORAD;
+            kp[nt+i]=dKp; per[nt+i]=iN; p0[nt+i]=dP0*RADTODEG;
             scee[nt+i]=0.0; scnb[nt+i]=0.0;
         }
         NC_RESTRAINTLOOP(uUnit, RESTRAINTTORSION, dKx, kp,  nt+ni);
@@ -1206,6 +1209,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     }
 
 
+    STOP(tNetCDF,"PRMTOP NetCDF prep+write");
     NC_CHECK(nc_close(ncid));
     VP0("Successfully saved NetCDF PRMTOP file \"%s\"\n", fname);
 }
@@ -1321,7 +1325,7 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         count[0] = 3; count[1] = 0;
         double lengths[3] = { dX, dY, dZ };
         NC_CHECK(nc_put_vara_double(ncid, vid_cell_length, start, count, lengths));
-        lengths[0] = lengths[1] = lengths[2] = dUnitBeta(uUnit) / DEGTORAD;
+        lengths[0] = lengths[1] = lengths[2] = dUnitBeta(uUnit) * RADTODEG;
         NC_CHECK(nc_put_vara_double(ncid, vid_cell_angle, start, count, lengths));
     }
 
@@ -1331,6 +1335,7 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
 }
 #else
 
+#include        "unit.h"
 void UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
 {
     VPFATALEXIT("Built without NetCDF support. Rebuild with -DBINTRAJ\n");

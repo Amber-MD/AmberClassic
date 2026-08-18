@@ -90,7 +90,7 @@ dDisplayerCreate( GENP PObject )
 DISPLAYER	dNew;
 
     if ( GbGraphicalEnvironment == false ) 
-	return(NULL);
+	return NULL;
 
     dNew = (DISPLAYER)MALLOC(sizeof(DISPLAYERt) );
     dNew->cStatus = D_SENSITIVE;
@@ -98,7 +98,7 @@ DISPLAYER	dNew;
     dNew->PObject = PObject;
     dNew->dNext = NULL;
 
-    return(dNew);
+    return dNew;
 }
 
 
@@ -209,11 +209,11 @@ DISPLAYERNODE	dnCur, dnPrev;
 	}
 
 	FREE( dnCur );
-	return(true);
+	return true;
     }
 
     DFATAL("DISPLAYER could not find callback/data pair\n" );
-    return(false);
+    return false;
 
 }
 

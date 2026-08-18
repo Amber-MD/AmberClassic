@@ -154,7 +154,7 @@ OBJEKT  o;
     o->PKlass = (GENP)&GkTObjekt;
 #endif
     o->iReferences = 1;
-    return(o);
+    return o;
 }
 
 
@@ -178,7 +178,7 @@ OBJEKT  o;
 
     o = oCreateSize( iType, DEFAULTSIZE );
                 
-    return(o);
+    return o;
 }
 
 
@@ -311,11 +311,11 @@ OBJEKT	oNew;
             VP0("Unknown object type=%s being copied!",
                  sObjectType(oCur) );
 	    Destroy( &oNew );
-	    return(NULL);
+	    return NULL;
             break;
     }
 
-    return(oNew);
+    return oNew;
 }
 	
 
@@ -423,77 +423,77 @@ int             iObjClass;
                 case UNITid:
                 case MOLECULEid:
                 case CONTAINERid:
-                    return(true);
+                    return true;
             }
             break;
         case OBJEKTid:
-            return(true);
+            return true;
         case ASSOCid:
-            if ( iObjClass==ASSOCid ) return(true);
+            if ( iObjClass==ASSOCid ) return true;
             break;
         case OINTEGERid:
-            if ( iObjClass==OINTEGERid ) return(true);
+            if ( iObjClass==OINTEGERid ) return true;
             break;
         case ODOUBLEid:
-            if ( iObjClass==ODOUBLEid ) return(true);
+            if ( iObjClass==ODOUBLEid ) return true;
             break;
         case OSTRINGid:
-            if ( iObjClass==OSTRINGid ) return(true);
+            if ( iObjClass==OSTRINGid ) return true;
             break;
         case BYTEARRAYid:
-            if ( iObjClass==BYTEARRAYid ) return(true);
+            if ( iObjClass==BYTEARRAYid ) return true;
             break;
         case COLLECTIONid:
             switch ( iObjClass ) {
                 case COLLECTIONid:
                 case LISTid:
-                    return(true);
+                    return true;
             }
             break;
         case LISTid:
             switch ( iObjClass ) {
                 case LISTid:
-                    return(true);
+                    return true;
             }
             break;
         case UNITid:
             switch ( iObjClass ) {
                 case UNITid:
-                    return(true);
+                    return true;
             }
             break;
         case MOLECULEid:
             switch ( iObjClass ) {
                 case MOLECULEid:
-                    return(true);
+                    return true;
             }
             break;
         case RESIDUEid:
             switch ( iObjClass ) {
                 case RESIDUEid:
-                    return(true);
+                    return true;
             }
             break;
         case ATOMid:
             switch ( iObjClass ) {
                 case ATOMid:
-                    return(true);
+                    return true;
             }
             break;
         case INTERNALid:
             switch ( iObjClass ) {
                 case INTERNALid:
-                    return(true);
+                    return true;
             }
             break;
         case PARMSETid:
             switch ( iObjClass ) {
                 case PARMSETid:
-                    return(true);
+                    return true;
             }
     }
     MESSAGE("Object type %c is not in class %c\n",iObjClass,iClass);
-    return(false);
+    return false;
 }
           
             
@@ -566,7 +566,7 @@ OBJEKT  o;
     }
     o->iReferences = 1;
     
-    return(o);
+    return o;
 }
 
 
@@ -583,23 +583,23 @@ sObjectIndexType( int iType )
 {
 
     switch ( iType ) {
-        case OBJEKTid:          return("Object");
-        case UNITid:            return("Unit");
-        case MOLECULEid:        return("Molecule");
-        case RESIDUEid:         return("Residue");
-        case ATOMid:            return("Atom");
-        case ASSOCid:           return("Association");
-        case COLLECTIONid:      return("Collection");
-        case LISTid:            return("List");
-        case BYTEARRAYid:       return("ByteArray");
-        case INTERNALid:        return("Internal");
-        case PARMSETid:         return("ParameterSet");
-        case OSTRINGid:         return("String");
-        case ODOUBLEid:         return("Double");
-        case OINTEGERid:        return("Integer");
-        default: return("?? Unknown type ??");
+        case OBJEKTid:          return "Object";
+        case UNITid:            return "Unit";
+        case MOLECULEid:        return "Molecule";
+        case RESIDUEid:         return "Residue";
+        case ATOMid:            return "Atom";
+        case ASSOCid:           return "Association";
+        case COLLECTIONid:      return "Collection";
+        case LISTid:            return "List";
+        case BYTEARRAYid:       return "ByteArray";
+        case INTERNALid:        return "Internal";
+        case PARMSETid:         return "ParameterSet";
+        case OSTRINGid:         return "String";
+        case ODOUBLEid:         return "Double";
+        case OINTEGERid:        return "Integer";
+        default: return "?? Unknown type ??";
     }
-    return("?? Unknown type ??");	/* for lint */
+    return "?? Unknown type ??";	/* for lint */
 }
 
 
@@ -631,9 +631,9 @@ bool
 bObjektWarnType( OBJEKT oObj, int iType )
 {
 
-    if ( iObjectType(oObj) == iType ) return(true);
+    if ( iObjectType(oObj) == iType ) return true;
     VP0("The value must be of the type: %s\n", sObjectIndexType(iType) );
-    return(false);
+    return false;
 }
 
 

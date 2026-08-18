@@ -112,7 +112,7 @@ static int
 ziModelAtomWeight( ATOM aAtom )
 {
     if ( iAtomElement(aAtom) == CARBON ) 
-	return(1000);
+	return 1000;
     return(iAtomElement(aAtom));
 }
 
@@ -183,7 +183,7 @@ sAtomName(maPA->aAtom));
 /*
 if (this)
 fprintf(stderr, " %s adding internal %f\n", sAtomName(maPA->aAtom),
-dVal/DEGTORAD);
+dVal*RADTODEG);
 */
 	iInternalTorsion( maPA->aAtom,
 			  maPX->aAtom,
@@ -191,7 +191,7 @@ dVal/DEGTORAD);
 			  maPD->aAtom,
 			  dVal );
         MESSAGE("++++Torsion INTERNAL: %lf to %s - %s - %s - %s\n",
-		dVal/DEGTORAD,
+		dVal*RADTODEG,
 		sContainerFullDescriptor((CONTAINER)maPA->aAtom,s1),
 		sContainerFullDescriptor((CONTAINER)maPX->aAtom,s2),
 		sContainerFullDescriptor((CONTAINER)maPY->aAtom,s3),
@@ -308,7 +308,7 @@ double	dADOffset;
 
 
     MESSAGE("dADAbsolute = %lf\n", 
-			mtPTorsions->dAbsolute/DEGTORAD );
+			mtPTorsions->dAbsolute*RADTODEG );
 
     dADOffset = mtPTorsions->dAbsolute - (180.0*DEGTORAD);
     d180 =  180.0*DEGTORAD + dADOffset;
@@ -390,7 +390,7 @@ INTERNAL	iChirality;
     if ( maPX->aAtom == NULL ||
 	 maPA->aAtom == NULL ||
 	 maPY->aAtom == NULL ||
-	 maPB->aAtom == NULL ) return(1.0);
+	 maPB->aAtom == NULL ) return 1.0;
 
     if ( maPX->bPosKnown &&
 	 maPA->bPosKnown &&
@@ -438,7 +438,7 @@ sAtomName(maPX->aAtom));
 
     }
 
-    return(dOrientation);
+    return dOrientation;
 }
 
 
@@ -460,7 +460,7 @@ zbModelTrueIfPosKnown( MODELATOMt *maPAtom )
 bool	bRes;
 
     bRes = maPAtom->bPosKnown;
-    return(bRes);
+    return bRes;
 }
 
 
@@ -1031,7 +1031,7 @@ double dModelBondLength( ATOM aAtom1, ATOM aAtom2 )
 	if ( iTag != PARM_NOT_FOUND ) {
 	  ParmSetBond(psTemp, iTag, s1, s2, &dK, &dValue, &dKpull, &dRpull0, &dKpress,
 		      &dRpress0, sDesc);
-          return(dValue);
+          return dValue;
 	}
     }
 
@@ -1043,7 +1043,7 @@ double dModelBondLength( ATOM aAtom1, ATOM aAtom2 )
 		sContainerFullDescriptor((CONTAINER)aAtom1,s1), 
 		sContainerFullDescriptor((CONTAINER)aAtom2,s2),
 		dValue );
-    return(dValue);
+    return dValue;
 }
 
 
@@ -1076,7 +1076,7 @@ int		iTag;
 	if ( iTag != PARM_NOT_FOUND ) {
 	    ParmSetAngle( psTemp, iTag, s1, s2, s3, &dK, &dValue, 
 			&dTkub, &dRkub, sDesc );
-	    return(dValue);
+	    return dValue;
 	}
     }
 
@@ -1086,9 +1086,9 @@ int		iTag;
 		sContainerFullDescriptor((CONTAINER) aAtom1, s1 ),
 		sContainerFullDescriptor((CONTAINER) aAtom2, s2 ),
 		sContainerFullDescriptor((CONTAINER) aAtom3, s3 ),
-		dValue/DEGTORAD );
+		dValue*RADTODEG );
 
-    return(dValue);
+    return dValue;
 }
 
 
@@ -1238,6 +1238,10 @@ static	H_PROPERPARMt	SppaPropers[] = {
 {	HSP2,	HSP2,	2,	-4.0,		0.0,	1.2,	2.0 },	/* Pi bond overlap */
 {	HSP1,	HSP1,	1,	0.0,		0.0,	1.2,	2.0 }	/* Not interesting */
 };
+
+//FIXME -- remove this if/when exact PI is default
+#undef DEGTORAD
+#define DEGTORAD 0.0174533
 
 #define	AFORCE	100.0
 #define	A109	109.5*DEGTORAD

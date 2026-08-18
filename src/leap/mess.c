@@ -136,7 +136,7 @@ int		iScanned, iFunction;
 	GmLastMess = mMess;
     }
 
-    return(mMess);
+    return mMess;
 }
 
 
@@ -173,7 +173,7 @@ mMessNext( MESS *mPMess )
 	*mPMess = (*mPMess)->mNext;
     }
 
-    return(*mPMess);
+    return *mPMess;
 }
 
 

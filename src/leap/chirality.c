@@ -179,7 +179,7 @@ int     i;
 		else if ( iAtomId(aCur) < iAtomId(aSmall) ) 
 			aSmall = aCur;
 	}
-	return(aSmall);
+	return aSmall;
 }
 
 
@@ -256,7 +256,7 @@ bool	bKnowA, bKnowB, bKnowC, bKnowD;
 VECTOR	*vPA = NULL, *vPB = NULL, *vPC = NULL, *vPD = NULL;
 
 	if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) 
-		return(0.0);
+		return 0.0;
     
                 /* Only atoms with 3,4 neighbors have chirality */
                 
@@ -293,7 +293,7 @@ VECTOR	*vPA = NULL, *vPB = NULL, *vPC = NULL, *vPD = NULL;
 						vPD, bKnowD );
 	}
 
-	return(dChi);
+	return dChi;
 }
 
 
@@ -318,7 +318,7 @@ double		dOrient;
 bool		bNewNull, bOrigNull, bFound;
 int		i, j;
 
-    if ( iDoubleCompare(dChirality,0.0)==0 ) return(0.0);
+    if ( iDoubleCompare(dChirality,0.0)==0 ) return 0.0;
 
     ChiralityOrderNeighbors( aCenter, &aaOrig[0], &aaOrig[1], 
 				&aaOrig[2], &aaOrig[3] );
@@ -352,7 +352,7 @@ int		i, j;
 CONT:
     zChiralityTransformOrientation( dChirality, aaOrig, &dOrient, aaNew );
 
-    return(dOrient);
+    return dOrient;
 }
 
 
@@ -376,7 +376,7 @@ double		dChirality;
 bool		bNewNull, bOrigNull, bFound;
 int		i, j;
 
-    if ( iDoubleCompare(dOrient,0.0) == 0 ) return(0.0);
+    if ( iDoubleCompare(dOrient,0.0) == 0 ) return 0.0;
 
     aaOrig[0] = aAtomA;
     aaOrig[1] = aAtomB;
@@ -409,7 +409,7 @@ int		i, j;
 CONT:
     zChiralityTransformOrientation( dOrient, aaOrig, &dChirality, aaNew );
 
-    return(dChirality);
+    return dChirality;
 }
 
 

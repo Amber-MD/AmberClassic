@@ -95,7 +95,7 @@ OSTRING osNew;
     osNew = (OSTRING)MALLOC(sizeof(OSTRINGt) );
     osNew->iMaxLen = 0;
     osNew->sString = NULL;
-    return(osNew);
+    return osNew;
 }
 
 
@@ -257,7 +257,7 @@ OSTRING osNew;
 
     osNew = (OSTRING)oCreate(OSTRINGid);
     OStringDefine( osNew, sOString(os) );
-    return(osNew);
+    return osNew;
 }
 
 

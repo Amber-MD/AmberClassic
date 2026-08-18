@@ -152,13 +152,13 @@ EATOMt	*eaPAtom;
 
     iMax = iVarArrayElementCount(mMinimizer->vaAtoms);
     if ( !iMax )
-	return(NOTFOUND);
+	return NOTFOUND;
     eaPAtom = PVAI( mMinimizer->vaAtoms, EATOMt, 0 );
     for ( i=0; i<iMax; i++, eaPAtom++ ) {
         if ( aAtom == eaPAtom->aAtom ) 
-		return(i);
+		return i;
     }
-    return(NOTFOUND);
+    return NOTFOUND;
 }
 
 
@@ -195,7 +195,7 @@ VECTOR          vPos;
         
     	}
     }
-    return(nvPosition);
+    return nvPosition;
 }
 
 
@@ -264,7 +264,7 @@ double          e, Kb, R0;
 
     iBonds = iVarArrayElementCount(mMinimizer->vaBonds);
     if ( !iBonds )
-	return(e);
+	return e;
 
     ebPBond = PVAI(mMinimizer->vaBonds, EBONDt, 0);
     for ( i=0; i<iBonds; i++, ebPBond++ ) {
@@ -362,7 +362,7 @@ double          e, Kb, R0;
     }
 
                 /* return the minimizer */
-    return(e);
+    return e;
 }
 
 
@@ -399,7 +399,7 @@ double          e;
 
     iAngles = iVarArrayElementCount(mMinimizer->vaAngles);
     if ( !iAngles )
-	return(e);
+	return e;
 
     eaPAngle = PVAI(mMinimizer->vaAngles, EANGLEt, 0);
     for ( i=0; i<iAngles; i++, eaPAngle++ ) {
@@ -547,7 +547,7 @@ double          e;
         }
     }
                 /* return the minimizer */
-    return(e);
+    return e;
 }
 
 
@@ -593,7 +593,7 @@ double          dx1,dy1,dz1, dx2,dy2,dz2, dx3,dy3,dz3, dx4,dy4,dz4;
 
     iTorsions = iVarArrayElementCount(mMinimizer->vaTorsions);
     if ( !iTorsions )
-	return(e);
+	return e;
 
                 /* Loop over all torsion interactions */
 
@@ -851,7 +851,7 @@ ZERODERIV:
         }
     }
                 /* return the minimizer */
-    return(e);
+    return e;
 }
 
 
@@ -883,7 +883,7 @@ MESSAGE("dAngle   = %lf\n", dAngle );
 MESSAGE("dTorsion = %lf\n", dTorsion );
 
     dEnergy = dBond + dAngle + dTorsion;
-    return(dEnergy);
+    return dEnergy;
 }
 
     
@@ -934,7 +934,7 @@ double          dStart;
 
 	/* If the derivative is zero then just return */
 	
-    if ( fabs(dD0) < VERYSMALL ) return( 0.0 );
+    if ( fabs(dD0) < VERYSMALL ) return  0.0 ;
     
     while (1) {
 
@@ -1108,7 +1108,7 @@ MESSAGE("Continuing!\n" );
 DONE:
     *dPF0 = dFcur;
     *dPD0 = dDcur;
-    return(dAcur);
+    return dAcur;
 
 #if 0
     *dPF0 = dFmin;
@@ -1125,7 +1125,7 @@ DONE:
 MESSAGE("^^^^^^ Returning dA= %lf   dF= %lf   dD= %lf\n",
                 dAmin, dFmin, dDmin );
 
-    return(dAmin);
+    return dAmin;
 #endif
 }
 
@@ -1416,7 +1416,7 @@ MINIMIZER       eNew;
     
     eNew->dMinRmsGradientSquared = MINRMSSQUARED;
 
-    return(eNew);
+    return eNew;
 }
 
 
@@ -1496,11 +1496,11 @@ int             iAtom;
                 /* Look up the indices of the atoms in the MINIMIZER object */
 
     iAtom = iFindAtom( mMinimizer, aAtom1 );
-    if ( iAtom == NOTFOUND ) return(false);
+    if ( iAtom == NOTFOUND ) return false;
     ebBond.iAtom1 = iAtom;
 
     iAtom = iFindAtom( mMinimizer, aAtom2 );
-    if ( iAtom == NOTFOUND ) return(false);
+    if ( iAtom == NOTFOUND ) return false;
     ebBond.iAtom2 = iAtom;
 
     ebBond.dKb = dKb;
@@ -1513,7 +1513,7 @@ int             iAtom;
         /* Add the bond */
     VarArrayAdd( (mMinimizer->vaBonds), (GENP)&ebBond );
     
-    return(true);
+    return true;
 }
 
  
@@ -1539,15 +1539,15 @@ int             iAtom;
 
     iAtom = iFindAtom( mMinimizer, aAtom1 );
     if ( iAtom == NOTFOUND ) 
-	return(false);
+	return false;
     eaAngle.iAtom1 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom2 );
     if ( iAtom == NOTFOUND ) 
-	return(false);
+	return false;
     eaAngle.iAtom2 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom3 );
     if ( iAtom == NOTFOUND ) 
-	return(false);
+	return false;
     eaAngle.iAtom3 = iAtom;
 
     eaAngle.dKt = dKt;
@@ -1555,12 +1555,12 @@ int             iAtom;
     
     MESSAGE("Adding angle to MINIMIZER: %s - %s - %s Kt=%lf  T0=%lf\n",
                 sContainerName(aAtom1), sContainerName(aAtom2),
-                sContainerName(aAtom3), dKt, dT0/DEGTORAD );
+                sContainerName(aAtom3), dKt, dT0*RADTODEG );
     
         /* Add the angle */
     VarArrayAdd( (mMinimizer->vaAngles), (GENP)&eaAngle );
 
-    return(true);
+    return true;
 }
 
  
@@ -1586,16 +1586,16 @@ int             iAtom;
                 /* Look up the indices of the atoms in the MINIMIZER object */
 
     iAtom = iFindAtom( mMinimizer, aAtom1 );
-    if ( iAtom == NOTFOUND ) return(false);
+    if ( iAtom == NOTFOUND ) return false;
     etTorsion.iAtom1 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom2 );
-    if ( iAtom == NOTFOUND ) return(false);
+    if ( iAtom == NOTFOUND ) return false;
     etTorsion.iAtom2 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom3 );
-    if ( iAtom == NOTFOUND ) return(false);
+    if ( iAtom == NOTFOUND ) return false;
     etTorsion.iAtom3 = iAtom;
     iAtom = iFindAtom( mMinimizer, aAtom4 );
-    if ( iAtom == NOTFOUND ) return(false);
+    if ( iAtom == NOTFOUND ) return false;
     etTorsion.iAtom4 = iAtom;
 
     etTorsion.dKp = dKp;
@@ -1616,7 +1616,7 @@ int             iAtom;
         /* Add the torsion */
     VarArrayAdd( (mMinimizer->vaTorsions), (GENP)&etTorsion );
 
-    return(true);
+    return true;
 }
 
 

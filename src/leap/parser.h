@@ -60,21 +60,21 @@
  *	to the graphics system.
  *
  *	The result codes are:
- *		CNONE	=	No command.
- *		CQUIT	=	Quit LEaP.
- *		CVIEW	=	Display the UNIT whose variable name
+ *		CMD_NONE	=	No command.
+ *		CMD_QUIT	=	Quit LEaP.
+ *		CMD_VIEW	=	Display the UNIT whose variable name
  *				is passed in the sVariable part of
- *				RESULTt on the graphics display.
- *		CRESETVIEW =	Reset the viewing matrix for the
+ *				RESULTt on the graphics display. --- UNUSED!
+ *		CMD_RESETVIEW =	Reset the viewing matrix for the
  *				current UNIT.
  *
  */		
 
-#define	CNONE		0
-#define	CQUIT		1
-#define	CVIEW		2
-#define	CEDIT		3
-#define CVERBOSITY      4
+#define	CMD_NONE		0
+#define	CMD_QUIT		1
+#define	CMD_VIEW		2
+#define	CMD_EDIT		3
+#define CMD_VERBOSITY		4
 
 typedef	struct	{
 	int	iCommand;

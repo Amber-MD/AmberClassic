@@ -116,7 +116,7 @@ int iVarArrayElementSize(VARARRAY header)
     if (header == NULL) {
         DFATAL(" iVarArrayElementSize: VARARRAY is NULL");
     }
-    return (header->size);
+    return header->size;
 }
 
 /*------------------------------------------------------
@@ -127,8 +127,8 @@ int iVarArrayElementSize(VARARRAY header)
 int iVarArrayElementCount(VARARRAY header)
 {
     if (header == NULL)
-        return (0);
-    return (header->count);
+        return 0;
+    return header->count;
 }
 
 /*-----------------------------------------------------
@@ -181,7 +181,7 @@ VARARRAY vaVarArrayCreate(int size)
     VARARRAY_LOG("Created VARARRAY: element_size=%d, initial_slots=%d, initial_bytes=%zu",
                  size, PORTION, alloc_size);
 
-    return (new);
+    return new;
 }
 
 /*-----------------------------------------------------
@@ -309,7 +309,7 @@ VARARRAY vaVarArrayCopy(VARARRAY header)
     VARARRAY_LOG("Copied VARARRAY: %d elements, %zu bytes",
                  new->count, alloc_size);
 
-    return (new);
+    return new;
 }
 
 /*-----------------------------------------------------
@@ -359,7 +359,7 @@ VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
     VARARRAY_LOG("Merged 2 VARRAYs: %d + %d = %d elements, %zu bytes",
                  header1->count, header2->count, total_count, alloc_size);
 
-    return (new);
+    return new;
 }
 
 void VarArrayInsertBeforeMore(VARARRAY header, int pos, int num)

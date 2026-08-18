@@ -77,7 +77,7 @@ bool		bOk;
 	VP0("There are no PARMSETs loaded!\n" );
     }
 #endif
-    return(bOk);
+    return bOk;
 }
 
 
@@ -106,7 +106,7 @@ PARMLIB     plTemp;
     plTemp = (PARMLIB)MALLOC(sizeof(PARMLIBt) );
 
     plTemp->lParmSets = (LIST)oCreate(LISTid);
-    return(plTemp);
+    return plTemp;
 }
 
 
@@ -182,11 +182,11 @@ bool
 bParmLibNextParmSet( PARMLIB plLib, PARMSET *psPSet )
 {
     if ( !zbParmLibOk(plLib) ) 
-	return(false);
+	return false;
     *psPSet = (PARMSET)oListNext(&(plLib->llParmSetLoop));
     if ( *psPSet == NULL ) 
-	return(false);
-    return(true);
+	return false;
+    return true;
 }
 
 

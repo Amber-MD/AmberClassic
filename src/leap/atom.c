@@ -157,7 +157,7 @@ ATOM    a;
     if ( GfAtomClassGraphicsCreator != NULL )
         GfAtomClassGraphicsCreator(a);
 
-    return(a);
+    return a;
 }
 
 
@@ -330,9 +330,9 @@ bAtomCoordinationSaturated( ATOM aAtom )
         
         if ( bAtomFlagsSet( aAtom, ATOMPERTURB ) ) {
                 if ( iAtomCoordination( aAtom ) >= MAXBONDS ) {
-                        return(true);
+                        return true;
                 } else {
-                        return(false);
+                        return false;
                 }
         }
 
@@ -345,24 +345,24 @@ bAtomCoordinationSaturated( ATOM aAtom )
                 if ( iAtomCoordination( aAtom ) ) {
                         if ( !strncmp( aAtom->sType, "HW", ATOMTYPELEN)
                                         && iAtomCoordination( aAtom ) == 1 )
-                                return(false);
-                        return(true);
+                                return false;
+                        return true;
                 }
-                return(false);
+                return false;
                 break;
             case OXYGEN:
                 if ( iAtomCoordination( aAtom ) >= 4)
-                        return(true);
-                return(false);
+                        return true;
+                return false;
                 break;
             default:
                 if ( iAtomCoordination( aAtom ) >= MAXBONDS )
-                        return(true);
-                return(false);
+                        return true;
+                return false;
                 break;
         }
 
-        return(false); /* for lint */
+        return false; /* for lint */
 }
 
 bool
@@ -400,9 +400,9 @@ STRING  sTemp;
     }
     if ( problem ) {
         VPNOTE( "      -- setting atoms pert=true overrides default limits\n" );
-        return( true );
+        return  true ;
     }
-    return( false );
+    return  false ;
 }
 
 /*
@@ -514,7 +514,7 @@ int     ierr = 0;
         ierr = 1;
     }
     if ( ierr )
-        return(false);
+        return false;
         
     /*
      *  make the bond
@@ -528,7 +528,7 @@ int     ierr = 0;
     AtomSetBondOrder( aAtom2, iAtomCoordination(aAtom2), BONDSINGLE );
     aAtom2->iCoordination++;
 
-    return(true);
+    return true;
 }
 
 
@@ -639,14 +639,14 @@ int             i;
     VERIFYOBJEKT( aAtom1, ATOMid );
     VERIFYOBJEKT( aAtom2, ATOMid );
     
-    if ( iAtomCoordination(aAtom1) <= 0 ) return(false);
-    if ( iAtomCoordination(aAtom2) <= 0 ) return(false);
+    if ( iAtomCoordination(aAtom1) <= 0 ) return false;
+    if ( iAtomCoordination(aAtom2) <= 0 ) return false;
     
     for ( i=0; i<iAtomCoordination(aAtom1); i++ )
         if ( aAtom1->aaBonds[i] == aAtom2 ) break;
-    if ( i == iAtomCoordination(aAtom1) ) return(false);
+    if ( i == iAtomCoordination(aAtom1) ) return false;
     
-    return(true);
+    return true;
 }
 
 
@@ -668,7 +668,7 @@ int             i;
         if ( aAtomBondedNeighbor( aAtom, i ) == aNeighbor )
                 return iAtomBondOrder( aAtom, i );
     }
-    return(BONDNONE);
+    return BONDNONE;
 }
 
 
@@ -720,7 +720,7 @@ int             i;
         if ( aAtomBondedNeighbor( aAtom, i ) == aNeighbor )
                 return(fAtomBondFlags( aAtom, i ));
     }
-    return(BONDNONE);
+    return BONDNONE;
 }
 
 
@@ -747,7 +747,7 @@ ATOM    aNewAtom;
     if ( GfAtomClassGraphicsCreator != NULL ) {
         GfAtomClassGraphicsCreator(aNewAtom);
     }
-    return(aNewAtom);   
+    return aNewAtom;   
 }
 
 
@@ -999,6 +999,8 @@ STRING          sTemp;
     if ( strcasecmp( sAttr, "element" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetElement( aAtom, NOELEMENT );
+        } else if ( iObjectType(oAttr) == ODOUBLEid ) {
+            AtomSetElement( aAtom, dODouble(oAttr));
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) 
             return;
         iElement = iElementNumber(sOString(oAttr));
@@ -1150,7 +1152,7 @@ PARMSET         psSet;
                         &dMass, &dPolar, &dEpsilon, &dRStar, &dEpsilon14, &dRStar14,
 			&dScreenF,
                         &iElement, &iH, sDesc );
-            return(iH);
+            return iH;
         }
     }
 
@@ -1189,7 +1191,7 @@ PARMSET         psSet;
                 /* Otherwise the atom is SP3 */
     else                        iH = HSP3;
 
-    return(iH);
+    return iH;
 }
 
 
@@ -1210,10 +1212,10 @@ int             i, iNum, iOrder;
     for ( i=0; i<iNum; i++ ) {
         if ( strcmp( SoaOrders[i].sName, sName ) == 0 ) {
             iOrder = SoaOrders[i].iOrder;
-            return(iOrder);
+            return iOrder;
         }
     }
-    return(BONDNONE);
+    return BONDNONE;
 }
 
 /*
@@ -1250,9 +1252,9 @@ double  dR1, dR2, dDist, dX, dY, dZ;
          *  check actual distance
          */
         if ( dDist * dDist > dX * dX + dY * dY + dZ * dZ )
-            return( true );
+            return  true ;
     }
-    return( false );
+    return  false ;
 }
 
 /*
@@ -1294,7 +1296,7 @@ double  dScreenF;
     PARMLIB_LOOP( GplDefaultParmLib, psTemp, 
                 ( iTemp = iParmSetFindAtom( psTemp, sType)));
     if( iTemp == PARM_NOT_FOUND) {
-        return( -1.0 );
+        return  -1.0 ;
     }
     ParmSetAtom( psTemp, iTemp, sType, &dMass, &dPolar, &dEpsilon, &dR, 
                         &dEpsilon14, &dR14, &dScreenF, &iElement, &iHybrid,
@@ -1303,33 +1305,29 @@ double  dScreenF;
     VarArrayAdd( GvaVDWTypes, (GENP)sType );
     VarArrayAdd( GvaVDWValues, (GENP)&dR );
 
-    return( dR );
+    return  dR ;
 }
 
 
 
-int
-iAtomSetTmpRadius( ATOM aAtom )
+bool
+bAtomSetTmpRadius( ATOM aAtom )
 {
 PARMSET psTemp;
-int     iTag, iElement, iHybrid;
-double  dMass, dPolar, dE, dR, dE14, dR14;
-double  dScreenF;
-STRING  sType, sDesc;
-int     iDefaultedRadius = 0;
+int     iTag;
+double  dR;
+bool    bDefaultedRadius = false;
 
         iTag = PARM_NOT_FOUND;
         PARMLIB_DEFAULT_LOOP( psTemp,
                 ( iTag = iParmSetFindAtom( psTemp, sAtomType(aAtom) ) ));
         if ( iTag != PARM_NOT_FOUND ) {
-            ParmSetAtom( psTemp, iTag, sType,
-                   &dMass, &dPolar, &dE, &dR, &dE14, &dR14, 
-		   &dScreenF,
-                                   &iElement, &iHybrid, sDesc );
+            ParmSetAtom( psTemp, iTag, NULL, NULL, NULL, NULL, &dR,
+                   NULL, NULL, NULL, NULL, NULL, NULL);
         } else {
-                iDefaultedRadius = 1;
+                bDefaultedRadius = true;
                 dR = ATOM_DEFAULT_RADIUS;
         }
         AtomSetTempDouble( aAtom, dR );
-        return(iDefaultedRadius);
+        return bDefaultedRadius;
 }

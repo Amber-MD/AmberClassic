@@ -191,9 +191,9 @@ int             i;
 
     for (i=0; GeaElements[i].iNumber != NOELEMENT; i++)
         if ( strcmp( GeaElements[i].sName, sName ) == 0 ) 
-            return(GeaElements[i].iNumber);
+            return GeaElements[i].iNumber;
 
-    return(NOELEMENT);
+    return NOELEMENT;
 }
 
 
@@ -213,13 +213,13 @@ int            i;
     if (sName[0]==' ') {
         for (i=0; GeaElements[i].iNumber != NOELEMENT; i++) {
             if ( GeaElements[i].sName[1] == 0 && GeaElements[i].sName[0] == sName[1])
-                return(GeaElements[i].iNumber);
+                return GeaElements[i].iNumber;
         }
     } else {
         for (i=0; GeaElements[i].iNumber != NOELEMENT; i++) {
             if ( GeaElements[i].sName[0] == sName[0] &&
                  GeaElements[i].sName[1] == (sName[0] | 0x20)) // force 2nd char to lower case
-                return(GeaElements[i].iNumber);
+                return GeaElements[i].iNumber;
         }
     }
     return 0;
@@ -248,7 +248,7 @@ int             i;
         strcpy( sName, GeaElements[i].sName );
         return sName;
     }
-    return(GeaElements[i].sName);
+    return GeaElements[i].sName;
 }
 
 
@@ -288,7 +288,7 @@ STRING		sTemp;
 	    sTemp[1] = cUpper(sTemp[1]);
             if ( strncmp( sTemp, sName, 2 ) == 0 ||
 	         strncmp( GeaElements[i].sName, sName, 2 ) == 0 ) 
-	        return(GeaElements[i].iNumber);
+	        return GeaElements[i].iNumber;
 	}
     }
 		/* Compare the one-character element names */
@@ -296,11 +296,11 @@ STRING		sTemp;
 
 	if (strlen(GeaElements[i].sName) == 1 ) {
 	    if ( GeaElements[i].sName[0] == sName[0] )
-		return(GeaElements[i].iNumber);
+		return GeaElements[i].iNumber;
 	}
     }
 
-    return(NOELEMENT);
+    return NOELEMENT;
 }
 
 

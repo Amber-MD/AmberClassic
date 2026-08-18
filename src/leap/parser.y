@@ -137,9 +137,9 @@ STRING		GsProgramName;
 extern int	iMemDebug;
 
 static	STRING	*SbFirstSourceFiles = NULL;
-static  bool    SbLastTokenWasCommand = false;
 static	int	iFirstSource = 0;
 static	bool	SbUseStartup = true;
+static  char    *SsCurrentVariable;
 
 
 
@@ -244,7 +244,8 @@ input   :       line
 line    :       LENDOFCOMMAND
 	|	instruct
                         {
-                        bCommandFound = false;
+                            bCommandFound = false;
+                            SsCurrentVariable = NULL;
                         }
         |       error LENDOFCOMMAND
                         {
@@ -280,6 +281,7 @@ assign  :       LVARIABLE LASSIGN express
                             MESSAGE("Removing variable %s\n", $<sVal>1 );
                             VariableRemove( $<sVal>1 );
                         }
+        |       LVARIABLE { SsCurrentVariable = $<sVal>1; } error
         ;
 
 express :       rawexp
@@ -529,13 +531,13 @@ int
 yyerror( const char *sStr )
 {
     VP0("\n%s%*s%.*s",GsInputLine,GiInputStartPos-1,"",
-              GiInputPos-GiInputStartPos+1,
+              GiInputPos-GiInputStartPos,
               "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...");
-    VPFATALEXIT("\nError from the parser: \n       %s.\n"
-            "       Check for typos, misspellings, etc.\n"
-            "       Hint: previous token was%s a command\n"
-            "       Try help on the command name and desc on the command arguments.\n",
-            sStr, SbLastTokenWasCommand? "":" not" );
+    VP0("\nError from the parser: %s.", sStr);
+    if (SsCurrentVariable)
+        VP0("\n\t('%.128s' is not a command.)",SsCurrentVariable);
+    VPFATALEXIT("\tCheck for typos, misspellings, etc.\n"
+                "\tTry help on the command name and desc on the command arguments.\n");
     return 1;
 }
 
@@ -879,7 +881,6 @@ bool            bGotExp, bGotDot;
 char            c;
 STRING		sPossibleCmd;
 
-    SbLastTokenWasCommand = false;
     /*
      * Skip whitespace: blanks, tabs, end of lines, carriage returns, and commas.
      */
@@ -988,23 +989,16 @@ STRING		sPossibleCmd;
 		aAssoc = (ASSOC)oCreate(ASSOCid);
                 int iSize = iCollectionSize(lAtoms);
                 VP2("AtomMask selected %d atoms\n", iSize );
-                //{
-                //    OBJEKT oObject;
-                //    LISTLOOP llAtoms = llListLoop(lAtoms);
-                //    while ( (oObject = oListNext(&llAtoms)) ) {
-                //        printf("Type = %c\n",iObjectType(oObject));
-                //    }
-                //}
                 if (bSelectResidues) {
-                    RESIDUE rRes = NULL;
+                    RESIDUE rCurrent = NULL;
                     OBJEKT oObject;
                     LIST lResidues = LIST_from(oCreate(LISTid));
                     LISTLOOP llAtoms = llListLoop(lAtoms);
                     while ( (oObject = oListNext(&llAtoms)) ) {
                         ATOM aAtom = ATOM_from(oObject);
                         RESIDUE rAtomRes = RESIDUE_from(cContainerWithin(aAtom));
-                        if (rAtomRes != rRes) {
-                            rRes = rAtomRes;
+                        if (rAtomRes != rCurrent) {
+                            rCurrent = rAtomRes;
                             ListAddToEnd(lResidues, OBJEKT_from(rAtomRes));
                         }
                     }
@@ -1021,7 +1015,7 @@ STRING		sPossibleCmd;
                 AssocSetName( aAssoc, "atomMask" );
                 AssocTakeObject( aAssoc, oResult );
 		yylval.aVal = aAssoc;
-		printf /*MESSAGE*/("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
+		MESSAGE("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
 		return(LASSOC);
 	    }
 	    /* not a UNIT: '(' really is just the single-char token */
@@ -1176,7 +1170,6 @@ notnum:
 		yylval.fCallback = cCommands[j].fCallback;
 		MESSAGE("Parsed a command: %s\n", sStr );
 		bCommandFound = true;
-                SbLastTokenWasCommand = true;
 		return(LCOMMAND);
 	    }
         }
@@ -1304,11 +1297,17 @@ char    *next;
 
 /* Returns TRUE if s is a non-empty string of digits */
 static bool
-zbResidNumeric(const char *s)
+zbResidNumeric(const char *s, char *cICode)
 {
     if (!*s) return false;
     for (const char *p = s; *p; p++)
-        if (!isdigit((unsigned char)*p)) return false;
+        if (!isdigit((unsigned char)*p)) {
+            if (cICode && p != s && !p[1] && *p >= 'A' && *p <= 'Z') {
+                *cICode = *p;
+                return true;
+            }
+            return false;
+        }
     return true;
 }
 
@@ -1323,12 +1322,13 @@ zbResidNumeric(const char *s)
  *   A numeric-looking OSTRINGid is NOT converted to CTOK_INT.
  *
  * For CTOK_CHAINRES: sOut receives chain (may be ""), *piValue receives resid.
+ *                                                 -> iCode returned in *cICode
  * For CTOK_STRING:   sOut receives the name.
  * For CTOK_INT:      *piValue receives the index.
  * Emits VPWARN and returns CTOK_ERROR on any problem.
  */
 static eContTokenType
-eResolveToken(const char *cPPos, char *sOut, int *piValue)
+eResolveToken(const char *cPPos, char *sOut, int *piValue, char *cICode)
 {
 OBJEKT      oVar;
 const char  *sVal;
@@ -1336,6 +1336,7 @@ char        sBuf[MAXSTRINGLENGTH];
 char        *cPColon;
 bool        bFromVar = false;
 
+    *cICode = 0;
     /* --- expand leading '$' if present --- */
     if (*cPPos == '$') {
         cPPos++;
@@ -1379,7 +1380,7 @@ bool        bFromVar = false;
                 *piValue = (int)dODouble(oVar);
             } else if (iObjectType(oVar) == OSTRINGid) {
                 const char *sR = sOString(oVar);
-                if (!zbResidNumeric(sR)) {
+                if (!zbResidNumeric(sR,cICode)) {
                     VPWARN("Resid variable %s value '%s' is not numeric\n", sResid, sR);
                     return CTOK_ERROR;
                 }
@@ -1389,7 +1390,7 @@ bool        bFromVar = false;
                 return CTOK_ERROR;
             }
         } else {
-            if (!zbResidNumeric(sResid)) {
+            if (!zbResidNumeric(sResid,cICode)) {
                 VPWARN("Resid '%s' is not numeric\n", sResid);
                 return CTOK_ERROR;
             }
@@ -1401,7 +1402,7 @@ bool        bFromVar = false;
     /* --- no colon ---
      * vars: OSTRINGid is always a name, even if digits only
      * literals: digit-only → int, otherwise → string             */
-    if (!bFromVar && zbResidNumeric(sVal)) {
+    if (!bFromVar && zbResidNumeric(sVal,NULL)) {
         *piValue = atoi(sVal);
         return CTOK_INT;
     }
@@ -1418,7 +1419,7 @@ int             iType, iValue;
 OBJEKT          oObj;
 STRING          sLine;
 STRING          sOut;
-char            cSep, cSepNext;
+char            cSep, cSepNext, cICode;
 char            *cPPos, *cPNext;
 LOOP            lRes;
 RESIDUE         rRes;
@@ -1469,7 +1470,7 @@ eContTokenType  eTok;
 
         switch (cSep) {
         case '.':
-            eTok = eResolveToken(cPPos, sOut, &iValue);
+            eTok = eResolveToken(cPPos, sOut, &iValue, &cICode);
             switch (eTok) {
             case CTOK_ERROR:
                 return NULL;
@@ -1482,7 +1483,8 @@ eContTokenType  eTok;
                 lRes = lLoop(oObj, RESIDUES);
                 while ((rRes = (RESIDUE)oNext(&lRes))) {
                     if (iResiduePdbSequence(rRes) == iValue &&
-                            !strcmp(sOut, rRes->sChainId)) {
+                            !strcmp(sOut, rRes->sChainId) &&
+                            rRes->cICode == cICode) {
                         cCont = (CONTAINER)rRes;
                         break;
                     }
@@ -1549,7 +1551,7 @@ eContTokenType  eTok;
                 VPWARN("Selection delimiter %% is only valid within UNIT\n");
                 return NULL;
             }
-            eTok = eResolveToken(cPPos, sOut, &iValue);
+            eTok = eResolveToken(cPPos, sOut, &iValue, &cICode);
             if (eTok == CTOK_ERROR) return NULL;
             if (eTok != CTOK_INT) {
                 VPWARN("Resid selection requires an integer\n");
@@ -1587,7 +1589,6 @@ eContTokenType  eTok;
 static OBJEKT
 zoGetObject(char *sName)
 {
-    printf("get object %s\n",sName);
     OBJEKT oObj;
     OSTRING osString;
 
@@ -1678,12 +1679,12 @@ extern	char	*optarg;
     while ( (c = getopt( argc, argv, "hsI:f:" )) != (char)(EOF) ) {
 	switch (c) {
 	    case 'h':
-		printf( "Usage: %s [options]\n", argv[0] );
-		printf( "Options:\n" );
-		printf( " -h         Generate this message.\n" );
-		printf( " -s         Ignore %s startup file.\n", LEAPRC );
-		printf( " -I {dir}   Add {dir} to search path.\n" );
-		printf( " -f {file}  Source {file}.\n" );
+		printf( "Usage: %s [options]\n"
+		        "Options:\n"
+		        " -h         Generate this message.\n"
+		        " -s         Ignore %s startup file.\n"
+		        " -I {dir}   Add {dir} to search path.\n"
+		        " -f {file}  Source {file}.\n", argv[0], LEAPRC );
 		exit(0);
 	    case 's':
 		printf( "-s: Ignoring all %s startup files.\n", LEAPRC );
@@ -1697,13 +1698,11 @@ extern	char	*optarg;
 		printf( "-f: Source %s.\n", optarg );
 		if ( iFirstSource == 0 ) {
 			SbFirstSourceFiles = (STRING *)MALLOC(sizeof(STRING));
-			iFirstSource = 1;
 		} else {
-			iFirstSource++;
 			SbFirstSourceFiles = (STRING *)REALLOC(SbFirstSourceFiles,
 					iFirstSource * sizeof(STRING));
 		}
-		strcpy( SbFirstSourceFiles[iFirstSource-1], optarg );
+		strcpy( SbFirstSourceFiles[iFirstSource++], optarg );
 		break;
 	}
     }
@@ -1747,8 +1746,8 @@ int	iFile;
     GplAllParameters = plParmLibCreate();
 
     VariablesInit();
-    GrMainResult.iCommand = CNONE;
-    rPResult->iCommand = CNONE;
+    GrMainResult.iCommand = CMD_NONE;
+    rPResult->iCommand = CMD_NONE;
     
                 /* Parse the LEAPRC file if bUseStartup is TRUE */
 
@@ -1765,7 +1764,7 @@ int	iFile;
 	    GiClipPrompts = 1;
 	    while ( fINPUTFILE() != NULL ) {
 	        yyparse();
-		if ( GrMainResult.iCommand == CQUIT ) {
+		if ( GrMainResult.iCommand == CMD_QUIT ) {
 	    	    if ( fINPUTFILE() != NULL )
 	    	    	fclose( fINPUTFILE() );
 	    	    INPUTPOPFILE();
@@ -1789,7 +1788,7 @@ int	iFile;
 	    GiClipPrompts = 1;
 	    while ( fINPUTFILE() != NULL ) {
 		yyparse();
-		if ( GrMainResult.iCommand == CQUIT ) {
+		if ( GrMainResult.iCommand == CMD_QUIT ) {
 	    	    if ( fINPUTFILE() != NULL )
 	    	    	fclose( fINPUTFILE() );
 	    	    INPUTPOPFILE();
@@ -1827,7 +1826,7 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
     GbCommand = bBlock;
     BlockResetRead( GbCommand );
 
-    GrMainResult.iCommand = CNONE;
+    GrMainResult.iCommand = CMD_NONE;
 
 		/* Parse the BLOCK */
 		/* Keep parsing as long as the 'execute' command */
@@ -1835,7 +1834,7 @@ ParseBlock( BLOCK bBlock, RESULTt *rPResult )
 
     do {
 	yyparse();
-	if ( GrMainResult.iCommand == CQUIT ) {
+	if ( GrMainResult.iCommand == CMD_QUIT ) {
 	    if ( fINPUTFILE() != NULL )
 	    	fclose( fINPUTFILE() );
 	    INPUTPOPFILE();

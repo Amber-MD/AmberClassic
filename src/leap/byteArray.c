@@ -88,7 +88,7 @@ BYTEARRAY       baPtr;
     iTotalSize = iSize + sizeof(BYTEARRAYHEADERt);
     baPtr = (BYTEARRAY)MALLOC(iTotalSize );
     baPtr->bahHeader.iDataSize = iSize;
-    return(baPtr);
+    return baPtr;
 }
 
 

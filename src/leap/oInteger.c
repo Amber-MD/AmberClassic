@@ -65,7 +65,7 @@ OINTEGER        oiNew;
 
     oiNew = (OINTEGER)MALLOC(sizeof(OINTEGERt) );
 
-    return(oiNew);
+    return oiNew;
 }
 
 
@@ -122,7 +122,7 @@ OINTEGER        oiNew;
 
     oiNew = (OINTEGER)oCreate(OINTEGERid);
     OIntegerSet( oiNew, iOInteger(oi) );
-    return(oiNew);
+    return oiNew;
 }
 
 

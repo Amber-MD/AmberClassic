@@ -81,7 +81,7 @@ typedef PARMSETt        *PARMSET;
  *  this one param type is moved here from parmSet.c
  *        to allow easy use in unitio.c
  */
-#define MAXTYPELEN      5
+#define MAXTYPELEN      32
 typedef char    typeStr[MAXTYPELEN];
 
 #define        MAXORDERLEN        5
@@ -172,13 +172,9 @@ extern int iParmSetAddNBEdit(PARMSET psLib, const typeStr sType1, const typeStr 
 
 extern int iParmSetAddCMAP(PARMSET psLib, CMAP cmap);
 extern int iParmSetFindCMAP (PARMSET psLib, const char **sResNames, const char **sAtomNames, int *iRelResIdx);
-extern int iParmSetTotalCMAPParms (PARMSET psLib);
 extern void ParmSetCMAP(PARMSET psLib, int i, CMAP cmapReturn, bool bCopy); 
 extern void VarArrayDestroyCMAP (VARARRAY *pva); 
 extern bool bParmSetCMAPHasPhi (PARMSET psLib, const char **sAtomNames, const char **resNames);
-
-extern void BoilTorsions_old(VARARRAY * vaPParms, int iParmOffset,
-             VARARRAY vaTorsions, int iTorsionOffset);
 
 extern int * BoilTorsions( VARARRAY *vaPParms, int iParmOffset);
 /*
@@ -270,6 +266,8 @@ extern bool        bParmSetCapableOfHBonding( PARMSET psParms, const typeStr sTy
                         iVarArrayElementCount( (psParmSet)->vaImpropers )
 #define iParmSetTotalHBondParms( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaHBonds )
+#define iParmSetTotalCMAPParms( psParmSet ) \
+                        iVarArrayElementCount( (psParmSet)->vaCMAPs )
 #define iParmSetTotalNBEdits( psParmSet ) \
                         iVarArrayElementCount( (psParmSet)->vaNBEdits )
 

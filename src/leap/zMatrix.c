@@ -238,7 +238,7 @@ VECTOR		vNew;
     VectorDef( &vNew, dBond*cos(dAngleA), 
                       dBond*sin(dAngleA)*cos(dX),
                       dBond*sin(dAngleA)*sin(dX) );
-    return(vNew);
+    return vNew;
 }
 #endif
 VECTOR
@@ -278,7 +278,7 @@ VECTOR		vNew;
     VectorDef( &vNew, dBond*dCosA,
                       dBond*dSinA*dCosX,
                       dBond*dSinA*dSinX );
-    return(vNew);
+    return vNew;
 }
 
 

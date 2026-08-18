@@ -106,7 +106,7 @@ LOOP		lInternals, lAtoms;
     lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
     BuildDestroyInternals(&lAtoms);
 
-    return(bFoundOne);
+    return bFoundOne;
 }
 
 
@@ -200,7 +200,7 @@ ATOM		aCur;
     while ( (aCur = (ATOM)oNext(&lSpan)) ) {
 	if ( aCur == aB ) break;
     }
-    if ( aCur == NULL ) return(false);
+    if ( aCur == NULL ) return false;
 
 		/* Select the chain back to aA */
 
@@ -208,7 +208,7 @@ ATOM		aCur;
 	if ( bOn ) AtomSetFlags( aCur, ATOMSELECTED );
 	else	AtomResetFlags( aCur, ATOMSELECTED );
     }
-    return(true);
+    return true;
 }
 
 

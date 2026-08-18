@@ -183,7 +183,7 @@ double		dHalfEdge = PdHalfEdges[iDepth-1];
 	PonChildren[7].vCorner = PonChildren[6].vCorner;
 	PonChildren[7].vCorner.dZ += dHalfEdge;		/*  0 + X + Y + Z  */
 
-	return( PonChildren );
+	return  PonChildren ;
 }
 
 static int
@@ -219,7 +219,7 @@ ATOM	*PaAtom;
 	else
 		outside[oct->depth]++;
 #endif
-	return(PonNode->iStatus);
+	return PonNode->iStatus;
 }
 
 /*
@@ -343,7 +343,7 @@ OCTNODEt	*PonChildren;
 			FREE( PaNewAtoms );
 			PonNode->PaAtomList = NULL;
 			PonNode->iStatus = OCT_EXCLUDED;
-			return(OCT_EXCLUDED);
+			return OCT_EXCLUDED;
 		} 
 
 		/*
@@ -393,7 +393,7 @@ OCTNODEt	*PonChildren;
 #endif
 			PonNode->iStatus = OCT_INCLUDED;
 			PonNode->iAtoms = iNewAtoms;
-			return(OCT_INCLUDED);
+			return OCT_INCLUDED;
 		} 
 		if ( !iPartialOut ) {
 			/*
@@ -410,7 +410,7 @@ OCTNODEt	*PonChildren;
 			PonNode->iStatus = OCT_EXCLUDED;
 			FREE( PaNewAtoms );
 			PonNode->PaAtomList = NULL;
-			return(OCT_EXCLUDED);
+			return OCT_EXCLUDED;
 		}
 	}
 	PonNode->iAtoms = iNewAtoms;
@@ -460,7 +460,7 @@ OCTNODEt	*PonChildren;
 		multex[oct->depth]++;
 #endif
 		DestroyOctant( PonNode, OCT_EXCLUDED );
-		return( OCT_EXCLUDED );
+		return  OCT_EXCLUDED ;
 	} 
 	if ( iIncluded == 8 ) {
 
@@ -483,7 +483,7 @@ OCTNODEt	*PonChildren;
 		FREE( PonChildren );
 		PonNode->PonChildren = NULL;
 		PonNode->iStatus = OCT_INCLUDED;
-		return(OCT_INCLUDED);
+		return OCT_INCLUDED;
 	}
 
 	/*
@@ -492,7 +492,7 @@ OCTNODEt	*PonChildren;
 	fVolume += iIncluded * dHalfEdge * dHalfEdge * dHalfEdge;
 	iTreeGridPoints += iIncluded * PiDensities[PonNode->iDepth+1]; 
 	PonNode->iStatus = OCT_PARTIAL;
-	return(OCT_PARTIAL);
+	return OCT_PARTIAL;
 }
 
 OCTREE
@@ -510,7 +510,7 @@ double		dMaxRadius, dCharge;
 double		dTx, dTy, dTz, dTmax, dTmp;
 
 	if ( !uUnit )
-		return(NULL);
+		return NULL;
 
 	/*
 	 *  Set globals.
@@ -540,17 +540,17 @@ double		dTx, dTy, dTz, dTmax, dTmp;
 
 	iDefaultedRadius = 0;
 	lRes = lLoop( (OBJEKT)uUnit, RESIDUES );
-		while ((rRes = (RESIDUE) oNext(&lRes))) {
-			if ( bIncludeSolvent  ||  
-			     cResidueType( rRes ) != RESTYPESOLVENT ) {
-    	    			lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
-    	    			while ((aAtom = (ATOM) oNext(&lAtoms))) {
-					VarArrayAdd( vaAtoms, (GENP)&aAtom );
-					iDefaultedRadius +=
-						iAtomSetTmpRadius( aAtom );
-				}
-	    		}
+	while ((rRes = (RESIDUE) oNext(&lRes))) {
+		if ( bIncludeSolvent  ||  
+				cResidueType( rRes ) != RESTYPESOLVENT ) {
+			lAtoms = lLoop( (OBJEKT)rRes, ATOMS );
+			while ((aAtom = (ATOM) oNext(&lAtoms))) {
+				VarArrayAdd( vaAtoms, (GENP)&aAtom );
+				if (bAtomSetTmpRadius( aAtom ))
+					iDefaultedRadius ++;
+			}
 		}
+	}
 
 	/*
 	 *  If no atoms, nothing to build.
@@ -566,13 +566,13 @@ MALLOC( PdHalfEdges, double *, (iMaxDepth+1) * sizeof(double) );
 octTree->PdHalfEdges = PdHalfEdges;
 MALLOC( PdHalfDiagonals, double *, (iMaxDepth+1) * sizeof(double) );
 octTree->PdHalfDiagonals = PdHalfDiagonals;
-return(octTree);
+return octTree;
 */
 
 	if ( !iAtoms ) {
 		VarArrayDestroy( &vaAtoms );
 		FREE( octTree );
-		return(NULL);
+		return NULL;
 	}
 	octTree->vaAtoms = vaAtoms;
 
@@ -746,7 +746,7 @@ return(octTree);
 	PaAtoms = PVAI( vaAtoms, ATOM, 0 );
 	for (i=0; i<iAtoms; i++, PaAtoms++)
 		AtomTempDoubleIncrement( *PaAtoms, -dAddExtent );
-	return(octTree);
+	return octTree;
 }
 
 /*************************************************************************
@@ -1177,7 +1177,7 @@ VECTOR		vCenter;
 	 *  If already excluded, quit. 
 	 */
 	if ( PonNode->iStatus == OCT_EXCLUDED )
-		return(OCT_EXCLUDED);
+		return OCT_EXCLUDED;
 
 	/*
 	 *  If resolution reached, check corner only.
@@ -1193,7 +1193,7 @@ VECTOR		vCenter;
 #endif
 			PonNode->iStatus = OCT_EXCLUDED;
 		}
-		return(PonNode->iStatus);
+		return PonNode->iStatus;
 	}
 
 	/*
@@ -1211,7 +1211,7 @@ VECTOR		vCenter;
 	 *  if box completely outside sphere, leave it alone.
 	 */
 	if ( d - dHalfDiagonal > dDeleteRadius )
-		return(OCT_INCLUDED);
+		return OCT_INCLUDED;
 
 	/*
 	 *  if box completely inside sphere, clean up its contents.
@@ -1237,7 +1237,7 @@ VECTOR		vCenter;
 		}
 #endif
 		DestroyOctant( PonNode, OCT_EXCLUDED );
-		return(OCT_EXCLUDED);
+		return OCT_EXCLUDED;
 	}
 
 	/*
@@ -1275,7 +1275,7 @@ VECTOR		vCenter;
 		 *  Whole box is within vdw of multiple atoms.
 		 */
 		DestroyOctant( PonNode, OCT_EXCLUDED );
-		return(OCT_EXCLUDED);
+		return OCT_EXCLUDED;
 	} 
 	/*
 	 * (don't fold into 1 node if iIncluded == 8 to avoid complications 
@@ -1283,7 +1283,7 @@ VECTOR		vCenter;
 	 *	OCT_INCLUDED, it is evaluated as an OCT_PARTIAL)
 	 */
 	PonNode->iStatus = OCT_PARTIAL;
-	return(OCT_PARTIAL);
+	return OCT_PARTIAL;
 }
 void
 OctTreeDeleteSphere( OCTREE octTree, VECTOR *PvPoint, double dRadius )

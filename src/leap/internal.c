@@ -99,7 +99,7 @@ INTERNAL        iNew;
     iNew->iType.niNormal.aAtom3 = NULL;
     iNew->iType.niNormal.aAtom4 = NULL;
     
-    return(iNew);
+    return iNew;
 }
 
 
@@ -251,7 +251,7 @@ INTERNAL        iInt;
     iInt->iType.niNormal.dValue = dValue;
   
     ContainerAdd( (CONTAINER)aAtom1, (OBJEKT)iInt );
-    return(iInt);
+    return iInt;
 }
 
 
@@ -280,7 +280,7 @@ INTERNAL        iInt;
     
     ContainerAdd( (CONTAINER)aAtom1, (OBJEKT)iInt );
     ContainerAdd( (CONTAINER)aAtom2, (OBJEKT)iInt );
-    return(iInt);
+    return iInt;
 }
 
 
@@ -310,7 +310,7 @@ INTERNAL        iInt;
     ContainerAdd( (CONTAINER)aAtom1, (OBJEKT)iInt );
     ContainerAdd( (CONTAINER)aAtom2, (OBJEKT)iInt );
     ContainerAdd( (CONTAINER)aAtom3, (OBJEKT)iInt );
-    return(iInt);
+    return iInt;
 }
 
 
@@ -349,7 +349,7 @@ INTERNAL        iInt;
     if ( aAtom4 != aAtom1 ) {
     	ContainerAdd( (CONTAINER)aAtom4, (OBJEKT)iInt );
     }
-    return(iInt);
+    return iInt;
 }
 
 
@@ -371,9 +371,9 @@ INTERNAL        iInt;
 
     lInternals = lLoop( (OBJEKT)aAtom1, INTERNALS );
     while ( ( iInt = (INTERNAL)oNext(&lInternals) ) != NULL ) {
-        if ( iInternalType(iInt) == INTERNALCHIRALITY ) return(iInt);
+        if ( iInternalType(iInt) == INTERNALCHIRALITY ) return iInt;
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -413,16 +413,16 @@ INTERNAL        iInt;
         if ( aAtom1 == aInternalAtom1(iInt) ) {
             if ( (aAtom2 == aInternalAtom2(iInt)) &&
                  (aAtom3 == aInternalAtom3(iInt)) &&
-                 (aAtom4 == aInternalAtom4(iInt)) ) return(iInt);
+                 (aAtom4 == aInternalAtom4(iInt)) ) return iInt;
         } else if ( aAtom1 == aInternalAtom4(iInt) ) {
             if ( (aAtom2 == aInternalAtom3(iInt)) &&
                  (aAtom3 == aInternalAtom2(iInt)) &&
-                 (aAtom4 == aInternalAtom1(iInt)) ) return(iInt);
+                 (aAtom4 == aInternalAtom1(iInt)) ) return iInt;
 	}	    
     }
     MESSAGE("Found nothing\n" );
 
-    return(NULL);
+    return NULL;
 }
 
 
@@ -448,12 +448,12 @@ INTERNAL        iInt;
         if ( iInternalType(iInt) != INTERNALANGLE ) continue;
         if ( aAtom2 == aInternalAtom2(iInt) ) {
             if ( (aAtom1 == aInternalAtom1(iInt)) &&
-                 (aAtom3 == aInternalAtom3(iInt)) ) return(iInt);
+                 (aAtom3 == aInternalAtom3(iInt)) ) return iInt;
             if ( (aAtom1 == aInternalAtom3(iInt)) &&
-                 (aAtom3 == aInternalAtom1(iInt)) ) return(iInt);
+                 (aAtom3 == aInternalAtom1(iInt)) ) return iInt;
         }
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -478,10 +478,10 @@ INTERNAL        iInt;
     lInternals = lLoop( (OBJEKT)aAtom1, INTERNALS );
     while ( ( iInt = (INTERNAL)oNext(&lInternals) ) != NULL ) {
         if ( iInternalType(iInt) != INTERNALBOND ) continue;
-        if ( aAtom2 == aInternalAtom2(iInt) ) return(iInt);
-        if ( aAtom2 == aInternalAtom1(iInt) ) return(iInt);
+        if ( aAtom2 == aInternalAtom2(iInt) ) return iInt;
+        if ( aAtom2 == aInternalAtom1(iInt) ) return iInt;
     }
-    return(NULL);
+    return NULL;
 }
 
 
@@ -566,7 +566,7 @@ bool		bFound;
     }
 #endif
 
-    return(bFound);
+    return bFound;
 }
 
 
@@ -630,7 +630,7 @@ INTERNAL        iNew;
         }
     }
     UNUSED(aAtom3);
-    if ( !bGotOne ) return(false);
+    if ( !bGotOne ) return false;
 
                 /* Loop over the internals of the first atom */
     lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
@@ -645,19 +645,19 @@ INTERNAL        iNew;
                     if ( bAtomFlagsSet( aInternalAtom3(iNew), 
                                         ATOMPOSITIONKNOWN ) ) {
                         *iPAngle2 = iNew;
-                        return(true);
+                        return true;
                     }
                 } else {
                     if ( bAtomFlagsSet( aInternalAtom1(iNew),
                                         ATOMPOSITIONKNOWN ) ) {
                         *iPAngle2 = iNew;
-                        return(true);
+                        return true;
                     }
                 }
             }
         }
     }
-    return(false);
+    return false;
 }
 
 
@@ -693,7 +693,7 @@ bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle,
              bAtomFlagsSet( aInternalAtom3(iInt), ATOMPOSITIONKNOWN ) ) {
              *iPAngle = iInt;
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
-             return(true);
+             return true;
         }
     }
     if ( aAtom == aInternalAtom3(iInt) ) {
@@ -701,10 +701,10 @@ bInternalGoodAngle( INTERNAL iInt, ATOM aAtom, INTERNAL *iPAngle,
              bAtomFlagsSet( aInternalAtom2(iInt), ATOMPOSITIONKNOWN )) {
              *iPAngle = iInt;
              *iPBond = iInternalFindBond( aAtom, aInternalAtom2(iInt) );
-             return(true);
+             return true;
         }
     }
-    return(false);
+    return false;
 }
 
 
@@ -735,16 +735,16 @@ bInternalGoodBond( INTERNAL iInt, ATOM aAtom, INTERNAL *iPBond )
     if ( aAtom == aInternalAtom1(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom2(iInt), ATOMPOSITIONKNOWN )) {
              *iPBond = iInt;
-             return(true);
+             return true;
         }
     }
     if ( aAtom == aInternalAtom2(iInt) ) {
         if ( bAtomFlagsSet( aInternalAtom1(iInt), ATOMPOSITIONKNOWN )) {
              *iPBond = iInt;
-             return(true);
+             return true;
         }
     }
-    return(false);
+    return false;
 }
 
 
@@ -783,7 +783,7 @@ INTERNAL	iInt;
 	    }
 	}
     }
-    return(iTorsions);
+    return iTorsions;
 }
 
 
@@ -805,7 +805,7 @@ INTERNAL	iInt;
     iInt = (INTERNAL)oCreate(INTERNALid);
     InternalSetType( iInt, INTERNALRING );
     iInt->iType.riRing.rAtoms = rRingCreate();
-    return(iInt);
+    return iInt;
 }
 
 
@@ -894,9 +894,9 @@ bInternalRingRemoveAtom( INTERNAL iInt, ATOM aAtom )
 	    DFATAL("The ATOM did not contain the INTERNAL" );
 	}
 	DEREF( iInt );  /* reset after bContainerRemove() */
-	return(true);
+	return true;
     }
-    return(false);
+    return false;
 }
 
 

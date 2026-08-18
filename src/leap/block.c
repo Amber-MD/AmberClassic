@@ -94,8 +94,8 @@ cBlockLastChar( BLOCK bBlock )
 {
 
     if ( bBlock->iTextNext <= 0 ) 
-	return('\0');
-    return(bBlock->cPText[bBlock->iTextNext-1]);
+	return '\0';
+    return bBlock->cPText[bBlock->iTextNext-1];
 }
 
 
@@ -171,7 +171,7 @@ BLOCK	bNew;
     bNew->iTextNext = 0;
     bNew->iReadPos = 0;
     bNew->iUnclosedLists = 0;
-    return(bNew);
+    return bNew;
 }
 
 
@@ -215,7 +215,7 @@ if ( bEndOfBlock ) {
 }
 #endif
 
-    return(bEndOfBlock);
+    return bEndOfBlock;
 }
 
 
@@ -233,13 +233,13 @@ bool
 bBlockRemoveChar( BLOCK bBlock )
 {
     if ( bBlock->iTextNext == 0 ) 
-	return(false);
+	return false;
     if ( cBlockLastChar(bBlock) == '{' ) 
 	bBlock->iUnclosedLists--;
     else if ( cBlockLastChar(bBlock) == '}' ) 
 	bBlock->iUnclosedLists++;
     bBlock->iTextNext--;
-    return(true);
+    return true;
 }
 
 

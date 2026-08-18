@@ -34,6 +34,12 @@
  *	Description:
  *		List is a doubly linked list of OBJEKTS.
  *
+ *      **NOTE**: The original design did not free object references
+ *              in ListDestroy() (I don't know why). This means that
+ *              DEREF(list) will cause memory leaks esp in parser
+ *              list arguments where a general object can be a list.
+ *              Set bFreeChildren=true for automatic content DEREF()
+ *
  *	Note:
  *	        ListAdd() inserts at the head node, reversing
  *		order. Use ListAddToEnd() to maintain insertion order.
@@ -107,7 +113,7 @@ lListCreate()
 LIST    lList;
 
         lList = (LIST)CALLOC(sizeof(LISTt) );
-        return(lList);
+        return lList;
 }
 
 
@@ -353,13 +359,13 @@ NODEP   nPNode;
 
                 /* If the list is empty then return */
 
-    if ( lList->nPFirstNode==NULL ) return(false);
+    if ( lList->nPFirstNode==NULL ) return false;
     if (bObjectInClass( oObject, CONTAINERid ) && CONTAINER_from(oObject)->nPListNode ) {
         nPNode = CONTAINER_from(oObject)->nPListNode;
     } else {
                 /* Search the list for the object */
         nPNode = searchList( lList->nPFirstNode, oObject);
-        if ( !nPNode ) return(false);
+        if ( !nPNode ) return false;
     }
 
                 /* Now remove the object from the list */
@@ -380,7 +386,7 @@ NODEP   nPNode;
                 /* DEREF the object */
     DEREF( oObject );
 
-    return(true);
+    return true;
 }
 
 
@@ -402,7 +408,7 @@ bool
 bListContains( LIST lList, OBJEKT oObject )
 {
                 /* If the list is empty then return */
-    if ( lList->nPFirstNode==NULL ) return(false);
+    if ( lList->nPFirstNode==NULL ) return false;
 
                 /* Search the list for the object */
     return searchList( lList->nPFirstNode, oObject ) != NULL;
@@ -424,7 +430,7 @@ llListLoop( LIST lList )
 {
     if ( lList == NULL )
 	DFATAL("llListLoop called with NULL list\n" );
-    return(lList->nPFirstNode);
+    return lList->nPFirstNode;
 }
 
 
@@ -444,10 +450,10 @@ oListNext( LISTLOOP *llPListLoop )
 NODEP   nPNode;
 
     if ( *llPListLoop == NULL ) 
-	return(NULL);
+	return NULL;
     nPNode = *llPListLoop;
     *llPListLoop = (*llPListLoop)->nPNextNode;
-    return(nPNode->PObject);
+    return nPNode->PObject;
 }
 
 

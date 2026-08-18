@@ -66,7 +66,7 @@ ODOUBLE         odNew;
 
     odNew = (ODOUBLE)MALLOC(sizeof(ODOUBLEt) );
 
-    return(odNew);
+    return odNew;
 }
 
 
@@ -122,6 +122,6 @@ ODOUBLE odNew;
 
     odNew = (ODOUBLE)oCreate(ODOUBLEid);
     ODoubleSet( odNew, dODouble(od) );
-    return(odNew);
+    return odNew;
 }
 

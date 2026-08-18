@@ -134,7 +134,7 @@ CONTAINER       c;
     c->iNextChildsSequence = 1;
                                         
     
-    return(c);
+    return c;
 }
 
 
@@ -317,7 +317,7 @@ bool            bResult;
     
         llList = llListLoop( (LIST)cContainer->lContents );
         while ( (cSub = (CONTAINER)oListNext(&llList)) != NULL ) {
-            if ( bContainerRemove( cSub, oObject ) ) return(true);
+            if ( bContainerRemove( cSub, oObject ) ) return true;
         }
     
         /* None of the sub-containers contained the object */
@@ -327,7 +327,7 @@ bool            bResult;
     }
 
     CDU(cContainer);
-    return(bResult);
+    return bResult;
 }
 
 
@@ -390,7 +390,7 @@ OBJEKT          oContents;
 
     cNew->dDisp = dDisplayerCreate((GENP)cNew);
  
-    return(cNew);
+    return cNew;
 }
 
 
@@ -458,7 +458,7 @@ LOOP    lContainers;
 OBJEKT  oObj;
 
     if ( iSeq > iContainerNextChildsSequence(cCont) ) {
-        return(NULL);
+        return NULL;
     }
     lContainers = lLoop( (OBJEKT)cCont, iContainerType );
     while ( (oObj = oNext(&lContainers) ) != NULL ) {
@@ -529,7 +529,7 @@ OBJEKT  aAtom;
                                 (double)(1.0/(double)iVectorCount) );
         }
     }
-    return(vSum);
+    return vSum;
 }
 
 
@@ -867,17 +867,18 @@ sContainerDescriptor( CONTAINER cCont, char *sDesc )
         if ( iVerbosity() < 4 ) strcpy( sDesc, "" );
         else sprintf(sDesc, "%c<%s>", iObjectType(cCont), sContainerName(cCont));
     } else {
-        if (iVerbosity() > 2 && iObjectType(cCont)==RESIDUEid)
-            sprintf( sDesc, "%c<%s | %s:%d | %d>", iObjectType(cCont), 
+        if (iVerbosity() > 1 && iObjectType(cCont)==RESIDUEid) {
+            char sICode[2] = { ((RESIDUE)cCont)->cICode, 0 };
+            sprintf( sDesc, "%c<%s | %s:%d%s | %d>", iObjectType(cCont), 
                     sContainerName(cCont),
-                    sResidueChainId(cCont),iResiduePdbSequence(cCont),
-                    iContainerSequence(cCont) );
-        else
+                    sResidueChainId(cCont), iResiduePdbSequence(cCont),
+                    sICode, iContainerSequence(cCont) );
+        } else
             sprintf( sDesc, "%c<%s %d>", iObjectType(cCont), 
                     sContainerName(cCont), 
                     iContainerSequence(cCont) );
     }
-    return(sDesc);
+    return sDesc;
 }
 
 
@@ -909,7 +910,7 @@ CONTAINER       cTemp;
 
     if ( cCont == NULL ) {
         strcpy( sFullDesc, "!NULL!" );
-        return(sFullDesc);
+        return sFullDesc;
     }
     cTemp = cCont;
     strcpy( sFullDesc, "" );
@@ -921,7 +922,7 @@ CONTAINER       cTemp;
         cTemp = cContainerWithin( cTemp );
     } while ( cTemp != NULL );
     sFullDesc[strlen(sFullDesc)-1] = '\0';
-    return(sFullDesc);
+    return sFullDesc;
 }
 
 
@@ -991,9 +992,9 @@ CONTAINER       cTemp;
     cTemp = cIn;
     while ( cTemp != NULL ) {
         cTemp = cContainerWithin( cTemp );
-        if ( cTemp == cOut ) return(true);
+        if ( cTemp == cOut ) return true;
     }
-    return(false);
+    return false;
 }
 
 
@@ -1373,11 +1374,11 @@ ATOM    aAtom1, aAtom2;
         lAtoms2 = lLoop( (OBJEKT)cCont2, ATOMS );
         while (( aAtom2 = (ATOM)oNext( &lAtoms2 ))) {
             if ( bAtomSpaceConflict( aAtom1, aAtom2 )) {
-                return( true );
+                return  true ;
             }
         }
     }
-    return(false);
+    return false;
 }
 
 

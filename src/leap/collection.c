@@ -89,7 +89,7 @@ COLLECTION      cCollect;
             break;
     }
     
-    return(cCollect);
+    return cCollect;
 }
 
 
@@ -162,7 +162,7 @@ GENP    PLoop;
             DFATAL("Attempting to loop over invalid collection id: %d",
                         iObjectType(cCollect) );
     }
-    return(PLoop);
+    return PLoop;
 }
 
 
@@ -187,7 +187,7 @@ OBJEKT  oObj;
             DFATAL("Unknown COLLECTION sub-class\n");
             break;
     }
-    return(oObj);
+    return oObj;
 }
 
 
@@ -220,5 +220,5 @@ COLLECTION      cNew;
             break;
     }
     
-    return(cNew);
+    return cNew;
 }

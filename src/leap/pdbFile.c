@@ -140,19 +140,19 @@ zcPPdbTerminationCode( int iCode )
 {
     switch ( iCode ) {
         case NOEND:
-            return("Nonterminal");
+            return "Nonterminal";
             break;
         case FIRSTEND:
-            return("Terminal/beginning");
+            return "Terminal/beginning";
             break;
         case LASTEND:
-            return("Terminal/last");
+            return "Terminal/last";
             break;
         default:
             DFATAL("Invalid termination type" );
             break;
     }
-    return(NULL);       /* for lint */
+    return NULL;       /* for lint */
 }
 
 
@@ -338,7 +338,7 @@ int             iInt;
 
     if ( iObjectType(lEntry) != LISTid ) {
         VPWARN("Map entry %d is not a list. Ignored.\n", iMap );
-        return(false);
+        return false;
     }
     aA = NULL;
     aB = NULL;
@@ -389,13 +389,13 @@ int             iInt;
         zPdbToNameMapKey( NOEND, sTempKey, sKey, NULL );
     }
 
-    return(true);
+    return true;
 
 BADTYPE:
     VPWARN("Residue Map entry %d must have the form %s. Ignored\n",
                 iMap,
                 "{ [0 or 1] string string }" );
-    return(false);
+    return false;
 }
 
 static bool
@@ -409,7 +409,7 @@ LISTLOOP        llEntry;
 
     if ( iObjectType(lEntry) != LISTid ) {
         VPWARN("Map entry %d is not a list. Ignored.\n", iMap );
-        return(false);
+        return false;
     }
     aA = NULL;
     aB = NULL;
@@ -447,12 +447,12 @@ LISTLOOP        llEntry;
 
     zPdbToNameMapKey( NOEND, sTempKey, sKey, sResName);
 
-    return(true);
+    return true;
 
 BADTYPE:
     VPWARN("Atom Map entry %d must have the form %s. Ignored\n",
                 iMap, "{ string string }" );
-    return(false);
+    return false;
 }
 
 
@@ -474,7 +474,7 @@ zcPPdbMapName( DICTIONARY SdNameMap, int iType, const char *sName, const RESIDUE
 char            *cPData;
 STRING          sKey;
 
-    if ( SdNameMap == NULL ) return(NULL);
+    if ( SdNameMap == NULL ) return NULL;
     if (rRes) {
         zPdbToNameMapKey( iType, sName, sKey, sContainerName(rRes));
         cPData = (char*)yPDictionaryFind( SdNameMap, sKey );
@@ -485,7 +485,7 @@ STRING          sKey;
     }
     zPdbToNameMapKey( iType, sName, sKey, NULL );
     cPData = (char*)yPDictionaryFind( SdNameMap, sKey );
-    return(cPData);
+    return cPData;
 }
 
 
@@ -643,7 +643,7 @@ RESIDUE         rRes;
         uUnit = (UNIT)oCopy((OBJEKT)uOrig);
     }
 
-    return(uUnit);
+    return uUnit;
 }
 
 
@@ -1072,15 +1072,15 @@ writeTER( RESIDUE rRes, int iRes )
         ATOM    aAtom = (ATOM) rRes->aaConnect[CONNECT1];
 
         if (aAtom == NULL)
-                return(1);
+                return 1;
 
         for (i = 0; i < iAtomCoordination(aAtom); i++) {
                 ATOM    aChildAtom = aAtomBondedNeighbor(aAtom,i);
                 int     iCRes = aChildAtom->iSeenId;
                 if (iCRes == iNextRes)
-                        return(0);
+                        return 0;
         }
-        return(1);
+        return 1;
 }
 
 /*
@@ -1109,7 +1109,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
         IX_DESC         ixResCount; // Count unique residues
 
         // Allocates unit->vaResidues
-        iResidueCount = UnitIOAmberOrderResidues( uUnit );
+        iResidueCount = iUnitIOAmberOrderResidues( uUnit );
         if ( iResidueCount == 0 ) {
                 VP0(" no residues\n" );
                 if (uUnit->vaResidues) VarArrayDestroy(&uUnit->vaResidues);
@@ -1273,9 +1273,9 @@ PdbWrite( FILE *fOut, UNIT uUnit )
             p.pdb.cryst1.a = a;
             p.pdb.cryst1.b = b;
             p.pdb.cryst1.c = c;
-            p.pdb.cryst1.alpha = uUnit->dAlpha / DEGTORAD;
-            p.pdb.cryst1.beta = dUnitBeta(uUnit) / DEGTORAD;
-            p.pdb.cryst1.gamma = uUnit->dGamma / DEGTORAD;
+            p.pdb.cryst1.alpha = uUnit->dAlpha * RADTODEG;
+            p.pdb.cryst1.beta = dUnitBeta(uUnit) * RADTODEG;
+            p.pdb.cryst1.gamma = uUnit->dGamma * RADTODEG;
             strcpy(p.pdb.cryst1.space_grp, "P 1");
             p.pdb.cryst1.z = 1;
             p.record_type = PDB_CRYST1;
@@ -2864,11 +2864,10 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
         if (iVerbosity() > 2) {
             if (strcmp(ix_record.key, sContainerName(uTemplate))) {
-                snprintf(sMatchResNames[iNumCandidates],sizeof(sMatchResNames[iNumCandidates]),
+                sprintf(sMatchResNames[iNumCandidates],
                          "%.24s(%.5s)",ix_record.key, sContainerName(uTemplate));
             } else {
-                sMatchResNames[iNumCandidates][sizeof(sMatchResNames[iNumCandidates])-1]=0;
-                strncpy(sMatchResNames[iNumCandidates],ix_record.key,sizeof(sMatchResNames[iNumCandidates])-1);
+                sprintf(sMatchResNames[iNumCandidates],"%.31s",ix_record.key);
             }
         }
         if (++iNumCandidates >= MAXCANDIDATES) break;
@@ -3270,7 +3269,7 @@ int             iChainCount=0;
             double dY = vAtomPosition(aTail).dY - vAtomPosition(aHead).dY;
             double dZ = vAtomPosition(aTail).dZ - vAtomPosition(aHead).dZ;
             float d2 = dX*dX + dY*dY + dZ*dZ;
-            float dCut;
+            float dCut = 0.0;
             if (!bAtomsBondedDist(iAtomElement(aTail),iAtomElement(aHead), d2,
                                   GDefaults.dPdbLinkCovalentCutoff, &dCut )) {
                 VP1("Starting new chain because dist %.2fÅ > %.2fÅ\n", sqrt(d2), dCut);
@@ -3454,44 +3453,44 @@ int             i;
         VP0("CifRead:   Prefer %s CIF columns\n",
             GDefaults.bCIFReadAuth ? "Author" : "Standardized");
     }
-    if (GDefaults.bPdbAutoMatch) VP0("PdbRead:   AutoMatch enabled, crosslink cutoff=%.3f\n",
+    if (GDefaults.bPdbAutoMatch) VP2("PdbRead:   AutoMatch enabled, crosslink cutoff=%.3f\n",
                    GDefaults.dPdbCrosslinkCovalentCutoff);
-    else VP0("PdbRead:   AutoMatch disabled\n" );
+    else VP2("PdbRead:   AutoMatch disabled\n" );
     if (GDefaults.sPdbPatchFilename[0]) {
-        VP0("PdbRead:   AutoMatch patch file = %s\n",GDefaults.sPdbPatchFilename);
+        VP2("PdbRead:   AutoMatch patch file = %s\n",GDefaults.sPdbPatchFilename);
         prPdb.fpPatchFileOut = fopen(GDefaults.sPdbPatchFilename,"w");
         if (!prPdb.fpPatchFileOut) {
             VPWARN("Cannot open autolink Patch file\n");
         } //TODO: header comment? we don't have the matching PDB filename
     }
-    VP0("PdbRead:   Tail-Head link cutoff=%.3f\n",GDefaults.dPdbLinkCovalentCutoff);
+    VP2("PdbRead:   Tail-Head link cutoff=%.3f\n",GDefaults.dPdbLinkCovalentCutoff);
     if (GDefaults.bPdbAutoLoadRes)
-        VP0("PdbRead:   AutoLoad enabled (attempt to load residue parameter files)\n" );
+        VP2("PdbRead:   AutoLoad enabled (attempt to load residue parameter files)\n" );
     if (!bFormatCIF)
-        VP0("PdbRead:   CONECT processing %sabled\n", GDefaults.bPdbUseConect ? "en":"dis");
-    VP0("PdbRead:   LINK,SSBOND processing %sabled\n", GDefaults.bPdbUseLinkRecords ? "en":"dis");
+        VP2("PdbRead:   CONECT processing %sabled\n", GDefaults.bPdbUseConect ? "en":"dis");
+    VP2("PdbRead:   LINK,SSBOND processing %sabled\n", GDefaults.bPdbUseLinkRecords ? "en":"dis");
     if ( (!bFormatCIF && GDefaults.bPdbUseConect) || GDefaults.bPdbUseLinkRecords )
-        VP0("PdbRead:   LINK/CONECT to metal ions will be %scluded\n", GDefaults.bPdbLinkIons ? "in":"ex");
+        VP2("PdbRead:   LINK/CONECT to metal ions will be %scluded\n", GDefaults.bPdbLinkIons ? "in":"ex");
     if ( GDefaults.iPdbReadModel == -2)
-        VP0("PdbRead:   All MODELs retained with 2-char ChainId assignment\n");
+        VP2("PdbRead:   All MODELs retained with 2-char ChainId assignment\n");
     if ( GDefaults.iPdbReadModel == -1)
-        VP0("PdbRead:   All MODELs retained with default ChainId assignment\n");
+        VP2("PdbRead:   All MODELs retained with default ChainId assignment\n");
     else if ( GDefaults.iPdbReadModel == 0)
-        VP0("PdbRead:   First MODEL will be retained, if MODEL is present\n");
+        VP2("PdbRead:   First MODEL will be retained, if MODEL is present\n");
     else
-        VP0("PdbRead:   MODEL %d will be retained\n", GDefaults.iPdbReadModel);
+        VP2("PdbRead:   MODEL %d will be retained\n", GDefaults.iPdbReadModel);
     if (GDefaults.bPdbExpandSymm) {
-        VP0("PdbRead:   CRYST1 Spacegroup symmetry will be expanded, MTRIXn will be ignored\n" );
+        VP2("PdbRead:   CRYST1 Spacegroup symmetry will be expanded, MTRIXn will be ignored\n" );
         prPdb.bSymmOps = true;
     } else if (GDefaults.iPdbReadBioMT) {
-        VP0("PdbRead:   REMARK BIOMT #%d will be read and processed, MTRIXn will be ignored\n",
+        VP2("PdbRead:   REMARK BIOMT #%d will be read and processed, MTRIXn will be ignored\n",
                 GDefaults.iPdbReadBioMT );
         prPdb.bBIOMT = true;
     } else if (GDefaults.bPdbExpandNCSMt) {
-        VP0("PdbRead:   MTRIXn records will be processed, if present\n" );
+        VP2("PdbRead:   MTRIXn records will be processed, if present\n" );
         prPdb.bNCS = true;
     } else
-        VP0("PdbRead:   MTRIXn records will not be processed\n" );
+        VP2("PdbRead:   MTRIXn records will not be processed\n" );
 
     prPdb.uUnit = (UNIT)oCreate(UNITid);
     ContainerSetName(prPdb.uUnit, "PDB_UNIT");
@@ -3660,6 +3659,6 @@ int             i;
     VariableSet( "PDB_UNIT", (OBJEKT)prPdb.uUnit );
     ContainerSetName(prPdb.uUnit, "default_name");
     VPTRACEEXIT("uPdbRead" );
-    return ( prPdb.uUnit );
+    return  prPdb.uUnit ;
 }
 

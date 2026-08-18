@@ -88,7 +88,7 @@ char	*sTemp;
         sStr++;
     }
     *sTemp = '\0';
-    return(sOut);
+    return sOut;
 }
 
     

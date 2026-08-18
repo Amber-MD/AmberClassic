@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
     bCmd = bBlockCreate();
 
-    while (rResult.iCommand != CQUIT) {
+    while (rResult.iCommand != CMD_QUIT) {
         char *line = NULL;
         char *cp;
 

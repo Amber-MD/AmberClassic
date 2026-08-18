@@ -270,7 +270,7 @@ bUnitIOLoadTables(UNIT uUnit, DATABASE db)
     bDBGetValue(db, "boundbox", &iLen, (GENP) & sbBox,
                 sizeof(sbBox.dUseBox));
     UnitSetUseBox(uUnit, (sbBox.dUseBox > 0.0));
-    if (fabs(sbBox.dBeta)>80.0) {
+    if (fabs(sbBox.dBeta)>80.0 && !GDefaults.bCompatible) {
         VPWARN("%s: Detected bounding Beta in degrees, converting to radians\n",
               sName);
         sbBox.dBeta *= DEGTORAD;
@@ -500,7 +500,7 @@ bUnitIOLoadTables(UNIT uUnit, DATABASE db)
 
   DONE:
     DBPopPrefix(db);
-    return (bGotOne);
+    return bGotOne;
 }
 
 /*
@@ -536,12 +536,11 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
 
     DBPutValue(db, "name", ENTRYSINGLE | ENTRYSTRING, 1,
                (GENP) sContainerName(uUnit), 0);
-
-    if (GDefaults.dPrmtopFormat > 1.0) //FIXME non conditional or use different flag
+    if (!GDefaults.bCompatible) {
     if (sUnitDescription(uUnit)[0]!=0) {
         DBPutValue(db, "description", ENTRYSINGLE | ENTRYSTRING, 1,
                (GENP) sUnitDescription(uUnit), 0);
-    }
+    }}
 
     iSequence = iContainerNextChildsSequence(uUnit);
     DBPutValue(db, "childsequence", ENTRYSINGLE | ENTRYINTEGER, 1,
@@ -1283,7 +1282,7 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
     }
 
     VPTRACEEXIT("bUnitIOIndexBondParameters" );
-    return (bFailedGeneratingParameters);
+    return bFailedGeneratingParameters;
 }
 
 
@@ -1464,7 +1463,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
 
         VarArrayAdd(uUnit->vaAngles, (GENP) & saAngle);
     }
-    return (bFailedGeneratingParameters);
+    return bFailedGeneratingParameters;
 }
 
 
@@ -1545,8 +1544,8 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
 
 #define                MAX_N                9999
 
-#define CACHE
-#ifdef CACHE
+//#define TOR_CACHE
+#ifdef TOR_CACHE
     bool bFromCache; // true if torsion came from cache
     IX_REC ixTorsionKey;
     IX_DESC ixTorsionCache;
@@ -1759,7 +1758,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         /* torsion parameters that we need. */
 
         tTorsion = tParmSetTORSIONCreate();
-#ifdef CACHE
+#ifdef TOR_CACHE
         bFromCache = false;
         // First check cache:
         sprintf(ixTorsionKey.key,"%.8s-%.8s-%.8s-%.8s", sAtom1, sAtom2, sAtom3, sAtom4);
@@ -1888,7 +1887,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         /* complete TORSION in tPertTorsion */
         /* The (stTorsion) terms must now be created */
 
-#ifdef CACHE
+#ifdef TOR_CACHE
         // cache the result:
         if (!bFromCache) {
             int count = iVarArrayElementCount(tTorsion);
@@ -1968,11 +1967,17 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 RESIDUE rRes4 = RESIDUE_from(cContainerWithin(aAtom4));
                 VP1(" ** Warning: No sp2 improper torsion term for  %-s-%-s-%-s-%-s\n",
                      sOrigAtom1, sOrigAtom2, sOrigAtom3, sOrigAtom4);
-                        VP1("        atoms are: %s.%s:%d.%s %s.%s:%d.%s %s.%s:%d.%s %s.%s:%d.%s\n",
-                        sContainerName(rRes1),sResidueChainId(rRes1),iResiduePdbSequence(rRes1),sContainerName(aAtom1),
-                        sContainerName(rRes2),sResidueChainId(rRes2),iResiduePdbSequence(rRes2),sContainerName(aAtom2),
-                        sContainerName(rRes3),sResidueChainId(rRes3),iResiduePdbSequence(rRes3),sContainerName(aAtom3),
-                        sContainerName(rRes4),sResidueChainId(rRes4),iResiduePdbSequence(rRes4),sContainerName(aAtom4));
+                if (GDefaults.bCompatible) {
+                    VP1("        atoms are: %s %s %s %s\n", 
+                            sAtomName(aAtom1), sAtomName(aAtom2),
+                            sAtomName(aAtom3), sAtomName(aAtom4));
+                } else {
+                    VP1("        atoms are: %s.%s:%d.%s %s.%s:%d.%s %s.%s:%d.%s %s.%s:%d.%s\n",
+                            sContainerName(rRes1),sResidueChainId(rRes1),iResiduePdbSequence(rRes1),sContainerName(aAtom1),
+                            sContainerName(rRes2),sResidueChainId(rRes2),iResiduePdbSequence(rRes2),sContainerName(aAtom2),
+                            sContainerName(rRes3),sResidueChainId(rRes3),iResiduePdbSequence(rRes3),sContainerName(aAtom3),
+                            sContainerName(rRes4),sResidueChainId(rRes4),iResiduePdbSequence(rRes4),sContainerName(aAtom4));
+                }
             }
             bEnd = true;
         }
@@ -2298,19 +2303,19 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
         }
         if (iImproper && iVerbosity() > 0) {
 
-            VP1("--Impropers:\n");
+            VP0("--Impropers:\n");
             first_key(&improper_index);
             while (next_key(&ixImp, &improper_index) == IX_OK)
                 VP1("  %d\t%s\n", ixImp.count, ixImp.key);
         }
-        VP1(" total %d improper torsion%s applied\n",
+        VP0(" total %d improper torsion%s applied\n",
              iImproper, (iImproper != 1 ? "s" : ""));
         if (iPrep)
-            VP1(" %d improper torsions in old prep form\n", iImproper2);
+            VP0(" %d improper torsions in old prep form\n", iImproper2);
         destroy_index(&improper_index);
     }
 
-#ifdef CACHE
+#ifdef TOR_CACHE
     first_key(&ixTorsionCache);
     while (next_key(&ixTorsionKey, &ixTorsionCache) == IX_OK) {
         VARARRAY vaTemp = (VARARRAY) ixTorsionKey.recptr;
@@ -2320,7 +2325,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
 #endif
 
     VPTRACEEXIT("zbUnitIOIndexTorsionParameters" );
-    return (bFailedGeneratingParameters);
+    return bFailedGeneratingParameters;
 }
 
 
@@ -2374,14 +2379,14 @@ UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int *iPPos,
 // Also builds residue table, and marks RESIDUE TempInt with derived sequence order.
 
 int
-UnitIOAmberOrderResidues( UNIT uUnit )
+iUnitIOAmberOrderResidues( UNIT uUnit )
 {
     LOOP    lResidues;
     RESIDUE rRes;
-    int iResidueCount = UnitLabelMolecules(uUnit);
+    int iResidueCount = iUnitLabelMolecules(uUnit);
 
     if (iResidueCount == 0)
-            return(0);
+            return 0;
 
     /*
     **  allocate array for residues
@@ -2415,7 +2420,7 @@ UnitIOAmberOrderResidues( UNIT uUnit )
         srPResidue++;
         iResIndex++;
     }
-    return(iResidueCount);
+    return iResidueCount;
 }
 
 /*
@@ -2534,12 +2539,12 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     /* UnitIOAmberOrderResidues generates the vaResidues array,
      * and puts residues in arbitrary amber order
      */
-    iResidueCount = UnitIOAmberOrderResidues( uUnit );
+    iResidueCount = iUnitIOAmberOrderResidues( uUnit );
 
     if (iResidueCount) {
 
         /* Build the array for the atoms */
-        // Now we repeat THE SAME LOGIC as in UnitIOAmberOrderResidues()
+        // Now we repeat THE SAME LOGIC as in iUnitIOAmberOrderResidues()
         // or we are screwed!
 
         VP0("Building atom parameters.\n");
@@ -3465,7 +3470,7 @@ iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
     }
     if (!iAtomCount) {
         VP0("  %s: no atoms\n", cPResName);
-        return (0);
+        return 0;
     }
     if (iAtomCount == 1) {
         /*
@@ -3473,7 +3478,7 @@ iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
          */
         aAtom = ATOM_from(oContainerFirstObject(CONTAINER_from(rRes)));
         AtomSetTempDouble(aAtom, (double) 'M');
-        return (1);
+        return 1;
     }
 
     /*
@@ -3494,7 +3499,7 @@ iMarkMainChainAtoms(RESIDUE rRes, bool bComplain)
         ierr=4;
     }
     if (ierr)
-        return (-iAtomCount);
+        return -iAtomCount;
 /*
 fprintf(stderr," connect %s .. %s total %d\n",
 sAtomName( aAtom0 ), sAtomName( aAtom1), iAtomCount);
@@ -3612,7 +3617,7 @@ sAtomName(aChildAtom),
      */
     VarArrayDestroy(&vaAtoms);
 
-    return (iAtomCount);
+    return iAtomCount;
 }
 
 /*

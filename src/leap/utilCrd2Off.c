@@ -145,7 +145,7 @@ int		iFirst;
     else strcpy( sType, "" );
     sprintf( sStr, "%2d(%3s):%s%s%s", iRes, PVAI(vaLabres,LABELTYPE,iRes-1),
                  sTemp, sType, sNumber );
-    return(sStr);
+    return sStr;
 }
 
 

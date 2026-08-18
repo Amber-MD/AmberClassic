@@ -64,18 +64,16 @@ extern void     UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName, bool bPo
 
 extern void     UnitIOSaveAmberPrep( UNIT uUnit, FILE *fOut );
 
-extern int UnitIOAmberOrderResidues(UNIT);
-extern int UnitLabelMolecules(UNIT);
+extern int iUnitIOAmberOrderResidues(UNIT);
 
 extern void UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit, bool bPert, bool bPolar,
                        VARARRAY vaExcludedAtoms, VARARRAY vaExcludedCount, VARARRAY vaNBIndexMatrix,
                        VARARRAY vaNBParameters, VARARRAY vaNBIndex);
 extern void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut);
-//extern int SaveAmberParmCMAPNetcdf(UNIT uUnit, int ncid);
 extern void UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *crdName);
 extern void UnitIOSaveAmberCoord(UNIT uUnit, char *crdName);
-extern int BondAugmentationFound(UNIT uUnit);
-void UnitIOFindAndCountMolecules(UNIT uUnit);
+extern bool bBondAugmentationFound(UNIT uUnit);
+extern void UnitIOFindAndCountMolecules(UNIT uUnit);
 
 extern int iMarkMainChainAtoms(RESIDUE rRes, bool bComplain);
 extern void MarkSideChainAtoms(RESIDUE rRes);

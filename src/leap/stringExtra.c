@@ -62,7 +62,7 @@ char	*sWrite;
         sIn++;
     }
     (*sWrite) = '\0';
-    return(sOut);
+    return sOut;
 }
 
 
@@ -112,7 +112,7 @@ char	*sCur, *sResultCur;
     }
     
 DONE:
-    return(sResult);
+    return sResult;
 }
 
 
@@ -137,7 +137,7 @@ size_t      mylength;
     //strcpy( sLine, sTemp );
     memmove(sLine, sTemp, mylength);
     sLine[mylength]='\0';
-    return(sLine);
+    return sLine;
 }
 
 
@@ -238,8 +238,8 @@ bStringMatchPattern( char *sString, char *sPattern )
 {
 
     while ( 1 ) {
-        if ( *sPattern == '\0' && *sString == '\0' ) return(true);
-        if ( *sString == '\0' || *sPattern == '\0' ) return(false);
+        if ( *sPattern == '\0' && *sString == '\0' ) return true;
+        if ( *sString == '\0' || *sPattern == '\0' ) return false;
         if ( *sString == *sPattern ) {
             sPattern++;
             sString++;
@@ -253,14 +253,14 @@ bStringMatchPattern( char *sString, char *sPattern )
         if ( *sPattern == '*' ) {
             while ( 1 ) {
                 if ( bStringMatchPattern( sString, sPattern+1 ) ) {
-		    return(true);
+		    return true;
 		} else {
                     sString++;
                     if ( *sString == '\0' ) {
                         if ( *(sPattern+1)=='\0' ) {
-			    return(true);
+			    return true;
 			} else {
-			    return(false);
+			    return false;
 			}
                     }
                 }
@@ -268,5 +268,5 @@ bStringMatchPattern( char *sString, char *sPattern )
         }
 	break;
     }
-    return(false);
+    return false;
 }

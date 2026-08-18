@@ -62,7 +62,7 @@ RESTRAINT	rNew;
 #ifdef DEBUG
     rNew->iMagic = RESTRAINT_MAGIC;
 #endif
-    return(rNew);
+    return rNew;
 }
 
 
@@ -100,8 +100,8 @@ bRestraintBondMatchAtoms( RESTRAINT rRes, ATOM aAtom1, ATOM aAtom2 )
     if ( (rRes->rType.rbBond.aAtom1 == aAtom1 &&
 	  rRes->rType.rbBond.aAtom2 == aAtom2 ) ||
 	 (rRes->rType.rbBond.aAtom1 == aAtom2 &&
-	  rRes->rType.rbBond.aAtom2 == aAtom1 ) ) return(true);
-    return(false);
+	  rRes->rType.rbBond.aAtom2 == aAtom1 ) ) return true;
+    return false;
 }
 
 	
@@ -123,8 +123,8 @@ bRestraintAngleMatchAtoms( RESTRAINT rRes,
 	  rRes->rType.raAngle.aAtom3 == aAtom3 ) ||
 	 (rRes->rType.raAngle.aAtom1 == aAtom3 &&
 	  rRes->rType.raAngle.aAtom2 == aAtom2 &&
-	  rRes->rType.raAngle.aAtom3 == aAtom1 ) ) return(true);
-    return(false);
+	  rRes->rType.raAngle.aAtom3 == aAtom1 ) ) return true;
+    return false;
 }
 
 
@@ -148,8 +148,8 @@ bRestraintTorsionMatchAtoms( RESTRAINT rRes,
 	 (rRes->rType.rtTorsion.aAtom1 == aAtom4 &&
 	  rRes->rType.rtTorsion.aAtom2 == aAtom3 &&
 	  rRes->rType.rtTorsion.aAtom3 == aAtom2 &&
-	  rRes->rType.rtTorsion.aAtom4 == aAtom1 ) ) return(true);
-    return(false);
+	  rRes->rType.rtTorsion.aAtom4 == aAtom1 ) ) return true;
+    return false;
 }
 
 
@@ -171,21 +171,21 @@ bRestraintContainsAtom( RESTRAINT rRes, ATOM aAtom )
 	    if ( rRes->rType.rtTorsion.aAtom1 == aAtom ||
 		 rRes->rType.rtTorsion.aAtom2 == aAtom ||
 		 rRes->rType.rtTorsion.aAtom3 == aAtom ||
-		 rRes->rType.rtTorsion.aAtom4 == aAtom ) return(true);
-	    return(false);
+		 rRes->rType.rtTorsion.aAtom4 == aAtom ) return true;
+	    return false;
 	case RESTRAINTANGLE:
 	    if ( rRes->rType.raAngle.aAtom1 == aAtom ||
 		 rRes->rType.raAngle.aAtom2 == aAtom ||
-		 rRes->rType.raAngle.aAtom3 == aAtom ) return(true);
-	    return(false);
+		 rRes->rType.raAngle.aAtom3 == aAtom ) return true;
+	    return false;
 	case RESTRAINTBOND:
 	    if ( rRes->rType.rbBond.aAtom1 == aAtom ||
-		 rRes->rType.rbBond.aAtom2 == aAtom ) return(true);
-	    return(false);
+		 rRes->rType.rbBond.aAtom2 == aAtom ) return true;
+	    return false;
 	default:
 	    DFATAL("Invalid RESTRAINT type!" );
     }
-    return(false);	/* for lint */
+    return false;	/* for lint */
 }
 
 
