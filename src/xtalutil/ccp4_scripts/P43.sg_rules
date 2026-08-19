@@ -1,0 +1,61 @@
+
+========================================================================
+  Space group : P 43  (#78)
+  Supercell   : 1 × 1 × 1  (no supercell expansion)
+  Operators   : 4
+========================================================================
+
+  Output structure factor formula:
+
+    F_out(H,K,L) = Σ_i  phase_i(H,K,L)  ×  F_P1(h_i, k_i, l_i)
+
+  where:
+    (H'_i, K'_i, L'_i) = R_direct_i^T · (H, K, L)  [transposed rotation]
+    (h_i, k_i, l_i)    = (H'_i, K'_i, L'_i)
+    phase_i            = exp(2πi · H·t_i)  [H·t_i = H·ta + K·tb + L·tc]
+
+  Operator 1: x,y,z
+    Re-indexed (H',K',L') = H, K, L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 2: -y,x,z+3/4
+    Re-indexed (H',K',L') = K, -H, L
+    Translation t          = (0, 0, 3/4)
+    Phase factor           = i^(3L)
+    Symbolic exponent      = exp(πi/2·(3L))
+                             (3L) % 4 == 0  ->  +1
+                             (3L) % 4 == 1  ->  +i
+                             (3L) % 4 == 2  ->  -1
+                             (3L) % 4 == 3  ->  -i
+
+  Operator 3: -x,-y,z+1/2
+    Re-indexed (H',K',L') = -H, -K, L
+    Translation t          = (0, 0, 1/2)
+    Phase factor           = (-1)^(L)
+    Symbolic exponent      = exp(πi·(L))
+                             (L) % 2 == 0  ->  +1
+                             (L) % 2 != 0  ->  -1
+
+  Operator 4: y,-x,z+1/4
+    Re-indexed (H',K',L') = -K, H, L
+    Translation t          = (0, 0, 1/4)
+    Phase factor           = i^(L)
+    Symbolic exponent      = exp(πi/2·(L))
+                             (L) % 4 == 0  ->  +1
+                             (L) % 4 == 1  ->  +i
+                             (L) % 4 == 2  ->  -1
+                             (L) % 4 == 3  ->  -i
+
+  ----------------------------------------------------------------------
+
+  NOTES:
+  • R_direct_i^T is the TRANSPOSE of the direct-space rotation matrix.
+    This differs from gemmi's apply_to_hkl(), which uses the
+    reciprocal-space (non-transposed) form.
+  • If the P1 MTZ lacks a required index, its Friedel mate is used:
+    F_P1(-h,-k,-l) = conj(F_P1(h,k,l))
+  • gemmi stores phase_shift = -2π H·t, so the code uses
+    exp(-i · op.phase_shift([H,K,L])) to obtain exp(+2πi H·t).
+

@@ -93,7 +93,7 @@ typedef double  pdb_float;              /* size of floating point */
 
 typedef struct  {                       /* residue info */
         pdb_rname       name;
-        char            chain_id;
+        char            chain_id[3];
         int             seq_num;
         char            insert_code;
 }       pdb_residue;
@@ -120,7 +120,8 @@ struct  pdb_atom                {
 	mol2_atom       type_at;
         pdb_float       x, y, z;
         pdb_float       occupancy, temp_factor;
-        int             ftnote_num;
+        char            element[3],fcharge[3];
+        int             leap_expanded; // flag for Leap expanded serial, resid detected
 };
 struct  pdb_author      {
         char    data[61];
@@ -217,7 +218,7 @@ struct  pdb_scale               {
 };
 struct  pdb_seqres      {
         int             serial_num;
-        char            chain_id;
+        char            chain_id[3];
         int             count;
         pdb_rname       names[13];
 };

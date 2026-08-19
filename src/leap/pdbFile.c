@@ -54,6 +54,8 @@
 #include        "defaults.h"
 #include        "build.h"
 #include        "atom.h"
+#include        "elements.h"
+#include        "hybrid36.h"
 
                 /* PDBWRITEt is used to store data for writing PDB files */
 
@@ -67,6 +69,7 @@ typedef struct  {
 typedef struct  {
         char    sName[10];
         int     iTerminator;
+        char    sChainId[3], iCode;
         int     iPdbSequence;
 } RESIDUENAMEt;
 
@@ -75,35 +78,35 @@ typedef struct  {
         MATRIX  mTransform;
 } PDBMATRIXt;
 
-/* PDBREADt is used to store data for reading PDB files 
- * (vaUnits) contains a VARARRAY of UNITs to take UNITs 
- *      from for each residue read from the PDB file. 
- *      The UNITs should all contain a single RESIDUE 
- *      but don't need to, the UNITs are searched for 
+/* PDBREADt is used to store data for reading PDB files
+ * (vaUnits) contains a VARARRAY of UNITs to take UNITs
+ *      from for each residue read from the PDB file.
+ *      The UNITs should all contain a single RESIDUE
+ *      but don't need to, the UNITs are searched for
  *      ATOMs with names that match the names read from
- *      the PDB file.   
- * (bRelax)(dRms) are used to determine whether 
- *      the geometry of ATOMs not specified within the 
- *      PDB file that are bonded to more than one other ATOM 
- *      that is specified should be relaxed 
- * (vaResidues) stores the residue names and termination 
- *      status of residues read from the PDB file 
- * (vaResidueSeq) stores the residue sequence number 
- *      of residues read from the PDB file 
- * (vaMatrices) stores the matrices that relate symmetry 
- *      related monomers 
- * (uUnit) will contain the UNIT read from the PDB file 
- * (rRes) is the current RESIDUE to load atom records into 
- * (iPdbSequence) is the sequence number read from the PDB 
- *      file of the current residue. 
- * (iNextUnit) is the index of the next UNIT to get from 
- *      (vaUnits) 
+ *      the PDB file.
+ * (bRelax)(dRms) are used to determine whether
+ *      the geometry of ATOMs not specified within the
+ *      PDB file that are bonded to more than one other ATOM
+ *      that is specified should be relaxed
+ * (vaResidues) stores the residue names and termination
+ *      status of residues read from the PDB file
+ * (vaResidueSeq) stores the residue sequence number
+ *      of residues read from the PDB file
+ * (vaMatrices) stores the matrices that relate symmetry
+ *      related monomers
+ * (uUnit) will contain the UNIT read from the PDB file
+ * (rRes) is the current RESIDUE to load atom records into
+ * (iPdbSequence) is the sequence number read from the PDB
+ *      file of the current residue.
+ * (iNextUnit) is the index of the next UNIT to get from
+ *      (vaUnits)
  */
 
 
 typedef struct  {
         FILE            *fPdbFile;
-        VARARRAY        vaUnits;                
+        VARARRAY        vaUnits;
         VARARRAY        vaResidues;
         VARARRAY        vaResidueSeq;
         VARARRAY        vaAtoms;
@@ -121,15 +124,11 @@ typedef struct  {
 ----------------------------------------------------------------------
 
         Static variables
-        
+
 */
 
 static  DICTIONARY      SdResidueNameMap = NULL;
 static  DICTIONARY      SdAtomNameMap = NULL;
-
-
-
-#define SEQUENCE_NUMBER_STEPS   10000
 
 
 extern int zUnitIOAmberOrderResidues( UNIT );
@@ -497,6 +496,7 @@ STRING          sKey;
  *              'CL2'  -> 'CL2 '
  *              'H12'  -> ' H12'
  *              'H123' -> 'H123'
+ *              'HG11' -> 'HG11'  ** NOTE ** New atoms names can deviate from alignment
  */
 static void
 zPdbConvoluteAtomName( ATOM aAtom, STRING sName, STRING sResname, STRING sConvoluted )
@@ -590,6 +590,10 @@ int     iElement;
 
     iElement = iElementNumberFromAmber(sConvoluted);
 
+    /* If element starts at char 2, element should be 1 character.
+     * but in newer residues, single char element can start at column 1
+     * e.g. there are cases where HG?? = H and not Hg, so element column is needed
+     */
     /*
      *    if element is not legal, or its name begins with something other
      *     than a blank or a digit, just strip spaces and go on
@@ -644,35 +648,45 @@ zPdbReadScan( PDBREADt *prPRead )
 pdb_record      p;
 int             iPdbSequence, iResNum;
 BOOL            bLastReadPdbRecordWasTer = FALSE;
-BOOL            bNewChain;
+BOOL            bNewChain, bNewRes;
 RESIDUENAMEt    rnName;
-int             iSerial, iStart, i, iRow;
 MATRIX          *mPMatrix;
+int             iSerial, iStart, i, iRow;
 int             iTerm, iLast, iSerialNum;
-BOOL            bProblemWithResidueNameAlreadyDetected = FALSE;
 int             iResidueProblems = 0;
 int             iSaidit;
 IX_REC          atomentry;
 IX_DESC         atomindex;
 int             *iPRes = NULL;
-char            chain, *cPAtom = NULL;
-char            cInsertionCode;
+char            *c2PChain = NULL;
+char            c2Chain[2];
+char            *cPAtom = NULL;
+char            *cPInsertionCode;
+int             iResIdMax, iAtomSerialMax;
+int             iPdbResSeqOffset=0, iAtomSerialOffset=0;
+int             iCurrentBioMT=0;
 
     VPTRACEENTER(( "zPdbReadScan" ));
-    iPdbSequence = iResNum = -9999;
-    cInsertionCode = '-';  /* valid codes are alphabetic or blank */
-    bNewChain = TRUE;
-    iSerialNum = 0;
 
     /*
      *  create index for checking uniqueness of atom names
-     *          key = int, char[4]
+     *          key = int, char[4], char[2], char
      */
-    if ( sizeof(int) + 4 > sizeof(atomentry.key) )
+    if ( sizeof(int) + 7 > sizeof(atomentry.key) )
         DFATAL(( "default key len too long\n" ));
-    create_index( &atomindex, 2, sizeof(int) + 5 );
+    create_index( &atomindex, 2, sizeof(int) + 7 );
     iPRes = (int *) atomentry.key;
-    cPAtom = (char *) iPRes + sizeof(int);
+    c2PChain = (char *) iPRes + sizeof(int);
+    cPInsertionCode = c2PChain + 2;
+    cPAtom = cPInsertionCode + 1;
+
+    iPdbSequence = iResNum = -9999;
+    *cPInsertionCode = '-';  /* valid codes are alphabetic or blank */
+    memcpy(c2PChain,"  ",2);
+    bNewChain = TRUE;
+    iSerialNum = 0; // Tracks *maximum* atomSerial
+    iAtomSerialMax = HY36_WIDTH_5_MAX;
+    iResIdMax = HY36_WIDTH_4_MAX;
 
     do {
         char    *resname;
@@ -684,90 +698,97 @@ char            cInsertionCode;
         switch ( p.record_type ) {
             case PDB_ATOM:
             case PDB_HETATM:
+                // Old Leap format detected, adjust overflow wrapping limit
+                if (p.pdb.atom.leap_expanded) {
+                    iAtomSerialMax = 99999;
+                    iResIdMax = 9999;
+                }
+                if (p.pdb.atom.serial_num == 0 && iSerialNum == iAtomSerialMax)
+                    iAtomSerialOffset += iAtomSerialMax+1; // atomSerial overflow unwrapping
+                p.pdb.atom.serial_num += iAtomSerialOffset;
+                if ( p.pdb.atom.serial_num > iSerialNum )
+                    iSerialNum = p.pdb.atom.serial_num;
+
+                // Convert string to fixed width 2-char, right justified
+                if (p.pdb.atom.residue.chain_id[0]==0)
+                    memcpy(c2Chain,"  ",2);
+                else if (p.pdb.atom.residue.chain_id[1]==0) {
+                    c2Chain[0]=' '; c2Chain[1]=p.pdb.atom.residue.chain_id[0];
+                }
+                else memcpy(c2Chain,p.pdb.atom.residue.chain_id,2);
+
                 VPTRACE(( "Read PDB_ATOM or PDB_HETATM record.\n" ));
-                VPTRACE(( "bNewChain = %d; iPdbSequence = %d; iResNum = %d; "
-                          "iSerialNum = %d\n", bNewChain, iPdbSequence,
+                VPTRACE(( "bNewChain = %d; Chain = %.2s; iPdbSequence = %d; iResNum = %d; "
+                          "iSerialNum = %d\n", bNewChain, c2Chain, iPdbSequence,
                           iResNum, iSerialNum ));
                 /*
-                 *  allow for right-shifted resnames
+                 *  allow for right-shifted resnames XXX right justified is standard
                  */
                 resname = p.pdb.atom.residue.name;
                 while (*resname == ' ')
                         resname++;
 
-                if ( p.pdb.atom.serial_num > iSerialNum ) {
-                    iSerialNum = p.pdb.atom.serial_num;
-                }
                 iTerm = NOEND;
+                bNewChain = bNewChain || memcmp(c2PChain,c2Chain,2);
                 if ( bNewChain ) {
-                    iTerm = FIRSTEND;
-                } else if ( p.pdb.atom.residue.chain_id != chain ) {
-                    VP0(( " (starting new molecule for chain %c)\n", 
-                                                p.pdb.atom.residue.chain_id ));
+/*
+                    if (p.pdb.atom.residue.chain_id[0]!= ' ')
+                        VP0(( " (starting new molecule for chain \"%.2s\")\n", p.pdb.atom.residue.chain_id ));
+                    else
+                        VP0(( " (starting new molecule for chain %c)\n", p.pdb.atom.residue.chain_id[1] ));
+*/
                     iTerm = FIRSTEND;
                     if ( (iLast = iVarArrayElementCount( prPRead->vaResidues )) ) 
                         iLast--;        /* last element, maybe 0th */
                     PVAI( (prPRead->vaResidues), 
                                 RESIDUENAMEt,iLast)->iTerminator = LASTEND;
+                    memcpy(c2PChain,c2Chain,2);
+                    iPdbResSeqOffset = 0;
                 }
-                chain = p.pdb.atom.residue.chain_id;
-                bNewChain = FALSE;
-                if ( ! bProblemWithResidueNameAlreadyDetected &&
-                            p.pdb.atom.residue.seq_num == iPdbSequence &&
-                            p.pdb.atom.residue.insert_code == cInsertionCode &&
-                            strcmp( rnName.sName, resname ) ) {
+                bNewRes = (bNewChain || p.pdb.atom.residue.seq_num != iPdbSequence ||
+                            p.pdb.atom.residue.insert_code != *cPInsertionCode ||
+                            bLastReadPdbRecordWasTer );
+                if (!bNewRes && strcmp(rnName.sName, resname) ) {
                     /* First detection of a residue with the same sequence
                      * number and insertion code but a different name.
                      */
-                    VPWARN(( "Name change in pdb file residue %d%c;\n"
+                    VPWARN(( "Name change in pdb file residue %.2s %d%c;\n"
                         "this residue is split into %s and %s.\n",
-                        iPdbSequence, cInsertionCode, rnName.sName, resname));
-                    bProblemWithResidueNameAlreadyDetected = TRUE;
+                        c2PChain, iPdbSequence, *cPInsertionCode, rnName.sName, resname));
+                    bNewRes = TRUE;
                     iResidueProblems++;
-                } 
-                if ( p.pdb.atom.residue.seq_num != iPdbSequence ||
-                            strcmp( rnName.sName, resname ) ||
-                            p.pdb.atom.residue.insert_code != cInsertionCode ||
-                            bLastReadPdbRecordWasTer ) {
+                }
+                if (bNewRes) {
                     VPTRACE(( "Detected a new residue.\n" ));
-                    if ( iResNum < 0 )
+                    if (p.pdb.atom.residue.seq_num == 0 && iPdbSequence == iResIdMax)
+                         iPdbResSeqOffset += iResIdMax + 1;
+                    if (GDefaults.bPdbKeepChainId) {
+                        iResNum = p.pdb.atom.residue.seq_num + iPdbResSeqOffset; // ResSeq overflow unwrapping
+                    } else if (iResNum < 0 )
                         iResNum = p.pdb.atom.residue.seq_num;
                     else
                         iResNum++;
                     rnName.iTerminator = iTerm;
                     rnName.iPdbSequence = iResNum;
+                    if (p.pdb.atom.residue.chain_id[0]==' ') {
+                         if (p.pdb.atom.residue.chain_id[1]==' ')
+                              rnName.sChainId[0]=0;
+                         else
+                             strcpy( rnName.sChainId, p.pdb.atom.residue.chain_id+1);
+                    }
+                    else strcpy( rnName.sChainId, p.pdb.atom.residue.chain_id);
                     strcpy( rnName.sName, resname );
+
                     VarArrayAdd( prPRead->vaResidues, (GENP)&rnName );
                     bLastReadPdbRecordWasTer = FALSE;
 
-        /* Experimental code to save original residue identification */
-                    if( GDefaults.iUseResIds ) {
-                        /* save cols 22-27 to a global string, until
-                           we can figure out how to do this better.....   */
-                        if( iResNum < MAXRESID ) {
-                            VPTRACE(( "GDefaults.sResidueId[ %d ] = %c%4d%c\n",
-                                iResNum, p.pdb.atom.residue.chain_id,
-                                p.pdb.atom.residue.seq_num,
-                                p.pdb.atom.residue.insert_code ));
-                            sprintf( GDefaults.sResidueId[iResNum], "%c%4d%c",
-                                    p.pdb.atom.residue.chain_id,
-                                    p.pdb.atom.residue.seq_num,
-                                    p.pdb.atom.residue.insert_code );
-                            GDefaults.sResidueId[iResNum][6] = '\0';
-                            GDefaults.iHaveResIds = 1;
-                        } else {
-                            VPFATALEXIT(("More than MAXRESID residues\n"));
-                        }
-                    }
-
-                    VarArrayAdd( prPRead->vaResidueSeq, (GENP)&iResNum );
                     MESSAGE(( "Reading residue: <%s>\n", rnName.sName ));
                     iPdbSequence = p.pdb.atom.residue.seq_num;
-                    cInsertionCode = p.pdb.atom.residue.insert_code;
-                    bProblemWithResidueNameAlreadyDetected = FALSE;
+                    *cPInsertionCode = p.pdb.atom.residue.insert_code;
 
                     *iPRes = iResNum;
                 }
+                bNewChain = FALSE;
 
                 /*
                  *  add to avl tree for uniqueness testing
@@ -794,8 +815,55 @@ char            cInsertionCode;
                 }
                 break;
 
+            case PDB_REMARK:
+                // Currently only REMARK 350 is parsed for BIOMT
+                if (!GDefaults.iPdbReadBioMT || p.pdb.remark.num != 350) break;
+                if (!strncmp(p.pdb.remark.text,"BIOMOLECULE:",12)) {
+                    iCurrentBioMT = atoi(p.pdb.remark.text+12);
+                    VP0(( "Found Biomolecule definition # %d.\n",iCurrentBioMT));
+                    if (iCurrentBioMT != 1) {
+                         VPWARN(("ReadBioMT only works correctly with a single biomolecule definition\n"));
+                    }
+                    break;
+                }
+                if (strncmp(p.pdb.remark.text,"  BIOMT",6)) break;
+                if (iCurrentBioMT != GDefaults.iPdbReadBioMT) break;
+/*
+rrrrrr iii sss...  columns 12-70 = 59 chars                 -------->|
+REMARK nnn text...
+REMARK 350 BIOMOLECULE: 1
+REMARK 350 APPLY THE FOLLOWING TO CHAINS: A, B, C, D, E, F, G, H, I, J,
+REMARK 350                    AND CHAINS: K, L, M, N
+REMARK 350   BIOMT1   1  1.000000  0.000000  0.000000        0.00000
+REMARK 350   BIOMT2   1  0.000000  1.000000  0.000000        0.00000
+REMARK 350   BIOMT3   1  0.000000  0.000000  1.000000        0.00000
+REMARK 350   BIOMT1   2  0.309017 -0.809017  0.500000      542.20813
+REMARK 350   BIOMT2   2  0.809017  0.500000  0.309017     -335.10305
+REMARK 350   BIOMT3   2 -0.500000  0.309017  0.809017      207.10519
+REMARK 350   BIOMT1   3 -0.809017 -0.500000  0.309017     1084.41630
+...
+*/
+                double m1, m2, m3, v;
+                int n = sscanf(p.pdb.remark.text,
+                       "  BIOMT%1d %3d %lf %lf %lf %lf",
+                       &iRow, &iSerial, &m1, &m2, &m3, &v);
+                if (iRow==1) VP2(( "Read PDB_REMARK 350 BIOMT1 record %d\n", iSerial ));
+                if(n<6 || iRow<1 || iRow>3 || iSerial<=0) break; //error
+                p.pdb.mtrix.serial_num = iSerial;
+                p.pdb.mtrix.row_num = iRow;
+                p.pdb.mtrix.m1 = m1;
+                p.pdb.mtrix.m2 = m2;;
+                p.pdb.mtrix.m3 = m3;
+                p.pdb.mtrix.v = v;
+                // First unit is identity, does not need replication
+                p.pdb.mtrix.given = (iSerial == 1);
+                // Now drop through to PDB_MTRIX processing of our BIOMT copied matix
+
             case PDB_MTRIX:
-                VPTRACE(( "Read PDB_MTRIX record.\n" ));
+                if (p.record_type == PDB_MTRIX) {
+                    if (GDefaults.iPdbReadBioMT) break;
+                    VPTRACE(( "Read PDB_MTRIX record.\n" ));
+                }
                 iStart = iVarArrayElementCount(prPRead->vaMatrices);
                 iSerial = p.pdb.mtrix.serial_num;
                 if ( iSerial>iStart ) {
@@ -896,7 +964,7 @@ void
 zPdbConvertNamesAndSequenceNumbers( PDBREADt *prPPdb )
 {
 UNIT            uUnit;
-int             i, iTers;
+int             i;
 STRING          sName;
 RESIDUENAMEt    *rnPName;
 
@@ -971,24 +1039,6 @@ RESIDUENAMEt    *rnPName;
         VPWARN(( "The extra units will be ignored.\n" ));
     }
 
-    if ( GDefaults.iPdbLoadSequential )
-        return;
-        
-                /* Rearrange the sequence numbers to guarantee */
-                /* uniqueness */
-
-    VP0(( "Incrementing residue numbers by %d at each molecule.\n",
-                                                SEQUENCE_NUMBER_STEPS ));
-    VP0(( "(To disable, 'set default PdbLoadSequential true'.)\n" ));
-    iTers = 0;
-    for ( i=0; i<iVarArrayElementCount(prPPdb->vaResidues); i++ ) {
-        PVAI( prPPdb->vaResidues, RESIDUENAMEt, i )->iPdbSequence +=
-                iTers*SEQUENCE_NUMBER_STEPS;
-        if ( PVAI(prPPdb->vaResidues,RESIDUENAMEt,i)->iTerminator 
-                == LASTEND ) {
-            iTers++;
-        }
-    }
 }
 
 
@@ -1007,7 +1057,7 @@ RESIDUENAMEt    *rnPName;
  *      a new chain.
  */
 static UNIT
-zuPdbGetNextUnit( PDBREADt *prPPdb, BOOL *bPStart )
+zuPdbGetNextUnit( PDBREADt *prPPdb, BOOL *bPStart, int iResNum )
 {
 int             iCurUnit, iTerm;
 UNIT            uOrig, uUnit;
@@ -1029,8 +1079,7 @@ RESIDUE         rRes;
                         
     if ( iObjectType(uOrig) != UNITid ) {
         VP0(( "Creating new UNIT for residue: %s sequence: %d\n",
-                PVAI(prPPdb->vaResidues,RESIDUENAMEt,iCurUnit)->sName,
-                prPPdb->iPdbSequence ));
+                PVAI(prPPdb->vaResidues,RESIDUENAMEt,iCurUnit)->sName, iResNum));
         uUnit = (UNIT)oCreate(UNITid);
         rRes = (RESIDUE)oCreate(RESIDUEid);
         ContainerSetName( (CONTAINER)rRes, 
@@ -1174,10 +1223,10 @@ BOOL            bStartChain;
                         /* Get a copy of the next UNIT */
                         /* to read atom records into */
 
-        prPPdb->iPdbSequence = iResNum;
-
-        uNew = zuPdbGetNextUnit( prPPdb, &bStartChain );
+        uNew = zuPdbGetNextUnit( prPPdb, &bStartChain, iResNum );
+        // JMK TODO:  if (iCollectionSize( cContainerContents((OBJEKT)uNew) ) == 1) { -- skip the loop
         iLowest = INT_MAX;
+        rUse = NULL;
         lResidues = lLoop( (OBJEKT)uNew, RESIDUES );
         while ( (rRes = (RESIDUE)oNext(&lResidues)) ) {
             if ( iContainerSequence(rRes) < iLowest ) {
@@ -1193,22 +1242,16 @@ BOOL            bStartChain;
 
         BuildInternalsForContainer( &(uNew->cHeader), 0, ATOMPOSITIONKNOWN );
 
+        ContainerSetNextChildsSequence( prPPdb->uUnit, iResNum );
+        RESIDUENAMEt *rName = PVAI( prPPdb->vaResidues,RESIDUENAMEt,prPPdb->iNextUnit-1 );
+
                 /* If the new UNIT is the first UNIT in a chain then */
                 /* Don't sequence it to the last UNIT, just join them */
 
-        ContainerSetNextChildsSequence( prPPdb->uUnit,
-                PVAI( prPPdb->vaResidues,RESIDUENAMEt,prPPdb->iNextUnit-1 )->iPdbSequence );
         if ( bStartChain ) {
-
-                        /* Define the PDB sequence number */
 
             lResidues = lLoop( (OBJEKT)uNew, RESIDUES );
             rRes = (RESIDUE)oNext(&lResidues);
-/*
-TODO - what if rRes is NULL?
-*/
-            ResidueSetPdbSequence( rRes, *PVAI( prPPdb->vaResidueSeq, int,
-                                                prPPdb->iNextUnit-1 ) );
             UnitJoin( prPPdb->uUnit, uNew );
         } else {
 
@@ -1216,18 +1259,21 @@ TODO - what if rRes is NULL?
                 /* UNITs that is about to be formed */
                 /* Sequence the new UNIT into the PDB UNIT */
 
-                        /* Define the PDB sequence number */
-
             BuildInternalsBetweenUnitsUsingFlags( prPPdb->uUnit, uNew, 0, 0 );
             lResidues = lLoop( (OBJEKT)uNew, RESIDUES );
             rRes = (RESIDUE)oNext(&lResidues);
-            ResidueSetPdbSequence( rRes, *PVAI( prPPdb->vaResidueSeq, int,
-                                                prPPdb->iNextUnit-1 ) );
             UnitSequence( prPPdb->uUnit, uNew );
         }
+
+            /* Define the PDB sequence number */
+
+// TODO - what if rRes is NULL?
+        rRes->iPdbResSeq = rName->iPdbSequence;
+        strcpy( rRes->sChainId,rName->sChainId);
+        rRes->cICode = rName->iCode;
     }
 
-
+// TODO: use pdb element column to determine Element if not defined in Amber lib?
     zPdbDeconvoluteAtomName( prRec.pdb.atom.name, sName, &iElement );
     aAtom = (ATOM)cContainerFindName( (CONTAINER)prPPdb->rRes, ATOMid, sName );
 
@@ -1260,7 +1306,9 @@ TODO - what if rRes is NULL?
         MESSAGE(( "Read atom: %s and found it in the RESIDUE\n",
                         sName ));
     }
-    *PVAI( prPPdb->vaAtoms, ATOM, prRec.pdb.atom.serial_num ) = aAtom;
+    if (prRec.pdb.atom.serial_num >= 0 ) { // Leap-built atoms get -1, ignore them
+        *PVAI( prPPdb->vaAtoms, ATOM, prRec.pdb.atom.serial_num ) = aAtom;
+    }
 
                         /* Define its position */
     VectorDef( &vPos, prRec.pdb.atom.x, prRec.pdb.atom.y, prRec.pdb.atom.z );
@@ -1298,16 +1346,17 @@ ATOM            aA, aB, *aPa;
 int             iPdbSequence, iResNum, iAtoms = 0;
 BOOL            bLastReadPdbRecordWasTer = FALSE;
 BOOL            bNewRes;
-char            cInsertionCode;
+char            cInsertionCode, c2ChainId[2];
 
     VPTRACEENTER(( "zPdbReadAndCreateUnit" ));
-    iPdbSequence = iResNum = -9999;
+    iResNum = -9999; // sequential starting at 1, the rest are copied from PDB file
+    iPdbSequence = -9999;
     cInsertionCode = '-';  /* valid codes are alphabetic or blank */
+    c2ChainId[0]=0;
 
                 /* Set up the PDBREADt structure to read a PDB file */
 
     prPPdb->rRes      = NULL;
-    prPPdb->iPdbSequence = -9999;
     prPPdb->uUnit = (UNIT)oCreate(UNITid);
     ContainerSetName(prPPdb->uUnit, "default_name");  
     prPPdb->iNextUnit = 0;
@@ -1315,6 +1364,7 @@ char            cInsertionCode;
         VPFATALEXIT(( "\tNo atoms!\n" ));
         return;
     }
+    // This array is an atom pointer arr indexed by atomSerial; only used for CONECT lookups
     VarArraySetSize( prPPdb->vaAtoms, prPPdb->iMaxSerialNum );
     aPa = PVAI( prPPdb->vaAtoms, ATOM, 0 );
     for ( i=0; i < prPPdb->iMaxSerialNum; i++, aPa++ ) {
@@ -1333,15 +1383,17 @@ char            cInsertionCode;
                 VPTRACE(( "Process PDB_ATOM or PDB_HETATM record.\n" ));
                 if ( p.pdb.atom.residue.seq_num != iPdbSequence ||
                             strcmp( sResName, p.pdb.atom.residue.name ) ||
+                            memcmp( c2ChainId, p.pdb.atom.residue.chain_id, 2) ||
                             p.pdb.atom.residue.insert_code != cInsertionCode ||
                             bLastReadPdbRecordWasTer ) {
                     VPTRACE(( "Detected a new residue.\n" ));
                     bNewRes = TRUE;
-                    if ( iResNum < 0 )
+                    if ( iResNum < 0 ) // JMK: FIXME - always start at 1!!!
                         iResNum = p.pdb.atom.residue.seq_num;
                     else
                         iResNum++;
                     iPdbSequence = p.pdb.atom.residue.seq_num;
+                    memcpy( c2ChainId, p.pdb.atom.residue.chain_id, 2);
                     strcpy( sResName, p.pdb.atom.residue.name );
                     cInsertionCode = p.pdb.atom.residue.insert_code;
                     bLastReadPdbRecordWasTer = FALSE;
@@ -1508,7 +1560,7 @@ LOOP            lAtoms;
 
                 /* Now combine the contents of the UNITs */
 
-            VP1(( "Building symmetry related monomer.\n" ));
+            VP1(( "Building symmetry related monomer %d.\n",i+1));
             UnitJoin( prPPdb->uUnit, uCopy );
 
         }
@@ -1544,37 +1596,63 @@ zPdbFileBegin( PDBWRITEt *pwPFile, FILE *fOut )
  *      Author: Christian Schafmeister (1991)
  *
  *      Write an ATOM record to the PDB file.
+ *
+ *      rRes argument added to copy ChainId (TODO: should also replace pwPFile->sResidueName)
  */
 void
-zPdbFileWriteAtomRecord( PDBWRITEt *pwPFile, ATOM aAtom )
+zPdbFileWriteAtomRecord( PDBWRITEt *pwPFile, ATOM aAtom, RESIDUE rRes)
 {
 pdb_record      p;
-#ifdef DEBUG
-STRING          sElement;
-#endif
-STRING          sName, sTemp;
+char            *sElement="",*sPName;
+int             iElement;
+STRING          sTemp;
 
     p.pdb.atom.serial_num = pwPFile->iRecordNumber++;
     strcpy( p.pdb.atom.residue.name, pwPFile->sResidueName );
 
-    strcpy( sTemp, sContainerName((CONTAINER)aAtom) );
-    zPdbConvoluteAtomName( aAtom, sTemp, pwPFile->sResidueName, sName );
-    strcpy( p.pdb.atom.name, sName );
+
+    sTemp[0]=' ';
+    sPName = &sTemp[1];
+    strcpy( sPName, sContainerName((CONTAINER)aAtom) );
+    iElement = iAtomElement(aAtom);
+    if (!bElementLegalNumber(iElement)) {
+        iElement = iElementNumberFromAmber(sPName);
+        if (iElement == HELIUM || iElement == HOLMIUM || iElement == HAFNIUM ||  iElement == MERCURY) iElement = HYDROGEN;
+    }
+    if (iElement != NOELEMENT) sElement=GeaElements[iElement].sName;
+
+    // Include leading space in atom name if it is a single letter element symbol *and* the name is not 4 characters
+    if (strlen(sElement)<2 && strlen(sPName) <4) sPName--;
+    strcpy( p.pdb.atom.name, sPName );
     MESSAGE(( "Element: |%s|   pdb_name=|%s|\n", sElement, sName ));
 
-    p.pdb.atom.residue.chain_id = ' ';
-    p.pdb.atom.residue.seq_num = pwPFile->iResidueSeq;
-    p.pdb.atom.residue.insert_code=' ';
+    if (rRes && GDefaults.bPdbKeepChainId) {
+        strncpy(p.pdb.atom.residue.chain_id,rRes->sChainId,2);
+        p.pdb.atom.residue.chain_id[2]=0;
+        p.pdb.atom.residue.seq_num = rRes->iPdbResSeq;
+        p.pdb.atom.residue.insert_code = rRes->cICode;
+    } else {
+        strcpy(p.pdb.atom.residue.chain_id,"  ");
+        p.pdb.atom.residue.seq_num = pwPFile->iResidueSeq;
+        p.pdb.atom.residue.insert_code=' ';
+    }
     p.pdb.atom.alt_loc = ' ';
     p.pdb.atom.x = dVX(&vAtomPosition(aAtom));
     p.pdb.atom.y = dVY(&vAtomPosition(aAtom));
     p.pdb.atom.z = dVZ(&vAtomPosition(aAtom));
     p.pdb.atom.occupancy = 1.0;
+    double chg = dAtomCharge(aAtom);
     if (GDefaults.pdbwritecharges)
-        p.pdb.atom.temp_factor = dAtomCharge(aAtom);
+        p.pdb.atom.temp_factor = chg;
     else
         p.pdb.atom.temp_factor = 0.0;
-    p.pdb.atom.ftnote_num = 0;
+    strcpy(p.pdb.atom.element,sElement);
+    if (floor(chg)==chg && chg != 0.0 && fabs(chg)<10.0) {
+        p.pdb.atom.fcharge[0] = '0' + abs((int)chg);
+        p.pdb.atom.fcharge[1] = chg > 0 ? '+' : '-';
+        p.pdb.atom.fcharge[2] = '\0';
+    } else
+        strcpy(p.pdb.atom.fcharge,"  ");
     p.record_type = PDB_ATOM;
     pdb_write_record( pwPFile->fPdbFile, &p, NULL, 0 );
 
@@ -1598,7 +1676,7 @@ pdb_record      p;
 
     strcpy( p.pdb.ter.residue.name, pwPFile->sResidueName );
 
-    p.pdb.ter.residue.chain_id = ' ';
+    memcpy(p.pdb.ter.residue.chain_id,"  ",2);
     p.pdb.ter.residue.seq_num = pwPFile->iResidueSeq;
     p.pdb.ter.residue.insert_code=' ';
     p.record_type = PDB_TER;
@@ -1624,7 +1702,7 @@ pdb_record      p;
     pdb_write_record( pwPFile->fPdbFile, &p, NULL, 0 );
 }
 
-    
+
 
 
 /*
@@ -1661,32 +1739,44 @@ char            *cPTemp;
         /* The intentional side effect is to truncate long names. */
         pwPFile->sResidueName[ RESIDUE_NAME_LENGTH ] = '\0';
         if ( strlen(cPTemp) > RESIDUE_NAME_LENGTH ) {
-            VPWARN(( " Truncating residue name for PDB format: %s -> %s\n", 
+            VPWARN(( " Truncating residue name for PDB format: %s -> %s\n",
                         sContainerName(cCont), pwPFile->sResidueName ));
         }
     }
 
     if ( iObjectType(cCont) == ATOMid ) {
-        zPdbFileWriteAtomRecord( pwPFile, (ATOM)cCont );
+        zPdbFileWriteAtomRecord( pwPFile, (ATOM)cCont, NULL );
         pwPFile->iResidueSeq++;
     } else if ( iObjectType(cCont) == RESIDUEid ) {
         RESIDUE rRes = (RESIDUE) cCont;
-        pwPFile->iResidueSeq = rRes->iTemp;
-        if ( pwPFile->iResidueSeq == 0 )
-                pwPFile->iResidueSeq = 1;
-        lContents = lLoop( (OBJEKT)cCont, DIRECTCONTENTSBYSEQNUM );
-        while ( (aAtom = (ATOM)oNext(&lContents)) ) {
-            zPdbFileWriteAtomRecord( pwPFile, aAtom );
+        if (GDefaults.bPdbKeepChainId) {
+            lContents = lLoop( (OBJEKT)cCont, DIRECTCONTENTSBYSEQNUM );
+            while ( (aAtom = (ATOM)oNext(&lContents)) ) {
+                zPdbFileWriteAtomRecord( pwPFile, aAtom, rRes);
+            }
+        } else {
+            /* Force left-justification for older format output */
+            /* TODO right-justify regardless of ChainId option - JMK */
+            if (strlen(pwPFile->sResidueName) < 3) {
+                strcpy(&pwPFile->sResidueName[2]," ");
+                if (pwPFile->sResidueName[1]==0) pwPFile->sResidueName[1]=' ';
+            }
+            pwPFile->iResidueSeq = rRes->iTemp;
+            if ( pwPFile->iResidueSeq == 0 )
+                    pwPFile->iResidueSeq = 1;
+            lContents = lLoop( (OBJEKT)cCont, DIRECTCONTENTSBYSEQNUM );
+            while ( (aAtom = (ATOM)oNext(&lContents)) ) {
+                zPdbFileWriteAtomRecord( pwPFile, aAtom, NULL);
+            }
         }
     } else if ( iObjectType(cCont) == MOLECULEid ) {
         lContents = lLoop( (OBJEKT)cCont, ATOMS );
         while ( (aAtom = (ATOM)oNext(&lContents)) ) {
-            zPdbFileWriteAtomRecord( pwPFile, aAtom );
+            zPdbFileWriteAtomRecord( pwPFile, aAtom, NULL );
         }
         pwPFile->iResidueSeq++;
     }
 }
-
 
 /*
 ==========================================================================
@@ -1722,7 +1812,6 @@ int             i;
     prPdb.fPdbFile = fPdb;
     prPdb.vaUnits = vaUnits;
     prPdb.vaResidues = vaVarArrayCreate( sizeof(RESIDUENAMEt) );
-    prPdb.vaResidueSeq = vaVarArrayCreate( sizeof(int) );
     prPdb.vaMatrices = vaVarArrayCreate( sizeof(PDBMATRIXt) );
     prPdb.vaAtoms    = vaVarArrayCreate( sizeof(ATOM) );
 
@@ -1772,23 +1861,22 @@ int             i;
                 /* Clean up */
 
     VarArrayDestroy( &(prPdb.vaResidues) );
-    VarArrayDestroy( &(prPdb.vaResidueSeq) );
     VarArrayDestroy( &(prPdb.vaMatrices) );
     VarArrayDestroy( &(prPdb.vaAtoms) );
 
     /*
-     *  If (vaUnits) is not defined then we created 
+     *  If (vaUnits) is not defined then we created
      *  (prPdb.vaUnits) and we should destroy it
      */
 
     if ( vaUnits == NULL )
         VarArrayDestroy( &(prPdb.vaUnits) );
- 
+
     VPTRACEEXIT (( "uPdbRead" ));
     return ( prPdb.uUnit );
 }
 
-
+// Search for a bond to the next residue. Return 1 if none found.
 static int
 writeTER( RESIDUE rRes, int iRes )
 {
@@ -1798,7 +1886,7 @@ writeTER( RESIDUE rRes, int iRes )
         if (aAtom == NULL)
                 return(1);
 
-        for (i = 0; i < iAtomCoordination(aAtom); i++) { 
+        for (i = 0; i < iAtomCoordination(aAtom); i++) {
                 ATOM    aChildAtom = aAtomBondedNeighbor(aAtom,i);
                 int     iCRes = aChildAtom->iSeenId;
                 if (iCRes == iNextRes)
@@ -1823,6 +1911,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
 
         /*
         **  mark atoms w/ res numbers
+        **  used for TER detection (atom->iSeenId), and for default resId (res->iTemp)
         */
         srPResidue = PVAI(uUnit->vaResidues, SAVERESIDUEt, 0);
         for (i = 0; i < iResidueCount; srPResidue++, i++) {
@@ -1863,7 +1952,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
 
                 p.record_type = PDB_REMARK;
                 p.pdb.remark.num = 1;
-                sprintf( p.pdb.remark.text, 
+                sprintf( p.pdb.remark.text,
                                 "LEAP: TEMPERATURE FACTORS ARE CHARGES" );
                 pdb_write_record( pwFile.fPdbFile, &p, NULL, 0 );
         }
@@ -1915,9 +2004,9 @@ BOOL            bOk;
         else if ( PSdNameMap == &SdResidueNameMap ) {
             bOk = zbPdbBuildResidueNameMapEntry( lEntry, iMap, sKey, sData );
         } else {
-            VPWARN(( "Programming error; skipping map %d %s %s\n" , 
+            VPWARN(( "Programming error; skipping map %d %s %s\n" ,
                                         iMap, sKey, sData ));
-            VP0(( " map is %d, Res %d Atom %d\n", 
+            VP0(( " map is %d, Res %d Atom %d\n",
                                 PSdNameMap, &SdResidueNameMap, &SdAtomNameMap));
             bOk = FALSE;
         }

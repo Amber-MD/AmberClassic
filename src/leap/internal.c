@@ -561,7 +561,7 @@ BOOL		bFound;
 			sContainerFullDescriptor((CONTAINER) a2, s2 ),
 			sContainerFullDescriptor((CONTAINER) a3, s3 ),
 			sContainerFullDescriptor((CONTAINER) a4, s4 ) ));
-	    DFATAL(( "Bad internal coordinate: iBond = %lX, iAngle = %lX\n",
+	    DFATAL(( "Bad internal coordinate: iBond = %p, iAngle = %p\n",
 			*iPBond, *iPAngle ));
 	}
     }

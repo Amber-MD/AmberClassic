@@ -1,0 +1,147 @@
+
+========================================================================
+  Space group : R 3 2:H  (#155)
+  Supercell   : 1 × 1 × 1  (no supercell expansion)
+  Operators   : 18
+========================================================================
+
+  Output structure factor formula:
+
+    F_out(H,K,L) = Σ_i  phase_i(H,K,L)  ×  F_P1(h_i, k_i, l_i)
+
+  where:
+    (H'_i, K'_i, L'_i) = R_direct_i^T · (H, K, L)  [transposed rotation]
+    (h_i, k_i, l_i)    = (H'_i, K'_i, L'_i)
+    phase_i            = exp(2πi · H·t_i)  [H·t_i = H·ta + K·tb + L·tc]
+
+  Operator 1: x,y,z
+    Re-indexed (H',K',L') = H, K, L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 2: -y,x-y,z
+    Re-indexed (H',K',L') = K, -H-K, L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 3: -x+y,-x,z
+    Re-indexed (H',K',L') = -H-K, H, L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 4: y,x,-z
+    Re-indexed (H',K',L') = K, H, -L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 5: x-y,-y,-z
+    Re-indexed (H',K',L') = H, -H-K, -L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 6: -x,-x+y,-z
+    Re-indexed (H',K',L') = -H-K, K, -L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 7: x+2/3,y+1/3,z+1/3
+    Re-indexed (H',K',L') = H, K, L
+    Translation t          = (2/3, 1/3, 1/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((2/3)·H + (1/3)·K + (1/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 8: -y+2/3,x-y+1/3,z+1/3
+    Re-indexed (H',K',L') = K, -H-K, L
+    Translation t          = (2/3, 1/3, 1/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((2/3)·H + (1/3)·K + (1/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 9: -x+y+2/3,-x+1/3,z+1/3
+    Re-indexed (H',K',L') = -H-K, H, L
+    Translation t          = (2/3, 1/3, 1/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((2/3)·H + (1/3)·K + (1/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 10: y+2/3,x+1/3,-z+1/3
+    Re-indexed (H',K',L') = K, H, -L
+    Translation t          = (2/3, 1/3, 1/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((2/3)·H + (1/3)·K + (1/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 11: x-y+2/3,-y+1/3,-z+1/3
+    Re-indexed (H',K',L') = H, -H-K, -L
+    Translation t          = (2/3, 1/3, 1/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((2/3)·H + (1/3)·K + (1/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 12: -x+2/3,-x+y+1/3,-z+1/3
+    Re-indexed (H',K',L') = -H-K, K, -L
+    Translation t          = (2/3, 1/3, 1/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((2/3)·H + (1/3)·K + (1/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 13: x+1/3,y+2/3,z+2/3
+    Re-indexed (H',K',L') = H, K, L
+    Translation t          = (1/3, 2/3, 2/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((1/3)·H + (2/3)·K + (2/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 14: -y+1/3,x-y+2/3,z+2/3
+    Re-indexed (H',K',L') = K, -H-K, L
+    Translation t          = (1/3, 2/3, 2/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((1/3)·H + (2/3)·K + (2/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 15: -x+y+1/3,-x+2/3,z+2/3
+    Re-indexed (H',K',L') = -H-K, H, L
+    Translation t          = (1/3, 2/3, 2/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((1/3)·H + (2/3)·K + (2/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 16: y+1/3,x+2/3,-z+2/3
+    Re-indexed (H',K',L') = K, H, -L
+    Translation t          = (1/3, 2/3, 2/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((1/3)·H + (2/3)·K + (2/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 17: x-y+1/3,-y+2/3,-z+2/3
+    Re-indexed (H',K',L') = H, -H-K, -L
+    Translation t          = (1/3, 2/3, 2/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((1/3)·H + (2/3)·K + (2/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  Operator 18: -x+1/3,-x+y+2/3,-z+2/3
+    Re-indexed (H',K',L') = -H-K, K, -L
+    Translation t          = (1/3, 2/3, 2/3)
+    Phase factor           = (general)
+    Symbolic exponent      = exp(2πi·((1/3)·H + (2/3)·K + (2/3)·L))
+                             (phase varies continuously; evaluate per HKL)
+
+  ----------------------------------------------------------------------
+
+  NOTES:
+  • R_direct_i^T is the TRANSPOSE of the direct-space rotation matrix.
+    This differs from gemmi's apply_to_hkl(), which uses the
+    reciprocal-space (non-transposed) form.
+  • If the P1 MTZ lacks a required index, its Friedel mate is used:
+    F_P1(-h,-k,-l) = conj(F_P1(h,k,l))
+  • gemmi stores phase_shift = -2π H·t, so the code uses
+    exp(-i · op.phase_shift([H,K,L])) to obtain exp(+2πi H·t).
+

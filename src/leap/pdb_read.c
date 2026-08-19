@@ -5,6 +5,7 @@
 /* LINTLIBRARY */
 
 #include        "basics.h"
+#include        "defaults.h"
 #include        "pdb_int.h"
 
 /*
@@ -218,26 +219,28 @@ pdb_read_record(FILE *f)
         case PDB_SIGATM:
         {
 /*
-ATOM  41150  H1  WAT  8081      21.760   0.196  43.791  1.00  0.00
-ATOM  51150  H1  WAT  10581 
-*/
-                int atom_overflow = 0, residue_overflow = 0;
+Leap uses extended integers atomSerial6 and resId5 (line 2)
+Update: when hybrid36 is off, old behavior is retained, but also truncated after 2nd overflow
+hybrid36 converts to base 36 after 9999 or 99999 (line 3, 4)
+Some programs include the column preceding chainId to store 2-char chainId (line 5)
 
-                if (isdigit(buffer[11]))
-                        atom_overflow = 1;
-                if (isdigit(buffer[26]))
-                        residue_overflow = 1;
+ATOM  41150  H1  WAT  8081      21.760   0.196  43.791  1.00  0.00
+ATOM  511508 H1  WAT  10581 
+ATOM  A1ABP  C   TYR A  94     266.258 217.733 347.579  1.00 34.72           C
+HETATMA4CPY MG    MG 1A60P     323.184 175.418 297.328  1.00 30.00          MG
+ATOM  33998  CG  LYSag 338     210.492 325.105 205.495  1.00 43.06           C
+*/
+                /* Default is hybrid36, which by design supports all standard integers */
+                int atom_overflow = isdigit(buffer[11]);
+                int residue_overflow = isdigit(buffer[26]);
+                r.pdb.atom.leap_expanded = atom_overflow || residue_overflow;
                 if (atom_overflow  &&  !residue_overflow) {
-                        fmt =
-          "%6 %6d%4s%c%3s %c%4d%c   %8f%8f%8f%6f%6f %3d";
+                        fmt = "%6 %6d%4s%c%3s%2c%4d%c   %8f%8f%8f%6f%6f          %2s%2s";
                 } else if (!atom_overflow  &&  residue_overflow) {
-                        fmt =
-                  "%6 %5d %4s%c%3s %c%5d%c  %8f%8f%8f%6f%6f %3d";
+                        fmt = "%6 %5d %4s%c%3s%2c%5d%c  %8f%8f%8f%6f%6f          %2s%2s";
                 } else if (atom_overflow  &&  residue_overflow) {
-                        fmt =
-                  "%6 %6d%4s%c%3s %c%5d%c  %8f%8f%8f%6f%6f %3d";
+                        fmt = "%6 %6d%4s%c%3s%2c%5d%c  %8f%8f%8f%6f%6f          %2s%2s";
                 }
-                
                 pdb_sscanf(buffer, fmt, &r.pdb.atom.serial_num,
                         r.pdb.atom.name, &r.pdb.atom.alt_loc,
                         r.pdb.atom.residue.name,
@@ -246,7 +249,7 @@ ATOM  51150  H1  WAT  10581
                         &r.pdb.atom.residue.insert_code,
                         &r.pdb.atom.x, &r.pdb.atom.y, &r.pdb.atom.z,
                         &r.pdb.atom.occupancy, &r.pdb.atom.temp_factor,
-                        &r.pdb.atom.ftnote_num);
+                        r.pdb.atom.element, r.pdb.atom.fcharge);
                 break;
         }
         case PDB_AUTHOR:
@@ -435,12 +438,23 @@ ATOM  51150  H1  WAT  10581
                 break;
 
         case PDB_TER:
+        {
+                /* Default is hybrid36, which by design supports all standard integers */
+                int atom_overflow = isdigit(buffer[11]);
+                int residue_overflow = isdigit(buffer[26]);
+                if (atom_overflow  &&  !residue_overflow) {
+                        fmt = "%6 %6h%5 %3s%2c%4d%c";
+                } else if (!atom_overflow  &&  residue_overflow) {
+                        fmt = "%6 %5h%6 %3s%2c%5d%c";
+                } else if (atom_overflow  &&  residue_overflow) {
+                        fmt = "%6 %6h%5 %3s%2c%5d%c";
+                }
                 pdb_sscanf(buffer, fmt, &r.pdb.ter.serial_num,
                         r.pdb.ter.residue.name, &r.pdb.ter.residue.chain_id,
                         &r.pdb.ter.residue.seq_num,
                         &r.pdb.ter.residue.insert_code);
                 break;
-
+        }
         case PDB_TURN:
                 pdb_sscanf(buffer, fmt, &r.pdb.turn.seq_num, r.pdb.turn.id,
                         r.pdb.turn.residues[0].name,
@@ -473,4 +487,3 @@ ATOM  51150  H1  WAT  10581
         
         return r;
 }
-

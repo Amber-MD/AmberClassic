@@ -1,4 +1,3 @@
-#define MAXRESID 50000
 
 typedef struct {
 	double	dDSearchDistance;
@@ -8,7 +7,7 @@ typedef struct {
 	int	iDESPConstant;
 	int	pdbwritecharges;
 	int nocenter;
-  int reorder_residues;
+	int reorder_residues;
 	double	dGridSpace;
 	double	dShellExtent;
 	int	iDielectricFlag;
@@ -18,11 +17,10 @@ typedef struct {
 	int 	iCharmm; 
 	int	iResidueImpropers;
 	int	iDeleteExtraPointAngles;
-	int	iPdbLoadSequential;
-	int	iHaveResIds;
-	int iUseResIds;
-	int iFlexibleWater;
-	char	sResidueId[MAXRESID][7];
+	int     bPdbHybrid36;
+	int     bPdbKeepChainId;
+	int     iPdbReadBioMT;
+	int     iFlexibleWater;
 	double  dDipoleDampFactor;
 	double  dSceeScaleFactor;
 	double  dScnbScaleFactor;
@@ -31,5 +29,5 @@ typedef struct {
 	int     iIPOLset;    /* indicate IPOL set in frcmod/parm.dat */
 } defaultstruct ;
 
-extern defaultstruct GDefaults; 
+extern defaultstruct GDefaults;
 

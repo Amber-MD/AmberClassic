@@ -92,8 +92,6 @@
 #define BONDTEMPORARY   0x00000010
 
 
-#define ATOM_SEGID_LEN  5               /* 4 char + \0 */
-typedef char            SEGIDt[ATOM_SEGID_LEN];
 typedef char            BONDt;
 typedef char            ATOMTYPEt[ATOMTYPELEN];
 
@@ -122,7 +120,6 @@ typedef struct  ATOMSTRUCT {
 	double                  daC4Pairwise[MAXC4Pairwise]; // New
         double                  dTemp;
         GENP                    PTemp;
-        SEGIDt                  siSegid;
                 /* Spanning tree stuff */
         struct ATOMSTRUCT       *aNextSpan;
         struct ATOMSTRUCT       *aBackSpan;
@@ -214,7 +211,7 @@ typedef ATOMt   *ATOM;
                                         VectorCopy(vv, vAtomPosition((ATOM)(a))); CDU(a);}
 #define AtomSetPosition(a,vv)   (((ATOM)(a))->fFlags|=ATOMPOSITIONKNOWN,\
                                         vAtomPosition((ATOM)(a)) = vv, CDU(a))
-#define AtomSetPositionNoFlags(a,vv)    {VectorCopy(vv, vAtomPosition((ATOM)(a))); CDU(a));}
+#define AtomSetPositionNoFlags(a,vv)    {VectorCopy(vv, vAtomPosition((ATOM)(a))); CDU(a);}
 #define vAtomPosition(a)                (((ATOM)(a))->vPosition)
 #define AtomDupVelocity(a,vv)           {VectorCopy(vv, vAtomVelocity((ATOM)(a))); CDU(a);}
 #define AtomSetVelocity(a,vv)           (vAtomVelocity((ATOM)(a)) = vv, CDU(a))

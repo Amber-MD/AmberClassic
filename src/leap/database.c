@@ -587,7 +587,13 @@ size_t             mylength;
     
         /* Find the first QUOTE character */
 
-    while ( (*sCur) != '"' ) sCur++;
+    while ( (*sCur) != '"' ) {
+        sCur++;
+        if (*sCur==0) {
+            *sLine=0;
+            return sLine;
+        }
+    }
     sCur++;
 
         /* Copy the following characters to sStr */
@@ -911,12 +917,15 @@ ENTRY           eEntry;
 TODO - add string length protection
      */
 
+    if (strlen(db->sFileName)+10 > sizeof(sNewName)) fNew = NULL;
+    else {
 #ifdef WIN32
-    sprintf( sNewName, "%s.%d", db->sFileName, GetCurrentProcessId() );
+        sprintf( sNewName, "%s.%d", db->sFileName, GetCurrentProcessId() );
 #else
-    sprintf( sNewName, "%s.%d", db->sFileName, getpid() );
+        sprintf( sNewName, "%s.%d", db->sFileName, getpid() );
 #endif
-    fNew = FOPENCOMPLAIN( sNewName, "w" );
+        fNew = FOPENCOMPLAIN( sNewName, "w" );
+    }
     if ( fNew == NULL ) {
 	ReportError( db, "Could not open scratch file" );
 	return;

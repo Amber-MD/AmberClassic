@@ -530,9 +530,6 @@ UNIT    m;
     UnitSetUseSolventCap( m, FALSE );
     m->dAtomGroups = dDictionaryCreate();
 
-    m->iMaxPdbSeq = 0;
-    m->bSeqCacheValid = TRUE;
-    
     return(m);
 }
 
@@ -868,65 +865,6 @@ OBJEKT  cCont;
 }
 #endif
 
-/*      SSchott: Inclusion of Claude suggested functions to Hash maximum PDB
- *      seq number and speed up big system parametrization
- *
- *      iUnitGetMaxPdbSeq
- *
- *      Get the maximum PDB sequence number in the unit.
- *      Uses cached value if valid, otherwise recomputes and caches.
- *
- *      This optimization eliminates O(n) scans on every UnitJoin,
- *      reducing UnitJoin complexity from O(n²) to O(n).
- */
-static int
-iUnitGetMaxPdbSeq( UNIT uUnit )
-{
-LOOP        lContents;
-RESIDUE     rRes;
-int         iMaxSeq;
-    
-    /* Return cached value if still valid */
-    if ( uUnit->bSeqCacheValid ) {
-        return uUnit->iMaxPdbSeq;
-    }
-    
-    /* Recompute max sequence number */
-    iMaxSeq = 0;
-    lContents = lLoop( (OBJEKT)uUnit, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lContents)) ) {
-        if ( iMaxSeq < iResiduePdbSequence(rRes) )
-            iMaxSeq = iResiduePdbSequence(rRes);
-    }
-    
-    /* Cache the result */
-    uUnit->iMaxPdbSeq = iMaxSeq;
-    uUnit->bSeqCacheValid = TRUE;
-    
-    return iMaxSeq;
-}
-
-/*
- *      UnitUpdateMaxPdbSeq
- *
- *      Update the cached max PDB sequence if we know we just added
- *      a residue with a specific sequence number.
- *      This avoids invalidating the cache unnecessarily.
- */
-static void
-UnitUpdateMaxPdbSeq( UNIT uUnit, int iNewSeq )
-{
-    if ( !uUnit->bSeqCacheValid ) {
-        /* Cache invalid, will be recomputed when needed */
-        return;
-    }
-    
-    if ( iNewSeq > uUnit->iMaxPdbSeq ) {
-        uUnit->iMaxPdbSeq = iNewSeq;
-    }
-}
-
-
 /*
  *      UnitJoinTailHead
  *
@@ -945,7 +883,6 @@ LOOP            lContents;
 OBJEKT          oObj;
 ATOM            aA, aB, aNext;
 RESIDUE         rRes;
-int             iPdbSeq;
 
     if ( !bUnitTailUsed(uA) ) { 
         VPWARN(( "UNIT (%s) does not have a tail atom.\n",
@@ -962,8 +899,6 @@ int             iPdbSeq;
     if ( !bUnitTailUsed(uB) ) aNext = NULL;
     else aNext = aUnitTail(uB);
 
-    /* OPTIMIZATION: Use cached max sequence instead of O(n) scan */
-    iPdbSeq = iUnitGetMaxPdbSeq( uA );
                 /* Remove all of the objects from uB and put them in uA */
                 /* This COMPLETELY empties the second UNIT, making it */
                 /* have NULL connect atoms */
@@ -973,17 +908,11 @@ int             iPdbSeq;
         REF( oObj );    /* bContainerRemove() does a DEREF */
         bContainerRemove( (CONTAINER)uB, oObj );
 
-                /* If the object being added is a RESIDUE then update */
-                /* it's PDB sequence number */
+                /* If the object being added is a RESIDUE then set */
+                /* default PDB sequence number to the Container sequence number */
+        if ( iObjectType(oObj) == RESIDUEid )
+            ResidueSetPdbSequence( oObj,  iContainerNextChildsSequence(uA));
 
-        if ( iObjectType(oObj) == RESIDUEid ) {
-            iPdbSeq++;
-            ResidueSetPdbSequence( oObj, iPdbSeq );
-
-            /* OPTIMIZATION: Update cache instead of invalidating */
-            UnitUpdateMaxPdbSeq( uA, iPdbSeq );
-
-        }
         ContainerAdd( (CONTAINER) uA, oObj );
         DEREF( oObj );  /* ContainerAdd() does a REF */
     }
@@ -1019,13 +948,6 @@ LOOP            lContents;
 OBJEKT          oObj;
 ATOM            aB;
 RESIDUE         rRes;
-int             iPdbSeq;
-
-    /* find max res seq of 1st unit */
-
-    /* OPTIMIZATION: Use cached max sequence instead of O(n) scan */
-    /* This changes UnitJoin from O(n²) to O(n) for sequential joins */
-    iPdbSeq = iUnitGetMaxPdbSeq( uA );
 
     aB = aUnitTail(uB);
 
@@ -1036,17 +958,11 @@ int             iPdbSeq;
         REF( oObj );    /* bContainerRemove() does a DEREF */
         bContainerRemove( (CONTAINER)uB, oObj );
 
-                /* If the object being added is a RESIDUE then update */
-                /* its PDB sequence number */
+                /* If the object being added is a RESIDUE then set */
+                /* default PDB sequence number to the Container sequence number */
+        if ( iObjectType(oObj) == RESIDUEid )
+            ResidueSetPdbSequence( oObj,  iContainerNextChildsSequence(uA));
 
-        if ( iObjectType(oObj) == RESIDUEid ) {
-            iPdbSeq++;
-            ResidueSetPdbSequence( oObj, iPdbSeq );
-            
-            /* OPTIMIZATION: Update cache instead of invalidating */
-            UnitUpdateMaxPdbSeq( uA, iPdbSeq );
-
-        }
         ContainerAdd( (CONTAINER) uA, oObj );
         DEREF( oObj );  /* ContainerAdd() does a REF */
     }
@@ -1173,7 +1089,7 @@ DONE:
  */
 void
 UnitSaveAmberParmFile( UNIT uUnit, FILE *fOut, char *crdName, 
-        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[4][8], char sB[4][8], double daC4Type[8], int iC4count ) //NewT
+        PARMLIB plParms, BOOL bPolar, BOOL bPert, BOOL bNetcdf, char sA[8][16], char sB[8][16], double daC4Type[16], int iC4count ) //NewT
 {
         BOOL            bGeneratedParameters;
         // VP0(("what saveparm returns before buildtable%d\n", iVarArrayElementCount(uUnit->vaAtoms))); //NewTdebug

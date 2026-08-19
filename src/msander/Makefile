@@ -36,7 +36,7 @@ MMOBJ = \
     lmodC.o lmod.o locmem.o matinv.o mbar.o \
     mdfil.o mdread.o md_scheme.o mdwrit.o memory_module.o \
     mexit.o minrit.o molecule.o mtmdcall.o multisander.o \
-    multitmd.o music_module.o new_time.o nmlsrc.o nmrcal.o \
+    multitmd.o new_time.o nmlsrc.o nmrcal.o \
     nmr.o nonbond_list.o parallel.o parms.o pcshift.o \
     pearsn.o printe.o quench.o rand2.o \
     random.o rattle.o rdparm.o relax_mat.o \
@@ -59,7 +59,7 @@ LESOBJ= \
     les.o linear_response.o lmodC.o lmod.LES.o locmem.LES.o \
     matinv.o mbar.o mdfil.LES.o mdread.LES.o md_scheme.LES.o \
     mdwrit.LES.o memory_module.o mexit.o minrit.LES.o molecule.o \
-    mtmdcall.o multisander.LES.o multitmd.o music_module.o new_time.o \
+    mtmdcall.o multisander.LES.o multitmd.o new_time.o \
     nmlsrc.o nmrcal.o nmr.LES.o nonbond_list.LES.o parallel.LES.o \
     parms.o pcshift.o pearsn.o printe.o \
     quench.o rand2.o random.o \

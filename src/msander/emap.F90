@@ -2165,11 +2165,16 @@ subroutine emapforce(natom,enemap,amass,x,f)
       INTEGER IERR
       _REAL_ TEMP1(10),TEMP2(10)
 
-      nsta = iparpt(mytaskid) + 1
-      nend = iparpt(mytaskid+1)
-#else
+   if ( mpi_orig ) then
       nsta = 1
       nend = natom
+   else
+      nsta = iparpt(mytaskid) + 1
+      nend = iparpt(mytaskid+1)
+   end if
+#else
+   nsta = 1
+   nend = natom
 #endif
       mapobj=emaps(rigobj%mapid)
       MNX=MAPOBJ%MX
@@ -2310,11 +2315,16 @@ subroutine emapforce(natom,enemap,amass,x,f)
 #endif
 !
 #ifdef MPI
-      nsta = iparpt(mytaskid) + 1
-      nend = iparpt(mytaskid+1)
-#else
+   if ( mpi_orig ) then
       nsta = 1
       nend = natom
+   else
+      nsta = iparpt(mytaskid) + 1
+      nend = iparpt(mytaskid+1)
+   end if
+#else
+   nsta = 1
+   nend = natom
 #endif
       mapobj=emaps(rigobj%mapid)
       MNX=MAPOBJ%MX

@@ -290,11 +290,12 @@ _REAL_, dimension(:), allocatable, private :: xtemp, ftemp
 ! stagid       - current stage of this replica
 ! myscalsg     - scaling factor for guiding properties after exchange. (in sgld
 !                module)
+! tempsgtable()  - Store sorted list of guiding temperature.
 ! sgfttable()  - Store sorted list of replica self-guiding momentum factors.
 ! sgfftable()   - Store sorted list of replica self-guiding force factors.
 ! psgldgtable()   - Store sorted list of replica self-guiding effective force factors.
 integer, save :: stagid
-_REAL_, allocatable, save :: sgfttable(:),sgfftable(:),psgldgtable(:)
+_REAL_, allocatable, save :: tempsgtable(:),sgfttable(:),sgfftable(:),psgldgtable(:)
 ! REMD RNG
 type(rand_gen_state), save :: remd_gen
 
@@ -329,7 +330,7 @@ end subroutine setup_pv_correction
 subroutine remd1d_setup(numexchg, hybridgb, numwatkeep, temp0, &
                         mxvar, natom, ig, solvph, solve, stagid)
 
-   use sgld, only : isgld, sgfti, sgffi, psgldg, sorttempsg, tempsglookup
+   use sgld, only : isgld, tempsg, sgfti, sgffi, psgldg, sorttempsg, tempsglookup
 
 implicit none
 #  include "parallel.h"
@@ -423,6 +424,12 @@ implicit none
    ! allocate memory for self-guiding temperature table: tempsgtable
    if (isgld > 0) then
       allocate(sgfttable(numreps), sgfftable(numreps), psgldgtable(numreps), stat=ierror)
+      REQUIRE(ierror==0)
+   end if
+
+   ! allocate memory for self-guiding temperature table: tempsgtable 
+   if (isgld > 0) then
+      allocate(tempsgtable(numreps), sgfttable(numreps), sgfftable(numreps), psgldgtable(numreps), stat=ierror)
       REQUIRE(ierror==0)
    end if
 
@@ -543,6 +550,11 @@ implicit none
 
          !  RXSGLD parameters
          if (isgld > 0) then
+           ! build RXSGLD momentum guiding temperature table
+            call mpi_allgather(tempsg, 1, mpi_double_precision, &
+                               tempsgtable, 1, mpi_double_precision, &
+                               remd_comm, ierror)
+
             ! build RXSGLD momentum guiding temperature table
             call mpi_allgather(sgfti, 1, mpi_double_precision, &
                                sgfttable, 1, mpi_double_precision, &
@@ -560,11 +572,10 @@ implicit none
                                remd_comm, ierror)
 
            ! Sort temperatures
-           call sorttempsg(numreps, statetable, psgldgtable, sgfftable)
+           call sorttempsg(numreps, statetable, tempsgtable, sgfttable, sgfftable, psgldgtable)
            ! Determine this replca's ID
            if (stagid == 0) then
-             stagid = tempsglookup(numreps, temp0, &
-               sgfti, sgffi, statetable, sgfttable, sgfftable)
+             stagid = tempsglookup(numreps, tempsg,  tempsgtable)
            else
              sgfti = sgfttable(stagid)
              sgffi   = sgfftable(stagid)
@@ -1352,7 +1363,7 @@ subroutine subrem(rem_dim)
 
    use constants, only : TWO
 
-   use sgld, only : isgld, tsgset, sgfti, sgffi, psgldg, epotlf, epotllf, &
+   use sgld, only : isgld, tsgset, tempsg, sgfti, sgffi, psgldg, epotlf, epotllf, &
                      templf,myscalsg, sgld_exchg, &
                     tempsglookup, stagidlookup
 
@@ -1654,8 +1665,7 @@ subroutine subrem(rem_dim)
             sgffi=sgfftable(stagid)
             psgldg=psgldgtable(stagid)
             tsgset=o_temp0
-            o_stagid = tempsglookup(remd_size, tsgset, sgfti, sgffi, &
-                                    statetable, sgfttable, sgfftable)
+            o_stagid = tempsglookup(remd_size, tempsg, tempsgtable)
             if(stagid /= o_stagid) &
                write(6,*) "Problem in exchange ID!", stagid, o_stagid
          end if

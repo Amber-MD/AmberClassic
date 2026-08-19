@@ -1,0 +1,105 @@
+Example for crambin, pdb 9ewk.  This has a set of alternates in the
+deposited structure, (unlike the 4tut example).
+
+Basic setup:
+
+UnitCell -p ../9ewk.pdb -o 9ewk_1uc.pdb
+PropPDB -p 9ewk_1uc.pdb -o 9ewk_6uc.pdb -ix 3 -iy 2 -iz 1
+./set_chainID 9ewk_6uc.pdb
+make_sslinks > sslinks
+./select_alts 1 9ewk_6uc.pdb > alt4.pdb
+
+./run_alt_tleap  alt4
+
+--------------------------------------------------------------------------
+You should now be able to run cycles:
+
+./run_cycle  0   (later 1,2,...)
+
+A sample output from the first cycle is in alt4_001.min1.o.  Note that the
+Rfactors start pretty high, but soon decrease dramatically.  Here is a
+sample log file of results I got:
+
+run_cycle  0  (200 steps PRCG)
+ EAMBER  =   -27501.0011
+ Exray   =   118809.1720  Rwork   =        0.1502  Rfree      =        0.1523
+Start R-work = 0.1674, R-free = 0.1728
+Final R-work = 0.1492, R-free = 0.1584   molp:  0.51, 0.74  (clash, overall)
+Expected energy for ideal structure with normal dist of errors: 98.29 +/- 6.50
+Overall geometry energy:                                        89.41
+
+Note that the B-factors were optimized using the full P1 reflection file.
+
+run_cycle  1  (250 steps PRCG)
+ EAMBER  =   -27608.7272
+ Exray   =   109916.6333  Rwork   =        0.1194  Rfree      =        0.1246
+Start R-work = 0.1396, R-free = 0.1450
+Final R-work = 0.1293, R-free = 0.1374    molp:  0.13, 0.61; hgv = 81.1
+
+run_cycle  2  (same)
+ EAMBER  =   -27540.9092
+ Exray   =   104628.6955  Rwork   =        0.1041  Rfree      =        0.1094
+Start R-work = 0.1318, R-free = 0.1388
+Final R-work = 0.1216, R-free = 0.1278    molp:  0.13, 0.61;  hgv = 94
+
+run_cycle  3  (same)
+ EAMBER  =   -27434.9563
+ Exray   =   100793.2515  Rwork   =        0.0948  Rfree      =        0.0998
+Start R-work = 0.1257, R-free = 0.1295
+Final R-work = 0.1171, R-free = 0.1216   molp: 0.13, 0.65  hgv= 101
+
+run_cycle  4 (500 steps PRCG, lower xray_weight to 0.5)
+ EAMBER  =   -27728.2112
+ Exray   =    61523.9008  Rwork   =        0.0898  Rfree      =        0.0949
+Start R-work = 0.1285, R-free = 0.1312
+Final R-work = 0.1116, R-free = 0.1155   molp:  0.25, 0.72; hgv = 100
+
+run_cycle  5  (15000 sa, weight from 0.2 to 0.8)
+ Exray  =     95478.4205  Rwork   =         0.0817  Rfree      =         0.0889
+ EAMBER (non-restraint)  =    -27930.0447
+Start R-work = 0.1576, R-free = 0.1603
+Final R-work = 0.1179, R-free = 0.1204   molp:  0.13, 0.65; hgv = 101
+
+run_cycle  6  (same)
+ Exray  =     95173.5878  Rwork   =         0.0805  Rfree      =         0.0858
+ EAMBER (non-restraint)  =    -27973.7286
+Start R-work = 0.1641, R-free = 0.1682
+Final R-work = 0.1248, R-free = 0.1301    molp: 0.25, 0.77;  hgv = 113.
+
+Redo, using using original 9ewk.mtz file, changing unit cell to original:
+Start R-work = 0.0812, R-free = 0.0868
+Final R-work = 0.0768, R-free = 0.0837    molp: 0.0, 0.66;  hgv = 94.
+     N.B.: can't reproduce exactly how I got to the molp, hgv numbers here.
+
+run_cycle  7  (500 steps PRCG, xray_weight=0.5)
+ EAMBER  =   -28142.2250
+ Exray   =    56602.4364  Rwork   =        0.0722  Rfree      =        0.0786
+Start R-work = 0.0729, R-free = 0.0797
+Final R-work = 0.0712, R-free = 0.0789   molp:  0.25, 0.72,  hgv = 111.
+
+run_cycle  8  (same)
+ EAMBER  =   -28070.2024
+ Exray   =    55004.8035  Rwork   =        0.0679  Rfree      =        0.0756
+Start R-work = 0.0686, R-free = 0.0767
+Final R-work = 0.0680, R-free = 0.0767    molp: 0.25, 0.72; hgv = 114.
+
+run_cycle 9 (15000 step SA, ending at xray_weight=0.8, GPU)
+ Exray  =     86008.8483  Rwork   =         0.0639  Rfree      =         0.0728
+ EAMBER (non-restraint)  =    -27658.7108
+Start R-work = 0.0649, R-free = 0.0738
+Final R-work = 0.0645, R-free = 0.0739   target function: 114585
+                                         Exray/0.8      : 107511
+                                         phase error(test): 4.62
+   molp: clash/score:  0.38, 0.73
+Expected energy for ideal structure with normal dist of errors: 97.61 +/- 6.71
+Overall geometry energy:                                       119.63
+
+run_cycle 10  (same)
+ Exray  =     84713.9367  Rwork   =         0.0620  Rfree      =         0.0717
+ EAMBER (non-restraint)  =    -27553.1853
+Start R-work = 0.0631, R-free = 0.0729
+Final R-work = 0.0627, R-free = 0.0729        molp:  0.38, 0.81  hgv: 118.8
+
+This is probably not fully converged, but note that the final R/Rfree
+(0.062/0.072) is quite good.
+

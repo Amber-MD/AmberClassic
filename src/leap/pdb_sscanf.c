@@ -1,10 +1,10 @@
-
 /* LINTLIBRARY */
 
 #include       <stdio.h>
 #include       <ctype.h>
 #include       <stdarg.h>
 #include       <stdlib.h>
+#include       "hybrid36.h"
 
 /*
  *      pdb_sscanf performs similarly to sscanf, execept that fields are of
@@ -13,6 +13,8 @@
  *      the default is returned.
  *
  *              d       get an integer.  Default:  0.
+ *              x       get a hexadecimal integer.  Default:  0.
+ *              h       get a hybrid36 encoded integer.  Default:  0.
  *              f       get a floating point number (C double).  Default:  0.0.
  *              (space) ignore characters within field
  *              s       get a C string, leading and trailing spaces are
@@ -49,12 +51,6 @@ pdb_sscanf(char *buffer, char *fmt, ...)
                         switch (*fmt) {
 
                         case 'd':                       /* integer */
-                                /* if we've already seen the end of
-                                   the buffer, don't
-                                   try to get anymore characters */
-                                if (*buffer == '\0')
-                                        field_width = 0;
-
                                 s = buffer;
                                 for (i = 0; i < field_width; i++, buffer++) {
                                         if (*buffer == '\0')
@@ -66,13 +62,29 @@ pdb_sscanf(char *buffer, char *fmt, ...)
                                 *buffer = c;
                                 break;
 
+                        case 'x':                       /* hexadecimal integer */
+                                s = buffer;
+                                for (i = 0; i < field_width; i++, buffer++) {
+                                        if (*buffer == '\0')
+                                                break;
+                                }
+                                c = *buffer;
+                                *buffer = '\0';
+                                *(va_arg(ap, int *)) = (int)strtol(s, NULL, 16);
+                                *buffer = c;
+                                break;
+                       case 'h':                       /* hybrid36 */
+                                s = buffer;
+                                for (i = 0; i < field_width; i++, buffer++) {
+                                        if (*buffer == '\0') {
+                                                field_width = i;
+                                                break;
+                                        }
+                                }
+                                int *result = va_arg(ap, int *);
+                                if (hy36decode(field_width,s,result)>0) *result=0;
+                                break;
                         case 'f':                       /* floating point */
-                                /* if we've already seen the end of
-                                   the buffer, don't
-                                   try to get anymore characters */
-                                if (*buffer == '\0')
-                                        field_width = 0;
-
                                 s = buffer;
                                 for (i = 0; i < field_width; i++, buffer++) {
                                         if (*buffer == '\0')
@@ -85,12 +97,6 @@ pdb_sscanf(char *buffer, char *fmt, ...)
                                 break;
 
                         case 's':                       /* string */
-                                /* if we've already seen the end of
-                                   the buffer, don't
-                                   try to get anymore characters */
-                                if (*buffer == '\0')
-                                        field_width = 0;
-
                                 s = t = va_arg(ap, char *);
                                 for (i = 0; i < field_width; i++) {
                                         if (*buffer == '\0')
@@ -108,12 +114,6 @@ pdb_sscanf(char *buffer, char *fmt, ...)
                                 for (i = 0; i < field_width; i++)
                                         s[i] = ' ';     /* default */
 
-                                /* if we've already seen the end of
-                                   the buffer, don't
-                                   try to get anymore characters */
-                                if (*buffer == '\0')
-                                        field_width = 0;
-
                                 for (i = 0; i < field_width; i++) {
                                         if (*buffer == '\0')
                                                 break;
@@ -122,12 +122,6 @@ pdb_sscanf(char *buffer, char *fmt, ...)
                                 break;
 
                         case ' ':                       /* space (ignore) */
-                                /* if we've already seen the end of
-                                   the buffer, don't
-                                   try to get anymore characters */
-                                if (*buffer == '\0')
-                                        field_width = 0;
-
                                 for (i = 0; i < field_width; i++, buffer++)
                                         if (*buffer == '\0')
                                                 break;

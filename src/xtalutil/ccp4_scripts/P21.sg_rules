@@ -1,0 +1,41 @@
+
+========================================================================
+  Space group : P 1 21 1  (#4)
+  Supercell   : 1 × 1 × 1  (no supercell expansion)
+  Operators   : 2
+========================================================================
+
+  Output structure factor formula:
+
+    F_out(H,K,L) = Σ_i  phase_i(H,K,L)  ×  F_P1(h_i, k_i, l_i)
+
+  where:
+    (H'_i, K'_i, L'_i) = R_direct_i^T · (H, K, L)  [transposed rotation]
+    (h_i, k_i, l_i)    = (H'_i, K'_i, L'_i)
+    phase_i            = exp(2πi · H·t_i)  [H·t_i = H·ta + K·tb + L·tc]
+
+  Operator 1: x,y,z
+    Re-indexed (H',K',L') = H, K, L
+    Translation t          = (0, 0, 0)
+    Phase factor           = +1
+    Symbolic exponent      = exp(0) = +1
+
+  Operator 2: -x,y+1/2,-z
+    Re-indexed (H',K',L') = -H, K, -L
+    Translation t          = (0, 1/2, 0)
+    Phase factor           = (-1)^(K)
+    Symbolic exponent      = exp(πi·(K))
+                             (K) % 2 == 0  ->  +1
+                             (K) % 2 != 0  ->  -1
+
+  ----------------------------------------------------------------------
+
+  NOTES:
+  • R_direct_i^T is the TRANSPOSE of the direct-space rotation matrix.
+    This differs from gemmi's apply_to_hkl(), which uses the
+    reciprocal-space (non-transposed) form.
+  • If the P1 MTZ lacks a required index, its Friedel mate is used:
+    F_P1(-h,-k,-l) = conj(F_P1(h,k,l))
+  • gemmi stores phase_shift = -2π H·t, so the code uses
+    exp(-i · op.phase_shift([H,K,L])) to obtain exp(+2πi H·t).
+

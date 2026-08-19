@@ -57,7 +57,6 @@ barostats.o: \
                     nonbond_list.o\
                     state.o\
                     ../include/md.h\
-                    nmr.h\
                     softcore.o\
                     box.h
 
@@ -797,7 +796,6 @@ force.o: \
                     xray_globals.o\
                     charmm.o\
                     state.o\
-                    music_module.o\
                     def_time.h\
                     ew_frc.h\
                     ew_cntrl.h\
@@ -843,7 +841,6 @@ force.LES.o: \
                     xray_globals.o\
                     charmm.o\
                     state.o\
-                    music_module.o\
                     def_time.h\
                     ew_frc.h\
                     ew_cntrl.h\
@@ -1345,20 +1342,6 @@ multitmd.o: \
 multitmd.o:   multitmd.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ multitmd.F90
-
-music_module.o: \
-                    ../include/dprec.fh\
-                    ../include/assert.fh\
-                    constants.o\
-                    parallel.h\
-                    nonbond_list.o\
-                    extra.h\
-                    memory_module.o
-
-
-music_module.o:   music_module.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ music_module.F90
 
 new_time.o: \
                     ../include/dprec.fh\
@@ -2340,14 +2323,6 @@ prmtop_type.o:   prmtop_type.F90
 	@echo '[MSANDER]  FC $<'
 	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ prmtop_type.F90
 
-pubfft.o: \
-                    ../include/dprec.fh
-
-
-pubfft.o:   pubfft.F90
-	@echo '[MSANDER]  FC $<'
-	$(VB)$(FC) $(LOCALFLAGS) -c $(FNOOPTFLAGS) $(FFLAGS) -o $@ pubfft.F90
-
 quench.o: \
                     ../include/dprec.fh\
                     ../include/assert.fh\
@@ -2649,7 +2624,6 @@ sander.o: \
                     file_io_dat.o\
                     barostats.o\
                     random.o\
-                    music_module.o\
                     mdfil.o\
                     nmr.h\
                     box.h\
@@ -2707,7 +2681,6 @@ sander.LES.o: \
                     file_io_dat.o\
                     barostats.o\
                     random.o\
-                    music_module.o\
                     mdfil.LES.o\
                     nmr.h\
                     box.h\
@@ -2778,9 +2751,11 @@ sglds.o: \
                     ../include/assert.fh\
                     ../include/dprec.fh\
                     md_scheme.o\
+                    findmask.o\
                     ../include/md.h\
                     ../include/memory.h\
                     parallel.h\
+                    extra_pts.h\
                     state.o\
                     random.o
 

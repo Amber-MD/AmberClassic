@@ -89,8 +89,16 @@ dDisplayerCreate( GENP PObject )
 {
 DISPLAYER	dNew;
 
+    if ( GbGraphicalEnvironment == FALSE ) 
 	return(NULL);
 
+    MALLOC( dNew, DISPLAYER, sizeof(DISPLAYERt) );
+    dNew->cStatus = D_SENSITIVE;
+    dNew->dnFirst = NULL;
+    dNew->PObject = PObject;
+    dNew->dNext = NULL;
+
+    return(dNew);
 }
 
 
@@ -109,7 +117,39 @@ DisplayerDestroy( DISPLAYER *dPOld )
 DISPLAYERNODE	dnCur, dnNext;
 DISPLAYER	dPrev, dCur;
 
+    if ( GbGraphicalEnvironment == FALSE ) 
 	return;
+
+		/* Check if the DISPLAYER is in the accumulated */
+		/* updates list.  If it is then remove it */
+
+    if ( SdDisplayerAccumulateList != NULL ) {
+	dCur = SdDisplayerAccumulateList;
+	dPrev = NULL;
+	while ( dCur ) {
+	    if ( dCur == (*dPOld) ) break;
+	    dPrev = dCur;
+	    dCur = dCur->dNext;
+	}
+
+	if ( dCur != NULL ) {
+	    if ( dPrev == NULL ) {
+		SdDisplayerAccumulateList = dCur->dNext;
+	    } else {
+		dPrev->dNext = dCur->dNext;
+	    }
+	}
+    }
+
+
+    dnCur = (*dPOld)->dnFirst;
+    while ( dnCur != NULL ) {
+	dnNext = dnCur->dnNext;
+	FREE(dnCur);
+	dnCur = dnNext;
+    }
+    FREE(*dPOld);
+    *dPOld = NULL;
 
 }
 
@@ -126,6 +166,13 @@ DISPLAYER	dPrev, dCur;
 void
 DisplayerAdd( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
 {
+DISPLAYERNODE	dnNew;
+
+    MALLOC( dnNew, DISPLAYERNODE, sizeof(DISPLAYERNODEt) )
+    dnNew->fCallback = vFunc;
+    dnNew->PData = PData;
+    dnNew->dnNext = dDisp->dnFirst;
+    dDisp->dnFirst = dnNew;
 }
 
 
@@ -141,8 +188,36 @@ DisplayerAdd( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
 BOOL
 bDisplayerRemove( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
 {
-   return(TRUE);
+DISPLAYERNODE	dnCur, dnPrev;
+
+    dnPrev = NULL;
+    dnCur = dDisp->dnFirst;
+    while ( dnCur != NULL ) {
+	if ( dnCur->fCallback == vFunc && dnCur->PData == PData ) break;
+	dnPrev = dnCur;
+	dnCur = dnCur->dnNext;
+    }
+
+	/* If we found it then remove it */
+
+    if ( dnCur != NULL ) {
+
+	if ( dnPrev == NULL ) {
+	    dDisp->dnFirst = dnCur->dnNext;
+	} else {
+	    dnPrev->dnNext = dnCur->dnNext;
+	}
+
+	FREE( dnCur );
+	return(TRUE);
+    }
+
+    DFATAL(( "DISPLAYER could not find callback/data pair\n" ));
+    return(FALSE);
+
 }
+
+
 
 /*
  *	DisplayerUpdate
@@ -159,10 +234,52 @@ bDisplayerRemove( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
 void
 DisplayerUpdate( DISPLAYER dDisp )
 {
+DISPLAYERNODE	dnCur;
 
+    if ( dDisp == NULL ) 
+	return;
+    if ( GbGraphicalEnvironment == FALSE ) 
+	return;
+    if ( GiUnitEditors == 0 )
 	return;
 
+		/* If we are not supposed to update DISPLAYERs but instead */
+		/* accumulate the updates then accumulate and continue */
+
+    if ( GiDisplayerAccumulateUpdates != 0 ) {
+	DISPLAYER	dTmp;
+	for (dTmp=SdDisplayerAccumulateList; dTmp; dTmp=dTmp->dNext)
+		if ( dTmp == dDisp )
+			return;
+    	if ( dDisp->dNext != NULL )
+		DFATAL(("bad dDisp->dNext pointer\n"));
+	dDisp->dNext = SdDisplayerAccumulateList;
+	SdDisplayerAccumulateList = dDisp;
+	return;
+    }
+		/* If the DISPLAYER is insensitive then */
+		/* just mark that the object has been modified */
+		/* and return */
+ 
+    if ( !(dDisp->cStatus & D_SENSITIVE) ) {
+	DisplayerSetModified(dDisp);
+	return;
+    }
+
+		/* Otherwise loop through the callbacks and */
+		/* call them all */
+
+    dnCur = dDisp->dnFirst;
+    while ( dnCur ) {
+	(dnCur->fCallback)( dDisp, dDisp->PObject, dnCur->PData );
+	dnCur = dnCur->dnNext;
+    }
+    dDisp->cStatus &= (~D_MODIFIED);
+
 }
+
+
+
 
 
 /*
@@ -177,6 +294,28 @@ DisplayerUpdate( DISPLAYER dDisp )
 void
 DisplayerReleaseUpdates()
 {
+DISPLAYER	dCur, dPrev;
+
+    if ( GiDisplayerAccumulateUpdates == 0 ) {
+    	DFATAL(( "Too many DisplayerReleaseUpdates called." ));
+    }
+
+    GiDisplayerAccumulateUpdates--;
+
+    if ( GbGraphicalEnvironment == FALSE )
+	return;
+
+    if ( GiDisplayerAccumulateUpdates == 0 ) {
+        dCur = SdDisplayerAccumulateList;
+	dPrev = NULL;
+	while ( dCur != NULL ) {
+	    DisplayerUpdate( dCur );
+	    dPrev = dCur;
+	    dCur = dCur->dNext;
+	    dPrev->dNext = NULL;
+	}
+	SdDisplayerAccumulateList = NULL;
+    }
 }
 
 /*
@@ -191,9 +330,20 @@ static int	iOffed = 0;
 void
 TurnOffDisplayerUpdates()
 {
+	if ( GbGraphicalEnvironment ) {
+		if ( iOffed )
+			DFATAL(( 
+			    " programmer error - TurnOffDisplayerUpdates\n" ));
+		iOffed++;
+		GbGraphicalEnvironment = FALSE;
+	}
 }
 
 void
 TurnOnDisplayerUpdates()
 {
+	if ( iOffed ) {
+		iOffed = 0;
+		GbGraphicalEnvironment = TRUE;
+	}
 }
