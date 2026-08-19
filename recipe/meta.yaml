@@ -14,7 +14,7 @@ mpi:
    - {{ mpi }}
 
 build:
-  number: 0
+  number: 1
   skip: True # [win or ppc65le]
 
 mpi:

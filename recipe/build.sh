@@ -5,16 +5,16 @@ export CUDA_HOME=/usr/local/cuda
 ./configure --conda
 (cd src && make conda)
 
-# ./configure --conda --mpi
-# (cd src && make clean2 && make parallel)
+./configure --conda --mpi
+(cd src && make clean2 && make parallel)
 
-# if [ "`uname`" == "Linux" ]; then
-#    ./configure --conda --cuda
-#    (cd src && make clean2 && make cuda)
+if [ "`uname`" == "Linux" ]; then
+   ./configure --conda --cuda
+   (cd src && make clean2 && make cuda)
 
-#    ./configure --conda --cuda --mpi
-#    (cd src && make clean2 && make mpicuda)
-# fi
+   ./configure --conda --cuda --mpi
+   (cd src && make clean2 && make mpicuda)
+fi
 
 rsync -a README.md LICENSE AmberClassic.sh config_testing.h include dat bin lib test $PREFIX
 mkdir -p $PREFIX/doc
