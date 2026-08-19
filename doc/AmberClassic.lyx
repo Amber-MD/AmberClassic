@@ -60000,6 +60000,31 @@ These are scripts that are used to run ensemble refinements,
 \end_layout
 
 \begin_layout Description
+AmberPrep This is a 
+\begin_inset Quotes eld
+\end_inset
+
+master
+\begin_inset Quotes erd
+\end_inset
+
+ script,
+ that calls other scripts listed below,
+ and in parallel folders.
+ Copy this script to a working directory,
+ edit the input variables at the top (and anything else that needs changing),
+ and the run that copy.
+ Documentation (which changes often) is in the script itself.
+ This script,
+ along with 
+\series bold
+XrayPrep
+\series default
+,
+ are the two main scripts for new (and old) users.
+\end_layout
+
+\begin_layout Description
 find_alts output a listing of alternate conformations found in an input pdb-file
 \end_layout
 
@@ -60140,6 +60165,42 @@ src/xtalutil
  then edit this local copy:
  usually,
  the options that need attention are described at the top of each script.
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Second note:
+
+\emph default
+ The workflow below should still work,
+ but (in the summer of 2026),
+ I am incorporating what is below into two 
+\begin_inset Quotes eld
+\end_inset
+
+master
+\begin_inset Quotes erd
+\end_inset
+
+ scripts,
+ 
+\series bold
+AmberPrep
+\series default
+ and 
+\series bold
+XrayPrep
+\series default
+.
+ These have lots of options,
+ and a much-simplified user interface.
+ Documentation is in the scripts themselves,
+ mostly at the very top.
+ As noted above,
+ make a copy of these scripts in a working directory,
+ edit the top of the that copy to set input variables,
+ and run the copy.
 \end_layout
 
 \begin_layout Subsection
