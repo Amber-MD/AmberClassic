@@ -89,8 +89,6 @@ subroutine sander()
   use barostats, only: mcbar_setup
   use random, only: amrset
 
-  use music_module, only: read_music_nml, print_music_settings
-
   use commandline_module, only: cpein_specified
 
 #ifdef MPI
@@ -271,8 +269,6 @@ subroutine sander()
       end if
 
       call mdread2(x, ix, ih)
-      call read_music_nml()
-      call print_music_settings()
 #ifdef MPI
       if (ifmbar .ne. 0) then
         call setup_mbar(nstlim)

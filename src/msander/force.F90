@@ -82,7 +82,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
   use ff11_mod, only: cmap_active, calc_cmap
   use state
   use les_data, only: temp0les
-  use music_module, only : music_force
 #ifdef MPI
    use mpi
 #endif
@@ -163,9 +162,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
    
   ! Aceelerated MD variables
   _REAL_ amd_totdih
-
-  ! MuSiC
-  _REAL_ :: music_vdisp, music_vang, music_vgauss, music_spohr89
 
   x3(1:3,1:natom) => x(1:3*natom)   ! for xray_get_derivative
   f3(1:3,1:natom) => f(1:3*natom)   ! for xray_get_derivative
@@ -632,9 +628,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
     if (iredir(8) /= 0) call align1(natom,x,f,xx(lmass))
   end if
 
-  ! MuSiC - GAL17 force field
-  call music_force(ipairs, music_vdisp, music_vang, music_vgauss, music_spohr89)
-
   ! Built-in X-ray target function and gradient
   xray_energy = 0.d0
   if( xray_active .and. master) then
@@ -711,9 +704,6 @@ subroutine force(xx, ix, ih, ipairs, x, f, ener, vir, fs, rborn, reff, &
 
   !Charmm related
   pot%tot = pot%tot + pot%angle_ub + pot%imp + pot%cmap 
-
-  ! MuSiC - GAL17 force field
-  pot%tot = pot%tot + music_vdisp + music_vang + music_vgauss + music_spohr89
 
   ! The handover
   ener%pot = pot
