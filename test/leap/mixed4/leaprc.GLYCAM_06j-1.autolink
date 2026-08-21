@@ -42,7 +42,7 @@ glycam_06 = loadamberparams GLYCAM_06j.dat
 #       load all prep files for polysaccharides
 #
 #loadamberprep GLYCAM_06j-1.prep
-loadOff GLYCAM_06j-1.lib
+loadOff GLYCAM_06j-1.lxx
 #
 #	load lib files
 #
