@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export XRAY_NUM_THREADS=1
+export XRAY_NUM_THREADS=20
 #export DO_PARALLEL='mpirun -np 8'
 export CUDA_VISIBLE_DEVICES=0
 
@@ -8,16 +8,17 @@ in=$(printf "%03d" $1)
 let out=$((10#$in))+1
 out=$(printf "%03d" $((10#$out)))
 
-id="alt2"
-sander="$AMBERCLASSICHOME/bin/msander.cuda_P6"
+id="aug26"
+sander="$AMBERCLASSICHOME/bin/msander.cuda.P212121_111"
+# sander="$AMBERCLASSICHOME/bin/msander"
 
 cat > mdin <<eof
-   checking out 8esu with 2 unit cells
+   checking out 1aho with 1 unit cells
  &cntrl
     imin=1, maxcyc=500, ntpr=50, nstlim=10000, ntwx=0, ntwr=0,
     ntx=1, irest=0, ntxo=1, 
     tempi=0.0, ntt=3, gamma_ln=10.0, dt=0.002, temp0=0.,
-    isgld=1, tsgavg=0.2,sgft=1.0, nsgsize=2,
+    isgld=1, tsgavg=0.2,sgft=1.0, sgtype=2,
     ntc=2, ntf=2, tol=1.d-6, cut=8.0,
     irism=0, nmropt=0,
  /
@@ -44,14 +45,14 @@ cat > mdin <<eof
    pdb_outfile = '${id}_$out.min1.pdb', 
    reflection_infile = '${id}-sf.dat',
    ! fmtz_outfile = 'P6cpu.fmtz',
-   spacegroup_name = 'P 6', spacegroup_number = 168,
-   na = 1, nb = 1, nc=2, 
+   spacegroup_name = 'P 21 21 21', spacegroup_number = 19,
+   na = 1, nb = 1, nc = 1, 
    atom_selection_mask = ':*', 
    xray_weight =  0.8,
    bulk_solvent_model = 'afonine-2013',  target = 'ml', 
-   ml_update_period = 40000,
-   scale_update_period = 40000, 
-   mask_update_period = 40000, 
+   ml_update_period = 200,
+   scale_update_period = 200, 
+   mask_update_period = 200, 
  /
 eof
 
