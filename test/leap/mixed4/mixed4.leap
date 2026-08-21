@@ -1,7 +1,7 @@
-addPath $$AMBERHOME/dat/leap/lib
-addPath $$AMBERHOME/dat/leap/parm
-addPath $$AMBERHOME/dat/leap/cmd
-addPath $$AMBERHOME/dat/leap/prep
+addPath $$AMBERCLASSICHOME/dat/leap/lib
+addPath $$AMBERCLASSICHOME/dat/leap/parm
+addPath $$AMBERCLASSICHOME/dat/leap/cmd
+addPath $$AMBERCLASSICHOME/dat/leap/prep
 
 set default reorder_residues off
 source leaprc.GLYCAM_06j-1.autolink
@@ -48,7 +48,7 @@ set NPO description "P-NITROPHENOL"
 set NPO head null
 set NPO tail null
 
-loadOff saccharides.lib
+loadOff saccharides.lxx
 
 verbosity 5
 
