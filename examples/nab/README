@@ -1,0 +1,4 @@
+These are the code segments from the Users' Manual.
+
+Type "make p1" (etc) to compile the programs.
+Type "make test.p1"  (for p1 to p5) to run some simple tests

@@ -1,0 +1,11 @@
+// Program 2 - Superimpose two DNA duplexes
+molecule m, mr;
+float r;
+
+m = getpdb( "test.pdb" );
+mr = getpdb( "gcg10.pdb" );
+superimpose( m, "::C1'", mr, "::C1'" );
+putpdb( "test.sup.pdb", m );
+rmsd( m, "::C1'", mr, "::C1'", r );
+printf( "rmsd = %8.3f\n", r );
+exit( 0 );
