@@ -766,7 +766,7 @@ void intercoord(int atomnum, ATOM atom[], char *torstr)
     int breakindex;
     TOR tor[100];
     int pos[100];
-    char ntor = 0;
+    int ntor = 0;
     select = (int *) emalloc(sizeof(int) * (atomnum + 10));
 
     for (i = 0; i < atomnum; i++) {

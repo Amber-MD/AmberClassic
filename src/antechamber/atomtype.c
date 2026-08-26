@@ -2032,7 +2032,7 @@ int main(int argc, char *argv[])
     int fix_atomnames_flag = 1;
     char *fname;
 
-    amberhome = egetenv("AMBERCLASSICHOME");
+    amberhome = egetenv("AMBERHOME");
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
         if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-H") == 0)) {
             printf("[31mUsage: atomtype -i[0m input file name\n"
@@ -2067,6 +2067,7 @@ int main(int argc, char *argv[])
                    "[34m                   abcg2 :[0m for ABCG2\n"
                    "[34m                   gas   :[0m for Gasteiger charge\n"
                    "[34m                   sybyl :[0m for atom types used in sybyl\n"
+                   "[34m                   glycam:[0m for GLYCAM saccharides(beta)\n"
                    "[31m                -d[0m atom type defination file, optional\n"
                    "[31m                -a[0m do post atom type adjustment (it is applied with \"-d\" option)\n"
                    "                   1: yes, 0: no (the default)\n"
@@ -2089,6 +2090,7 @@ int main(int argc, char *argv[])
                        "                   abcg2 : for ABCG2\n"
                        "                   gas   : for Gasteiger charge \n"
                        "                   sybyl : for atom types used in sybyl\n"
+                       "                   glycam: for GLYCAM saccharides (beta)\n"
                        "                -d atom type defination file, optional\n"
                        "                -a do post atom type adjustment (it is applied with \"-d\" option)\n"
                        "                   1: yes, 0: no (the default)\n"
@@ -2115,6 +2117,7 @@ int main(int argc, char *argv[])
                    "                   abcg2 : for ABCG2\n"
                    "                   gas   : for Gasteiger charge \n"
                    "                   sybyl : for atom types used in sybyl\n"
+                   "                   glycam: for GLYCAM saccharides (beta)\n"
                    "                -d atom type defination file, optional\n"
                    "                -a do post atom type adjustment (it is applied with \"-d\" option)\n"
                    "                   1: yes, 0: no (the default)\n"
@@ -2158,6 +2161,8 @@ int main(int argc, char *argv[])
                 pindex = 5;
             if (strcmp("abcg2", argv[i + 1]) == 0 || strcmp("ABCG2", argv[i + 1]) == 0)
                 pindex = 6;
+            if (strcmp("glycam", argv[i + 1]) == 0 || strcmp("GLYCAM", argv[i + 1]) == 0)
+                pindex = 7;
         }
         if (strcmp(argv[i], "-an") == 0) {
             if (strcmp(argv[i+1], "no") == 0 || strcmp(argv[i+1], "n") == 0) {
@@ -2222,6 +2227,8 @@ int main(int argc, char *argv[])
             fname = "ATOMTYPE_GFF2.DEF";
         else if (pindex == 6)
             fname = "ATOMTYPE_ABCG2.DEF";
+        else if (pindex == 7)
+            fname = "ATOMTYPE_GLYCAM.DEF";
         else {
             printf("Warning: Cannot find atom type definition file.\n"
                    "         Define it with the \"-d\" option.\n");

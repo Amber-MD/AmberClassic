@@ -590,7 +590,7 @@ int main(int argc, char *argv[])
     int numcon;
     int nhydrogen;
 
-    amberhome = egetenv("AMBERCLASSICHOME");
+    amberhome = egetenv("AMBERHOME");
 
     if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
         if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-H") == 0)) {
@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
     if (strcmp(rformat, "pdb") != 0 && strcmp(rformat, "ac") != 0
         && strcmp(rformat, "prepi") != 0 && strcmp(rformat, "prepc") != 0
         && strcmp(rformat, "mol2") != 0) {
-        eprintf("The input format (%s) is not supported.", iformat);
+        eprintf("The input format (%s) is not supported.", rformat);
     }
 
     default_cinfo(&cinfo);
@@ -852,7 +852,7 @@ int main(int argc, char *argv[])
         for (i = 0; i < atomnum; i++)
             strcpy(atom[i].aa, atom[i].name);
     }
-/* 
+/*
 	generate input_atom, input_bond, ref_atom and ref_bond
 	need to adjust the atom.con and bond.bondi, bond.bondj accordingly
 */

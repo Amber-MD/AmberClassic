@@ -1,8 +1,7 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
-// AmberTools_version.update_number
-const char *const ANTECHAMBER_VERSION="24.0" ;
+const char *const ANTECHAMBER_VERSION = "26aug26" ;
 
 # define COLORTEXT "YES"
 # define REDUCEFACTOR 1

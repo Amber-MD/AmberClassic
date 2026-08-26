@@ -212,9 +212,9 @@ int main(int argc, char *argv[])
     fprintf(stdout, "\nWelcome to acdoctor %s: check and diagnose problems"
             " in molecular input files.\n\n", ANTECHAMBER_VERSION);
     esetprogramname(argv[0]);
-    amberhome = (char *) getenv("AMBERCLASSICHOME");
+    amberhome = (char *) getenv("AMBERHOME");
     if (amberhome == NULL) {
-        eprintf("AMBERCLASSICHOME is not set.");
+        eprintf("AMBERHOME is not set.");
     }
     if (argc == 2)
         if (strncmp(argv[1], "-h", 2) == 0 || strncmp(argv[1], "-H", 2) == 0) {

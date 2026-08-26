@@ -13,8 +13,8 @@ extern int checkbybondtype;     // bond type based weird bond checking
 #endif                          // CHECKMOLECULE_H
 
 
-#ifndef CHECKMOLECULE_C__YES_THAT_IS_C
-#define CHECKMOLECULE_C__YES_THAT_IS_C
+#ifndef CHECKMOLECULE_C//YES_THAT_IS_C
+#define CHECKMOLECULE_C//YES_THAT_IS_C
 
 # include <assert.h>
 # include <math.h>
@@ -81,7 +81,7 @@ void bondrange(int atomicnum1, int atomicnum2)
 }
 
 
-void check_input_molecule()
+void check_input_molecule(void)
 {
     extern int atomnum;         // 1 more than the highest valid atom array index.
     extern int bondnum;
@@ -452,4 +452,4 @@ void check_input_molecule()
 }
 
 
-#endif                          // CHECKMOLECULE_C__YES_THAT_IS_C
+#endif // CHECKMOLECULE_C//YES_THAT_IS_C

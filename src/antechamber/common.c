@@ -20,8 +20,32 @@
    Assumptions:  strncat correctly handles a non-positive 3rd argument.
    'for_system' indicates if the path will be used in a 'system'
    command and therefore needs quotes if there are spaces in the
-   AMBERCLASSICHOME variable.
+   AMBERHOME variable.
  */
+static const char *elemname[NUMBER_OF_CHEMICAL_ELEMENTS] = {
+    "X",                                           /* 0: unknown    */
+    "H",                                     "He", /* 1-2           */
+    "Li", "Be", "B",  "C",  "N",  "O",  "F", "Ne", /* 3-10        */
+    "Na", "Mg", "Al", "Si", "P",  "S", "Cl", "Ar", /* 11-18      */
+    "K",  "Ca",                                    /* 19-20         */
+    "Sc", "Ti", "V",  "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", /* 21-30 */
+    "Ga", "Ge", "As", "Se", "Br", "Kr",            /* 31-36         */
+    "Rb", "Sr", "Y",  "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", /* 37-46 */
+    "Ag", "Cd", "In", "Sn", "Sb", "Te", "I",  "Xe", /* 47-54      */
+    "Cs", "Ba", "La",                              /* 55-57         */
+    /* Lanthanides */
+    "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd",      /* 58-64         */
+    "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu",      /* 65-71         */
+    "Hf", "Ta", "W",  "Re", "Os", "Ir", "Pt",      /* 72-78         */
+    "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", /* 79-86     */
+    "Fr", "Ra", "Ac",                              /* 87-89         */
+    /* Actinides */
+    "Th", "Pa", "U",  "Np", "Pu", "Am", "Cm",      /* 90-96         */
+    "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr",      /* 97-103        */
+    "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds",      /* 104-110       */
+    "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts",      /* 111-117       */
+};
+
 size_t build_path(char *path, const char *subdir, const char *fname, size_t sizeof_path,
                   int for_system)
 {
@@ -199,138 +223,15 @@ int intcharge(int atomnum, ATOM atom[])
 void formula(int atomnum, ATOM atom[], char *form)
 {
     int i, j;
-    int countatom[NUMBER_OF_CHEMICAL_ELEMENTS];
+    int countatom[NUMBER_OF_CHEMICAL_ELEMENTS] = {0};
     char tmpchar[MAXCHAR];
-    char elemname[NUMBER_OF_CHEMICAL_ELEMENTS][5];
-
-    for (i = 0; i < NUMBER_OF_CHEMICAL_ELEMENTS; i++) {
-        countatom[i] = 0;
-        strcpy(elemname[i], "X");
-    }
-    strcpy(elemname[1], "H");
-    strcpy(elemname[2], "He");
-    strcpy(elemname[3], "Li");
-    strcpy(elemname[4], "Be");
-    strcpy(elemname[5], "B");
-    strcpy(elemname[6], "C");
-    strcpy(elemname[7], "N");
-    strcpy(elemname[8], "O");
-    strcpy(elemname[9], "F");
-    strcpy(elemname[10], "Ne");
-    strcpy(elemname[11], "Na");
-    strcpy(elemname[12], "Mg");
-    strcpy(elemname[13], "Al");
-    strcpy(elemname[14], "Si");
-    strcpy(elemname[15], "P");
-    strcpy(elemname[16], "S");
-    strcpy(elemname[17], "Cl");
-    strcpy(elemname[18], "Ar");
-    strcpy(elemname[19], "K");
-    strcpy(elemname[20], "Ca");
-    strcpy(elemname[21], "Sc");
-    strcpy(elemname[22], "Ti");
-    strcpy(elemname[23], "V");
-    strcpy(elemname[24], "Cr");
-    strcpy(elemname[25], "Mn");
-    strcpy(elemname[26], "Fe");
-    strcpy(elemname[27], "Co");
-    strcpy(elemname[28], "Ni");
-    strcpy(elemname[29], "Cu");
-    strcpy(elemname[30], "Zn");
-    strcpy(elemname[31], "Ga");
-    strcpy(elemname[32], "Ge");
-    strcpy(elemname[33], "As");
-    strcpy(elemname[34], "Se");
-    strcpy(elemname[35], "Br");
-    strcpy(elemname[36], "Kr");
-    strcpy(elemname[37], "Rb");
-    strcpy(elemname[38], "Sr");
-    strcpy(elemname[39], "Y");
-    strcpy(elemname[40], "Zr");
-    strcpy(elemname[41], "Nb");
-    strcpy(elemname[42], "Mo");
-    strcpy(elemname[43], "Tc");
-    strcpy(elemname[44], "Ru");
-    strcpy(elemname[45], "Rh");
-    strcpy(elemname[46], "Pd");
-    strcpy(elemname[47], "Ag");
-    strcpy(elemname[48], "Cd");
-    strcpy(elemname[49], "In");
-    strcpy(elemname[50], "Sn");
-    strcpy(elemname[51], "Sb");
-    strcpy(elemname[52], "Te");
-    strcpy(elemname[53], "I");
-    strcpy(elemname[54], "Xe");
-    strcpy(elemname[55], "Cs");
-    strcpy(elemname[56], "Ba");
-    strcpy(elemname[57], "La");
-/* Lanthanide Series*/
-    strcpy(elemname[58], "Ce");
-    strcpy(elemname[59], "Pr");
-    strcpy(elemname[60], "Nd");
-    strcpy(elemname[61], "Pm");
-    strcpy(elemname[62], "Sm");
-    strcpy(elemname[63], "Eu");
-    strcpy(elemname[64], "Gd");
-    strcpy(elemname[65], "Tb");
-    strcpy(elemname[66], "Dy");
-    strcpy(elemname[67], "Ho");
-    strcpy(elemname[68], "Er");
-    strcpy(elemname[69], "Tm");
-    strcpy(elemname[70], "Yb");
-    strcpy(elemname[71], "Lu");
-
-    strcpy(elemname[72], "Hf");
-    strcpy(elemname[73], "Ta");
-    strcpy(elemname[74], "W");
-    strcpy(elemname[75], "Re");
-    strcpy(elemname[76], "Os");
-    strcpy(elemname[77], "Ir");
-    strcpy(elemname[78], "Pt");
-    strcpy(elemname[79], "Au");
-    strcpy(elemname[80], "Hg");
-    strcpy(elemname[81], "Tl");
-    strcpy(elemname[82], "Pb");
-    strcpy(elemname[83], "Bi");
-    strcpy(elemname[84], "Po");
-    strcpy(elemname[85], "At");
-    strcpy(elemname[86], "Rn");
-    strcpy(elemname[87], "Fr");
-    strcpy(elemname[88], "Ra");
-    strcpy(elemname[89], "Ac");
-/* Actinide Series*/
-    strcpy(elemname[90], "Th");
-    strcpy(elemname[91], "Pa");
-    strcpy(elemname[92], "U");
-    strcpy(elemname[93], "Np");
-    strcpy(elemname[94], "Pu");
-    strcpy(elemname[95], "Am");
-    strcpy(elemname[96], "Cm");
-    strcpy(elemname[97], "Bk");
-    strcpy(elemname[98], "Cf");
-    strcpy(elemname[99], "Es");
-    strcpy(elemname[100], "Fm");
-    strcpy(elemname[101], "Md");
-    strcpy(elemname[102], "No");
-    strcpy(elemname[103], "Lr");
-
-    strcpy(elemname[104], "Rf");
-    strcpy(elemname[105], "Db");
-    strcpy(elemname[106], "Sg");
-    strcpy(elemname[107], "Bh");
-    strcpy(elemname[108], "Hs");
-    strcpy(elemname[109], "Mt");
-    strcpy(elemname[110], "Ds");
     strcpy(form, "");
     for (j = 0; j < atomnum; j++)
         countatom[atom[j].atomicnum]++;
     for (i = 0; i < NUMBER_OF_CHEMICAL_ELEMENTS; i++)
         if (countatom[i] >= 1) {
-            strcat(form, elemname[i]);
-            sprintf(tmpchar, "%d", countatom[i]);
-            /* newitoa(countatom[i], tmpchar); */
+            sprintf(tmpchar, "%s%d ", elemname[i], countatom[i]);
             strcat(form, tmpchar);
-            strcat(form, " ");
         }
 }
 
@@ -1133,343 +1034,13 @@ void atomicnum(int atomnum, ATOM * atom)
 
 void initialize_elements_in_atom_to_symbols_upto_atomnum(int atomnum, ATOM * atom)
 {
-    int i;
-    for (i = 0; i < atomnum; i++)
-        switch (atom[i].atomicnum) {
-        case 1:
-            strcpy(atom[i].element, "H");
-            break;
-        case 2:
-            strcpy(atom[i].element, "He");
-            break;
-        case 3:
-            strcpy(atom[i].element, "Li");
-            break;
-        case 4:
-            strcpy(atom[i].element, "Be");
-            break;
-        case 5:
-            strcpy(atom[i].element, "B");
-            break;
-        case 6:
-            strcpy(atom[i].element, "C");
-            break;
-        case 7:
-            strcpy(atom[i].element, "N");
-            break;
-        case 8:
-            strcpy(atom[i].element, "O");
-            break;
-        case 9:
-            strcpy(atom[i].element, "F");
-            break;
-        case 10:
-            strcpy(atom[i].element, "Ne");
-            break;
-        case 11:
-            strcpy(atom[i].element, "Na");
-            break;
-        case 12:
-            strcpy(atom[i].element, "Mg");
-            break;
-        case 13:
-            strcpy(atom[i].element, "Al");
-            break;
-        case 14:
-            strcpy(atom[i].element, "Si");
-            break;
-        case 15:
-            strcpy(atom[i].element, "P");
-            break;
-        case 16:
-            strcpy(atom[i].element, "S");
-            break;
-        case 17:
-            strcpy(atom[i].element, "Cl");
-            break;
-        case 18:
-            strcpy(atom[i].element, "Ar");
-            break;
-        case 19:
-            strcpy(atom[i].element, "K");
-            break;
-        case 20:
-            strcpy(atom[i].element, "Ca");
-            break;
-        case 21:
-            strcpy(atom[i].element, "Sc");
-            break;
-        case 22:
-            strcpy(atom[i].element, "Ti");
-            break;
-        case 23:
-            strcpy(atom[i].element, "V");
-            break;
-        case 24:
-            strcpy(atom[i].element, "Cr");
-            break;
-        case 25:
-            strcpy(atom[i].element, "Mn");
-            break;
-        case 26:
-            strcpy(atom[i].element, "Fe");
-            break;
-        case 27:
-            strcpy(atom[i].element, "Co");
-            break;
-        case 28:
-            strcpy(atom[i].element, "Ni");
-            break;
-        case 29:
-            strcpy(atom[i].element, "Cu");
-            break;
-        case 30:
-            strcpy(atom[i].element, "Zn");
-            break;
-        case 31:
-            strcpy(atom[i].element, "Ga");
-            break;
-        case 32:
-            strcpy(atom[i].element, "Ge");
-            break;
-        case 33:
-            strcpy(atom[i].element, "As");
-            break;
-        case 34:
-            strcpy(atom[i].element, "Se");
-            break;
-        case 35:
-            strcpy(atom[i].element, "Br");
-            break;
-        case 36:
-            strcpy(atom[i].element, "Kr");
-            break;
-        case 37:
-            strcpy(atom[i].element, "Rb");
-            break;
-        case 38:
-            strcpy(atom[i].element, "Sr");
-            break;
-        case 39:
-            strcpy(atom[i].element, "Y");
-            break;
-        case 40:
-            strcpy(atom[i].element, "Zr");
-            break;
-        case 41:
-            strcpy(atom[i].element, "Nb");
-            break;
-        case 42:
-            strcpy(atom[i].element, "Mo");
-            break;
-        case 43:
-            strcpy(atom[i].element, "Tc");
-            break;
-        case 44:
-            strcpy(atom[i].element, "Ru");
-            break;
-        case 45:
-            strcpy(atom[i].element, "Rh");
-            break;
-        case 46:
-            strcpy(atom[i].element, "Pd");
-            break;
-        case 47:
-            strcpy(atom[i].element, "Ag");
-            break;
-        case 48:
-            strcpy(atom[i].element, "Cd");
-            break;
-        case 49:
-            strcpy(atom[i].element, "In");
-            break;
-        case 50:
-            strcpy(atom[i].element, "Sn");
-            break;
-        case 51:
-            strcpy(atom[i].element, "Sb");
-            break;
-        case 52:
-            strcpy(atom[i].element, "Te");
-            break;
-        case 53:
-            strcpy(atom[i].element, "I");
-            break;
-        case 54:
-            strcpy(atom[i].element, "Xe");
-            break;
-        case 55:
-            strcpy(atom[i].element, "Cs");
-            break;
-        case 56:
-            strcpy(atom[i].element, "Ba");
-            break;
-        case 57:
-            strcpy(atom[i].element, "La");
-            break;
-        case 58:
-            strcpy(atom[i].element, "Ce");
-            break;
-        case 59:
-            strcpy(atom[i].element, "Pr");
-            break;
-        case 60:
-            strcpy(atom[i].element, "Nd");
-            break;
-        case 61:
-            strcpy(atom[i].element, "Pm");
-            break;
-        case 62:
-            strcpy(atom[i].element, "Sm");
-            break;
-        case 63:
-            strcpy(atom[i].element, "Eu");
-            break;
-        case 64:
-            strcpy(atom[i].element, "Gd");
-            break;
-        case 65:
-            strcpy(atom[i].element, "Tb");
-            break;
-        case 66:
-            strcpy(atom[i].element, "Dy");
-            break;
-        case 67:
-            strcpy(atom[i].element, "Ho");
-            break;
-        case 68:
-            strcpy(atom[i].element, "Er");
-            break;
-        case 69:
-            strcpy(atom[i].element, "Tm");
-            break;
-        case 70:
-            strcpy(atom[i].element, "Yb");
-            break;
-        case 71:
-            strcpy(atom[i].element, "Lu");
-            break;
-        case 72:
-            strcpy(atom[i].element, "Hf");
-            break;
-        case 73:
-            strcpy(atom[i].element, "Ta");
-            break;
-        case 74:
-            strcpy(atom[i].element, "W");
-            break;
-        case 75:
-            strcpy(atom[i].element, "Re");
-            break;
-        case 76:
-            strcpy(atom[i].element, "Os");
-            break;
-        case 77:
-            strcpy(atom[i].element, "Ir");
-            break;
-        case 78:
-            strcpy(atom[i].element, "Pt");
-            break;
-        case 79:
-            strcpy(atom[i].element, "Au");
-            break;
-        case 80:
-            strcpy(atom[i].element, "Hg");
-            break;
-        case 81:
-            strcpy(atom[i].element, "Tl");
-            break;
-        case 82:
-            strcpy(atom[i].element, "Pb");
-            break;
-        case 83:
-            strcpy(atom[i].element, "Bi");
-            break;
-        case 84:
-            strcpy(atom[i].element, "Po");
-            break;
-        case 85:
-            strcpy(atom[i].element, "At");
-            break;
-        case 86:
-            strcpy(atom[i].element, "Rn");
-            break;
-        case 87:
-            strcpy(atom[i].element, "Fr");
-            break;
-        case 88:
-            strcpy(atom[i].element, "Ra");
-            break;
-        case 89:
-            strcpy(atom[i].element, "Ac");
-            break;
-        case 90:
-            strcpy(atom[i].element, "Th");
-            break;
-        case 91:
-            strcpy(atom[i].element, "Pa");
-            break;
-        case 92:
-            strcpy(atom[i].element, "U");
-            break;
-        case 93:
-            strcpy(atom[i].element, "Np");
-            break;
-        case 94:
-            strcpy(atom[i].element, "Pu");
-            break;
-        case 95:
-            strcpy(atom[i].element, "Am");
-            break;
-        case 96:
-            strcpy(atom[i].element, "Cm");
-            break;
-        case 97:
-            strcpy(atom[i].element, "Bk");
-            break;
-        case 98:
-            strcpy(atom[i].element, "Cf");
-            break;
-        case 99:
-            strcpy(atom[i].element, "Es");
-            break;
-        case 100:
-            strcpy(atom[i].element, "Fm");
-            break;
-        case 101:
-            strcpy(atom[i].element, "Md");
-            break;
-        case 102:
-            strcpy(atom[i].element, "No");
-            break;
-        case 103:
-            strcpy(atom[i].element, "Lr");
-            break;
-        case 104:
-            strcpy(atom[i].element, "Rf");
-            break;
-        case 105:
-            strcpy(atom[i].element, "Db");
-            break;
-        case 106:
-            strcpy(atom[i].element, "Sg");
-            break;
-        case 107:
-            strcpy(atom[i].element, "Bh");
-            break;
-        case 108:
-            strcpy(atom[i].element, "Hs");
-            break;
-        case 109:
-            strcpy(atom[i].element, "Mt");
-            break;
-        case 110:
-            strcpy(atom[i].element, "Ds");
-            break;
-        default:
+    for (int i = 0; i < atomnum; i++) {
+        int z = atom[i].atomicnum;
+        if (z > 0 && z < NUMBER_OF_CHEMICAL_ELEMENTS)
+            strcpy(atom[i].element, elemname[z]);
+        else
             strcpy(atom[i].element, "du");
-            break;
-        }
+    }
 }
 
 
@@ -1486,124 +1057,6 @@ void duplicatedname(int atomnum, ATOM * atom)
     int id;
     char tmpchar[MAXCHAR];
     char name[MAXCHAR];
-    char elemname[NUMBER_OF_CHEMICAL_ELEMENTS][5];
-    for (i = 0; i < NUMBER_OF_CHEMICAL_ELEMENTS; i++)
-        strcpy(elemname[i], "X");
-    strcpy(elemname[1], "H");
-    strcpy(elemname[2], "He");
-    strcpy(elemname[3], "Li");
-    strcpy(elemname[4], "Be");
-    strcpy(elemname[5], "B");
-    strcpy(elemname[6], "C");
-    strcpy(elemname[7], "N");
-    strcpy(elemname[8], "O");
-    strcpy(elemname[9], "F");
-    strcpy(elemname[10], "Ne");
-    strcpy(elemname[11], "Na");
-    strcpy(elemname[12], "Mg");
-    strcpy(elemname[13], "Al");
-    strcpy(elemname[14], "Si");
-    strcpy(elemname[15], "P");
-    strcpy(elemname[16], "S");
-    strcpy(elemname[17], "Cl");
-    strcpy(elemname[18], "Ar");
-    strcpy(elemname[19], "K");
-    strcpy(elemname[20], "Ca");
-    strcpy(elemname[21], "Sc");
-    strcpy(elemname[22], "Ti");
-    strcpy(elemname[23], "V");
-    strcpy(elemname[24], "Cr");
-    strcpy(elemname[25], "Mn");
-    strcpy(elemname[26], "Fe");
-    strcpy(elemname[27], "Co");
-    strcpy(elemname[28], "Ni");
-    strcpy(elemname[29], "Cu");
-    strcpy(elemname[30], "Zn");
-    strcpy(elemname[31], "Ga");
-    strcpy(elemname[32], "Ge");
-    strcpy(elemname[33], "As");
-    strcpy(elemname[34], "Se");
-    strcpy(elemname[35], "Br");
-    strcpy(elemname[36], "Kr");
-    strcpy(elemname[37], "Rb");
-    strcpy(elemname[38], "Sr");
-    strcpy(elemname[39], "Y");
-    strcpy(elemname[40], "Zr");
-    strcpy(elemname[41], "Nb");
-    strcpy(elemname[42], "Mo");
-    strcpy(elemname[43], "Tc");
-    strcpy(elemname[44], "Ru");
-    strcpy(elemname[45], "Rh");
-    strcpy(elemname[46], "Pd");
-    strcpy(elemname[47], "Ag");
-    strcpy(elemname[48], "Cd");
-    strcpy(elemname[49], "In");
-    strcpy(elemname[50], "Sn");
-    strcpy(elemname[51], "Sb");
-    strcpy(elemname[52], "Te");
-    strcpy(elemname[53], "I");
-    strcpy(elemname[54], "Xe");
-    strcpy(elemname[55], "Cs");
-    strcpy(elemname[56], "Ba");
-    strcpy(elemname[57], "La");
-/* Lanthanide Series*/
-    strcpy(elemname[58], "Ce");
-    strcpy(elemname[59], "Pr");
-    strcpy(elemname[60], "Nd");
-    strcpy(elemname[61], "Pm");
-    strcpy(elemname[62], "Sm");
-    strcpy(elemname[63], "Eu");
-    strcpy(elemname[64], "Gd");
-    strcpy(elemname[65], "Tb");
-    strcpy(elemname[66], "Dy");
-    strcpy(elemname[67], "Ho");
-    strcpy(elemname[68], "Er");
-    strcpy(elemname[69], "Tm");
-    strcpy(elemname[70], "Yb");
-    strcpy(elemname[71], "Lu");
-
-    strcpy(elemname[72], "Hf");
-    strcpy(elemname[73], "Ta");
-    strcpy(elemname[74], "W");
-    strcpy(elemname[75], "Re");
-    strcpy(elemname[76], "Os");
-    strcpy(elemname[77], "Ir");
-    strcpy(elemname[78], "Pt");
-    strcpy(elemname[79], "Au");
-    strcpy(elemname[80], "Hg");
-    strcpy(elemname[81], "Tl");
-    strcpy(elemname[82], "Pb");
-    strcpy(elemname[83], "Bi");
-    strcpy(elemname[84], "Po");
-    strcpy(elemname[85], "At");
-    strcpy(elemname[86], "Rn");
-    strcpy(elemname[87], "Fr");
-    strcpy(elemname[88], "Ra");
-    strcpy(elemname[89], "Ac");
-/* Actinide Series*/
-    strcpy(elemname[90], "Th");
-    strcpy(elemname[91], "Pa");
-    strcpy(elemname[92], "U");
-    strcpy(elemname[93], "Np");
-    strcpy(elemname[94], "Pu");
-    strcpy(elemname[95], "Am");
-    strcpy(elemname[96], "Cm");
-    strcpy(elemname[97], "Bk");
-    strcpy(elemname[98], "Cf");
-    strcpy(elemname[99], "Es");
-    strcpy(elemname[100], "Fm");
-    strcpy(elemname[101], "Md");
-    strcpy(elemname[102], "No");
-    strcpy(elemname[103], "Lr");
-
-    strcpy(elemname[104], "Rf");
-    strcpy(elemname[105], "Db");
-    strcpy(elemname[106], "Sg");
-    strcpy(elemname[107], "Bh");
-    strcpy(elemname[108], "Hs");
-    strcpy(elemname[109], "Mt");
-    strcpy(elemname[110], "Ds");
-
     for (i = 0; i < atomnum; i++)
         for (j = i + 1; j < atomnum; j++)
             if (strcmp(atom[i].name, atom[j].name) == 0 && atom[i].resno == atom[j].resno) {

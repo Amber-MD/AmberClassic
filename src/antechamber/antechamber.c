@@ -10,7 +10,6 @@ char *amberhome;
 # include "define.h"
 # include "atom.h"
 # include "eprintf.h"
-
 # include "utility.c"
 # include "common.c"
 # include "equatom.c"
@@ -149,6 +148,7 @@ void usage()
                "[34m                          bcc  [0m: bcc \n"
                "[34m                          abcg2[0m: abcg2 \n"
                "[34m                          sybyl[0m: sybyl \n"
+               "[34m                          glycam[0m: glycam \n"
                "[31m                   -du   [0m fix duplicate atom names: yes(y)[default] or no(n)\n"
                "[31m                   -bk   [0m component/block Id, for ccif\n"
                "[31m                   -an   [0m adjust atom names: yes(y) or no(n)\n"
@@ -216,7 +216,7 @@ void usage()
                "                          amber: for PARM94/99/99SB\n"
                "                          bcc  : bcc \n"
                "                          abcg2: abcg2 \n"
-               "                          sybyl: sybyl \n"
+               "                          glycam: glycam \n"
                "                   -du    fix duplicate atom names: yes(y)[default] or no(n)\n"
                "                   -bk    component/block Id, for ccif\n"
                "                   -an    adjust atom names: yes(y) or no(n)\n"
@@ -434,9 +434,9 @@ int main(int argc, char *argv[])
     fprintf(stdout, "\nWelcome to antechamber %s: molecular input file processor.\n\n",
             ANTECHAMBER_VERSION);
     esetprogramname(argv[0]);
-    amberhome = (char *) getenv("AMBERCLASSICHOME");
+    amberhome = (char *) getenv("AMBERHOME");
     if (amberhome == NULL) {
-        eprintf("AMBERCLASSICHOME is not set.");
+        eprintf("AMBERHOME is not set.");
     }
     if (argc == 2) {
         if (strncmp(argv[1], "-h", 2) == 0 || strncmp(argv[1], "-H", 2) == 0) {
@@ -763,6 +763,7 @@ int main(int argc, char *argv[])
     if( cinfo.intstatus )
     printf("Info: The atom type is set to %s; the options available to the -at flag are\n"
            "      gaff, gaff2, amber, bcc, abcg2, and sybyl.\n\n", minfo.atom_type_def);
+           //"      gaff, gaff2, amber, bcc, abcg2, sybyl, and glycam.\n\n", minfo.atom_type_def); // FIXME
     read_and_validate_input_file();
 
 /* when read in a mopout, divout, or sqmout file, always output a pdb file
@@ -809,6 +810,7 @@ int main(int argc, char *argv[])
         // prepi may have additional atom records.
         cinfo.maxatom = atomnum + 10;
         cinfo.maxbond = bondnum + 10;
+        if (bondnum == 0) { cinfo.maxbond = atomnum + 10; } // Some types don't define bonds, guess by # atoms
         atom_tmp = (ATOM *) emalloc(sizeof(ATOM) * cinfo.maxatom);
         bond_tmp = (BOND *) emalloc(sizeof(BOND) * cinfo.maxbond);
         for (i = 0; i < cinfo.maxbond; ++i) {
@@ -1054,7 +1056,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (strcmp("charmm", cinfo.intype) == 0 || strcmp("25", cinfo.intype) == 0) {
+        if (strcmp("charmm", cinfo.atype) == 0 || strcmp("25", cinfo.atype) == 0) {
             overflow_flag =
                 rcharmm(afilename, &atomnum_tmp, atom_tmp, &bondnum, bond, &cinfo,
                         &minfo);
@@ -1064,7 +1066,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (strcmp("gesp", cinfo.intype) == 0 || strcmp("26", cinfo.intype) == 0) {
+        if (strcmp("gesp", cinfo.atype) == 0 || strcmp("26", cinfo.atype) == 0) {
             overflow_flag = rgesp(afilename, &atomnum_tmp, atom_tmp, cinfo, minfo);
             if (overflow_flag) {
                 fprintf(stderr, "Overflow happens for additional files, exit");

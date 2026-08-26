@@ -44,9 +44,9 @@ void read_geom_parm()
     char filename[MAXCHAR];
     char line[MAXCHAR];
 
-    amberhome = (char *) getenv("AMBERCLASSICHOME");
+    amberhome = (char *) getenv("AMBERHOME");
     if (amberhome == NULL) {
-        fprintf(stdout, "Warning: AMBERCLASSICHOME is not set!\n");
+        fprintf(stdout, "Warning: AMBERHOME is not set!\n");
         strcpy(amberhome, "");
     } else {
         strcpy(filename, amberhome);

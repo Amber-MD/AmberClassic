@@ -43,9 +43,9 @@ void geometry(ATOM * atom, int atomnum, BOND * bond, int bondnum, GEOM * geom, i
     int count;
     double tor;
 /* first of all, reads in parameters */
-    amberhome = (char *) getenv("AMBERCLASSICHOME");
+    amberhome = (char *) getenv("AMBERHOME");
     if (amberhome == NULL) {
-        fprintf(stdout, "AMBERCLASSICHOME is not set!\n");
+        fprintf(stdout, "AMBERHOME is not set!\n");
         strcpy(amberhome, "");
     } else {
         strcpy(filename, amberhome);

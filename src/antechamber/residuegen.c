@@ -328,9 +328,9 @@ int main(int argc, char *argv[])
 	int overflow_flag = 0;			/*if overflow_flag ==1, reallocate memory */
 	char command[MAXCHAR];
 
-    amberhome = (char *) getenv("AMBERCLASSICHOME");
+    amberhome = (char *) getenv("AMBERHOME");
     if( amberhome == NULL ){
-       fprintf( stdout, "AMBERCLASSICHOME is not set!\n" );
+       fprintf( stdout, "AMBERHOME is not set!\n" );
        exit(1);
     }
 	if (strcmp(COLORTEXT, "YES") == 0 || strcmp(COLORTEXT, "yes") == 0) {
