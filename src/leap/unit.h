@@ -93,6 +93,7 @@ typedef struct UNITSTRUCT {
         OBJEKT          aHead;
         OBJEKT          aTail;
         PARMSET         psParameters;
+        VARARRAY        vaParmSets; // Should be PARMLIB but linked list is slow
         FLAGS           fFlags;
         int             iMode;
         double          dAlpha, dBeta, dGamma;

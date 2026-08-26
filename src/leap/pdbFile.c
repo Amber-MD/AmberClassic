@@ -630,7 +630,7 @@ RESIDUE         rRes;
         *bPStart = false;
 
     if ( iObjectType(uOrig) != UNITid ) {
-        VP0("Creating new UNIT for residue: %s sequence: %d\n",
+        VP0("Creating new UNIT for residue: %s sequence: %d\n", // FIXME set flag
                 PVAI(prPPdb->vaResidues,RESIDUENAMEt,iCurUnit)->sName, iResNum);
         uUnit = (UNIT)oCreate(UNITid);
         rRes = (RESIDUE)oCreate(RESIDUEid);
@@ -2997,7 +2997,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
     } else {
 
-        VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n",
+        VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n", // FIXME set flag
             cPResName, rnPName->sChainId,
             rnPName->iPdbSequence, rnPName->cICode);
         uResult = (UNIT)oCreate(UNITid);
@@ -3236,14 +3236,13 @@ int             iChainCount=0;
                         /* that you are going to create it */
             if ( aAtom == NULL ) {
                 aAtom = (ATOM)oCreate(ATOMid);
-                ContainerAdd( (CONTAINER)rRes, (OBJEKT)aAtom );
-                DEREF(aAtom);
+                ContainerAdd( (CONTAINER)rRes, (OBJEKT)aAtom ); DEREF(aAtom);
                 ContainerSetName( (CONTAINER)aAtom, anAtom->sName );
                 AtomSetElement( aAtom, anAtom->iElement );
                 MESSAGE("Read atom: %s and adding it to: %s\n", anAtom->sName,
                                 sContainerName((CONTAINER)rRes) );
                 STRING sTemp;
-                VP0("Created a new atom named: %s within residue: %s\n",
+                VP0("Created a new atom named: %s within residue: %s\n", // FIXME set created flag
                         anAtom->sName, sContainerFullDescriptor((CONTAINER)rRes,sTemp) );
                 iCreate ++;
             } else {
@@ -3296,7 +3295,7 @@ int             iChainCount=0;
                  * it has wasted space at the start but none at the end.
                  * So guard against out of bounds high indexing.  srb 5-2022.
                  */
-            if (conect->serial_num >= prPPdb->iMaxSerialNum ) {
+            if (conect->serial_num >= prPPdb->iMaxSerialNum || conect->serial_num < 0) {
                 VPWARN("Ignoring CONECT record for atom serial number "
                     "(%i) that is greater than\nthe maximum serial"
                     " number inputted (%i) from the pdb file.\n",
@@ -3310,7 +3309,7 @@ int             iChainCount=0;
             }
             for (int j=0; j<4; j++ ) {
                 if ( conect->covalent[j] == 0 ) continue;
-                if ( conect->covalent[j] >= prPPdb->iMaxSerialNum ) {
+                if ( conect->covalent[j] >= prPPdb->iMaxSerialNum || conect->serial_num < 0) {
                     VPWARN("In CONECT record for atom serial number (%i)\n"
                         "ignoring bonded atom serial number (%i) that is "
                         "greater than\nthe maximum serial"
@@ -3324,8 +3323,9 @@ int             iChainCount=0;
                     VPWARN("Invalid CONECT record (atomSerial=%d) in pdb file.\n", conect->covalent[j] );
                     continue;
                 }
-                if ( !bAtomBondedTo( aA, aB ) ) { //FIXME why did I decide to let d<1 through?
-                    if (GDefaults.bPdbLinkIons) // || bAtomsBondedDist(iAtomElement(aA),iAtomElement(aB),1.0,1.0,NULL) )
+                if ( !bAtomBondedTo( aA, aB ) ) {
+                    // check if atoms bond at 1A. bAtomsBondedDist excluudes ions and nobel gasses. All others will bond
+                    if (GDefaults.bPdbLinkIons || bAtomsBondedDist(iAtomElement(aA),iAtomElement(aB),1.0,1.0,NULL) )
                         AtomBondTo( aA, aB );
                     else {
                         RESIDUE rA = (RESIDUE)cContainerWithin(aA);
@@ -3373,8 +3373,8 @@ int             iChainCount=0;
                 }
             }
             if ( aAtom[0] && aAtom[1] &&!bAtomBondedTo( aAtom[0], aAtom[1] ) ) {
-                                           //FIXME why did I decide to let d<1 through?
-                if (GDefaults.bPdbLinkIons) { // || bAtomsBondedDist(iAtomElement(aAtom[0]),iAtomElement(aAtom[1]),1.0,1.0) ) {
+                // check if atoms bond at 1A. bAtomsBondedDist excluudes ions and nobel gasses. All others will bond
+                if (GDefaults.bPdbLinkIons || bAtomsBondedDist(iAtomElement(aAtom[0]),iAtomElement(aAtom[1]),1.0,1.0,NULL) ) {
                     AtomBondTo( aAtom[0], aAtom[1] );
                 } else {
                     RESIDUE rA1 = (RESIDUE)cContainerWithin(aAtom[0]);
@@ -3629,7 +3629,9 @@ int             i;
 
     if (prPdb.bBIOMT || prPdb.bNCS || prPdb.bSymmOps) {
         if (! iVarArrayElementCount( prPdb.vaMatrices )) {
-            VP0("Not expanding symmetry, matrix count is zero\n");
+            VP0("Not expanding %s symmetry, no symmetry operations defined.\n",
+                    prPdb.bSymmOps ? "Spacegroup" :
+                    prPdb.bBIOMT ? "Biomolecule" : "NCS MTRIXn");
         } else {
             VP0("Expanding %s symmetry\n", prPdb.bSymmOps ? "Spacegroup" :
                         prPdb.bBIOMT ? "Biomolecule" : "NCS MTRIXn");

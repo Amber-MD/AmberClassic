@@ -1640,12 +1640,14 @@ char            *sUsage =
  *   nasty, special kludge to prevent loading parm10 more than once;
  *      This is not generalizable....
  */
-static          int parm10_loaded = 0;
-static          int parm99_loaded = 0;
-static          int parm15_loaded = 0;
-static          char parm10[] = "parm10.dat";
-static          char parm99[] = "parm99.dat";
-static          char parm15[] = "parm15";
+static struct { const char *name; bool loaded; }
+                parm_list[3] = {
+                   { "parm10.dat", false },
+                   { "parm99.dat", false },
+                   { "parm15",     false }
+                };
+int             iParm = -1, iCount = 0;
+bool            bLoaded = false;
 
     if ( !bCmdGoodArguments( "loadAmberParams", iArgCount, aaArgs, "s" ) ) {
         VPFATALDELAYEDEXIT( sUsage );
@@ -1653,41 +1655,30 @@ static          char parm15[] = "parm15";
     }
     strcpy( sFile, sOString(oAssocObject(aaArgs[0])) );
 
-    if( strstr( sFile, parm10 ) ) {
-        parm10_loaded += 1;
-        if( parm10_loaded > 1 ){
-            VPNOTE( "Skipping %s: already loaded\n", sFile );
-            parm10_loaded -= 1;
-            return NULL;
+    for (int i=0; i<3; i++) {
+        if ( parm_list[i].loaded ) iCount++;
+        if ( strstr( sFile, parm_list[i].name ) ) {
+            iParm = i;
+            bLoaded = parm_list[i].loaded;
         }
     }
-    if( strstr( sFile, parm99 ) ) {
-        parm99_loaded += 1;
-        if( parm99_loaded > 1 ){
-            VPNOTE( "Skipping %s: already loaded\n", sFile );
-            parm99_loaded -= 1;
-            return NULL;
-        }
-    }
-    if( strstr( sFile, parm15 ) ) {
-        parm15_loaded += 1;
-        if( parm15_loaded > 1 ){
-            VPNOTE( "Skipping %s: already loaded\n", sFile );
-            parm15_loaded -= 1;
-            return NULL;
-        }
-    }
-
-    fIn = FOPENCOMPLAIN( sFile, "r" );
-    if ( fIn == NULL )
+    if (bLoaded) {
+        VPNOTE( "Skipping %s: already loaded\n", sFile );
         return NULL;
+    }
 
-    if( parm99_loaded + parm15_loaded + parm10_loaded > 1 ){
-        VPFATALEXIT( "Cannot load more than one of parm99/10/15.dat\n"
+    if( iParm>=0 ) {
+        if ( iCount ) {
+            VPFATALEXIT( "Cannot load more than one of parm99/10/15.dat\n"
                 "If you are running interactively then you should save your work,"
                 "\nquit LEaP, and retry being careful to load only one parm of"
                 " above.\n" );
+        }
+        parm_list[iParm].loaded = true;
     }
+
+    fIn = FOPENCOMPLAIN( sFile, "r" );
+    if ( fIn == NULL ) return NULL;
 
     VP0("Loading parameters: %s\n", GsBasicsFullName );
     psParms = psAmberReadParmSet( fIn, sFile );
@@ -5308,7 +5299,7 @@ int             iCount=0, iErrorCount=0;
         else sErrors[0]=0;
         bool bMissingConnect01 = iContainerNumberOfChildren(rRes) > 1 &&
                    !(bResidueConnectUsed(rRes,0) && bResidueConnectUsed(rRes,1));
-        if (bMissingConnect01) strcat(sErrors,"Missing Connect01, ");
+        if (bMissingConnect01) strcat(sErrors,"Missing CONNECT0/1, ");
         if (strlen(sEndFlags)>1) strcat(sErrors,"Mixed END flags, ");
         if ( (fEndFlag & RESIDUEFIRSTEND && (aHead || !aTail)) ||
                  (fEndFlag & RESIDUELASTEND && (!aHead || aTail)) ||

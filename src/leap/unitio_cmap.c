@@ -164,7 +164,8 @@ void UnitIOBuildCMAPTables(UNIT uUnit, PARMLIB plLib)
                 CMAPt cmap;
                 ParmSetCMAP(psTemp, iTemp, &cmap, true);
                 iIndex = iParmSetAddCMAP(uUnit->psParameters, &cmap);
-                dest_cmap_index[iTemp] = iIndex; // compaitibility hack
+                dest_cmap_index[iTemp] = iIndex; // compatibility hack -- FIXME to be removed
+                UnitIOAddParmSet(uUnit,psTemp);
             }
 
             /* ── store SAVECMAPt entry ── */

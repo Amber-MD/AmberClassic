@@ -59,7 +59,6 @@ zSDefaultSettings[] = {
     { 'B', "nocenter", "NoCenter", &GDefaults.bNoCenter },
     { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.bReorderResidues, .defval.integer=1 },
     { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.bReorderMolecules }, //TODO: , .defval.integer=1 },
-    { 'B', "reverse_lists", "Reverse_Lists", &GDefaults.bReverseLists, .defval.integer=1 },
     { 'B', "original_cmap_order", "Original_CMAP_Order", &GDefaults.bOrigCMAPOrder, .defval.integer=1 },
     { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.bOldPrmtopFormat },
     { 'D', "prmtopformat", "PrmtopFormat", &GDefaults.dPrmtopFormat, .defval.real=1.0 },

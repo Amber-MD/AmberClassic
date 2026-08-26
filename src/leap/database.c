@@ -1881,6 +1881,9 @@ int             iColumn, iType;
             } else if ( iColumn == iString5Column ) {
                 sStripString( sLine, PString5 );
                 (PString5) += iString5Skip;
+            } else {
+                // JMK: don't loop forever, trigger by a mere trailing space! warn?
+                break;
             }
             iColumn++;
         } while ( strlen(sLine) != 0 );

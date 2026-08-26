@@ -63,6 +63,7 @@ extern void     UnitDoAtoms(UNIT uUnit, PARMLIB plParameters, RESIDUE rRes, int 
 extern void     UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName, bool bPolar, bool bPert, bool bNetcdf);
 
 extern void     UnitIOSaveAmberPrep( UNIT uUnit, FILE *fOut );
+extern void     UnitIOAddParmSet( UNIT uUnit, PARMSET psLib);
 
 extern int iUnitIOAmberOrderResidues(UNIT);
 
@@ -128,7 +129,7 @@ typedef struct {
     int iAtom4;
     double dKx;
     double dX0;
-    double dN;
+    int    iN;
     int iParmIndex;  /* This is filled in when */
                      /* the parameters are written */
                      /* to the file */

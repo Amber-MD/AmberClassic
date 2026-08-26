@@ -66,6 +66,15 @@
  *        
  *        Object typedef MUST include the superclass object as
  *        its first structure element.
+ *
+ *        nPListNode tracks the "owner" list node. This is to speed up
+ *        RESIDUE and ATOM access for deletion in large structures, which
+ *        otherwise must traverse the entire list to find the node.
+ *        This is set only in ListDuplicate() because molecular and
+ *        solvent box UNITs are created with duplication. This
+ *        is the only safe way to define "owner". UNITs read directly
+ *        from files will not have the node cache, and will fall back
+ *        to list traversal if needed.
  */
 
 

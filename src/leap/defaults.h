@@ -13,7 +13,6 @@ typedef struct {
 	bool    bNoCenter;
 	bool    bReorderResidues;
 	bool    bReorderMolecules;
-	bool    bReverseLists;
 	bool    bOrigCMAPOrder;
         bool    bRandomOrientation;
         bool    bOldPrmtopFormat;

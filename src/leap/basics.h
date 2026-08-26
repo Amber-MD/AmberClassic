@@ -43,27 +43,14 @@
  *                      If NOT defined then all debugging macros
  *                      are defined as nothing.
  *
- *              MEMORY_DEBUG:   Can have one of the following five values.
- *                              If MEMORY_DEBUG is anything other than 0
- *                              then DEBUG must be defined.
- *              0 -     Dont do any MEMORY debugging.
- *              1 -     Use my memory usage tracking.
- *                              This adds 4 bytes to every MALLOC and stores
- *                              the size of the allocation in an int
- *                              at the front of the memory block.
- *                              This is useful for finding memory leaks.
- *              2 -     Use my memory debugging.
- *                              Every MALLOC,FREE,REALLOC first tests
- *                              memory for overwrites etc.
- *              3 -     Use SUN memory debugging, requires linking with
- *                              /usr/lib/debug/malloc.o
- *              4 -     Use my memory debugging, but test memory EVERY TIME
- *                              a routine is entered or exited.
+ *              MEMORY_DEBUG: removed, use ASAN
  */
 
 
 #ifndef BASICS_H
 #define BASICS_H
+
+#define LEAP_VERSION "2.0"
 
 #include        <stdio.h>
 #include        <math.h>
@@ -771,6 +758,10 @@ static inline void *safe_calloc(size_t size) {
     return p;
 }
 static inline void *safe_realloc(void *ptr, size_t size) {
+    if (!size) {
+        free(ptr);
+        return NULL;
+    }
     void *p = realloc(ptr,size);
     if (!p) DFATAL("Realloc: %s", strerror(errno));
     return p;

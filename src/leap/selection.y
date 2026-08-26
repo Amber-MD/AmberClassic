@@ -98,11 +98,15 @@ SELNODE selection_root = NULL;
 %token COLON_SEMICOLON       /* :; RES_PDBSEQ — always PDB resSeq */
 %token COLON_HASH            /* :# RES_INDEX  — always flat sequential index */
 %token COLON_PCT             /* :% RESTYPE    — residue type, single literal name */
+%token COLON_FLAG    /* :{  residue flag test */
+%token COLON_FLAGN   /* :{! residue flag negated */
 %token AT                    /* @  atom name or global index (cpptraj compat) */
 %token AT_HASH               /* @# explicit global flat atom index */
 %token AT_SEMICOLON          /* @; atom index within residue (PDB order, 1-based) */
 %token AT_PCT                /* @% atom type (always literal) */
 %token AT_SLASH              /* @/ atom element */
+%token AT_FLAG       /* @{  atom flag test */
+%token AT_FLAGN      /* @{! atom flag negated */
 %token LESS_AT               /* <@ distance within, by atom */
 %token LESS_COLON            /* <: distance within, by residue */
 %token LESS_SEMICOLON        /* <; distance within, by residue center */
@@ -119,6 +123,7 @@ SELNODE selection_root = NULL;
 %token LPAREN                /* ( */
 %token RPAREN                /* ) */
 %token DASH                  /* - */
+%token RBRACE                /* } */
 /* NOTE: no STAR token — * and ? are valid NAMESTART chars and lex as NAME.
  * fnmatch handles glob matching. Bare * at expression level is select-all,
  * handled by checking NAME == "*" in primary.                             */
@@ -250,6 +255,8 @@ res_selection
     | COLON_COLON     chain_list        { $$ = $2; }
     | chain_res_selection               { $$ = $1; }
     | COLON LPAREN expr RPAREN          { $$ = mk_node(SEL_NODE_RES_CONTAINS, $3, NULL); }
+    | COLON_FLAG  NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG, fResFlagNameToBit($2)); free($2); }
+    | COLON_FLAGN NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG_NOT, fResFlagNameToBit($2)); free($2); }
     ;
 
 /* '::' chain ':' resnum — ':' is always PDB resSeq here regardless of
@@ -267,6 +274,8 @@ atom_selection
     | AT_SEMICOLON atom_list_residx    { $$ = $2; }   /* index within residue, PDB order */
     | AT_PCT       type_list           { $$ = $2; }
     | AT_SLASH     elem_list           { $$ = $2; }
+    | AT_FLAG     NAME RBRACE { $$ = mk_int_node(SEL_NODE_ATOM_FLAG, fAtomFlagNameToBit($2)); free($2); }
+    | AT_FLAGN    NAME RBRACE { $$ = mk_int_node(SEL_NODE_ATOM_FLAG_NOT, fAtomFlagNameToBit($2)); free($2); }
     ;
 
 /* --- atom index lists --- */
@@ -456,7 +465,7 @@ any_name
 
 void selerror(const char *s)
 {
-    VPFATAL("selection parse error near '%s': %s\n", sel_error_token, s);
+    VPFATALEXIT("selection parse error near '%s': %s\n", sel_error_token, s);
 }
 
 static SELNODE alloc_node(SELNODEKINDt k)

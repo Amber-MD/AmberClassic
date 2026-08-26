@@ -81,6 +81,7 @@ int        ii, iiMax, jj = 0; \
             } \
     } \
 }
+
 #define        bPERT_BOND(bp,a1,a2)        (bp && (bAtomFlagsSet(a1,ATOMPERTURB)\
                                 || bAtomFlagsSet(a2,ATOMPERTURB)))
 #define        bPERT_ANGLE(bp,a1,a2,a3) (bp && (bAtomFlagsSet(a1,ATOMPERTURB) \
@@ -582,22 +583,46 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString(sContainerName(uUnit));
 
 /////////////////////////////////////////////////
-  if (GDefaults.dPrmtopFormat>=2.0) {
-      PARMSET psSet;
-      int iLines=0;
+// TODO: collect a list of parmsets actually used in 
+// iParmSetAdd*(uUnit->psParameters,...) - 12 places in unitio.c, 1 in unitio_cmap.c
+  if (GDefaults.dPrmtopFormat > 1.0) {
+      const char *sLabel = "AMBER ";
+      STRING sTemp1, sTemp2;
+      PARMSET psLib;
+      int iLines=0, iPARM=-1;
       FortranFormat(1,"%-80s");
       FortranWriteString("%FLAG FORCE_FIELD_TYPE");
-      ParmLibParmSetLoop(GplAllParameters);
-      while ( bParmLibNextParmSet(GplAllParameters, &psSet) ) iLines += 2;
+      iLines = iVarArrayElementCount(uUnit->vaParmSets) * 2 + 1;
       COMMENT_SIZE(iLines)
-      FortranWriteString("%FORMAT(A)");
-      ParmLibParmSetLoop(GplAllParameters);
-      while ( bParmLibNextParmSet(GplAllParameters, &psSet) ) {
-          STRING sTemp;
-          snprintf(sTemp,sizeof(sTemp),"Filename: %.1024s",psSet->sFname);
-          FortranWriteString(sTemp);
-          snprintf(sTemp,sizeof(sTemp),"Title: %.1024s",psSet->sTitle);
-          FortranWriteString(sTemp);
+      if (GDefaults.dPrmtopFormat < 2.0)
+          FortranWriteString("%FORMAT(i2,a78)");
+      else
+          FortranWriteString("%FORMAT(A)");
+      for (i=0; i< iVarArrayElementCount(uUnit->vaParmSets); i++) {
+          psLib = *PVAI(uUnit->vaParmSets, PARMSET, i);
+          if (!strncmp(psLib->sTitle,"PARM",4)) {
+              iPARM = i;
+              break;
+          }
+      }
+      if (iPARM >= 0) sprintf(sTemp1,"%s %.1024s", sLabel, psLib->sTitle);
+      else strcpy(sTemp1,sLabel);
+      if (GDefaults.dPrmtopFormat < 2.0) {
+          sprintf(sTemp2,"%2d %.77s", iLines, sTemp1);
+          FortranWriteString(sTemp2);
+      } else FortranWriteString(sTemp1);
+
+      for (i=0; i< iVarArrayElementCount(uUnit->vaParmSets); i++) {
+          psLib = *PVAI(uUnit->vaParmSets, PARMSET, i);
+          if (GDefaults.dPrmtopFormat < 2.0) {
+              sprintf(sTemp1,"%2d Filename: %.67s",iLines,psLib->sFname);
+              sprintf(sTemp2,"%2d Title: %.70s",iLines,psLib->sTitle);
+          } else {
+              sprintf(sTemp1,"Filename: %.1024s",psLib->sFname);
+              sprintf(sTemp2,"Title: %.1024s",psLib->sTitle);
+          }
+          FortranWriteString(sTemp1);
+          FortranWriteString(sTemp2);
       }
   }
 /////////////////////////////////////////////////
@@ -1181,7 +1206,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // Write the torsion RESTRAINT constants AND set the index
   // for where the interaction can find its constants
-  RESTRAINTLOOP(RESTRAINTTORSION, dX0, i + 1);
+  RESTRAINTLOOP(RESTRAINTTORSION, iN, i + 1);// !BUGFIX! was dX0!!! JMK
   FortranEndLine();
 
   // -17- Phase for torsions
@@ -1206,7 +1231,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // Write the torsion RESTRAINT constants AND set the index
   // for where the interaction can find its constants
-  RESTRAINTLOOP(RESTRAINTTORSION, dN, i + 1);
+  RESTRAINTLOOP(RESTRAINTTORSION, iN, i + 1); // !BUGFIX! was dX0!! JMK
   FortranEndLine();
 
   // -17B-
@@ -3096,7 +3121,7 @@ IX_DESC         iResIx;
     }
                 /* Write the torsion RESTRAINT constants AND set the index */
                 /* for where the interaction can find its constants */
-    RESTRAINTLOOP( RESTRAINTTORSION, dN, i+1 );
+    RESTRAINTLOOP( RESTRAINTTORSION, iN, i+1 );
     FortranEndLine();
 
         /* -18- Not used, reserved for future use, uses NATYP */

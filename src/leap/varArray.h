@@ -45,40 +45,40 @@
 #include "basics.h"
 
 typedef struct {
-        int     count;  /* real count of element in array  */ 
-        int     size;   /* all elements have the same size */
-        int     slot;   /* max available count of element before new realloc*/
-        char    *data;
+        size_t  count;  /* real count of element in array  */ 
+        size_t  size;   /* all elements have the same size */
+        size_t  slot;   /* max available count of element before new realloc*/
+        void    *data;
 } HeaderStruct, *VARARRAY;
 
-extern int      iVarArrayPointerToIndex(VARARRAY header, char *data);
-#ifdef DEBUGx
-extern int      iVarArrayElementSize(VARARRAY header);
-extern int      iVarArrayElementCount(VARARRAY header);
-extern char     *PVarArrayIndex( VARARRAY header, int pos);
+extern size_t      iVarArrayPointerToIndex(VARARRAY header, void *data);
+#ifdef DEBUG
+extern size_t      iVarArrayElementSize(VARARRAY header);
+extern size_t      iVarArrayElementCount(VARARRAY header);
+extern void     *PVarArrayIndex( VARARRAY header, size_t pos);
 #else
-static inline int iVarArrayElementSize(VARARRAY header) {
+static inline size_t iVarArrayElementSize(VARARRAY header) {
     return (header->size);
 }
-static inline int iVarArrayElementCount(VARARRAY header) {
+static inline size_t iVarArrayElementCount(VARARRAY header) {
     return header ? header->count : 0;
 }
-static inline char * PVarArrayIndex( VARARRAY header, int pos ) {
-    return (char*)(header->data + ((size_t)pos)*((size_t)header->size));
+static inline void * PVarArrayIndex( VARARRAY header, size_t pos ) {
+    return header->data + pos*header->size;
 }
 #endif
 
-extern VARARRAY vaVarArrayCreate(int size);
+extern VARARRAY vaVarArrayCreate(size_t size);
 extern void     VarArrayDestroy(VARARRAY *header);
 extern void     VarArrayAdd(VARARRAY header, GENP data);
 extern VARARRAY vaVarArrayCopy(VARARRAY header);
 extern VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2);
-extern void     VarArraySetSize(VARARRAY header, int ncount);
-extern GENP     PVarArrayDebugIndex(VARARRAY header, int pos, 
-                        char *file, int line);
+extern void     VarArraySetSize(VARARRAY header, size_t ncount);
+extern GENP     PVarArrayDebugIndex(VARARRAY header, size_t pos, 
+                        const char *file, int line);
 
-extern void     VarArrayInsertBefore(VARARRAY header, int pos, GENP data);
-extern void     VarArrayInsertBeforeMore(VARARRAY header, int pos, int num);
+extern void     VarArrayInsertBefore(VARARRAY header, size_t pos, GENP data);
+extern void     VarArrayInsertBeforeMore(VARARRAY header, size_t pos, size_t num);
      
 #define VarArrayDelete(t,i) VarArrayDeleteMore(t,i,1)
 

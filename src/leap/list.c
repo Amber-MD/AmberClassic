@@ -484,7 +484,7 @@ LISTLOOP        llLoop;
     while ( ( oObj = oListNext(&llLoop) ) != NULL ) {
         oNew = oObjectDuplicate(oObj);
         /* Call ListAddTeEnd() to maintain the same order! JMK 2026 */
-        if (GDefaults.bReverseLists) {
+        if (GDefaults.bCompatible) {
             ListAdd( (LIST)lNew, oNew );
             CONTAINER_from(oNew)->nPListNode = LIST_from(lNew)->nPFirstNode;
         } else {

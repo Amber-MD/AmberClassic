@@ -224,7 +224,7 @@ extern void CheckAgainstNBEdits(VARARRAY vaPNBEdits, const typeStr tI, const typ
 extern TORSION        tParmSetTORSIONCreate(void);
 
 #define iParmSetTORSIONTermCount( tTorsion ) \
-                ( iVarArrayElementCount( (tTorsion) ) )
+                ((int) iVarArrayElementCount( (tTorsion) ) )
 #define ParmSetTORSIONDestroy( tPT ) \
                 { VarArrayDestroy( (tPT) );}
 
@@ -255,21 +255,21 @@ extern bool        bParmSetCapableOfHBonding( PARMSET psParms, const typeStr sTy
 #define sParmName( psParmSet )        (psParmSet)->sFname 
 
 #define iParmSetTotalAtomParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaAtoms )
+                        (int)iVarArrayElementCount( (psParmSet)->vaAtoms )
 #define iParmSetTotalBondParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaBonds )
+                        (int)iVarArrayElementCount( (psParmSet)->vaBonds )
 #define iParmSetTotalAngleParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaAngles )
+                        (int)iVarArrayElementCount( (psParmSet)->vaAngles )
 #define iParmSetTotalTorsionParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaTorsions )
+                        (int)iVarArrayElementCount( (psParmSet)->vaTorsions )
 #define iParmSetTotalImproperParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaImpropers )
+                        (int)iVarArrayElementCount( (psParmSet)->vaImpropers )
 #define iParmSetTotalHBondParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaHBonds )
+                        (int)iVarArrayElementCount( (psParmSet)->vaHBonds )
 #define iParmSetTotalCMAPParms( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaCMAPs )
+                        (int)iVarArrayElementCount( (psParmSet)->vaCMAPs )
 #define iParmSetTotalNBEdits( psParmSet ) \
-                        iVarArrayElementCount( (psParmSet)->vaNBEdits )
+                        (int)iVarArrayElementCount( (psParmSet)->vaNBEdits )
 
 extern  bool    bParmSetCapableofHBonding(void);    /* ( PARMSET, char* ) */
 extern int CheckTypeNBEdit(const typeStr sType, VARARRAY vaPNBEdits);

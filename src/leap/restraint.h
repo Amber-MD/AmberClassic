@@ -92,7 +92,7 @@ typedef	struct	{
 	ATOM		aAtom4;
 	double		dKp;
 	double		dP0;
-	double		dN;
+	int		iN;
 } RESTRAINTTORSIONt;
 
 typedef	struct	{
@@ -167,7 +167,7 @@ extern bool	bRestraintContainsAtom(RESTRAINT rRes, ATOM aAtom);
 	(r)->rType.rtTorsion.aAtom3 = a3, \
 	(r)->rType.rtTorsion.aAtom4 = a4, \
 	(r)->rType.rtTorsion.dKp = kp, \
-	(r)->rType.rtTorsion.dN = n, \
+	(r)->rType.rtTorsion.iN = n, \
 	(r)->rType.rtTorsion.dP0 = p0 )
 
 #define	RestraintBondGet(r,aP1,aP2,dPkr,dPr0) ( \
@@ -183,14 +183,14 @@ extern bool	bRestraintContainsAtom(RESTRAINT rRes, ATOM aAtom);
 	*dPkt = (r)->rType.raAngle.dKt, \
 	*dPt0 = (r)->rType.raAngle.dT0 )
 
-#define	RestraintTorsionGet(r,aP1,aP2,aP3,aP4,dPkp,dPp0,dPn) ( \
+#define	RestraintTorsionGet(r,aP1,aP2,aP3,aP4,dPkp,dPp0,iPn) ( \
 	*aP1  = (r)->rType.rtTorsion.aAtom1, \
 	*aP2  = (r)->rType.rtTorsion.aAtom2, \
 	*aP3  = (r)->rType.rtTorsion.aAtom3, \
 	*aP4  = (r)->rType.rtTorsion.aAtom4, \
 	*dPkp = (r)->rType.rtTorsion.dKp, \
 	*dPp0 = (r)->rType.rtTorsion.dP0, \
-	*dPn  = (r)->rType.rtTorsion.dN )
+	*iPn  = (r)->rType.rtTorsion.iN )
 
 
 #endif	/* RESTRAINT_H */

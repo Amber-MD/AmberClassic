@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
 #include "neighbors.h"
 #include "basics.h"
 
@@ -82,11 +79,7 @@ static CellRange *build_ranges(const KeyedIdx *kidx, unsigned int n, unsigned in
 
         if (rcount >= est) {
             est *= 2;
-            CellRange *tmp = realloc(ranges, est * sizeof(CellRange));
-            if (!tmp) {
-                perror("realloc ranges");
-                exit(1);
-            }
+            CellRange *tmp = REALLOC(ranges, est * sizeof(CellRange));
             ranges = tmp;
         }
 
@@ -155,9 +148,6 @@ NeighborGrid *neighbor_grid_setup(const Point *points,
 
     const float cell = r_cut;
 
-#if defined(_OPENMP)
-    #pragma omp parallel for schedule(static)
-#endif
     for (unsigned int i = 0; i < total_points; ++i) {
         int32_t ci = (int32_t)floorf((points[i].x - xmin) / cell);
         int32_t cj = (int32_t)floorf((points[i].y - ymin) / cell);

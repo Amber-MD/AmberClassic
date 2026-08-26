@@ -319,6 +319,7 @@ bUnitIOLoadTables(UNIT uUnit, DATABASE db)
     if (iRestraintCount) {
         srPRestraint = PVAI(uUnit->vaRestraints, SAVERESTRAINTt, 0);
         iSize = sizeof(SAVERESTRAINTt);
+        double dTemp;
         bDBGetTable(db, "restraints", &iBondCount,
                     1, (char *) &(srPRestraint->iType), iSize,
                     2, (char *) &(srPRestraint->fFlags), iSize,
@@ -330,10 +331,11 @@ bUnitIOLoadTables(UNIT uUnit, DATABASE db)
                     0, NULL, 0,
                     7, (char *) &(srPRestraint->dKx), iSize,
                     8, (char *) &(srPRestraint->dX0), iSize,
-                    9, (char *) &(srPRestraint->dN), iSize,
+                    9, (char *) &dTemp, iSize,
                     0, NULL, 0,
                     0, NULL, 0,
                     0, NULL, 0, 0, NULL, 0, 0, NULL, 0, 0, NULL, 0);
+                    srPRestraint->iN = round(dTemp);
     }
     /* Load the UNIT connect atoms */
 
@@ -536,11 +538,11 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
 
     DBPutValue(db, "name", ENTRYSINGLE | ENTRYSTRING, 1,
                (GENP) sContainerName(uUnit), 0);
-    if (!GDefaults.bCompatible) {
-    if (sUnitDescription(uUnit)[0]!=0) {
+
+    if (!GDefaults.bCompatible &&
+            sUnitDescription(uUnit)[0]!=0)
         DBPutValue(db, "description", ENTRYSINGLE | ENTRYSTRING, 1,
                (GENP) sUnitDescription(uUnit), 0);
-    }}
 
     iSequence = iContainerNextChildsSequence(uUnit);
     DBPutValue(db, "childsequence", ENTRYSINGLE | ENTRYINTEGER, 1,
@@ -677,6 +679,7 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
     if ((iCount = iVarArrayElementCount(uUnit->vaRestraints))) {
         srPRestraint = PVAI(uUnit->vaRestraints, SAVERESTRAINTt, 0);
         iSize = sizeof(SAVERESTRAINTt);
+        double dTemp = srPRestraint->iN;
         DBPutTable(db, "restraints", iCount,
                    1, "type", (char *) &(srPRestraint->iType), iSize,
                    2, "flags", (char *) &(srPRestraint->fFlags), iSize,
@@ -688,7 +691,7 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
                    0, NULL, NULL, 0,
                    7, "kx", (char *) &(srPRestraint->dKx), iSize,
                    8, "x0", (char *) &(srPRestraint->dX0), iSize,
-                   9, "n", (char *) &(srPRestraint->dN), iSize,
+                   9, "n", (char *) &dTemp, iSize,
                    0, NULL, NULL, 0,
                    0, NULL, NULL, 0,
                    0, NULL, NULL, 0,
@@ -873,7 +876,16 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
 }
 
 
-
+void
+UnitIOAddParmSet( UNIT uUnit, PARMSET psLib) {
+    if (!uUnit->vaParmSets) {
+        uUnit->vaParmSets = vaVarArrayCreate(sizeof(PARMSET));
+    } else {
+        for (int i=0; i<iVarArrayElementCount(uUnit->vaParmSets); i++ )
+            if (*PVAI(uUnit->vaParmSets, PARMSET, i) == psLib) return;
+    }
+    VarArrayAdd(uUnit->vaParmSets, &psLib);
+}
 
 
 /*
@@ -972,6 +984,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
                                     dMass, dPolar, dDepth, dRStar,
                                     dDepth14, dRStar14, dScreenF, iElement,
                                     iHybridization, sDesc);
+                UnitIOAddParmSet(uUnit,psTemp);
             } else {
                 iIndex = 0;
                 VPERROR("For atom (%s) could not find vdW (or other) "
@@ -1009,6 +1022,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
                                         dDepth, dRStar, dDepth14, dRStar14,
 					dScreenF,
                                         iElement, iHybridization, sDesc);
+                UnitIOAddParmSet(uUnit,psTemp);
                 } else {
                     iIndex = 0;
                     VPERROR("For atom (%s) of type (%s) could not find "
@@ -1204,6 +1218,7 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                         &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
                 iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2,
                         dKb, dR0, dKpull, dRpull0, dKpress, dRpress0, sDesc);
+                UnitIOAddParmSet(uUnit,psTemp);
             } else {
                 bFailedGeneratingParameters = true;
                 iIndex = 0;
@@ -1269,6 +1284,7 @@ bUnitIOIndexBondParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                                 &dKb, &dR0, &dKpull, &dRpull0, &dKpress, &dRpress0, sDesc);
                     iIndex = iParmSetAddBond(uUnit->psParameters, sAtom1, sAtom2, dKb, dR0,
                                              dKpull, dRpull0, dKpress, dRpress0, sDesc);
+                    UnitIOAddParmSet(uUnit,psTemp);
                 } else {
                     bFailedGeneratingParameters = true;
                     iIndex = 0;
@@ -1360,6 +1376,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                 iIndex = iParmSetAddAngle(uUnit->psParameters,
                                           sAtom1, sAtom2, sAtom3,
                                           dKt, dT0, dTkub, dRkub, sDesc);
+                UnitIOAddParmSet(uUnit,psTemp);
             } else {
                 bFailedGeneratingParameters = true;
                 iIndex = 0;
@@ -1444,6 +1461,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                                               sAtom1, sAtom2, sAtom3,
                                               dKt, dT0, dTkub, dRkub,
                                               sDesc);
+                    UnitIOAddParmSet(uUnit,psTemp);
                 } else {
                     bFailedGeneratingParameters = true;
                     iIndex = 0;
@@ -1544,7 +1562,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
 
 #define                MAX_N                9999
 
-//#define TOR_CACHE
+#define TOR_CACHE  // comment to disable for debugging
 #ifdef TOR_CACHE
     bool bFromCache; // true if torsion came from cache
     IX_REC ixTorsionKey;
@@ -1831,6 +1849,8 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                                         sAtom1, sAtom2,
                                                         sAtom3, sAtom4);
                     }
+                    // FIXME: imprecise tracking for wildcard case
+                    if (iTN != PARM_NOT_FOUND) UnitIOAddParmSet(uUnit,psTemp);
                 }
                 if (bPerturbTorsion && iTNPert != PARM_FOUND_EXACT) {
                     if (bProper) {
@@ -1846,6 +1866,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                                             sPert2, sPert3,
                                                             sPert4);
                     }
+                    if (iTNPert != PARM_NOT_FOUND) UnitIOAddParmSet(uUnit,psTemp);
                 }
                 if (iTN == PARM_FOUND_EXACT &&
                         (!bPerturbTorsion || iTNPert == PARM_FOUND_EXACT) ) {
@@ -2468,7 +2489,8 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
     LIST lGroup;
     int i, j, iAtomCount, iMoleculeCount, iResidueCount;
     int iIndex, iGroup, iErrors = 0, iWarnings = 0;
-    double dKx, dX0, dN, dA, dB, dEI, dEJ, dRI, dRJ;
+    double dKx, dX0, dA, dB, dEI, dEJ, dRI, dRJ;
+    int iN;
 
     if (bCheck) {
         VP0("Checking Unit.\n");
@@ -2608,7 +2630,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                 srPRestraint->iAtom4 = 0;
                 srPRestraint->dKx = dKx;
                 srPRestraint->dX0 = dX0;
-                srPRestraint->dN = 0.0;
+                srPRestraint->iN = 0;
                 break;
             case RESTRAINTANGLE:
                 RestraintAngleGet(rRest, &aAtom1, &aAtom2, &aAtom3,
@@ -2619,18 +2641,18 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                 srPRestraint->iAtom4 = 0;
                 srPRestraint->dKx = dKx;
                 srPRestraint->dX0 = dX0;
-                srPRestraint->dN = 0.0;
+                srPRestraint->iN = 0;
                 break;
             case RESTRAINTTORSION:
                 RestraintTorsionGet(rRest, &aAtom1, &aAtom2,
-                                    &aAtom3, &aAtom4, &dKx, &dX0, &dN);
+                                    &aAtom3, &aAtom4, &dKx, &dX0, &iN);
                 srPRestraint->iAtom1 = iContainerTempInt(aAtom1);
                 srPRestraint->iAtom2 = iContainerTempInt(aAtom2);
                 srPRestraint->iAtom3 = iContainerTempInt(aAtom3);
                 srPRestraint->iAtom4 = iContainerTempInt(aAtom4);
                 srPRestraint->dKx = dKx;
                 srPRestraint->dX0 = dX0;
-                srPRestraint->dN = dN;
+                srPRestraint->iN = iN;
                 break;
             default:
                 DFATAL("Invalid restraint type!");
@@ -2798,6 +2820,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                          sAtom2) == PARM_NOT_FOUND) {
                         iParmSetAddHBond(uUnit->psParameters, sAtom1,
                                          sAtom2, dA, dB, sDesc);
+                        UnitIOAddParmSet(uUnit,psTemp);
                     }
                 }
             }
@@ -2820,6 +2843,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 		  PARM_NOT_FOUND) {
 		iParmSetAddNBEdit(uUnit->psParameters, sAtom1, sAtom2, dEI,
 				  dEJ, dRI, dRJ, sDesc);
+                UnitIOAddParmSet(uUnit,psTemp);
 	      }
 	    }
 	  }
@@ -3061,7 +3085,7 @@ void UnitIOBuildFromTables(UNIT uUnit)
                               srPRestraint->iAtom4 - 1)->aAtom;
                 RestraintTorsionSet(rRest, aAtom1, aAtom2, aAtom3, aAtom4,
                                     srPRestraint->dKx, srPRestraint->dX0,
-                                    srPRestraint->dN);
+                                    srPRestraint->iN);
                 break;
             default:
                 DFATAL("Invalid RESTRAINT type loaded");

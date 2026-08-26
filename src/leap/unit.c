@@ -591,7 +591,8 @@ double          dX, dY, dZ, dR, dA, dB, dG;
 BAGLOOP         blRestraints;
 ATOM            aAtom1, aAtom2, aAtom3, aAtom4;
 STRING          sAtom1, sAtom2, sAtom3, sAtom4;
-double          dKr, dR0, dKt, dT0, dKp, dP0, dN;
+double          dKr, dR0, dKt, dT0, dKp, dP0;
+int             iN;
 RESTRAINT       rRest;
 DICTLOOP        dlGroups, dlHeterogens;
 LIST            lAtoms;
@@ -651,13 +652,13 @@ STRING          sAtom;
         while ( (rRest = (RESTRAINT)PBagNext(&blRestraints)) ) {
             if ( iRestraintType(rRest) == RESTRAINTTORSION ) {
                 RestraintTorsionGet( rRest, &aAtom1, &aAtom2, &aAtom3, &aAtom4,
-                                  &dKp, &dP0, &dN );
-        VP0("Restraint TORSION: %s - %s - %s - %s  Kt=%lf  T0=%lf  N=%lf\n",
+                                  &dKp, &dP0, &iN );
+        VP0("Restraint TORSION: %s - %s - %s - %s  Kt=%lf  T0=%lf  N=%d\n",
                         sContainerFullDescriptor( CONTAINER_from(aAtom1), sAtom1 ),
                         sContainerFullDescriptor( CONTAINER_from(aAtom2), sAtom2 ),
                         sContainerFullDescriptor( CONTAINER_from(aAtom3), sAtom3 ),
                         sContainerFullDescriptor( CONTAINER_from(aAtom4), sAtom4 ),
-                        dKp, dP0, dN );
+                        dKp, dP0, iN );
             }
         }
     }

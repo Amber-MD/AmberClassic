@@ -211,7 +211,7 @@ STRING		sTemp, sA, sB;
     InternalRingLoopAtoms(iSmall);
     while ( (aAtom = aInternalRingNextAtom(iSmall)) ) {
 	roPAtom = PVAI( vaAtoms, RINGOVERLAPt, 0 );
-	for ( i=0; i<iVarArrayElementCount(vaAtoms); i++ ) {
+	for ( i=0; i<(int)iVarArrayElementCount(vaAtoms); i++ ) {
 	    if ( aAtom == roPAtom->aAtom ) {
 		roPAtom->bInSmallRing = true;
 		iOverlap++;
@@ -225,7 +225,7 @@ STRING		sTemp, sA, sB;
 	/* larger ring separates from the smaller ring */
 
     roPFirst  = PVAI(vaAtoms,RINGOVERLAPt,0);
-    roPLast   = roPFirst + iVarArrayElementCount(vaAtoms);
+    roPLast   = roPFirst + (int)iVarArrayElementCount(vaAtoms);
     roPBefore = roPLast-1;
     roPCur    = roPFirst;
     roPAfter  = roPFirst+1;
@@ -548,8 +548,8 @@ INTERNAL	inRingBig, inRingSmall;
 	/* from each other */
 
     MESSAGE("There are %d broken bonds\n", 
-		iVarArrayElementCount(vaBrokenBonds) );
-    for ( i=0; i<iVarArrayElementCount(vaBrokenBonds); i++ ) {
+		(int)iVarArrayElementCount(vaBrokenBonds) );
+    for ( i=0; i<(int)iVarArrayElementCount(vaBrokenBonds); i++ ) {
 	aA = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom1;
 	aB = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom2;
 
@@ -593,7 +593,7 @@ INTERNAL	inRingBig, inRingSmall;
 		/* If no RingGroup was found then create a new one */
 
 	if ( iRingGroupIndex == -1 ) {
-	    iRingGroupIndex = iVarArrayElementCount(vaRingGroups);
+	    iRingGroupIndex = (int)iVarArrayElementCount(vaRingGroups);
 	    lRingGroup = (LIST)oCreate(LISTid);
 	    bNewRingGroup = true;
 	} else {
@@ -628,7 +628,7 @@ INTERNAL	inRingBig, inRingSmall;
 	/* Rebuild the broken bonds */
 
     MESSAGE("About to rejoin bonds\n" );
-    for ( i=0; i<iVarArrayElementCount(vaBrokenBonds); i++ ) {
+    for ( i=0; i<(int)iVarArrayElementCount(vaBrokenBonds); i++ ) {
 	aA = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom1;
 	aB = PVAI( vaBrokenBonds, BROKENBONDt, i )->aAtom2;
 	MESSAGE("Rejoining bond between: %s - %s\n",
@@ -641,8 +641,8 @@ INTERNAL	inRingBig, inRingSmall;
 
 #ifdef DEBUG
     MESSAGE("There are total %d ring groups\n", 
-		iVarArrayElementCount(vaRingGroups) );
-    for ( i=0; i<iVarArrayElementCount(vaRingGroups); i++ ) {
+		(int)iVarArrayElementCount(vaRingGroups) );
+    for ( i=0; i<(int)iVarArrayElementCount(vaRingGroups); i++ ) {
 	if ( *PVAI(vaRingGroups,LIST,i) == NULL ) {
 	    MESSAGE("Ring group #%d is EMPTY\n", i );
 	} else {
@@ -655,7 +655,7 @@ INTERNAL	inRingBig, inRingSmall;
 
 		/* Tease apart the rings within the ring groups */
 
-    for ( h=0; h<iVarArrayElementCount(vaRingGroups); h++ ) {
+    for ( h=0; h<(int)iVarArrayElementCount(vaRingGroups); h++ ) {
 	lRingGroup = *PVAI(vaRingGroups,LIST,h);
 	if ( lRingGroup != NULL ) {
 
@@ -674,16 +674,16 @@ INTERNAL	inRingBig, inRingSmall;
 		rsPCur++;
 	    }
 	    SortByInteger( PVAI(vaRingSort,RINGSORTt,0),
-				iVarArrayElementCount(vaRingSort),
+				(int)iVarArrayElementCount(vaRingSort),
 				sizeof(RINGSORTt),
 				&(PVAI(vaRingSort,RINGSORTt,0)->iSize),
 				false );
 
 	    MESSAGE("About to separate the rings.\n" );
 
-	    for ( i=0; i<iVarArrayElementCount(vaRingSort); i++ ) {
+	    for ( i=0; i<(int)iVarArrayElementCount(vaRingSort); i++ ) {
 		inRingBig = PVAI( vaRingSort, RINGSORTt, i )->inRing;
-		for ( j=i+1; j<iVarArrayElementCount(vaRingSort); j++ ) {
+		for ( j=i+1; j<(int)iVarArrayElementCount(vaRingSort); j++ ) {
 		    inRingSmall = PVAI( vaRingSort, RINGSORTt, j )->inRing;
 		    if ( zbGraphUtilSeparate( inRingBig, i, inRingSmall, j ) ) break;
 		}
@@ -696,7 +696,7 @@ INTERNAL	inRingBig, inRingSmall;
 		/* Do this by compacting the (vaRingGroups) VARARRAY */
 
     iPut = 0;
-    for ( i=0; i<iVarArrayElementCount(vaRingGroups); i++ ) {
+    for ( i=0; i<(int)iVarArrayElementCount(vaRingGroups); i++ ) {
 	if ( !*PVAI(vaRingGroups,LIST,i) ) continue;
 	*PVAI(vaRingGroups,LIST,iPut) = *PVAI(vaRingGroups,LIST,i);
 	iPut++;
@@ -728,7 +728,7 @@ LIST		lRingGroup;
 
 		/* Now destroy the lists, the ring groups */
 
-    for ( i=0; i<iVarArrayElementCount(*vaPRingGroup); i++ ) {
+    for ( i=0; i<(int)iVarArrayElementCount(*vaPRingGroup); i++ ) {
 	lRingGroup = *PVAI(*vaPRingGroup,LIST,i);
 	if ( lRingGroup != NULL ) 
 		Destroy( (OBJEKT *)&lRingGroup );
