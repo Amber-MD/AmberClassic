@@ -1,0 +1,71 @@
+//  Program 7 - refine backbone geometry using distance function
+molecule m;
+bounds b;
+string  seq, cseq;
+int i;
+float xyz[ dynamic ], fret;
+
+seq = "acgtacgt";
+cseq = wc_complement( "acgtacgt", "", "dna" );
+
+m = wc_helix( seq, "", "dna", cseq, "",
+         "dna", 2.25, -4.96, 36.0, 3.38, "" );
+
+b = newbounds(m, "");
+allocate xyz[ 4*m.natoms ];
+
+useboundsfrom(b, m, "::??,H?[^T']", m, "::??,H?[^T']", 0.0 );
+for ( i = 1; i < m.nresidues/2 ; i = i + 1 ){
+        setbounds(b,m, sprintf("1:%d:O3'",i),
+                       sprintf("1:%d:P",i+1),   1.595,1.595);
+        setbounds(b,m, sprintf("1:%d:O3'",i),
+                       sprintf("1:%d:O5'",i+1), 2.469,2.469);
+        setbounds(b,m, sprintf("1:%d:C3'",i),
+                       sprintf("1:%d:P",i+1),   2.609,2.609);
+        setbounds(b,m, sprintf("1:%d:O3'",i),
+                       sprintf("1:%d:O1P",i+1), 2.513,2.513);
+        setbounds(b,m, sprintf("1:%d:O3'",i),
+                       sprintf("1:%d:O2P",i+1), 2.515,2.515);
+        setbounds(b,m, sprintf("1:%d:C4'",i),
+                       sprintf("1:%d:P",i+1),   3.550,4.107);
+        setbounds(b,m, sprintf("1:%d:C2'",i),
+                       sprintf("1:%d:P",i+1),   3.550,4.071);
+        setbounds(b,m, sprintf("1:%d:C3'",i),
+                       sprintf("1:%d:O1P",i+1), 3.050,3.935);
+        setbounds(b,m, sprintf("1:%d:C3'",i),
+                       sprintf("1:%d:O2P",i+1), 3.050,4.004);
+        setbounds(b,m, sprintf("1:%d:C3'",i),
+                       sprintf("1:%d:O5'",i+1), 3.050,3.859);
+        setbounds(b,m, sprintf("1:%d:O3'",i),
+                       sprintf("1:%d:C5'",i+1), 3.050,3.943);
+
+        setbounds(b,m, sprintf("2:%d:P",i+1),
+                       sprintf("2:%d:O3'",i),   1.595,1.595);
+        setbounds(b,m, sprintf("2:%d:O5'",i+1),
+                       sprintf("2:%d:O3'",i),   2.469,2.469);
+        setbounds(b,m, sprintf("2:%d:P",i+1),
+                       sprintf("2:%d:C3'",i),   2.609,2.609);
+        setbounds(b,m, sprintf("2:%d:O1P",i+1),
+                       sprintf("2:%d:O3'",i),   2.513,2.513);
+        setbounds(b,m, sprintf("2:%d:O2P",i+1),
+                       sprintf("2:%d:O3'",i),   2.515,2.515);
+        setbounds(b,m, sprintf("2:%d:P",i+1),
+                       sprintf("2:%d:C4'",i),   3.550,4.107);
+        setbounds(b,m, sprintf("2:%d:P",i+1),
+                       sprintf("2:%d:C2'",i),   3.550,4.071);
+        setbounds(b,m, sprintf("2:%d:O1P",i+1),
+                       sprintf("2:%d:C3'",i),   3.050,3.935);
+        setbounds(b,m, sprintf("2:%d:O2P",i+1),
+                       sprintf("2:%d:C3'",i),   3.050,4.004);
+        setbounds(b,m, sprintf("2:%d:O5'",i+1),
+                       sprintf("2:%d:C3'",i),   3.050,3.859);
+        setbounds(b,m, sprintf("2:%d:C5'",i+1),
+                       sprintf("2:%d:O3'",i),   3.050,3.943);
+}
+tsmooth( b, 0.05 );
+dg_options(b, "seed=33333, gdist=0, ntpr=100, k4d=4.0" );
+setxyzw_from_mol( m, NULL, xyz );
+conjgrad( xyz, 4*m.natoms, fret, db_viol, 0.1, 10., 500 );
+setmol_from_xyzw( m, NULL, xyz );
+putpdb( "acgtacgt.pdb", m );
+

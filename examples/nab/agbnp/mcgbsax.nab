@@ -1,0 +1,104 @@
+// Try some conjugate gradients to 2.e-5 rms gradient.
+
+molecule m;
+int i, ier, mytaskid, numtasks;
+float m_xyz[dynamic], f_xyz[dynamic];
+float dgrad, fret;
+point dummy;
+
+// Check for correct number of calling parameters.
+
+if (argc != 3 && argc != 4 && argc != 5 && argc != 6 && argc != 7) {
+  if (mytaskid == 0) {
+    printf("Usage: %s pdbin <prmtop> <xin> pdbout <xout> <check>\n", argv[1]);
+  }
+  ier = -1;
+} else {
+  ier = 0;
+}
+if ( mpierror(ier) != 0) {
+  if (mytaskid == 0) {
+    printf("Error in mpierror!\n");
+    fflush(stdout);
+  }
+  exit (1);
+}
+
+
+// Print the command line.
+
+if (mytaskid == 0) {
+  if (argc == 3) {
+    printf("%s %s %s\n\n", argv[1], argv[2], argv[3]);
+  } else if (argc == 4) {
+    printf("%s %s %s %s\n\n", argv[1], argv[2], argv[3], argv[4]);
+  } else if (argc == 5) {
+    printf("%s %s %s %s %s\n\n",
+	   argv[1], argv[2], argv[3], argv[4], argv[5]);
+  } else if (argc == 6) {
+    printf("%s %s %s %s %s %s\n\n",
+	   argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]);
+  } else {
+    printf("%s %s %s %s %s %s %s\n\n",
+	   argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]);
+  }
+}
+
+// Create a molecule from a pdb file and a force-field parameter file,
+// or from a pdb file and a "prmtop" file.
+
+if (argc == 3) {
+  m = getpdb_prm(argv[2], "leaprc.ff94", "", 0);
+} else {
+  m = getpdb(argv[2]);
+  readparm(m, argv[3]);
+}
+
+// Allocate the arrays.
+
+allocate m_xyz[3*m.natoms];
+allocate f_xyz[3*m.natoms];
+
+// Load the molecular coordinates into the m_xyz array.
+
+if (argc == 3 || argc == 4) {
+  setxyz_from_mol(m, NULL, m_xyz);
+} else {
+  getxyz(argv[4], m.natoms, m_xyz);
+}
+
+// Initialize molecular mechanics, then perform some conjugate
+// gradients and save intermediate results to a Cartesian
+// coordinate checkpoint file every nchk steps.
+
+if (argc == 7) mm_set_checkpoint(argv[7]);
+mm_options("cut=20.0, rgbmax=20.0");
+mm_options("nchk=10, ntpr=1, nsnb=100000, gb=1, diel=C, deltar=0.5, cull_np_lists=1");
+mm_options("gbsa=5, gbsa_debug=1, cutnp=20.0, nsnp=100000, min_volume=0.01");
+mme_init(m, NULL, "::ZZZZ", dummy, NULL);
+fret = mme(m_xyz, f_xyz, -1);
+if (mytaskid == 0) printf("Initial energy is %f0\n\n", fret);
+mme_timer();
+if (mytaskid == 0) printf("Starting with conjugate gradients...\n\n");
+dgrad = 0.0001;
+ier = conjgrad(m_xyz, 3*m.natoms, fret, mme, dgrad, 0.0001, 50);
+if (mytaskid == 0) printf("\n...Done, conjgrad returns %d\n", ier);
+
+// Load the molecular coordinates into the m_xyz array and
+// write the result as a pdb file and an optional x file.
+
+setmol_from_xyz(m, NULL, m_xyz);
+if (argc == 3) {
+  putpdb(argv[3], m);
+} else if (argc == 4) {
+  putpdb(argv[4], m);
+} else if (argc == 5) {
+  putpdb(argv[5], m);
+} else {
+  putpdb(argv[5], m);
+  putxyz(argv[6], m.natoms, m_xyz);
+}
+
+// Print out the timers.
+
+mme_timer();

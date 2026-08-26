@@ -32,8 +32,10 @@ public :: proxy_finalize
 public :: sander_imin
 public :: sander_natoms
 public :: sander_mdtime
+public :: sander_tempsg
 public :: sander_sgft
 public :: sander_sgff
+public :: sander_psgldg
 public :: sander_temp0
 public :: sander_timestep
 public :: sander_init
@@ -236,6 +238,15 @@ end function sander_mdtime
 
 !-----------------------------------------------------------------------------
 
+pure NFE_REAL function sander_tempsg()
+   use sgld, only:tempsg
+   implicit none
+#include "../include/md.h"
+   sander_tempsg = tempsg
+end function sander_tempsg
+
+!-----------------------------------------------------------------------------
+
 pure NFE_REAL function sander_sgft()
    use sgld, only:sgft
    implicit none
@@ -251,6 +262,15 @@ pure NFE_REAL function sander_sgff()
 #include "../include/md.h"
    sander_sgff = sgff
 end function sander_sgff
+
+!-----------------------------------------------------------------------------
+
+pure NFE_REAL function sander_psgldg()
+   use sgld, only:psgldg
+   implicit none
+#include "../include/md.h"
+   sander_psgldg = psgldg
+end function sander_psgldg
 
 !-----------------------------------------------------------------------------
 

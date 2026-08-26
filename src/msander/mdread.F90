@@ -19,8 +19,8 @@ subroutine mdread1()
    use les_data, only : temp0les
    use stack, only: lastist,lastrst
    use nmr, only: echoin
-   use sgld, only : isgld, isgsta,isgend,nsgsize, &
-                    tsgavg,sgft,sgff,sgfg,tsgavp
+   use sgld, only : isgld, isgsta,isgend,sgtype,sgsize, &
+                    tsgavg,sgft,sgff,sgfg,tempsg,tsgavp,sgmask
    use emap,only: temap,gammamap
 #ifdef DSSP
    use dssp, only: idssp
@@ -111,7 +111,7 @@ subroutine mdread1()
          skmin, skmax, vv,vfac, tmode, &
          ntt, gamma_ln, &
          iemap,gammamap, &
-         isgld,isgsta,isgend,nsgsize,tsgavg,sgft,sgff,sgfg,tsgavp,&
+         isgld,isgsta,isgend,sgtype,tsgavg,sgft,sgff,sgfg,tempsg,tsgavp,sgmask,&
          jar, isynctraj, &
          numexchg, repcrd, numwatkeep, hybridgb, reservoir_exchange_step, &
          ntwprt,tausw, &
@@ -490,14 +490,18 @@ subroutine mdread1()
    isgld = 0   ! no self-guiding
    isgsta=1    ! Begining index of SGLD range
    isgend=0    ! Ending index of SGLD range
-   nsgsize=1       !   1--self atom only,
+   sgtype=1        !   1--self atom only,
                    !   2--bond and angle atoms,
                    !   3--bond, angle, and dihedral atoms
+                   !   4--spatial average within cutoff os sgsize
+   sgsize=3.0d0    !  spatial averaging cutoff distance
    tsgavg=0.2d0    !  Local averaging time of SGLD simulation
    sgft=0.0d0      !  Guiding factor of SGLD simulation
    sgff=0.0d0      !  Guiding factor of SGLD simulation
    sgfg=0.0d0      !  Guiding factor of SGLD simulation
+   tempsg=0.0d0    !  Guiding temperature 
    tsgavp=2.0d0    !  Convergency time of SGLD simulation
+   sgmask=':*'     !  atoms apply guiding forces
 
    !     Check to see if "cntrl" namelist has been defined.
    mdin_cntrl=.false.

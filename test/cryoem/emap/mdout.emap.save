@@ -3,10 +3,10 @@
           MSANDER                                      2021
           -------------------------------------------------------
 
-| Run on 06/05/2023 at 08:55:57
+| Run on 08/08/2026 at 12:54:43
 
 |   Executable path: ../../../bin/msander
-| Working directory: /home/case/msander/test/cryoem/emap
+| Working directory: /home/case/AmberClassic/test/cryoem/emap
 |          Hostname: Unknown
   [-O]verwriting output
 
@@ -27,9 +27,9 @@ File Assignments:
 |RSTDIP: rstdip                                                                
 |INPTRA: inptraj                                                               
 
- 
+
  Here is the input file:
- 
+
 Map Constraint Self-Guided Langevin dynamics                                   
  &cntrl                                                                        
     ntx=5, irest=1,ntb=0,nstlim=10,                                            
@@ -126,20 +126,6 @@ SHAKE:
  Number of triangulated 3-point waters found:        0
 
      Sum of charges from parm topology file =      -4.0000
-  _________________ SGLD parameters _________________
-  Parameters for self-guided Langevin dynamics (SGLD) simulation
-
-  Guiding range from     1  to   855
-  Local averaging time:     0.2000 ps 
-  SGLDg  method is used to enhance conformational search. 
-  Collision frequency:    5.00 /ps
-  sgfti:   0.5000 psgldg:   0.1654
-  sgffi:   0.0000
-  SGMD/SGLD output properties:
-  SGLABEL:  SGGAMMA TEMPLF  TEMPHF  EPOTLF EPOTHF EPOTLLF SGWT
-         SGMD/SGLD weighting factor=exp(SGWT)
- _______________________________________________________
-
  ------------------EMAP IMAGE    2 INPUT ---------------
 map file: 1gb1.map is read from unit:   99
  LX, LY, LZ              =       30      20      20
@@ -181,6 +167,20 @@ Rigid    1 has    310 constrained atoms with mask: :1-19;
 Rigid    2 has    855 constrained atoms with mask: :*;                                                                                                                                                                                                                                                             
     Rigid-fitting is not requested for the constrained atoms.
     The constraint map is fixed in space.
+  _________________ SGLD parameters _________________
+  Parameters for self-guided Langevin dynamics (SGLD) simulation
+
+  Guiding range from     1  to   855
+  Local averaging time:     0.2000 ps 
+  SGLDg  method is used to enhance conformational search. 
+  Collision frequency:    5.00 /ps
+  sgfti:   0.5000 psgldg:   0.1654
+  sgffi:   0.0000
+  SGMD/SGLD output properties:
+  SGLABEL:  SGGAMMA TEMPLF  TEMPHF  EPOTLF EPOTHF EPOTLLF SGWT
+         SGMD/SGLD weighting factor=exp(SGWT)
+ _______________________________________________________
+
 
 --------------------------------------------------------------------------------
    4.  RESULTS
@@ -335,18 +335,18 @@ Rigid    2 has    855 constrained atoms with mask: :*;
    5.  TIMINGS
 --------------------------------------------------------------------------------
 
-|                Calc gb radii              0.04 (29.60% of Gen B)
-|                Calc gb diag               0.07 (55.07% of Gen B)
-|                Calc gb off-diag           0.02 (15.33% of Gen B)
-|             Gen Born time              0.12 (100.0% of Nonbo)
-|          Nonbond force              0.12 (95.14% of Force)
-|          Bond/Angle/Dihedral        0.00 ( 1.39% of Force)
-|          Other                      0.00 ( 3.47% of Force)
-|       Force time                 0.13 (96.93% of Runmd)
-|       Verlet update time         0.00 ( 2.92% of Runmd)
-|    Runmd Time                 0.13 (86.26% of Total)
-|    Other                      0.02 (13.42% of Total)
-| Total time                 0.15 (100.0% of ALL  )
+|                Calc gb radii              0.05 (31.74% of Gen B)
+|                Calc gb diag               0.09 (53.89% of Gen B)
+|                Calc gb off-diag           0.02 (14.37% of Gen B)
+|             Gen Born time              0.17 (100.0% of Nonbo)
+|          Nonbond force              0.17 (93.82% of Force)
+|          Bond/Angle/Dihedral        0.00 ( 1.69% of Force)
+|          Other                      0.01 ( 4.49% of Force)
+|       Force time                 0.18 (98.34% of Runmd)
+|       Verlet update time         0.00 ( 1.66% of Runmd)
+|    Runmd Time                 0.18 (91.88% of Total)
+|    Other                      0.02 ( 7.61% of Total)
+| Total time                 0.20 (100.0% of ALL  )
 
 | Number of list builds   :          0
 
@@ -356,11 +356,11 @@ Rigid    2 has    855 constrained atoms with mask: :*;
 | Final Performance Info:
 | -----------------------------------------------------
 | Average timings for all steps:
-|     Elapsed(s) =       0.15 Per Step(ms) =      14.83
-|         ns/day =       5.83   seconds/ns =   14830.00
+|     Elapsed(s) =       0.18 Per Step(ms) =      18.20
+|         ns/day =       4.75   seconds/ns =   18200.00
 | -----------------------------------------------------
 
-|           Job began  at 08:55:57.302  on 06/05/2023
-|           Setup done at 08:55:57.309  on 06/05/2023
-|           Run   done at 08:55:57.457  on 06/05/2023
+|           Job began  at 12:54:43.415  on 08/08/2026
+|           Setup done at 12:54:43.429  on 08/08/2026
+|           Run   done at 12:54:43.612  on 08/08/2026
 |     wallclock() was called     243 times

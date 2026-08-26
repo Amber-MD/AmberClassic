@@ -1,0 +1,55 @@
+// Program 8 - create a pseudoknot using distance bounds and refinement
+molecule m;
+float 	xyz[ dynamic ],f[ dynamic ],v[ dynamic ];
+bounds 	b;
+int	i, seqlen, ier;
+float	fret;
+string	seq, opt;
+
+seq = "GCGGAAACGCCGCGUAAGCG";
+
+seqlen = length(seq);
+
+m = link_na("1", seq, "", "RNA", "35");
+
+allocate xyz[ 4*m.natoms ];
+allocate f[ 4*m.natoms ];
+allocate v[ 4*m.natoms ];
+
+b = newbounds(m, "");
+
+for ( i = 1; i <= seqlen; i = i + 1) {
+	useboundsfrom(b, m, sprintf("1:%d:??,H?[^'T]", i), m,
+		sprintf("1:%d:??,H?[^'T]", i), 0.0 );
+}
+
+setboundsfromdb(b, m, "1:1:", "1:2:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:2:", "1:3:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:3:", "1:18:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:18:", "1:19:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:19:", "1:20:", "arna.stack.db", 1.0);
+
+setboundsfromdb(b, m, "1:8:", "1:9:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:9:", "1:10:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:10:", "1:11:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:11:", "1:12:", "arna.stack.db", 1.0);
+setboundsfromdb(b, m, "1:12:", "1:13:", "arna.stack.db", 1.0);
+
+setboundsfromdb(b, m, "1:1:", "1:13:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:2:", "1:12:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:3:", "1:11:", "arna.basepair.db", 1.0);
+
+setboundsfromdb(b, m, "1:8:", "1:20:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:9:", "1:19:", "arna.basepair.db", 1.0);
+setboundsfromdb(b, m, "1:10:", "1:18:", "arna.basepair.db", 1.0);
+
+tsmooth( b, 0.0005 );
+
+opt = "seed=571, gdist=0, ntpr=100, k4d=2.0, randpair=5, sqviol=1";
+dg_options( b, opt );
+embed(b, xyz );
+
+ier = conjgrad( xyz, 4*m.natoms, fret, db_viol, 0.001, 10., 1000 );
+
+setmol_from_xyzw( m, NULL, xyz );
+putpdb( "rna_pseudoknot.pdb", m );

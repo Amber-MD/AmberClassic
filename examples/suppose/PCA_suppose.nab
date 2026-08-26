@@ -1,0 +1,599 @@
+//
+//
+// This software is copyrighted, 1997, by Jarrod A. Smith.
+// The NAB molecular manipulation language is copyrighted, 1995,
+// 1996, 1997, by Thomas J. Macke and David A. Case.
+// The following terms apply to all files associated with the software
+// unless explicitly disclaimed in individual files.
+//
+// The authors hereby grant permission to use, copy, modify, and re-distribute
+// this software and its documentation for any purpose, provided
+// that existing copyright notices are retained in all copies and that this
+// notice is included verbatim in any distributions. No written agreement,
+// license, or royalty fee is required for any of the authorized uses.
+// Modifications to this software may be distributed provided that
+// the nature of the modifications are clearly indicated.
+//
+// IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+// ARISING OUT OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY
+// DERIVATIVES THEREOF, EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
+// THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE
+// IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE
+// NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+// MODIFICATIONS.
+//
+//
+
+#define MAXMOL		5000
+#define MAXSTRAND	50
+#define MAXRES_PER_STRAND 500
+#define MAXATOM	500000
+#define MEANPDBFNAME "mean.pdb"
+#define ROT_EXT	".rot.pdb"
+#define USAGE	"%s [-mat] [-rot] [-mean] [-sd] [-cmp pdbfile]\n        [-pr atom_sel] [-fit atom_expr] [-calc atom_expr] pdbfiles\n", argv[1]
+
+// define death
+int die( string message )
+{
+	fprintf( stderr, "%s\n", message );
+	exit( -1 );
+};
+
+float		rms_per_res[ MAXSTRAND, MAXRES_PER_STRAND ];
+string	prexpr;
+
+int per_res_rmsd( molecule mi, molecule mj )
+{
+	residue r;
+	int rn, sn;
+	string per_res_calcexpr, emsg;
+	float pr_fit;
+
+	for( r in mi ){
+		rn = r.resnum; sn = r.strandnum;
+		per_res_calcexpr = sprintf( "%d:%d:%s", sn, rn, prexpr );
+		if ( rmsd( mi, per_res_calcexpr, mj, per_res_calcexpr, pr_fit ) ){
+			emsg = sprintf( "ERROR: per_res_rmsd() failed with atom expression %s\n",
+				per_res_calcexpr );
+			die( emsg );
+		}
+		rms_per_res[sn, rn] = rms_per_res[sn, rn] + pr_fit * pr_fit;
+	}
+	return( 1 );
+};
+
+// make filenames for output rotated structures
+string make_rot_fname( string fname )
+{
+	int	nf, i;
+	string	rotfname, fields[256];
+
+	nf = split( fname, fields, "." );
+	rotfname = fields[1];
+	for( i=2; i<nf; i++ ){
+		rotfname = rotfname + "." + fields[i];
+	}
+	rotfname = rotfname + ROT_EXT;
+	return( rotfname );
+};
+
+// Check to see that two molecules appear to be the same
+int check_input_mol( molecule mol, molecule ref )
+{
+//	if( mol.nstrands != ref.nstrands )
+//		die( "ERROR: Molecules differ.  Bye." );
+//	if( mol.nresidues != ref.nresidues )
+//		die( "ERROR: Molecules differ.  Bye." );
+//	if( mol.natoms != ref.natoms )
+//		die( "ERROR: Molecules differ.  Bye." );
+	return( 0 );
+};
+
+// variable declarations
+molecule m[MAXMOL], m_mean, m_temp, m_cmp;
+residue	r;
+atom		a,a_c;
+int		ac, n_mol, n_pairs, n_fitatoms, n_calcatoms,n_molsq;
+int		pr, mat, rot, mean, cmp, sd, i, j,pca,k;
+string	fitexpr, calcexpr, cmpfname, rotcmpfname;
+string	pdbfname[ MAXMOL ], rotpdbfname[ MAXMOL ];
+float		pairwise_fit[MAXMOL, MAXMOL], fit_to_mean[MAXMOL], fit_to_cmp[MAXMOL];
+float		rms_pair_difference, rms_mean_difference, rms_cmp_difference;
+float		mean_x[ MAXATOM ], mean_y[ MAXATOM ], mean_z[ MAXATOM ];
+float		pair_mean, pair_sum, pair_sigma, dev_sum, dev;
+float		cmp_mean, cmp_sum, cmp_sigma, mean_mean, mean_sum, mean_sigma;
+float		dist_mat[dynamic], met_mat[dynamic],d0isq[dynamic],met_cp[dynamic];
+float           evals[dynamic],d2,rog2,mostneg,sumsq,evmax,sumev,printsum;
+int             n_dim[1],i_max,numneg,allocsize,no;
+float           xyz_mean[dynamic],xyzij[dynamic,dynamic],xyz_tmp[dynamic],xyz_c_mean[dynamic];
+int		unknownfac,lastind;
+float		prodi;
+float		logsum;
+file		evalfile,pc_file;
+int eigen(float a, float eV,int n) c;
+
+//for the pca-stuff
+
+// initialize some of the variables
+n_mol = n_pairs = pr = mat = rot = mean = cmp = 0;
+rms_pair_difference = rms_mean_difference = 0;
+pair_sum = mean_sum = cmp_sum = dev_sum = 0;
+no=0;
+// get the command line arguments
+if ( argc==1 ){
+	fprintf( stderr, USAGE );
+	exit(-1);
+}
+for ( ac=2; ac<=argc; ac=ac+1 ){
+	if (argv[ac] == "-fit"){
+		fitexpr=argv[ac + 1];
+		ac = ac + 1;
+	}else
+	if (argv[ac] == "-calc"){
+		calcexpr=argv[ac + 1];
+		ac = ac + 1;
+	}else
+	if (argv[ac] == "-pr"){
+		prexpr=argv[ac + 1];
+		ac = ac + 1;
+		pr = 1;
+	}else
+	if (argv[ac] == "-mat"){
+		mat = 1;
+	}else
+	if (argv[ac] == "-rot"){
+		rot = 1;
+	}else
+	if (argv[ac] == "-mean"){
+		mean = 1;
+	}else
+	if (argv[ac] == "-sd"){
+		sd = 1;
+	}else
+	if (argv[ac] == "-cmp"){
+		cmp = 1;
+		cmpfname = argv[ac + 1];
+		ac = ac + 1;
+         }else
+	 if(argv[ac]== "-no"){
+		       no=1;
+
+
+
+	}else
+	if(argv[ac] == "-pca"){
+		    pca = 1;
+
+
+
+
+}else{
+// Get an input pdb file
+		n_mol++;
+		if ( m[n_mol] = getpdb ( argv[ac] ) ){
+			pdbfname[n_mol] = argv[ac];
+			if( rot ){
+				rotpdbfname[n_mol] = make_rot_fname( pdbfname[n_mol] );
+				printf( "Molecule %d = %s --> %s\n",
+						n_mol, pdbfname[ n_mol ], rotpdbfname[n_mol]);
+			}else{
+				printf( "Molecule %d = %s\n", n_mol, pdbfname[ n_mol ] );
+			}
+			if( n_mol > 1 ){
+				check_input_mol( m[n_mol], m[n_mol - 1] );
+			}
+		}else{
+			fprintf( stderr, "Cannot get pdb file %s.  Bye.\n", argv[ac] );
+			exit(-1);
+		}
+	}
+}
+
+// if per-residue rmsds are requested, initialize the array that stores them
+if( pr ){
+	m_temp=m[1];
+	for( r in m_temp ){
+		rms_per_res[ r.strandnum, r.resnum ] = 0.0;
+	}
+}
+
+// some sanity checks
+if( n_mol < 2 ) die( "ERROR: At least 2 pdb structures are required.  Bye." );
+if ( ! (n_fitatoms = countmolatoms( m[1], fitexpr )) )
+	die( "ERROR:  No atoms defined by the fit atom expression " + fitexpr );
+if ( ! (n_calcatoms = countmolatoms( m[1], calcexpr )) )
+	die( "ERROR:  No atoms defined by the calc atom expression " + calcexpr );
+
+// Report the filename for the mean structure if requested
+if( mean ){
+	printf( "\n-mean : Mean structure will be output to \"%s\"\n", MEANPDBFNAME);
+}
+
+// report the fit and calc atom expressions
+if ( fitexpr == NULL )
+	printf( "\nAll atom fit.\n");
+else
+	printf( "\n-fit : Fitting on the atom expression \"%s\" : %d atoms.\n",
+		fitexpr, n_fitatoms );
+if ( calcexpr == NULL )
+	printf( "All atom RMSDs.\n");
+else
+	printf( "-calc : Calculating on the atom expression \"%s\" : %d atoms.\n\n",
+		calcexpr, n_calcatoms );
+
+// superimposing all pairs swithed off for now !!
+// compute the pairwise RMSDs and the overall rms difference
+  for ( i=2; i<=n_mol; i=i+1 ){
+  	for ( j=1; j<i; j=j+1 ){
+              if(no==0){
+  	    if ( !superimpose( m[i], fitexpr, m[j], fitexpr ) )
+  			die( "ERROR: superimpose() failed.  Check your atom expressions." );}
+  		if ( rmsd( m[i], calcexpr, m[j], calcexpr, pairwise_fit[j,i] ) )
+  			die( "ERROR: rmsd() failed.  Check your atom expressions." );
+  		n_pairs++;
+  		pair_sum = pair_sum + pairwise_fit[j,i];
+  		rms_pair_difference = rms_pair_difference + pairwise_fit[j,i]*pairwise_fit[j,i];
+  		if( pr ){
+  			per_res_rmsd( m[i], m[j] );
+  		}
+  	}
+  }
+  rms_pair_difference = sqrt( rms_pair_difference / n_pairs );
+//   Compute standard deviation if requested
+if( sd ){
+	dev_sum = 0;
+	pair_mean = pair_sum / n_pairs;
+	for ( i=2; i<=n_mol; i=i+1 ){
+		for( j=1; j<i; j=j+1 ){
+			dev = pairwise_fit[j,i] - pair_mean; 
+			dev_sum = dev_sum + ( dev * dev ); 
+		}
+	}
+	pair_sigma = sqrt( dev_sum / (n_pairs - 1) );
+}
+
+// superimpose all structures onto the first molecule
+if(no==0){
+for( i=2; i<=n_mol; i++ ){
+	superimpose( m[i], fitexpr, m[1], fitexpr );
+}
+}
+// compute the mean structure from the superimposed family
+m_mean = getpdb( pdbfname[1] );
+
+if(pca==1)
+{
+if(calcexpr == NULL)
+	    {
+	     allocsize=3*m_mean.natoms;
+	     }
+	     else
+	     {
+	      allocsize=3*n_calcatoms;
+	      }
+
+unknownfac=allocsize/3;
+//unknownfac is not unknown any longer
+//we just weren't aware of the correct definition
+//of the rmsd between two structures
+
+allocate xyz_mean[allocsize];
+allocate xyzij[allocsize,3*n_mol];
+allocate xyz_tmp[allocsize];
+allocate xyz_c_mean[allocsize];
+
+for(i=1;i<=allocsize;i++) xyz_tmp[i]=xyz_mean[i]=0.0;
+//what follows is a trick to get the PC's for subsets of atoms, too
+for( i=1;i<=n_mol;i++ )
+     {
+      m_temp = m[i];
+    
+      setxyz_from_mol(m_temp,calcexpr,xyz_tmp);
+      
+      for( j=1;j<=allocsize;j++) xyz_mean[j]+=xyz_tmp[j];
+      }
+      for( j=1;j<=allocsize;j++)
+	   {
+	    xyz_mean[j]/=n_mol;
+	    
+	    }
+}
+      
+
+
+
+for( i=1; i<=n_mol; i++ ){
+	m_temp = m[i];
+	for( a in m_temp ){
+		mean_x[ a.tatomnum ] = mean_x[ a.tatomnum ] + a.x;
+		mean_y[ a.tatomnum ] = mean_y[ a.tatomnum ] + a.y;
+		mean_z[ a.tatomnum ] = mean_z[ a.tatomnum ] + a.z;
+	}
+if (pca == 1)
+   {
+	setxyz_from_mol(m_temp,calcexpr,xyz_tmp);
+	for(j=1;j<=allocsize;j++) xyzij[j,i] = xyz_tmp[j];
+	}
+
+}
+
+
+for( a in m_mean ){
+	a.x = mean_x[ a.tatomnum ] / n_mol;
+	a.y = mean_y[ a.tatomnum ] / n_mol;
+	a.z = mean_z[ a.tatomnum ] / n_mol;
+        
+	}
+//setxyz_from_mol(m_mean,"::",xyz_mean);
+// print the pairwise matrix if requested
+if ( mat == 1 ){
+	printf( "\nPairwise difference matrix by molecule number :\n---" );
+	for ( i=1; i<n_mol; i=i+1 ) printf( "------" ); printf( "\n" );
+	for ( i=1; i<=n_mol; i++ ){
+		printf( "%2d |", i );
+		for ( j=1; j<i; j++ ){
+			printf( "%6.2f", pairwise_fit[j,i] );
+		}
+		printf( "\n" );
+	}
+	printf( "----" );
+	for ( i=1; i<n_mol; i=i+1 ) printf( "------" ); printf( "\n" ); printf( "  " );
+	for ( i=1; i<n_mol; i=i+1 ) printf( "%6d", i );
+	printf( "\n" );
+}
+if ( pca == 1 ){
+        n_molsq = n_mol * n_mol;
+        allocate dist_mat[n_mol*n_mol];
+	allocate met_mat[n_mol*n_mol];
+        allocate evals[n_mol];
+	n_dim[1] = n_mol;
+	for(i=1;i<=n_molsq;i++)
+	{
+	 dist_mat[i]=0.0;
+	 met_mat[i] =0.0;
+	 }
+	 
+
+
+for(i=1;i<=n_molsq;i++) met_mat[i]=0.0;
+
+// generate the covariance matrix, not from pairwise distances anymore,
+// but directly
+// C_ij ~= (x_i-x_mean)*(x_j-x_mean) where x is a vector containing all
+// selected atomic coordinates (like anywhere else in NAB)
+// note that the inventors of essential dynamics use a completely different
+// normalization factor, they devide C_ij by <number of conformations read in>
+// however, dividing by <number of atoms considered> yields correct PC's
+// in Angstroms and seems reasonable, since generating C_ij from
+// the pairwise rmsd distance matrix should yield the same values
+// One more important note: C_ijs defined as above MUST
+// contain one (nonzero) eigenvector to the eigenvalue 0, which is quite clear,
+// since the sum over each row (column) is zero, which follows
+// from the definition.
+
+
+// the covariance matrix is written into met_mat, 
+for(i=1;i<=n_mol;i++)
+	{
+	 for(j=1;j<=i;j++)
+		{
+                 for(k=1;k<=allocsize;k++)
+		{ 
+		  met_mat[n_mol*(i-1)+j]+=(xyzij[k,j]-xyz_mean[k])*(xyzij[k,i]-xyz_mean[k])/(unknownfac);
+
+		  }
+		 met_mat[ n_mol*(j-1)+i] = met_mat[ n_mol*(i-1)+j];
+                 
+		 }
+      
+	}
+	
+ 	
+  eigen(met_mat,evals,n_dim);
+
+//diagonalize it (in place)
+//met_mat contains the eigenvectors (column-wise ?) after return,
+//evals contains the eigenvalues
+
+// some checks follow, just to keep track of numerical junk,
+// i.e. negative eigenvalues of small absolute values
+ evmax=-1.0e20;
+ mostneg = 1.e20;
+ numneg=0;
+ sumev=0.0;
+prodi=1.0;
+
+for(i=1;i<=n_mol;i++)
+	{
+	if(evals[i]<=0.0) lastind=i;
+		  
+        }
+
+ for(i=1;i<=n_mol;i++)
+	{
+	 if(evals[i]<0.0)
+	 {
+	  if (evals[i]<mostneg) mostneg=evals[i];
+	  numneg++;
+	  }
+		
+	 if (evals[i]>evmax)
+	     {
+	      evmax=evals[i];
+              
+	      i_max=i;
+	      }
+	  sumev+=evals[i];
+	 }
+	if(numneg !=0 )
+		  {
+		   fprintf(stderr,"ERR: %d EV's smaller than zero\n",numneg);
+		   fprintf(stderr,"ERR: most negative EV: %f\n",mostneg);
+		   }
+// experience shows that negative eigenvalues occur only far down the list.
+// in the following, two columns are written out,percentage of variance for the
+// PC's beside total variance yet accounted for
+ printsum=0.0;
+
+evalfile=fopen("EVscaled.dat","w");
+for(i=1;i<=n_mol;i++)
+	{         printsum+=evals[i]/sumev;
+		  fprintf(evalfile,"VAR: %d %f %f\n",i,evals[i]/sumev,printsum);
+        }
+fclose(evalfile);
+
+// largest eigenvalue-eigenvecs
+// careful, Evals are not necessarily sorted
+// and we don't want to with fiddle an extra sort 
+// all the way through
+// but it seems correct for the relevant PC's
+// the following is taken from the corresponding distance geometry
+// procedure
+
+pc_file=fopen("PC_s.dat","w");
+for(i=1;i<=n_mol;i++)
+	{
+	 fprintf(pc_file,"PC "); 
+	 for(j=1;j<=n_mol;j++)
+		{
+// the following line should only affect numerical junk
+// it prevents nan's when the sqrt is taken		
+		 if(evals[j]<0.0) evals[j]=0.0;
+ 		 
+		 dist_mat[n_mol*(i-1)+j] =sqrt(evals[j])*met_mat[n_mol*(i-1)+j];
+                 fprintf(pc_file,"%f ",dist_mat[n_mol*(i-1)+j]);
+		 }
+		 fprintf(pc_file,"\n");
+		 }
+
+//this prints out the principal components in the order the structures were
+//read in. E.g. the second column contains the first PC of structure
+//1,2,..,n
+//the fourth column contains the second PC of structure 1,2,...n and so on.
+
+
+deallocate xyz_mean;
+deallocate xyzij;
+deallocate xyz_tmp;
+deallocate xyz_c_mean;
+
+
+}	
+
+// Compute RMSD from mean
+for( i=1; i<=n_mol; i++ ){
+	rmsd( m[i], calcexpr, m_mean, calcexpr, fit_to_mean[i] );
+	mean_sum = mean_sum + fit_to_mean[i];
+	rms_mean_difference = rms_mean_difference + fit_to_mean[i] * fit_to_mean[i];
+}
+rms_mean_difference = sqrt( rms_mean_difference / n_mol );
+// Compute standard deviation if requested
+if( sd ){
+	dev_sum = 0;
+	mean_mean = mean_sum / n_mol;
+	for ( i=1; i<=n_mol; i=i+1 ){
+		dev = fit_to_mean[i] - mean_mean; 
+		dev_sum = dev_sum + ( dev * dev ); 
+	}
+	mean_sigma = sqrt( dev_sum / (n_mol - 1) );
+}
+
+// Print RMSD from mean table if requested
+if( mat ){
+	printf( "\nDifference from mean by molecule number :\n" );
+	for ( i=1; i<=n_mol; i++ ) printf( "------" ); printf( "\n" );
+	for ( i=1; i<=n_mol; i++ ) printf( "%6.2f", fit_to_mean[i] ); printf( "\n" );
+	for ( i=1; i<=n_mol; i++ ) printf( "------" ); printf( "\n" );
+	for ( i=1; i<=n_mol; i=i+1 ) printf( "%4d  ", i ); printf( "\n" );
+}
+
+// print the overall rms differences
+printf( "\nRMS pairwise difference between structures = %5.3f\n", rms_pair_difference );
+if( sd ) printf( "Standard Deviation = %5.3f\n\n", pair_sigma );
+printf( "RMS difference from mean structure = %5.3f\n", rms_mean_difference );
+if( sd ) printf( "Standard Deviation = %5.3f\n", mean_sigma );
+
+// Get cmp molecule if requested
+if( cmp ){
+	if( m_cmp = getpdb( cmpfname ) ){
+		check_input_mol( m_cmp, m[1] );
+	}else{
+		fprintf( stderr, "ERROR: -cmp: Cannot get pdb file %s\n", cmpfname ); 
+		exit( -1 );
+	}
+// Superimpose cmp structure onto first structure and compute RMSDs
+	superimpose( m_cmp, fitexpr, m[1], fitexpr );
+	for( i=1; i<=n_mol; i++ ){
+		rmsd( m[i], calcexpr, m_cmp, calcexpr, fit_to_cmp[i] );
+		cmp_sum = cmp_sum + fit_to_cmp[i];
+		rms_cmp_difference = rms_cmp_difference + fit_to_cmp[i] * fit_to_cmp[i];
+	}
+	rms_cmp_difference = sqrt( rms_cmp_difference / n_mol );
+// Compute standard deviation if requested
+	if( sd ){
+		dev_sum = 0;
+		cmp_mean = cmp_sum / n_mol;
+		for ( i=1; i<=n_mol; i=i+1 ){
+			dev = fit_to_cmp[i] - cmp_mean; 
+			dev_sum = dev_sum + ( dev * dev ); 
+		}
+		cmp_sigma = sqrt( dev_sum / (n_mol - 1) );
+	}
+
+// Print RMSD from cmp table if requested
+	if( mat ){
+		printf( "\nDifference from %s by molecule number :\n", cmpfname );
+		for ( i=1; i<=n_mol; i++ ) printf( "------" ); printf( "\n" );
+		for ( i=1; i<=n_mol; i++ ) printf( "%6.2f", fit_to_cmp[i] ); printf( "\n" );
+		for ( i=1; i<=n_mol; i++ ) printf( "------" ); printf( "\n" );
+		for ( i=1; i<=n_mol; i=i+1 ) printf( "%4d  ", i ); printf( "\n" );
+}
+if( rot ){
+	rotcmpfname = make_rot_fname( cmpfname );
+	printf( "\nRotated %s will be output to file %s", cmpfname, rotcmpfname );
+	putpdb( rotcmpfname, m_cmp ); 
+}
+printf( "\nRMS difference from %s = %5.3f\n", cmpfname, rms_cmp_difference );
+if( sd ) printf( "Standard Deviation = %5.3f\n", cmp_sigma );
+
+}
+
+// write out the superimposed structures if requested
+if( rot )
+	for( i=1; i<=n_mol; i++ )
+		putpdb( rotpdbfname[i], m[i] ); 
+
+// write out the mean structure if requested
+if( mean ){
+	putpdb( MEANPDBFNAME, m_mean );
+}
+
+if( pr ){
+	printf( "\nper-residue RMS differences:\n" );
+	for( r in m_temp ){
+		rms_per_res[r.strandnum, r.resnum] =
+			sqrt(rms_per_res[r.strandnum, r.resnum]/n_pairs); 
+		printf( "%4s %5d %8.3f\n",
+			r.resname, r.tresnum, rms_per_res[r.strandnum, r.resnum]);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

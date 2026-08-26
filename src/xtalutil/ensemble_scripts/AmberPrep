@@ -255,10 +255,10 @@ fi
 #-----------------------------------------------------------------------
 
 cat <<EOF > tleap.in
-addPath $AMBERCLASSICHOME/dat/leap/lib
-addPath $AMBERCLASSICHOME/dat/leap/parm
-addPath $AMBERCLASSICHOME/dat/leap/cmd
-addPath $AMBERCLASSICHOME/dat/leap/prep
+addPath \$\$AMBERCLASSICHOME/dat/leap/lib
+addPath \$\$AMBERCLASSICHOME/dat/leap/parm
+addPath \$\$AMBERCLASSICHOME/dat/leap/cmd
+addPath \$\$AMBERCLASSICHOME/dat/leap/prep
 set default nocenter on
 set default reorder_residues off
 source leaprc.protein.autolink

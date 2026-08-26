@@ -89,8 +89,6 @@ subroutine sander()
   use barostats, only: mcbar_setup
   use random, only: amrset
 
-  use music_module, only: read_music_nml, print_music_settings
-
   use commandline_module, only: cpein_specified
 
 #ifdef MPI
@@ -271,8 +269,6 @@ subroutine sander()
       end if
 
       call mdread2(x, ix, ih)
-      call read_music_nml()
-      call print_music_settings()
 #ifdef MPI
       if (ifmbar .ne. 0) then
         call setup_mbar(nstlim)
@@ -659,6 +655,11 @@ subroutine sander()
     call amrset(ig+1)
     call stack_setup()
 
+    ! Prepare for EMAP constraints:  non-MPI branch:
+    if (temap) then
+      call pemap(dt,temp0,x,ix,ih)
+    end if
+
 #endif /* MPI */
 
     ! Initialize LIE module if used
@@ -686,7 +687,7 @@ subroutine sander()
 
     ! Prepare for SGLD simulation
     if (isgld > 0) then
-      call psgld(natom,ix(i08), ix(i10), x(lmass),x(lcrd),x(lvel), rem)
+      call psgld(natom,ix,ih, ix(i08), ix(i10), x(lmass),x(lcrd),x(lvel), rem)
     end if
 
     if (master) then
