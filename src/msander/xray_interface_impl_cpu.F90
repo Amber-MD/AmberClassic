@@ -394,7 +394,6 @@ contains
 
    subroutine xray_write_fmtz(filename)
 
-   use xray_globals_module
    use xray_interface2_data_module, only:  Fcalc, Fobs, hkl, resolution, &
        sigma_Fobs, new_order, penalty
    use xray_target_module, only : target_function_id
@@ -430,15 +429,6 @@ contains
          '15N', achar(9), '15N',achar(9), '15N',achar(9),'15N', &
          achar(9),'15N',achar(9),'15N',achar(9),'15N'
       do i=1,num_hkl
-#if 0
-       if( mod(i,4) == 1 ) then
-         Fcalcav = Fcalc(i)
-       else if( mod(i,4) == 2 .or. mod(i,4) == 3 ) then
-         Fcalcav = Fcalcav + Fcalc(i)
-       else
-         Fcalcav = (Fcalcav + Fcalc(i)) / 4.0
-       endif
-#endif
          phicalc = atan2( aimag(Fcalc(i)), real(Fcalc(i)) ) * 57.2957795d0
          write(20,&
          '(i4,a,i4,a,i4,a,f8.3,a,f12.3,a,f12.3,a,f12.3,a,f12.3,a,f12.3,a,f12.4)') &
@@ -446,14 +436,6 @@ contains
           resolution(i), achar(9), abs(Fobs(i)), achar(9), &
           sigma_Fobs(i), achar(9), abs(Fcalc(i)), achar(9), phicalc, &
           achar(9), real(Fcalc(i)),achar(9),aimag(Fcalc(i))
-#if 0
-         if( mod(i,4) == 0 ) write(20,&
-         '(i4,a,i4,a,i4,a,f8.3,a,f12.3,a,f12.3,a,f12.3,a,f12.3,a,i4,a,f12.4)') &
-          hkl(1,i), achar(9),hkl(2,i), achar(9), hkl(3,i), achar(9), &
-          resolution(i), achar(9), abs(Fobs(i)), achar(9), &
-          sigma_Fobs(i), achar(9), abs(Fcalcav), achar(9), phicalc, &
-          achar(9), rfree(i),achar(9),zero
-#endif
       end do
    end if
    close(20)
