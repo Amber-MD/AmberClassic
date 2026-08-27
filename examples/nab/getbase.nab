@@ -1,0 +1,22 @@
+
+int	getbase( float gc, string sbase, string abase )
+//  output a randdom base-pair sequence, with overall GC content of gc
+{
+	float	pgc;
+
+	pgc = rand2();
+	if( pgc < 0.5 * gc ){
+		sbase = "c";		// C
+		abase = "g";
+	}else if( pgc >= 0.5 * gc && pgc < gc ){
+		sbase = "g";		// G
+		abase = "c";
+	}else if( pgc >= gc && pgc < 0.5 + 0.5 * gc ){
+		sbase = "a";		// A
+		abase = "t";
+	}else{
+		sbase = "t";		// T
+		abase = "a";
+	}
+};
+

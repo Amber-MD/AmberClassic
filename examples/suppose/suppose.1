@@ -1,0 +1,226 @@
+.TH SUPPOSE l "June 5, 1997"
+
+.SH NAME
+suppose \- superposition of multiple structures
+
+.SH USAGE
+\fBsuppose\fR [-mat] [-rot] [-mean] [-sd] [-cmp <cmppdb>] [-fit <fitexpr>]
+[-calc <calcexpr>] [-pr <atomlist>] <pdb-files>
+
+.SH DESCRIPTION
+This is a program written in the NAB molecular manipulation lanuguage
+(http://www.scripps.edu/case/casegroup-sh-2.2.html#sh-2.2) to supercede Bob
+Diamond's multiple superposition program, "superpose".  It overcomes a number
+of superpose's limitations and undocumented bugs while retaining it's functionality
+as well as adding features and improving some aspects of it, particularly the way
+atom selections are made for defining regions of the molecule you wish to superimpose
+and get statistics for.
+\fIsuppose\fR takes structures as pdb files and fits each structure onto
+every other, computing the fitting error for each pair and optionally, for each
+residue of each pair.  It then uses this complete set of pairwise rms deviations
+to compute the overall rms pairwise deviation between structures.
+.PP
+\fIsuppose\fR also computes the mean structure by superimposing all structures
+onto the first one and then averaging each coordinate of each atom over all
+the molecules.  It then determines the deviation of each structure from this
+mean coordinate set and reports the overall rms deviation from the mean.   The
+deviation of each structure and overall rms deviation from a user-specified
+coordinate set can also be obtained by using the -cmp option (i.e. to compare an
+NMR family to an Xray structure).  The program can then write the set of fitted,
+rotated coordinates and/or the mean structure back as new pdb files.  All input
+files must have the same atoms in the same order.
+.SH OPTIONS
+.HP
+.B -mat
+will write to STDOUT a matrix of all pairwise deviations as well as a table containing
+the deviation of each structure from the mean and optionally, from an arbitrary input
+structure (see the -cmp options for details). 
+.HP
+.B -rot
+will write out fitted, rotated coordinates to files with ".rot.pdb" in place
+of the last extension of the input file names.  For example, if you specified *.pdb as the
+input files, the rotated files would be called *.rot.pdb.
+.HP
+.B -mean
+will cause the mean structure (after superposition) to be
+written to the file \fImean.pdb\fR.
+.HP
+.B -sd
+will compute and report standard deviations for all RMS values.  I'm not sure error bars
+on an RMSD are very meaningful, but people have asked for it...
+.HP
+.B -cmp \fI<cmppdb>\fR
+.br
+indicates that each of the input structures should be compared to
+\fI<cmppdb>\fR similar to the way each one gets compared to the mean structure.
+Overall RMS from <cmppdb> and optionally (via -mat), the RMSD from each structure is
+reported.  This could be useful for comparing an NMR family to an Xray or some other
+Brookhaven structure, for example.  The -rot option will cause \fI<cmppdb>\fR to be
+fitted and written out along with the input files.
+.B Note that <cmppdb> must be the same molecule as the input structures with the
+.B atoms in the same order!
+.HP
+.B -fit \fI<"fitexpr">\fR
+.br
+indicates that the atoms to be used in the various fits will be
+specified by the NAB atom expression \fI<fitexpr>\fR. See below.  Default is all atoms.
+It is recommended that \fI<fitexpr>\fR be contained in quotes.
+.HP
+.B -calc \fI<"calcexpr">\fR
+.br
+indicates the atoms to be used in calculating rms
+differences will be specified by the NAB atom expression
+\fI<calcexpr>\fR after the fit.  See below.  Default is all atoms.
+It is recommended that \fI<calcexpr>\fR be contained in quotes.
+.HP
+.B -pr \fI<"atomlist">\fR
+.br
+causes suppose to compute per-residue RMSDs for the fit specified by the -fit option (or
+the default fitting on all atoms of the molecule if the -fit option was omitted). 
+\fI<atomlist>\fR should be just the "atom part" of an NAB atom expression (see below).
+It will be used as the atom selection upon which the RMSD of each residue will be
+calculated.  Normally, this will be the quoted wildcard character "*", indicating that
+all atoms of each residue will be used to compute the per-residue RMSDs.
+
+.SH ATOM EXPRESSIONS
+An atom expression is a pattern that matches one or more atom names in a molecule
+or residue.  NAB atom expressions are based on the idea that atoms can be easily
+specified by three things:  the strand they belong to, the residue they belong to,
+and their name.  Therefore, an NAB atom expression consists of three parts: first, a strand
+part, second, a residue part and third, an atom part.  The parts must occur in order and be
+separated by colons (:).  For example, the expression
+.B 1:10:CA
+specifies the alpha carbon of residue 10 on strand 1.
+.PP
+Not all three parts of an atom expression are required.  If one part is missing, it is
+assumed that you mean to select \fIeverything\fR for that part.  Extending the above example,
+the expression
+.B 1::CA
+specifies the alpha carbons in \fIall\fR residues on the first strand.  Notice that
+there is nothing for the residue part, so all residues were selected.
+.PP
+Finally, within each part, the
+.B *
+and
+.B ?
+wildcards and/or the
+.B ,
+and
+.B -
+delimiters and the
+.B[]
+construct can be used to increase the flexibility of atom expressions.  For example,
+.B 2:1-10:CA 
+selects the alpha carbons for the first 10 residues of the second strand, while
+.B :1-10,ALA:C* 
+selects \fIall\fR carbon atoms in \fIall\fR ALA residues in all strands as well as all
+carbon atoms in the first 10 residues of all strands.
+.PP
+.B Some more examples of atom expressions:
+.PP
+.B ::C,CA,N
+Select all atoms with the names C, CA or N in all residues in all strands - typically
+the peptide backbone.
+.PP
+.B 1:1-10,13,URA:C1'
+Select atoms named C1' (the glycosyl carbons) in residues 1 to 10 and 13 and any
+residues named URA in the first strand.
+.PP
+.B :C*[^']
+Select all non-sugar carbons in a nucleic acid.  The [^'] is an example of a negated
+character class.  It matches any character in the last position except '.
+.PP
+.B ::P,O?P,C[3-5]?,O[35]?
+The nucleic acid backbone.  The P selects phosphorous atoms.  The O?P matches phosphate
+oxygens that have various second letters: O1P, O2P or OAP, OBP.  The C[3-5]? matches the
+backbone carbons C3', C4', C5', or C3*, C4*, C5* depending on the character you use to
+denote "prime" in your structures.  The O[35]? matches the backbone oxygens O3', O5' or
+O3*, O5*.
+
+.SH NAMING AND NUMBERING CONVENTIONS
+This program reads pdb files but doesn't necessarrily keep the names and numbers
+for the residues and/or strands that appeared in the pdb file.  Atom names in your pdb file
+will be preserved, but by convention, NAB and therefore \fIsuppose\fR start residue
+numbering over at the beginning of each strand.  Also, strands are labelled as integers
+beginning at 1,
+.B not
+alphabetically beginning at A.  Be careful about this since correct atom expressions
+rely on the understanding that residues on the second, etc. strands in particular may be
+renumbered if they weren't already in the pdb file.
+
+.SH EXAMPLES
+Example 1: 
+.br
+.B suppose *.pdb
+.br
+would take all files with the .pdb extension in the current directory, calculate the 
+rms deviation for every possible pair, calculate the mean structure and report
+the overall rms pairwise deviation and the rms deviation from the mean structure.
+.PP
+Example 2: 
+.br
+.B suppose -mat -rot *.pdb
+.br
+Same as example 1, but in addition, the complete matrix of pairwise deviations as well
+as each structure's deviation from the would be printed to STDOUT.  The superimposed
+structures would be written out as *.rot.pdb
+.PP
+Example 3: 
+.br
+.B suppose -mat -rot -mean -fit """:1-10:C,CA,N""" *.pdb
+.br
+Similar to example 2, but in addition, the mean structure would be written to the
+file "mean.pdb" and the superposition would be done considering only the backbone
+atoms of the first 10 residues of all strands.  The deviations would be calcluated
+using all atoms.
+.PP
+Example 4: 
+.br
+.B suppose -mat -rot -mean -fit """::C,CA,N""" -calc """::C,CA,N""" *.pdb
+.br
+Similar to example 3, but both the fitting and the rmsd calculations would be performed
+on all of the backbone atoms in the molecule.
+.PP
+Example 5: 
+.br
+.B suppose -fit """::C,CA,N""" -pr """*""" *.pdb
+.br
+This example shows how to use the per-residue RMSD feature.  The fit expression indicates
+that the molecules will be fitted on the backbone atoms, and subsequently, per-residue
+RMSDs will be computed using all atoms in each residue.
+.PP
+Example 6: 
+.br
+.B suppose -fit """::C,CA,N""" -pr """C*,N*,O*,S*""" *.pdb
+.br
+Similar to example 5, except that the per-residue RMSDs will be computed on the atoms
+named like "C*,N*,O*,S*".  Namely, all the heavy atoms in each residue.
+
+.SH FILES
+Statistics are printed to STDOUT; rotated coordinates (if requested) are
+placed in new files that have ".rot.pdb" in place of the input
+file extension (usually ".pdb").
+
+.SH DIAGNOSTICS
+Checks are performed to see if each input file has the same number of strands, residues,
+and atoms as the others. As soon as the first difference is detected, the program stops
+and prints an error message.
+.PP
+If either atom expression \fIfitexpr\fR or \fIcalcexpr\fR match no atoms in the structure
+the program stops and prints an error message. 
+.PP
+If less than 2 input files are detected the program stops and prints an error message.
+
+.SH BUGS
+Checks are not made that the atoms in are really in the same order in all structures.
+This is particularly troublesome for the file specified by the -cmp option since
+presumably the comparison pdb file has been obtained from a different source
+(i.e. an Xray or Brookhaven structure).
+.PP
+Portions of an atom expression can be invalid and without warning the program goes ahead
+and computes the fit and/or calculation on the valid part of the atom expression.  This
+can be misleading.
+.PP
+If certain atom expressions are not contained in quotes, they can be interpreted by the
+shell and replaced by filenames, etc.  If you are unlucky, undesireable behavior such as
+seg faulting and dumping core will result.  Put your atom expressions in quotes.

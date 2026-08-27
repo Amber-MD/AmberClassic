@@ -189,7 +189,7 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --cuda          build only msander.cuda\n"
     printf "                      [With both --mpi and --cuda, build only msander.cuda.MPI]\n"
     printf "    --cudaprec      [SPFP|DPFP], cuda precision, default is SPFP\n"
-    printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada>\n"
+    printf "    --cudaarch      <kepler|maxwell|pascal|volta|turing|ampere|ada|blackwell>\n"
     printf "\nLess-common options:\n\n"
     printf "    --openblas      use openBLAS routines from a system library\n"
     printf "    --mkl           use MKL for LAPACK/BLAS/FFTW\n"

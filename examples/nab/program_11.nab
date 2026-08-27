@@ -1,0 +1,72 @@
+// Program 11 - Build DNA along a curve
+#define RISE    3.38
+
+#define EPS 1e-3
+#define APPROX(a,b) (fabs((a)-(b))<=EPS)
+#define MAXI    20
+
+#define MAXPTS  150
+int npts;
+float   a[ MAXPTS ];
+float   x[ MAXPTS ], y[ MAXPTS ], z[ MAXPTS ];
+float   x2[ MAXPTS ], y2[ MAXPTS ], z2[ MAXPTS ];
+float   tmp[ MAXPTS ];
+
+string  line;
+
+int i, li, ni;
+float   dx, dy, dz;
+float   la, lx, ly, lz, na, nx, ny, nz;
+float   d, tfrac, frac;
+
+int spline();
+int splint();
+
+for( npts = 0; line = getline( stdin ); ){
+    npts = npts + 1;
+    a[ npts ] = npts;
+    sscanf( line, "%lf %lf %lf",
+        x[ npts ], y[ npts ], z[ npts ] );
+}
+
+spline( a, x, npts, 1e30, 1e30, x2, tmp );
+spline( a, y, npts, 1e30, 1e30, y2, tmp );
+spline( a, z, npts, 1e30, 1e30, z2, tmp );
+
+li = 1; la = 1.0; lx = x[1]; ly = y[1]; lz = z[1];
+printf( "%8.3f %8.3f %8.3f\n", lx, ly, lz );
+
+while( li < npts ){
+    ni = li + 1;
+    na = a[ ni ];
+    nx = x[ ni ]; ny = y[ ni ]; nz = z[ ni ];
+    dx = nx - lx; dy = ny - ly; dz = nz - lz;
+    d = sqrt( dx*dx + dy*dy + dz*dz );
+    if( d > RISE ){
+        tfrac = frac = .5;
+        for( i = 1; i <= MAXI; i = i + 1 ){
+            na = la + tfrac * ( a[ni] - la );
+            splint( a, x, x2, npts, na, nx );
+            splint( a, y, y2, npts, na, ny );
+            splint( a, z, z2, npts, na, nz );
+            dx = nx - lx; dy = ny - ly; dz = nz - lz;
+            d = sqrt( dx*dx + dy*dy + dz*dz );
+            frac = 0.5 * frac;
+            if( APPROX( d, RISE ) )
+                break;
+            else if( d > RISE )
+                tfrac = tfrac - frac;
+            else if( d < RISE )
+                tfrac = tfrac + frac;
+        }
+        printf( "%8.3f %8.3f %8.3f\n", nx, ny, nz );
+    }else if( d < RISE ){
+        li = ni;
+        continue;
+    }else if( d == RISE ){
+        printf( "%8.3f %8.3f %8.3f\n", nx, ny, nz );
+        li = ni;
+    }
+    la = na;
+    lx = nx; ly = ny; lz = nz;
+}

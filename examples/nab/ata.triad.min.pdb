@@ -1,0 +1,105 @@
+REMARK sense strand has 1 residues
+REMARK   RES   1 ADE 32 atoms
+ATOM      1 P    ADE A   1      -0.893  -9.024  -1.145
+ATOM      2 O1P  ADE A   1      -0.284 -10.327  -0.813
+ATOM      3 O2P  ADE A   1      -2.083  -8.641  -0.346
+ATOM      4 O5'  ADE A   1       0.202  -7.869  -1.050
+ATOM      5 O3'  ADE A   1       4.175  -7.712   0.382
+ATOM      6 C1'  ADE A   1       2.250  -5.452   0.000
+ATOM      7 C2'  ADE A   1       2.047  -6.700   0.848
+ATOM      8 C3'  ADE A   1       2.791  -7.755   0.044
+ATOM      9 C4'  ADE A   1       2.536  -7.324  -1.400
+ATOM     10 C5'  ADE A   1       1.264  -7.831  -2.037
+ATOM     11 O4'  ADE A   1       2.477  -5.862  -1.334
+ATOM     12 N6   ADE A   1      -1.596  -0.789  -0.005
+ATOM     13 C6   ADE A   1      -0.374  -1.346  -0.001
+ATOM     14 C5   ADE A   1      -0.164  -2.741   0.002
+ATOM     15 N7   ADE A   1      -1.035  -3.816  -0.009
+ATOM     16 C8   ADE A   1      -0.250  -4.852  -0.002
+ATOM     17 N9   ADE A   1       1.081  -4.532  -0.001
+ATOM     18 C4   ADE A   1       1.136  -3.160  -0.002
+ATOM     19 N3   ADE A   1       2.243  -2.396   0.002
+ATOM     20 C2   ADE A   1       1.916  -1.121   0.005
+ATOM     21 N1   ADE A   1       0.711  -0.557   0.000
+ATOM     22 H1'  ADE A   1       3.124  -4.892   0.332
+ATOM     23 1H2' ADE A   1       0.995  -6.957   0.961
+ATOM     24 2H2' ADE A   1       2.469  -6.594   1.848
+ATOM     25 H3'  ADE A   1       2.405  -8.757   0.228
+ATOM     26 H4'  ADE A   1       3.374  -7.690  -1.992
+ATOM     27 1H5' ADE A   1       0.983  -7.165  -2.853
+ATOM     28 2H5' ADE A   1       1.435  -8.831  -2.432
+ATOM     29 H61  ADE A   1      -1.694   0.236  -0.007
+ATOM     30 H62  ADE A   1      -2.434  -1.388  -0.005
+ATOM     31 H8   ADE A   1      -0.617  -5.879   0.003
+ATOM     32 H2   ADE A   1       2.755  -0.426   0.011
+TER
+REMARK anti strand has 1 residues
+REMARK   RES   1 THY 32 atoms
+ATOM      1 P    THY B   1      -0.900   9.019   1.138
+ATOM      2 O1P  THY B   1      -0.293  10.323   0.805
+ATOM      3 O2P  THY B   1      -2.089   8.633   0.340
+ATOM      4 O5'  THY B   1       0.197   7.867   1.045
+ATOM      5 O3'  THY B   1       4.172   7.716  -0.384
+ATOM      6 C1'  THY B   1       2.250   5.452   0.000
+ATOM      7 C2'  THY B   1       2.045   6.700  -0.850
+ATOM      8 C3'  THY B   1       2.787   7.756  -0.046
+ATOM      9 C4'  THY B   1       2.532   7.326   1.397
+ATOM     10 C5'  THY B   1       1.258   7.831   2.033
+ATOM     11 O4'  THY B   1       2.476   5.865   1.333
+ATOM     12 O4   THY B   1      -1.997   1.930   0.006
+ATOM     13 C4   THY B   1      -1.080   2.760   0.004
+ATOM     14 N3   THY B   1       0.236   2.358   0.003
+ATOM     15 C2   THY B   1       1.349   3.176  -0.001
+ATOM     16 O2   THY B   1       2.481   2.726  -0.004
+ATOM     17 N1   THY B   1       1.083   4.530   0.001
+ATOM     18 C6   THY B   1      -0.199   5.022   0.005
+ATOM     19 C5   THY B   1      -1.260   4.192   0.001
+ATOM     20 C5M  THY B   1      -2.679   4.676   0.011
+ATOM     21 H1'  THY B   1       3.126   4.894  -0.332
+ATOM     22 1H2' THY B   1       0.993   6.954  -0.964
+ATOM     23 2H2' THY B   1       2.467   6.593  -1.850
+ATOM     24 H3'  THY B   1       2.399   8.757  -0.233
+ATOM     25 H4'  THY B   1       3.369   7.695   1.990
+ATOM     26 1H5' THY B   1       0.978   7.167   2.851
+ATOM     27 2H5' THY B   1       1.428   8.832   2.427
+ATOM     28 H3   THY B   1       0.408   1.343   0.005
+ATOM     29 H6   THY B   1      -0.359   6.100   0.011
+ATOM     30 1H5M THY B   1      -3.353   3.825   0.113
+ATOM     31 2H5M THY B   1      -2.826   5.359   0.849
+ATOM     32 3H5M THY B   1      -2.892   5.197  -0.923
+TER
+REMARK third strand has 1 residues
+REMARK   RES   1 ADE 32 atoms
+ATOM      1 P    ADE C   1     -12.955  -0.154  -1.138
+ATOM      2 O1P  ADE C   1     -14.228  -0.824  -0.805
+ATOM      3 O2P  ADE C   1     -12.629   1.053  -0.340
+ATOM      4 O5'  ADE C   1     -11.749  -1.193  -1.044
+ATOM      5 O3'  ADE C   1     -11.401  -5.153   0.388
+ATOM      6 C1'  ADE C   1      -9.236  -3.123   0.004
+ATOM      7 C2'  ADE C   1     -10.492  -2.980   0.853
+ATOM      8 C3'  ADE C   1     -11.510  -3.773   0.050
+ATOM      9 C4'  ADE C   1     -11.093  -3.498  -1.394
+ATOM     10 C5'  ADE C   1     -11.661  -2.252  -2.031
+ATOM     11 O4'  ADE C   1      -9.636  -3.369  -1.330
+ATOM     12 N6   ADE C   1      -4.762   0.941  -0.005
+ATOM     13 C6   ADE C   1      -5.261  -0.305  -0.001
+ATOM     14 C5   ADE C   1      -6.643  -0.582   0.003
+ATOM     15 N7   ADE C   1      -7.759   0.237  -0.007
+ATOM     16 C8   ADE C   1      -8.756  -0.597   0.001
+ATOM     17 N9   ADE C   1      -8.373  -1.911   0.002
+ATOM     18 C4   ADE C   1      -7.000  -1.900   0.000
+ATOM     19 N3   ADE C   1      -6.184  -2.970   0.003
+ATOM     20 C2   ADE C   1      -4.926  -2.582   0.005
+ATOM     21 N1   ADE C   1      -4.421  -1.352   0.000
+ATOM     22 H1'  ADE C   1      -8.635  -3.969   0.336
+ATOM     23 1H2' ADE C   1     -10.799  -1.941   0.966
+ATOM     24 2H2' ADE C   1     -10.365  -3.395   1.853
+ATOM     25 H3'  ADE C   1     -12.530  -3.435   0.235
+ATOM     26 H4'  ADE C   1     -11.420  -4.352  -1.986
+ATOM     27 1H5' ADE C   1     -11.010  -1.940  -2.848
+ATOM     28 2H5' ADE C   1     -12.652  -2.471  -2.425
+ATOM     29 H61  ADE C   1      -3.743   1.088  -0.008
+ATOM     30 H62  ADE C   1      -5.400   1.750  -0.005
+ATOM     31 H8   ADE C   1      -9.799  -0.280   0.007
+ATOM     32 H2   ADE C   1      -4.192  -3.387   0.011
+TER

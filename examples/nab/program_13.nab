@@ -1,0 +1,66 @@
+// Program 13 - place base pairs on a curve.
+float       s_ax[ 12 ];
+int     getbase();
+
+int putdna( string mname, point pts[ 1 ], int npts )
+{
+    int p;
+    float   tw;
+    residue r;
+    molecule    m, m_path, m_ax, m_bp;
+    point   p1, p2, p3, p4;
+    string  sbase, abase;
+    string  aex;
+    matrix  mat;
+
+    m_ax = newmolecule();
+    addstrand( m_ax, "A" );
+    r = getresidue( "AXS", "axes.rlb" );
+    addresidue( m_ax, "A", r );
+    setxyz_from_mol( m_ax, NULL, s_ax );
+
+    m_path = newmolecule();
+    addstrand( m_path, "A" );
+
+    m = newmolecule();
+    addstrand( m, "A" );
+    addstrand( m, "B" );
+
+    for( p = 1; p < npts; p = p + 1 ){
+        setmol_from_xyz( m_ax, NULL, s_ax );
+        setframe( 1, m_ax,
+            "::ORG", "::ORG", "::SXT", "::ORG", "::CYT" );
+        axis2frame( m_path, pts[ p ], pts[ p + 1 ] );
+        alignframe( m_ax, m_path );
+        mergestr( m_path, "A", "last", m_ax, "A", "first" );
+        if( p > 1 ){
+            setpoint( m_path, sprintf( "A:%d:CYT",p-1 ), p1 );
+            setpoint( m_path, sprintf( "A:%d:ORG",p-1 ), p2 );
+            setpoint( m_path, sprintf( "A:%d:ORG",p ), p3 );
+            setpoint( m_path, sprintf( "A:%d:CYT",p ), p4 );
+            tw = 36.0 - torsionp( p1, p2, p3, p4 );
+            mat = rot4p( p2, p3, tw );
+            aex = sprintf( ":%d:", p );
+            transformmol( mat, m_path, aex );
+            setpoint( m_path, sprintf( "A:%d:ORG",p ), p1 );
+            setpoint( m_path, sprintf( "A:%d:SXT",p ), p2 );
+            setpoint( m_path, sprintf( "A:%d:CYT",p ), p3 );
+            setframep( 1, m_path, p1, p1, p2, p1, p3 );
+        }
+
+        getbase( 0.5, sbase, abase );
+        m_bp = wc_helix( sbase, "", "dna",
+            abase, "", "dna",
+            2.25, -5.0, 0.0, 0.0, "" );
+        alignframe( m_bp, m_path );
+        mergestr( m, "A", "last", m_bp, "sense", "first" );
+        mergestr( m, "B", "first", m_bp, "anti", "last" );
+        if( p >  1 ){
+            connectres( m, "A", p - 1, "O3'", p, "P" );
+            connectres( m, "B", 2, "P", 1, "O3'" );
+        }
+     }
+
+        putpdb( mname + ".pdb", m );
+        putbnd( mname + ".bnd", m );
+};

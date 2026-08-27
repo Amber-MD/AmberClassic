@@ -1,0 +1,46 @@
+// Program 10.  Create simple nucleosome model.
+
+#define PI  3.141593
+#define RISE    3.38
+#define TWIST   36.0
+int         b, nbp; int getbase();
+float       nt, theta, phi, rad, dy, ttw, len, plen, side;
+molecule    m, m1;
+matrix      matdx, matrx, maty, matry, mattw;
+string      sbase, abase;
+
+nt = atof( argv[ 2 ] );    // number of turns
+nbp = atoi( argv[ 3 ] );   // number of base pairs
+theta = atof( argv[ 4 ] ); // winding angle
+
+dy = RISE * sin( theta );
+phi = 360.0 * nt / ( nbp-1 );
+rad = (( nbp-1 )*RISE*cos( theta ))/( 2*PI*nt );
+
+matdx = newtransform( rad, 0.0, 0.0, 0.0, 0.0, 0.0 );
+matrx = newtransform( 0.0, 0.0, 0.0, -theta, 0.0, 0.0 );
+
+m = newmolecule();
+addstrand( m, "A" ); addstrand( m, "B" );
+ttw = 0.0;
+for( b = 1; b <= nbp; b = b + 1 ){
+    getbase( 0.5, sbase, abase );
+    m1 = wc_helix( sbase, "", "dna", abase, "", "dna", 
+        2.25, -4.96, 0.0, 0.0, "" );
+    mattw = newtransform( 0., 0., 0., 0., 0., ttw );
+    transformmol( mattw, m1, NULL );
+    transformmol( matrx, m1, NULL );
+    transformmol( matdx, m1, NULL );
+    maty = newtransform( 0.,dy*(b-1),0., 0.,-phi*(b-1),0.);
+    transformmol( maty, m1, NULL );
+
+    mergestr( m, "A", "last", m1, "sense", "first" );
+    mergestr( m, "B", "first", m1, "anti", "last" );
+    if( b > 1 ){
+        connectres( m, "A", b - 1, "O3'", b, "P" );
+        connectres( m, "B", 1, "O3'", 2, "P" );
+    }
+    ttw += TWIST; if( ttw >= 360.0 ) ttw -= 360.0;
+}
+putpdb( "nuc.pdb", m );
+
