@@ -4,14 +4,16 @@
 #include <thrust/device_vector.h>
 #include <cstdio>
 
+#define P1 1
 #undef P212121
 #undef P21212
 #undef C121
 #undef C2221
-#define P21 1
+#undef P21
 #undef P6
 #undef P21c
 #define NA  1
+#define NB  1
 #define NC  1
 
 namespace {
@@ -35,13 +37,16 @@ namespace {
     __shared__ thrust::complex<FloatType> term[BLOCK_SIZE];
     term[tid] = {};
 
+    int h,k,l;
+
+#ifdef P1
     // Basic code to compute f is here; 
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
-      const int h = hkl[i_hkl * 3 + 0];
-      const int k = hkl[i_hkl * 3 + 1];
-      const int l = hkl[i_hkl * 3 + 2];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
 
       for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
         const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
@@ -52,9 +57,40 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l
         );
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
+      }
+      __syncthreads();
 
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
+
+#endif
 #ifdef P21
         // code for spacegroup 4:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         const int h2 = -hkl[i_hkl * 3 + 0];
         const int k2 =  hkl[i_hkl * 3 + 1];
@@ -71,10 +107,40 @@ namespace {
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         }
+      }
+      __syncthreads();
+
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
 #endif
 
 #ifdef P6
         // code for spacegroup 168:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         // set #2: h+k,-h,l
         const int h2 =  hkl[i_hkl * 3 + 0] + hkl[i_hkl * 3 + 1];
@@ -135,11 +201,41 @@ namespace {
         );
       
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle6), f * std::sin(angle6)} * occupancy[j_atom];
+      }
+      __syncthreads();
+
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
 
 #endif
 
 #ifdef P212121
         // code for spacegroup 19:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         // set #2: -h,-k,l
         const int h2 = -hkl[i_hkl * 3 + 0];
@@ -191,11 +287,41 @@ namespace {
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         }
+      }
+      __syncthreads();
+
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
 
 #endif
 
 #ifdef C2221
         // code for spacegroup 20:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         // set #2/6: -h,-k,l
         const int h2 = -hkl[i_hkl * 3 + 0];
@@ -275,11 +401,41 @@ namespace {
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         }
+      }
+      __syncthreads();
+
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
 
 #endif
 
 #ifdef P21212
         // code for spacegroup 18:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         // set #2: -h,-k,l
         const int h2 = -hkl[i_hkl * 3 + 0];
@@ -327,11 +483,41 @@ namespace {
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         }
+      }
+      __syncthreads();
+
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
 
 #endif
 
 #ifdef C121
         // code for spacegroup 5:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         // set #3: h,k,l
         // const int h2 =  hkl[i_hkl * 3 + 0];
@@ -382,11 +568,41 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
         // } else {
         //   term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         // }
+      }
+      __syncthreads();
+
+      for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+          term[tid] += term[tid + s];
+        }
+        __syncthreads();
+      }
+
+      if (tid == 0 && i_hkl < n_hkl) {
+        f_non_bulk[i_hkl] = term[0];
+      }
+    }
 
 #endif
 
 #ifdef P21c
         // code for spacegroup 14:
+
+    if (i_hkl < n_hkl) {
+      const FloatType hkl_mss4 = mss4[i_hkl];
+      h = hkl[i_hkl * 3 + 0];
+      k = hkl[i_hkl * 3 + 1];
+      l = hkl[i_hkl * 3 + 2];
+
+      for (int j_atom = tid; j_atom < n_atom; j_atom += BLOCK_SIZE) {
+        const FloatType f = std::exp(hkl_mss4 * b_factor[j_atom]) *
+                            atomic_scatter_factor[(scatter_type_index[j_atom] - 1) * n_hkl + i_hkl];
+        const FloatType angle = 2 * M_PI * (
+          frac_xyz[j_atom * 3 + 0] * h +
+          frac_xyz[j_atom * 3 + 1] * k +
+          frac_xyz[j_atom * 3 + 2] * l
+        );
+        term[tid] += thrust::complex<FloatType>{f * std::cos(angle), f * std::sin(angle)} * occupancy[j_atom];
 
         // set #2: -h,k,-l
         const int h2 = -hkl[i_hkl * 3 + 0];
@@ -434,9 +650,6 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         }
-
-#endif
-
       }
       __syncthreads();
 
@@ -451,6 +664,9 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
         f_non_bulk[i_hkl] = term[0];
       }
     }
+
+#endif
+
   }
 }
 
@@ -473,8 +689,7 @@ xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::NonBulkGPU(
 }
 
 template<xray::NonBulkKernelVersion KERNEL_VERSION, xray::KernelPrecision PRECISION>
-void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int
-n_atom, int nb, const double* frac_xyz) {
+void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, int nb, const double* frac_xyz) {
   assert(n_atom == m_n_atom);
 
   thrust::copy(frac_xyz, frac_xyz + n_atom * 3, m_dev_frac_xyz.begin());
