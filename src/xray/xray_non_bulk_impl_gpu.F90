@@ -17,8 +17,7 @@ module xray_non_bulk_impl_gpu_module
   
   interface
     subroutine pmemd_xray_non_bulk_init_gpu(n_hkl, hkl, f_non_bulk, mSS4, n_atom, &
-        & b_factor, &
-        & occupancy, &
+        & nb, b_factor, occupancy, &
         & n_scatter_types, scatter_type_index, atomic_scatter_factor) bind(C)
       use iso_c_binding
       implicit none
@@ -27,6 +26,7 @@ module xray_non_bulk_impl_gpu_module
       complex(c_double_complex), intent(out) :: f_non_bulk(n_hkl)
       real(c_double), intent(in) :: mSS4(n_hkl)
       integer(c_int), value :: n_atom
+      integer(c_int), value :: nb
       real(c_double), intent(in) :: b_factor(n_atom)
       real(c_double), intent(in) :: occupancy(n_atom)
       integer(c_int), value :: n_scatter_types
@@ -37,10 +37,11 @@ module xray_non_bulk_impl_gpu_module
   end interface
   
   interface
-    subroutine pmemd_xray_non_bulk_calc_f_non_bulk_gpu(n_atom, frac_xyz) bind(C)
+    subroutine pmemd_xray_non_bulk_calc_f_non_bulk_gpu(n_atom, nb, frac_xyz) bind(C)
       use iso_c_binding
       implicit none
       integer(c_int), value :: n_atom
+      integer(c_int), value :: nb
       real(c_double), intent(in) :: frac_xyz(3, n_atom)
     end subroutine pmemd_xray_non_bulk_calc_f_non_bulk_gpu
   end interface
@@ -84,7 +85,7 @@ contains
     real(real_kind), intent(in) :: frac(:, :)
     
     ASSERT(size(frac, 1) == 3)
-    call pmemd_xray_non_bulk_calc_f_non_bulk_gpu(size(frac, 2), frac)
+    call pmemd_xray_non_bulk_calc_f_non_bulk_gpu(size(frac, 2), nb, frac)
   end subroutine calc_f_non_bulk
   
   
@@ -96,7 +97,7 @@ contains
     ASSERT(allocated(atomic_scatter_factor))
     
     call pmemd_xray_non_bulk_init_gpu( &
-        & size(hkl, 2), hkl, f_non_bulk, mSS4, size(b_factor), &
+        & size(hkl, 2), hkl, f_non_bulk, mSS4, size(b_factor), nb, &
         & b_factor, &
         & occupancy, &
         & size(atomic_scatter_factor, 2), scatter_type_index, atomic_scatter_factor &

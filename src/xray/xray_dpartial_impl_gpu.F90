@@ -5,6 +5,7 @@ module xray_dpartial_impl_gpu_module
   use xray_contracts_module
   use xray_dpartial_data_module
   use xray_pure_utils, only : real_kind
+  use xray_non_bulk_data_module, only : na, nb, nc
   
   implicit none
   private
@@ -22,7 +23,7 @@ module xray_dpartial_impl_gpu_module
         & mss4, &
         & f_calc, &
         & abs_f_calc, &
-        & n_atom, &
+        & n_atom, nb, &
         & atom_b_factor, &
         & atom_occupancy, &
         & atom_scatter_type, &
@@ -38,6 +39,7 @@ module xray_dpartial_impl_gpu_module
       complex(c_double_complex), intent(in) :: f_calc(n_hkl)
       real(c_double), target, intent(in) :: abs_f_calc(n_hkl)
       integer(c_int), value :: n_atom
+      integer(c_int), value :: nb
       real(c_double), target, intent(in) :: atom_b_factor(n_atom)
       real(c_double), target, intent(in) :: atom_occupancy(n_atom)
       integer(c_int), target, intent(in) :: atom_scatter_type(n_atom)
@@ -47,7 +49,7 @@ module xray_dpartial_impl_gpu_module
     end subroutine pmemd_xray_dpartial_init_gpu
     
     subroutine pmemd_xray_dpartial_calc_d_target_d_frac(&
-        & n_atom, &
+        & n_atom, nb, &
         & frac, &
         & n_hkl, &
         & f_scale, &
@@ -56,7 +58,7 @@ module xray_dpartial_impl_gpu_module
         ) bind(C)
       use iso_c_binding
       implicit none
-      integer(c_int), value :: n_atom
+      integer(c_int), value :: n_atom, nb
       real(c_double), intent(in) :: frac(3, n_atom)
       integer(c_int), value :: n_hkl
       real(c_double), intent(in) :: f_scale(n_hkl)
@@ -98,7 +100,7 @@ contains
     ASSERT(all(mSS4 <= 0))
     
     call pmemd_xray_dpartial_calc_d_target_d_frac(&
-        & size(frac, 2), &
+        & size(frac, 2), nb, &
         & frac, &
         & size(hkl, 2), &
         & f_scale, &
@@ -136,7 +138,7 @@ contains
   end subroutine finalize
   
   subroutine gpu_init()
-    use xray_dpartial_data_module
+    ! use xray_dpartial_data_module
     use xray_atomic_scatter_factor_module, only : atomic_scatter_factor
     implicit none
     
@@ -149,6 +151,7 @@ contains
         & Fcalc, &
         & abs_Fcalc, &
         & size(atom_b_factor), &
+        & nb, &
         & atom_b_factor, &
         & atom_occupancy, &
         & atom_scatter_type, &
