@@ -18,7 +18,7 @@ namespace {
 
   template<int BLOCK_SIZE, typename FloatType>
   __global__
-  void calc_f_non_bulk_kernel(int n_atom,
+  void calc_f_non_bulk_kernel(int n_atom, int nb,
                               const FloatType* frac_xyz,
                               const FloatType* b_factor,
                               const FloatType* occupancy,
@@ -473,7 +473,8 @@ xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::NonBulkGPU(
 }
 
 template<xray::NonBulkKernelVersion KERNEL_VERSION, xray::KernelPrecision PRECISION>
-void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, const double* frac_xyz) {
+void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int
+n_atom, int nb, const double* frac_xyz) {
   assert(n_atom == m_n_atom);
 
   thrust::copy(frac_xyz, frac_xyz + n_atom * 3, m_dev_frac_xyz.begin());
@@ -488,7 +489,7 @@ void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, co
 
       calc_f_non_bulk_kernel<block_size>
       <<<numBlocks, threadsPerBlock>>>(
-        n_atom, 
+        n_atom, nb,
         m_dev_frac_xyz.data().get(),
         m_dev_b_factor.data().get(),
         m_dev_occupancy.data().get(),

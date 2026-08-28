@@ -21,7 +21,7 @@ namespace xray {
     virtual ~NonBulk() = default;
 
     virtual void calc_f_non_bulk(
-      int n_atoms,
+      int n_atoms, int nb,
       const double* frac_xyz
     ) = 0;
 

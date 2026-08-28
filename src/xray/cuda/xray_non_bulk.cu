@@ -35,11 +35,11 @@ extern "C" void pmemd_xray_non_bulk_init_gpu(
 }
 
 extern "C" void pmemd_xray_non_bulk_calc_f_non_bulk_gpu(
-  int n_atoms,
+  int n_atoms, int nb,
   const double* frac_xyz
 ) {
   assert(non_bulk_instance());
-  non_bulk_instance()->calc_f_non_bulk(n_atoms, frac_xyz);
+  non_bulk_instance()->calc_f_non_bulk(n_atoms, nb, frac_xyz);
 }
 
 
