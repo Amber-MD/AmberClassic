@@ -38,7 +38,6 @@ namespace xray {
     const std::complex<double>* m_f_calc;
     const double* m_abs_f_calc;
     int m_n_atom = 0;
-    int m_nb = 1;
     const double* m_atom_b_factor;
     const double* m_atom_occupancy;
     const int* m_atom_scatter_type;

@@ -32,7 +32,6 @@ namespace xray {
     const double* m_mSS4 = nullptr;
 
     int m_n_atom = 0;
-    int m_nb = 0;
     const double* m_b_factor = nullptr;
     const double* m_occupancy = nullptr;
     int m_n_scatter_types = 0;

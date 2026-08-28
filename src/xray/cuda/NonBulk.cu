@@ -10,7 +10,6 @@ xray::NonBulk::NonBulk(int n_hkl, const int* hkl, complex_double* f_non_bulk, co
   this->m_mSS4 = mSS4;
 
   this->m_n_atom = n_atom;
-  this->m_nb = nb;
   this->m_b_factor = b_factor;
   this->m_occupancy = occupancy;
   this->m_n_scatter_types = n_scatter_types;
