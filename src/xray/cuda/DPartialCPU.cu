@@ -3,7 +3,7 @@
 #include "DPartialCPU.h"
 
 void xray::DPartialCPU::calc_d_target_d_frac(
-  int n_atom, int nb,
+  int n_atom, int na, int nb, int nc, int sgn,
   const double* frac,
   int n_hkl,
   const double* f_scale,

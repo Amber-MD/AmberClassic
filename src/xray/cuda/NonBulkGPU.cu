@@ -20,7 +20,7 @@ namespace {
 
   template<int BLOCK_SIZE, typename FloatType>
   __global__
-  void calc_f_non_bulk_kernel(int n_atom, int nb,
+  void calc_f_non_bulk_kernel(int n_atom, int na, int nb, int nc, int sgn,
                               const FloatType* frac_xyz,
                               const FloatType* b_factor,
                               const FloatType* occupancy,
@@ -672,11 +672,13 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
 
 template<xray::NonBulkKernelVersion KERNEL_VERSION, xray::KernelPrecision PRECISION>
 xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::NonBulkGPU(
-  int n_hkl, const int* hkl, complex_double* f_non_bulk, const double* mSS4, int n_atom, int nb,
+  int n_hkl, const int* hkl, complex_double* f_non_bulk, const double* mSS4,
+int n_atom, int na, int nb, int nc, int sgn,
   const double* b_factor, const double* occupancy, int n_scatter_types, const int* scatter_type_index,
-  const double* atomic_scatter_factor) : NonBulk(n_hkl, hkl, f_non_bulk, mSS4, n_atom, nb,
-                                                 b_factor, occupancy, n_scatter_types,
-                                                 scatter_type_index, atomic_scatter_factor) {
+  const double* atomic_scatter_factor) : NonBulk(n_hkl, hkl, f_non_bulk,
+mSS4, n_atom, na, nb, nc, sgn,
+     b_factor, occupancy, n_scatter_types,
+     scatter_type_index, atomic_scatter_factor) {
   m_dev_frac_xyz = thrust::device_vector<FloatType>(n_atom * 3);
   m_dev_b_factor = thrust::device_vector<FloatType>(m_b_factor, m_b_factor + n_atom);
   m_dev_occupancy = thrust::device_vector<FloatType>(m_occupancy, m_occupancy + n_atom);
@@ -689,7 +691,8 @@ xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::NonBulkGPU(
 }
 
 template<xray::NonBulkKernelVersion KERNEL_VERSION, xray::KernelPrecision PRECISION>
-void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, int nb, const double* frac_xyz) {
+void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int
+n_atom, int na, int nb, int nc, int sgn, const double* frac_xyz) {
   assert(n_atom == m_n_atom);
 
   thrust::copy(frac_xyz, frac_xyz + n_atom * 3, m_dev_frac_xyz.begin());
@@ -704,7 +707,7 @@ void xray::NonBulkGPU<KERNEL_VERSION, PRECISION>::calc_f_non_bulk(int n_atom, in
 
       calc_f_non_bulk_kernel<block_size>
       <<<numBlocks, threadsPerBlock>>>(
-        n_atom, nb,
+        n_atom, na, nb, nc, sgn,
         m_dev_frac_xyz.data().get(),
         m_dev_b_factor.data().get(),
         m_dev_occupancy.data().get(),

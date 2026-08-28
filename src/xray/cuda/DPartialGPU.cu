@@ -20,7 +20,7 @@ namespace {
   template<int blockDimX, typename FloatType>
   __global__
   void calc_d_target_d_frac_kernel(
-    int n_atom, int nb, 
+    int n_atom, int na, int nb, int nc, int sgn,
     const FloatType* frac_by_2_pi,
     const FloatType* b_factor,
     const FloatType* occupancy,
@@ -403,9 +403,11 @@ namespace {
 
 template<typename xray::KernelPrecision PRECISION>
 xray::DPartialGPU<PRECISION>::DPartialGPU(int n_hkl, const int* hkl, const double* mss4, std::complex<double>* f_calc,
-     const double* abs_f_calc, int n_atom, int nb, const double* atom_b_factor, const double* atom_occupancy,
+     const double* abs_f_calc, int n_atom, int na, int nb, int nc, 
+     int sgn, const double* atom_b_factor, const double* atom_occupancy,
      const int* atom_scatter_type, int n_scatter_types, const double* atomic_scatter_factor)
-  : xray::DPartial(n_hkl, hkl, mss4, f_calc, abs_f_calc, n_atom, nb, atom_b_factor, atom_occupancy, atom_scatter_type,
+  : xray::DPartial(n_hkl, hkl, mss4, f_calc, abs_f_calc, n_atom, na, nb, nc,
+       sgn, atom_b_factor, atom_occupancy, atom_scatter_type,
                    n_scatter_types, atomic_scatter_factor) {
 
   m_dev_frac_by_2_pi = thrust::device_vector<FloatType>(n_atom * 3);
@@ -426,7 +428,7 @@ xray::DPartialGPU<PRECISION>::DPartialGPU(int n_hkl, const int* hkl, const doubl
 
 template<typename xray::KernelPrecision PRECISION>
 void xray::DPartialGPU<PRECISION>::calc_d_target_d_frac(
-  int n_atom, int nb,
+  int n_atom, int na, int nb, int nc, int sgn,
   const double* frac,
   int n_hkl,
   const double* f_scale,
@@ -455,7 +457,7 @@ void xray::DPartialGPU<PRECISION>::calc_d_target_d_frac(
 
   calc_d_target_d_frac_kernel<block_size>
   <<<numBlocks, threadsPerBlock>>>(
-    n_atom, nb,
+    n_atom, na, nb, nc, sgn,
     m_dev_frac_by_2_pi.data().get(),
     m_dev_atom_b_factor.data().get(),
     m_dev_atom_occupancy.data().get(),
