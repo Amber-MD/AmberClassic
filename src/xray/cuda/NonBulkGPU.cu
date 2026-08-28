@@ -12,9 +12,6 @@
 #undef P21
 #undef P6
 #undef P21c
-#define NA  1
-#define NB  1
-#define NC  1
 
 namespace {
 
@@ -248,7 +245,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l2
         );
 
-        if( (h2/NA + l2/NC) % 2 != 0 ) {
+        if( (h2/na + l2/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -265,7 +262,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l3
         );
 
-        if( (k3/nb + l3/NC) % 2 != 0 ) {
+        if( (k3/nb + l3/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle3), f * std::sin(angle3)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle3), f * std::sin(angle3)} * occupancy[j_atom];
@@ -282,7 +279,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l4
         );
 
-        if( (h4/NA + k4/nb) % 2 != 0 ) {
+        if( (h4/na + k4/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
@@ -334,12 +331,12 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l2
         );
 
-        if( (l2/NC) % 2 != 0 ) {
+        if( (l2/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         }
-        if( (h2/NA + k2/nb + l2/NC) % 2 != 0 ) {
+        if( (h2/na + k2/nb + l2/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -358,7 +355,7 @@ namespace {
         );
 
         term[tid] += thrust::complex<FloatType>{f * std::cos(angle3), f * std::sin(angle3)} * occupancy[j_atom];
-        if( (h3/NA + k3/nb) % 2 != 0 ) {
+        if( (h3/na + k3/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -375,12 +372,12 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l4
         );
 
-        if( (l4/NC) % 2 != 0 ) {
+        if( (l4/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         }
-        if( (h4/NA + k4/nb + l4/NC) % 2 != 0 ) {
+        if( (h4/na + k4/nb + l4/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
@@ -396,7 +393,7 @@ namespace {
           frac_xyz[j_atom * 3 + 1] * k5 +
           frac_xyz[j_atom * 3 + 2] * l5
         );
-        if( (h5/NA + k5/nb) % 2 != 0 ) {
+        if( (h5/na + k5/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle5), f * std::sin(angle5)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
@@ -461,7 +458,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l3
         );
 
-        if( (h3/NA + k3/nb) % 2 != 0 ) {
+        if( (h3/na + k3/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle3), f * std::sin(angle3)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle3), f * std::sin(angle3)} * occupancy[j_atom];
@@ -478,7 +475,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l4
         );
 
-        if( (h4/NA + k4/nb) % 2 != 0 ) {
+        if( (h4/na + k4/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
@@ -531,7 +528,7 @@ namespace {
         // );
         const FloatType amgle2 = angle;
 
-        if( (h2/NA + k2/nb) % 2 != 0 ) {
+        if( (h2/na + k2/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -548,7 +545,7 @@ namespace {
           frac_xyz[j_atom * 3 + 2] * l3
         );
 
-        if( (h3/NA + k3/nb) % 2 == 0 ) 
+        if( (h3/na + k3/nb) % 2 == 0 ) 
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle3), f *
 std::sin(angle3)} * occupancy[j_atom] * 2.d0;
 
@@ -563,7 +560,7 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
         //   frac_xyz[j_atom * 3 + 2] * l4
         // );
 
-        // if( (h2/NA + k2/nb) % 2 != 0 ) {
+        // if( (h2/na + k2/nb) % 2 != 0 ) {
         //   term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         // } else {
         //   term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
@@ -615,7 +612,7 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
           frac_xyz[j_atom * 3 + 2] * l2
         );
 
-        if( (k2/nb + l2/NC) % 2 != 0 ) {
+        if( (k2/nb + l2/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -645,7 +642,7 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
           frac_xyz[j_atom * 3 + 2] * l4
         );
 
-        if( (k2/nb + l2/NC) % 2 != 0 ) {
+        if( (k2/nb + l2/nc) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle4), f * std::sin(angle4)} * occupancy[j_atom];
