@@ -6,7 +6,7 @@ module xray_dpartial_impl_cpu_module
   use xray_dpartial_data_module
   use xray_pure_utils, only : real_kind
   use constants_xray, only : xray_num_threads
-  use xray_interface2_data_module, only : spacegroup_number
+  use xray_interface2_data_module, only : sgn
   use xray_non_bulk_data_module, only : na, nb, nc
   
   implicit none
@@ -67,7 +67,7 @@ contains
             * exp(mSS4(ihkl) * atom_b_factor(i)) &
             * f_scale(ihkl) * d_target_d_abs_Fcalc(ihkl) / abs_Fcalc(ihkl)
         
-        if( spacegroup_number .eq. 1 ) then  ! P1
+        if( sgn .eq. 1 ) then  ! P1
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -75,7 +75,7 @@ contains
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
             * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 19 ) then  ! P212121
+        else if( sgn .eq. 19 ) then  ! P212121
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -117,7 +117,7 @@ contains
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 18 ) then  ! P21212
+        else if( sgn .eq. 18 ) then  ! P21212
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -158,7 +158,7 @@ contains
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 20 ) then  ! C 2 2 21
+        else if( sgn .eq. 20 ) then  ! C 2 2 21
 
            ! set #1/5:  h,k,l
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -233,7 +233,7 @@ contains
            endif
           
 
-        else if( spacegroup_number .eq. 5 ) then  ! C 1 2 1
+        else if( sgn .eq. 5 ) then  ! C 1 2 1
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -275,7 +275,7 @@ contains
            ! d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
            !     * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 14 ) then  ! P21/c
+        else if( sgn .eq. 14 ) then  ! P21/c
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -316,7 +316,7 @@ contains
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 4 ) then  ! P21
+        else if( sgn .eq. 4 ) then  ! P21
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
@@ -335,7 +335,7 @@ contains
            d_target_d_frac(:, i) = d_target_d_frac(:, i) + hkl_v(:) &
                * (real(f)*aimag(Fcalc(ihkl)) - aimag(f)*real(Fcalc(ihkl))) 
 
-        else if( spacegroup_number .eq. 168 ) then  ! P6
+        else if( sgn .eq. 168 ) then  ! P6
 
            ! identity transform
            phase = hkl_v(1)*frac(1,i) + hkl_v(2)*frac(2,i) + hkl_v(3)*frac(3,i)
