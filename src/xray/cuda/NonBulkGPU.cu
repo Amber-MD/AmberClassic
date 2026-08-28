@@ -4,15 +4,6 @@
 #include <thrust/device_vector.h>
 #include <cstdio>
 
-#define P1 1
-#undef P212121
-#undef P21212
-#undef C121
-#undef C2221
-#undef P21
-#undef P6
-#undef P21c
-
 namespace {
 
   template<int BLOCK_SIZE, typename FloatType>
@@ -36,8 +27,7 @@ namespace {
 
     int h,k,l;
 
-#ifdef P1
-    // Basic code to compute f is here; 
+  if( sgn == 1 ){ // P1
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -69,9 +59,7 @@ namespace {
       }
     }
 
-#endif
-#ifdef P21
-        // code for spacegroup 4:
+  } else if (sgn == 4){ // P21
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -118,10 +106,8 @@ namespace {
         f_non_bulk[i_hkl] = term[0];
       }
     }
-#endif
 
-#ifdef P6
-        // code for spacegroup 168:
+  } else if (sgn == 168){ // P6
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -213,10 +199,7 @@ namespace {
       }
     }
 
-#endif
-
-#ifdef P212121
-        // code for spacegroup 19:
+  } else if (sgn == 19){ // P212121
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -299,10 +282,7 @@ namespace {
       }
     }
 
-#endif
-
-#ifdef C2221
-        // code for spacegroup 20:
+  } else if (sgn == 20){ // C2221
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -413,10 +393,7 @@ namespace {
       }
     }
 
-#endif
-
-#ifdef P21212
-        // code for spacegroup 18:
+  } else if (sgn == 18){ // P21212
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -495,10 +472,7 @@ namespace {
       }
     }
 
-#endif
-
-#ifdef C121
-        // code for spacegroup 5:
+  } else if (sgn == 5){ // C121
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -526,9 +500,9 @@ namespace {
         //   frac_xyz[j_atom * 3 + 1] * k2 +
         //   frac_xyz[j_atom * 3 + 2] * l2
         // );
-        const FloatType amgle2 = angle;
+        const FloatType angle2 = angle;
 
-        if( (h2/na + k2/nb) % 2 != 0 ) {
+        if( (h/na + k/nb) % 2 != 0 ) {
           term[tid] -= thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
         } else {
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle2), f * std::sin(angle2)} * occupancy[j_atom];
@@ -547,7 +521,7 @@ namespace {
 
         if( (h3/na + k3/nb) % 2 == 0 ) 
           term[tid] += thrust::complex<FloatType>{f * std::cos(angle3), f *
-std::sin(angle3)} * occupancy[j_atom] * 2.d0;
+std::sin(angle3)} * occupancy[j_atom] * 2.0;
 
         // set #4: h,-k,-l
         // const int h4 =  hkl[i_hkl * 3 + 0];
@@ -580,10 +554,7 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
       }
     }
 
-#endif
-
-#ifdef P21c
-        // code for spacegroup 14:
+  } else if (sgn == 14){ // P21c
 
     if (i_hkl < n_hkl) {
       const FloatType hkl_mss4 = mss4[i_hkl];
@@ -662,9 +633,9 @@ std::sin(angle3)} * occupancy[j_atom] * 2.d0;
       }
     }
 
-#endif
-
   }
+
+ }
 }
 
 template<xray::NonBulkKernelVersion KERNEL_VERSION, xray::KernelPrecision PRECISION>
