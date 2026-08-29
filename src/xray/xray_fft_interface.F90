@@ -11,7 +11,7 @@ contains
   
     use iso_fortran_env
     implicit none
-    include 'fftw3.f'
+#include <fftw3.f>
     
     integer, intent(in) :: dim(3)
     integer, allocatable, intent(in) :: data_in(:)
