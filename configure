@@ -642,7 +642,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0,7.5,8.0,8.6,8.9,12.0"
+        echo "Configuring for SM6.0, 7.0, 7.5, 8.0, 8.6, 8.9, 12.0"
         cuda_arch_flags="$sm60flags $sm70flags $sm75flags $sm80flags $sm86flags $sm89flags $sm120flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -651,7 +651,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for 6.0,7.0,7.5,8.0"
+        echo "Configuring for 6.0, 7.0, 7.5, 8.0"
         cuda_arch_flags="$sm60flags $sm70flags $sm75flags $sm80flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -660,7 +660,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0,7.5"
+        echo "Configuring for SM6.0, 7.0, 7.5"
         cuda_arch_flags="$sm60flags $sm70flags $sm75flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -669,7 +669,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0"
+        echo "Configuring for SM6.0, 7.0"
         cuda_arch_flags="$sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -678,7 +678,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0"
+        echo "Configuring for SM6.0, 7.0"
         cuda_arch_flags="$sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
