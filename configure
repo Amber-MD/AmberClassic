@@ -63,6 +63,7 @@ netcdflibf=$netcdflibf_static
 lapack="skip"
 blas="skip"
 macAccelerate="no"
+system_fftw="no"
 fftw_flags=""
 gnuld="yes"
 
@@ -123,6 +124,8 @@ while [ $# -gt 0 ]; do
         --system-boost)
             boostlib="-lboost_program_options -lboost_iostreams"
             boost="system";;
+        --system-fftw)
+            system_fftw="yes";;
         --openblas)
             openblas="yes";;
         --mkl)
@@ -152,7 +155,7 @@ while [ $# -gt 0 ]; do
             optflags="-g -O3";;
         --oneapi)
             compiler="oneapi"
-            cc="icx-cc"
+            cc="icx -Wno-gcc-install-dir-libstdcxx -Wno-deprecated-non-prototype"
             cxx="icpx"
             fc="ifx"
             gccflags=""
@@ -195,6 +198,7 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --mkl           use MKL for LAPACK/BLAS/FFTW\n"
     printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
     printf "    --system-boost  use system boost rather than built-in subset\n"
+    printf "    --system-fftw   use system fftw3 rather than built-in code\n"
     printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
@@ -266,7 +270,7 @@ $cc -o testp testp.c
 status=$?
 
 if [ $status -gt 0 ]; then
-    printf "\nError: Unable to compile a C program using gcc\n"
+    printf "\nError: Unable to compile a C program using $cc\n"
     printf "       Please check your compiler settings.\n"
     exit 1
 else
@@ -427,6 +431,11 @@ if [ "$conda" == "yes" ]; then
    flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
    echo "using fftw     libraries from conda-forge"
 
+elif [ "$system_fftw" == "yes" ]; then
+
+   flibs_fftw="$flibs_fftw"
+   echo "using fftw     libraries from system"
+
 elif [ "$mkl" == "yes" ]; then
 
   lapack=skip
@@ -444,7 +453,7 @@ elif [ "$mkl" == "yes" ]; then
   else
     echo "Using MKL for BLAS/LAPACK/FFTW"
   fi
-  mklinc=-I$mklroot/include/fftw
+  mklinc="-I$mklroot/include -I$mklroot/include/fftw"
   # Determine how we are linking MKL: hard-wire to 'line' for now
   link_type='line'
   if [ "$compiler" = "oneapi" ]; then
@@ -741,11 +750,11 @@ BLAS=$blas
 
 ###############################################################################
 
-#  (4)  C compilers:
+#  (4)  C/C++ compilers:
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag
+CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag $mklinc
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)
