@@ -16,11 +16,12 @@ requested_help="no"
 openblas="no"
 mkl="no"
 mklinc=""
+netcdfinc=""
 sfx=""
 debug="-DNDEBUG"
 fpic="-fPIC"
 conda="no"
-conda_incflags=""
+condainc=""
 installtype="serial"
 xblasflag="-DCONFIG_FC_UNDERSCORE"
 
@@ -64,6 +65,7 @@ lapack="skip"
 blas="skip"
 macAccelerate="no"
 system_fftw="no"
+system_netcdf="no"
 fftw_flags=""
 gnuld="yes"
 
@@ -108,7 +110,7 @@ while [ $# -gt 0 ]; do
             gcc10f=""
             gcc10c="";;
         --conda)
-            conda_incflags="-I$CONDA_PREFIX/include"
+            condainc="-I$CONDA_PREFIX/include"
             clangf="-DCLANG"
             clangflags="-Wno-parentheses"
             installtype="conda"
@@ -126,6 +128,9 @@ while [ $# -gt 0 ]; do
             boost="system";;
         --system-fftw)
             system_fftw="yes";;
+        --system-netcdf)
+            netcdfinc="-I/usr/include"
+            system_netcdf="yes";;
         --openblas)
             openblas="yes";;
         --mkl)
@@ -199,6 +204,9 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
     printf "    --system-boost  use system boost rather than built-in subset\n"
     printf "    --system-fftw   use system fftw3 rather than built-in code\n"
+    printf "                       (not compatible with --mkl)\n"
+    printf "    --system-netcdf use system netcdf rather than built-in code\n"
+    printf "                       (must use system gfortran compiler)\n"
     printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
@@ -365,6 +373,11 @@ if [ "$conda" == "yes" ]; then
    netcdflibf="-L$CONDA_PREFIX/lib -lnetcdff -lnetcdf"
    echo "using netcdf   libraries from conda-forge"
 
+elif [ "$system_netcdf" == "yes" ]; then
+
+   netcdflibf="-lnetcdff -lnetcdf"
+   echo "using netcdf   libraries from system"
+
 elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
    printf "Configuring the NetCDF C interface..."
@@ -429,12 +442,12 @@ fi
 if [ "$conda" == "yes" ]; then
 
    flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
-   echo "using fftw     libraries from conda-forge"
+   echo "using fftw3    libraries from conda-forge"
 
 elif [ "$system_fftw" == "yes" ]; then
 
    flibs_fftw="$flibs_fftw"
-   echo "using fftw     libraries from system"
+   echo "using fftw3    libraries from system"
 
 elif [ "$mkl" == "yes" ]; then
 
@@ -564,7 +577,7 @@ if [ "$boost" == "yes" -o "$boost" == "system" ]; then
       cd ../..
 
    else
-      echo "Using the existing boost  libraries"
+      echo "Using the existing boost libraries"
    fi
 fi
 
@@ -754,7 +767,7 @@ BLAS=$blas
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag $mklinc
+CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $condainc $xblasflag $mklinc
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)
@@ -765,7 +778,7 @@ FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_ar
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags $mklinc
+FFLAGS=$clangf $inc $mklinc $netcdfinc $condainc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
 FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
@@ -793,7 +806,7 @@ MDGXLIBS=$flibs_fftw $flibs_la $netcdflib
 # CUDA:
 CUDAFLAGS=$cudafflags $prec_model $cuda_arch_flags $cuda_dc_flags
 CUDAFFLAGS=$cudafflags
-NVCC_CFLAGS=-Wno-deprecated-gpu-targets $clangf $inc $fpic $debug $conda_incflags
+NVCC_CFLAGS=-Wno-deprecated-gpu-targets $clangf $inc $fpic $debug $condainc
 
 # PLUMED related variables:
 PLUMED_INCLUDE_FILE=
