@@ -308,7 +308,7 @@ c
       mismch   = .false.
       lprint   = .false.
       atout    = .true.
-      call getenv( 'AMBERHOME', datafile )
+      call getenv( 'AMBERCLASSICHOME', datafile )
       lendf = len_trim( datafile )
       if (lendf.gt.0 ) then
         datafile = datafile(1:lendf) // '/dat/PROTON_INFO'
@@ -385,7 +385,7 @@ c
      .         '   -r to renumber residues starting at 1'
             write(nerrout,*)
      .       '   -d to specify datafile',
-     .       ' (default is $AMBERHOME/dat/PROTON_INFO)'
+     .       ' (default is $AMBERCLASSICHOME/dat/PROTON_INFO)'
             write(nerrout,*)
      .         '   -i to specify input file (default is stdin)'
             write(nerrout,*)
