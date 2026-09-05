@@ -10862,6 +10862,13 @@ conda install reduce -c bioconda
 
 \begin_layout Standard
 or by using homebrew/linuxbrew:
+ (
+\series bold
+note
+\series default
+:
+ as of 05sep26,
+ the first command below seems to lead to a broken pipe error)
 \end_layout
 
 \begin_layout LyX-Code
@@ -10870,6 +10877,18 @@ brew tap brewsci/bio
 
 \begin_layout LyX-Code
 brew install reduce
+\end_layout
+
+\begin_layout Standard
+Phenix users should also have 
+\family sans
+reduce
+\family default
+ and/or 
+\family sans
+phenix.reduce
+\family default
+ in their PATH.
 \end_layout
 
 \begin_layout Section
