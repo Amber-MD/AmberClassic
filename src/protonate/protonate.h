@@ -41,8 +41,9 @@ c
       character*3 cresnam(MAXAT)
       character*1 chainid(MAXAT), crescod(MAXAT)
       character*6 ckey(MAXAT)
+      character*24 rest(MAXAT)
       common /crdc/ cnamat, catom, cresnam, chainid, ckey,
-     .              crescod
+     .              crescod, rest
 c
 c files common info
 c

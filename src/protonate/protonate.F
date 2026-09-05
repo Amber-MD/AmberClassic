@@ -62,8 +62,8 @@ c
      .         inline(17:17) .eq. 'A' ) ) then
           read( inline, 35 ) ckey(iat), cnamat(iat), cresnam(iat),
      .                       chainid(iat), ires(iat), crescod(iat),
-     .                       (coord(ic,iat), ic=1,3)
-   35     format( A6, 6X, A4, 1X, A3, 1X, A1, I4, A1, 3X, 3F8.3 )
+     .                       (coord(ic,iat), ic=1,3), rest(iat)
+   35     format( A6, 6X, A4, 1X, A3, 1X, A1, I4, A1, 3X, 3F8.3, A24 )
 c         if ( cresnam(iat) .eq. 'HIS' ) cresnam(iat) = 'HIE'
 #if 0
 c
@@ -127,6 +127,8 @@ c
           ter(iat) = .true.
         else if ( inline(1:3) .eq. 'END' ) then
           go to 40
+        else
+          write(nfilout, '(a)') inline
         endif
       end do
       call maxerr( iat )
@@ -197,7 +199,7 @@ c
         if ( atout )
      .    call writeout( ckey(j), cnamat(j), cresnam(j), chainid(j),
      .                   ires(j), crescod(j), coord(1,j), coord(2,j),
-     .                   coord(3,j) )
+     .                   coord(3,j), rest(j) )
 c
 c -- Check for N atom
 c
@@ -236,7 +238,7 @@ c
               ctemp = camidet(n)
               call writeout( ckey(j), ctemp, cresnam(j), chainid(j),
      .                       ires(j), crescod(j), protp(1,n),
-     .                       protp(2,n), protp(3,n) )
+     .                       protp(2,n), protp(3,n), rest(j) )
   130       continue
           else
             lres = ires(j) - 1
@@ -252,7 +254,7 @@ c
               ctemp = camide
               call writeout( ckey(j), ctemp, cresnam(j), chainid(j),
      .                       ires(j), crescod(j), protp(1,n),
-     .                       protp(2,n), protp(3,n) )
+     .                       protp(2,n), protp(3,n), rest(j) )
   160       continue
           end if
         end if
@@ -454,7 +456,7 @@ c!!     .                                         cnamat(j),cdatnamh(k,1)
             atoml = cdhname(k,l,n)
             call writeout( ckey(j), atoml, cresnam(j), chainid(j),
      .                     kres, resc, protp(1,n), protp(2,n),
-     .                     protp(3,n) )
+     .                     protp(3,n), rest(j) )
    20     continue
    30 continue
       return
@@ -497,7 +499,7 @@ c
          if ( ipopt )
      .      call writeout( ckey(iat), catom(iat), cresnam(iat),
      .                     chainid(iat), npres, resc, scoord(1,iat),
-     .                     scoord(2,iat), scoord(3,iat) )
+     .                     scoord(2,iat), scoord(3,iat), rest(iat) )
    40 continue
 c
       return
@@ -833,7 +835,7 @@ c
 c
 c
       subroutine writeout( bstr, atomname, resname, id, resnum, resc,
-     .                     x, y, z )
+     .                     x, y, z, restin )
       implicit none
 c
 #include "protonate.h"
@@ -845,6 +847,7 @@ c
       character*3 resname
       character*1 mark, id, resc
       character*40 line
+      character*24 restin
       logical header, longbond
       integer resnum, i, imatch
       real x, y, z, TOL, ONE, ZERO, dis, dish, disn
@@ -974,6 +977,7 @@ c
              x = coord(1,i)
              y = coord(2,i)
              z = coord(3,i)
+             restin = rest(i)
            end if
            if ( lprint ) then
               mark = ' '
@@ -1027,15 +1031,15 @@ c
  5000 continue
       if ( lrenum ) then
          write( nfilout, 6000 ) bstr, icount, printa, resname, id,
-     .                          iresct+1, ' ', x, y, z
+     .                          iresct+1, ' ', x, y, z, restin
       else
          write( nfilout, 6000 ) bstr, icount, printa, resname, id,
-     .                          resnum, resc, x, y, z
+     .                          resnum, resc, x, y, z, restin
       endif
       icount = icount + 1
 c
       return
- 6000 format( A6, I5, 1X, A4, 1X, A3, 1X, A1, I4, A1, 3X, 3F8.3)
+ 6000 format( A6, I5, 1X, A4, 1X, A3, 1X, A1, I4, A1, 3X, 3F8.3, A24)
       end
 c
       subroutine maxerr( iat )
