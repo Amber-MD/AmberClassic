@@ -1,26 +1,8 @@
-#!/bin/csh  -f
-#TEST-PROGRAM nef_to_RST
-#TEST-DESCRIP TO_BE_DEtermined
-#TEST-PURPOSE regression, basic
-#TEST-STATE   undocumented
+#!/bin/bash
 
-${AMBERHOME}/bin/nef_to_RST -nef 1pqx.nef -pdb 1pqx.pdb -rst 1pqx.RST \
-               -p4a 1pqx_renum.txt -rdc 1pqx.DIP || goto error
+${AMBERCLASSICHOME}/bin/nef_to_RST -nef 1pqx.nef -pdb 1pqx.pdb -rst 1pqx.RST \
+               -p4a 1pqx_renum.txt -rdc 1pqx.DIP 
 
 ../dacdif 1pqx.RST.save 1pqx.RST
 
-exit(0)
-
-error:
-echo "  ${0}:  Program error"
-exit(1)
-
-
-
-
-
-
-
-
-
-
+exit 0
