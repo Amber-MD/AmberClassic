@@ -378,6 +378,7 @@ if [ "$conda" == "yes" ]; then
 elif [ "$system_netcdf" == "yes" ]; then
 
    netcdflibf="-lnetcdff -lnetcdf"
+   netcdflib="-lnetcdf"
    echo "using netcdf   libraries from system"
 
 elif [ ! -s "lib/libnetcdf.a" ]; then
