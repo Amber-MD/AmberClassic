@@ -1,7 +1,5 @@
 #  just redirect things to lower-level Makefiles
 
-include config.h
-
 install::
 	cd src && $(MAKE) install
 
@@ -11,11 +9,13 @@ test::
 clean::
 	cd src && $(MAKE) clean
 
-uninstall::
+uninstall:: clean
 	touch config.h
 	cd src && $(MAKE) uninstall
+	/bin/rm -f config.h
 
-distclean::
+distclean:: clean uninstall
 	touch config.h
 	cd src && $(MAKE) distclean
+	/bin/rm -f config.h
 

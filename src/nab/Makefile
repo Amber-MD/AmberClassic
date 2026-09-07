@@ -54,7 +54,7 @@ LIBNABOBJS=	\
 	dg_helix.o \
 	getchivol.o \
 	getseq_from_pdb.o \
-	getxyz_from_pdb.o \
+#	getxyz_from_pdb.o \
 	getpdb_prm.o \
 	linkprot.o	\
 	link_na.o	\

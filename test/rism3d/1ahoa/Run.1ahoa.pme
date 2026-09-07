@@ -1,34 +1,21 @@
-#!/bin/csh -f
-#TEST-PROGRAM sander
-#TEST-DESCRIP Tests PME potential gradients vs. analytic forces
-#TEST-PURPOSE regression, basic
-#TEST-STATE   undocumented
+#!/bin/sh
 
-echo "SANDER: 3D-RISM: PME potential - orthorhombic"
+sander="../../../bin/msander"
 
-if( ! $?TESTsander ) set TESTsander = "../../../bin/sander"
+if [ ! -z "$DO_PARALLEL" ]; then
+   sander=$sander.MPI
+   export OMP_NUM_THREADS=1
+fi
 
-if ! { ../checkrismunsupported.sh $TESTsander } exit 0
-
-if( ! $?DO_PARALLEL ) then
-        set DO_PARALLEL = " "
-else
-        set numprocs=`echo $DO_PARALLEL | awk -f ../../numprocs.awk `
-#        if ( $numprocs > 2 ) then
-#            echo " DO_PARALLEL set to $DO_PARALLEL"
-#            goto toomany
-#        endif
-        #set TESTsander = $TESTsander.MPI
-        echo "Running $DO_PARALLEL $TESTsander"
-endif  
+output=1ahoa.pme.out
 
 cat > mdin <<EOF
 1ahoa crystal unit cell
  &cntrl
     ntx=1, ntpr=1, ntwx=0, ntwr=0
     ioutfm=1
-    imin=1, drms=1E-4
-    maxcyc=0, ntmin=1
+    imin=0, drms=1E-4
+    nstlim=0,
     ig=314159
     ntb=1
     irism=1
@@ -37,7 +24,7 @@ cat > mdin <<EOF
  &rism
     periodic='pme'
     closure='kh'
-    buffer=1, grdspc=0.5,0.5,0.5
+    grdspc=1,1,1
     solvcut=12.d0
     verbose=1
     npropagate=5
@@ -46,31 +33,13 @@ cat > mdin <<EOF
  /
 EOF
 
-$DO_PARALLEL $TESTsander -O -i mdin -o mdout \
+$DO_PARALLEL $sander -O -i mdin -o $output \
     -p 1ahoa.parm7 -c 1ahoa.rst7 \
     -xvv ../xvv/spc-nacl.kh.xvv \
-    || goto error
+    < /dev/null || { echo "  $0:  Program error"; exit 1; }
 
 grep -E "^rism_|^solute" mdout | grep -v "rism_DCFintegral"  > erism.pme.out
 ../../dacdif -r 5.e-2 erism.pme.out.save erism.pme.out
-/bin/rm -f mdin mdinfo restrt mdout 
-exit(0)
-
-error:
-echo "  ${0}:  Program error"
-exit(1)
-
-toomany:
-    echo " too many processors for this test, exiting"
-    echo "============================================================"
-    exit(0)
-
-
-
-
-
-
-
-
-
+/bin/rm -f mdin mdinfo restrt
+exit 0
 

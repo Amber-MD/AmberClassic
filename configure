@@ -16,11 +16,12 @@ requested_help="no"
 openblas="no"
 mkl="no"
 mklinc=""
+netcdfinc=""
 sfx=""
 debug="-DNDEBUG"
 fpic="-fPIC"
 conda="no"
-conda_incflags=""
+condainc=""
 installtype="serial"
 xblasflag="-DCONFIG_FC_UNDERSCORE"
 
@@ -64,6 +65,8 @@ netcdflib="\$(LIBDIR)/libnetcdf.a"
 lapack="skip"
 blas="skip"
 macAccelerate="no"
+system_fftw="no"
+system_netcdf="no"
 fftw_flags=""
 gnuld="yes"
 
@@ -108,7 +111,7 @@ while [ $# -gt 0 ]; do
             gcc10f=""
             gcc10c="";;
         --conda)
-            conda_incflags="-I$CONDA_PREFIX/include"
+            condainc="-I$CONDA_PREFIX/include"
             clangf="-DCLANG"
             clangflags="-Wno-parentheses"
             installtype="conda"
@@ -124,6 +127,11 @@ while [ $# -gt 0 ]; do
         --system-boost)
             boostlib="-lboost_program_options -lboost_iostreams"
             boost="system";;
+        --system-fftw)
+            system_fftw="yes";;
+        --system-netcdf)
+            netcdfinc="-I/usr/include"
+            system_netcdf="yes";;
         --openblas)
             openblas="yes";;
         --mkl)
@@ -153,7 +161,7 @@ while [ $# -gt 0 ]; do
             optflags="-g -O3";;
         --oneapi)
             compiler="oneapi"
-            cc="icx-cc"
+            cc="icx -Wno-gcc-install-dir-libstdcxx -Wno-deprecated-non-prototype"
             cxx="icpx"
             fc="ifx"
             gccflags=""
@@ -196,6 +204,10 @@ if [ "$requested_help" = "yes" ] ; then
     printf "    --mkl           use MKL for LAPACK/BLAS/FFTW\n"
     printf "    --macAccelerate use Apple Accelerate framework for linear algebra\n"
     printf "    --system-boost  use system boost rather than built-in subset\n"
+    printf "    --system-fftw   use system fftw3 rather than built-in code\n"
+    printf "                       (not compatible with --mkl)\n"
+    printf "    --system-netcdf use system netcdf rather than built-in code\n"
+    printf "                       (must use system gfortran compiler)\n"
     printf "    --static        use static linking (experimental)\n"
     printf "\n"
     exit 0
@@ -267,7 +279,7 @@ $cc -o testp testp.c
 status=$?
 
 if [ $status -gt 0 ]; then
-    printf "\nError: Unable to compile a C program using gcc\n"
+    printf "\nError: Unable to compile a C program using $cc\n"
     printf "       Please check your compiler settings.\n"
     exit 1
 else
@@ -363,6 +375,11 @@ if [ "$conda" == "yes" ]; then
    netcdflib="-L$CONDA_PREFIX/lib -lnetcdf"
    echo "using netcdf   libraries from conda-forge"
 
+elif [ "$system_netcdf" == "yes" ]; then
+
+   netcdflibf="-lnetcdff -lnetcdf"
+   echo "using netcdf   libraries from system"
+
 elif [ ! -s "lib/libnetcdf.a" ]; then
    cd src/netcdf-c-4.7.2
    printf "Configuring the NetCDF C interface..."
@@ -427,7 +444,12 @@ fi
 if [ "$conda" == "yes" ]; then
 
    flibs_fftw="-L$CONDA_PREFIX/lib $flibs_fftw"
-   echo "using fftw     libraries from conda-forge"
+   echo "using fftw3    libraries from conda-forge"
+
+elif [ "$system_fftw" == "yes" ]; then
+
+   flibs_fftw="$flibs_fftw"
+   echo "using fftw3    libraries from system"
 
 elif [ "$mkl" == "yes" ]; then
 
@@ -446,7 +468,7 @@ elif [ "$mkl" == "yes" ]; then
   else
     echo "Using MKL for BLAS/LAPACK/FFTW"
   fi
-  mklinc=-I$mklroot/include/fftw
+  mklinc="-I$mklroot/include -I$mklroot/include/fftw"
   # Determine how we are linking MKL: hard-wire to 'line' for now
   link_type='line'
   if [ "$compiler" = "oneapi" ]; then
@@ -557,7 +579,7 @@ if [ "$boost" == "yes" -o "$boost" == "system" ]; then
       cd ../..
 
    else
-      echo "Using the existing boost  libraries"
+      echo "Using the existing boost libraries"
    fi
 fi
 
@@ -644,7 +666,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0,7.5,8.0,8.6,8.9,12.0"
+        echo "Configuring for SM6.0, 7.0, 7.5, 8.0, 8.6, 8.9, 12.0"
         cuda_arch_flags="$sm60flags $sm70flags $sm75flags $sm80flags $sm86flags $sm89flags $sm120flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -653,7 +675,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for 6.0,7.0,7.5,8.0"
+        echo "Configuring for 6.0, 7.0, 7.5, 8.0"
         cuda_arch_flags="$sm60flags $sm70flags $sm75flags $sm80flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -662,7 +684,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0,7.5"
+        echo "Configuring for SM6.0, 7.0, 7.5"
         cuda_arch_flags="$sm60flags $sm70flags $sm75flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -671,7 +693,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0"
+        echo "Configuring for SM6.0, 7.0"
         cuda_arch_flags="$sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -680,7 +702,7 @@ if [ "$cuda" = 'yes' ]; then
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
       else
-        echo "Configuring for SM6.0,7.0"
+        echo "Configuring for SM6.0, 7.0"
         cuda_arch_flags="$sm60flags $sm70flags"
         cuda_dc_flags='-Xptxas --disable-optimizer-constants'
       fi
@@ -744,11 +766,11 @@ BLAS=$blas
 
 ###############################################################################
 
-#  (4)  C compilers:
+#  (4)  C/C++ compilers:
 
 CC=$cc
 CXX=$cxx
-CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $conda_incflags $xblasflag -DBINTRAJ
+CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $condainc $xblasflag $mklinc -DBINTRAJ
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
 # (FLIBS is for C/NAB codes)
@@ -759,7 +781,7 @@ FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_ar
 #  (5)  Fortran compiler:
 
 FC=$fc
-FFLAGS=$clangf $inc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def $conda_incflags $mklinc
+FFLAGS=$clangf $inc $mklinc $netcdfinc $condainc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
 FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
@@ -787,7 +809,7 @@ MDGXLIBS=$flibs_fftw $flibs_la $netcdflib
 # CUDA:
 CUDAFLAGS=$cudafflags $prec_model $cuda_arch_flags $cuda_dc_flags
 CUDAFFLAGS=$cudafflags
-NVCC_CFLAGS=-Wno-deprecated-gpu-targets $clangf $inc $fpic $debug $conda_incflags
+NVCC_CFLAGS=-Wno-deprecated-gpu-targets $clangf $inc $fpic $debug $condainc
 
 # PLUMED related variables:
 PLUMED_INCLUDE_FILE=

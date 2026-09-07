@@ -22,7 +22,7 @@ void pmemd_xray_dpartial_init_gpu(
   const double* mss4,
   complex_double* f_calc,
   const double* abs_f_calc,
-  int n_atom,
+  int n_atom, int na, int nb, int nc, int sgn,
   const double* atom_b_factor,
   const double* atom_occupancy,
   const int* atom_scatter_type,
@@ -37,7 +37,7 @@ void pmemd_xray_dpartial_init_gpu(
       mss4,
       reinterpret_cast<std::complex<double>*>(f_calc),
       abs_f_calc,
-      n_atom,
+      n_atom, na, nb, nc, sgn,
       atom_b_factor,
       atom_occupancy,
       atom_scatter_type,
@@ -48,7 +48,7 @@ void pmemd_xray_dpartial_init_gpu(
 
 extern "C"
 void pmemd_xray_dpartial_calc_d_target_d_frac(
-  int n_atom,
+  int n_atom, int na, int nb, int nc, int sgn,
   const double* frac,
   int n_hkl,
   const double* f_scale,
@@ -57,7 +57,7 @@ void pmemd_xray_dpartial_calc_d_target_d_frac(
 ) {
   assert(dpartial_instance());
   dpartial_instance()->calc_d_target_d_frac(
-    n_atom, frac, n_hkl, f_scale, d_target_d_abs_f_calc, d_target_d_frac
+    n_atom, na, nb, nc, sgn, frac, n_hkl, f_scale, d_target_d_abs_f_calc, d_target_d_frac
   );
 }
 

@@ -18,6 +18,7 @@ namespace xray {
       std::complex<double>* f_calc,
       const double* abs_f_calc,
       int n_atom,
+      int na, int nb, int nc, int sgn,
       const double* atom_b_factor,
       const double* atom_occupancy,
       const int* atom_scatter_type,
@@ -28,7 +29,7 @@ namespace xray {
     ~DPartialGPU() override = default;
 
     void calc_d_target_d_frac(
-      int n_atom,
+      int n_atom, int na, int nb, int nc, int sgn,
       const double* frac,
       int n_hkl,
       const double* f_scale,

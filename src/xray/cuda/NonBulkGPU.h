@@ -20,6 +20,7 @@ namespace xray {
                complex_double* f_non_bulk,
                const double* mSS4,
                int n_atom,
+               int na, int nb, int nc, int sgn,
                const double* b_factor,
                const double* occupancy,
                int n_scatter_types,
@@ -29,7 +30,7 @@ namespace xray {
     ~NonBulkGPU() override = default;
 
     void calc_f_non_bulk(
-      int n_atoms,
+      int n_atoms, int na, int nb, int nc, int sgn,
       const double* frac_xyz
     ) override;
 

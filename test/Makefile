@@ -55,6 +55,7 @@ test.general:
 test.rism:
 	-(cd rism3d/4lzt && ./Run.4lzt.pme)
 	-(cd rism3d/2igd && ./Run.2igd.pme)
+	-(cd rism3d/1ahoa && ./Run.1ahoa.pme)
 	-(cd xray/480d && ./Run.480d_pse2)
 
 test.nmr:

@@ -3,7 +3,8 @@
 #include <cstdio>
 
 
-void xray::NonBulkCPU::calc_f_non_bulk(int n_atom, const double* frac_xyz) {
+void xray::NonBulkCPU::calc_f_non_bulk(int n_atom, int na, int nb, 
+     int nc, int sgn, const double* frac_xyz) {
   assert(n_atom == m_n_atom);
   for (int i_hkl = 0; i_hkl < m_n_hkl; ++i_hkl) {
     complex_double term{0, 0};

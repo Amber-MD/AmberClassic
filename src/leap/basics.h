@@ -173,10 +173,15 @@ typedef unsigned char   bool;
 # include <sys/syslimits.h> 
 #endif
 
-#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || \
-      defined(__OpenBSD__) || defined(__NetBSD__)
-#  define HAVE_SYS_IOCTL_H
-#  include <sys/ioctl.h>
+// functions
+// ---------------------------------------------------------------------
+
+#ifndef tolower
+# define        tolower(c)      ( c - 'A' + 'a' )
+#endif
+
+#ifndef toupper
+# define        toupper(c)      ( c - 'a' + 'A' )
 #endif
 
 // types

@@ -364,7 +364,8 @@ xray_scaling_impl_cpu.o: \
                     ../include/assert.fh\
                     xray_pure_utils.o\
                     xray_contracts.o\
-                    xray_scaling_data.o
+                    xray_scaling_data.o\
+                    xray_interface2_data.o
 
 
 xray_scaling_impl_cpu.o:   xray_scaling_impl_cpu.F90
