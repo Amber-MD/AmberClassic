@@ -1,7 +1,13 @@
 !   Simple filter program to convert AMBER coordinate files into PDB files
 !   (and to do other similar conversions).
+!
+!  N.B.: this is very old code, and does not handle crystallographic
+!  symmetry, netcdf input files, and other features found in the cpptraj
+!  version of ambpdb.  It is useful for simple tasks in environments where
+!  the cpptraj version is not available.  It is now renamed "amdpdb_old"
+!  to indicate this.
 
-program ambpdb
+program ambpdb_old
 
 !  implicit none
 
@@ -220,7 +226,7 @@ program ambpdb
    end if
    call mexit(6,0)
 
-end program ambpdb 
+end program ambpdb_old
 
 !=====================================================================
 
