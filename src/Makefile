@@ -12,7 +12,7 @@ serial:
 	@cd addles && $(MAKE) addles
 	@cd leap && $(MAKE) leap
 	@cd sff && $(MAKE) libsff
-	@cd nabc && $(MAKE) nabc
+	@cd nabc && $(MAKE) libnabc
 	@cd antechamber && $(MAKE) install_ac
 	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
