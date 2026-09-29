@@ -4,7 +4,7 @@ install::
 	cd src && $(MAKE) install
 
 test::
-	cd test && $(MAKE) test.$(INSTALLTYPE)
+	cd test && $(MAKE) test
 
 clean::
 	cd src && $(MAKE) clean
