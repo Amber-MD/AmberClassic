@@ -50,7 +50,7 @@ test_cif:  tcif
 	./tcif
 	/bin/rm tcif tcif.o
 
-LIBS = -L$(LIBDIR) $(FLIBS) $(NETCDFLIBF)  $(LM) 
+LIBS = -L$(LIBDIR) $(FLIBS) -lnabc $(NETCDFLIBF)  $(LM) 
 
 #---------------------------------------------------------------------------
 program_2:  program_2.o
