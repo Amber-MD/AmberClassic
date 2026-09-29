@@ -770,7 +770,7 @@ CXX=$cxx
 CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $condainc $xblasflag $mklinc
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
-# (FLIBS is for NAB codes)
+# (FLIBS is for NAB and NABC codes)
 FLIBS= $ompcflag -lsff $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
 
 ###############################################################################
@@ -779,6 +779,7 @@ FLIBS= $ompcflag -lsff $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldf
 
 FC=$fc
 FFLAGS=$clangf $inc $mklinc $netcdfinc $condainc $optmkl $ompflag $mpiflag $gcc10f $fpic $longlines $plumed_def
+# (FLIBSF is for Fortran codes)
 FLIBSF=-lrism -lxray $flibs_fftw $flibs_la $plumed_load
 FNOOPTFLAGS= -O0 -g
 FOPTFLAGS=$optflags
