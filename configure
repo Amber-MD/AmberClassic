@@ -770,8 +770,8 @@ CXX=$cxx
 CFLAGS=$gccflags $clangf $clangflags $ompcflag $inc $gcc10c $fpic $debug $condainc $xblasflag $mklinc
 CNOOPTFLAGS=-g -O0
 COPTFLAGS=$optflags
-# (FLIBS is for C/NAB codes)
-FLIBS= $ompcflag -lsff -lnabc $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
+# (FLIBS is for NAB codes)
+FLIBS= $ompcflag -lsff $flibs_la $netcdflib $netcdflibf $ciflib $flibs_arch $ldflags $lm
 
 ###############################################################################
 
