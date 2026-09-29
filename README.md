@@ -1,6 +1,6 @@
 # Overview of AmberClassic
 
-* This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and commonly-used) parts of AmberTools: `tleap, antechamber, sqm, NAB, nabc, metatwist, rism1d, saxs, gbnsr6, xtalutil` and `paramfit`.  All of the force field files from AmberTools are also included here. With these tools, many systems can be set up for simulation in `msander`.
+* This repository contains `msander`, a "modern" version of parts of the Amber molecular dynamics program `sander`.  Also included are various NMR, X-ray and cryoEM-related code and utilities, as well as versions of a number of the “classic” (and commonly-used) parts of AmberTools: `pdb4amber, tleap, antechamber, sqm, NAB, nabc, metatwist, mdgx, rism1d, saxs, gbnsr6, xtalutil` and `paramfit`.  All of the force field files from AmberTools are also included here. With these tools, many systems can be set up for simulation in `msander`.
 
 * The documentation and authorship credits are in the *doc/AmberClassic.pdf* file.
 
@@ -12,13 +12,15 @@
 
 * This is a work in progress, essentially creating a (modified) subset of `AmberTools`.  Please create a github issue if you have comments or suggestions.  (As an alternative, send email to dacase1@gmail.com.) Volunteers to help improve or extend the package are welcome.
 
+* Versioning is a bit haphazard, but git tags `v1.0, v2.0` and `v3.0` represent stable points in the development, and may be of help if something seems broken.
+
 # Design goals
 
 * This project began as a fork of the `sander` code in `AmberTools`.  It tries to (greatly) simplify the code base, choosing the best and most useful parts of the code, and to serve as a test bed for how modern Fortran coding techniques can be used.  Key application areas are expected to be in structure refinements using NMR, cryoEM or Xray diffraction information.  This version has a fair amount of OpenMP support, especially for Xray and 3D-RISM calculations.  Parts of the Xray code use GPU acceleration.
 
 * One additional goal of this collection is to make compiling and installation as simple as possible. There is a pretty simple configure script, and minimal dependencies on external packages.  I am (slowly) cleaning up and adding other parts of AmberTools, and a conda package is available (see below.)
 
-* This project incorporates and supercedes two previous packages (msander and nabc) that were available at github.com/dacase.
+* This project incorporates and supercedes two previous packages (msander and nabc) that were at one point available at github.com/dacase.
 
 # Key differences in functionality versus sander
 
