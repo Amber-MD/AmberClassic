@@ -6,22 +6,22 @@
 #  set variables here:
 #==========================================================================
 
-na=1      # cells along a axis
-nb=1      # cells along b axis
-nc=1      # cells along c axis
+na=13      # cells along a axis
+nb=11      # cells along b axis
+nc=11      # cells along c axis
 let nabc=$na*$nb*$nc
-residuesperchain=193
-repeats="()"
-id="1aho"
-idalt="aug26"
-seed=1
+residuesperchain=227
+repeats="(62)"
+id="6o2h"
+idalt="dac1"
+seed=18
 #  supercell unit cell parameters:
-a=45.900
-b=40.700
-c=30.100
-al=90.0
-bt=90.0
-gm=90.0
+a=356.152
+b=353.474
+c=379.643
+al=88.66
+bt=108.46
+gm=111.88
 
 #==========================================================================
 #  set up unit cell and supercell
@@ -33,6 +33,7 @@ UnitCell -p $id.pdb -o ${id}_uc.pdb
 # gemmi convert --assembly unit_cell $id.pdb ${id}_uc.pdb
 PropPDB -p ${id}_uc.pdb -o ${id}_${nabc}uc.pdb -ix $na -iy $nb -iz $nc
 
+if false; then
 #==========================================================================
 #  set chainID's for each ASU:
 #==========================================================================
@@ -83,14 +84,16 @@ EOF
 
 perl -n -i.bak -f ./set_chainID ${id}_${nabc}uc.pdb
 
+fi
+
 #==========================================================================
 #  select alternates to be used
 #==========================================================================
 
 cat <<EOF > select_alts
 
-\$resno_prev = 0;
-\$chain_prev = "";
+\$resno_prev = "";
+\$resno = 0;
 \$seed = srand(int(\$ARGV[0]));
 print "REMARK   select_alts run with seed of \$ARGV[0]\n"; 
 
@@ -121,13 +124,19 @@ ATOM: while (<PDB>){
          \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
        unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
 
-   \$resno = int(\$resno1);
-   \$altocc{\$resno . \$alt} = \$occ if \$alt ne " ";
-
+      if( \$resno1 ne \$resno_prev ){
+         \$resno++;
+         \$resno_prev = \$resno1;
+      }
+      \$altocc{\$resno . \$alt} = \$occ if \$alt ne " ";
    }
 }
 seek PDB, 0, 0;  # rewind the input file
 \$max_res = \$resno;
+print STDERR "max_res is \$max_res\n";
+
+\$resno_prev = "";
+\$resno = 0;
 
 #-----------------------------------------------------------------------
 #  next, use the alternate info above to select the ensemble:
@@ -167,15 +176,14 @@ if( \$_ =~ /^ATOM|^HETATM/){
     ( \$label, \$atno1, \$atname, \$alt, \$resname, \$chainId, \$resno1, \$iCode,
           \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
         unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
-    \$resno = int(\$resno1);
     \$atno = int(\$atno1);
+    if( \$resno1 != \$resno_prev ){ 
+       \$resno++;
+       \$resno_prev = \$resno1;
 
-    #  determine the relative residue number: only needed for repeats
-    \$relres = \$resno % \$residuesperchain;
-
-    if( \$resno != \$resno_prev ){ 
+       #  determine the relative residue number: only needed for repeats
+       \$relres = \$resno % \$residuesperchain;
        \$rand = rand() unless defined \$repeat[\$relres];
-       \$resno_prev = \$resno;
     }
 
     # N.B.: following should not require conformers to be in alphabetical order
@@ -210,14 +218,15 @@ if( \$_ =~ /^ATOM|^HETATM/){
                           
     \$occ = 1.0;
     \$alt = " ";
+    \$resnop = \$resno % 10000;
 
     #
     #  write back out
     #
     printf 
     "%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
-          \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resno, \$iCode,
-            \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+        \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resnop, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
 
 } else {
     print;
@@ -226,6 +235,7 @@ if( \$_ =~ /^ATOM|^HETATM/){
 }
 EOF
 
+echo "ready to run select_alts"
 perl -f ./select_alts $seed ${id}_${nabc}uc.pdb > $idalt.pdb
 
 #-----------------------------------------------------------------------
@@ -265,12 +275,16 @@ source leaprc.protein.autolink
 source leaprc.water.spce
 set pdb_auto_match 1
 set pdb_auto_link 1
+NO3 = loadMol2 NO3.mol2
+loadAmberParams NO3.frcmod
 x = loadPdb $idalt.pdb
 set x box { $a $b $c }
 saveAmberParm x $idalt.parm7 foo.rst7
 quit
 EOF
 
+exit
+echo "ready to run tleap"
 $AMBERCLASSICHOME/bin/teLeap -f tleap.in > tleap.out \
    || { echo "  teLeap:  Program error"; exit 1; }
 /bin/rm tleap.in
