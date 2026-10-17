@@ -1,4 +1,4 @@
-{% set version = "1.3" %}
+{% set version = "3.0" %}
 {% set mpi = "openmpi" %}
 
 package:
@@ -83,7 +83,7 @@ about:
       NMR, X-ray and cryoEM-related code and utilities, as well as versions
       of a number of the "classic" (and commonly-used) parts of AmberTools:
       tleap, antechamber, sqm, sff, mdgx, metatwist, rism1d, saxs, gbnsr6,
-      xtalutil, protonate, packmol and paramfit. All of the force
+      xtalutil, protonate, pdb4amber, packmol and paramfit. All of the force
       field files from AmberTools are also included here. With these tools,
       many systems can be set up for simulation in msander.
 
