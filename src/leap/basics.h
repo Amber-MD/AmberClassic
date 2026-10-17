@@ -196,8 +196,6 @@ typedef unsigned char   BOOL;
 // functions
 // ---------------------------------------------------------------------
 
-extern	double	strtod();
-
 #ifndef tolower
 # define        tolower(c)      ( c - 'A' + 'a' )
 #endif

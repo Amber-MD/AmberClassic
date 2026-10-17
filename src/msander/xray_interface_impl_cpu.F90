@@ -394,7 +394,6 @@ contains
 
    subroutine xray_write_fmtz(filename)
 
-   use xray_globals_module
    use xray_interface2_data_module, only:  Fcalc, Fobs, hkl, resolution, &
        sigma_Fobs, new_order, penalty
    use xray_target_module, only : target_function_id
@@ -430,15 +429,6 @@ contains
          '15N', achar(9), '15N',achar(9), '15N',achar(9),'15N', &
          achar(9),'15N',achar(9),'15N',achar(9),'15N'
       do i=1,num_hkl
-#if 0
-       if( mod(i,4) == 1 ) then
-         Fcalcav = Fcalc(i)
-       else if( mod(i,4) == 2 .or. mod(i,4) == 3 ) then
-         Fcalcav = Fcalcav + Fcalc(i)
-       else
-         Fcalcav = (Fcalcav + Fcalc(i)) / 4.0
-       endif
-#endif
          phicalc = atan2( aimag(Fcalc(i)), real(Fcalc(i)) ) * 57.2957795d0
          write(20,&
          '(i4,a,i4,a,i4,a,f8.3,a,f12.3,a,f12.3,a,f12.3,a,f12.3,a,f12.3,a,f12.4)') &
@@ -446,14 +436,6 @@ contains
           resolution(i), achar(9), abs(Fobs(i)), achar(9), &
           sigma_Fobs(i), achar(9), abs(Fcalc(i)), achar(9), phicalc, &
           achar(9), real(Fcalc(i)),achar(9),aimag(Fcalc(i))
-#if 0
-         if( mod(i,4) == 0 ) write(20,&
-         '(i4,a,i4,a,i4,a,f8.3,a,f12.3,a,f12.3,a,f12.3,a,f12.3,a,i4,a,f12.4)') &
-          hkl(1,i), achar(9),hkl(2,i), achar(9), hkl(3,i), achar(9), &
-          resolution(i), achar(9), abs(Fobs(i)), achar(9), &
-          sigma_Fobs(i), achar(9), abs(Fcalcav), achar(9), phicalc, &
-          achar(9), rfree(i),achar(9),zero
-#endif
       end do
    end if
    close(20)
@@ -503,7 +485,7 @@ contains
       call amopen(allocate_lun(hkl_lun),reflection_infile,'O','F','R')
       read(hkl_lun,*,end=1,err=2) num_hkl, has_Fuser
 
-      allocate(hkl_index(3,num_hkl),abs_Fobs(num_hkl),sigFobs(num_hkl), &
+      allocate(hkl_index(3,num_hkl),abs_Fobs(num_hkl),sigma_Fobs(num_hkl), &
             & test_flag(num_hkl))
 
       if (fave_outfile /= '') then
@@ -512,14 +494,14 @@ contains
       endif
 
       !  each line contains h,k,l and two reals
-      !  if target == "ls" or "ml", these are Fobs, sigFobs (for diffraction)
+      !  if target == "ls" or "ml", these are Fobs, sigma_Fobs (for diffraction)
       !  if target == "vls",  these are Fobs, phiFobs (for cryoEM)
 
       if (has_Fuser > 0 ) then
          allocate( Fuser(num_hkl) )
          do i = 1,num_hkl
             read(hkl_lun,*,end=1,err=2) &
-               hkl_index(1:3,i),abs_Fobs(i),sigFobs(i),test_flag(i), &
+               hkl_index(1:3,i),abs_Fobs(i),sigma_Fobs(i),test_flag(i), &
                abs_Fuser, phase_Fuser
             Fuser(i) = abs_Fuser*cmplx( cos( DEG_TO_RAD*phase_Fuser) , &
                                         sin( DEG_TO_RAD*phase_Fuser), rk_ )
@@ -528,7 +510,7 @@ contains
       else
          do i = 1,num_hkl
             read(hkl_lun,*,end=1,err=2) &
-               hkl_index(1:3,i),abs_Fobs(i),sigFobs(i),test_flag(i)
+               hkl_index(1:3,i),abs_Fobs(i),sigma_Fobs(i),test_flag(i)
             test_flag(i) = min(test_flag(i),1)
          end do
       end if
@@ -562,8 +544,8 @@ contains
       REQUIRE(alloc_status==0)
       if( target(1:3) == 'vls' ) then
          do i = 1,num_hkl
-            !  sigFobs() here is assumed to be really phi(), in degrees
-            phi = sigFobs(i) * DEG_TO_RAD
+            !  sigma_Fobs() here is assumed to be really phi(), in degrees
+            phi = sigma_Fobs(i) * DEG_TO_RAD
             Fobs(i) = cmplx( abs_Fobs(i)*cos(phi), abs_Fobs(i)*sin(phi), rk_ )
          end do
       else
@@ -572,7 +554,7 @@ contains
       
       call init_interface2( &
          & target, bulk_solvent_model, &
-         & hkl_index, Fobs, sigFobs, test_flag==1, &
+         & hkl_index, Fobs, sigma_Fobs, test_flag==1, &
          & unit_cell, scatter_coefficients, &
          & atom_bfactor, atom_occupancy, atom_scatter_type, &
          & atom_selection==1, ix(i100+1:i100+natom), &
@@ -582,7 +564,7 @@ contains
          & spacegroup_number, has_Fuser, na, nb, nc )
       
       ! should be able to do some deallocations here:
-      deallocate(hkl_index,Fobs,sigFobs, &
+      deallocate(hkl_index,Fobs,sigma_Fobs, &
            atom_scatter_type, stat=alloc_status)
       if( alloc_status .ne. 0 ) then
          write(6,*) 'error in deallocation after init_interface2()'
@@ -641,7 +623,7 @@ contains
       deallocate(atom_bfactor,atom_occupancy,atom_scatter_type, &
             atom_selection,residue_chainid,residue_icode, &
             atom_element,atom_altloc,residue_number, &
-            hkl_index,abs_Fobs,sigFobs,test_flag)
+            hkl_index,abs_Fobs,sigma_Fobs,test_flag)
 #endif
 
    end subroutine finalize

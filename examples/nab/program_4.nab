@@ -1,0 +1,23 @@
+// Program 4 - compute H-H distances <= cutoff
+molecule    m;
+atom        ai, aj;
+float       d, cutoff;
+
+cutoff = atof( argv[ 2 ] );
+m = getpdb( "gcg10.pdb" );
+
+for( ai in m ){
+    if( ai.atomname !~ "H" )continue;
+    for( aj in m ){
+        if( aj.tatomnum <= ai.tatomnum )continue;
+        if( aj.atomname !~ "H" )continue;
+        if(( d=distp(ai.pos,aj.pos))<=cutoff){
+            printf(
+                "%3d %-4s %-4s %3d %-4s %-4s %8.3f\n",
+                ai.tresnum, ai.resname, ai.atomname,
+                aj.tresnum, aj.resname, aj.atomname,
+                d );
+        }
+    }
+}
+

@@ -1,0 +1,188 @@
+//   LMOD reverse communication external minimization package.
+//   Written by Istvan Kolossvary.
+
+#include "xmin_opt.h"
+#include "lmod_opt.h"
+
+// M A I N  P R O G R A M  to carry out LMOD simulation on a molecule/complex:
+
+// This is a typical workflow for running LMOD searches.
+// Note, however that you need to run this very large example
+// on 4-8 cores to finish the job in reasonable wall clock time.
+
+struct xmin_opt xo;
+struct lmod_opt lo;
+
+int rnd_seed;
+molecule mol;
+int natm;
+int eig_recalc, ndim_arnoldi;
+int lmod_restart, n_best_conf,mc_option;
+int n_lmod_steps, nlig, apply_rigdock;
+int n_pose_try, random_seed, verbosity, error_flag;
+float ene, minim_grms, ene_window, rtemp;
+int lig_start[ dynamic ], lig_end[ dynamic ], lig_cent[ dynamic ];
+float x[ dynamic ], g[ dynamic ], x_ref[ dynamic ],
+      conflib[ dynamic ], lmod_traj[ dynamic ];
+float tr_min[ dynamic ], tr_max[ dynamic ], rot_min[ dynamic ],
+      rot_max[ dynamic ];
+int i,max_nof_pdb_files;
+float glob_min_energy;
+float grms;
+string fname,sys_command;
+point dummy;
+
+    if( mytaskid == 0 ) {       // set random seed based on clock
+
+        rnd_seed = -rseed();    // rseed() returns a negative num
+    }
+
+    mol = getpdb( "1W50_4nab.pdb" );
+    readparm( mol, "1W50_4nab.prmtop" );
+    natm = mol.natoms;
+
+    allocate x[ 3*natm ]; allocate g[ 3*natm ]; allocate x_ref[ 3*natm ];
+
+    setxyz_from_mol( mol, NULL, x );
+
+    xmin_opt_init( xo );  //  set up defaults
+
+    // Initial minimization:
+
+    xo.maxiter   = 500;
+    xo.grms_tol  = 0.05;
+    xo.method    = 3;
+    xo.m_lbfgs   = 5;
+    xo.print_level = 1;
+
+    mm_options( "ntpr=1,gb=1,kappa=0.10395,rgbmax=99.,cut=99.0,diel=C " );
+    mme_init( mol, NULL, "::ZZZ", dummy, NULL );  // fully flexible moleucle
+
+    ene = mme( x, g, 0 );
+    ene = xmin( mme, natm, x, g, ene,grms, xo);
+
+    if( mytaskid == 0 ) {
+
+      printf( " Unfrozen minimized energy = %12.3lf\n" , ene );
+      printf( " Gradient RMS              = %12.3lf\n" , grms );
+      printf( " Iter                      = %12d\n"    , xo.iter );
+      printf( " CPU time                  = %12.3f\n\n", xo.xmin_time );
+    }
+
+    lmod_opt_init( lo, xo );   //  set up defaults
+
+    // Conf search:
+
+    lo.niter               = 20;
+    lo.nconf               = 50;
+    lo.minim_grms          = 0.1;
+    lo.nmod                = 15;
+    lo.kmod                = 5;
+    lo.nrotran_dof         = 0;
+    lo.energy_window       = 50.;
+    lo.conf_separation_rms = 1.0;
+    lo.eig_recalc          = lo.niter+1;  // computed only once at startup
+    lo.ndim_arnoldi        = 50;
+    lo.lmod_restart        = 10;
+    lo.n_best_struct       = 50;
+    lo.mc_option           = 2;
+    lo.rtemp               = 3.0;
+    lo.lmod_step_size_min  = 2.0;
+    lo.lmod_step_size_max  = 5.0;
+    lo.nof_lmod_steps      = 0;
+    lo.lmod_relax_grms     = 1.0;
+    lo.nlig                = 0;
+    lo.random_seed         = rnd_seed;
+    lo.print_level         = 2;
+    xo.method              = 3;
+    xo.m_lbfgs             = 5;
+    xo.print_level         = 0;
+
+    allocate conflib[ lo.nconf * 3*natm ];
+    allocate lmod_traj[ (lo.niter+1) * 3*natm ];
+
+    setmol_from_xyz( mol, NULL, x );        // load minimized coords into mol
+    setxyz_from_mol( mol, NULL, x_ref );    // save minimized coords in x_ref
+
+    // for tethering specify restrained atoms based on residue serial number, not pdb number
+    //mm_options( "wcons=100.0,ntpr=99999 " );
+    //mme_init( mol, NULL, ":1-42,64-107,120-387:", x_ref, NULL );
+
+    // for frozen atoms, specify the moving atoms!
+    mm_options( "ntpr=99999 " );
+    mme_init( mol, ":43-63,108-119:", "::ZZZ", dummy, NULL );
+
+    mme( x, g, 1 );
+      
+         glob_min_energy = lmod( natm, x, g, ene,
+                                 conflib, lmod_traj, lig_start, lig_end, lig_cent,
+                                 tr_min, tr_max, rot_min, rot_max, xo, lo );
+
+
+
+    if( mytaskid == 0 ) {
+
+      printf( " Glob. min. E         = %12.3lf kcal/mol\n", glob_min_energy );
+      printf( " Time in LMOD         = %12.3lf CPU sec\n", lo.lmod_time );
+      printf( " Time in NAB and libs = %12.3lf CPU sec\n", lo.aux_time );
+    }
+
+    xmin_opt_init( xo );  //  set up defaults
+
+    // Re-minimize structures with no restraints and save them
+    // freeparm and readprm is required to reset mme_init
+    freeparm( mol );
+    readparm( mol, "1W50_4nab.prmtop" );
+
+    mme_init( mol, NULL, "::ZZZ", dummy, NULL );
+
+    xo.maxiter   = 0;    // recompute unfrozen energies
+    xo.grms_tol  = 0.1;
+    xo.method    = 3;
+    xo.m_lbfgs   = 5;
+    xo.print_level = 0;
+
+    //if( mytaskid == 0 ) {
+    //
+    //    printf( "\n Unfrozen minimized energies:\n" );
+    //}
+
+    mm_options( "ntpr=1" );
+
+    max_nof_pdb_files = lo.nconf;
+    if( max_nof_pdb_files > lo.nconf ) max_nof_pdb_files = lo.nconf;
+    for( i = 1; i <= max_nof_pdb_files; i = i+1 )
+    {
+        setmol_from_xyz( mol, NULL, conflib[ (i-1)*3*natm + 1 ] );  // read i-th conf
+        setxyz_from_mol( mol, NULL, x );                            // load it to x[]
+        ene = xmin( mme, natm, x, g, ene, grms, xo);                // re-minimize
+        setmol_from_xyz( mol, NULL, x );                            // load x[] into mol
+
+        //if( mytaskid == 0 ) {
+        //
+        //    printf( " conf %3d  E = %12.3lf (%12.3lf)\n" , i, ene, grms );
+        //}
+
+        fname = sprintf( "1W50_lmod_%04d_%010d.pdb", i, lo.random_seed );
+        putpdb( fname, mol );                                       // save conf in pdb file ("-brook" alternative PDB format)
+    }
+
+    // Load the individual pdb files into a single, multi-pdb file
+
+    if( mytaskid == 0 ) {
+
+        sys_command = sprintf( "touch 1W50_lmod_conf_%010d.pdb", lo.random_seed );
+        system( sys_command );
+
+        for( i = 1; i <= max_nof_pdb_files; i = i+1 )
+        {
+            sys_command = sprintf( "echo 'MODEL%8d' >> 1W50_lmod_conf_%010d.pdb", i, lo.random_seed );
+            system( sys_command );
+            sys_command = sprintf( "cat '1W50_lmod_%04d_%010d.pdb' >> 1W50_lmod_conf_%010d.pdb", i, lo.random_seed, lo.random_seed );
+            system( sys_command );
+            sys_command = sprintf( "echo 'ENDMDL' >> 1W50_lmod_conf_%010d.pdb", lo.random_seed );
+            system( sys_command );
+        }
+    }
+
+// E N D  MAIN

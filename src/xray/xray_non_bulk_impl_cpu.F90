@@ -5,7 +5,7 @@ module xray_non_bulk_impl_cpu_module
   use xray_pure_utils, only : real_kind
   use xray_contracts_module
   use xray_non_bulk_data_module
-  use xray_interface2_data_module, only : spacegroup_number
+  use xray_interface2_data_module, only : sgn
   
   implicit none
   
@@ -122,7 +122,7 @@ contains
       f(:) = exp(mSS4(ihkl) * b_factor(:)) &
           * atomic_scatter_factor(ihkl, scatter_type_index(:))
 
-      if( spacegroup_number .eq. 1 ) then   ! P1
+      if( sgn .eq. 1 ) then   ! P1
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -132,7 +132,7 @@ contains
          F_non_bulk(ihkl) = cmplx(sum(f(:) * cos(angle(:))), &
              sum(f(:) * sin(angle(:))), real_kind)
 
-      else if( spacegroup_number .eq. 19 ) then   ! P212121
+      else if( sgn .eq. 19 ) then   ! P212121
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -178,7 +178,7 @@ contains
          if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
-      else if( spacegroup_number .eq. 18 ) then   ! P21212
+      else if( sgn .eq. 18 ) then   ! P21212
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -223,7 +223,7 @@ contains
          if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
-      else if( spacegroup_number .eq. 20 ) then   ! C 2 2 21
+      else if( sgn .eq. 20 ) then   ! C 2 2 21
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -298,7 +298,7 @@ contains
             F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
          endif
 
-      else if( spacegroup_number .eq. 5 ) then   ! C 1 2 1
+      else if( sgn .eq. 5 ) then   ! C 1 2 1
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -337,7 +337,7 @@ contains
          ! if( mod(hkls(1)/na + hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          ! F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
-      else if( spacegroup_number .eq. 14 ) then   ! P21/c
+      else if( sgn .eq. 14 ) then   ! P21/c
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -382,7 +382,7 @@ contains
          if( mod(hkls(2)/nb + hkls(3)/nc, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
-      else if ( spacegroup_number .eq. 4 ) then   ! P21
+      else if ( sgn .eq. 4 ) then   ! P21
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)
@@ -404,7 +404,7 @@ contains
          if( mod(hkls(2)/nb, 2) .ne. 0 ) fcalcs = -fcalcs
          F_non_bulk(ihkl) = F_non_bulk(ihkl) + fcalcs
 
-      else if ( spacegroup_number .eq. 168 ) then  ! P6
+      else if ( sgn .eq. 168 ) then  ! P6
 
          ! identity operation
          hkls(:) = hkl(:,ihkl)

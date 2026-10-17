@@ -314,7 +314,7 @@ if [ "$UPL_FILES" != "" ]; then
    echo "# Converting $UPL_FILES to Amber upper bounds" >>RST.all
    echo "# ----------------------------------------------------------" >>RST.all
    cat $UPL_FILES | ./zero_first | ./upl_to_upb > all.upb
-   cat $AMBERHOME/dat/map.DG-AMBER maps.dat > newmap.dat
+   cat $AMBERCLASSICHOME/dat/map.DG-AMBER maps.dat > newmap.dat
 
    makeDIST_RST -upb all.upb -pdb $AMBER_PDB_FILE -rst RST.all.upb \
        -map newmap.dat 2> upb.out

@@ -1,0 +1,6 @@
+// Program 1 - Average B-form DNA duplex
+molecule m;
+
+m = bdna( "gcgttaacgc" );
+putpdb( "gcg10.pdb", m );
+exit( 0 );

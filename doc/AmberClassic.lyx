@@ -10862,6 +10862,13 @@ conda install reduce -c bioconda
 
 \begin_layout Standard
 or by using homebrew/linuxbrew:
+ (
+\series bold
+note
+\series default
+:
+ as of 05sep26,
+ the first command below seems to lead to a broken pipe error)
 \end_layout
 
 \begin_layout LyX-Code
@@ -10870,6 +10877,18 @@ brew tap brewsci/bio
 
 \begin_layout LyX-Code
 brew install reduce
+\end_layout
+
+\begin_layout Standard
+Phenix users should also have 
+\family sans
+reduce
+\family default
+ and/or 
+\family sans
+phenix.reduce
+\family default
+ in their PATH.
 \end_layout
 
 \begin_layout Section
@@ -36683,10 +36702,10 @@ Low-MODe (LMOD) methods
 \begin_layout Standard
 István Kolossváry's LMOD methods for minimization,
  conformational searching,
- and flexible docking
+ and flexible docking 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Kolossvary96,Kolossvary99,Kolossvary01,Keseru01"
+key "Kolossvary96,Kolossvary99,Kolossvary01,Keseru01,Kolossvary24"
 literal "true"
 
 \end_inset
@@ -36694,60 +36713,51 @@ literal "true"
  are fully implemented in Amber.
  The centerpiece of LMOD is a conformational search algorithm based on eigenvector following of low frequency vibrational modes.
  It has been applied to a spectrum of computational chemistry domains including protein loop optimization and flexible active site docking.
+ The search method is implemented without explicit computation of a Hessian matrix and utilizes the Arnoldi package (ARPACK,
  
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/opencollab/arpack-ng"
+target "https://github.com/opencollab/arpack-ng"
+literal "false"
+
+\end_inset
+
+) for computing the low-frequency modes.
+ LMOD optimization can be thought of as an advanced minimization method.
+ LMOD can not only energy minimize a molecular structure in the local sense,
+ but can generate a series of very low energy conformations.
+ The LMOD capability resides in a single,
+ top-level calling function 
+\shape italic
+lmod()
+\shape default
+,
+ which uses fast local minimization techniques,
+ collectively termed XMIN that can also be accessed directly through the function 
+\shape italic
+xmin().
 \end_layout
 
 \begin_layout Standard
-In the Amber 2020 release,
+In the Amber26 release,
  the LMOD optimization code has been updated with major improvements and new features including more accurate flexible docking,
  the option to visualize normal modes,
  utilization of random mixtures of low-frequency modes,
  and the option to work with a range of modes anywhere in the spectrum and not just the lowest frequency modes.
  The latter is particularly useful for docking where the modes relevant to binding a ligand molecule are usually not the lowest frequency modes.
   The interface of the new LMOD has not changed,
- everything works exactly the same way as in Amber18 and earlier versions,
+ everything works exactly the same way as in earlier versions,
  a few parameters simply have additional options as documented below.
  The new features are demonstrated with production quality examples.
 \end_layout
 
 \begin_layout Standard
-Details of the LMOD procedure,
- and hints on getting good performance,
- are given Section 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sec:lmod"
-nolink "false"
-
-\end_inset
-
-,
- which should be consulted before trying the procedures in 
-\emph on
-sander
-\emph default
-.
- The only difference between the 
-\emph on
-sander
-\emph default
- and 
-\emph on
-NAB
-\emph default
- implementations is the input specification;
- the same LMOD code is linked into both.
- The sections below give input details for 
-\emph on
-sander
-\emph default
-.
-\end_layout
-
-\begin_layout Standard
 There are
 \series bold
- four 
+ 
+\series default
+four 
 \begin_inset Quotes eld
 \end_inset
 
@@ -36755,22 +36765,316 @@ real-life
 \begin_inset Quotes erd
 \end_inset
 
- examples
-\series default
- of performing LMOD searches and in 
+ examples of performing LMOD searches and (in 
 \emph on
-lmod_vib_anim
+lmod_vib_anim)
 \series bold
 \emph default
- three examples
+ 
 \series default
- of updates in Amber20 including generating LMOD-vibration visualization.
- These are available at 
+three examples of LMOD-vibration visualization,
+ plus an additional co-vibrational analysis to reproduce the results in 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Kolossvary24"
+literal "false"
+
+\end_inset
+
+.
+ This analysis consists of two steps included in the 
 \emph on
-https://ambermd.org/Manuals.php
+lmodvib
 \emph default
+ and 
+\emph on
+covib
+\emph default
+ sub-directories,
+ respectively.
+ A 3rd directory called 
+\emph on
+publication
+\emph default
+ contains the publication pdf and associated video files.
+ These are available at 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://ambermd.org/Manuals.php"
+target "https://ambermd.org/Manuals.php"
+literal "false"
+
+\end_inset
+
 .
  Each directory in the tar file has a README file with more information.
+\end_layout
+
+\begin_layout Subsection
+
+\series bold
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:lmod1-1"
+
+\end_inset
+
+LMOD conformational searching
+\end_layout
+
+\begin_layout Standard
+The LMOD conformational search procedure is based on gentle,
+ but very effective structural perturbations applied to molecular systems in order to explore their conformational space.
+ LMOD perturbations are derived from low-frequency vibrational modes representing large-amplitude,
+ concerted atomic movements.
+ Unlike essential dynamics where such low modes are derived from long molecular dynamics simulations,
+ LMOD calculates the modes directly and utilizes them to improve Monte Carlo sampling.
+\end_layout
+
+\begin_layout Standard
+LMOD has been developed primarily for macromolecules,
+ with its main focus on protein loop optimization.
+ However,
+ it can be applied to many kinds of molecular systems,
+ including complexes and flexible docking where it has found widespread use.
+ The LMOD procedure starts with an initial molecular model,
+ which is energy minimized.
+ The minimized structure is then subjected to an ARPACK calculation to find a user-specified number of low-mode eigenvectors of the Hessian matrix.
+ The Hessian matrix,
+ H,
+ is never computed;
+ ARPACK makes only implicit reference to H through its product with a series of vectors Hv,
+ where v is an arbitrary unit vector.
+  Hv is calculated via a finite-difference formula as follows:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+Hv=\left[\nabla(x_{min}+h)-\nabla(x_{min})\right]/h\label{eq:lmod1-1}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $x_{min}$
+\end_inset
+
+ is the coordinate vector at the energy minimized conformation and 
+\begin_inset Formula $h$
+\end_inset
+
+ denotes machine precision.
+ The computational cost of Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:lmod1-1"
+nolink "false"
+
+\end_inset
+
+ requires a single gradient calculation at the energy minimum point and one additional gradient calculation for each new vector.
+ Note that 
+\begin_inset Formula $\bigtriangledown x$
+\end_inset
+
+ is never 0,
+ because minimization is stopped at a finite gradient RMS,
+ which is typically set to 0.1-1.0 kcal/mol-
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+r{A}
+\end_layout
+
+\end_inset
+
+ in most calculations.
+\end_layout
+
+\begin_layout Standard
+The low-mode eigenvectors of the Hessian matrix are stored and can be re-used throughout the LMOD search.
+ Note that although ARPACK is very fast in relative terms,
+ a single ARPACK calculation may take up to a few hours on an absolute CPU time scale with a large protein structure.
+ Therefore,
+ it would be impractical to recalculate the low-mode eigenvectors for each new structure.
+ Visual inspection of the low-frequency vibrational modes of different,
+ randomly generated conformations of protein molecules showed very similar,
+ collective motions clearly suggesting that low-modes of one particular conformation were transferable to other conformations for LMOD use.
+ This important finding implies that the time limiting factor in LMOD optimization,
+ even for relatively small molecules,
+ is energy minimization,
+ not the eigenvector calculation.
+\end_layout
+
+\begin_layout Subsection
+
+\series bold
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:lmod2-1"
+
+\end_inset
+
+LMOD procedure
+\end_layout
+
+\begin_layout Standard
+Given the energy-minimized structure of an initial protein model,
+ protein- ligand complex,
+ or any other molecular system and its low-mode Hessian eigenvectors,
+ LMOD proceeds as follows.
+ For each of the first n low-modes repeat steps 1-3 until convergence:
+\end_layout
+
+\begin_layout Enumerate
+Perturb the energy-minimized starting structure by moving along the ith (i =1-n) Hessian eigenvector in either of the two opposite directions to a certain distance.
+ The 3N-dimensional (N is equal to the number of atoms) travel distance along the eigenvector is scaled to move the fastest moving atom of the selected mode in 3-dimensional space to a randomly chosen distance between a user-specified minimum and maximum value.
+\begin_inset Newline newline
+\end_inset
+
+
+\emph on
+Note
+\emph default
+:
+ A single LMOD move inherently involves excessive bond stretching and bond angle bending in Cartesian space.
+ Therefore the primarily torsional trajectory drawn by the low-modes of vibration on the PES is severely contaminated by this naive,
+ linear approximation and,
+ therefore,
+ the actual Cartesian LMOD trajectory often misses its target by climbing walls rather than crossing over into neighboring valleys at not too high altitudes.
+ The current implementation of LMOD employs a so-called ZIG-ZAG algorithm,
+ which consists of a series of alternating short LMOD moves along the low-mode eigenvector (ZIG) followed by a few steps of minimization (ZAG),
+ which has been found to relax excessive stretches and bends more than reversing the torsional move.
+ Therefore,
+ it is expected that such a ZIG-ZAG trajectory will eventually be dominated by concerted torsional movements and will carry the molecule over the energy barrier in a way that is not too different from finding a saddle point and crossing over into the next valley like passing through a mountain pass.
+\begin_inset Newline newline
+\end_inset
+
+
+\emph on
+Barrier crossing check:
+
+\emph default
+ The LMOD algorithm checks barrier crossing by evaluating the following criterion:
+ IF the current endpoint of the zigzag trajectory is lower than the energy of the starting structure,
+ OR,
+ the endpoint is at least lower than it was in the previous ZIG-ZAG iteration step AND the molecule has also moved farther away from the starting structure in terms of all-atom superposition RMS than at the previous position THEN it is assumed that the LMOD ZIG-ZAG trajectory has crossed an energy barrier.
+\end_layout
+
+\begin_layout Enumerate
+Energy-minimize the perturbed structure at the endpoint of the ZIG-ZAG trajectory.
+\end_layout
+
+\begin_layout Enumerate
+Save the new minimum-energy structure and return to step 1.
+ Note that LMOD saves only low-energy structures within a user-specified energy window above the then current global minimum of the ongoing search.
+\end_layout
+
+\begin_layout Standard
+After exploring the modes of a single structure,
+ LMOD goes on to the next starting structure,
+ which is selected from the set of previously found low- energy structures.
+ The selection is based on either the Metropolis criterion,
+ or simply the than lowest energy structure is used.
+ LMOD terminates when the user-defined number of steps has been completed or when the user-defined number of low-energy conformations has been collected.
+\end_layout
+
+\begin_layout Standard
+Note that for flexible docking calculations LMOD applies explicit translations and rotations of the ligand(s) on top of the low-mode perturbations.
+\end_layout
+
+\begin_layout Subsection
+Co-vibrational low-mode procedure
+\end_layout
+
+\begin_layout Standard
+The new version of LMOD included in AmberTools26 has significant new capabilities but the existing options and parameters are exactly the same as in earlier versions.
+ Instead,
+ new behavior can be triggered by the presence of certain files in the work directory.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+1)
+\series default
+ LMOD eigenvectors no longer have to be recomputed whenever a LMOD job needs to be restarted.
+ LMOD is now saving the computed eigenvectors with high accuracy at the end of a run in a file called eigvecs.dat,
+ and in a new run the saved eigenvectors can be read instead of recomputing them.
+ If the file eigvecs.dat exists in the work directory,
+ LMOD will check if it is compatible with the current calculation and if so,
+ it'll read the eigenvectors from the file.
+ Note that LMOD is picky about the formatting of the eigenvector file,
+ always use one that was written by LMOD.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+2)
+\series default
+ The original LMOD used Cartesian eigenvectors with no weighting,
+ which was/is perfectly fine for conformational searches,
+ but if physically correct normal modes are required (especially for visualization via the setting lmod_verbosity = 5 or 6) the Hessian matrix must be mass weighted.
+ The user can now include a file called atom_weights.dat in the work directory,
+ in which case LMOD will mass-weight the Hessian eigenvectors.
+ The first line of atom_weights.dat contains the number of atoms,
+ and subsequent lines list the atomic masses,
+ one per line.
+ If no atom_weights.dat file can be found in the work directory,
+ the Hessian will not be weighted.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+3) 
+\series default
+At the heart of a new LMOD application is the concept termed allosteric co-vibrational modes 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Kolossvary24"
+literal "false"
+
+\end_inset
+
+.
+ Covib modes are mixed/superposed normal modes where the individual modes contribute with specific amplitudes,
+ and can be used to model protein conformational transitions.
+ The user can provide these amplitudes in a file called 
+\emph on
+amplitudes.dat
+\emph default
+.
+ The way it works is that LMOD already has the lmod_verbosity=5 option to generate a pseudo-trajectory of an animation of normal modes,
+ and this trajectory also includes a random mixture of the modes as the last "mode." With the new version of LMOD,
+ if an amplitude file is provided in the work directory,
+ LMOD will compute the corresponding mixed mode and include it as the last mode in the pseudo-trajectory instead of the random mixture.
+ The computational performance enhancement option lmod_verbosity=6 has been added to visualize only the co-vibrational mode.
+  The 
+\emph on
+amplitudes.dat
+\emph default
+ file has the number of modes in the first line,
+ followed by the user-defined mode amplitudes,
+ printed one amplitude per line.
+ Note that both 
+\emph on
+eigvecs.dat
+\emph default
+ and 
+\emph on
+amplitudes.dat
+\emph default
+ include the trivial modes if there are any.
+ This is intentional (for legacy code structure reasons),
+ but LMOD will exclude them from the mixing.
 \end_layout
 
 \begin_layout Subsection
@@ -59857,6 +60161,10 @@ CryoPrep These two scripts take an atomic model (in the form of a PDB-format fil
 \end_layout
 
 \begin_layout Description
+adp_opt Run ADP optimization (default of 5 cycles) in phenix.refine.
+\end_layout
+
+\begin_layout Description
 expand_to_p1.py uses 
 \emph on
 cctbx
@@ -59878,6 +60186,19 @@ REMARK 290
  records in the input PDB file.
  But because of this,
  the results from the two programs may not always be the same.
+ An alternative is to use 
+\begin_inset Quotes eld
+\end_inset
+
+
+\family typewriter
+gemmi convert –assembly unit_cell
+\family default
+
+\begin_inset Quotes erd
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Description
@@ -59900,16 +60221,6 @@ refmac5
 \end_layout
 
 \begin_layout Description
-run_phenix_refine This is just an alternative way to run 
-\emph on
-phenix.refine
-\emph default
- from the command line,
- with flexible ways to choose the input paramters.
- It's probably not for everyone.
-\end_layout
-
-\begin_layout Description
 run_fmodel This just runs 
 \emph on
 phenix.fmodel
@@ -59928,7 +60239,7 @@ macrocycle
 
  in phenix.refine:
  xyz optimization is carried out via msander,
- followed by ADP optimazation using phenix.refine.
+ followed by ADP optimization using phenix.refine.
  
 \end_layout
 
@@ -60022,6 +60333,19 @@ XrayPrep
 \series default
 ,
  are the two main scripts for new (and old) users.
+\end_layout
+
+\begin_layout Description
+xyz_opt Run one cycle of xyz optimization using 
+\emph on
+msander
+\emph default
+.
+ Called by 
+\emph on
+run_cycle
+\emph default
+ in ../phenix_scripts.
 \end_layout
 
 \begin_layout Description

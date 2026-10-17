@@ -1,0 +1,31 @@
+// Program 12 - DNA bender main program
+string      line;
+file        pf;
+int     npts;
+point       pts[ 5000 ];
+int     putdna();
+
+if( argc == 1 )
+    pf = stdin;
+else if( argc > 2 ){
+    fprintf( stderr, "usage: %s [ path-file ]\\n",
+        argv[ 1 ], argv[ 2 ] );
+    exit( 1 );
+}else if( !( pf = fopen( argv[ 2 ], "r" ) ) ){
+    fprintf( stderr, "%s: can't open %s\\n",
+        argv[ 1 ], argv[ 2 ] );
+    exit( 1 );
+}
+
+for( npts = 0; line = getline( pf ); ){
+    if( substr( line, 1, 1 ) != "#" ){
+        npts = npts + 1;
+        sscanf( line, "%lf %lf %lf",
+            pts[ npts ].x, pts[ npts ].y, pts[ npts ].z );
+    }
+}
+
+if( pf != stdin )
+    fclose( pf );
+
+putdna( "dna.path", pts, npts );

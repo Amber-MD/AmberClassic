@@ -1,0 +1,111 @@
+// Program 6 - Assemble triads into dimers
+molecule    gettriad( string mname )
+{
+    molecule    m;
+    point       p1, p2, p3, pc;
+    matrix      mat;
+
+    if( mname == "a" ){
+        m = getpdb( "ata.triad.min.pdb" );
+        setpoint( m, "A:ADE:C1'", p1 );
+        setpoint( m, "B:THY:C1'", p2 );
+        setpoint( m, "C:ADE:C1'", p3 );
+    }else if( mname == "c" ){
+        m = getpdb( "cgc.triad.min.pdb" );
+        setpoint( m, "A:CYT:C1'", p1 );
+        setpoint( m, "B:GUA:C1'", p2 );
+        setpoint( m, "C:CYT:C1'", p3 );
+    }else if( mname == "g" ){
+        m = getpdb( "gcg.triad.min.pdb" );
+        setpoint( m, "A:GUA:C1'", p1 );
+        setpoint( m, "B:CYT:C1'", p2 );
+        setpoint( m, "C:GUA:C1'", p3 );
+    }else if( mname == "t" ){
+        m = getpdb( "tat.triad.min.pdb" );
+        setpoint( m, "A:THY:C1'", p1 );
+        setpoint( m, "B:ADE:C1'", p2 );
+        setpoint( m, "C:THY:C1'", p3 );
+    }
+    circle( p1, p2, p3, pc );
+    mat = newtransform( -pc.x, -pc.y, -pc.z, 0.0, 0.0, 0.0 );
+    transformmol( mat, m, NULL );
+    setreskind( m, NULL, "DNA" );
+    return( m );
+};
+
+int mk_dimer( string ti, string tj )
+{
+    molecule    mi, mj;
+    matrix      mat;
+    int     sid;
+    float       ri, tw;
+    string      ifname, sfname, mfname;
+    file        idx;
+
+    int     natoms;
+    float       dgrad, fret;
+    float       box[ 3 ];
+    float       xyz[ 1000 ];
+    float       fxyz[ 1000 ];
+    float       energy;
+
+    sid = 0;
+    mi = gettriad( ti );
+    mj = gettriad( tj );
+    mergestr( mi, "A", "last", mj, "A", "first" );
+    mergestr( mi, "B", "first", mj, "B", "last" );
+    mergestr( mi, "C", "last", mj, "C", "first" );
+    connectres( mi, "A", 1, "O3'", 2, "P" );
+    connectres( mi, "B", 1, "O3'", 2, "P" );
+    connectres( mi, "C", 1, "O3'", 2, "P" );
+
+    putpdb( "temp.pdb", mi );
+    mi = getpdb_prm( "temp.pdb", "leaprc.ff99SB", "", 0 );
+
+    ifname = sprintf( "%s%s3.idx", ti, tj );
+    idx = fopen( ifname, "w" );
+    for( ri = 3.2; ri <= 4.4; ri = ri + .2 ){
+        for( tw = 25; tw <= 45; tw = tw + 5 ){
+            sid = sid + 1;
+            fprintf( idx, "%3d %5.1f %5.1f", sid, ri, tw );
+
+            mi = gettriad( ti );
+            mj = gettriad( tj );
+
+            mat = newtransform( 0.0, 0.0, ri, 0.0, 0.0, tw );
+            transformmol( mat, mj, NULL );
+
+            mergestr( mi, "A", "last", mj, "A", "first" );
+            mergestr( mi, "B", "first", mj, "B", "last" );
+            mergestr( mi, "C", "last", mj, "C", "first" );
+            connectres( mi, "A", 1, "O3'", 2, "P" );
+            connectres( mi, "B", 1, "O3'", 2, "P" );
+            connectres( mi, "C", 1, "O3'", 2, "P" );
+
+            sfname = sprintf( "%s%s3.%03d.pdb", ti, tj, sid );
+            putpdb( sfname, mi );   // starting coords
+
+            natoms = mi.natoms;
+            mme_init( mi, NULL, "::ZZZ", xyz, NULL );
+
+            dgrad = 3 * natoms * 0.01;
+            conjgrad( xyz, 3*natoms, fret, mme, dgrad, 10.0, 100 );
+            energy = mme( xyz, fxyz, 1 );
+
+            setmol_from_xyz( mi, NULL, xyz );
+            mfname = sprintf( "%s%s3.%03d.min.pdb", ti, tj, sid );
+            putpdb( mfname, mi );   // minimized coords
+        }
+    }
+    fclose( idx );
+};
+
+int i, j;
+string  ti, tj;
+for( i = 1; i <= 4; i = i + 1 ){
+    for( j = 1; j <= 4; j = j + 1 ){
+        ti = substr( "acgt", i, 1 );
+        tj = substr( "acgt", j, 1 );
+        mk_dimer( ti, tj );
+    }
+}

@@ -1,0 +1,79 @@
+// Program 5 - Investigate energies of base triads
+molecule m;
+residue tr;
+string sb, ab, tb;
+matrix rmat, tmat;
+
+file ef;
+string mfnm, efnm;
+float txyz[ 1000 ];
+float x, lx, hx, xi, mx;
+float y, ly, hy, yi, my;
+float rz, lrz, hrz, rzi, urz, mrz, brz;
+
+int prm, iter;
+float xyz[ 1000 ], force[ 1000 ];
+float me, be, energy;
+
+scanf( "%s %s %s", sb, ab, tb );
+scanf( "%lf %lf %lf", lx, hx, xi );
+scanf( "%lf %lf %lf", ly, hy, yi );
+scanf( "%lf %lf %lf", lrz, hrz, rzi );
+
+mfnm = sprintf( "%s%s%s.triad.min.pdb", sb, ab, tb );
+efnm = sprintf( "%s%s%s.energy.dat", sb, ab, tb );
+
+m = wc_helix(sb, "", "dna", ab, "", "dna",
+       2.25, 0.0, 0.0, 0.0, "s3a3" );
+
+addstrand( m, "3" );
+tr = getresidue( tb, "nucleic10.lib" );
+addresidue( m, "3", tr );
+setxyz_from_mol( m, "3::", txyz );
+
+putpdb( "temp.pdb", m );
+m = getpdb_prm( "temp.pdb", "leaprc.ff12SB", "", 1 );
+mme_init( m, NULL, "::ZZZ", xyz, NULL );
+
+ef = fopen( efnm, "w" );
+
+mrz = urz = lrz - 1;
+for( x = lx; x <= hx; x = x + xi ){
+    for( y = ly; y <= hy; y = y + yi ){
+        brz = urz;
+        for( rz = lrz; rz <= hrz; rz = rz + rzi ){
+            setmol_from_xyz( m, "3::", txyz );
+            rmat=newtransform( 0., 0., 0., 0., 0., rz );
+            transformmol( rmat, m, "3::" );
+            tmat=newtransform( x, y, 0., 0., 0., 0. );
+            transformmol( tmat, m, "3::" );
+
+            setxyz_from_mol( m, NULL, xyz );
+            energy = mme( xyz, force, 1 );
+
+            if( brz == urz ){
+                brz = rz; be = energy;
+            }else if( energy < be ){
+                brz = rz; be = energy;
+            }
+            if( mrz == urz ){
+                me = energy;
+                mx = x; my = y; mrz = rz;
+            }else if( energy < me ){
+                me = energy;
+                mx = x; my = y; mrz = rz;
+            }
+        }
+        fprintf( ef, "%10.3f %10.3f %10.3f %10.3f\n",
+                x, y, brz, be );
+    }
+}
+fclose( ef );
+
+setmol_from_xyz( m, "3::", txyz );
+rmat = newtransform( 0.0, 0.0, 0.0, 0.0, 0.0, mrz );
+transformmol( rmat, m, "3::" );
+tmat = newtransform( mx, my, 0.0, 0.0, 0.0, 0.0 );
+transformmol( tmat, m, "3::" );
+putpdb( mfnm, m );
+

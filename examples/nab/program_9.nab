@@ -1,0 +1,71 @@
+// Program 9 - Create closed circular DNA.
+#define RISE    3.38
+
+int     b, nbp, dlk;
+float       rad, twist, ttw;
+molecule    m, m1;
+matrix      matdx, mattw, matry;
+string      sbase, abase;
+int     getbase();
+
+if( argc != 3 ){
+    fprintf( stderr, "usage: %s nbp dlk\n", argv[ 1 ] );
+    exit( 1 );
+}
+
+nbp = atoi( argv[ 2 ] );
+if( !nbp || nbp % 10 ){
+    fprintf( stderr,
+    "%s: Num. of base pairs must be multiple of 10\\n",
+        argv[ 1 ] );
+    exit( 1 );
+}
+
+dlk = atoi( argv[ 3 ] );
+
+twist = ( nbp / 10 + dlk ) * 360.0 / nbp;
+rad = 0.5 * RISE / sin( 180.0 / nbp );
+
+matdx = newtransform( rad, 0.0, 0.0, 0.0, 0.0, 0.0 );
+
+m = newmolecule();
+addstrand( m, "A" );
+addstrand( m, "B" );
+ttw = 0.0;
+for( b = 1; b <= nbp; b = b + 1 ){
+
+    getbase( 0.5, sbase, abase );
+
+    m1 = wc_helix(
+        sbase, "", "dna", abase, "", "dna", 2.25, -4.96, 0.0, 0.0, "" );
+
+    if( b > 1 ){
+        mattw = newtransform( 0.,0.,0.,0.,0.,ttw );
+        transformmol( mattw, m1, NULL );
+    }
+
+    transformmol( matdx, m1, NULL );
+
+    if( b > 1 ){
+        matry = newtransform(
+            0.,0.,0.,0.,-360.*(b-1)/nbp,0. );
+        transformmol( matry, m1, NULL );
+    }
+
+    mergestr( m, "A", "last", m1, "sense", "first" );
+    mergestr( m, "B", "first", m1, "anti", "last" );
+    if( b > 1 ){
+        connectres( m, "A", b - 1, "O3'", b, "P" );
+        connectres( m, "B", 1, "O3'", 2, "P" );
+    }
+
+    ttw = ttw + twist;
+    if( ttw >= 360.0 )
+        ttw = ttw - 360.0;
+}
+
+connectres( m, "A", nbp, "O3'", 1, "P" );
+connectres( m, "B", nbp, "O3'", 1, "P" );
+
+putpdb( "circ.pdb", m );
+putbnd( "circ.bnd", m );

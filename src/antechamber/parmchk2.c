@@ -359,22 +359,18 @@ void improper_id1(char *filename) {
 				continue;
 			for (i = 0; i < atomnum; i++) {
 				if (strcmp(tmpchar1, atom[i].name) == 0) {
-					strcpy(tmpchar1, atom[i].ambername);
 					improper[impropernum].atid1 = i;
 					continue;
 				}
 				if (strcmp(tmpchar2, atom[i].name) == 0) {
-					strcpy(tmpchar2, atom[i].ambername);
 					improper[impropernum].atid2 = i;
 					continue;
 				}
 				if (strcmp(tmpchar3, atom[i].name) == 0) {
-					strcpy(tmpchar3, atom[i].ambername);
 					improper[impropernum].atid3 = i;
 					continue;
 				}
 				if (strcmp(tmpchar4, atom[i].name) == 0) {
-					strcpy(tmpchar4, atom[i].ambername);
 					improper[impropernum].atid4 = i;
 					continue;
 				}

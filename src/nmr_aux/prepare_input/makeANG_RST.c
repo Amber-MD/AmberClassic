@@ -371,7 +371,7 @@ void cmd_parse( int argc, char *argv[] )
 		fprintf(stderr, "Reading constraints from stdin.\n");
 	}
 	if (lib == NULL){
-		if((ambh = getenv( "AMBERHOME" ))){
+		if((ambh = getenv( "AMBERCLASSICHOME" ))){
 			strncpy( f_lib, ambh, MAXFILENAME-40 );
 			strcat( f_lib, "/" );
 		}else{

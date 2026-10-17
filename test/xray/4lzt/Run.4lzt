@@ -39,7 +39,14 @@ $DO_PARALLEL $sander -O -i mdin -p 4lzt_uc.parm7 -c 4lzt_uc.rst7 \
 
 head -500 4lzt_uc.fmtz > 4lzt_500.fmtz
 
-../../dacdif -r 3e-4 4lzt_md.out.save 4lzt_md.out
+if [ ! -z "$DO_CUDA" ]; then
+   ../../dacdif -r 3e-4 4lzt_md.gpu.out.save 4lzt_md.out
+else
+   ../../dacdif -r 3e-4 4lzt_md.out.save 4lzt_md.out
+fi
+
+
+# head -500 4lzt_uc.fmtz > 4lzt_500.fmtz
 # ../../dacdif -r 1e-4 4lzt_500.fmtz.save 4lzt_500.fmtz
 
 /bin/rm -f mdin mdinfo restrt 4lzt_uc.fmtz 4lzt_500.fmtz

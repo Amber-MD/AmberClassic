@@ -6,22 +6,11 @@
 #include <thrust/functional.h>
 #include <thrust/transform.h>
 
-#undef P212121
-#undef P21212
-#undef C121
-#undef C2221
-#undef P21
-#undef P6
-#undef P21c
-#define NA   1
-#define NB   1
-#define NC   1
-
 namespace {
   template<int blockDimX, typename FloatType>
   __global__
   void calc_d_target_d_frac_kernel(
-    int n_atom,
+    int n_atom, int na, int nb, int nc, int sgn,
     const FloatType* frac_by_2_pi,
     const FloatType* b_factor,
     const FloatType* occupancy,
@@ -73,8 +62,7 @@ namespace {
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp;
 
-#ifdef P21
-        // spacegroup 4 code here
+      if( sgn==4 ){ // P21
 
         // set #2:   -h,k,-l
         FloatType phase2 = -(
@@ -83,15 +71,12 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
-        // note that NB is def-ed at top of file
-        if( hkl[i_hkl * 3 + 1]/NB % 2 != 0 ){ tmp2 = -tmp2; }
+        if( hkl[i_hkl * 3 + 1]/nb % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp2;
-#endif
 
-#ifdef P6
-        // spacegroup 168 code here
+      } else if ( sgn==168) { // P6
 
         // set #2:   h+k,-h,l
         FloatType phase2 = -(
@@ -148,10 +133,7 @@ namespace {
         term_y[tid] += (hkl[i_hkl*3 + 0] + hkl[i_hkl*3 + 1])  * tmp6;
         term_z[tid] += hkl[i_hkl*3 + 2] * tmp6;
 
-#endif
-
-#ifdef P212121
-        // spacegroup 19 code here
+      } else if (sgn==19){ // P212121
 
         // set #2: -h,-k,l
         FloatType phase2 = -(
@@ -160,7 +142,7 @@ namespace {
           + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
@@ -172,7 +154,7 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp3 = f * sin(phase3 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp3 = -tmp3; }
+        if( (hkl[i_hkl * 3 + 1]/nb + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp3 = -tmp3; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp3;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp3;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
@@ -184,15 +166,12 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp4 = -tmp4; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 != 0 ){ tmp4 = -tmp4; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 
-#endif
-
-#ifdef P21212
-        // spacegroup 18 code here
+      } else if (sgn==18){
 
         // set #2: -h,-k,l
         FloatType phase2 = -(
@@ -212,7 +191,7 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp3 = f * sin(phase3 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp3 = -tmp3; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 != 0 ){ tmp3 = -tmp3; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp3;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp3;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
@@ -224,15 +203,12 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp4 = -tmp4; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 != 0 ){ tmp4 = -tmp4; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp4;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 
-#endif
-
-#ifdef C2221
-        // spacegroup 20 code here
+      } else if (sgn==20){ // C2221
 
         // set #5: h,k,l
         FloatType phase5 = -(
@@ -241,7 +217,7 @@ namespace {
           + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp5 = f * sin(phase5 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl + 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp5 = -tmp5; }
+        if( (hkl[i_hkl + 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 != 0 ){ tmp5 = -tmp5; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp5;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp5;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp5;
@@ -253,13 +229,12 @@ namespace {
           + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        if( (hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
 
-        FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_ihl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
@@ -275,7 +250,7 @@ namespace {
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp3;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
 
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_ihl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp3 = -tmp3; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp3 = -tmp3; }
         term_x[tid]  = hkl[i_hkl * 3 + 0] * tmp3;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp3;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp3;
@@ -287,24 +262,21 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp4 = -tmp4; }
+        if( (hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp4 = -tmp4; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 
-        FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_ihl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp4 = -tmp4; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp4 = -tmp4; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
-#endif
 
-#ifdef C121
-        // spacegroup 5 code here
+      } else if (sgn==5){ // C121
 
         // set #3:  h, k,l
         FloatType tmp2 = tmp;
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp2 = -tmp2; }
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp2;
@@ -316,7 +288,7 @@ namespace {
           - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp3 = f * sin(phase3 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 == 0 ){ 
+        if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 == 0 ){ 
            term_x[tid] -= hkl[i_hkl * 3 + 0] * 2*tmp3;
            term_y[tid] += hkl[i_hkl * 3 + 1] * 2*tmp3;
            term_z[tid] -= hkl[i_hkl * 3 + 2] * 2*tmp3;
@@ -329,15 +301,12 @@ namespace {
         //   - hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         // );
         // FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
-        // if( (hkl[i_hkl * 3 + 0]/NA + hkl[i_hkl * 3 + 1]/NB) % 2 != 0 ){ tmp4 = -tmp4; }
+        // if( (hkl[i_hkl * 3 + 0]/na + hkl[i_hkl * 3 + 1]/nb) % 2 != 0 ){ tmp4 = -tmp4; }
         // term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
         // term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
         // term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp4;
 
-#endif
-
-#ifdef P21c
-        // spacegroup 14 code here
+      } else if (sgn==14){ // P21c
 
         // set #2: -h,k,-l
         FloatType phase2 = -(
@@ -346,7 +315,7 @@ namespace {
           + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp2 = f * sin(phase2 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        if( (hkl[i_hkl * 3 + 1]/nb + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] -= hkl[i_hkl * 3 + 0] * tmp2;
         term_y[tid] += hkl[i_hkl * 3 + 1] * tmp2;
         term_z[tid] -= hkl[i_hkl * 3 + 2] * tmp2;
@@ -369,13 +338,13 @@ namespace {
           + hkl[i_hkl * 3 + 2] * frac_by_2_pi[i * 3 + 2]
         );
         FloatType tmp4 = f * sin(phase4 + f_calc_phase[i_hkl]);
-        if( (hkl[i_hkl * 3 + 1]/NB + hkl[i_hkl * 3 + 2]/NC) % 2 != 0 ){ tmp2 = -tmp2; }
+        if( (hkl[i_hkl * 3 + 1]/nb + hkl[i_hkl * 3 + 2]/nc) % 2 != 0 ){ tmp2 = -tmp2; }
         term_x[tid] += hkl[i_hkl * 3 + 0] * tmp4;
         term_y[tid] -= hkl[i_hkl * 3 + 1] * tmp4;
         term_z[tid] += hkl[i_hkl * 3 + 2] * tmp4;
 
-#endif
       }
+     }
 
       __syncthreads();
 
@@ -405,9 +374,11 @@ namespace {
 
 template<typename xray::KernelPrecision PRECISION>
 xray::DPartialGPU<PRECISION>::DPartialGPU(int n_hkl, const int* hkl, const double* mss4, std::complex<double>* f_calc,
-                               const double* abs_f_calc, int n_atom, const double* atom_b_factor, const double* atom_occupancy,
-                               const int* atom_scatter_type, int n_scatter_types, const double* atomic_scatter_factor)
-  : xray::DPartial(n_hkl, hkl, mss4, f_calc, abs_f_calc, n_atom, atom_b_factor, atom_occupancy, atom_scatter_type,
+     const double* abs_f_calc, int n_atom, int na, int nb, int nc, 
+     int sgn, const double* atom_b_factor, const double* atom_occupancy,
+     const int* atom_scatter_type, int n_scatter_types, const double* atomic_scatter_factor)
+  : xray::DPartial(n_hkl, hkl, mss4, f_calc, abs_f_calc, n_atom, na, nb, nc,
+       sgn, atom_b_factor, atom_occupancy, atom_scatter_type,
                    n_scatter_types, atomic_scatter_factor) {
 
   m_dev_frac_by_2_pi = thrust::device_vector<FloatType>(n_atom * 3);
@@ -428,7 +399,7 @@ xray::DPartialGPU<PRECISION>::DPartialGPU(int n_hkl, const int* hkl, const doubl
 
 template<typename xray::KernelPrecision PRECISION>
 void xray::DPartialGPU<PRECISION>::calc_d_target_d_frac(
-  int n_atom,
+  int n_atom, int na, int nb, int nc, int sgn,
   const double* frac,
   int n_hkl,
   const double* f_scale,
@@ -457,7 +428,7 @@ void xray::DPartialGPU<PRECISION>::calc_d_target_d_frac(
 
   calc_d_target_d_frac_kernel<block_size>
   <<<numBlocks, threadsPerBlock>>>(
-    n_atom,
+    n_atom, na, nb, nc, sgn,
     m_dev_frac_by_2_pi.data().get(),
     m_dev_atom_b_factor.data().get(),
     m_dev_atom_occupancy.data().get(),

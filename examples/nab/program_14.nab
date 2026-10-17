@@ -1,0 +1,261 @@
+
+// "peptide" is an nab program that will generate a pdb file given a structure
+// type and a sequence.  It was created by Paul Beroza.
+
+// The command line syntax for peptide is:
+
+// % peptide  structure sequence pdbout [ -lib libfile ]
+
+// where "structure" defines the type of structure to be created and "sequence"
+// is a string o of 1 letter amino acid codes.  For example:
+
+// % peptide ALPHA  AAAAA aaaa.pdb
+
+// will create and alanine pentapeptide in an alpha helical structure.
+
+// The structure definitions are stored in a library file that can be specified
+// on the command line  (the "-lib libfile" option), or by default is in
+// $NABHOME/reslib/conf.lib.
+
+// I've included a sample library  "conf.lib" This file looks like:
+
+// --------------------
+// ALPHA  1 	alpha helix
+// phi    -57.0 psi    -47.0 omega  180.0
+
+// ABETA 1 	anti-parallel beta sheet
+// phi    -139.0 psi    135.0 omega  -178.0
+// 	.
+// 	.
+// 	.etc.
+// --------------------
+
+// The file contains sets of definitions, one for each structure type.  The
+// definitions above are separated by a blank line, but that is not necessary.
+// Each time peptide finds a line that begins with an alphanumeric character,
+// it initializes a new structure type with the first string in the line as its
+// identifying string.  The <structure> on the command line must match one of
+// the structure types in the "conf.lib" file.
+
+// The next field on the structure type line is the number of residues in the
+// structure.  The following lines must contain the phi psi and omega values
+// for each of the residues in the structure type.  The angles may be in any
+// order, but the string defining the angle must precede its floating point
+// value.
+
+// If the number of residues = 1, it is a special structure for which the phi
+// psi and omega values are the same for all residues in the structure.  For
+// these structure types, the <sequence> may be of any length.  For other
+// structure types, the number of residues in <sequence> must agree with the
+// number of residues in the corresponding structure type in the "conf.lib"
+// file.  The resulting pdb file is written to standard out.
+
+// Please let me know of any bugs or suggestions.
+
+// Enjoy,
+
+// Paul Beroza  <pberoza@info.combichem.com>
+
+
+#define MAXRES 500
+#define USAGE "Usage: %s structure_type sequence pdbout <-lib XXX>\n", argv[1]
+
+int fix_angles( molecule m1, int i, int nr, float omega, float psi, float phi)
+{
+
+	//atom expressions to rotate about angles:
+	string omega_string, psi_string, phi_string;
+
+	//atom expressions for backbone atoms:
+	string npos, cpos, capos, nm1pos, cm1pos, cam1pos;
+
+	point n_xyz, ca_xyz, c_xyz; //coords for res i bb
+	point cm1_xyz; //coords for res i - 1 bb
+	point u, v, zax, p_head, p_tail;
+	point           va, vb, vc;
+	float           a0, rot_angle, phi0, psi0, omega0;
+	atom            a;
+	int             ii;
+	matrix          mat;
+
+	if (i > nr) nr = i;
+	omega_string = sprintf(":%d-%d:", i, nr);
+	psi_string = sprintf(":%d:O|:%d-%d:", i - 1, i, nr);
+	phi_string = sprintf(":%d:C*,O*,?[A-Z]*|:%d-%d:*", i, i + 1, nr);
+	npos = sprintf(":%d:N", i);
+	cpos = sprintf(":%d:C", i);
+	capos = sprintf(":%d:CA", i);
+	cm1pos = sprintf(":%d:C", i - 1);
+	cam1pos = sprintf(":%d:CA", i - 1);
+	nm1pos = sprintf(":%d:N", i - 1);
+
+	//create z - axis for rotation to get 
+	// C(i - 1) - N(i) - CA(i) bond angle = 121.9;
+
+	setpoint(m1, npos, n_xyz);
+	setpoint(m1, capos, ca_xyz);
+	setpoint(m1, cpos, c_xyz);
+	setpoint(m1, cm1pos, cm1_xyz);
+
+	u = ca_xyz - n_xyz;
+	v = cm1_xyz - n_xyz;
+	zax = u ^ v;
+
+	a0 = angle(m1, cm1pos, npos, capos);
+	rot_angle = 121.9 - a0;
+
+	p_tail = n_xyz;
+	p_head = n_xyz + zax;
+
+	mat = rot4p(p_head, p_tail, rot_angle);
+	transformmol(mat, m1, omega_string);
+
+	psi0 = torsion(m1, nm1pos, cam1pos, cm1pos, npos);
+	rot_angle = psi - psi0;
+	mat = rot4(m1, cam1pos, cm1pos, rot_angle);
+	transformmol(mat, m1, psi_string);
+
+	omega0 = torsion(m1, cam1pos, cm1pos, npos, capos);
+	rot_angle = omega - omega0;
+	mat = rot4(m1, cm1pos, npos, rot_angle);
+	transformmol(mat, m1, omega_string);
+
+	phi0 = torsion(m1, cm1pos, npos, capos, cpos);
+	rot_angle = phi - phi0;
+	mat = rot4(m1, npos, capos, rot_angle);
+	transformmol(mat, m1, phi_string);
+
+	return 0;
+};
+
+#define MAXTEMPLATES 50
+
+int match_template(file f, float phi[1], float psi[1], float omega[1],
+	       string struct_type, int nres)
+{
+	string          line;
+	int             ir, template_nres, ntemp, found;
+	string          ttype, template_name[MAXTEMPLATES];
+	string          s1, s2, s3;
+	float           f1, f2, f3;
+	string          ftmp;
+
+	found = 0;
+	ntemp = 0;
+	while (line = getline(f)) {
+		sscanf(line, "%s %d", ttype, template_nres);
+		if (ttype == "")
+			continue;
+		if (template_nres < 1) {
+			fprintf(stderr, "template has no residues\n");
+			exit(0);
+		}
+		++ntemp;
+		template_name[ntemp] = ttype;
+		if (ttype != struct_type) {
+			for (ir = 1; ir <= template_nres; ir++)
+				line = getline(f);
+			continue;
+		}
+		found = 1;
+		if (template_nres != 1 && template_nres != nres) {
+			fprintf(stderr, "template has %d atoms and sequence has %d\n",
+				template_nres, nres);
+			exit(0);
+		}
+		for (ir = 1; ir <= template_nres; ir++) {
+			line = getline(f);
+			sscanf(line, "%s %lf %s %lf %s %lf", s1, f1, s2, f2, s3, f3);
+			if (s1 == "phi") phi[ir] = f1;
+			else if (s1 == "psi") psi[ir] = f1;
+			else if (s1 == "omega") omega[ir] = f1;
+
+			if (s2 == "phi") phi[ir] = f2;
+			else if (s2 == "psi") psi[ir] = f2;
+			else if (s2 == "omega") omega[ir] = f2;
+
+			if (s3 == "phi") phi[ir] = f3;
+			else if (s3 == "psi") psi[ir] = f3;
+			else if (s3 == "omega") omega[ir] = f3;
+		}
+
+	//template_nres == 1 is a special case for which all
+	// residues in the sequence adopt the 1 triplet of phi / psi / omega values
+
+		if (template_nres == 1) {
+			for (ir = 2; ir <= nres; ir++) {
+				phi[ir] = phi[1];
+				psi[ir] = psi[1];
+				omega[ir] = omega[1];
+			}
+		}
+		break;
+	}
+	if (!found) {
+		fprintf(stderr, "template not found\n");
+		fprintf(stderr, "must be one of:");
+		for (ir = 1; ir <= ntemp; ++ir)
+			fprintf(stderr, " %s", template_name[ir]);
+		fprintf(stderr, "\n");
+		exit(0);
+	}
+	return 0;
+};
+
+//main routine: process the input, then call the above routines
+
+int             ir, nr;
+string          seq, struct_type;
+molecule        m1;
+float           omega[MAXRES], psi[MAXRES], phi[MAXRES];
+point           ax, center;
+atom            a;
+file            conformation_file;
+string          outfile;
+int             ac;
+
+if (argc != 4 && argc != 6) {
+	fprintf(stderr, USAGE);
+	exit(1);
+}
+if (argc > 4) {
+	if (argv[5] != "-lib") {
+		fprintf(stderr, USAGE);
+		exit(1);
+	}
+	conformation_file = fopen(argv[6], "r");
+	if (conformation_file == NULL) {
+		fprintf(stderr, "conformation file not found %s\n", argv[6]);
+		exit(1);
+	}
+} else {
+	conformation_file = fopen(getenv("NABHOME") + "/reslib/conf.lib", "r");
+	if (conformation_file == NULL) {
+		fprintf(stderr, "conformation file not found %s\n", 
+			getenv("NABHOME") + "/reslib/conf.lib" );
+		exit(1);
+	}
+}
+
+struct_type = sprintf("%s", argv[2]);
+seq = sprintf("%s", argv[3]);
+nr = length(seq);
+outfile = argv[4];
+
+if (nr > MAXRES) {
+	fprintf(stderr, "MAXRES exceeded\n");
+	exit(0);
+}
+
+//get the needed phi, psi and omega values from a template:
+match_template(conformation_file, phi, psi, omega, struct_type, nr);
+
+//generate a structure in the extended conformation:
+m1 = linkprot("new", seq, "");
+
+//adjust the phi, psi, and omega angles:
+for (ir = 2; ir <= nr; ++ir){
+	fix_angles(m1, ir, nr, omega[ir], psi[ir - 1], phi[ir]);
+}
+
+putpdb(outfile, m1);

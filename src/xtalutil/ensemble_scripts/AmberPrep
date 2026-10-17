@@ -6,19 +6,19 @@
 #  set variables here:
 #==========================================================================
 
-na=3      # cells along a axis
+na=1      # cells along a axis
 nb=1      # cells along b axis
 nc=1      # cells along c axis
 let nabc=$na*$nb*$nc
-residuesperchain=609
-repeats="(100..103)"
-id="4zm7"
-idalt="alt1"
+residuesperchain=193
+repeats="()"
+id="1aho"
+idalt="aug26"
 seed=1
 #  supercell unit cell parameters:
-a=137.292
-b=57.955
-c=63.079
+a=45.900
+b=40.700
+c=30.100
 al=90.0
 bt=90.0
 gm=90.0
@@ -28,9 +28,9 @@ gm=90.0
 #==========================================================================
 
 # N.B.: AmberClassic UnitCell program requires REMARK 290 records
-# UnitCell -p $id.pdb -o ${id}_uc.pdb
+UnitCell -p $id.pdb -o ${id}_uc.pdb
 # one alternative is to use gemmi:
-gemmi convert --assembly unit_cell $id.pdb ${id}_uc.pdb
+# gemmi convert --assembly unit_cell $id.pdb ${id}_uc.pdb
 PropPDB -p ${id}_uc.pdb -o ${id}_${nabc}uc.pdb -ix $na -iy $nb -iz $nc
 
 #==========================================================================
@@ -232,18 +232,17 @@ perl -f ./select_alts $seed ${id}_${nabc}uc.pdb > $idalt.pdb
 #  if needed, set up sslinks (should go away with updated tleap):
 #-----------------------------------------------------------------------
 
-if true; then
+if false; then
 
 cat << EOF > make_sslinks
 \$rpc = $residuesperchain;
-@nums = (0..11);
+@nums = (0..3);
 
 for \$n (@nums) {
-   printf("bond x.%d.SG x.%d.SG\n", 21 + \$n*\$rpc, 116 + \$n*\$rpc);
-   printf("bond x.%d.SG x.%d.SG\n", 26 + \$n*\$rpc, 54 + \$n*\$rpc);
-   printf("bond x.%d.SG x.%d.SG\n", 57 + \$n*\$rpc, 142 + \$n*\$rpc);
-   printf("bond x.%d.SG x.%d.SG\n", 87 + \$n*\$rpc, 96 + \$n*\$rpc);
-   printf("bond x.%d.SG x.%d.SG\n", 158 + \$n*\$rpc, 172 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 12 + \$n*\$rpc, 63 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 16 + \$n*\$rpc, 36 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 22 + \$n*\$rpc, 46 + \$n*\$rpc);
+   printf("bond x.%d.SG x.%d.SG\n", 26 + \$n*\$rpc, 48 + \$n*\$rpc);
 }
 EOF
 
@@ -256,20 +255,24 @@ fi
 #-----------------------------------------------------------------------
 
 cat <<EOF > tleap.in
+addPath \$\$AMBERCLASSICHOME/dat/leap/lib
+addPath \$\$AMBERCLASSICHOME/dat/leap/parm
+addPath \$\$AMBERCLASSICHOME/dat/leap/cmd
+addPath \$\$AMBERCLASSICHOME/dat/leap/prep
 set default nocenter on
 set default reorder_residues off
-source leaprc.protein.ff19SB
+source leaprc.protein.autolink
 source leaprc.water.spce
-source leaprc.gaff2
+set pdb_auto_match 1
+set pdb_auto_link 1
 x = loadPdb $idalt.pdb
-source sslinks
 set x box { $a $b $c }
 saveAmberParm x $idalt.parm7 foo.rst7
 quit
 EOF
 
-tleap -f tleap.in > tleap.out \
-   || { echo "  tleap:  Program error"; exit 1; }
+$AMBERCLASSICHOME/bin/teLeap -f tleap.in > tleap.out \
+   || { echo "  teLeap:  Program error"; exit 1; }
 /bin/rm tleap.in
 
 ChBox -c foo.rst7 -o ${idalt}.rst7 -al $al -bt $bt -gm $gm \
@@ -291,5 +294,5 @@ $AMBERCLASSICHOME/bin/ambpdb -p ${idalt}.parm7 -ext < ${idalt}.rst7 \
 #  cleanup:
 #-----------------------------------------------------------------------
 
-/bin/rm -f set_chainID select_alts make_sslinks leap.log \
+/bin/rm -f set_chainID select_alts leap.log \
    ${id}_${nabc}uc.pdb.bak add_pdb.log add_xray.log

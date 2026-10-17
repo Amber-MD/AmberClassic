@@ -1,0 +1,18 @@
+// Program 3 - orient nucleic acid monomers
+molecule m;
+
+m = getpdb( "ADE.pdb" );
+setframe( 2, m,                // also for GUA
+       "::C4",
+       "::C5", "::N3",
+       "::C4", "::N1" );
+alignframe( m, NULL );
+putpdb( "ADE.std.pdb", m );
+
+m = getpdb( "THY.pdb" );
+setframe( 2, m,                // also for CYT & URA
+       "::C6",
+       "::C5", "::N1",
+       "::C6", "::N3" );
+alignframe( m, NULL );
+putpdb( "THY.std.pdb", m );

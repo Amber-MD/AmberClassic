@@ -3,7 +3,7 @@
           MSANDER                                      2021
           -------------------------------------------------------
 
-| Run on 08/08/2026 at 12:54:43
+| Run on 09/29/2026 at 11:30:58
 
 |   Executable path: ../../../bin/msander
 | Working directory: /home/case/AmberClassic/test/cryoem/emap
@@ -167,18 +167,19 @@ Rigid    1 has    310 constrained atoms with mask: :1-19;
 Rigid    2 has    855 constrained atoms with mask: :*;                                                                                                                                                                                                                                                             
     Rigid-fitting is not requested for the constrained atoms.
     The constraint map is fixed in space.
-  _________________ SGLD parameters _________________
-  Parameters for self-guided Langevin dynamics (SGLD) simulation
+  _________________ SGMD/SGLD parameters _________________
+  Parameters for self-guided Molecular/Langevin dynamics (SGMD/SGLD) simulation
 
-  Guiding range from     1  to   855
-  Local averaging time:     0.2000 ps 
+  Guiding range from     1  to      855 with      855 guiding atoms
+  Local averaging time: tsgavg:     0.2000 ps,  tsgavp:     2.0000 ps
   SGLDg  method is used to enhance conformational search. 
   Collision frequency:    5.00 /ps
   sgfti:   0.5000 psgldg:   0.1654
   sgffi:   0.0000
-  SGMD/SGLD output properties:
-  SGLABEL:  SGGAMMA TEMPLF  TEMPHF  EPOTLF EPOTHF EPOTLLF SGWT
-         SGMD/SGLD weighting factor=exp(SGWT)
+  Guided sampling effective temperature (TEMPSG):   359.44
+  Output properties:
+  SGMD/SGLD:  SGGAMMA TEMPLF  TEMPHF  EPOTLF EPOTHF EPOTLLF SGWT
+         SGMD/SGLD weighting factor =exp(SGWT)
  _______________________________________________________
 
 
@@ -196,7 +197,7 @@ Rigid    2 has    855 constrained atoms with mask: :*;
  BOND   =       159.7274  ANGLE   =       412.1703  DIHED      =       589.9095
  1-4 NB =       203.5664  1-4 EEL =      3041.8514  VDWAALS    =      -321.8182
  EELEC  =     -5010.2468  EGB     =      -480.0403  RESTRAINT  =     -1135.8440
- SGLD:    0.0000    1.50   -1.50     -2540.72        0.00    -2540.72    0.0000
+ SGLD:    0.0100    1.50  298.50     -2540.72        0.00    -2540.72    0.0000
  EAMBER (non-restraint)  =     -1404.8803
  EMAP   =     -1135.8440
 
@@ -205,7 +206,7 @@ Rigid    2 has    855 constrained atoms with mask: :*;
  BOND   =       158.4901  ANGLE   =       415.6860  DIHED      =       589.5910
  1-4 NB =       203.6553  1-4 EEL =      3040.7140  VDWAALS    =      -323.6518
  EELEC  =     -4935.2769  EGB     =      -553.2457  RESTRAINT  =     -1135.7860
- SGLD:   -0.0000    1.50  285.42     -2540.72        0.90    -2540.72    0.0012
+ SGLD:   -0.0679    1.50  298.50     -2540.72        0.90    -2540.72    0.0012
  EAMBER (non-restraint)  =     -1404.0380
  EMAP   =     -1135.7860
 
@@ -214,96 +215,96 @@ Rigid    2 has    855 constrained atoms with mask: :*;
  BOND   =       156.0998  ANGLE   =       419.2751  DIHED      =       589.3353
  1-4 NB =       203.8356  1-4 EEL =      3040.1060  VDWAALS    =      -325.7099
  EELEC  =     -4967.3110  EGB     =      -521.8683  RESTRAINT  =     -1135.5708
- SGLD:   -0.0059    1.50  286.18     -2540.73       -1.08    -2540.72   -0.0003
+ SGLD:   -0.1460    1.50  298.50     -2540.73       -1.08    -2540.72   -0.0003
  EAMBER (non-restraint)  =     -1406.2373
  EMAP   =     -1135.5708
 
  NSTEP =        4   TIME(PS) =       0.014  TEMP(K) =   288.47  PRESS =     0.0
- Etot   =     -1933.1581  EKtot   =       613.3665  EPtot      =     -2546.5245
- BOND   =       152.8706  ANGLE   =       420.7322  DIHED      =       588.9928
+ Etot   =     -1933.1580  EKtot   =       613.3667  EPtot      =     -2546.5247
+ BOND   =       152.8706  ANGLE   =       420.7321  DIHED      =       588.9928
  1-4 NB =       203.9507  1-4 EEL =      3040.1322  VDWAALS    =      -327.9433
  EELEC  =     -4978.8883  EGB     =      -511.1573  RESTRAINT  =     -1135.2141
- SGLD:   -0.0175    1.50  286.59     -2540.75       -5.77    -2540.72   -0.0083
- EAMBER (non-restraint)  =     -1411.3105
+ SGLD:   -0.2225    1.50  298.50     -2540.75       -5.77    -2540.72   -0.0083
+ EAMBER (non-restraint)  =     -1411.3106
  EMAP   =     -1135.2141
 
  NSTEP =        5   TIME(PS) =       0.015  TEMP(K) =   291.09  PRESS =     0.0
- Etot   =     -1933.3180  EKtot   =       618.9399  EPtot      =     -2552.2579
- BOND   =       149.5397  ANGLE   =       420.5912  DIHED      =       588.7574
+ Etot   =     -1933.3178  EKtot   =       618.9409  EPtot      =     -2552.2587
+ BOND   =       149.5394  ANGLE   =       420.5907  DIHED      =       588.7574
  1-4 NB =       203.9110  1-4 EEL =      3041.0511  VDWAALS    =      -330.1823
  EELEC  =     -4948.9716  EGB     =      -542.2238  RESTRAINT  =     -1134.7306
- SGLD:   -0.0343    1.50  288.56     -2540.81      -11.45    -2540.72   -0.0241
- EAMBER (non-restraint)  =     -1417.5273
+ SGLD:   -0.2935    1.50  298.50     -2540.81      -11.45    -2540.72   -0.0241
+ EAMBER (non-restraint)  =     -1417.5281
  EMAP   =     -1134.7306
 
- NSTEP =        6   TIME(PS) =       0.016  TEMP(K) =   294.03  PRESS =     0.0
- Etot   =     -1931.8549  EKtot   =       625.2032  EPtot      =     -2557.0580
- BOND   =       146.8506  ANGLE   =       419.8456  DIHED      =       588.4048
- 1-4 NB =       203.8478  1-4 EEL =      3042.7985  VDWAALS    =      -332.0861
- EELEC  =     -4884.0202  EGB     =      -608.5499  RESTRAINT  =     -1134.1492
- SGLD:   -0.0557    1.50  291.50     -2540.89      -16.17    -2540.73   -0.0464
- EAMBER (non-restraint)  =     -1422.9088
+ NSTEP =        6   TIME(PS) =       0.016  TEMP(K) =   294.04  PRESS =     0.0
+ Etot   =     -1931.8545  EKtot   =       625.2056  EPtot      =     -2557.0601
+ BOND   =       146.8500  ANGLE   =       419.8444  DIHED      =       588.4047
+ 1-4 NB =       203.8478  1-4 EEL =      3042.7985  VDWAALS    =      -332.0862
+ EELEC  =     -4884.0203  EGB     =      -608.5498  RESTRAINT  =     -1134.1492
+ SGLD:   -0.3569    1.50  298.50     -2540.89      -16.17    -2540.73   -0.0464
+ EAMBER (non-restraint)  =     -1422.9110
  EMAP   =     -1134.1492
 
  NSTEP =        7   TIME(PS) =       0.017  TEMP(K) =   296.07  PRESS =     0.0
- Etot   =     -1932.7854  EKtot   =       629.5336  EPtot      =     -2562.3189
- BOND   =       145.2136  ANGLE   =       418.2251  DIHED      =       588.0666
- 1-4 NB =       203.6891  1-4 EEL =      3045.0538  VDWAALS    =      -333.6996
- EELEC  =     -4908.7938  EGB     =      -586.5678  RESTRAINT  =     -1133.5059
- SGLD:   -0.0810    1.50  294.39     -2541.00      -21.32    -2540.73   -0.0757
- EAMBER (non-restraint)  =     -1428.8131
+ Etot   =     -1932.7849  EKtot   =       629.5379  EPtot      =     -2562.3229
+ BOND   =       145.2124  ANGLE   =       418.2228  DIHED      =       588.0664
+ 1-4 NB =       203.6890  1-4 EEL =      3045.0539  VDWAALS    =      -333.6997
+ EELEC  =     -4908.7939  EGB     =      -586.5678  RESTRAINT  =     -1133.5059
+ SGLD:   -0.4117    1.50  298.50     -2541.00      -21.32    -2540.73   -0.0757
+ EAMBER (non-restraint)  =     -1428.8170
  EMAP   =     -1133.5059
 
- NSTEP =        8   TIME(PS) =       0.018  TEMP(K) =   296.76  PRESS =     0.0
- Etot   =     -1935.2145  EKtot   =       631.0076  EPtot      =     -2566.2221
- BOND   =       144.9473  ANGLE   =       416.0079  DIHED      =       587.5914
- 1-4 NB =       203.4698  1-4 EEL =      3047.6911  VDWAALS    =      -334.9635
- EELEC  =     -4939.1923  EGB     =      -558.9603  RESTRAINT  =     -1132.8136
- SGLD:   -0.1096    1.49  295.40     -2541.13      -25.10    -2540.73   -0.1102
- EAMBER (non-restraint)  =     -1433.4085
+ NSTEP =        8   TIME(PS) =       0.018  TEMP(K) =   296.77  PRESS =     0.0
+ Etot   =     -1935.2140  EKtot   =       631.0140  EPtot      =     -2566.2280
+ BOND   =       144.9457  ANGLE   =       416.0045  DIHED      =       587.5909
+ 1-4 NB =       203.4697  1-4 EEL =      3047.6912  VDWAALS    =      -334.9636
+ EELEC  =     -4939.1925  EGB     =      -558.9603  RESTRAINT  =     -1132.8136
+ SGLD:   -0.4568    1.50  298.50     -2541.13      -25.10    -2540.73   -0.1102
+ EAMBER (non-restraint)  =     -1433.4144
  EMAP   =     -1132.8136
 
  NSTEP =        9   TIME(PS) =       0.019  TEMP(K) =   297.01  PRESS =     0.0
- Etot   =     -1937.8464  EKtot   =       631.5238  EPtot      =     -2569.3702
- BOND   =       145.4830  ANGLE   =       413.4001  DIHED      =       586.8425
- 1-4 NB =       203.3091  1-4 EEL =      3050.1951  VDWAALS    =      -335.8675
- EELEC  =     -4988.7607  EGB     =      -511.8925  RESTRAINT  =     -1132.0792
- SGLD:   -0.1406    1.49  295.72     -2541.27      -28.10    -2540.73   -0.1486
- EAMBER (non-restraint)  =     -1437.2909
+ Etot   =     -1937.8461  EKtot   =       631.5316  EPtot      =     -2569.3777
+ BOND   =       145.4812  ANGLE   =       413.3957  DIHED      =       586.8417
+ 1-4 NB =       203.3088  1-4 EEL =      3050.1951  VDWAALS    =      -335.8677
+ EELEC  =     -4988.7609  EGB     =      -511.8925  RESTRAINT  =     -1132.0792
+ SGLD:   -0.4919    1.50  298.50     -2541.27      -28.11    -2540.73   -0.1486
+ EAMBER (non-restraint)  =     -1437.2985
  EMAP   =     -1132.0792
 
  NSTEP =       10   TIME(PS) =       0.020  TEMP(K) =   297.02  PRESS =     0.0
- Etot   =     -1941.4571  EKtot   =       631.5524  EPtot      =     -2573.0095
- BOND   =       145.7761  ANGLE   =       410.3145  DIHED      =       585.7136
- 1-4 NB =       203.3086  1-4 EEL =      3052.7477  VDWAALS    =      -336.4954
- EELEC  =     -5048.3694  EGB     =      -454.6623  RESTRAINT  =     -1131.3429
- SGLD:   -0.1731    1.49  296.19     -2541.43      -31.58    -2540.74   -0.1917
- EAMBER (non-restraint)  =     -1441.6666
+ Etot   =     -1941.4572  EKtot   =       631.5606  EPtot      =     -2573.0178
+ BOND   =       145.7745  ANGLE   =       410.3097  DIHED      =       585.7124
+ 1-4 NB =       203.3083  1-4 EEL =      3052.7477  VDWAALS    =      -336.4956
+ EELEC  =     -5048.3697  EGB     =      -454.6622  RESTRAINT  =     -1131.3429
+ SGLD:   -0.5177    1.50  298.50     -2541.43      -31.59    -2540.74   -0.1917
+ EAMBER (non-restraint)  =     -1441.6749
  EMAP   =     -1131.3429
 
       A V E R A G E S   O V E R      10 S T E P S
 
 
- NSTEP =       10   TIME(PS) =       0.020  TEMP(K) =   292.16  PRESS =     0.0
- Etot   =     -1933.6853  EKtot   =       621.2264  EPtot      =     -2554.9118
- BOND   =       150.4998  ANGLE   =       416.6248  DIHED      =       588.3205
- 1-4 NB =       203.6544  1-4 EEL =      3044.2341  VDWAALS    =      -330.2418
- EELEC  =     -4960.9831  EGB     =      -532.9168  RESTRAINT  =     -1134.1036
- SGLD:   -0.0618    1.50  261.84     -2540.94      -13.97    -2540.73   -0.0604
- EAMBER (non-restraint)  =     -1420.8081
+ NSTEP =       10   TIME(PS) =       0.020  TEMP(K) =   292.17  PRESS =     0.0
+ Etot   =     -1933.6852  EKtot   =       621.2295  EPtot      =     -2554.9146
+ BOND   =       150.4991  ANGLE   =       416.6231  DIHED      =       588.3202
+ 1-4 NB =       203.6543  1-4 EEL =      3044.2341  VDWAALS    =      -330.2418
+ EELEC  =     -4960.9832  EGB     =      -532.9168  RESTRAINT  =     -1134.1036
+ SGLD:   -0.2955    1.50  298.50     -2540.94      -13.97    -2540.73   -0.0604
+ EAMBER (non-restraint)  =     -1420.8110
  EMAP   =     -1134.1036
 
       R M S  F L U C T U A T I O N S
 
 
- NSTEP =       10   TIME(PS) =       0.020  TEMP(K) =     4.24  PRESS =     0.0
- Etot   =         3.4398  EKtot   =         9.0241  EPtot      =        11.8406
- BOND   =         5.5360  ANGLE   =         3.5197  DIHED      =         1.2408
- 1-4 NB =         0.2249  1-4 EEL =         4.2984  VDWAALS    =         4.9862
+ NSTEP =       10   TIME(PS) =       0.020  TEMP(K) =     4.25  PRESS =     0.0
+ Etot   =         3.4398  EKtot   =         9.0271  EPtot      =        11.8436
+ BOND   =         5.5366  ANGLE   =         3.5208  DIHED      =         1.2412
+ 1-4 NB =         0.2250  1-4 EEL =         4.2985  VDWAALS    =         4.9862
  EELEC  =        45.9592  EGB     =        44.4232  RESTRAINT  =         1.5291
-|E(PBS) =         3.2778
- SGLD:    0.0590    0.00   87.87         0.24       11.61        0.00    0.0656
- EAMBER (non-restraint)  =        10.3114
+|E(PBS) =         3.2779
+ SGLD:    0.1744    0.00    0.00         0.24       11.62        0.00    0.0656
+ EAMBER (non-restraint)  =        10.3145
  EMAP   =         1.5291
  map object: 1gb1.map is written to: 1gb1_fit.mrc
  LX, LY, LZ              =       30      20      20
@@ -335,18 +336,18 @@ Rigid    2 has    855 constrained atoms with mask: :*;
    5.  TIMINGS
 --------------------------------------------------------------------------------
 
-|                Calc gb radii              0.05 (31.74% of Gen B)
-|                Calc gb diag               0.09 (53.89% of Gen B)
-|                Calc gb off-diag           0.02 (14.37% of Gen B)
-|             Gen Born time              0.17 (100.0% of Nonbo)
-|          Nonbond force              0.17 (93.82% of Force)
-|          Bond/Angle/Dihedral        0.00 ( 1.69% of Force)
-|          Other                      0.01 ( 4.49% of Force)
-|       Force time                 0.18 (98.34% of Runmd)
-|       Verlet update time         0.00 ( 1.66% of Runmd)
-|    Runmd Time                 0.18 (91.88% of Total)
-|    Other                      0.02 ( 7.61% of Total)
-| Total time                 0.20 (100.0% of ALL  )
+|                Calc gb radii              0.03 (30.77% of Gen B)
+|                Calc gb diag               0.05 (52.75% of Gen B)
+|                Calc gb off-diag           0.02 (16.48% of Gen B)
+|             Gen Born time              0.09 (100.0% of Nonbo)
+|          Nonbond force              0.09 (91.92% of Force)
+|          Bond/Angle/Dihedral        0.00 ( 4.04% of Force)
+|          Other                      0.00 ( 4.04% of Force)
+|       Force time                 0.10 (98.02% of Runmd)
+|       Verlet update time         0.00 ( 1.98% of Runmd)
+|    Runmd Time                 0.10 (87.07% of Total)
+|    Other                      0.01 (12.07% of Total)
+| Total time                 0.12 (100.0% of ALL  )
 
 | Number of list builds   :          0
 
@@ -356,11 +357,11 @@ Rigid    2 has    855 constrained atoms with mask: :*;
 | Final Performance Info:
 | -----------------------------------------------------
 | Average timings for all steps:
-|     Elapsed(s) =       0.18 Per Step(ms) =      18.20
-|         ns/day =       4.75   seconds/ns =   18200.00
+|     Elapsed(s) =       0.10 Per Step(ms) =      10.20
+|         ns/day =       8.47   seconds/ns =   10200.00
 | -----------------------------------------------------
 
-|           Job began  at 12:54:43.415  on 08/08/2026
-|           Setup done at 12:54:43.429  on 08/08/2026
-|           Run   done at 12:54:43.612  on 08/08/2026
+|           Job began  at 11:30:58.786  on 09/29/2026
+|           Setup done at 11:30:58.800  on 09/29/2026
+|           Run   done at 11:30:58.903  on 09/29/2026
 |     wallclock() was called     243 times

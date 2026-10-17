@@ -11,7 +11,7 @@ namespace xray {
     ~NonBulkCPU() override = default;
 
     void calc_f_non_bulk(
-      int n_atoms,
+      int n_atoms, int na, int nb, int nc, int sgn,
       const double* frac_xyz
     ) override;
 

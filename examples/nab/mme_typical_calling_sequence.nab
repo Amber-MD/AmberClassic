@@ -1,0 +1,28 @@
+// carry out molecular mechanics minimization and some simple dynamics
+molecule m, mi;
+int  ier;
+float  m_xyz[ dynamic ], f_xyz[ dynamic ], v[ dynamic ];
+float  dgrad, fret, dummy[2];
+
+mi = bdna( "gcgc" );
+putpdb( "temp.pdb", mi );
+m = getpdb_prm( "temp.pdb", "leaprc.ff12SB", "", 0 );
+
+allocate m_xyz[ 3*m.natoms ];  allocate f_xyz[ 3*m.natoms ];
+allocate v[ 3*m.natoms ];
+setxyz_from_mol( m, NULL, m_xyz );
+
+mm_options( "cut=25.0, ntpr=10, nsnb=999, gamma_ln=5.0" );
+mme_init( m, NULL, "::ZZZ", dummy, NULL );
+fret = mme( m_xyz, f_xyz, 1 );
+printf( "Initial energy is %8.3f\n", fret );
+
+dgrad = 0.1;
+ier = conjgrad( m_xyz, 3*m.natoms, fret, mme, dgrad, 10.0, 100 );
+setmol_from_xyz( m, NULL, m_xyz );                                     
+putpdb( "gcgc.min.pdb", m );                                           
+
+mm_options( "tautp=0.4, temp0=100.0, ntpr_md=10, tempi=50." );         
+md( 3*m.natoms, 1000, m_xyz, f_xyz, v, mme );                             
+setmol_from_xyz( m, NULL, m_xyz );                                     
+putpdb( "gcgc.md.pdb", m );                                            

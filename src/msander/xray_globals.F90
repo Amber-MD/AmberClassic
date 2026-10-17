@@ -89,7 +89,7 @@ module xray_globals_module
    
    integer, allocatable, target, save :: hkl_index(:,:) ! (3,num_hkl)
 
-   real(real_kind), allocatable, save :: abs_Fobs(:), sigFobs(:)
+   real(real_kind), allocatable, save :: abs_Fobs(:), sigma_Fobs(:)
    complex(real_kind), allocatable, save :: Fuser(:)
    integer, allocatable, save :: test_flag(:)  ! 0 -- "free set" ; 1 -- "work set"
    integer, save :: scale_update_period, &
