@@ -34,7 +34,7 @@ NABCOBJS=	\
 
 #===========================================================================
 
-nabc: $(LIBDIR)/libnabc.a
+libnabc: $(LIBDIR)/libnabc.a
 
 $(LIBDIR)/libnabc.a: $(NABCOBJS)
 	@echo "[NABC]  AR $@"

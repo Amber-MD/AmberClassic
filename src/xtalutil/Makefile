@@ -12,16 +12,16 @@ include ../../config.h
 
 OBJS = crdmanip.o grid.o matrix.o pdbRead.o rand2.o topRead.o vector.o
 
-AOBJ=   ambpdb.o forFIRSTtype.o forFIRSTbond.o forFIRSThbond.o \
+AOBJ=   ambpdb_old.o forFIRSTtype.o forFIRSTbond.o forFIRSThbond.o \
         forFIRSTteth.o forFIRSToutp.o forFIRSTsugar.o nxtsec.o \
         amopen.o mexit.o
 
 xtalutil: $(BINDIR)/ChBox $(BINDIR)/UnitCell $(BINDIR)/CheckMD \
-     $(BINDIR)/AddToBox $(BINDIR)/PropPDB $(BINDIR)/ambpdb
+     $(BINDIR)/AddToBox $(BINDIR)/PropPDB $(BINDIR)/ambpdb_old
 	cp ensemble_scripts/find_alts ensemble_scripts/make_addles.in $(BINDIR)
 	cp phenix_scripts/XrayPrep phenix_scripts/XrayPrep_redo $(BINDIR)
 
-$(BINDIR)/ambpdb: $(AOBJ)
+$(BINDIR)/ambpdb_old: $(AOBJ)
 	@echo "[XTALUTIL]  FC $@"
 	@$(FC) $(FFLAGS) $(LDFLAGS) -o $@ $(AOBJ)
 

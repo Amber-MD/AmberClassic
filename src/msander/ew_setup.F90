@@ -1836,7 +1836,7 @@ subroutine vdw_correction(ico,ntypes,nvdwclas, &
          index = iaci + j
          ic = ico(index)
          if ( ic > 0 )then
-            term = term + nvdwclas(i)*nvdwclas(j)*cn2(ic)
+            term = term + dble(nvdwclas(i))*dble(nvdwclas(j))*cn2(ic)
          end if
       end do
    end do

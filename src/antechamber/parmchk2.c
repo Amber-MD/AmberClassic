@@ -395,45 +395,73 @@ void improper_id1(char *filename) {
     char   t1[MAXCHAR], t2[MAXCHAR], t3[MAXCHAR], t4[MAXCHAR];
     char line[MAXCHAR];
 
-    if ((fpin = fopen(filename, "r")) == NULL) {
-        fprintf(stdout, "Cannot open %s in improper_id1(), exit\n", filename);
-        exit(1);
-    }
-    while (fgets(line, MAXCHAR, fpin)) {
-        sscanf(line, "%s", t1);
-        if (!strcmp("IMPROPER", t1)) { readindex = 1; continue; }
-        if (readindex == 1) {
-            if (spaceline(line) == 1      || !strcmp(t1, "DONE")   ||
-                !strcmp(t1, "STOP")       || !strcmp(t1, "CHARGE") ||
-                !strcmp(t1, "LOOP")       || !strcmp(t1, "IMPROPER"))
-                { readindex = 0; continue; }
-            sscanf(line, "%s%s%s%s", t1, t2, t3, t4);
-            if (!strcmp(t1,"-M")||!strcmp(t2,"-M")||!strcmp(t3,"-M")||!strcmp(t4,"-M")) continue;
-            if (!strcmp(t1,"+M")||!strcmp(t2,"+M")||!strcmp(t3,"+M")||!strcmp(t4,"+M")) continue;
-            printf("IMPR(%s,%s,%s,%s) FIXME!!!\n", t1, t2, t3, t4);
-            for (int i = 0; i < atomnum; i++) {
-                if (!strcmp(t1, atom[i].name)) { strcpy(t1, atom[i].ambername); improper[impropernum].atid1 = i; continue; }
-                if (!strcmp(t2, atom[i].name)) { strcpy(t2, atom[i].ambername); improper[impropernum].atid2 = i; continue; }
-                if (!strcmp(t3, atom[i].name)) { strcpy(t3, atom[i].ambername); improper[impropernum].atid3 = i; continue; }
-                if (!strcmp(t4, atom[i].name)) { strcpy(t4, atom[i].ambername); improper[impropernum].atid4 = i; continue; }
-            }
-            impropernum++;
-        }
-    }
-    fclose(fpin);
-}
-void improper_id2(void) {
-    impropernum = 0;
-    for (int i = 0; i < atomnum; i++)
-        if (atom[i].improper == 1) {
-            if (atom[i].con[0] < 0 || atom[i].con[1] < 0 || atom[i].con[2] < 0)
-                continue;
-            improper[impropernum].atid3 = i;
-            improper[impropernum].atid1 = atom[i].con[0];
-            improper[impropernum].atid2 = atom[i].con[1];
-            improper[impropernum].atid4 = atom[i].con[2];
-            impropernum++;
-        }
+	if ((fpin = fopen(filename, "r")) == NULL) {
+		fprintf(stdout, "Cannot open file %s in improper_id1(), exit\n", filename);
+		exit(1);
+	}
+	readindex = 0;
+	for (;;) {
+		if (fgets(line, MAXCHAR, fpin) == NULL)
+			break;
+		sscanf(line, "%s", tmpchar1);
+		if (strcmp("IMPROPER", tmpchar1) == 0) {
+			readindex = 1;
+			continue;
+		}
+		if (spaceline(line) == 1 && readindex == 1)
+			readindex = 0;
+		if (strcmp(tmpchar1, "DONE") == 0 && readindex == 1)
+			readindex = 0;
+		if (strcmp(tmpchar1, "STOP") == 0 && readindex == 1)
+			readindex = 0;
+		if (strcmp(tmpchar1, "CHARGE") == 0 && readindex == 1)
+			readindex = 0;
+		if (strcmp(tmpchar1, "LOOP") == 0 && readindex == 1)
+			readindex = 0;
+		if (strcmp(tmpchar1, "IMPROPER") == 0 && readindex == 1)
+			readindex = 0;
+
+		if (readindex == 1) {
+			sscanf(line, "%s%s%s%s", tmpchar1, tmpchar2, tmpchar3,
+				   tmpchar4);
+			if (strcmp(tmpchar1, "-M") == 0)
+				continue;
+			if (strcmp(tmpchar2, "-M") == 0)
+				continue;
+			if (strcmp(tmpchar3, "-M") == 0)
+				continue;
+			if (strcmp(tmpchar4, "-M") == 0)
+				continue;
+			if (strcmp(tmpchar1, "+M") == 0)
+				continue;
+			if (strcmp(tmpchar2, "+M") == 0)
+				continue;
+			if (strcmp(tmpchar3, "+M") == 0)
+				continue;
+			if (strcmp(tmpchar4, "+M") == 0)
+				continue;
+			for (i = 0; i < atomnum; i++) {
+				if (strcmp(tmpchar1, atom[i].name) == 0) {
+					improper[impropernum].atid1 = i;
+					continue;
+				}
+				if (strcmp(tmpchar2, atom[i].name) == 0) {
+					improper[impropernum].atid2 = i;
+					continue;
+				}
+				if (strcmp(tmpchar3, atom[i].name) == 0) {
+					improper[impropernum].atid3 = i;
+					continue;
+				}
+				if (strcmp(tmpchar4, atom[i].name) == 0) {
+					improper[impropernum].atid4 = i;
+					continue;
+				}
+			}
+			impropernum++;
+		}
+	}
+	fclose(fpin);
 }
 
 /*========================================================================

@@ -13,7 +13,7 @@ serial:
 	@cd cifparse && $(MAKE) libcifparse
 	@cd leap && $(MAKE) leap
 	@cd sff && $(MAKE) libsff
-	@cd nabc && $(MAKE) nabc
+	@cd nabc && $(MAKE) libnabc
 	@cd antechamber && $(MAKE) install_ac
 	@cd sqm && $(MAKE) install_sqm
 	@cd nmr_aux && $(MAKE) nmr_aux
@@ -28,7 +28,8 @@ serial:
 	@cd nab && $(MAKE) install_nab
 	@cd packmol && $(MAKE) install_packmol
 	@cd mdgx && $(MAKE) install_mdgx
-#	@cd nss & make install_nss  # compiles, but not tested yet
+#	@cd nss && make install_nss  # compiles, but not tested yet
+	@cd pdb4amber && $(MAKE) install  # Romain Wolf version, requires python
 
 parallel:
 	@cd msander && $(MAKE) msander.MPI

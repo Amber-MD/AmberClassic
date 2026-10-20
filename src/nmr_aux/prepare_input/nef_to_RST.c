@@ -466,7 +466,7 @@ void parse_ambig( char *line )
     char    tmpatyp[WORDSIZE];
     char    tmprtyp[WORDSIZE];
 
-    // fprintf( stderr, "in parse_ambig: nm=%d, %s\n", nm,line );
+    // fprintf( stderr, "in parse_ambig: nm=%d, |%s|\n", nm,line );
 
     nw=split(line,word);
     assert( nw <= MAXWORDS );
@@ -694,7 +694,7 @@ int main( int argc, char *argv[] )
     // for ( i = 0; banner[i] != 0; i++ ) fprintf( stderr, banner[i] );
     // fprintf(stderr, "Currently configured for up to %d atoms\n", MAXATOMS);
 
-    if(( ambh = getenv( "AMBERHOME" ))){
+    if(( ambh = getenv( "AMBERCLASSICHOME" ))){
         strncpy( f_map, ambh, MAXFILENAME-1 );
         strcat( f_map, "/dat/" );
     }else{
