@@ -63,6 +63,7 @@ typedef struct PARMSETSTRUCT {
         OBJEKTt         oSuper;
         STRING          sFname;
         STRING          sTitle;
+        char            cksum[32];
         VARARRAY        vaAtoms;
         VARARRAY        vaBonds;
         VARARRAY        vaAngles;
@@ -243,7 +244,6 @@ extern bool        bParmSetTORSIONAddImproperTerm(TORSION tTorsion,
                         const typeStr sType3, const typeStr sType4,
                         int iN, double dKp, double dP0, double dScEE,
                         double dScNB, char *sDesc);
-extern void        ParmSetTORSIONOrderAtoms(void);        
 extern void        ParmSetImproperOrderAtoms( TORSION tTorsion, int iTorsionIndex,
                         char *caPTypes[4], int iaIndexes[4] );
 extern bool        bParmSetCapableOfHBonding( PARMSET psParms, const typeStr sType );

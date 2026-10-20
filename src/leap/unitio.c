@@ -319,7 +319,6 @@ bUnitIOLoadTables(UNIT uUnit, DATABASE db)
     if (iRestraintCount) {
         srPRestraint = PVAI(uUnit->vaRestraints, SAVERESTRAINTt, 0);
         iSize = sizeof(SAVERESTRAINTt);
-        double dTemp;
         bDBGetTable(db, "restraints", &iBondCount,
                     1, (char *) &(srPRestraint->iType), iSize,
                     2, (char *) &(srPRestraint->fFlags), iSize,
@@ -331,11 +330,10 @@ bUnitIOLoadTables(UNIT uUnit, DATABASE db)
                     0, NULL, 0,
                     7, (char *) &(srPRestraint->dKx), iSize,
                     8, (char *) &(srPRestraint->dX0), iSize,
-                    9, (char *) &dTemp, iSize,
+                    9, (char *) &(srPRestraint->dN), iSize,
                     0, NULL, 0,
                     0, NULL, 0,
                     0, NULL, 0, 0, NULL, 0, 0, NULL, 0, 0, NULL, 0);
-                    srPRestraint->iN = round(dTemp);
     }
     /* Load the UNIT connect atoms */
 
@@ -679,7 +677,6 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
     if ((iCount = iVarArrayElementCount(uUnit->vaRestraints))) {
         srPRestraint = PVAI(uUnit->vaRestraints, SAVERESTRAINTt, 0);
         iSize = sizeof(SAVERESTRAINTt);
-        double dTemp = srPRestraint->iN;
         DBPutTable(db, "restraints", iCount,
                    1, "type", (char *) &(srPRestraint->iType), iSize,
                    2, "flags", (char *) &(srPRestraint->fFlags), iSize,
@@ -691,7 +688,7 @@ UnitIOSaveTables(UNIT uUnit, DATABASE db)
                    0, NULL, NULL, 0,
                    7, "kx", (char *) &(srPRestraint->dKx), iSize,
                    8, "x0", (char *) &(srPRestraint->dX0), iSize,
-                   9, "n", (char *) &dTemp, iSize,
+                   9, "n", (char *) &(srPRestraint->dN), iSize,
                    0, NULL, NULL, 0,
                    0, NULL, NULL, 0,
                    0, NULL, NULL, 0,
@@ -1355,10 +1352,6 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
         strcpy(sAtom2, sAtomType(aAtom2));
         strcpy(sAtom3, sAtomType(aAtom3));
 
-/* TODO:Fix this UNGODLY HACK, the PARMSET type has to be modified to */
-/* TODO:Allow the user to specify interactions that should be ignored */
-/* TODO:Like HW-HW-OW angles for TIP3 waters */
-
         if (bUnitIgnoreAngle(sAtom1, sAtom2, sAtom3))
             goto IGNORE1;
 
@@ -1438,10 +1431,6 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
                     strcpy(sAtom2, sAtomType(aAtom2));
             } else
                 strcpy(sAtom3, sAtomType(aAtom3));
-
-/* TODO:Fix this UNGODLY HACK, the PARMSET type has to be modified to */
-/* TODO:Allow the user to specify interactions that should be ignored */
-/* TODO:Like HW-HW-OW angles for TIP3 waters */
 
             if (bUnitIgnoreAngle(sAtom1, sAtom2, sAtom3))
                 goto IGNORE2;
@@ -1524,6 +1513,7 @@ zbUnitIOIndexAngleParameters(PARMLIB plLib, UNIT uUnit, bool bPert)
  *          ..plug params in for molecule
  *        end/molecule_dihedrals
  */
+
 static bool
 zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                                bool bProper, bool bPert )
@@ -1690,9 +1680,9 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                  sAtomName(aAtom3), sAtomName(aAtom4));
 
         stTorsion.bProper = bProper;
+        stTorsion.iTerm = 0;
         stTorsion.bCalc14 = false;
         stTorsion.bPertCalc14 = false;
-
 
         /* iContainerTempInt contains atom indices into SAVEATOMt arrays */
 
@@ -2037,6 +2027,52 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                      stTorsion.iAtom3, stTorsion.iAtom4);
 
             ParmSetImproperOrderAtoms(tTorsion, 0, cPaTypes, iaIndexes);
+            /*
+             * ParmSetImproperOrderAtoms() rewrites cPaTypes[]/iaIndexes[]
+             * from "as found by the topology search" (arbitrary order,
+             * driven by incidental bond-list order) into "parameter file
+             * order" -- i.e. the peripheral atom order the .dat/.frcmod
+             * entry's author originally wrote, before ParmSet's own
+             * internal canonicalization sort. This is done purely to get
+             * energetics right (periodicity/phase were fit against that
+             * written role assignment); it carries NO chirality intent
+             * and NO permutation-parity bookkeeping.
+             *
+             * On return:
+             *   - iaIndexes[2] (atom 3, 1-based) is the CENTRAL atom.
+             *     It is the only slot never moved. Every phase of this
+             *     routine skips it explicitly.
+             *   - iaIndexes[0], iaIndexes[1], iaIndexes[3] are the three
+             *     peripheral atoms, now in file-defined roles. Whether a
+             *     given role was resolved by an exact type match or by
+             *     an internal ascending-atom-index tiebreak (used when a
+             *     role is satisfied by a wildcard or a duplicated type)
+             *     is NOT recorded here -- iaIndexes[] only tells you the
+             *     final assignment, not how confidently it was made.
+             *
+             * If we ever want to test/enforce chirality (e.g. a harmonic
+             * chirality improper) against this output:
+             *   - Hold iaIndexes[2] (center) fixed -- always safe.
+             *   - Compare iaIndexes[0] and iaIndexes[3] (the two "wing"
+             *     atoms) against whatever independent reference defines
+             *     intended handedness (e.g. original build order). If
+             *     they're swapped relative to that reference, the
+             *     improper is inverted relative to it.
+             *   - This wing-swap test is only meaningful if the
+             *     parameter entry's axis-partner slot (iaIndexes[1],
+             *     atom 2) was an EXACT type match -- never a wildcard,
+             *     never sharing a type with another peripheral slot.
+             *     If that role was ambiguous, phase 3's tiebreak (not
+             *     the parameter file) chose which atom sits there, and
+             *     the file itself never encoded a handedness preference
+             *     for that case -- there is nothing to recover.
+             *   - Practical rule: author any new chirality-sensitive
+             *     improper parameter with zero wildcards and zero
+             *     duplicate types among its three peripheral slots.
+             *     Given that, this routine already delivers atoms in
+             *     faithful file order and the wing-swap test above is
+             *     exact.
+             */
 
             stTorsion.iAtom1 = iaIndexes[0];
             stTorsion.iAtom2 = iaIndexes[1];
@@ -2106,6 +2142,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 }
 /*                else if ( !GDefaults.bCharmm )    ???---should I do this????     */
                 else
+//TODO: here we divide out CHARMM impropers with periodicity=0 ?? or not?
                     iIndex = iParmSetAddImproperTerm(uUnit->psParameters,
                                                      sAtom1, sAtom2,
                                                      sAtom3, sAtom4, iN,
@@ -2279,7 +2316,7 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 stP->iPertParmIndex = iIndexMap[ stP->iPertParmIndex - iParmOffset - 1 ];
         }
         FREE( iIndexMap );
-        }
+        }//XXX proper BoilTorsion is a leak
         //BoilTorsions(&uUnit->psParameters->vaTorsions, 0,        /* parm table */
         //             uUnit->vaTorsions, 0);        /* atom lists */
         STOP(iBoil,"Proper (BoilTorsions)");
@@ -2630,7 +2667,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                 srPRestraint->iAtom4 = 0;
                 srPRestraint->dKx = dKx;
                 srPRestraint->dX0 = dX0;
-                srPRestraint->iN = 0;
+                srPRestraint->dN = 0;
                 break;
             case RESTRAINTANGLE:
                 RestraintAngleGet(rRest, &aAtom1, &aAtom2, &aAtom3,
@@ -2641,7 +2678,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                 srPRestraint->iAtom4 = 0;
                 srPRestraint->dKx = dKx;
                 srPRestraint->dX0 = dX0;
-                srPRestraint->iN = 0;
+                srPRestraint->dN = 0;
                 break;
             case RESTRAINTTORSION:
                 RestraintTorsionGet(rRest, &aAtom1, &aAtom2,
@@ -2652,7 +2689,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
                 srPRestraint->iAtom4 = iContainerTempInt(aAtom4);
                 srPRestraint->dKx = dKx;
                 srPRestraint->dX0 = dX0;
-                srPRestraint->iN = iN;
+                srPRestraint->dN = iN;
                 break;
             default:
                 DFATAL("Invalid restraint type!");
@@ -3085,7 +3122,7 @@ void UnitIOBuildFromTables(UNIT uUnit)
                               srPRestraint->iAtom4 - 1)->aAtom;
                 RestraintTorsionSet(rRest, aAtom1, aAtom2, aAtom3, aAtom4,
                                     srPRestraint->dKx, srPRestraint->dX0,
-                                    srPRestraint->iN);
+                                    srPRestraint->dN);
                 break;
             default:
                 DFATAL("Invalid RESTRAINT type loaded");
@@ -3951,8 +3988,27 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
         case 7:  dGBrad = 1.50; break;  case 8:  dGBrad = 1.40; break;
         case 16: dGBrad = 1.85; break;  default: dGBrad = 1.50; break;
         }
+    } else if (GDefaults.iGBparm == GBPARM_SIRAH) {
+        const char *sType = sAtomType(aAtom);
+        struct { char type[4]; double radius; } type_radius[40] = {
+            { "GN", 1.85 }, { "T1", 1.85 }, { "T3", 1.85 }, { "GO", 2.61 }, { "T2", 2.61 },
+            { "T4", 2.61 }, { "GC", 2.30 }, { "YA", 1.94 }, { "Y1", 2.00 }, { "Y3", 2.03 },
+            { "Y4", 1.94 }, { "Y5", 1.79 }, { "YZ", 2.82 }, { "Y6", 2.05 }, { "W1", 1.77 },
+            { "WC", 1.49 }, { "W2", 1.69 }, { "W3", 1.73 }, { "W4", 1.68 }, { "WD", 1.88 },
+            { "WE", 1.76 }, { "WN", 1.79 }, { "WH", 1.49 }, { "QO", 1.74 }, { "QS", 1.90 },
+            { "QP", 1.68 }, { "QC", 1.60 }, { "QK", 2.01 }, { "QX", 1.38 }, { "QN", 1.82 },
+            { "X1", 1.65 }, { "X2", 1.60 }, { "X3", 1.87 }, { "XD", 1.71 }, { "XE", 1.53 },
+            { "X5", 1.97 }, { "X6", 1.90 }, { "X7", 2.52 }, { "XM", 2.25 }, { "", 0.0 }
+        };
+        dGBrad = 1.5;
+        for (int i=0; type_radius[i].type[0]; i++) {
+            if (!strcmp(sType, type_radius[i].type)) {
+                dGBrad = type_radius[i].radius;
+                break;
+            }
+        }
     } else {
-        // Currently, this is all modes but PARSE
+        // Currently, this is all modes but PARSE or SIRAH
         switch (iElement) {
         case 1:
             dGBrad = 1.2;
@@ -3987,6 +4043,14 @@ double dGBRadiusForAtom(SAVEATOMt *sa, int iElement, double dMass, bool bLastAto
             }
             break;
         case 6:
+          // Use the mass of the carbon atom. We are testing for
+          // carbons here. C1 == CH, C2 == CH2, C3 == CH3. UA carbons
+          // have a larger radius (2.2), so we want to make sure that
+          // the C1, C2, and C3 atom types _really_ correspond to UA
+          // UA carbons. C1 atoms should have a mass of 12.01 + 1.01,
+          // C2 should be 12.01 + 2.02, and C3 should be 12.01 + 3.03.
+          // This mnemonic will not work for 13C named "C1". This is
+          // a (hopefully) temporary kludge.
             {
                 const char *sType = sAtomType(aAtom);
                 dGBrad = ((!strncmp(sType, "C1", 2) && dMass >= 13.0) ||

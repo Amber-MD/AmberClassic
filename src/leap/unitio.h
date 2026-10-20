@@ -67,7 +67,7 @@ extern void     UnitIOAddParmSet( UNIT uUnit, PARMSET psLib);
 
 extern int iUnitIOAmberOrderResidues(UNIT);
 
-extern void UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit, bool bPert, bool bPolar,
+extern void UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit, bool bPert, bool bPolar, int iMaxAtoms,
                        VARARRAY vaExcludedAtoms, VARARRAY vaExcludedCount, VARARRAY vaNBIndexMatrix,
                        VARARRAY vaNBParameters, VARARRAY vaNBIndex);
 extern void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut);
@@ -129,7 +129,7 @@ typedef struct {
     int iAtom4;
     double dKx;
     double dX0;
-    int    iN;
+    double dN;
     int iParmIndex;  /* This is filled in when */
                      /* the parameters are written */
                      /* to the file */
@@ -159,7 +159,8 @@ typedef struct {
     int iAtom4;
     int iParmIndex;
     bool bProper;
-    bool bCalc14;
+    int iTerm;
+    bool bCalc14; // obsolete?
     int iPertParmIndex;
     bool bPertCalc14;
     FLAGS fFlags;

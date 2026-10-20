@@ -73,8 +73,9 @@ extern char *PBRadii_options[], *PBRadii_optionDesc[];
 #define GBPARM_AMBER6 1
 #define GBPARM_MBONDI 2
 #define GBPARM_MBONDI2 3
-#define GBPARM_PARSE 4
-#define GBPARM_MBONDI3 5
-#define GBPARM_MAX 5
+#define GBPARM_MBONDI3 4
+#define GBPARM_SIRAH 5
+#define GBPARM_PARSE 6
+#define GBPARM_MAX 6
 
 #endif

@@ -172,7 +172,7 @@ zbUnitCheckAngleParameters( PARMLIB plLib, UNIT uUnit)
 LOOP            lTemp;
 ATOM            aAtom1, aAtom2, aAtom3;
 bool            bFailedGeneratingParameters;
-STRING          sAtom1, sAtom2, sAtom3;
+typeStr         sAtom1, sAtom2, sAtom3;
 PARMSET         psTemp;
 int             iTemp = PARM_NOT_FOUND;
 
@@ -187,10 +187,6 @@ int             iTemp = PARM_NOT_FOUND;
         strcpy( sAtom1, sAtomType( aAtom1 ));
         strcpy( sAtom2, sAtomType( aAtom2 ));
         strcpy( sAtom3, sAtomType( aAtom3 ));
-
-/* TODO:Fix this UNGODLY HACK, the PARMSET type has to be modified to */
-/* TODO:Allow the user to specify interactions that should be ignored */
-/* TODO:Like HW-HW-OW angles for TIP3 waters */
 
         if ( bUnitIgnoreAngle( sAtom1, sAtom2, sAtom3 )) goto IGNORE1;
 
@@ -234,10 +230,6 @@ IGNORE1:
                 strcpy( sAtom2, sAtomPertType( aAtom2 ));
             if ( bAtomFlagsSet( aAtom3, ATOMPERTURB ))
                 strcpy( sAtom3, sAtomPertType( aAtom3 ));
-
-/* TODO:Fix this UNGODLY HACK, the PARMSET type has to be modified to */
-/* TODO:Allow the user to specify interactions that should be ignored */
-/* TODO:Like HW-HW-OW angles for TIP3 waters */
 
             if ( bUnitIgnoreAngle( sAtom1, sAtom2, sAtom3 )) 
                         goto IGNORE2;
@@ -414,40 +406,29 @@ bool    bMissing = false;
  */
 
 
-
 /*
  *      bUnitIgnoreAngle
  *
  *      Author: Christian Schafmeister (1991)
  *
- *      This is an ungodly hack that checks if the types are defining
+ *      This is an ungodly HACK that checks if the types are defining
  *      an angle interaction between HW-HW-OW.  If they are then return true
  *      this will cause the code to ignore this interaction.
  *      This will allow LEAP to handle TIP3 waters.
  */
 bool
-bUnitIgnoreAngle( STRING sA, STRING sB, STRING sC )
+bUnitIgnoreAngle( typeStr sA, typeStr sB, typeStr sC )
 {
-
-    if ( strcmp( sA, "OW" ) == 0 ) {
-        if ( strcmp( sB, "HW" ) == 0 &&
-             strcmp( sC, "HW" ) == 0 ) return true;
-    }
-	if( ! GDefaults.bFlexibleWater ){
-		if ( strcmp( sB, "OW" ) == 0 ) {
-			if ( strcmp( sA, "HW" ) == 0 &&
-				 strcmp( sC, "HW" ) == 0 ) return true;
-		}
-	}
-    if ( strcmp( sC, "OW" ) == 0 ) {
-        if ( strcmp( sB, "HW" ) == 0 &&
-             strcmp( sA, "HW" ) == 0 ) return true;
-    }
+    char key[128];
+    sprintf(key,"%s-%s-%s",sA,sB,sC);
+    
+    if ( !strcmp( key, "OW-HW-HW" )) return true;
+    if ( !strcmp( key, "HW-HW-OW" )) return true;
+    if ( !GDefaults.bFlexibleWater && !strcmp( key, "HW-OW-HW" )) return true;
 
 /*  delete all angles related to extra points    */
-        if( GDefaults.bDeleteExtraPointAngles ){
-        if ( strcmp( sA, "EP" ) == 0 || strcmp( sC, "EP" ) == 0 ) return true;
-        }
+    if ( GDefaults.bDeleteExtraPointAngles &&
+         ( strcmp( sA, "EP" ) == 0 || strcmp( sC, "EP" ) == 0 )) return true;
 
     return false;
 }
@@ -555,6 +536,8 @@ DICTLOOP        dlGroups, dlHeterogens;
         VarArrayDestroy( &(*uPUnit)->vaGroupNames );
     if ( (*uPUnit)->vaGroupAtoms )
         VarArrayDestroy( &(*uPUnit)->vaGroupAtoms );
+    if ( (*uPUnit)->vaParmSets )
+        VarArrayDestroy( &(*uPUnit)->vaParmSets );
 
                 /* Destroy the UNIT */
 

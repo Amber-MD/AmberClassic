@@ -91,6 +91,7 @@ Same as addIons, except solvent and solute are treated the same.
 
 
     addIonsRand unit ion1 #ion1 [ion2 #ion2] [separation]
+    addIonsRand unit ion1 ion2 [molarity [separation] ]
 
 
         UNIT      _unit_
@@ -98,20 +99,25 @@ Same as addIons, except solvent and solute are treated the same.
         NUMBER    _#ion1_
         UNIT      _ion2_
         NUMBER    _#ion2_
+        NUMBER    _molarity_
         NUMBER    _separation_
 
 
 Adds counterions in a shell around _unit_ by replacing random solvent
-molecules. If _#ion1_ is 0, the _unit_ is neutralized (_ion1_ must be
-opposite in charge to _unit_, and _ion2_ cannot be specified). Otherwise,
-the specified numbers of _ion1_ [_ion2_] are added [in alternating order].
-If _separation_ is specified, ions will be guaranteed to be more than that
-distance apart in Angstroms.
+molecules. If _#ion1_ is 0, or only _unit_ and two ions given, the _unit_
+is neutralized (_ion1_ must be opposite in charge to _unit_, and _#ion2_
+cannot be specified). Otherwise, the specified numbers of _ion1_ [_ion2_]
+are added. If _molarity_ is specified, solvent count * _molarity_ / 55.51
+in pairs are added. If _separation_ is specified, ions will be guaranteed
+to be more than that distance apart in Angstroms.
 
 Ions must be monoatomic. This procedure is much faster than addIons, as
 it does not calculate charges. Solvent must be present. It must be possible
 to position the requested number of ions with the given separation in the
 solvent.
+
+if default keep_input_solvent is true, then only solvent added by bulk
+solvation will be considered for ion substitution.
 
 The randomness depends on the innvocation of the LEaP executable.
 In particular, if one creates three copies of a unit and performs
@@ -714,6 +720,40 @@ List all of the variables currently defined.
 
 @@endHelp
 
+@@beginHelp:  listParmSets
+
+    listparmSets
+
+List all currently loaded ParmSets
+
+@@endHelp
+
+@@beginHelp:  listResidues
+
+    listResidues
+
+List all currently defined RESIDUE Templates
+
+RESIDUE Template is a variable defined as a UNIT containing a single RESIDUE.
+For each template, print:
+   Variable name
+   UNIT name, HEAD and TAIL atom names and element
+   RESIDUE name, Residue Type, and CONNECT atoms
+   Flags: idendtifies deficiencies in the template:
+     * ATOMs with undefined elements (These are corrected)
+     * RESIDUE name longer than 3 letters (or 4 with N,C prefix)
+     * Residue Type undefined with polymeric RESIDUE (U.HEAD or U.TAIL)
+     * UNIT HEAD or TAIL does not match RESIDUE HEAD or TAIL 
+     * RESIDUE lists CONNECT atoms to hydrogen
+
+HEAD and TAIL members of RESIDUE are generally not used as the active links
+are copied to UNIT HEAD and TAIL, so CONNECT 0 or 1 errors are irrelevant
+
+Ideally all residues sould have a defined type, so that type mismatch can
+be excluded in TAIL-to-HEAD bonds.
+
+@@endHelp
+
 @@beginHelp:  loadOff
 
     loadOff filename
@@ -803,7 +843,26 @@ http://q4md-forcefieldtools.org/Tutorial/leap-mol3.php
 
       STRING                       _filename_
 
+Load an mmCIF coordinate file. Standard atom records are read and
+processed as with _loadPdb_. (See loadPdb)
+Atom records are in the "atom_site" category.
+alt_id, ins_code, and formal_charge are optional.
+"struct_conn" is processed as LINK, SSBOND
+"struct_ncs_oper" is processed as MTRIXn records
+"pdbx_struct_oper_list" is processed as REMARK 350 BIOMT records
 
+CIF Processing options:
+CIFReadAuth=TRUE: prefer _auth_ columns over _label_
+
+@@endHelp
+
+
+@@beginHelp:  loadPdb
+
+
+    variable = loadPdb filename
+
+      STRING                       _filename_
 
 Load a Protein Data Bank format file with the file name _filename_.
 The sequence numbers of the RESIDUEs will be determined from the order
@@ -811,25 +870,68 @@ of residues within the PDB file ATOM records.  For each residue in the
 PDB file, LEaP searches the variables currently defined for variable
 names that match the residue name.  If a match is found then the
 contents of the variable are copied into the UNIT created for the PDB
-structure.  If no PDB `TER' card separates the current residue from the
-previous one, a bond is created between the connect1 ATOM of the
-previous residue and the connect0 atom of the new one.  (A PDB TER
-record is also used to detect a new residue in the case of contiguous
-residues with identical residue sequence numbers.)  As atoms are read
-from the ATOM records, their coordinates are written into the
-correspondingly named ATOMs within the residue being built.  If the
-entire residue is read and it is found that ATOM coordinates are missing
-then external coordinates are built from the internal coordinates that
+structure.
+
+If no PDB `TER' record separates the current residue from the previous
+one, a bond is created between the TAIL ATOM of the previous UNIT and
+the HEAD ATOM of the current UNIT. Note that CONNECT0 and CONNECT1 of
+the contained residue are not considered. (A PDB TER record will also
+force a new residue in the case of sequential residues with identical
+residue sequence numbers.)
+
+ATOMs defined in the RESIDUE template but absent from the file will
+have coordinates will be built using the internal coordinates that
 were defined in the matching UNIT (residue) variable.  This allows LEaP
 to build coordinates for hydrogens and lone pairs which are not
 specified in PDB files.  Note that the standard leaprc files include
 commands to establish automatic N- and C-termination of amino acid
 sequences and 5' and 3' termination of nucleic acid sequences.
 
+PDB Processing options:
+pdb_auto_match=TRUE: Match RESIDUE templates by ResName, Residue Type, HEAD,
+                TAIL, CONNECT*, Atom names, and finally Sequence priority
+pdb_auto_link=TRUE: apply Bonds to all detected Crosslinks with CONNECT
+               (both residues must have CONNECT atoms)
+pdb_altloc=character: Retain atoms with this non-blank AltLoc, default="A"
+pdb_convert_resname: "none" = allow PdbResMap conversion e.g. DC -> DC5
+                     "keep" = keep all input residue names
+                     "variant" = convert to AMBER variant e.g. HIE
+                          note: variant names longer than 3 characters excluded
+                     "standard" = convert to standard name e.g. HIS
+pdb_link_cutoff=factor: allow TAIL-HEAD bonds up to factor * covalent distance
+pdb_crosslink_cutoff=factor: allow CONNECT bonds up to factor * covalent distance
+pdb_link_ions=TRUE: apply LINK,CONECT bonds to ions (old default=TRUE, now FALSE) 
+pdb_auto_load=TRUE: Automatically "loadOff <resName>.{lib,mol2,prepc}" for missing resName
+pdb_use_link=TRUE: Add bonds using LINK and SSBOND
+pdb_use_conect=TRUE: Add bonds using CONECT (old default)
+pdb_read_model=number:  which MODEL to read, 0=All (old default), -1 = assign extended chainID
+pdb_use_ncs=TRUE: process symmetry MTRIXn records 9old default)
+pdb_use_biomt=TRUE: process REMARK BIOMT in place of MTRIXn records
+pdb_reset_chainids=TRUE: Relabel chainId in order A-Z,0-9,a-z then 2-characters
+pdb_patch_file=FILENAME: generate auto-link patch file (to be sourced after loadPdb)
 
 
 @@endHelp
 
+
+@@beginHelp:  loadCif
+
+
+    variable = loadCif filename
+
+      STRING                       _filename_
+
+Load an mmCIF format file with the file name _filename_.
+Processing is identical to PDB format, with appropriate field
+correspondences. mmCIF files also contain both standardized
+ChainID, ResSeq and resName fields. By default, author (origninal)
+fields are parse. To read standardized fields, use the setting:
+
+    set [default] cif_read_auth=FALSE
+
+For all other options, see "help loadPdb"
+
+@@endHelp
 
 @@beginHelp:  loadPdbUsingSeq
 
@@ -1383,6 +1485,83 @@ Sets the SELECT flag on all ATOMs within _obj_.  See the deSelect command.
 
 @@endHelp
 
+@@beginHelp:  selectMask
+
+
+    selectMask unit mask
+
+
+      UNIT                       _unit_
+      STRING                     _mask_
+
+
+
+Sets the SELECT flag on all ATOMs selected by _mask_.  Also see the deSelectMask command.
+
+Implements cpptraj AtomMask
+1. ~ Forced Literal String, for names containing leading zero or letters * or ?
+2. Integer Auto-Promotion to String in Name Contexts (ChainID or residue name list)
+3. Full fnmatch() Glob with bracket expressions that support character escape
+4. Drop '=' Wildcard Alias
+5. ":#" for Flat Index, and migrate ":" defaults to PDB resSeq
+
+For '=' wildcard and ':' as residue index: set mask_compat = true
+
+Full Grammar
+expression  := operand
+             | '!' expression
+             | expression '&' expression
+             | expression '|' expression
+             | '(' expression ')'
+
+operand     := selection_spec_list | '*'
+
+selection_spec_list
+            := selection_spec
+             | res_selection  atom_selection       -- implied AND (narrowing)
+             | mol_selection  atom_selection       -- implied AND
+             | mol_selection  res_selection        -- implied AND
+             | mol_res_selection atom_selection    -- implied AND (3-level chain)
+             | selection_spec_list selection_spec  -- implied OR  (same level)
+
+mol_res_selection
+            := mol_selection res_selection         -- AND, intermediate for 3-level
+
+res_selection
+            := ':' value_list                      -- Residue Index or PDB resSeq when following chainID
+             | ':#' value_list                     -- flat sequential index
+             | '::' value_list                     -- chain ID (int auto-promoted)
+             | ':(' expression ')'                 -- residues containing expr
+
+atom_selection
+            := '@' value_list                      -- atom number or name
+             | '@%' value_list                     -- atom type (always literal)
+             | '@/' value_list                     -- element number or name
+
+mol_selection
+            := '^' value_list                      -- molecule number
+             | '^(' expression ')'                 -- molecules containing expr
+
+value_list  := value (',' value)*
+
+value       := integer
+             | integer '-' integer                 -- numeric range
+             | name                                -- string, glob active
+             | '~' name                            -- forced literal, no glob
+
+name        := chars including [x] literal escapes for special chars
+               * and ? are glob wildcards outside ~ context
+               See "man fnmatch" for full bracket class functionality.
+
+distance_op := ('<' | '>') ('@' | ':' | ';' | '^') number
+             -- select within < or beyond > 
+             -- select atoms @, residues :, residus by center ;, or molecules ^ 
+             -- within or beyond radius in Angstroms
+             -- e.g.  :ALA <@5.0
+
+@@endHelp
+
+
 
 @@beginHelp:  sequence
 
@@ -1442,7 +1621,7 @@ with polarizable atoms, e.g.
 @@beginHelp:  set
 
 
-   set default variable value
+   set [default] variable value
 
       STRING                       _variable_
 
@@ -1452,7 +1631,7 @@ OR
 
     set container parameter object
 
-      UNIT/RESIDUE/ATOM/STRING     _container_
+      UNIT/RESIDUE/ATOM/LIST       _container_
 
       STRING                       _parameter_
 
@@ -1461,14 +1640,13 @@ OR
 
 This command sets the values of some global parameters (when the first
 argument is "default") or sets various parameters associated with _container_.
-
+Lists of objects are accepted, including named Groups or selection Masks.
 
 To see the possible variables for "set default", type "help set_default".
 
-
-The box parameter of a UNIT defines the bounding box of the UNIT; this is
-not a UNIT's periodic box.  The setBox and solvate family of commands add a
-periodic box to a UNIT; for a description, type, e.g., "help setBox".
+The box parameter of a UNIT defines the bounding box of the UNIT; this does
+not define a UNIT's periodic box.  The setBox and solvate family of commands
+add a periodic box to a UNIT; for a description, type, e.g., "help setBox".
 
 
 The more useful parameters for each type of _container_ are the following:
@@ -1477,9 +1655,11 @@ The more useful parameters for each type of _container_ are the following:
 
 
   UNIT         name                 STRING
+               description          STRING (defines HETNAM for residue templates)
                head, tail           ATOM [e.g. unit.1.1]
                restype              "protein" "nucleic" "saccharide" "solvent"
-                                    "undefined" [sets all residues in UNIT]
+                                    "undefined" "ion" "ligand" "other"
+                                                  [sets all residues in UNIT]
                box                  LIST [side lengths: {A B C}]
                                     or NUMBER [cube side length] or "null"
                cap                  LIST [center, radius: {X Y Z  R}]
@@ -1500,6 +1680,63 @@ The more useful parameters for each type of _container_ are the following:
                position             LIST [{X Y Z}]
 
 @@endHelp
+
+@@beginHelp:  get
+
+
+    variable = get container parameter [mode]
+
+      object/value                 _variable_
+
+      UNIT/RESIDUE/ATOM/LIST       _container_
+
+      STRING                       _parameter_
+
+      object                       _object/value_
+
+      STRING                       _mode_
+
+
+This command gets various parameters associated with _container_,
+complementary to set. _container_ may be a list, including a
+named Group or Mask selection
+
+The accessible parameters for each type of _container_ are the following:
+
+  container    parameters           values
+
+
+  UNIT         name                 STRING
+               description          STRING
+               head, tail           ATOM [e.g. unit.1.1]
+               box.x, box.y, box.z  side lengths: A, B, C
+               box                  BOOL: box enabled = 1
+               cap.x, cap.y,        Cap Center, radius: {X Y Z  R}]
+                  cap.z, cap.r
+               cap                  BOOL: cap enabled = 1
+
+
+  RESIDUE      name                 STRING
+               restype              Residue link category (see _set_)
+               connect0, connect1   ATOM [e.g. unit.1.1]
+               imagingAtom          ATOM [e.g. unit.1.1]
+
+
+  ATOM         name, pertName       STRING [<= 4 chars]
+               type, pertType       STRING [<= 2 chars]
+               element              STRING
+               pert                 "true" [or pert flag unset]
+               charge, pertCharge   DOUBLE
+               position.x           X coordinate
+               position.y           Y coordinate
+               position.z           Z coordinate
+
+@@endHelp
+
+
+@@beginHelp:  set_default
+
+Allowed arguments to "set default variable value" are these:
 
 
 @@beginHelp:  set_default

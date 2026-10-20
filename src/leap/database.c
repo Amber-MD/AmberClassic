@@ -557,7 +557,6 @@ static void
 StripDouble( char *sLine, double *dPDbl )
 {
 STRING  sHead;
-
     sRemoveLeadingSpaces( sLine );
     sRemoveFirstString( sLine, sHead );
     sscanf( sHead, "%lg", dPDbl );
@@ -1779,9 +1778,10 @@ bDBGetTable( DATABASE db, char *sOrgEntry, int *iPLength,
 STRING          sEntry, sName, sType;
 char            sLine[MAXDATALINELEN];
 ENTRY           eEntry;
-int             iColumn, iType;
+int             iColumn, iType, iLen;
 
     MESSAGE("Getting table\n" );
+    iLen = *iPLength;
 
     *iPLength = 0;
 
@@ -1824,6 +1824,10 @@ int             iColumn, iType;
     while ( zbDBReadDataLine( db, sLine ) ) {
         iColumn = 1;
 	(*iPLength)++;
+        if (iLen>0 && *iPLength > iLen) {
+          VPWARN("Table %s overflow\n",sOrgEntry);
+          return true;
+        }
 
         do {
                 /* If there is no more stuff then stop */

@@ -182,8 +182,70 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     STRING sComment;
     int CMAP_TYPES = iParmSetTotalCMAPParms(uUnit->psParameters);
     int CMAP_KINDS = iVarArrayElementCount(uUnit->vaCMAPs);
+    int cmap_renum[256]={0};  // FIXME delete
     if (!(CMAP_TYPES && CMAP_KINDS)) return;
 
+
+    if (GDefaults.dPrmtopFormat>=2.0) {
+        FortranFormat(1, "%-80s");
+        FortranWriteString("%FLAG CMAP_RESOLUTION");
+        sprintf(sComment, "%%COMMENT DIMENSION:CMAP_TYPES; SIZE:%d;", CMAP_TYPES);
+        FortranWriteString(sComment);
+        FortranWriteString("%FORMAT(20I4)");
+        FortranFormat(20, "%4d");
+        int cmap_energy_size = 0, title_len=0;
+        CMAP cmaps = MALLOC(sizeof(CMAPt)*CMAP_TYPES);
+        printf("types=%d, kinds=%d\n", CMAP_TYPES, CMAP_KINDS);
+        for (int i = 0; i < CMAP_TYPES; i++) {
+            ParmSetCMAP(uUnit->psParameters, i, &cmaps[i], false);
+            FortranWriteInt(cmaps[i].resolution);
+            cmap_energy_size += cmaps[i].resolution * cmaps[i].resolution;
+            int len = (int)strlen(cmaps[i].title);
+            if (len > title_len) title_len = len;
+        }
+        FortranEndLine();
+
+        FortranFormat(1, "%-80s");
+        FortranWriteString("%FLAG CMAP_PARAMETER");
+        sprintf(sComment, "%%COMMENT SIZE:%d; UNITS:kcal/mol; DESC:CMAP energy grid: rows=phi, cols=psi;", cmap_energy_size);
+        FortranWriteString(sComment);
+        sprintf(sComment, "%%COMMENT INDEXING: SUM(CMAP_RESOULTION(I=1,N-1)^2");
+        FortranWriteString(sComment);
+        FortranWriteString("%FORMAT(8F9.5)");
+        FortranFormat(8, "%9.5lf");
+        for (int i = 0; i < CMAP_TYPES; i++) {
+            for (int j = 0; j < cmaps[i].resolution * cmaps[i].resolution; j++) FortranWriteDouble(cmaps[i].map[j]);
+        }
+        FortranEndLine();
+
+        FortranFormat(1, "%-80s");
+        FortranWriteString("%FLAG CMAP_TITLE");
+        sprintf(sComment, "%%COMMENT LENGTH:%d; SIZE:%d;", title_len, CMAP_TYPES);
+        FortranWriteString(sComment);
+        FortranWriteString("%FORMAT(A)");
+        for (int i = 0; i < CMAP_TYPES; i++) FortranWriteString(cmaps[i].title);
+        FortranEndLine();
+        FREE(cmaps);
+
+        FortranFormat(1, "%-80s");
+        FortranWriteString("%FLAG CMAP_INDEX");
+        if (GDefaults.dPrmtopFormat>1.0) {
+            sprintf(sComment, "%%COMMENT DIMENSION:CMAP_KINDS; STRIDE:6; SIZE:%d;", CMAP_KINDS);
+            FortranWriteString(sComment);
+            FortranWriteString("%COMMENT MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,ATOM_M,PARM_INDEX;");
+            FortranWriteString("%COMMENT DESC:INDEX=1-based index into CMAP_RESOLUTION CMAP_PARAMETER");
+        }
+        FortranWriteString("%FORMAT(6I8)");
+        FortranFormat(6, "%8d");
+        for (int i = 0; i < CMAP_KINDS; i++) {
+            SAVECMAPt *saveCMAP = PVAI(uUnit->vaCMAPs, SAVECMAPt, i);
+            for (int j=0;j<5;j++) FortranWriteInt(saveCMAP->iAtom[j]);
+            FortranWriteInt(saveCMAP->iParmIndex);
+        }
+        FortranEndLine();
+        return;
+
+    }
 
     FortranFormat(1, "%-80s");
     FortranWriteString("%FLAG CMAP_COUNT");
@@ -212,7 +274,6 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     }
     FortranEndLine();
 
-    int cmap_renum[256]={0};
     if (GDefaults.bOrigCMAPOrder) { // FIXME: remove this compatibility feature hack
         int iIndex=0;
         for (int irenum=0;irenum<256;irenum++) if (dest_cmap_index[irenum]>=0) {
@@ -255,13 +316,12 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
         FortranEndLine();
     }
     }
-
     FREE(cmaps);
 
     FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CMAP_INDEX");
+    FortranWriteString("%FLAG CMAP_INDEX"); // FIXME: whys is this part duplicated
     if (GDefaults.dPrmtopFormat>1.0) {
-        sprintf(sComment, "%%COMMENT DIMENSION:CMAP_KINDS; STRIDE:6; SIZE:%d;", CMAP_KINDS*6);
+        sprintf(sComment, "%%COMMENT DIMENSION:CMAP_KINDS; STRIDE:6; SIZE:%d;", CMAP_KINDS);
         FortranWriteString(sComment);
         FortranWriteString("%COMMENT MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,ATOM_M,PARM_INDEX;");
         FortranWriteString("%COMMENT DESC:INDEX=1-based index into CMAP_RESOLUTION_<nn> CMAP_PARAMETER_<nn>");
@@ -271,7 +331,7 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     for (int i = 0; i < CMAP_KINDS; i++) {
         SAVECMAPt *saveCMAP = PVAI(uUnit->vaCMAPs, SAVECMAPt, i);
         for (int j=0;j<5;j++) FortranWriteInt(saveCMAP->iAtom[j]);
-      if (GDefaults.bOrigCMAPOrder) // FIXME: remove this compatibility feature hack
+      if (GDefaults.bOrigCMAPOrder && GDefaults.dPrmtopFormat<2.0 ) // FIXME: remove this compatibility feature hack
         FortranWriteInt(cmap_renum[saveCMAP->iParmIndex-1]);
       else
         FortranWriteInt(saveCMAP->iParmIndex);
