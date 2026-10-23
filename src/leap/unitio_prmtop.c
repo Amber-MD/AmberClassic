@@ -25,6 +25,7 @@
 #define DBLCOUNT        5
 #define LBLFORMAT_C     "%-4s"
 #define LBLFORMAT_F     "A4"
+#define AMBER_VERSION   "3.0"
 
 /* COMMENT_DIM: annotate a FLAG section with its dimension name and size.
    For 2D/strided arrays, add STRIDE=n manually after the macro.          */
@@ -133,7 +134,6 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
 {
     SAVERESIDUEt *srPRes;
     int iResidues, iAtom, iCount;
-    LOOP lSpanning;
     bool bSeenFirstSolvent = false, bWarn = false;
     ATOM aAtom;
 
@@ -176,7 +176,7 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
 
         iMolecule++;
         iCount = 0;
-        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
+        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,lSpanning) {
             AtomSetFlags(aAtom, ATOMTOUCHED);
             iCount++;
             CONTAINER cParent = cContainerWithin(aAtom);
@@ -405,8 +405,9 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 // PRMTOP entries in cpptraj that are not here (See Parm_Amber.cpp for the full list)
 // LES_NTYP scalar
 // LES_CNUM(natoms) -- copy ID (altLoc)
-// LES_ID(natoms) -- LES group number
-// LES_TYPE(natoms)  -- clssification purely for cross-interactions via LES_FAC
+// LES_ID(natoms) -- Per-atom LES subspace, or region, identifier
+// LES_TYPE(natoms)  -- Per-atom LES type; the manual describes each new set of copies as a new type,
+//                      for cross-interactions via LES_FAC
 // LES_FAC(LES_NTYP,LES_NTYP) cross-group energy scaling (auto computed by addles)
 //
 // CHARMM_UREY_BRADLEY_COUNT scalar
@@ -424,7 +425,6 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
                                 bool bPolar, bool bPert, bool bNetcdf)
 {
     int i, iMax, iIndex;
-    LOOP lTemp, lSpan;
     ATOM aAtom, aA, aB, aC, aD;
     int iCount, iBondWith, iBondWithout, iAngleWith, iAngleWithout,
         iTorsionWith, iTorsionWithout, iNumExtra, nBondTypes;
@@ -476,7 +476,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
         iCount = 0;
         bFoundSome = false;
         iStart = iVarArrayElementCount(vaExcludedAtoms);
-        LOOPOVERALL(aAtom,SPANNINGTREE,aA,ATOM,lSpan) {
+        LOOPOVERALL(aAtom,SPANNINGTREE,aA,lSpanning) {
             if (aA == aAtom) continue;
             // If the atom is more than three away from the first
             // atom then it is not in the excluded atom list
@@ -508,7 +508,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     create_index(&iResIx, IX_DUPKEYREC, IX_LEN_CSTRING);
     VP0("Marking per-residue atom chain types.\n");
     iMaxAtoms = 0;
-    LOOPOVERALL(uUnit,RESIDUES,rRes,RESIDUE,lTemp) {
+    LOOPOVERALL(uUnit,RESIDUES,rRes,lResidues) {
         iAtoms = iMarkMainChainAtoms(rRes, false);
         if (iAtoms > 0) MarkSideChainAtoms(rRes);
         if (iAtoms < 0) {
@@ -589,7 +589,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString(sContainerName(uUnit));
 
   if (GDefaults.dPrmtopFormat > 1.0) {
-      const char *sLabel = "AMBER ";
+      const char *sLabel = "AMBER " AMBER_VERSION;
       STRING sTemp1, sTemp2;
       PARMSET psParm;
       int iLines=0, iPARM=-1;
@@ -707,7 +707,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   NPHIH=iTorsionWith;
   MPHIA=iTorsionWithout;
   NHPARM=0;
-  NPARM=0;
+  NPARM=0; // LES flag
 
   // Write the number of excluded atoms
   NNB=iVarArrayElementCount(vaExcludedAtoms);
@@ -797,8 +797,13 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   MDPER=iCountTorsionPerturbed - iCountTorsionBoundary;
 
   // Save flag for periodic boundary conditions
-  if (bUnitUseBox(uUnit)) IFBOX = bUnitBoxOct(uUnit) ? 2 : 1;
-  else IFBOX = 0;
+  if (bUnitUseBox(uUnit)) {
+    if (bUnitBoxOct(uUnit)) IFBOX = 2;
+    else if (abs(uUnit->dAlpha * RADTODEG - 90.0) > 1.e-5 ||
+             abs(uUnit->dBeta  * RADTODEG - 90.0) > 1.e-5 ||
+             abs(uUnit->dGamma * RADTODEG - 90.0) > 1.e-5) IFBOX = 3;
+    else IFBOX = 1;
+  } else IFBOX = 0;
 
   // Save the number of atoms in the largest residue
   NMXRS=iMaxAtoms;
@@ -1678,7 +1683,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranWriteString("%FLAG SOLVENT_POINTERS");
       COMMENT("PARAMETER; MEMBERS:IPTRES,NSPM,NSPSOL;")
       COMMENT_SIZE(3)
-      FortranIntFormat(NRES);
+      FortranIntFormat(NRES); //FIXME
       FortranWriteInt(IPTRES);
       FortranWriteInt(NSPM);
       FortranWriteInt(NSPSOL);
@@ -1698,31 +1703,29 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -35C- BETA, (BOX(I), I=1,3 )
     FortranDebug("-35C-");
-    FortranFormat(1, "%-80s");
     UnitGetBox(uUnit, &dX, &dY, &dZ);
-    if (GDefaults.dPrmtopFormat >= 2.0 ||
-         (dUnitBeta(uUnit)!=uUnit->dAlpha || dUnitBeta(uUnit)!=uUnit->dGamma) ) {
-      FortranWriteString("%FLAG CELL_DIMENSIONS");
-      COMMENT("SIZE: 6; UNITS:angstrom,degrees; MEMBERS:A,B,C,APHA,BETA,GAMMA;")
-      FortranWriteString("%FORMAT(6E16.8)");
-      FortranFormat(4, DBLFORMAT_C);
-      FortranWriteDouble(dX);
-      FortranWriteDouble(dY);
-      FortranWriteDouble(dZ);
+    FortranFormat(1, "%-80s");
+    FortranWriteString("%FLAG BOX_DIMENSIONS");
+    COMMENT("SIZE:4; UNITS:degrees,angstrom; MEMBERS:BETA,A,B,C;")
+    FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
+    FortranFormat(4, DBLFORMAT_C);
+    FortranWriteDouble(dUnitBeta(uUnit) * RADTODEG);
+    FortranWriteDouble(dX);
+    FortranWriteDouble(dY);
+    FortranWriteDouble(dZ);
+    FortranEndLine();
+
+    if (IFBOX > 1) {
+      FortranFormat(1, "%-80s");
+      FortranWriteString("%FLAG BOX_ANGLES");
+      COMMENT("SIZE:3; UNITS:degrees; MEMBERS:ALPHA,BETA,GAMMA;")
+      FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
+      FortranFormat(3, DBLFORMAT_C);
       FortranWriteDouble(uUnit->dAlpha * RADTODEG);
       FortranWriteDouble(uUnit->dBeta  * RADTODEG);
       FortranWriteDouble(uUnit->dGamma * RADTODEG);
-    } else {
-      FortranWriteString("%FLAG BOX_DIMENSIONS");
-      COMMENT("SIZE:4; UNITS:angstrom,degrees; MEMBERS:BETA,A,B,C;")
-      FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
-      FortranFormat(4, DBLFORMAT_C);
-      FortranWriteDouble(dUnitBeta(uUnit) * RADTODEG);
-      FortranWriteDouble(dX);
-      FortranWriteDouble(dY);
-      FortranWriteDouble(dZ);
+      FortranEndLine();
     }
-    FortranEndLine();
   }
 
   // -35D- NATCAP
@@ -1809,21 +1812,21 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranIntFormat(NBPER);
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
-      if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) == 0)) {
-        FortranWriteInt(AMBERINDEX(sbPBond->iAtom1));
-        FortranWriteInt(AMBERINDEX(sbPBond->iAtom2));
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
+        if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) == 0)) {
+          FortranWriteInt(AMBERINDEX(sbPBond->iAtom1));
+          FortranWriteInt(AMBERINDEX(sbPBond->iAtom2));
+        }
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
-      if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) != 0)) {
-        FortranWriteInt(AMBERINDEX(sbPBond->iAtom1));
-        FortranWriteInt(AMBERINDEX(sbPBond->iAtom2));
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
+        if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) != 0)) {
+          FortranWriteInt(AMBERINDEX(sbPBond->iAtom1));
+          FortranWriteInt(AMBERINDEX(sbPBond->iAtom2));
+        }
       }
-    }
     }
     FortranEndLine();
 
@@ -1837,37 +1840,37 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // First, LAMBDA = 0
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
-      if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) == 0)) {
-        FortranWriteInt(sbPBond->iParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
+        if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) == 0)) {
+          FortranWriteInt(sbPBond->iParmIndex);
+        }
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
-      if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) != 0)) {
-        FortranWriteInt(sbPBond->iParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
+        if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) != 0)) {
+          FortranWriteInt(sbPBond->iParmIndex);
+        }
       }
-    }
     }
 
     // Then LAMBDA = 1
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
-      if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) == 0)) {
-        FortranWriteInt(sbPBond->iPertParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
+        if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) == 0)) {
+          FortranWriteInt(sbPBond->iPertParmIndex);
+        }
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
-      if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) != 0)) {
-        FortranWriteInt(sbPBond->iPertParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
+        if (((sbPBond->fFlags & PERTURBED) != 0) && ((sbPBond->fFlags & BOUNDARY) != 0)) {
+          FortranWriteInt(sbPBond->iPertParmIndex);
+        }
       }
-    }
     }
     FortranEndLine();
 
@@ -1880,23 +1883,23 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranIntFormat(NGPER);
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
-      if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) == 0)) {
-        FortranWriteInt(AMBERINDEX(saPAngle->iAtom1));
-        FortranWriteInt(AMBERINDEX(saPAngle->iAtom2));
-        FortranWriteInt(AMBERINDEX(saPAngle->iAtom3));
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
+        if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) == 0)) {
+          FortranWriteInt(AMBERINDEX(saPAngle->iAtom1));
+          FortranWriteInt(AMBERINDEX(saPAngle->iAtom2));
+          FortranWriteInt(AMBERINDEX(saPAngle->iAtom3));
+        }
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
-      if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) != 0)) {
-        FortranWriteInt(AMBERINDEX(saPAngle->iAtom1));
-        FortranWriteInt(AMBERINDEX(saPAngle->iAtom2));
-        FortranWriteInt(AMBERINDEX(saPAngle->iAtom3));
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
+        if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) != 0)) {
+          FortranWriteInt(AMBERINDEX(saPAngle->iAtom1));
+          FortranWriteInt(AMBERINDEX(saPAngle->iAtom2));
+          FortranWriteInt(AMBERINDEX(saPAngle->iAtom3));
+        }
       }
-    }
     }
     FortranEndLine();
 
@@ -1910,37 +1913,37 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // First LAMBDA = 0
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
-      if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) == 0)) {
-        FortranWriteInt(saPAngle->iParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
+        if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) == 0)) {
+          FortranWriteInt(saPAngle->iParmIndex);
+        }
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
-      if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) != 0)) {
-        FortranWriteInt(saPAngle->iParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
+        if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) != 0)) {
+          FortranWriteInt(saPAngle->iParmIndex);
+        }
       }
-    }
     }
 
     // Then LAMBDA = 1
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
-      if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) == 0)) {
-        FortranWriteInt(saPAngle->iPertParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
+        if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) == 0)) {
+          FortranWriteInt(saPAngle->iPertParmIndex);
+        }
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
-      if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) != 0)) {
-        FortranWriteInt(saPAngle->iPertParmIndex);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
+        if (((saPAngle->fFlags & PERTURBED) != 0) && ((saPAngle->fFlags & BOUNDARY) != 0)) {
+          FortranWriteInt(saPAngle->iPertParmIndex);
+        }
       }
-    }
     }
     FortranEndLine();
 
@@ -1953,41 +1956,41 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranIntFormat(NDPER);
     if (iVarArrayElementCount(uUnit->vaTorsions)) {
       stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++, stPTorsion++) {
-      if (((stPTorsion->fFlags & PERTURBED) != 0) && ((stPTorsion->fFlags & BOUNDARY) == 0)) {
-        if ((AMBERINDEX(stPTorsion->iAtom3) == 0) || (AMBERINDEX(stPTorsion->iAtom4) == 0)) {
-          MESSAGE("Had to turn torsion around to avoid K,L == 0\n");
-          aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
-          aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
-          MESSAGE("Outer atoms: %s --- %s\n", sContainerName(aA), sContainerName(aD));
-          SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
-          SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++, stPTorsion++) {
+        if (((stPTorsion->fFlags & PERTURBED) != 0) && ((stPTorsion->fFlags & BOUNDARY) == 0)) {
+          if ((AMBERINDEX(stPTorsion->iAtom3) == 0) || (AMBERINDEX(stPTorsion->iAtom4) == 0)) {
+            MESSAGE("Had to turn torsion around to avoid K,L == 0\n");
+            aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
+            aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
+            MESSAGE("Outer atoms: %s --- %s\n", sContainerName(aA), sContainerName(aD));
+            SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
+            SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
+          }
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * (stPTorsion->bCalc14 ? 1 : -1));
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * (stPTorsion->bProper ? 1 : -1));
         }
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * (stPTorsion->bCalc14 ? 1 : -1));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * (stPTorsion->bProper ? 1 : -1));
       }
-    }
     }
     if (iVarArrayElementCount(uUnit->vaTorsions)) {
       stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, 0);
-    for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++, stPTorsion++) {
-      if (((stPTorsion->fFlags & PERTURBED) != 0) && ((stPTorsion->fFlags & BOUNDARY) != 0)) {
-        if ((AMBERINDEX(stPTorsion->iAtom3) == 0) || (AMBERINDEX(stPTorsion->iAtom4) == 0)) {
-          MESSAGE("Had to turn torsion around to avoid K,L == 0\n");
-          aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
-          aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
-          MESSAGE("Outer atoms: %s --- %s\n", sContainerName(aA), sContainerName(aD));
-          SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
-          SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
+      for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++, stPTorsion++) {
+        if (((stPTorsion->fFlags & PERTURBED) != 0) && ((stPTorsion->fFlags & BOUNDARY) != 0)) {
+          if ((AMBERINDEX(stPTorsion->iAtom3) == 0) || (AMBERINDEX(stPTorsion->iAtom4) == 0)) {
+            MESSAGE("Had to turn torsion around to avoid K,L == 0\n");
+            aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
+            aD = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom4 - 1)->aAtom;
+            MESSAGE("Outer atoms: %s --- %s\n", sContainerName(aA), sContainerName(aD));
+            SWAP(stPTorsion->iAtom1, stPTorsion->iAtom4, iTemp);
+            SWAP(stPTorsion->iAtom2, stPTorsion->iAtom3, iTemp);
+          }
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * (stPTorsion->bCalc14 ? 1 : -1));
+          FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * (stPTorsion->bProper ? 1 : -1));
         }
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom1));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom2));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom3) * (stPTorsion->bCalc14 ? 1 : -1));
-        FortranWriteInt(AMBERINDEX(stPTorsion->iAtom4) * (stPTorsion->bProper ? 1 : -1));
       }
-    }
     }
     FortranEndLine();
 
@@ -2478,7 +2481,6 @@ UnitIOSaveAmberParmFormat_old( UNIT uUnit, FILE *fOut, char *crdName,
         bool bPolar, bool bPert)
 {
 int             i, iMax, iIndex;
-LOOP            lTemp, lSpan;
 ATOM            aAtom, aA, aB, aC, aD;
 int             iCount, iBondWith, iBondWithout;
 int             iAngleWith, iAngleWithout;
@@ -2527,11 +2529,10 @@ IX_DESC         iResIx;
         if ( bAtomFlagsSet( aAtom, ATOMPERTURB ) )
                 iCountPerturbed++;
 
-        lSpan = lLoop( (OBJEKT)aAtom, SPANNINGTREE );
         iCount = 0;
         bFoundSome = false;
         iStart = iVarArrayElementCount( vaExcludedAtoms );
-        while ( (aA = (ATOM)oNext(&lSpan)) ) {
+        LOOPOVERALL(aAtom, SPANNINGTREE, aA, lSpan) {
 
             if ( aA == aAtom ) continue;
             
@@ -2579,8 +2580,7 @@ IX_DESC         iResIx;
     VP0( "Marking per-residue atom chain types.\n" );
 
     iMaxAtoms = 0;
-    lTemp = lLoop( (OBJEKT)uUnit, RESIDUES );
-    while ( (rRes = (RESIDUE)oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit, RESIDUES, rRes, lTemp) {
         iAtoms = iMarkMainChainAtoms( rRes, false );
         if ( iAtoms > 0 )
                 MarkSideChainAtoms( rRes );

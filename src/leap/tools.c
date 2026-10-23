@@ -86,14 +86,12 @@ STRING          sType, sDesc;
 static double
 dToolFindBiggestAtom( UNIT uUnit )
 {
-LOOP            lTemp;
 ATOM            aAtom;
 double          dMaxR, dR;
 
     dMaxR = 0.0;
 
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lTemp) {
         dR = dToolAtomR( aAtom );
         if ( dR < 0.1 ) {
             /* R unknown or 0 */
@@ -119,7 +117,6 @@ double          dMaxR, dR;
 static double
 dToolUnitMass( UNIT uUnit )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 PARMSET         psTemp;
 int             iTag, iElement, iHybrid, iIncomplete;
@@ -129,8 +126,7 @@ STRING          sType, sDesc;
 
         dTotalMass = 0.0;
         iIncomplete = 0;
-        lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
-        while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+        LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) {
                 /*
                  *  try ff=parmlibs 1st
                  */
@@ -223,12 +219,10 @@ ToolSanityCheckBox( UNIT uUnit )
 static void
 zToolSetTempRadii( UNIT uUnit )
 {
-LOOP    lTemp;
 ATOM    aAtom;
 double  dR;
 
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lTemp) {
         dR = dToolAtomR( aAtom );
         if ( dR < 0.1 ) {
                 /* R unknown or 0 */
@@ -255,7 +249,6 @@ double  dR;
 void
 ToolCenterUnitByRadii( UNIT uUnit, bool bOrient )
 {
-LOOP            lTemp;
 ATOM            aAtom;
 double          dR, dXmin=0, dYmin=0, dZmin=0, dXmax=0, dYmax=0, dZmax=0;
 double          dX, dY, dZ;
@@ -281,8 +274,7 @@ int             iFirst = 1;
         ToolOrientPrincipleAxisAlongCoordinateAxis( uUnit );
     }
 
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lTemp) {
         dR = dToolAtomR( aAtom );
         if ( dR < 0.1 ) {
             /* R unknown or 0 */
@@ -351,15 +343,13 @@ int             iFirst = 1;
 void
 ToolSetUnitBoxByCenters( UNIT uUnit )
 {
-LOOP            lTemp;
 ATOM            aAtom;
 double          dXmin=0, dYmin=0, dZmin=0, dXmax=0, dYmax=0, dZmax=0;
 double          dX, dY, dZ;
 VECTOR          vPos;
 int             iFirst = 1;
 
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lTemp) {
         vPos = vAtomPosition(aAtom);
         dX = dVX(&vPos);
         dY = dVY(&vPos);
@@ -442,18 +432,13 @@ RESIDUE         rRes;
 static void
 zToolBuildSoluteArray( UNIT uSolute, double dCloseness, VARARRAY *vaPSolute)
 {
-int             i, iAtoms;
-LOOP            lTemp;
+int             iAtoms;
 VARARRAY        vaSolute;
 ATOM            aAtom;
 Point           *ptPTmp;
 
-
-
     iAtoms = 0;
-    lTemp = lLoop( (OBJEKT)uSolute, ATOMS );
-    while ( oNext(&lTemp) != NULL ) 
-        iAtoms++;
+    LOOPOVERALL(uSolute,ATOMS,aAtom,lTemp) iAtoms++;
     
     vaSolute = vaVarArrayCreate( sizeof(Point) );
     VarArraySetSize( vaSolute, iAtoms );
@@ -463,10 +448,7 @@ Point           *ptPTmp;
         return;
 
     ptPTmp = PVAI( vaSolute, Point, 0 );
-    lTemp = lLoop( (OBJEKT)uSolute, ATOMS );
-    for (i = 0; i < iAtoms; i++, ptPTmp++ ) {
-
-        aAtom = (ATOM) oNext(&lTemp);
+    LOOPOVERALL(uSolute,ATOMS,aAtom,lTemp) {
         ptPTmp->r = dToolAtomR( aAtom );
         if ( ptPTmp->r < 0.1 )  {
             /* R unknown or 0 */
@@ -480,6 +462,7 @@ Point           *ptPTmp;
         ptPTmp->y = vAtomPosition( aAtom ).dY;
         ptPTmp->z = vAtomPosition( aAtom ).dZ;
         ptPTmp->group=0;
+        ptPTmp++;
     }
 }
 /* ======================================================================
@@ -563,7 +546,6 @@ zToolBuildSoluteArrayWrapped( UNIT uUnit,
         double dCloseness,
         VARARRAY *vaPSolute )
 {
-LOOP        lTemp;
 VARARRAY    vaSolute;
 ATOM        aAtom;
 MATRIX      M, Mi;
@@ -582,8 +564,7 @@ double      Rf[3];
 
     vaSolute = vaVarArrayCreate( sizeof(Point) );
 
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM) oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lTemp) {
 
         /* --- atom radius --- */
         double r = dToolAtomR( aAtom );
@@ -838,7 +819,6 @@ ATOM            aAtom;
 static void
 zToolFindBoundingBoxRadii( UNIT uUnit, double *dPX, double *dPY, double *dPZ )
 {
-LOOP            lTemp;
 ATOM            aAtom;
 double          dR, dX, dY, dZ;
 VECTOR          vPos;
@@ -847,8 +827,7 @@ VECTOR          vPos;
     *dPY = 0.0;
     *dPZ = 0.0;
 
-    lTemp = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lTemp) {
         dR = dToolAtomR( aAtom );
         if ( dR < 0.1 ) {
             /* R unknown or 0 */
@@ -931,7 +910,6 @@ NeighborGrid    *ngSolute;
 static void
 EwaldRotate( UNIT uUnit, double *dPAngle )
 {
-LOOP    lAtoms;
 ATOM    aAtom;
 double  tetra_angl, phi, cos1, sin1, cos2, sin2, pi;
 double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
@@ -970,8 +948,7 @@ double  t11, t12, t13, t21, t22, t23, t31, t32, t33;
   t32= cos1;
   t33=0;
 
-  lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
-  while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+  LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) {
         double dX = vAtomPosition(aAtom).dX;
         double dY = vAtomPosition(aAtom).dY;
         double dZ = vAtomPosition(aAtom).dZ;
@@ -1123,10 +1100,9 @@ CRITERIAt       cCriteria;
     { //FIXME: check this -- Is this really the best way to get atom count??
       // Better to loop over residues and sum iContainerNumberOfChildren(res)
       // *** BUT that skips bare ATOMs which are techically supported even though a bad idea
-        LOOP lTemp;
         ATOM aAtom;
         int iAtomCount = 0;
-        LOOPOVERALL(uSolute,ATOMS,aAtom,ATOM,lTemp) iAtomCount++;
+        LOOPOVERALL(uSolute,ATOMS,aAtom,lTemp) iAtomCount++;
         uSolute->iFirstBulkSolvent = iAtomCount+1;
     }
 
@@ -1156,6 +1132,7 @@ CRITERIAt       cCriteria;
                         zToolFindBoundingBoxRadii( uSolute, &dMaxX, &dMaxY, 
                                                                 &dMaxZ );
                         EwaldRotate( uSolute, &dAngle );
+                        // dAngle return is always 109.471220634490691369246 ( to some precision )
                         UnitSetAlphaBetaGamma( uSolute, dAngle*DEGTORAD );
                         dAngle = ( dMaxX + dMaxY + dMaxZ ) / 3.0;
                         /* MFC just add an angstrom to the desired box size
@@ -1236,8 +1213,8 @@ CRITERIAt       cCriteria = {0};
             VP0("Centering Solute along non-fixed primitive axes, by translation: %8.3f,%8.3f,%8.3f\n",
                      vShift.dX, vShift.dY, vShift.dZ);
             /* --- apply shift to original */
-            LOOP lAtoms; ATOM aAtom;
-            LOOPOVERALL(uSolute,ATOMS,aAtom,ATOM,lAtoms) {
+            ATOM aAtom;
+            LOOPOVERALL(uSolute,ATOMS,aAtom,lAtoms) {
                 VECTOR vNewPosition = {
                     vAtomPosition(aAtom).dX + vShift.dX,
                     vAtomPosition(aAtom).dY + vShift.dY,
@@ -1593,7 +1570,6 @@ int
 iToolDistanceSearch( CONTAINER cCont, double dCloseness, bool bAbsoluteDistance,
                                 int iOperation )
 {
-LOOP                    lTemp;
 VARARRAY                vaAtoms;
 int                     iAtoms, i, j;
 ATOM                    aAtom;
@@ -1622,8 +1598,7 @@ size_t                  npairs;
     vaAtoms = vaVarArrayCreate( sizeof(BONDSEARCHt) );
     dMaxR = 0;
     iAtoms = 0;
-    lTemp = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM) oNext(&lTemp)) ) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lTemp) {
         Point p = {
                 vAtomPosition( aAtom ).dX,
                 vAtomPosition( aAtom ).dY,
@@ -1818,7 +1793,6 @@ ToolOrientPrincipleAxisAlongCoordinateAxis( UNIT uUnit )
 VECTOR          vTemp, vEigenvalues;
 MATRIX          mMoment, mDiagonalize;
 int             iSteps;
-LOOP            lAtoms;
 ATOM            aAtom;
 VECTOR          vPos;
 double          dDot;
@@ -1858,8 +1832,7 @@ double          dDot;
 
         /* Apply the matrix to the UNIT */
 
-    lAtoms = lLoop( (OBJEKT)uUnit, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) {
         vPos = vAtomPosition(aAtom);
         MatrixTimesVector( vPos, mDiagonalize, vPos );
         AtomSetPosition( aAtom, vPos );
@@ -1904,7 +1877,6 @@ OBJEKT          oElement, oNum;
 CONTAINER       cCont;
 VECTOR          vPos;
 int             i, iCount;
-LOOP            lAtoms;
 ATOM            aAtom;
 bool            bVector;
 double          daElements[3];
@@ -1951,8 +1923,7 @@ double          daElements[3];
                     cCont = (CONTAINER)oElement;
                 if ( !bObjectInClass( (OBJEKT)cCont, CONTAINERid ) ) 
                         return false;
-                lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-                while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+                LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
                     vPos = vVectorAdd( &vPos, &vAtomPosition(aAtom) );
                     iCount++;
                 }
@@ -2043,7 +2014,6 @@ OBJEKT          oObj;
 void
 ToolOctBoxCheck( UNIT uSolute, double *dPBuf, bool bMsg, bool bIsotropic )
 {
-LOOP            lTemp;
 ATOM            aAtom;
 VECTOR          vPos;
 double          dXBox, dYBox, dZBox;
@@ -2085,8 +2055,7 @@ double          dX, dY, dZ, dTmp, dMax, dBmax;
          *  find max atom distance from origin along the diagonal
          */
         dMax = 0.0;
-        lTemp = lLoop( (OBJEKT)uSolute, ATOMS );
-        while ( (aAtom = (ATOM)oNext(&lTemp)) ) {
+        LOOPOVERALL(uSolute,ATOMS,aAtom,lTemp) {
                 vPos = vAtomPosition(aAtom);
 
                 dX = dVX(&vPos);

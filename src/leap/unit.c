@@ -1939,7 +1939,6 @@ double  dXMax, dYMax, dZMax;
 
 int
 iUnitLabelMolecules(UNIT uUnit) {
-    LOOP    lResidues, lSpanning, lAtoms;
     RESIDUE rRes;
     ATOM    aAtom;
     int     iAtomCount=0, iResidueCount=0, iMolecule=0;
@@ -1947,7 +1946,7 @@ iUnitLabelMolecules(UNIT uUnit) {
     /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
     /* Also clear the imaging atom flag which will be updated */
     ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED|RESIDUEIMAGEATOM);
-    LOOPOVERALL(uUnit,ATOMS,aAtom,ATOM,lAtoms) AtomSetSeenId(aAtom, -1);
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) AtomSetSeenId(aAtom, -1);
 
     /* Loop through solvent RESIDUEs and:
      * 1) Count them
@@ -1961,7 +1960,7 @@ iUnitLabelMolecules(UNIT uUnit) {
      *     of repeating the full spanning tree search
      * 4) set image atom flag if present; only valid if solvent residue
     */
-    LOOPOVERALL(uUnit,DIRECTCONTENTSBYSEQNUM,rRes,RESIDUE,lResidues) {
+    LOOPOVERALL(uUnit,DIRECTCONTENTSBYSEQNUM,rRes,lResidues) {
         iResidueCount++;
         if (cResidueType(rRes) == RESTYPESOLVENT) {
             if (bUnitCapContainsContainer(uUnit, CONTAINER_from(rRes)))
@@ -1979,7 +1978,7 @@ iUnitLabelMolecules(UNIT uUnit) {
 
         /* Touch all of the ATOMs within the molecule that */
         /* contains the current RESIDUE */
-        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,ATOM,lSpanning) {
+        LOOPOVERALL(aAtom,SPANNINGTREE,aAtom,lSpanning) {
             AtomSetFlags(aAtom, ATOMTOUCHED);
             iAtomCount++;
             CONTAINER cParent = cContainerWithin(aAtom);

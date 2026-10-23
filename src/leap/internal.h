@@ -96,6 +96,13 @@ typedef INTERNALt	*INTERNAL;
 
 
 static inline OBJEKT objekt_from_internal(INTERNAL i) { return &(i->oSuper); }
+static inline INTERNAL internal_from_internal(INTERNAL i) { return i; }
+static inline INTERNAL internal_from_objekt(OBJEKT o)
+  { return o ? (assert(iObjectType(o)==INTERNALid),(INTERNAL)o) : NULL; }
+#define INTERNAL_from(x) _Generic((x), \
+    OBJEKT: internal_from_objekt, \
+    INTERNAL: internal_from_internal \
+)(x)
 
 /*
 ======================================================================
@@ -127,13 +134,13 @@ extern void		InternalRingAddAtomAfter(INTERNAL iRing, ATOM aAtom,
 				ATOM aPrev);
 extern void		InternalRingAddAtomBefore(INTERNAL iInt, ATOM aAtom, 
 				ATOM aBefore);
-#define	iInternalRingSize(II) iRingSize(((INTERNAL)(II))->iType.riRing.rAtoms)
+#define	iInternalRingSize(II) iRingSize((INTERNAL_from(II))->iType.riRing.rAtoms)
 extern void		InternalRingLoopAtoms(INTERNAL iInt);
 extern ATOM		aInternalRingNextAtom(INTERNAL iInt);
 extern bool		bInternalRingRemoveAtom(INTERNAL iInt, ATOM aAtom);
 #define	InternalRingSetTempInt(i,in)	\
-		((INTERNAL)(i)->iType.riRing.iTempInt = in )
-#define	iInternalRingTempInt(i)	((INTERNAL)(i)->iType.riRing.iTempInt)
+		(INTERNAL_from(i)->iType.riRing.iTempInt = in )
+#define	iInternalRingTempInt(i)	(INTERNAL_from(i)->iType.riRing.iTempInt)
 
 
 extern INTERNAL		iInternalFindChirality(ATOM aAtom1);
@@ -155,14 +162,14 @@ extern bool		bInternalGoodBond(INTERNAL iInt, ATOM aAtom,
 				INTERNAL *iPBond);
 
 
-#define InternalSetType(II,TT)  (((INTERNAL)II)->cInternalType=TT)
-#define iInternalType(II)       ((int)(((INTERNAL)II)->cInternalType))
-#define aInternalAtom1(II)      (((INTERNAL)(II))->iType.niNormal.aAtom1)
-#define aInternalAtom2(II)      (((INTERNAL)(II))->iType.niNormal.aAtom2)
-#define aInternalAtom3(II)      (((INTERNAL)(II))->iType.niNormal.aAtom3)
-#define aInternalAtom4(II)      (((INTERNAL)(II))->iType.niNormal.aAtom4)
-#define dInternalValue(II)      (((INTERNAL)(II))->iType.niNormal.dValue)
-#define InternalSetValue(II,VV) (((INTERNAL)(II))->iType.niNormal.dValue=VV)
+#define InternalSetType(II,TT)  (INTERNAL_from(II)->cInternalType=TT)
+#define iInternalType(II)       ((int)(INTERNAL_from(II)->cInternalType))
+#define aInternalAtom1(II)      (INTERNAL_from(II)->iType.niNormal.aAtom1)
+#define aInternalAtom2(II)      (INTERNAL_from(II)->iType.niNormal.aAtom2)
+#define aInternalAtom3(II)      (INTERNAL_from(II)->iType.niNormal.aAtom3)
+#define aInternalAtom4(II)      (INTERNAL_from(II)->iType.niNormal.aAtom4)
+#define dInternalValue(II)      (INTERNAL_from(II)->iType.niNormal.dValue)
+#define InternalSetValue(II,VV) (INTERNAL_from(II)->iType.niNormal.dValue=VV)
 
 
 extern int	iInternalFindAllTorsionInternalsAround(ATOM aAtom2, 

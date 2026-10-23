@@ -313,7 +313,7 @@ bool            bDone, bAllowDuplicates;
 
                                 /* Test if the atoms are unique */
 
-                    if ( (ATOM)cCont ==aAtom2 ) goto AINC1;
+                    if ( (ATOM)cCont == aAtom2 ) goto AINC1;
 
                                 /* If it passed all these tests then    */
                                 /* it is a valid angle                 */
@@ -365,7 +365,7 @@ ANONE:          break;
                     if ( !(iAtomId(cCont) < iAtomId(aAtom3)) &&
 				!bAllowDuplicates ) goto TINC2;
                                 /* Test if the atoms are unique */
-                    if ( (ATOM)cCont ==aAtom2 ) goto TINC1;
+                    if ( (ATOM)cCont == aAtom2 ) goto TINC1;
                     if ( (ATOM)cCont == aAtom3 ) goto TINC2;
                     if ( aAtom1 == aAtom3 ) goto TINC2;
                                 /* If it passed all these tests then    */

@@ -19,8 +19,6 @@
 #include "oDouble.h"
 #endif
 
-bool cpptraj_compatible = true;
-
 /* AtomMaskPrepare: stamp sequential TempInt on residues and atoms in
  * output order (respecting bReorderResidues flag). Must be called before
  * any selection evaluation on a unit. Always re-runs since LEAP has no
@@ -31,7 +29,6 @@ bool cpptraj_compatible = true;
 void
 AtomMaskPrepare(UNIT uUnit)
 {
-    cpptraj_compatible = !GDefaults.bMaskPDBMode;
     /* marks molecule number in RESIDUE->iMolecule */
     int iResidueCount = iUnitLabelMolecules(uUnit);
     if (iResidueCount == 0) return;
@@ -40,18 +37,18 @@ AtomMaskPrepare(UNIT uUnit)
         VP2("\"order_residues\" off: keep input residue order.\n");
 
     int iResIndex = 0, iAtomIndex = 0;
-    LOOP lResidues; OBJEKT oObj; RESIDUE rRes;
+    OBJEKT oObj;
     LOOPOVERALL(uUnit, GDefaults.bReorderResidues ?
             DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
-            oObj, OBJEKT, lResidues) {
+            oObj, lResidues) {
         if (iObjectType(oObj) != RESIDUEid) continue;
-        rRes = RESIDUE_from(oObj);
+        RESIDUE rRes = RESIDUE_from(oObj);
         ContainerSetTempInt(rRes, ++iResIndex);
         int iAtomResIndex = 0;
-        ATOM aAtom; LOOP lAtoms;
+        ATOM aAtom;
         LOOPOVERALL(rRes, GDefaults.bReorderResidues ?
                 DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
-                aAtom, ATOM, lAtoms) {
+                aAtom, lAtoms) {
             ContainerSetTempInt(aAtom, ++iAtomIndex);
             AtomSetIndex(aAtom,++iAtomResIndex);
         }
@@ -91,9 +88,8 @@ VARARRAY
 vaUnitEvalSelection(const SELNODE node, const UNIT uUnit)
 {
     VARARRAY vaResult = vaVarArrayCreate(sizeof(ATOM));
-    LOOP lAtoms = lLoop(OBJEKT_from(uUnit), ATOMS);
     ATOM aAtom;
-    while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
+    LOOPOVERALL(uUnit, ATOMS, aAtom, lAtoms) {
         if (bAtomEvalSelection(node, aAtom))
             VarArrayAdd(vaResult, (GENP)&aAtom);
     }
@@ -104,9 +100,8 @@ LIST
 lUnitEvalSelection(const SELNODE node, const UNIT uUnit)
 {
     LIST lResult = LIST_from(oCreate(LISTid));
-    LOOP lAtoms = lLoop(OBJEKT_from(uUnit), ATOMS);
     ATOM aAtom;
-    while ( (aAtom = ATOM_from(oNext(&lAtoms))) ) {
+    LOOPOVERALL(uUnit, ATOMS, aAtom, lAtoms) {
         if (bAtomEvalSelection(node, aAtom))
             ListAddToEnd(lResult, OBJEKT_from(aAtom));
     }

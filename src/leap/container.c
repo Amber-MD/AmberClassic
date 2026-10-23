@@ -438,14 +438,12 @@ ContainerResetPointers( CONTAINER cContainer )
 CONTAINER       
 cContainerFindSequence( CONTAINER cCont, int iContainerType, int iSeq )
 {
-LOOP    lContainers;
 OBJEKT  oObj;
 
     if ( iSeq > iContainerNextChildsSequence(cCont) ) {
         return NULL;
     }
-    lContainers = lLoop( (OBJEKT)cCont, iContainerType );
-    while ( (oObj = oNext(&lContainers) ) != NULL ) {
+    LOOPOVERALL(cCont,CONTAINERS,oObj,lContainers) {
         if ( iContainerSequence(oObj) == iSeq ) break;
     }
     return((CONTAINER)oObj);
@@ -466,11 +464,9 @@ OBJEKT  oObj;
 CONTAINER       
 cContainerFindName( CONTAINER cCont, int iContainerType, const char *sName )
 {
-LOOP    lContainers;
 OBJEKT  oObj;
 
-    lContainers = lLoop( (OBJEKT)cCont, iContainerType );
-    while ( (oObj = oNext(&lContainers) ) != NULL ) {
+    LOOPOVERALL(cCont,iContainerType,oObj,lContainers) {
         if ( strcmp( sContainerName(oObj), sName) == 0 ) break;
     }
     return((CONTAINER)oObj);
@@ -493,7 +489,6 @@ vContainerGeometricCenter( CONTAINER cCont )
 {
 VECTOR  vSum;
 int     iVectorCount;
-LOOP    lAtoms;
 OBJEKT  aAtom;
 
     iVectorCount = 0;
@@ -501,8 +496,7 @@ OBJEKT  aAtom;
     if ( iObjectType(cCont) == ATOMid ) {
         vSum = vAtomPosition(cCont);
     } else {
-        lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-        while ( (aAtom = oNext(&lAtoms)) != NULL ) {
+        LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
             if ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) {
                 vSum = vVectorAdd( &vSum, &vAtomPosition(aAtom) );
                 iVectorCount++;
@@ -535,39 +529,37 @@ ContainerBoundingBox( CONTAINER cCont, VECTOR *vPMin, VECTOR *vPMax )
 {
 double          dXMin, dYMin, dZMin;
 double          dXMax, dYMax, dZMax;
-LOOP            lAtoms;
 ATOM            aAtom;
 
     dXMin = dYMin = dZMin =  9.0E99;
     dXMax = dYMax = dZMax = -9.0E99;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-            while ( (aAtom = (ATOM)oNext( &lAtoms )) ) {
-                if ( dXMin > dVX( &(vAtomPosition( aAtom )))) {
-                    dXMin = dVX( &(vAtomPosition( aAtom )));
-                    MESSAGE("Min X Value:  %4.2lf\n", dXMin );
-                }
-                if ( dYMin > dVY( &(vAtomPosition( aAtom )))) {
-                    dYMin = dVY( &(vAtomPosition( aAtom )));
-                    MESSAGE("Min Y Value:  %4.2lf\n", dYMin );
-                }
-                if ( dZMin > dVZ( &(vAtomPosition( aAtom )))) {
-                    dZMin = dVZ( &(vAtomPosition( aAtom )));
-                    MESSAGE("Min Z Value:  %4.2lf\n", dZMin );
-                }
-                if ( dXMax < dVX( &(vAtomPosition( aAtom )))) {
-                    dXMax = dVX( &(vAtomPosition( aAtom )));
-                    MESSAGE("Max X Value:  %4.2lf\n", dXMax );
-                }
-                if ( dYMax < dVY( &(vAtomPosition( aAtom )))) {
-                    dYMax = dVY( &(vAtomPosition( aAtom )));
-                    MESSAGE("Max Y Value:  %4.2lf\n", dYMax );
-                }
-                if ( dZMax < dVZ( &(vAtomPosition( aAtom )))) {
-                    dZMax = dVZ( &(vAtomPosition( aAtom )));
-                    MESSAGE("Max Z Value:  %4.2lf\n", dZMax );
-                }
-            }
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
+        if ( dXMin > dVX( &(vAtomPosition( aAtom )))) {
+            dXMin = dVX( &(vAtomPosition( aAtom )));
+            MESSAGE("Min X Value:  %4.2lf\n", dXMin );
+        }
+        if ( dYMin > dVY( &(vAtomPosition( aAtom )))) {
+            dYMin = dVY( &(vAtomPosition( aAtom )));
+            MESSAGE("Min Y Value:  %4.2lf\n", dYMin );
+        }
+        if ( dZMin > dVZ( &(vAtomPosition( aAtom )))) {
+            dZMin = dVZ( &(vAtomPosition( aAtom )));
+            MESSAGE("Min Z Value:  %4.2lf\n", dZMin );
+        }
+        if ( dXMax < dVX( &(vAtomPosition( aAtom )))) {
+            dXMax = dVX( &(vAtomPosition( aAtom )));
+            MESSAGE("Max X Value:  %4.2lf\n", dXMax );
+        }
+        if ( dYMax < dVY( &(vAtomPosition( aAtom )))) {
+            dYMax = dVY( &(vAtomPosition( aAtom )));
+            MESSAGE("Max Y Value:  %4.2lf\n", dYMax );
+        }
+        if ( dZMax < dVZ( &(vAtomPosition( aAtom )))) {
+            dZMax = dVZ( &(vAtomPosition( aAtom )));
+            MESSAGE("Max Z Value:  %4.2lf\n", dZMax );
+        }
+    }
     VectorDef( vPMin, dXMin, dYMin, dZMin );
     VectorDef( vPMax, dXMax, dYMax, dZMax );
 
@@ -590,7 +582,6 @@ ContainerCenterAt( CONTAINER cCont, VECTOR vCenter )
 {
 VECTOR  vOffset, vPos;
 VECTOR  vCur;
-LOOP    lAtoms;
 OBJEKT  aAtom;
 
     vCur = vContainerGeometricCenter( cCont ) ;
@@ -601,8 +592,7 @@ OBJEKT  aAtom;
     if ( iObjectType(cCont) == ATOMid ) {
         AtomSetPosition( cCont, vVectorAdd( &vOffset, &vAtomPosition(cCont) ));
     } else {
-        lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-        while ( (aAtom = oNext(&lAtoms)) != NULL ) {
+        LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
             if ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN )) {
                 vPos = vVectorAdd( &vOffset, &vAtomPosition(aAtom));
                 MESSAGE("Atoms old Z:  %4.2lf\n", dVX(&vAtomPosition(aAtom)) );
@@ -634,15 +624,13 @@ void
 ContainerTransformBy( CONTAINER cCont, MATRIX mTransform )
 {
 VECTOR          vPos;
-LOOP            lAtoms;
 OBJEKT          aAtom;
 
     if ( iObjectType(cCont) == ATOMid ) {
         MatrixTimesVector( vPos, mTransform, vAtomPosition(cCont) );
         AtomSetPosition( cCont, vPos );
     } else {
-        lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-        while ( (aAtom = oNext(&lAtoms)) != NULL ) {
+        LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
             MatrixTimesVector( vPos, mTransform, vAtomPosition(aAtom) );
             AtomSetPosition( aAtom, vPos );
         }
@@ -663,14 +651,12 @@ void
 ContainerTranslateBy( CONTAINER cCont, VECTOR vOffset )
 {
 VECTOR          vPos;
-LOOP            lAtoms;
 OBJEKT          aAtom;
 
     if ( iObjectType(cCont) == ATOMid ) {
         AtomSetPosition( cCont, vVectorAdd( &vOffset, &vAtomPosition(cCont) ));
     } else {
-        lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-        while ( (aAtom = oNext(&lAtoms)) != NULL ) {
+        LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
             if ( bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) {
                 vPos = vVectorAdd( &vOffset, &vAtomPosition(aAtom) );
                 AtomSetPosition( aAtom, vPos );
@@ -694,11 +680,9 @@ OBJEKT          aAtom;
 void    
 ContainerSetAllAtomsFlags( CONTAINER cCont, FLAGS fFlags )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) 
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) 
                 AtomSetFlags( aAtom, fFlags );
 }
 
@@ -718,17 +702,11 @@ ATOM            aAtom;
 void    
 ContainerResetAllAtomsFlags( CONTAINER cCont, FLAGS fFlags )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) 
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) 
         AtomResetFlags( aAtom, fFlags );
 }
-
-
-
-
 
 
 
@@ -743,11 +721,9 @@ ATOM            aAtom;
 void    
 ContainerWithFlagsSetAtomFlags( CONTAINER cCont, FLAGS fNeed, FLAGS fFlags )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
         if ( !bAtomFlagsSet( aAtom, fNeed ) ) continue;
         AtomSetFlags( aAtom, fFlags );
     }
@@ -767,11 +743,9 @@ ATOM            aAtom;
 void    
 ContainerWithFlagsResetAtomFlags( CONTAINER cCont, FLAGS fNeed, FLAGS fFlags )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
         if ( bAtomFlagsSet( aAtom, fNeed ) ) 
                 AtomResetFlags( aAtom, fFlags );
     }
@@ -791,11 +765,9 @@ ATOM            aAtom;
 void    
 ContainerWithoutFlagsSetAtomFlags( CONTAINER cCont, FLAGS fNeed, FLAGS fFlags )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
         if ( bAtomFlagsSet( aAtom, fNeed ) ) continue;
         AtomSetFlags( aAtom, fFlags );
     }
@@ -816,11 +788,9 @@ void
 ContainerWithoutFlagsResetAtomFlags( CONTAINER cCont, 
                 FLAGS fNeed, FLAGS fFlags )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) != NULL ) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
         if ( bAtomFlagsSet( aAtom, fNeed ) ) continue;
         AtomResetFlags( aAtom, fFlags );
     }
@@ -1173,13 +1143,11 @@ OBJEKT   oResult;
 void    
 ContainerTotalCharge( CONTAINER cCont, double *dPCharge, double *dPPertCharge )
 {
-LOOP            lAtoms;
 ATOM            aAtom;
 
     *dPCharge = 0.0;
     *dPPertCharge = 0.0;
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    while ( (aAtom = (ATOM)oNext(&lAtoms)) ) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
         (*dPCharge) += dAtomCharge(aAtom);
         (*dPPertCharge) += dAtomPertCharge(aAtom);
     }
@@ -1260,11 +1228,9 @@ ContainerDisplayerUpdate( CONTAINER cCont )
 void    
 ContainerTreeMakeInsensitive( CONTAINER cCont )
 {
-LOOP            lContainer;
 CONTAINER       cCur;
 
-    lContainer = lLoop( (OBJEKT)cCont, CONTAINERS );
-    while ( (cCur = (CONTAINER)oNext(&lContainer)) ) {
+    LOOPOVERALL(cCont,CONTAINERS,cCur,lContainer) {
         DisplayerSetSensitive(dContainerDisplayer(cCur),false);
     }
 }
@@ -1289,15 +1255,13 @@ CONTAINER       cCur;
 void    
 ContainerTreeMakeSensitive( CONTAINER cCont )
 {
-LOOP            lContents;
 CONTAINER       cCur;
 
         /* If the OBJEKT is an ATOM then it will have no  */
         /* CONTAINERs within it */
 
     if ( iObjectType(cCont) != ATOMid ) {
-        lContents = lLoop( (OBJEKT)cCont, DIRECTCONTENTS );
-        while ( (cCur = (CONTAINER)oNext(&lContents)) ) {
+        LOOPOVERALL(cCont,DIRECTCONTENTS,cCur,lContents) {
             ContainerTreeMakeSensitive(cCur);
         }
     }
@@ -1325,11 +1289,9 @@ CONTAINER       cCur;
 void    
 ContainerResetAllCopyPointers( CONTAINER cTop )
 {
-LOOP            lContainerLoop;
 CONTAINER       cCont;
 
-    lContainerLoop = lLoop( (OBJEKT)cTop, CONTAINERS );
-    while ( ( cCont = (CONTAINER)oNext( &lContainerLoop ) ) != NULL ) {
+    LOOPOVERALL(cTop,CONTAINERS,cCont,lContainerLoop) {
         ContainerResetPointers(cCont);
     }
 
@@ -1338,6 +1300,7 @@ CONTAINER       cCont;
     ContainerResetPointers( cTop );
 }
 
+#if 0
 /*
  *      bContainerSpaceConflict
  *      
@@ -1365,5 +1328,5 @@ ATOM    aAtom1, aAtom2;
     return false;
 }
 
-
+#endif
 

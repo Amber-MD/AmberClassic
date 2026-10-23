@@ -905,8 +905,8 @@ pdb_auto_load=TRUE: Automatically "loadOff <resName>.{lib,mol2,prepc}" for missi
 pdb_use_link=TRUE: Add bonds using LINK and SSBOND
 pdb_use_conect=TRUE: Add bonds using CONECT (old default)
 pdb_read_model=number:  which MODEL to read, 0=All (old default), -1 = assign extended chainID
-pdb_use_ncs=TRUE: process symmetry MTRIXn records 9old default)
-pdb_use_biomt=TRUE: process REMARK BIOMT in place of MTRIXn records
+pdb_expand_ncs=TRUE: process symmetry MTRIXn records 9old default)
+pdb_expand_biomt=TRUE: process REMARK BIOMT in place of MTRIXn records
 pdb_reset_chainids=TRUE: Relabel chainId in order A-Z,0-9,a-z then 2-characters
 pdb_patch_file=FILENAME: generate auto-link patch file (to be sourced after loadPdb)
 
@@ -1749,6 +1749,7 @@ Allowed arguments to "set default variable value" are these:
   PdbWriteCharges  "on"         Write charge to each ATOM record as B-factor
                    "off"        (default)
 
+  (See help loadPdb for pdb_* settings)
 
   keep_chainid     "on"         Keep ChainId and ResId number read from PDB.
                                 These are written to prmtop arrays
@@ -1756,30 +1757,23 @@ Allowed arguments to "set default variable value" are these:
                                 parmed "addPdb". Supports 2-character chainId
                    "off"        (default)
 
-
   hybrid36         "on"         Write PDB files using hybrid36 format for
                                 overflow instead of Leap's extra column mode.
                                 (Reading PDB will auto-detect either form.)
                                 (default)
                    "off"        Use old LEaP procedure for overflows
 
-
-  PdbReadBioMT     "on"         Read REMARK 350 BIOMT matrices in place of
-                                MTRIXn matrices to generate a biological unit.
-                                Currently only functional with single defined
-                                biomolecule, an does noe de-duplicate chainId;
-                                If off, MTRIXn expansion is always enabled.
-                                (Reading PDB will auto-detect either form.)
-                   "off"        (default)
+  CIF_use_auth     "on"         read *_auth fields
+                   "off"        read wwPDB standardized fields
 
 
   OldPrmtopFormat  "on"         use prmtop format from Amber6 and earlier
                    "off"        use the new prmtop format (default)
 
+  PrmTop_NetCDF    "on"         Write experimental NetCDF PRMTOP with saveAmberParmNetCDF
 
   Charmm           "on"         include terms for CHARMM22 force fields
                    "off"        don't include these (default)
-
 
   DeleteExtraPointAngles
                    "on"         delete angles and torsions relating to
@@ -1804,6 +1798,9 @@ Allowed arguments to "set default variable value" are these:
   Dielectric       "distance"   use distance-dependent dielectric (default)
                    "constant"   use constant dielectric
 
+
+  Shell_Extent FIXME
+  SearchDistance
 
   dipole_damp_factor    real    sets the default value for "DIPOLE_DAMP_FACTOR"
                                 for dipole screening factors in Thole models.
@@ -1836,6 +1833,16 @@ Allowed arguments to "set default variable value" are these:
 
   reorder_residues "on"         solvent will be moved to the end (default)
                    "off"        residue order will be maintained as input.
+
+  reorder_molecules "on"        Sort atoms so that all molecules are contiguous
+                                so that ATOMS_PER_MOLECULE can partition atoms
+
+  random orientation "on"       Randomize the direction of rotatable atoms built.
+
+  Only for compatibility (to be removed):
+  original_cmap_order "on"      Order CMAP on PRMTOP as original code
+  compatible "on"               Keep various compatibilities like inexact PI,
+                                reverse list order on copy
 
 
 @@endHelp

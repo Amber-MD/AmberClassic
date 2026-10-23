@@ -35,7 +35,7 @@ typedef struct {
 	double  dScnbScaleFactor;
 	bool    bCMAP;
 	int     iIPOL;    
-	int     iIPOLset;    /* indicate IPOL set in frcmod/parm.dat */
+	int     iIPOLset;    /* indicate IPOL set in frcmod/parm.dat, not an option */
 
         double  dPdbLinkCovalentCutoff;
         double  dPdbCrosslinkCovalentCutoff;
@@ -55,7 +55,6 @@ typedef struct {
         bool    bPdbExpandNCSMt;
         bool    bPdbExpandSymm;
         bool    bCIFReadAuth;
-        bool    bMaskPDBMode;
         bool    bTiming;
         char    cPdbAltLocSelect;
         STRING  sPdbPatchFilename;

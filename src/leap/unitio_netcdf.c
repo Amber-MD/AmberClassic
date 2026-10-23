@@ -1,4 +1,3 @@
-#define AMBER_VERSION ""
 #ifdef BINTRAJ
 
 #include        "basics.h"
@@ -16,6 +15,7 @@
 
 #define LABLEN 4
 #define MAXDESCLEN MAXSTRINGLENGTH
+#define AMBER_VERSION   "3.0"
 
 /* NC_RESTRAINTLOOP: NetCDF equivalent of RESTRAINTLOOP.
    Collects values into buf[] at offset, preserves iParmIndex
@@ -67,10 +67,10 @@
    *literal* call expression -- inside a shared helper that would
    always print the same generic "nc_def_var(ncid, name, type, ...)"
    text rather than which actual variable failed. Callers wrap the
-   whole nc_defvar() call in NC_CHECK instead, so the reported
+   whole NC_DEFVAR() call in NC_CHECK instead, so the reported
    expression is the meaningful one (e.g. the real variable name).   */
 static int
-nc_defvar(int ncid, int *pvid, const char *name, nc_type type,
+NC_DEFVAR(int ncid, int *pvid, const char *name, nc_type type,
           int ndims, const int *dimids,
           const char *amber_name, const char *units, const char *long_name,
           ...)
@@ -522,13 +522,13 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     NC_CHECK(nc_def_dim(ncid, "parameter_set", iParmSets, &dimid_nparm));
     {
         int dims2[2] = {dimid_nparm, dimid_fname_len};
-        NC_CHECK(nc_defvar(ncid, &vid_parm_file, "parm_file", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_parm_file, "parm_file", NC_CHAR, 2, dims2,
                             NULL, NULL, NULL, NULL));
         dims2[1] = dimid_title_len;
-        NC_CHECK(nc_defvar(ncid, &vid_parm_title, "parm_title", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_parm_title, "parm_title", NC_CHAR, 2, dims2,
                             NULL, NULL, NULL, NULL));
         dims2[1] = dimid_hash_length;
-        NC_CHECK(nc_defvar(ncid, &vid_parm_hash, "parm_hash", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_parm_hash, "parm_hash", NC_CHAR, 2, dims2,
                             NULL, NULL,
                             "POSIX cksum(1) result for parm_file, formatted as \"<checksum>-<size>\"", NULL));
     }
@@ -538,43 +538,43 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     if (bUnitUseBox(uUnit)) {
         int dim;
         NC_CHECK(nc_def_dim(ncid, "cell_spatial", 3, &dim));
-        NC_CHECK(nc_defvar(ncid, &vid_cell_length, "cell_lengths", NC_DOUBLE, 1, &dim,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cell_length, "cell_lengths", NC_DOUBLE, 1, &dim,
                             NULL, "angstrom", NULL,
                             "comment", "initial cell dimension is primarily for fixed dimension systems",
                             NULL));
         NC_CHECK(nc_def_dim(ncid, "cell_angular", 3, &dim));
-        NC_CHECK(nc_defvar(ncid, &vid_cell_angle, "cell_angle", NC_DOUBLE, 1, &dim,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cell_angle, "cell_angle", NC_DOUBLE, 1, &dim,
                             NULL, "degree", NULL, NULL));
     }
 
     /* atom properties */
     {
         int dims2[2] = {dimid_atoms, dimid_name4};
-        NC_CHECK(nc_defvar(ncid, &vid_name, "atom_name", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_name, "atom_name", NC_CHAR, 2, dims2,
                             "ATOM_NAME", NULL, "atom name",
                             "pdb_name", "name",
                             "mmcif_name", GDefaults.bCIFReadAuth ? "atom_site.auth_atom_id"
                                                                    : "atom_site.label_atom_id",
                             NULL));
     }
-    NC_CHECK(nc_defvar(ncid, &vid_charge, "atom_charge", NC_DOUBLE, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_charge, "atom_charge", NC_DOUBLE, 1, &dimid_atoms,
                         "CHARGE", "elementary charge", "partial atomic charge",
                         "comment", "multiply by 18.2223 for AMBER internal charge units",
                         NULL));
-    NC_CHECK(nc_defvar(ncid, &vid_atomic_num, "atom_atomic_number", NC_INT, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_atomic_num, "atom_atomic_number", NC_INT, 1, &dimid_atoms,
                         "ATOMIC_NUMBER", NULL, "atomic number", NULL));
-    NC_CHECK(nc_defvar(ncid, &vid_extrapoints, "extra_point", NC_INT, 0, NULL,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_extrapoints, "extra_point", NC_INT, 0, NULL,
                         "NUMEXTRA", NULL, NULL, NULL));
 
     int vid_mass, vid_radii, vid_screen;
-    NC_CHECK(nc_defvar(ncid, &vid_mass, "atom_mass", NC_DOUBLE, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_mass, "atom_mass", NC_DOUBLE, 1, &dimid_atoms,
                         "MASS", "g/mol", NULL, NULL));
-    NC_CHECK(nc_defvar(ncid, &vid_radii, "atom_GB_radius", NC_DOUBLE, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_radii, "atom_GB_radius", NC_DOUBLE, 1, &dimid_atoms,
                         "RADII", "angstrom", "GB radius", NULL));
-    NC_CHECK(nc_defvar(ncid, &vid_screen, "atom_GB_screen", NC_DOUBLE, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_screen, "atom_GB_screen", NC_DOUBLE, 1, &dimid_atoms,
                         "SCREEN", NULL, "GB screening factor", NULL));
 
-    NC_CHECK(nc_defvar(ncid, &vid_itype, "atom_nonbond_type_index", NC_INT, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_itype, "atom_nonbond_type_index", NC_INT, 1, &dimid_atoms,
                         "ATOM_TYPE_INDEX", NULL, "nonbond type index",
                         "reference_equation", "nonbond_lower_triangle_echelon_indexing",
                         "index_dimension", "nonbond_atom_type",
@@ -589,15 +589,15 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
        over it and carries the amber_name NNB since NNB in the original
        format IS that array's declared size.                              */
     int vid_nbex_count, vid_nbex_list;
-    NC_CHECK(nc_defvar(ncid, &vid_nbex_count, "atom_nonbond_exclusion", NC_INT, 1, &dimid_atoms,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_nbex_count, "atom_nonbond_exclusion", NC_INT, 1, &dimid_atoms,
                         "NUMBER_EXCLUDED_ATOMS", NULL, "excluded atom count per atom",
-                        "index_variables", "nonbond_excluded_atom",
+                        "index_variables", "nonbond_excluded_atom_",
                         NULL));
     {
         int dimid_excl;
         int n = iVarArrayElementCount(vaExcludedAtoms);
-        NC_DIM(ncid, "nonbond_excluded_atom", "NNB", n, &dimid_excl);
-        NC_CHECK(nc_defvar(ncid, &vid_nbex_list, "nonbond_excluded_atom", NC_INT, 1, &dimid_excl,
+        NC_DIM(ncid, "nonbond_exclusion", "NNB", n, &dimid_excl);
+        NC_CHECK(NC_DEFVAR(ncid, &vid_nbex_list, "nonbond_excluded_atom", NC_INT, 1, &dimid_excl,
                             "EXCLUDED_ATOMS_LIST", NULL, "excluded atom list",
                             "encoding", "cumulative_sum_offset by n_atom_nonbond_exclusions",
                             "index_dimension", "atom",
@@ -613,25 +613,25 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         assert(ntypes * ntypes == iVarArrayElementCount(vaNBIndexMatrix));
         NC_CHECK(nc_def_dim(ncid, "nonbond_atom_type", ntypes, &dimid_nb));
         int dims2[2] = {dimid_nb, dimid_nb};
-        NC_CHECK(nc_defvar(ncid, &vid_nbidx, "nonbond_pair_index", NC_INT, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_nbidx, "nonbond_pair_index", NC_INT, 2, dims2,
                             "ATOM_TYPE_INDEX", NULL, "nonbond parm index",
                             "comment", "sign encodes table: positive = LJ echelon index, negative = hbond index",
                             "reference_equation", "nonbond_lower_triangle_echelon_indexing",
                             "index_dimension", "nonbond_pair_types,-n_hbond_type",
                             NULL));
         NC_CHECK(nc_def_dim(ncid, "nonbond_pair_type", nttyp, &dimid_nttyp));
-        NC_CHECK(nc_defvar(ncid, &vid_acoef, "lennard_jones_acoef", NC_DOUBLE, 1, &dimid_nttyp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_acoef, "lennard_jones_acoef", NC_DOUBLE, 1, &dimid_nttyp,
                             "LENNARD_JONES_ACOEF", "kcal/mol*angstrom^12",
                             "LJ parm A coefficients, size NTYPES*(NTYPES+1)/2",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_bcoef, "lennard_jones_bcoef", NC_DOUBLE, 1, &dimid_nttyp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bcoef, "lennard_jones_bcoef", NC_DOUBLE, 1, &dimid_nttyp,
                             "LENNARD_JONES_BCOEF", "kcal/mol*angstrom^6",
                             "LJ parm B coefficients, size NTYPES*(NTYPES+1)/2",
                             NULL));
         if (GDefaults.bCharmm) {
-            NC_CHECK(nc_defvar(ncid, &vid_14acoef, "lennard_jones_14_acoef", NC_DOUBLE, 1, &dimid_nttyp,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_14acoef, "lennard_jones_14_acoef", NC_DOUBLE, 1, &dimid_nttyp,
                                 "LENNARD_JONES_14_ACOEF", "kcal/mol*angstrom^12", NULL, NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_14bcoef, "lennard_jones_14_bcoef", NC_DOUBLE, 1, &dimid_nttyp,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_14bcoef, "lennard_jones_14_bcoef", NC_DOUBLE, 1, &dimid_nttyp,
                                 "LENNARD_JONES_14_BCOEF", "kcal/mol*angstrom^6", NULL, NULL));
         }
     }
@@ -640,22 +640,22 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int vid_resname, vid_res_type, vid_res_first_atom, vid_res_max_atoms;
     {
         int dims2[2] = {dimid_res, dimid_name4};
-        NC_CHECK(nc_defvar(ncid, &vid_resname, "residue_label", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_resname, "residue_label", NC_CHAR, 2, dims2,
                             "RESIDUE_LABEL", NULL, "residue name",
                             "pdb_name", "resName",
                             "mmcif_name", GDefaults.bCIFReadAuth ? "atom_site.auth_comp_id"
                                                                    : "atom_site.label_comp_id",
                             NULL));
         dims2[1] = dimid_restype_len;
-        NC_CHECK(nc_defvar(ncid, &vid_res_type, "residue_type", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_res_type, "residue_type", NC_CHAR, 2, dims2,
                             "RESIDUE_TYPE", NULL,
                             "residue type: w=water, p=protein, n=nucleic, s=saccharide,"
                             " i=ion, l=ligand, o=other, ?=undefined",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_res_max_atoms, "residue_max_atoms", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_res_max_atoms, "residue_max_atoms", NC_INT, 0, NULL,
                             "NMXRS", NULL, "maximum number of atoms per residue", NULL));
     }
-    NC_CHECK(nc_defvar(ncid, &vid_res_first_atom, "residue_first_atom", NC_INT, 1, &dimid_res,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_res_first_atom, "residue_first_atom", NC_INT, 1, &dimid_res,
                         "RESIDUE_POINTER", NULL, "first atom index per residue",
                         "index_dimension", "atom",
                         NULL));
@@ -668,18 +668,18 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         int nb = iParmSetTotalBondParms(uUnit->psParameters);
         int nr = iUnitRestraintTypeCount(uUnit, RESTRAINTBOND);
         NC_CHECK(nc_def_dim(ncid, "bond_type", nb + nr, &dimid_bp));
-        NC_CHECK(nc_defvar(ncid, &vid_bond_force, "bond_force_constant", NC_DOUBLE, 1, &dimid_bp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bond_force, "bond_force_constant", NC_DOUBLE, 1, &dimid_bp,
                             "BOND_FORCE_CONSTANT", "kcal/mol/angstrom^2", NULL, NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_bond_eq, "bond_equil_value", NC_DOUBLE, 1, &dimid_bp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bond_eq, "bond_equil_value", NC_DOUBLE, 1, &dimid_bp,
                             "BOND_EQUIL_VALUE", "angstrom", NULL, NULL));
         if (bBondAug) {
-            NC_CHECK(nc_defvar(ncid, &vid_bond_stiffness_pull_adj, "bond_stiffness_pull_adj", NC_DOUBLE, 1, &dimid_bp,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_bond_stiffness_pull_adj, "bond_stiffness_pull_adj", NC_DOUBLE, 1, &dimid_bp,
                                 "BOND_STIFFNESS_PULL_ADJ", "kcal/mol/angstrom^2", NULL, NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_bond_equil_pull_adj, "bond_equil_pull_adj", NC_DOUBLE, 1, &dimid_bp,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_bond_equil_pull_adj, "bond_equil_pull_adj", NC_DOUBLE, 1, &dimid_bp,
                                 "BOND_EQUIL_PULL_ADJ", "angstrom", NULL, NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_bond_stiffness_press_adj, "bond_stiffness_press_adj", NC_DOUBLE, 1, &dimid_bp,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_bond_stiffness_press_adj, "bond_stiffness_press_adj", NC_DOUBLE, 1, &dimid_bp,
                                 "BOND_STIFFNESS_PRESS_ADJ", "kcal/mol/angstrom^2", NULL, NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_bond_equil_press_adj, "bond_equil_press_adj", NC_DOUBLE, 1, &dimid_bp,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_bond_equil_press_adj, "bond_equil_press_adj", NC_DOUBLE, 1, &dimid_bp,
                                 "BOND_EQUIL_PRESS_ADJ", "angstrom", NULL, NULL));
         }
     }
@@ -690,9 +690,9 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         int na = iParmSetTotalAngleParms(uUnit->psParameters);
         int nr = iUnitRestraintTypeCount(uUnit, RESTRAINTANGLE);
         NC_CHECK(nc_def_dim(ncid, "angle_type", na + nr, &dimid_ap));
-        NC_CHECK(nc_defvar(ncid, &vid_angle_force, "angle_force_constant", NC_DOUBLE, 1, &dimid_ap,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angle_force, "angle_force_constant", NC_DOUBLE, 1, &dimid_ap,
                             "ANGLE_FORCE_CONSTANT", "kcal/mol/radian^2", NULL, NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_angle_eq, "angle_equil_value", NC_DOUBLE, 1, &dimid_ap,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angle_eq, "angle_equil_value", NC_DOUBLE, 1, &dimid_ap,
                             "ANGLE_EQUIL_VALUE", "degree", NULL,
                             "comment", "convert to radians for AMBER internal units", NULL));
     }
@@ -731,17 +731,17 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             NC_CHECK(nc_def_dim(ncid, "urey_bradley", iVarArrayElementCount(ub_index), &dimid_UB));
             NC_CHECK(nc_def_dim(ncid, "urey_bradley_type", iVarArrayElementCount(ub_force), &dimid_UB_types));
             int dims2[2] = {dimid_UB, dimid_atom2};
-            NC_CHECK(nc_defvar(ncid, &vid_UB13_atoms, "urey_bradley_atom", NC_INT, 2, dims2,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_UB13_atoms, "urey_bradley_atom", NC_INT, 2, dims2,
                                 NULL, NULL, "angle atom indices (atoms 1 and 3)",
                                 "index_dimension", "atom",
                                 NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_UB13_index, "urey_bradley_type_index", NC_INT, 1, &dimid_UB,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_UB13_index, "urey_bradley_type_index", NC_INT, 1, &dimid_UB,
                                 NULL, NULL, "Urey-Bradley parameter index",
                                 "index_dimension", "urey_bradley_type",
                                 NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_UB13_force, "urey_bradley_force_constant", NC_DOUBLE, 1, &dimid_UB_types,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_UB13_force, "urey_bradley_force_constant", NC_DOUBLE, 1, &dimid_UB_types,
                                 "CHARMM_UREY_BRADLEY_FORCE_CONSTANT", "kcal/mol/angstrom^2", NULL, NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_UB13_equil, "urey_bradley_equil_value", NC_DOUBLE, 1, &dimid_UB_types,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_UB13_equil, "urey_bradley_equil_value", NC_DOUBLE, 1, &dimid_UB_types,
                                 "CHARMM_UREY_BRADLEY_EQUIL_VALUE", "angstrom", NULL, NULL));
         }
     }
@@ -752,27 +752,27 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     {
         int dimid_tp;
         NC_CHECK(nc_def_dim(ncid, "dihedral_type", nd_parm_total, &dimid_tp));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_force, "dihedral_force_constant", NC_DOUBLE, 1, &dimid_tp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_force, "dihedral_force_constant", NC_DOUBLE, 1, &dimid_tp,
                             "DIHEDRAL_FORCE_CONSTANT", "kcal/mol", NULL, NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_period, "dihedral_periodicity", NC_INT, 1, &dimid_tp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_period, "dihedral_periodicity", NC_INT, 1, &dimid_tp,
                             "DIHEDRAL_PERIODICITY", NULL, "torsion Fourier periodicity",
                             "comment", "term is cos(n*phi - phase)",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_phase, "dihedral_phase", NC_DOUBLE, 1, &dimid_tp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_phase, "dihedral_phase", NC_DOUBLE, 1, &dimid_tp,
                             "DIHEDRAL_PHASE", "degree", NULL,
                             "comment", "convert to radians for AMBER internal units", NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_scee, "dihedral_scee_scale", NC_DOUBLE, 1, &dimid_tp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_scee, "dihedral_scee_scale", NC_DOUBLE, 1, &dimid_tp,
                             "SCEE_SCALE_FACTOR", NULL, "1-4 electrostatic energy scale factor", NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_scnb, "dihedral_scnb_scale", NC_DOUBLE, 1, &dimid_tp,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_scnb, "dihedral_scnb_scale", NC_DOUBLE, 1, &dimid_tp,
                             "SCNB_SCALE_FACTOR", NULL, "1-4 VdW energy scale factor", NULL));
         if (nh_parm_total) {
             int dimid_tp_harm;
             NC_CHECK(nc_def_dim(ncid, "harmonic_dihedral_type", nh_parm_total, &dimid_tp_harm));
-            NC_CHECK(nc_defvar(ncid, &vid_harm_dihe_force, "harmonic_dihedral_force_constant", NC_DOUBLE, 1, &dimid_tp_harm,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_harm_dihe_force, "harmonic_dihedral_force_constant", NC_DOUBLE, 1, &dimid_tp_harm,
                                 "CHARMM_IMPROPER_FORCE_CONSTANT", "kcal/mol/radian^2",
                                 "CHARMM harmonic improper force constant",
                                 NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_harm_dihe_equil, "harmonic_dihedral_equil_value", NC_DOUBLE, 1, &dimid_tp_harm,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_harm_dihe_equil, "harmonic_dihedral_equil_value", NC_DOUBLE, 1, &dimid_tp_harm,
                                 "CHARMM_IMPROPER_EQUIL_VALUE", "degree",
                                 "CHARMM harmonic improper equilibrium angle",
                                 NULL));
@@ -791,29 +791,29 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     {
         int dimid_bond;
         NC_CHECK(nc_def_dim(ncid, "bond", n_bond_total, &dimid_bond));
-        NC_CHECK(nc_defvar(ncid, &vid_bonds_inc_h, "bonds_inc_hydrogen", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bonds_inc_h, "bonds_inc_hydrogen", NC_INT, 0, NULL,
                             "NBONH", NULL, "count of leading bond_atom entries containing hydrogen",
                             "index_dimension", "bond",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_bonds_excl_h, "bonds_without_hydrogen", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bonds_excl_h, "bonds_without_hydrogen", NC_INT, 0, NULL,
                             "MBONA", NULL, "count of trailing bond_atom entries without hydrogen",
                             "index_dimension", "bond",
                             "comment", "bonds_inc_hydrogen + n_bonds_without_hydrogen + n_bond_restraints == n_bond",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_bond_restraints, "bond_restraint", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bond_restraints, "bond_restraint", NC_INT, 0, NULL,
                             NULL, NULL, "count of bond restraints",
                             "index_dimension", "bond",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_NBONA, "NBONA", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_NBONA, "NBONA", NC_INT, 0, NULL,
                             NULL, NULL, "count of bonds without hydrogens plus bond restraints",
                             "index_dimension", "bond",
                             NULL));
         int dims2[2] = {dimid_bond, dimid_atom2};
-        NC_CHECK(nc_defvar(ncid, &vid_bond_atom, "bond_atom", NC_INT, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bond_atom, "bond_atom", NC_INT, 2, dims2,
                             "PERT_BOND_ATOMS", NULL, "atom indices",
                             "index_dimension", "atom",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_bond_parm, "bond_type_index", NC_INT, 1, &dimid_bond,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_bond_parm, "bond_type_index", NC_INT, 1, &dimid_bond,
                             "PERT_BOND_PARAMS", NULL, "parm index",
                             "index_dimension", "bond_type",
                             "index_variables", "bond_force_constant bond_equil_value",
@@ -821,34 +821,29 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     }
 
     /* unified angle interactions */
-    int vid_angle_atom, vid_angle_parm, vid_angle_restraints = 0, vid_angles_inc_h, vid_angles_excl_h, vid_NPHIA;
+    int vid_angle_atom, vid_angle_parm, vid_angle_restraints = 0, vid_angles_inc_h, vid_angles_excl_h;
     {
         int dimid_angle;
         NC_CHECK(nc_def_dim(ncid, "angle", n_angle_total, &dimid_angle));
-        NC_CHECK(nc_defvar(ncid, &vid_angles_inc_h, "angles_inc_hydrogen", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angles_inc_h, "angles_inc_hydrogen", NC_INT, 0, NULL,
                             "NTHETH", NULL, "count of leading angles containing hydrogen",
                             "index_dimension", "angle",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_angles_excl_h, "angles_without_hydrogen", NC_INT, 0, NULL,
-                            "MTHETA", NULL, "count of angles without hydrogen",
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angles_excl_h, "angles_without_hydrogen", NC_INT, 0, NULL,
+                            "NTHETA", NULL, "count of angles without hydrogen",
                             "index_dimension", "angle",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_angle_restraints, "angle_restraint", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angle_restraints, "angle_restraint", NC_INT, 0, NULL,
                             NULL, NULL, "count of angle restraints",
                             "index_dimension", "angle",
                             "comment", "angles_inc_hydrogen + n_angles_without_hydrogen + n_angle_restraints == n_angle",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_NPHIA, "NPHIA", NC_INT, 0, NULL,
-                            NULL, NULL, "count of angles without hydrogen plus angle restraints",
-                            "index_dimension", "angle",
-                            "comment", "angles_inc_hydrogen + n_angles_without_hydrogen + n_angle_restraints == n_angle",
-                            NULL));
         int dims2[2] = {dimid_angle, dimid_atom3};
-        NC_CHECK(nc_defvar(ncid, &vid_angle_atom, "angle_atom", NC_INT, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angle_atom, "angle_atom", NC_INT, 2, dims2,
                             NULL, NULL, "atom indices",
                             "index_dimension", "atom",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_angle_parm, "angle_type_index", NC_INT, 1, &dimid_angle,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_angle_parm, "angle_type_index", NC_INT, 1, &dimid_angle,
                             NULL, NULL, "parm index",
                             "index_variables", "angle_force_constant angle_equil_value",
                             NULL));
@@ -856,44 +851,40 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     }
 
     /* unified periodic dihedral interactions */
-    int vid_dihe_atom, vid_dihe_parm, vid_dihe_proper, vid_dihe_term, vid_dihe_restraints, vid_dihe_inc_h, vid_dihe_excl_h, vid_NTHETA;
+    int vid_dihe_atom, vid_dihe_parm, vid_dihe_proper, vid_dihe_term;
+    int vid_dihe_restraints, vid_dihe_inc_h, vid_dihe_excl_h;
     {
         int dimid_dihe;
         NC_CHECK(nc_def_dim(ncid, "dihedral", n_dihe_total, &dimid_dihe));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_inc_h, "dihedrals_inc_hydrogen", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_inc_h, "dihedrals_inc_hydrogen", NC_INT, 0, NULL,
                             "NPHIH", NULL, "count of leading dihedrals containing hydrogen",
                             "index_dimension", "dihedral",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_excl_h, "dihedrals_without_hydrogen", NC_INT, 0, NULL,
-                            "MPHIA", NULL, "count of dihedrals without hydrogen",
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_excl_h, "dihedrals_without_hydrogen", NC_INT, 0, NULL,
+                            "NPHIA", NULL, "count of dihedrals without hydrogen",
                             "index_dimension", "dihedral",
                             "comment", "dihedrals_inc_hydrogen + n_dihedrals_without_hydrogen == n_dihedral",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_restraints, "dihedral_restraint", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_restraints, "dihedral_restraint", NC_INT, 0, NULL,
                             NULL, NULL, "count of trailing dihedral restraints",
                             "index_dimension", "dihedral",
                             "comment", "dihedrals_inc_hydrogen + n_dihedrals_without_hydrogen == n_dihedral",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_NTHETA, "NPHIA", NC_INT, 0, NULL,
-                            NULL, NULL, "count of dihedral_atom entries without hydrogen",
-                            "index_dimension", "dihedral",
-                            "comment", "dihedrals_inc_hydrogen + n_dihedrals_without_hydrogen == n_dihedral",
-                            NULL));
         int dims2[2] = {dimid_dihe, dimid_atom4};
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_atom, "dihedral_atom", NC_INT, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_atom, "dihedral_atom", NC_INT, 2, dims2,
                             NULL, NULL, "atom indices",
                             "index_dimension", "atom",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_parm, "dihedral_type_index", NC_INT, 1, &dimid_dihe,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_parm, "dihedral_type_index", NC_INT, 1, &dimid_dihe,
                             NULL, NULL, "parm index",
                             "index_dimension", "dihedral_type",
                             "index_variables", "dihedral_force_constant dihedral_periodicity dihedral_phase",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_proper, "dihedral_proper", NC_BYTE, 1, &dimid_dihe,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_proper, "dihedral_proper", NC_BYTE, 1, &dimid_dihe,
                             NULL, NULL, "proper-torsion flag",
                             "comment", "0 = improper, 1 = proper",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_dihe_term, "dihedral_term", NC_INT, 1, &dimid_dihe,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_term, "dihedral_term", NC_INT, 1, &dimid_dihe,
                             NULL, NULL, "multi-term Fourier series ordinal (0=solo, else 1,2,3,... within a set)",
                             "comment", "calc14 = dihedral_term < 2 && dihedral_proper",
                             NULL));
@@ -909,16 +900,16 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         int dimid_harm;
         NC_CHECK(nc_def_dim(ncid, "harmonic_dihedral", n_harm_total, &dimid_harm));
         int dims2[2] = {dimid_harm, dimid_atom4};
-        NC_CHECK(nc_defvar(ncid, &vid_harm_atom, "harmonic_dihedral_atom", NC_INT, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_harm_atom, "harmonic_dihedral_atom", NC_INT, 2, dims2,
                             NULL, NULL, "harmonic dihedral atom indices",
                             "index_dimension", "atom",
                             "comment", "typical use: CHARMM improper, first atom = center atom",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_harm_parm, "harmonic_dihedral_type_index", NC_INT, 1, &dimid_harm,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_harm_parm, "harmonic_dihedral_type_index", NC_INT, 1, &dimid_harm,
                             NULL, NULL, "harmonic dihedral parameter index",
                             "index_variables", "harmonic_dihedral_force_constant harmonic_dihedral_equil_value",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_harm_restraint, "harmonic_dihedral_restraint", NC_BYTE, 1, &dimid_harm,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_harm_restraint, "harmonic_dihedral_restraint", NC_BYTE, 1, &dimid_harm,
                             NULL, NULL, "supplemental restraint flag",
                             "flag_meanings", "force_field_term restraint",
                             NULL));
@@ -936,9 +927,9 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         if (n > 0) {
             int dimid_hb;
             NC_CHECK(nc_def_dim(ncid, "hbond_type", n, &dimid_hb));
-            NC_CHECK(nc_defvar(ncid, &vid_hba, "hbond_acoef", NC_DOUBLE, 1, &dimid_hb,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_hba, "hbond_acoef", NC_DOUBLE, 1, &dimid_hb,
                                 "HBOND_ACOEF", "kcal/mol*angstrom^12", NULL, NULL));
-            NC_CHECK(nc_defvar(ncid, &vid_hbb, "hbond_bcoef", NC_DOUBLE, 1, &dimid_hb,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_hbb, "hbond_bcoef", NC_DOUBLE, 1, &dimid_hb,
                                 "HBOND_BCOEF", "kcal/mol*angstrom^10", NULL, NULL));
         }
     }
@@ -947,9 +938,9 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int vid_atom_type, vid_atom_tree;
     {
         int dims2[2] = {dimid_atoms, dimid_name4};
-        NC_CHECK(nc_defvar(ncid, &vid_atom_type, "atom_forcefield_type", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_atom_type, "atom_forcefield_type", NC_CHAR, 2, dims2,
                             "AMBER_ATOM_TYPE", NULL, "force field atom type name", NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_atom_tree, "atom_tree_chain_classification", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_atom_tree, "atom_tree_chain_classification", NC_CHAR, 2, dims2,
                             "TREE_CHAIN_CLASSIFICATION", NULL,
                             "mainchain tree class: M,E,S,B,3,4,5,6,X; BLA=unknown",
                             NULL));
@@ -971,17 +962,17 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         iFS1 = uUnit->iFirstSolvent + 1;
         int dimid_mol;
         NC_CHECK(nc_def_dim(ncid, "molecule", nMol, &dimid_mol));
-        NC_CHECK(nc_defvar(ncid, &vid_mol, "atoms_per_molecule", NC_INT, 1, &dimid_mol,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_mol, "atoms_per_molecule", NC_INT, 1, &dimid_mol,
                             "NSPM", NULL, "number of atoms in molecule N", NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_fsr, "first_solvent_residue", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_fsr, "first_solvent_residue", NC_INT, 0, NULL,
                             "IPTRES", NULL, "residue index of first solvent residue",
                             "index_dimension", "residue",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_fsm, "first_solvent_molecule", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_fsm, "first_solvent_molecule", NC_INT, 0, NULL,
                             "NSPSOL", NULL, "molecule index of first solvent molecule",
                             "index_dimension", "molecule",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_res_mol, "residue_molecule", NC_INT, 1, &dimid_res,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_res_mol, "residue_molecule", NC_INT, 1, &dimid_res,
                             "RESIDUE_MOLECULE", NULL, "molecule index",
                             "index_dimension", "molecule",
                             NULL));
@@ -991,14 +982,14 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int vid_cap_info_atom = 0, vid_cap_info_radius = 0, vid_cap_info_origin = 0;
     if (bUnitUseSolventCap(uUnit)) {
         int dimid_vec;
-        NC_CHECK(nc_defvar(ncid, &vid_cap_info_atom, "cap_info_atom", NC_INT, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cap_info_atom, "cap_info_atom", NC_INT, 0, NULL,
                             "CAP_INFO", NULL, "index of the last atom not in the solvent cap",
                             "index_dimension", "atom",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_cap_info_radius, "cap_info_radius", NC_DOUBLE, 0, NULL,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cap_info_radius, "cap_info_radius", NC_DOUBLE, 0, NULL,
                             "CAP_INFO2", "angstrom", "radius of solvent cap", NULL));
         NC_CHECK(nc_def_dim(ncid, "vector", 3, &dimid_vec));
-        NC_CHECK(nc_defvar(ncid, &vid_cap_info_origin, "cap_info_origin", NC_DOUBLE, 1, &dimid_vec,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cap_info_origin, "cap_info_origin", NC_DOUBLE, 1, &dimid_vec,
                             "CAP_INFO2", "angstrom", "origin of solvent cap", NULL));
     }
 
@@ -1015,14 +1006,14 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     }
 
     int vid_IPOL;
-    NC_CHECK(nc_defvar(ncid, &vid_IPOL, "polarizability_type", NC_INT, 0, NULL,
+    NC_CHECK(NC_DEFVAR(ncid, &vid_IPOL, "polarizability_type", NC_INT, 0, NULL,
                         "IPOL", NULL, "polarizable force field flag", NULL));
 
     int vid_polar = 0, vid_damp = 0;
     if (bPolar) {
-        NC_CHECK(nc_defvar(ncid, &vid_polar, "polarizability", NC_DOUBLE, 1, &dimid_atoms,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_polar, "polarizability", NC_DOUBLE, 1, &dimid_atoms,
                             "POLARIZABILITY", "angstrom^3", NULL, NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_damp, "dipole_damp_factor", NC_DOUBLE, 1, &dimid_atoms,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_damp, "dipole_damp_factor", NC_DOUBLE, 1, &dimid_atoms,
                             "DIPOLE_DAMP_FACTOR", NULL, NULL, NULL));
     }
 
@@ -1030,14 +1021,14 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     int vid_resSeq = 0, vid_res_chain = 0, vid_res_icode = 0;
     bool bHasICodes = false;
     if (GDefaults.bPdbKeepChainId) {
-        NC_CHECK(nc_defvar(ncid, &vid_resSeq, "residue_number", NC_INT, 1, &dimid_res,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_resSeq, "residue_number", NC_INT, 1, &dimid_res,
                             "RESIDUE_NUMBER", NULL, "PDB resSeq",
                             "pdb_name", "resSeq",
                             "mmcif_name", GDefaults.bCIFReadAuth ? "atom_site.auth_seq_id"
                                                                    : "atom_site.label_seq_id",
                             NULL));
         int dims2[2] = {dimid_res, dimid_chainid_len};
-        NC_CHECK(nc_defvar(ncid, &vid_res_chain, "residue_chainid", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_res_chain, "residue_chainid", NC_CHAR, 2, dims2,
                             "RESIDUE_CHAINID", NULL, "PDB chainId",
                             "pdb_name", "chainId",
                             "mmcif_name", GDefaults.bCIFReadAuth ? "atom_site.auth_asym_id"
@@ -1050,7 +1041,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         }
         if (bHasICodes) {
             dims2[1] = dimid_icode_len;
-            NC_CHECK(nc_defvar(ncid, &vid_res_icode, "residue_icode", NC_CHAR, 2, dims2,
+            NC_CHECK(NC_DEFVAR(ncid, &vid_res_icode, "residue_icode", NC_CHAR, 2, dims2,
                                 "RESIDUE_ICODE", NULL, "PDB iCode",
                                 "pdb_name", "iCode",
                                 "mmcif_name", "atom_site.pdbx_PDB_ins_code",
@@ -1077,13 +1068,13 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_def_dim(ncid, "cmap_parameter", cmap_energy_size, &dimid_values));
         NC_CHECK(nc_def_dim(ncid, "cmap_title_length", cmap_title_len, &dimid_cmap_title_len));
         int dims2[2] = {dimid_types, dimid_cmap_title_len};
-        NC_CHECK(nc_defvar(ncid, &vid_cmap_title, "cmap_title", NC_CHAR, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cmap_title, "cmap_title", NC_CHAR, 2, dims2,
                             NULL, NULL, "descriptive title per CMAP type", NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_cmap_resolution, "cmap_resolution", NC_INT, 1, &dimid_types,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cmap_resolution, "cmap_resolution", NC_INT, 1, &dimid_types,
                             "CMAP_RESOLUTION", NULL, "grid resolution per map type",
                             "index_dimension", "cmap_type",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_cmap_energy, "cmap_parameter", NC_DOUBLE, 1, &dimid_values,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cmap_energy, "cmap_parameter", NC_DOUBLE, 1, &dimid_values,
                             NULL, "kcal/mol", "Concatenated phi/psi torsion energy correction grids",
                             "row_axis", "phi",
                             "column_axis", "psi",
@@ -1092,11 +1083,11 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                             "packing", "concatenated row-major grids; offset for type i is sum(cmap_resolution(1:i-1)**2)",
                             NULL));
         dims2[0] = dimid_kinds; dims2[1] = dimid_atom5;
-        NC_CHECK(nc_defvar(ncid, &vid_cmap_atoms, "cmap_phi_psi_atom", NC_INT, 2, dims2,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cmap_atoms, "cmap_phi_psi_atom", NC_INT, 2, dims2,
                             "CMAP_INDEX", NULL, "5 atom indices: atoms 1-4=phi, 2-5=psi",
                             "index_dimension", "atom",
                             NULL));
-        NC_CHECK(nc_defvar(ncid, &vid_cmap_type_index, "cmap_phi_psi_type_index", NC_INT, 1, &dimid_kinds,
+        NC_CHECK(NC_DEFVAR(ncid, &vid_cmap_type_index, "cmap_phi_psi_type_index", NC_INT, 1, &dimid_kinds,
                             "CMAP_INDEX", NULL, "index into cmap_title/cmap_resolution/cmap_energy",
                             "index_dimension", "cmap_type",
                             "index_variables", "cmap_title cmap_resolution cmap_energy",
@@ -1113,7 +1104,6 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     NC_CHECK(nc_put_var_int  (ncid, vid_dihe_inc_h, &dihe_nh));
     NC_CHECK(nc_put_var_int  (ncid, vid_dihe_excl_h, &dihe_nnh));
     dihe_nnh += n_dihe_restraints;
-    NC_CHECK(nc_put_var_int  (ncid, vid_NPHIA, &dihe_nnh));
     NC_CHECK(nc_put_var_int  (ncid, vid_dihe_restraints, &n_dihe_restraints));
     NC_CHECK(nc_put_var_int  (ncid, vid_dihe_atom, (int*)dihe_atoms));
     NC_CHECK(nc_put_var_int  (ncid, vid_dihe_parm, dihe_parm));
@@ -1459,7 +1449,6 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(nc_put_var_int  (ncid, vid_angles_inc_h, &nh));
         NC_CHECK(nc_put_var_int  (ncid, vid_angles_excl_h, &nnh));
         nnh += nr_angle;
-        NC_CHECK(nc_put_var_int  (ncid, vid_NPHIA, &nnh));
         NC_CHECK(nc_put_var_int  (ncid, vid_angle_restraints, &nr_angle));
         NC_CHECK(nc_put_var_int  (ncid, vid_angle_atom, (int*)buf));
         NC_CHECK(nc_put_var_int  (ncid, vid_angle_parm, parm));
@@ -1644,16 +1633,20 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
     VP0("There are %i atoms\n", iAtomCount);
 
     NC_CHECK(nc_create(filename, NC_64BIT_OFFSET, &ncid));
+
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "title",
+                        strlen(sContainerName(uUnit)), sContainerName(uUnit)));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "application", 5, "AMBER"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "program", 4, "leap"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "programVersion", 3, LEAP_VERSION));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "Conventions", 12, "AMBERRESTART"));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0"));
+
     NC_CHECK(nc_def_dim(ncid, "spatial", 3, &did_spatial));
     NC_CHECK(nc_def_var(ncid, "spatial", NC_CHAR, 1, &did_spatial, &vid_spatial));
     NC_CHECK(nc_def_dim(ncid, "atom", iAtomCount, &did_atom));
     NC_CHECK(nc_def_var(ncid, "time", NC_DOUBLE, 0, dimensionID, &vid_time));
     NC_CHECK(nc_put_att_text(ncid, vid_time, "units", 10, "picosecond"));
-
-    dimensionID[0] = did_atom;
-    dimensionID[1] = did_spatial;
-    NC_CHECK(nc_def_var(ncid, "coordinates", NC_DOUBLE, 2, dimensionID, &vid_coord));
-    NC_CHECK(nc_put_att_text(ncid, vid_coord, "units", 8, "angstrom"));
 
     if (bUnitUseBox(uUnit)) {
         VP0("Using the unit box\n");
@@ -1673,35 +1666,25 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         NC_CHECK(nc_put_att_text(ncid, vid_cell_angle, "units", 6, "degree"));
     }
 
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "title",
-                        strlen(sContainerName(uUnit)), sContainerName(uUnit)));
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "application", 5, "AMBER"));
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "program", 4, "leap"));
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "programVersion", 3, LEAP_VERSION));
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "Conventions", 12, "AMBERRESTART"));
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0"));
+    dimensionID[0] = did_atom;
+    dimensionID[1] = did_spatial;
+    NC_CHECK(nc_def_var(ncid, "coordinates", NC_DOUBLE, 2, dimensionID, &vid_coord));
+    NC_CHECK(nc_put_att_text(ncid, vid_coord, "units", 8, "angstrom"));
 
-    NC_CHECK(nc_set_fill(ncid, NC_NOFILL, dimensionID));
+    NC_CHECK(nc_set_fill(ncid, NC_NOFILL, dimensionID)); // dimensionID is scratch return value
     NC_CHECK(nc_enddef(ncid));
 
-    NC_CHECK(nc_put_var_text(ncid, vid_spatial, "xyz"));
-
-    if (bUnitUseBox(uUnit)) {
-        NC_CHECK(nc_put_var_text(ncid, vid_cell_spatial, "abc"));
-        NC_CHECK(nc_put_var_text(ncid, vid_cell_angular,
-                             "alpha" "beta " "gamma"));
-    }
-
-    double *data;
-    data = (double *)MALLOC(3 * iAtomCount * sizeof(double));
+    double *data = (double *)MALLOC(3 * iAtomCount * sizeof(double));
     int counter = 0;
     VECTOR vPos;
 
     double time = 0.0;
     NC_CHECK(nc_put_var_double(ncid, vid_time, &time));
 
-    double dX, dY, dZ, dX2, dY2, dZ2;
-    UnitGetBox(uUnit, &dX, &dY, &dZ);
+    double dX, dY, dZ, dX2, dY2, dZ2, alpha, beta, gamma;
+    UnitGetCell(uUnit, &dX, &dY, &dZ, &alpha, &beta, &gamma);
+
+    // This insanity is because NO-CENTER actually does center but then undo it here.
     if (bUnitUseBox(uUnit) && GDefaults.bNoCenter == 0) {
         dX2 = dX * 0.5; dY2 = dY * 0.5; dZ2 = dZ * 0.5;
     } else {
@@ -1715,17 +1698,20 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         data[counter++] = dVZ(&vPos) + dZ2;
     }
 
+    NC_CHECK(nc_put_var_text(ncid, vid_spatial, "xyz"));
     NC_CHECK(nc_put_var_double(ncid, vid_coord, data));
+    FREE(data);
 
     if (bUnitUseBox(uUnit)) {
+        NC_CHECK(nc_put_var_text(ncid, vid_cell_spatial, "abc"));
+        NC_CHECK(nc_put_var_text(ncid, vid_cell_angular, "alpha" "beta " "gamma"));
         double lengths[3] = { dX, dY, dZ };
+        double angles[3] = { alpha * RADTODEG, beta * RADTODEG, gamma * RADTODEG };
         NC_CHECK(nc_put_var_double(ncid, vid_cell_length, lengths));
-        lengths[0] = lengths[1] = lengths[2] = dUnitBeta(uUnit) * RADTODEG;
-        NC_CHECK(nc_put_var_double(ncid, vid_cell_angle, lengths));
+        NC_CHECK(nc_put_var_double(ncid, vid_cell_angle, angles));
     }
 
     NC_CHECK(nc_close(ncid));
-    FREE(data);
     VP0("Successfully saved NetCDF inpcrd file \"%s\"\n", filename);
 }
 

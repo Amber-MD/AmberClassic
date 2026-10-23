@@ -214,9 +214,18 @@ extern void		LoopDestroyMemory(LOOP *lPLoop);
                 /* Some macros that make LOOPs a little easier to use */
 
 #define FOREACH(x,type,l)       while ( ( x = (type)oNext(&l) ) != NULL )
-#define LOOPOVERALL(over,goal,element,type,loop) \
-        loop = lLoop(OBJEKT_from(over),goal);\
-        while ( (element=type##_from(oNext(&loop))) )
+
+#define LOOPOVERALL(over, goal, element, loop)       \
+    for (LOOP loop = lLoop(OBJEKT_from(over), goal); \
+         ((element) = _Generic((element),            \
+             OBJEKT:   OBJEKT_from(oNext(&loop)),    \
+             CONTAINER: CONTAINER_from(oNext(&loop)), \
+             ATOM:     ATOM_from(oNext(&loop)),      \
+             RESIDUE:  RESIDUE_from(oNext(&loop)),   \
+             MOLECULE: MOLECULE_from(oNext(&loop)),  \
+             UNIT:     UNIT_from(oNext(&loop)),      \
+             INTERNAL: INTERNAL_from(oNext(&loop))   \
+         )); )
 
 /*
  *      FOR_<type>_IN_CONTAINER pattern

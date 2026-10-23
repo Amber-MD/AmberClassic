@@ -642,9 +642,9 @@ OBJEKT
 oCmd_sequence( int iArgCount, ASSOC aaArgs[] )
 {
 LISTLOOP        llElements;
+LOOP            lAtoms;
 UNIT            uFirst, uSecond, uUnit;
 ASSOC           aAss;
-LOOP            lTemp, lAtoms;
 ATOM            aConnect;
 char            *sCmd = "sequence";
 RESIDUE         rRes;
@@ -726,8 +726,7 @@ int             iDum;
 
                 /* Define PDB sequence */
 
-    lTemp = lLoop( OBJEKT_from(uFirst), RESIDUES );
-    while ( (rRes = RESIDUE_from(oNext(&lTemp))) ) {
+    LOOPOVERALL(uFirst,RESIDUES,rRes,lTemp) {
         ResidueSetPdbSequence( rRes, iContainerSequence(CONTAINER_from( rRes)) );
     }
 
@@ -2577,7 +2576,6 @@ oCmd_combine( int iArgCount, ASSOC aaArgs[] )
 LISTLOOP        llElements;
 UNIT            uCombined, uCurrent;
 ASSOC           aAss;
-LOOP            lTemp;
 RESIDUE         rRes;
 OBJEKT          oObj;
 char            *sCmd = "combine";
@@ -2620,8 +2618,7 @@ char            *sCmd = "combine";
 
                 /* Define PDB sequence */
 
-    lTemp = lLoop( OBJEKT_from(uCombined), RESIDUES );
-    while ( (rRes = RESIDUE_from(oNext(&lTemp))) ) {
+    LOOPOVERALL(uCombined,RESIDUES,rRes,lTemp) {
         ResidueSetPdbSequence( rRes, iContainerSequence(CONTAINER_from( rRes)) );
     }
 
@@ -3648,7 +3645,6 @@ OBJEKT
 oCmd_resequence( int iArgCount, ASSOC aaArgs[] )
 {
 OBJEKT oUnit, oResidue, oAtom;
-LOOP lResidues, lAtoms;
 int iResidue, iAtom, iNonResidue=0, iNonAtom=0, iAllAtoms=0;
 STRING sResidue, sAtom;
 char *sUnit;
@@ -3661,7 +3657,7 @@ char *sUnit;
     sUnit = sAssocName(aaArgs[0]);
 
     iResidue=0;
-    LOOPOVERALL(oUnit,DIRECTCONTENTSBYSEQNUM,oResidue,OBJEKT,lResidues) {
+    LOOPOVERALL(oUnit,DIRECTCONTENTSBYSEQNUM,oResidue,lResidues) {
         ContainerSetSequence(oResidue,++iResidue);
         if (iObjectType(oResidue)!=RESIDUEid) {
             VPWARN("UNIT %s contains a non-RESIDUE member %s\n",
@@ -3669,7 +3665,7 @@ char *sUnit;
             continue;
         }
         iAtom=0;
-        LOOPOVERALL(oResidue,DIRECTCONTENTSBYSEQNUM,oAtom,OBJEKT,lAtoms) {
+        LOOPOVERALL(oResidue,DIRECTCONTENTSBYSEQNUM,oAtom,lAtoms) {
             ContainerSetSequence(oAtom,++iAtom);
             if (iObjectType(oAtom)!=ATOMid) {
                 VPWARN("RESIDUE %s contains a non-ATOM member %s\n",

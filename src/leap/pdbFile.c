@@ -651,7 +651,7 @@ void
 zPdbBuildCoordinatesForContainer( CONTAINER cCont, int *iPAddH,
         int *iPAddHeavy, int *iPAddUnk )
 {
-LOOP            lAtoms, lSpan;
+LOOP            lSpan;
 ATOM            aAtom, aTemp, aSpan;
 int             i;
 #ifdef DEBUG
@@ -663,7 +663,7 @@ STRING          sSpan;
                 /* Loop through all ATOMs looking for those that */
                 /* do not have positions known and build externals */
                 /* for them and neighbors that are bonded to them */
-    LOOPOVERALL(cCont,ATOMS,aAtom,ATOM,lAtoms) {
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
         if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) {
             lSpan = lLoop( (OBJEKT)aAtom, SPANNINGTREE );
             LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
@@ -710,8 +710,8 @@ STRING          sSpan;
 
                 /* Destroy the INTERNALs in the CONTAINER */
 
-    lAtoms = lLoop( (OBJEKT)cCont, ATOMS );
-    BuildDestroyInternals( &lAtoms );
+    LOOP lTemp = lLoop( (OBJEKT)cCont, ATOMS );
+    BuildDestroyInternals( &lTemp );
 
 }
 
@@ -740,7 +740,6 @@ VECTOR          vPos, vCenOrig = {0,0,0}, vCen, vCenFrac, vCenWrap, vShift = {0,
 MATRIX          mTransform, M, Mi;
 UNIT            uOrig, uCopy;
 ATOM            aAtom;
-LOOP            lAtoms;
 
     if (prPPdb->bSymmOps) {
         VP0("Building transforms from spacegroup info\n");
@@ -772,7 +771,7 @@ LOOP            lAtoms;
         vShift.dZ = M[0][2]*vCenWrap.dX + M[1][2]*vCenWrap.dY + M[2][2]*vCenWrap.dZ - vCen.dZ;
 
         /* --- apply wrapping shift to original */
-        LOOPOVERALL(prPPdb->uUnit,ATOMS,aAtom,ATOM,lAtoms) {
+        LOOPOVERALL(prPPdb->uUnit,ATOMS,aAtom,lAtoms) {
             VECTOR vNewPosition = {
                 vAtomPosition(aAtom).dX + vShift.dX,
                 vAtomPosition(aAtom).dY + vShift.dY,
@@ -830,7 +829,7 @@ LOOP            lAtoms;
             vShift.dZ = M[0][2]*vCenWrap.dX + M[1][2]*vCenWrap.dY + M[2][2]*vCenWrap.dZ - vCen.dZ;
         }
         /* --- transform all atoms and apply wrapping shift in one pass --- */
-        LOOPOVERALL(uCopy,ATOMS,aAtom,ATOM,lAtoms) {
+        LOOPOVERALL(uCopy,ATOMS,aAtom,lAtoms) {
             MatrixTimesVector( vPos, mTransform, vAtomPosition(aAtom) );
             vPos.dX += vShift.dX;
             vPos.dY += vShift.dY;
@@ -991,7 +990,6 @@ zPdbFileWriteContainer( PDBWRITEt *pwPFile, CONTAINER cCont )
 const char      C_TERMINAL_PREFIX = 'C';
 const char      N_TERMINAL_PREFIX = 'N';
 const int       RESIDUE_NAME_LENGTH = 3;
-LOOP            lContents;
 ATOM            aAtom;
 char            *cPTemp;
 
@@ -1027,19 +1025,19 @@ char            *cPTemp;
     } else if ( iObjectType(cCont) == RESIDUEid ) {
         RESIDUE rRes = (RESIDUE) cCont;
         if (GDefaults.bPdbKeepChainId) {
-            LOOPOVERALL(cCont,DIRECTCONTENTSBYSEQNUM,aAtom,ATOM,lContents) {
+            LOOPOVERALL(cCont,DIRECTCONTENTSBYSEQNUM,aAtom,lContents) {
                 zPdbFileWriteAtomRecord( pwPFile, aAtom, rRes);
             }
         } else {
             pwPFile->iResidueSeq = rRes->iTemp;
             if ( pwPFile->iResidueSeq == 0 ) // FIXME: This looks like an ugly work-around
                     pwPFile->iResidueSeq = 1;
-            LOOPOVERALL(cCont,DIRECTCONTENTSBYSEQNUM,aAtom,ATOM,lContents) {
+            LOOPOVERALL(cCont,DIRECTCONTENTSBYSEQNUM,aAtom,lContents) {
                 zPdbFileWriteAtomRecord( pwPFile, aAtom, NULL);
             }
         }
     } else if ( iObjectType(cCont) == MOLECULEid ) {
-        LOOPOVERALL(cCont,ATOMS,aAtom,ATOM,lContents) {
+        LOOPOVERALL(cCont,ATOMS,aAtom,lContents) {
             zPdbFileWriteAtomRecord( pwPFile, aAtom, NULL );
         }
         pwPFile->iResidueSeq++;
@@ -1078,10 +1076,8 @@ void
 PdbWrite( FILE *fOut, UNIT uUnit )
 {
         int             iResidueCount;
-        LOOP            lContents;
         SAVERESIDUEt    *srPResidue;
         PDBWRITEt       pwFile;
-        LOOP            lAtoms;
         ATOM            aAtom;
         ATOM            aNeighbor;
         RESIDUE         rNeighbor;
@@ -1113,7 +1109,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
                 strcpy(recResCount.key,sContainerName(rRes));
                 add_key(&recResCount, &ixResCount);
                 rRes->iTemp = i + 1;
-                LOOPOVERALL(rRes,DIRECTCONTENTSBYSEQNUM,aAtom,ATOM,lContents) aAtom->iSeenId = i;
+                LOOPOVERALL(rRes,DIRECTCONTENTSBYSEQNUM,aAtom,lContents) aAtom->iSeenId = i;
         }
 
         first_key(&ixResCount);
@@ -1188,7 +1184,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
         // Determine and write LINK, SSBOND records
         if (GDefaults.bPdbKeepChainId) {
             iSSBOND = 0;
-            LOOPOVERALL(uUnit,ATOMS,aAtom,ATOM,lAtoms) {
+            LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) {
                 RESIDUE rResidue = (RESIDUE)cContainerWithin((CONTAINER) aAtom);
                 int iResSeq = iContainerSequence((CONTAINER) rResidue);
                 for ( int i=0; i<iAtomCoordination(aAtom); i++ ) {
@@ -2041,9 +2037,9 @@ zLoadUnit(char *name) {
         return NULL;
     }
 
-    ATOM aAtom; LOOP lAtoms;
+    ATOM aAtom;
     int nH=0;
-    LOOPOVERALL(rRes,ATOMS,aAtom,ATOM,lAtoms)
+    LOOPOVERALL(rRes,ATOMS,aAtom,lAtoms)
         if (aAtom->iAtomicNumber == HYDROGEN) nH++;
     ContainerSetTempInt(uTemplate,nH);
 
@@ -2509,8 +2505,7 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
         if (match->score.extra_nonh_atoms == 0 && match->score.extra_h_atoms == 1) {
             ATOM aExtraAtom = NULL;
             ATOM aCand;
-            LOOP lAtoms;
-            LOOPOVERALL(rResidue,ATOMS,aCand,ATOM,lAtoms) {
+            LOOPOVERALL(rResidue,ATOMS,aCand,lAtoms) {
                 bool found = false;
                 for (int i = iFirstAtom; i <= iLastAtom; i++) {
                     if (!strcmp(sContainerName(aCand),
@@ -3031,9 +3026,8 @@ DICTIONARY      dVariables;
         // Index it by VARIABLE name and RESIDUE name
         // And mark UNIT TempInt with number of hydrogen atoms
         ATOM aAtom;
-        LOOP lAtoms;
         int nH=0;
-        LOOPOVERALL(rRes,ATOMS,aAtom,ATOM,lAtoms)
+        LOOPOVERALL(rRes,ATOMS,aAtom,lAtoms)
             if (aAtom->iAtomicNumber == HYDROGEN) nH++;
         ContainerSetTempInt(uTemplate,nH);
         char *sVarName = sDictLoopKey(dlLoop);

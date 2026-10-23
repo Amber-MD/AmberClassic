@@ -40,11 +40,11 @@ typedef struct {
 
 static char opt_null[]="null";
 char *PBRadii_options[] =
-     {"bondi", "amber6", "mbondi", "mbondi2", "parse", "mbondi3", NULL};
+     {"bondi", "amber6", "mbondi", "mbondi2", "mbondi3", "sirahrad", "parse", NULL};
 char *PBRadii_optionDesc[] =
-     {"Bondi radii","amber6 modified Bondi radii","modified Bondi radii",
-     //{"Bondi radii","Amber6 modified Bondi radii","Modified Bondi radii",
-       "H(N)-modified Bondi radii", "Parse radii", "ArgH and AspGluO modified Bondi2 radii", NULL};
+     {"Bondi radii","Amber6 modified Bondi radii","modified Bondi radii", // FIXME "Modified Bondi radii"
+       "H(N)-modified Bondi radii", "ArgH and AspGluO modified Bondi2 radii",
+       "Sirah radii", "Parse radii", NULL};
 static char *Dielectric_options[] = {opt_null,"constant","distance",NULL};
 static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
 static char *PdbConvertResname_options[] = {"standard","keep","variant",NULL};
@@ -66,7 +66,7 @@ zSDefaultSettings[] = {
     { 'B', "hybrid36", "Hybrid36", &GDefaults.bPdbHybrid36, .defval.integer=1 },
     { 'B', "keep_input_solvent", "Keep_Input_Solvent", &GDefaults.bKeepInputSolvent, .defval.integer=0 },
     { 'B', "keep_chainid", "Keep_chainId", &GDefaults.bPdbKeepChainId },
-    { 'I', "pdbreadbiomt", "PdbReadBioMT", &GDefaults.iPdbReadBioMT },
+    { 'I', "pdb_expand_biomt", "Pdb_Expand_BioMT", &GDefaults.iPdbReadBioMT },
     { 'B', "charmm", "Charmm", &GDefaults.bCharmm },
     { 'B', "flexiblewater", "FlexibleWater", &GDefaults.bFlexibleWater },
     { 'B', "deleteextrapointangles", "DeleteExtraPointAngles", &GDefaults.bDeleteExtraPointAngles,
@@ -108,7 +108,6 @@ zSDefaultSettings[] = {
     { 'S', "pdb_patch_file","PDB_Patch_File", &GDefaults.sPdbPatchFilename },
     { 'D', "pdb_bulk_q","PDB_Bulk_Q", &GDefaults.dPdbBulkQ, .defval.real=1.0 },
     { 'B', "prmtop_netcdf","PrmTop_NetCDF", &GDefaults.bPrmtopNetcdf },
-    { 'B', "mask_pdb_mode","Mask_PDB_Mode", &GDefaults.bMaskPDBMode },
     { 'B', "timing","Timing", &GDefaults.bTiming },
     { 0 }
 };

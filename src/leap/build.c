@@ -187,7 +187,6 @@ ATOM            aAtomC, aAtomA, aAtomB;
 VECTOR          vAtomC, vAtomA, vAtomB;
 double          dBond, dAngleA, dAngleB;
 INTERNAL        iChirality;
-LOOP            lInternals;
 double          dChirality, dOrient;
 VECTOR          vNew;
 
@@ -241,8 +240,7 @@ STRING		s1, s2, s3;
 	dChirality = 1.0;
                 /* Check to see if aAtomC has an internal chirality defined */
 
-        lInternals = lLoop( (OBJEKT)aAtomC, INTERNALS );
-        while ( (iChirality = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtomC, INTERNALS, iChirality, lInternals) {
             if ( iInternalType(iChirality) == INTERNALCHIRALITY ) {
                 dChirality = dInternalValue(iChirality);
 		MESSAGE("Got INTERNAL chirality: %lf\n", 
@@ -390,7 +388,6 @@ STRING		s1, s2, s3;
 #endif
 int		i, j, iTorsions, iShouldBe;
 double		dValue;
-LOOP		lTemp;
 
     MESSAGE("Building internals for: %s\n", 
 		sContainerFullDescriptor((CONTAINER)aAtom,sTemp) );
@@ -422,7 +419,7 @@ LOOP		lTemp;
     }
 		/* Build bond angles */
 
-    LOOPOVERALL( aAtom, ANGLES|ALLOWDUPLICATES, aTemp, ATOM, lTemp ) {
+    LOOPOVERALL( aAtom, ANGLES|ALLOWDUPLICATES, aTemp, lTemp ) {
 	LoopGetAngle( &lTemp, &a1, &a2, &a3 );
 	MESSAGE("Building angle INTERNAL for: %s - %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
@@ -453,7 +450,7 @@ LOOP		lTemp;
 
 		/* Build bond internals */
 
-    LOOPOVERALL( aAtom, BONDS|ALLOWDUPLICATES, aTemp, ATOM, lTemp ) {
+    LOOPOVERALL( aAtom, BONDS|ALLOWDUPLICATES, aTemp, lTemp ) {
 	LoopGetBond( &lTemp, &a1, &a2 );
 	MESSAGE("Building bond INTERNAL for: %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
@@ -520,7 +517,6 @@ LOOP		lTemp;
 static void
 BuildExternalForOneAtom( ATOM aAtom )
 {
-LOOP            lInternals;
 INTERNAL        iTemp, iBond, iAngle, iTorsion;
 INTERNAL        iAngle1, iAngle2;
 VECTOR          vPos;
@@ -541,9 +537,7 @@ STRING		s1;
                 /* the other three with their coordinates specified. */
                 /* Then find the angle and bond that share this atom and */
                 /* that lie on the torsion */
-                
-        lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
-        while ( (iTemp = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iTemp, lInternals) {
             if ( iInternalType(iTemp)==INTERNALTORSION ) {
                 if ( bInternalGoodTorsion( iTemp, aAtom,
 					&iTorsion, &iAngle, &iBond )) break;
@@ -561,8 +555,7 @@ STRING		s1;
                 /* the terminal and shares the center atom with the first */
                 /* angle and also has all of its coordinates specified */
         
-        lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
-        while ( (iTemp = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iTemp, lInternals) {
             if ( iInternalType(iTemp)==INTERNALANGLE ) {
                 if ( bInternalGoodPairOfAngles( iTemp, aAtom, &iAngle1,
                                                 &iAngle2, &iBond )) break;
@@ -579,8 +572,7 @@ STRING		s1;
                 /* Then find the bond that shares */
                 /* this atom and that lies on the angle */
         
-        lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
-        while ( (iTemp = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iTemp, lInternals) {
             if ( iInternalType(iTemp)==INTERNALANGLE ) {
                 if ( bInternalGoodAngle( iTemp, aAtom, &iAngle, &iBond ))
                     break;
@@ -595,8 +587,7 @@ STRING		s1;
                 /* Loop over all internals involving this atom and look */
                 /* for a bond that has this atom as a terminal atom*/
                 
-        lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
-        while ( (iTemp = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iTemp, lInternals) {
             if ( iInternalType(iTemp)==INTERNALBOND ) {
                 if ( bInternalGoodBond( iTemp, aAtom, &iBond )) break;
             }
@@ -633,10 +624,8 @@ STRING		s1;
 static void
 zBuildVerifyInternals( LOOP lAtoms )
 {
-LOOP		lTemp;
 ATOM		a1, a2, a3, a4;
 //STRING		s1, s2, s3, s4;
-LOOP		lInternals;
 INTERNAL	iInt;
 int		iCount;
 ATOM		aAtom;
@@ -649,8 +638,7 @@ ATOM		aAtom;
     while ( oNext(&lTemp) ) {
 	LoopGetBond( &lTemp, &a1, &a2 );
 	iCount = 0;
-	lInternals = lLoop( (OBJEKT)a1, INTERNALS );
-	while ( (iInt = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
 	    if ( iInternalType(iInt) == INTERNALBOND && 
 		 ( aInternalAtom1(iInt) == a2 ||
 		   aInternalAtom2(iInt) == a2 ) ) iCount++;
@@ -669,8 +657,7 @@ ATOM		aAtom;
     while ( oNext(&lTemp) ) {
 	LoopGetAngle( &lTemp, &a1, &a2, &a3 );
 	iCount = 0;
-	lInternals = lLoop( (OBJEKT)a1, INTERNALS );
-	while ( (iInt = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
 	    if ( iInternalType(iInt) == INTERNALANGLE && 
 		 aInternalAtom2(iInt) == a2 && 
 		( aInternalAtom1(iInt) == a3 ||
@@ -691,8 +678,7 @@ ATOM		aAtom;
     while ( oNext(&lTemp) ) {
 	LoopGetTorsion( &lTemp, &a1, &a2, &a3, &a4 );
 	iCount = 0;
-	lInternals = lLoop( (OBJEKT)a1, INTERNALS );
-	while ( (iInt = (INTERNAL)oNext(&lInternals)) ) {
+        LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
 	    if ( iInternalType(iInt) == INTERNALTORSION &&
 		( ( aInternalAtom2(iInt) == a2 &&
 		    aInternalAtom3(iInt) == a3 &&
@@ -744,7 +730,7 @@ INTERNAL	iRing;
 		/* Get the single ring in the ring group */
 
     llList = llListLoop(lRingGroup);
-    iRing = (INTERNAL)oListNext(&llList);
+    iRing = INTERNAL_from(oListNext(&llList));
 
 		/* Loop over all ATOMs, find the hybridization */
 		/* and count the number of ATOMs with */
@@ -960,7 +946,6 @@ BuildInternalsForContainer( CONTAINER cCont, FLAGS fSet, FLAGS fReset )
 {
 OBJEKT          oTemp;
 ATOM            aTemp, a1, a2, a3;
-LOOP		lTemp;
 #ifdef DEBUG
 STRING		s1, s2, s3;
 #endif
@@ -976,7 +961,7 @@ double		dValue;
 		/* around central pairs of ATOMs taking into account any */
 		/* external coordinates that may be defined already */
 
-    LOOPOVERALL( cCont, BONDS, oTemp, OBJEKT, lTemp ) {
+    LOOPOVERALL( cCont, BONDS, oTemp, lTemp ) {
         
 	LoopGetBond( &lTemp, &a2, &a3 );
 	if ( iAtomCoordination(a2) <= 1 ) continue;
@@ -993,7 +978,7 @@ double		dValue;
     }
 		/* Build bond angles */
 
-    LOOPOVERALL( cCont, ANGLES, oTemp, OBJEKT, lTemp ) {
+    LOOPOVERALL( cCont, ANGLES, oTemp, lTemp ) {
 	LoopGetAngle( &lTemp, &a1, &a2, &a3 );
 	MESSAGE("Building angle INTERNAL for: %s - %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
@@ -1020,7 +1005,7 @@ double		dValue;
 
 		/* Build bond internals */
 
-    LOOPOVERALL( cCont, BONDS, oTemp, OBJEKT, lTemp ) {
+    LOOPOVERALL( cCont, BONDS, oTemp, lTemp ) {
 	LoopGetBond( &lTemp, &a1, &a2 );
 	MESSAGE("Building bond INTERNAL for: %s - %s\n",
 			sContainerFullDescriptor( (CONTAINER)a1, s1 ),
@@ -1047,7 +1032,7 @@ double		dValue;
                 /* need to be specified */
 
     
-    LOOPOVERALL( cCont, ATOMS, aTemp, ATOM, lTemp ) {
+    LOOPOVERALL( cCont, ATOMS, aTemp, lTemp ) {
 	dValue = dChiralityForAtom(aTemp);
 	AtomSetFlags( aTemp, fSet );
 	AtomResetFlags( aTemp, fReset );
@@ -1082,7 +1067,6 @@ double		dValue;
 void
 BuildDestroyInternals( LOOP *lPLoop )
 {
-LOOP            lInternals;
 INTERNAL        iInt;
 ATOM            aAtom;
 #ifdef	DEBUG
@@ -1093,17 +1077,13 @@ STRING		sTemp;
     while ( ( aAtom=(ATOM)oNext(lPLoop) ) != NULL ) {
 	MESSAGE("Destroying INTERNALs on: %s\n",
 			sContainerFullDescriptor((CONTAINER)aAtom,sTemp) );
-        lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
 #ifdef DEBUG
-	while ( ( iInt=(INTERNAL)oNext(&lInternals) ) != NULL ) {
-	    MESSAGE("    Internal type = %c  at: %p\n",
-			iInternalType(iInt), iInt );
+        LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
+	    MESSAGE("    Internal type = %c  at: %p\n", iInternalType(iInt), iInt );
 	}
 #endif
-	lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
-        while ( ( iInt=(INTERNAL)oNext(&lInternals) ) != NULL ) {
-	    MESSAGE("    destroying    = %c  at: %p\n",
-			iInternalType(iInt), iInt );
+        LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
+	    MESSAGE("    destroying    = %c  at: %p\n", iInternalType(iInt), iInt );
             Destroy( (OBJEKT *)&iInt );
         }
     }
@@ -1261,7 +1241,6 @@ STRING		sAtom1, sAtom2, sAtom3, sAtom4;
 void
 BuildHierarchy( UNIT uUnit )
 {
-LOOP            lResidues;
 CONTAINER       cCont;
 RESIDUE         rRes;
 LOOP            lAtoms, lSpan, lMolecules;
@@ -1272,8 +1251,7 @@ MOLECULE        mMol;
 
                 /* Touch all ATOMs within RESIDUEs */
 
-    lResidues = lLoop( (OBJEKT)uUnit, RESIDUES );
-    while ( ( rRes = (RESIDUE)oNext(&lResidues) ) != NULL ) {
+    LOOPOVERALL( uUnit, RESIDUES, rRes, lResidues) {
         FOR_ATOMS_IN_RESIDUE(aAtom, rRes)
             AtomSetFlags( aAtom, ATOMTOUCHED );
     }
@@ -1870,7 +1848,7 @@ bBuildFlipChiralityFor( CONTAINER cContainer, ATOM aFlip )
 COUNTATOMSt	caaCount[MAXBONDS];
 ATOM		aAtom;
 ATOM		aA, aB, aFixA, aFixB;
-LOOP		lSpan, lInternals, lAtoms;
+LOOP		lSpan, lAtoms;
 int		i, iCountRings, iDum;
 INTERNAL	iRing;
 INTERNAL	iFlipRing;
@@ -1913,10 +1891,9 @@ bool		bPartOfRing;
 	/* Count the number of rings passing through the flip ATOM */
 	/* If there is more than 1 then we cannot perform the flip */
 
-    lInternals = lLoop( (OBJEKT)aFlip, INTERNALS );
     iCountRings = 0;
     iFlipRing = NULL;
-    while ( (iRing = (INTERNAL)oNext(&lInternals)) ) {
+    LOOPOVERALL(aFlip, INTERNALS, iRing, lInternals) {
 	if ( iInternalType(iRing) == INTERNALRING ) {
 	    iCountRings++;
 	    iFlipRing = iRing;
@@ -1941,9 +1918,8 @@ bool		bPartOfRing;
 	aFixB = NULL;
 	for ( i=0; i<iAtomCoordination(aFlip); i++ ) {
 	    aAtom = aAtomBondedNeighbor( aFlip, i );
-	    lInternals = lLoop( (OBJEKT)aAtom, INTERNALS );
 	    bPartOfRing = false;
-	    while ( (iRing = (INTERNAL)oNext(&lInternals)) ) {
+	    LOOPOVERALL(aAtom, INTERNALS, iRing, lInternals) {
 		if ( iInternalType(iRing) == INTERNALRING &&
 		     iRing == iFlipRing ) {
 		    if ( aFixA == NULL ) aFixA = aAtom;
