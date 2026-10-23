@@ -659,7 +659,16 @@ if [ "$cuda" = 'yes' ]; then
 
     cudaversion=`$nvcc --version | awk '/release/{print substr($5,1,4)}'`
 
-    if [ "${cudaversion:0:2}" = "12" ]; then
+    if [ "${cudaversion:0:2}" = "13" ]; then
+      echo "CUDA Version $cudaversion detected"
+      if [ "$uspec_arch" = 'true' ]; then
+        set_uspec_arch
+      else
+        echo "Configuring for 7.5, 8.0, 8.6, 8.9, 12.0"
+        cuda_arch_flags="$sm75flags $sm80flags $sm86flags $sm89flags $sm120flags"
+        cuda_dc_flags='-Xptxas --disable-optimizer-constants'
+      fi
+    elif [ "${cudaversion:0:2}" = "12" ]; then
       echo "CUDA Version $cudaversion detected"
       if [ "$uspec_arch" = 'true' ]; then
         set_uspec_arch
