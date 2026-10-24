@@ -10,10 +10,10 @@
 #include "loop.h"
 #include "unitio.h"
 #include "defaults.h"
+#include "internal.h"
 
 #ifdef DEBUG
 // These are unused here; needed for object debugging in objekt.h
-#include "internal.h"
 #include "assoc.h"
 #include "oString.h"
 #include "oDouble.h"
