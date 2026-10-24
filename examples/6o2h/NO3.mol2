@@ -1,0 +1,18 @@
+@<TRIPOS>MOLECULE
+NO3
+    4     3     1     0     0
+SMALL
+bcc
+
+
+@<TRIPOS>ATOM
+      1 N            0.0440    -0.0280    -0.0230 no         1 NO3       0.416700
+      2 O1           0.9590    -0.5980    -0.4910 o          1 NO3      -0.660033
+      3 O2          -1.0940     0.2310    -0.8000 o          1 NO3      -0.378333
+      4 O3           0.0910     0.3950     1.3140 o          1 NO3      -0.378333
+@<TRIPOS>BOND
+     1     1     2 2   
+     2     1     3 1   
+     3     1     4 1   
+@<TRIPOS>SUBSTRUCTURE
+     1 NO3         1 TEMP              0 ****  ****    0 ROOT

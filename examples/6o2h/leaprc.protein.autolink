@@ -1,0 +1,86 @@
+source leaprc.protein.ff19SB
+#source leaprc.protein.ff14SB
+set CALA.1 name "ALA"
+set CARG.1 name "ARG"
+set CASN.1 name "ASN"
+set CASP.1 name "ASP"
+set CCYS.1 name "CYS"
+set CCYX.1 name "CYS"
+set CGLN.1 name "GLN"
+set CGLU.1 name "GLU"
+set CGLY.1 name "GLY"
+set CHID.1 name "HIS"
+set CHIE.1 name "HIS"
+set CHIP.1 name "HIS"
+set CHYP.1 name "HYP"
+set CILE.1 name "ILE"
+set CLEU.1 name "LEU"
+set CLYS.1 name "LYS"
+set CMET.1 name "MET"
+set CPHE.1 name "PHE"
+set CPRO.1 name "PRO"
+set CSER.1 name "SER"
+set CTHR.1 name "THR"
+set CTRP.1 name "TRP"
+set CTYR.1 name "TYR"
+set CVAL.1 name "VAL"
+# C-term amide
+set NHE tail null
+set NHE.1 connect1 null
+# C-term N methyl
+set NME tail null
+set NME.1 connect1 null
+
+set NALA.1 name "ALA"
+set NARG.1 name "ARG"
+set NASN.1 name "ASN"
+set NASP.1 name "ASP"
+set NCYS.1 name "CYS"
+set NCYX.1 name "CYS"
+set NGLN.1 name "GLN"
+set NGLU.1 name "GLU"
+set NGLY.1 name "GLY"
+set NHID.1 name "HIS"
+set NHIE.1 name "HIS"
+set NHIP.1 name "HIS"
+set NILE.1 name "ILE"
+set NLEU.1 name "LEU"
+set NLYS.1 name "LYS"
+set NMET.1 name "MET"
+set NPHE.1 name "PHE"
+set NPRO.1 name "PRO"
+set NSER.1 name "SER"
+set NTHR.1 name "THR"
+set NTRP.1 name "TRP"
+set NTYR.1 name "TYR"
+set NVAL.1 name "VAL"
+# N-term acetyl
+set ACE head null
+set ACE.1 connect0 null
+
+set CYX.1 name "CYS"
+set CYM.1 name "CYS"
+set ASH.1 name "ASP"
+set GLH.1 name "ASP"
+set HID.1 name "HIS"
+set HIE.1 name "HIS"
+set HIP.1 name "HIS"
+set HID.1 resid 2
+set NHID.1 resid 2
+set CHID.1 resid 2
+set HIP.1 resid 3
+set NHIP.1 resid 3
+set CHIP.1 resid 3
+set CYX.1 resid 2
+set NCYX.1 resid 2
+set CCYX.1 resid 2
+
+set CYM.1 resid 3
+set ASH.1 resid 2
+set GLH.1 resid 2
+
+# Standard LYS deprotonation is HZ3
+set LYN.1.HZ2 name "HZ1"
+set LYN.1.HZ3 name "HZ2"
+set LYN.1 name "LYS"
+set LYN.1 resid 2

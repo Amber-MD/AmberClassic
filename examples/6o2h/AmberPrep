@@ -1,0 +1,223 @@
+#!/bin/bash
+
+#  collect earlier scripts to set up Amber crystal simulations
+
+#==========================================================================
+#  set variables here:
+#==========================================================================
+
+na=3      # cells along a axis
+nb=3      # cells along b axis
+nc=3      # cells along c axis
+let nabc=$na*$nb*$nc
+residuesperchain=226
+repeats="(62)"
+id="6o2h"
+idalt="dac1"
+seed=18
+
+#==========================================================================
+#  set up unit cell and supercell
+#==========================================================================
+
+# N.B.: AmberClassic UnitCell program requires REMARK 290 records
+UnitCell -p $id.pdb -o ${id}_uc.pdb \
+  || { echo "  UnitCell:  Program error"; exit 1; }
+# one alternative is to use gemmi:
+# gemmi convert --assembly unit_cell $id.pdb ${id}_uc.pdb
+PropPDB -p ${id}_uc.pdb -o ${id}_${nabc}uc.pdb -ix $na -iy $nb -iz $nc \
+  || { echo "  PropPDB:  Program error"; exit 1; }
+
+#==========================================================================
+#  select alternates to be used
+#==========================================================================
+
+cat <<EOF > select_alts
+
+\$resno_prev = "";
+\$resno = 0;
+\$seed = srand(int(\$ARGV[0]));
+print "REMARK   select_alts run with seed of \$ARGV[0]\n"; 
+
+#-----------------------------------------------------------------------
+# following is specfic to this particular system
+@repeats = $repeats;
+\$residuesperchain = $residuesperchain;
+#-----------------------------------------------------------------------
+
+for \$i (@repeats){ \$repeat[\$i] = 1; }
+
+
+open( PDB, "<", \$ARGV[1] );
+
+#-----------------------------------------------------------------------
+#  first: find all the alternates that are in the input file:
+#-----------------------------------------------------------------------
+
+ATOM: while (<PDB>){
+
+   if( \$_ =~ /^ATOM|^HETATM/){
+
+   #  expand to 80+ characters (really hokey version):
+   chop(\$_);
+   \$_ .= "                                                                    ";
+
+   ( \$label, \$atno, \$atname, \$alt, \$resname, \$chainId, \$resno1, \$iCode,
+         \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+       unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+
+      if( \$resno1 ne \$resno_prev ){
+         \$resno++;
+         \$resno_prev = \$resno1;
+      }
+      \$altocc{\$resno . \$alt} = \$occ if \$alt ne " ";
+   }
+}
+seek PDB, 0, 0;  # rewind the input file
+\$max_res = \$resno;
+
+\$resno_prev = "";
+\$resno = 0;
+
+#-----------------------------------------------------------------------
+#  next, use the alternate info above to select the ensemble:
+#-----------------------------------------------------------------------
+
+@res = (1..\$max_res);
+for \$res (@res) {
+    if (defined \$altocc{\$res . "A"}) {
+       \$sum_occ = \$altocc{\$res . "A"} +
+                  \$altocc{\$res . "B"} +
+                  \$altocc{\$res . "C"} +
+                  \$altocc{\$res . "D"} +
+                  \$altocc{\$res . "E"};
+       \$altocc{\$res . "A"} /= \$sum_occ;
+       \$altocc{\$res . "B"} /= \$sum_occ;
+       \$altocc{\$res . "C"} /= \$sum_occ;
+       \$altocc{\$res . "D"} /= \$sum_occ;
+       \$altocc{\$res . "E"} /= \$sum_occ;
+    }  
+}
+
+#-----------------------------------------------------------------------
+#  next, use the alternate info above to select the ensemble:
+#-----------------------------------------------------------------------
+
+ATOM: while (<PDB>){
+
+#
+#   first, read in a pdb file line and unpack
+#
+
+if( \$_ =~ /^ATOM|^HETATM/){
+
+    #  expand to 80+ characters (really hokey version):
+    chop(\$_);
+    \$_ .= "                                                                    "; 
+    ( \$label, \$atno1, \$atname, \$alt, \$resname, \$chainId, \$resno1, \$iCode,
+          \$x, \$y, \$z, \$occ, \$bfact, \$element, \$charge ) =
+        unpack("a6 a5 x a4 a a3 x a a4 a x3 a8 a8 a8 a6 a6 x10 a2 a2",\$_);
+    \$atno = int(\$atno1);
+    if( \$resno1 != \$resno_prev ){ 
+       \$resno++;
+       \$resno_prev = \$resno1;
+
+       #  determine the relative residue number: only needed for repeats
+       \$relres = \$resno % \$residuesperchain;
+       \$rand = rand() unless defined \$repeat[\$relres];
+    }
+
+    # N.B.: following should not require conformers to be in alphabetical order
+
+    if( \$alt eq "A" ){
+        next ATOM if \$rand > \$altocc{\$resno."A"}; 
+    } elsif( \$alt eq "B" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"}; 
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"}; 
+    } elsif( \$alt eq "C" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"} + \$altocc{\$resno."B"}; 
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"};
+    } elsif( \$alt eq "D" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"};
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"} + \$altocc{\$resno."D"};
+    } elsif( \$alt eq "E" ){
+        next ATOM if \$rand < \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"} + \$altocc{\$resno."D"};
+        next ATOM if \$rand > \$altocc{\$resno."A"} + \$altocc{\$resno."B"} 
+                           + \$altocc{\$resno."C"} + \$altocc{\$resno."D"}
+                           + \$altocc{\$resno."E"};
+    } elsif( \$alt eq "F" ){
+        print STDERR "Error: should never have an F conformer\n";
+        exit(1);
+    } elsif( \$alt ne " " ){ 
+        print STDERR "Error: trouble processing altocc \$altocc\n";
+        exit(1);
+    }
+                          
+    \$occ = 1.0;
+    \$alt = " ";
+    \$resnop = \$resno % 10000;
+
+    #
+    #  write back out
+    #
+    printf 
+    "%6s%5s %-4s%1s%3s %1s%4s%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n",
+        \$label, \$atno,\$atname,\$alt, \$resname,\$chainId, \$resnop, \$iCode,
+        \$x,\$y,\$z, \$occ, \$bfact, \$element, \$charge;
+
+} else {
+    print;
+}
+
+}
+EOF
+
+perl -f ./select_alts $seed ${id}_${nabc}uc.pdb > $idalt.pdb \
+   || { echo "  select_alts:  Program error"; exit 1; }
+
+#-----------------------------------------------------------------------
+#  prepare Amber files using tleap;
+#-----------------------------------------------------------------------
+
+cat <<EOF > tleap.in
+addPath \$\$AMBERCLASSICHOME/dat/leap/lib
+addPath \$\$AMBERCLASSICHOME/dat/leap/parm
+addPath \$\$AMBERCLASSICHOME/dat/leap/cmd
+addPath \$\$AMBERCLASSICHOME/dat/leap/prep
+set default nocenter on
+set default reorder_residues off
+source leaprc.protein.autolink
+source leaprc.water.spce
+source leaprc.gaff2
+set pdb_auto_match 1
+set pdb_auto_link 1
+set pdb_auto_load 1
+x = loadPdb $idalt.pdb
+saveAmberParm x $idalt.parm7 $idalt.rst7
+savePdb x ${idalt}_000.pdb
+quit
+EOF
+
+$AMBERCLASSICHOME/bin/teLeap -f tleap.in > tleap.out \
+   || { echo "  teLeap:  Program error"; exit 1; }
+/bin/rm tleap.in
+
+#-----------------------------------------------------------------------
+#  next steps: (not included in this script yet:)
+#   1. run short MD steps with a target temp of 0K to remove bad clashes
+#   2. run addtobox.sh to add chlorides and water to complete the solvent
+#      (or: invoke the comming solvateCell option in tleap)
+#   3. re-run the tleap step above with the new pdb file as input
+#   4. usual sort of MD on this final system
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+#  cleanup:
+#-----------------------------------------------------------------------
+
+/bin/rm -f set_chainID select_alts leap.log \
+   ${id}_${nabc}uc.pdb.bak add_pdb.log add_xray.log

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+export CUDA_VISIBLE_DEVICES=0
+
+in=$(printf "%03d" $1)
+let out=$((10#$in))+1
+out=$(printf "%03d" $((10#$out)))
+
+id="dac2"
+# sander="mpirun -np 12 /home/case/dist/ambertools26/bin/sander.MPI"
+sander="/home/case/dist/pmemd26/bin/pmemd.cuda"
+
+cat > mdin <<eof
+   checking out 6o2h with 1573 chains
+ &cntrl
+    imin=0, maxcyc=10, ntpr=1000, nstlim=500000, ntwx=0, ntwr=0,
+    ntx=5, irest=1, ntxo=2, 
+    tempi=0.0, ntt=3, gamma_ln=5.0, dt=0.004, temp0=300.,
+    ntb=1, ntp=0, barostat=1, taup=1.d12,
+    ntc=2, ntf=2, tol=1.d-6, cut=8.0,
+    ntr=1, restraint_wt=0.10, restraintmask='@C,CA,N&!:NO3',
+ /
+ &ewald dsum_tol=0.000001, /
+ &lmod  xmin_verbosity=0, xmin_method='PRCG', /
+eof
+
+$DO_PARALLEL $sander -O -i mdin -o ${id}_$out.o -r ${id}_$out.x \
+    -p ${id}.parm7 -c ${id}_$in.x -ref ${id}.rst7  \
+    < /dev/null || { echo "  $0:  Program error"; exit 1; }
+
+/bin/rm -f mdin mdinfo restrt
+exit 0
+
