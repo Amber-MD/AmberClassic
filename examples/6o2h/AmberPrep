@@ -30,6 +30,8 @@ PropPDB -p ${id}_uc.pdb -o ${id}_${nabc}uc.pdb -ix $na -iy $nb -iz $nc \
 
 #==========================================================================
 #  select alternates to be used
+#   optional: could also just choose altloc A or the one most highly
+#   occupied
 #==========================================================================
 
 cat <<EOF > select_alts
@@ -180,24 +182,33 @@ perl -f ./select_alts $seed ${id}_${nabc}uc.pdb > $idalt.pdb \
    || { echo "  select_alts:  Program error"; exit 1; }
 
 #-----------------------------------------------------------------------
-#  prepare Amber files using tleap;
+#  prepare Amber files using tleap:
 #-----------------------------------------------------------------------
 
 cat <<EOF > tleap.in
+# set search paths:
 addPath \$\$AMBERCLASSICHOME/dat/leap/lib
 addPath \$\$AMBERCLASSICHOME/dat/leap/parm
 addPath \$\$AMBERCLASSICHOME/dat/leap/cmd
 addPath \$\$AMBERCLASSICHOME/dat/leap/prep
+# defaults for crystal simulations
 set default nocenter on
 set default reorder_residues off
+# following line allows pdb_auto_link to find links:
 source leaprc.protein.autolink
 source leaprc.water.spce
 source leaprc.gaff2
+# options to simplify the tleap input
 set pdb_auto_match 1
 set pdb_auto_link 1
 set pdb_auto_load 1
+#  load the input PDB file from above
 x = loadPdb $idalt.pdb
+solvateCell x SPCBOX 0.55
+addIonsRand x CL 81
 saveAmberParm x $idalt.parm7 $idalt.rst7
+# next line keeps chainIDs and also adds LINK records to the PDB file
+set keep_chainid 1
 savePdb x ${idalt}_000.pdb
 quit
 EOF
@@ -219,5 +230,5 @@ $AMBERCLASSICHOME/bin/teLeap -f tleap.in > tleap.out \
 #  cleanup:
 #-----------------------------------------------------------------------
 
-/bin/rm -f set_chainID select_alts leap.log \
+/bin/rm -f set_chainID select_alts \
    ${id}_${nabc}uc.pdb.bak add_pdb.log add_xray.log
