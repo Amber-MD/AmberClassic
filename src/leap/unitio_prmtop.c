@@ -974,7 +974,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranFormat(1, "%-80s");
   FortranWriteString("%FLAG RESIDUE_POINTER");
   COMMENT_DIM(NRES)
-  FortranIntFormat(NRES);
+  FortranIntFormat(NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
     FortranWriteInt(PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->iAtomStartIndex);
   }
@@ -1291,7 +1291,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG BONDS_INC_HYDROGEN");
   COMMENT("STRIDE:3; MEMBERS:ATOM_I,ATOM_J,PARM_INDEX;")
   COMMENT_DIM(NBONH)
-  FortranIntFormat(NBONH);
+  FortranIntFormat(3*NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++) {
     sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, sbPBond->iAtom1 - 1)->aAtom;
@@ -1316,7 +1316,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG BONDS_WITHOUT_HYDROGEN");
   COMMENT("STRIDE:3; MEMBERS:ATOM_I,ATOM_J,PARM_INDEX;")
   COMMENT_DIM(NBONA)
-  FortranIntFormat(NBONA);
+  FortranIntFormat(3*NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++) {
     sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, sbPBond->iAtom1 - 1)->aAtom;
@@ -1355,7 +1355,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG ANGLES_INC_HYDROGEN");
   COMMENT("STRIDE:4; MEMBERS:ATOM_I,ATOM_J,ATOM_K,PARM_INDEX;")
   COMMENT_DIM(NTHETH)
-  FortranIntFormat(NTHETH);
+  FortranIntFormat(3*NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++) {
     saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, saPAngle->iAtom1 - 1)->aAtom;
@@ -1383,7 +1383,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG ANGLES_WITHOUT_HYDROGEN");
   COMMENT("STRIDE:4; MEMBERS:ATOM_I,ATOM_J,ATOM_K,PARM_INDEX;")
   COMMENT_DIM(NTHETA)
-  FortranIntFormat(NTHETA);
+  FortranIntFormat(3*NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++) {
     saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, saPAngle->iAtom1 - 1)->aAtom;
@@ -1425,7 +1425,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG DIHEDRALS_INC_HYDROGEN");
   COMMENT("STRIDE:5; MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,PARM_INDEX;")
   COMMENT_DIM(NPHIH)
-  FortranIntFormat(NPHIH);
+  FortranIntFormat(30*NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++) {
     stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
@@ -1472,7 +1472,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FLAG DIHEDRALS_WITHOUT_HYDROGEN");
   COMMENT("STRIDE:5; MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,PARM_INDEX;")
   COMMENT_DIM(NPHIA)
-  FortranIntFormat(NPHIA);
+  FortranIntFormat(30*NATOM);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++) {
     stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
