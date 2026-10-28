@@ -39,7 +39,6 @@ typedef PARMLIBt	*PARMLIB;
 	/* Maintain a default PARMLIB */
 extern	PARMLIB	GplDefaultParmLib;
 
-
 extern PARMLIB	plParmLibCreate(void);
 extern void	ParmLibDestroy(PARMLIB *plPLib);
 extern void	ParmLibAddParmSet(PARMLIB plLib, PARMSET psSet);

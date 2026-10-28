@@ -46,6 +46,7 @@
 
 
 #include	"basics.h"
+#include	"fortran.h"
 
 #include        "stringExtra.h"
 
@@ -66,12 +67,13 @@ static  FILE*   SfFile;
 static  int     SiPerLine;
 static  int     SiOnLine = 0;   /* Stores the # of entries already on line */
 static  bool    SbWroteNothing;
+static  int     SiIntWidth;
 
 static  STRING  SsInput;
 static  bool    SbNeedInput = true;
 
 static	bool	SbFortranDebug = false;
-static	STRING	GsFortranDebug;
+STRING	GsFortranDebug;
 
 
 
@@ -126,6 +128,31 @@ FortranFile( FILE *fOut )
     SfFile = fOut;
 }
 
+static const char *ScPSection = NULL;
+
+void FortranSection(const char *label) {
+  char line[80];
+  ScPSection = label;
+  sprintf(line,"%%FLAG %s",label);
+  FortranFormat(1, "%-80s");
+  FortranWriteString(line);
+}
+
+void FortranIntFormat(int maxval) {
+  char fmt[32],line[80];
+  int width, count;
+  width = snprintf(NULL, 0, "%d", maxval);
+  snprintf(fmt, sizeof(fmt), "%%%dd", width);  /* e.g. "%4d" */
+  count = 80 / width;                 /* ints per line */
+  if (GDefaults.dPrmtopFormat>1.0) {
+    sprintf(line,"%%COMMENT CFORMAT:%s;", fmt);
+    FortranWriteString(line);
+  }
+  sprintf(line,"%%FORMAT(%dI%d)",count,width);
+  FortranWriteString(line);
+  FortranFormat(count, fmt);
+  SiIntWidth = width;
+}
 
 
 
@@ -158,7 +185,14 @@ FortranFormat( int iPerLine, char *sFormat )
 void
 FortranWriteInt( int iVal )
 {
-    fprintf( SfFile, SsFormat, iVal );
+    static const char *sWarnSection=NULL;
+    int n = fprintf( SfFile, SsFormat, iVal );
+    if (n > SiIntWidth) {
+        // warn on ove
+        if (sWarnSection != ScPSection)
+            VPFATAL("Integer overflow in %s, writing value %d with format width %d\n", ScPSection, iVal, SiIntWidth);
+        sWarnSection = ScPSection;
+    }
     SiOnLine++;
     SbWroteNothing = false;
     if ( SiOnLine >= SiPerLine ) {

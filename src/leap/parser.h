@@ -72,6 +72,7 @@ extern RESULTt		GrMainResult;
 extern PARMLIB		GplAllParameters;
 extern bool		GbGraphicalEnvironment;
 extern STRING		GsProgramName;
+extern int              GiMemDebug;
 
 
 /*

@@ -68,8 +68,7 @@
 #define UNITBEINGEDITED         0x00000002
 #define UNITUSESOLVENTCAP       0x00000004
 #define UNITBOXOCT              0x00000008
-
-
+#define UNITBOXCRYST1           0x00000010
 
 
 typedef struct UNITSTRUCT {
@@ -246,7 +245,9 @@ extern int      iUnitLabelMolecules(UNIT uUnit);
 #define UnitSetBox( u, x, y, z ) (\
         UNIT_from(u)->dXWidth = (x),\
         UNIT_from(u)->dYWidth = (y),\
-        UNIT_from(u)->dZWidth = (z),CDU(u) )
+        UNIT_from(u)->dZWidth = (z), \
+        UNIT_from(u)->fFlags &= ~UNITBOXCRYST1, \
+        CDU(u) )
 #define UnitGetCell( u, xP, yP, zP, aP, bP, gP ) (\
         *(xP) = UNIT_from(u)->dXWidth,\
         *(yP) = UNIT_from(u)->dYWidth,\
@@ -260,7 +261,9 @@ extern int      iUnitLabelMolecules(UNIT uUnit);
         UNIT_from(u)->dZWidth = (z),\
         UNIT_from(u)->dAlpha = (a),\
         UNIT_from(u)->dBeta = (b),\
-        UNIT_from(u)->dGamma = (g), CDU(u) )
+        UNIT_from(u)->dGamma = (g), \
+        UNIT_from(u)->fFlags &= ~UNITBOXCRYST1, \
+        CDU(u) )
 #define UnitGetSolventCap( u, xP, yP, zP, rP ) {\
         (*xP) = dVX(&(u->vCapOrigin));\
         (*yP) = dVY(&(u->vCapOrigin));\

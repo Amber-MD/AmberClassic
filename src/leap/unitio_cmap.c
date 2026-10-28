@@ -184,15 +184,13 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     int CMAP_KINDS = iVarArrayElementCount(uUnit->vaCMAPs);
     int cmap_renum[256]={0};  // FIXME delete
     if (!(CMAP_TYPES && CMAP_KINDS)) return;
-
+    int NATOM=iVarArrayElementCount(uUnit->vaAtoms);
 
     if (GDefaults.dPrmtopFormat>=2.0) {
-        FortranFormat(1, "%-80s");
-        FortranWriteString("%FLAG CMAP_RESOLUTION");
+        FortranSection("CMAP_RESOLUTION");
         sprintf(sComment, "%%COMMENT DIMENSION:CMAP_TYPES; SIZE:%d;", CMAP_TYPES);
         FortranWriteString(sComment);
-        FortranWriteString("%FORMAT(20I4)");
-        FortranFormat(20, "%4d");
+        FortranIntFormat(99);
         int cmap_energy_size = 0, title_len=0;
         CMAP cmaps = MALLOC(sizeof(CMAPt)*CMAP_TYPES);
         printf("types=%d, kinds=%d\n", CMAP_TYPES, CMAP_KINDS);
@@ -205,8 +203,7 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
         }
         FortranEndLine();
 
-        FortranFormat(1, "%-80s");
-        FortranWriteString("%FLAG CMAP_PARAMETER");
+        FortranSection("CMAP_PARAMETER");
         sprintf(sComment, "%%COMMENT SIZE:%d; UNITS:kcal/mol; DESC:CMAP energy grid: rows=phi, cols=psi;", cmap_energy_size);
         FortranWriteString(sComment);
         sprintf(sComment, "%%COMMENT INDEXING: SUM(CMAP_RESOULTION(I=1,N-1)^2");
@@ -218,8 +215,7 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
         }
         FortranEndLine();
 
-        FortranFormat(1, "%-80s");
-        FortranWriteString("%FLAG CMAP_TITLE");
+        FortranSection("CMAP_TITLE");
         sprintf(sComment, "%%COMMENT LENGTH:%d; SIZE:%d;", title_len, CMAP_TYPES);
         FortranWriteString(sComment);
         FortranWriteString("%FORMAT(A)");
@@ -227,16 +223,14 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
         FortranEndLine();
         FREE(cmaps);
 
-        FortranFormat(1, "%-80s");
-        FortranWriteString("%FLAG CMAP_INDEX");
+        FortranSection("CMAP_INDEX");
         if (GDefaults.dPrmtopFormat>1.0) {
             sprintf(sComment, "%%COMMENT DIMENSION:CMAP_KINDS; STRIDE:6; SIZE:%d;", CMAP_KINDS);
             FortranWriteString(sComment);
             FortranWriteString("%COMMENT MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,ATOM_M,PARM_INDEX;");
             FortranWriteString("%COMMENT DESC:INDEX=1-based index into CMAP_RESOLUTION CMAP_PARAMETER");
         }
-        FortranWriteString("%FORMAT(6I8)");
-        FortranFormat(6, "%8d");
+        FortranIntFormat(NATOM);
         for (int i = 0; i < CMAP_KINDS; i++) {
             SAVECMAPt *saveCMAP = PVAI(uUnit->vaCMAPs, SAVECMAPt, i);
             for (int j=0;j<5;j++) FortranWriteInt(saveCMAP->iAtom[j]);
@@ -247,26 +241,22 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
 
     }
 
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CMAP_COUNT");
+    FortranSection("CMAP_COUNT");
     if (GDefaults.dPrmtopFormat>1.0) {
         FortranWriteString("%COMMENT SIZE:2; MEMBERS:CMAP_KINDS,CMAP_TYPES;");
         FortranWriteString("%COMMENT DESC:CMAP_KINDS=phi+psi set count, CMAP_TYPES=Energy map count;");
     }
-    FortranWriteString("%FORMAT(2I8)");
-    FortranFormat(10, "%8d");
+    FortranIntFormat(CMAP_KINDS > CMAP_TYPES ? CMAP_KINDS : CMAP_TYPES);
     FortranWriteInt(CMAP_KINDS);
     FortranWriteInt(CMAP_TYPES);
     FortranEndLine();
 
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CMAP_RESOLUTION");
+    FortranSection("CMAP_RESOLUTION");
     if (GDefaults.dPrmtopFormat>1.0) {
         sprintf(sComment, "%%COMMENT DIMENSION:CMAP_TYPES; SIZE:%d;", CMAP_TYPES);
         FortranWriteString(sComment);
     }
-    FortranWriteString("%FORMAT(20I4)");
-    FortranFormat(20, "%4d");
+    FortranIntFormat(99);
     CMAP cmaps = MALLOC(sizeof(CMAPt)*CMAP_TYPES);
     for (int i = 0; i < CMAP_TYPES; i++) {
         ParmSetCMAP(uUnit->psParameters, i, &cmaps[i], false);
@@ -279,9 +269,8 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
         for (int irenum=0;irenum<256;irenum++) if (dest_cmap_index[irenum]>=0) {
             int i = dest_cmap_index[irenum];
             cmap_renum[i]=++iIndex;
-            FortranFormat(1, "%-80s");
-            sprintf(sComment, "%%FLAG CMAP_PARAMETER_%02d",iIndex);
-            FortranWriteString(sComment);
+            sprintf(sComment, "CMAP_PARAMETER_%02d",iIndex);
+            FortranSection(sComment);
             int msize = cmaps[i].resolution * cmaps[i].resolution;
             if (GDefaults.dPrmtopFormat>1.0) {
                 sprintf(sComment, "%%COMMENT DIMENSION:CMAP_RESOLUTION(%d),"
@@ -298,7 +287,6 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
         }
     } else {
     for (int i = 0; i < CMAP_TYPES; i++) {
-        FortranFormat(1, "%-80s");
         sprintf(sComment, "%%FLAG CMAP_PARAMETER_%02d",i+1);
         FortranWriteString(sComment);
         int msize = cmaps[i].resolution * cmaps[i].resolution;
@@ -318,16 +306,14 @@ void SaveAmberParmCMAP(UNIT uUnit, FILE * fOut)
     }
     FREE(cmaps);
 
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CMAP_INDEX"); // FIXME: whys is this part duplicated
+    FortranSection("CMAP_INDEX");
     if (GDefaults.dPrmtopFormat>1.0) {
         sprintf(sComment, "%%COMMENT DIMENSION:CMAP_KINDS; STRIDE:6; SIZE:%d;", CMAP_KINDS);
         FortranWriteString(sComment);
         FortranWriteString("%COMMENT MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,ATOM_M,PARM_INDEX;");
         FortranWriteString("%COMMENT DESC:INDEX=1-based index into CMAP_RESOLUTION_<nn> CMAP_PARAMETER_<nn>");
     }
-    FortranWriteString("%FORMAT(6I8)");
-    FortranFormat(6, "%8d");
+    FortranIntFormat(NATOM);
     for (int i = 0; i < CMAP_KINDS; i++) {
         SAVECMAPt *saveCMAP = PVAI(uUnit->vaCMAPs, SAVECMAPt, i);
         for (int j=0;j<5;j++) FortranWriteInt(saveCMAP->iAtom[j]);

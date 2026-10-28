@@ -614,7 +614,7 @@ RESIDUE         rRes;
         *bPStart = false;
 
     if ( iObjectType(uOrig) != UNITid ) {
-        VP0("Creating new UNIT for residue: %s sequence: %d\n", // FIXME set flag
+        VP0("Creating new UNIT for residue: %s sequence: %d\n", // FIXME set RESIDUE created flag?
                 PVAI(prPPdb->vaResidues,RESIDUENAMEt,iCurUnit)->sName, iResNum);
         uUnit = (UNIT)oCreate(UNITid);
         rRes = (RESIDUE)oCreate(RESIDUEid);
@@ -1156,7 +1156,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
                 strcpy(sDesc, (char*)PDictLoopData(dlHeterogens));
                 char *cPHetID = sDictLoopKey(dlHeterogens);
                 char *cPCompID = zcPPdbMapName( SdResidueNameMap, HETID_COMPID, cPHetID, NULL );
-                //VP2("HETNAM: HETID=%s COMPID=%s\n",cPHetID,cPCompID); //FIXME verify this works
+                //VP2("HETNAM: HETID=%s COMPID=%s\n",cPHetID,cPCompID); //FIXME verify that this is working as expected
                 if (cPCompID && !strstr(sDesc,"COMP_ID:")) {
                     strcat(sDesc,"; COMP_ID:");
                     strcat(sDesc,cPCompID);
@@ -1755,6 +1755,7 @@ int             iCurrentBioMT=0;
 
             case PDB_CRYST1:
                 UnitSetBox(prPRead->uUnit,p.pdb.cryst1.a, p.pdb.cryst1.b, p.pdb.cryst1.c);
+                UnitSetFlags(prPRead->uUnit, UNITBOXCRYST1);
                 prPRead->uUnit->dAlpha = p.pdb.cryst1.alpha * DEGTORAD;
                 prPRead->uUnit->dBeta = p.pdb.cryst1.beta * DEGTORAD;
                 prPRead->uUnit->dGamma = p.pdb.cryst1.gamma * DEGTORAD;
@@ -1975,8 +1976,12 @@ zDetectResidueType(UNIT uTemplate) {
 static UNIT
 zLoadUnit(char *name) {
     STRING sFilename;
+#define FORMAT_MOL2 0
+#define FORMAT_PREPC 1
+#define FORMAT_PREPI 2
+#define FORMAT_LIB 3
 #define NFORMATS 4
-    char *format_ext[NFORMATS] = {"lib","prepc","prepi","mol2"};
+    char *format_ext[NFORMATS] = {"mol2","prepc","prepi","lib"};
     int i;
     if (!GDefaults.bPdbAutoLoadRes) {
        VP2("Not searching for topology (PDB_Auto_Load=off)\n");
@@ -1984,10 +1989,10 @@ zLoadUnit(char *name) {
     }
     for (i=0;i<NFORMATS;i++) {
         sprintf(sFilename,"%s.%s",name,format_ext[i]);
-        VP2("Search for residue parameter file: %s\n", sFilename);
+        VP2("Searching for residue parameter file: %s\n", sFilename);
         if (zbFileReadable(sFilename)) break;
         sprintf(sFilename,"%c/%s.%s",cLower(name[0]),name,format_ext[i]);
-        VP2("Search for residue parameter file: %s\n", sFilename);
+        VP2("Searching for residue parameter file: %s\n", sFilename);
         if (zbFileReadable(sFilename)) break;
     }
     if (i==NFORMATS) {
@@ -2004,23 +2009,23 @@ zLoadUnit(char *name) {
     UNIT uTemplate;
     RESIDUE rRes;
 
-    // loadOff and loadAmberPrep define variables for all UNITs read in
-    // We must look up uTemplate for these. For Mol2, we already have uTemplate
-    // and must set the matching variable.
+    // loadOff and loadAmberPrep define parser variables for all UNITs read in,
+    // but we must look up uTemplate for these.
+    // For Mol2, we already have uTemplate and must define the matching variable.
 
     // HEAD, TAIL, ResidueType defined in the library
-    if (i==0) {
+    if (i==FORMAT_LIB) {
         oCmd_loadOff( 1, &aAssoc );
         uTemplate = (UNIT)oVariable(name);
 
     // PREPC and PREPI automatically get HEAD = first main atom, TAIL = last main atom
     // and these can be the same atom (happens some terminal residues)
-    } else if (i==1 || i==2 ) {
+    } else if (i==FORMAT_PREPC || i==FORMAT_PREPI ) {
         oCmd_loadAmberPrep(1, &aAssoc );
         uTemplate = (UNIT)oVariable(name);
 
-    } else { //  Mol2
-        // Mol2 has no default head/tail.
+    } else { // FORMAT_MOL2
+        // Mol2 has no default head/tail; normally used for ligands.
         uTemplate = (UNIT)oCmd_loadMol2(1, &aAssoc );
         if (uTemplate) {
             VariableSet( name, (OBJEKT)uTemplate ); /* adds 1 REF */
@@ -2043,11 +2048,11 @@ zLoadUnit(char *name) {
         if (aAtom->iAtomicNumber == HYDROGEN) nH++;
     ContainerSetTempInt(uTemplate,nH);
 
-    if (i==1 || i==2 ) zDetectResidueType(uTemplate);
-    else if (i==3) ResidueSetType(rRes,RESTYPELIGAND);
+    if (i==FORMAT_PREPC || i==FORMAT_PREPI ) zDetectResidueType(uTemplate);
+    else if (i==FORMAT_MOL2) ResidueSetType(rRes,RESTYPELIGAND);
 
     sprintf(sFilename,"%s.frcmod",name);
-    VP2("Search for FRCMOD file: %s\n", sFilename);
+    VP2("Searching for FRCMOD file: %s\n", sFilename);
     bool bFound = zbFileReadable(sFilename);
     if (!bFound ) {
         sprintf(sFilename,"%c/%s.frcmod",cLower(name[0]),name);
@@ -2072,21 +2077,21 @@ zLoadUnit(char *name) {
 // polymer residue middle: will match name and head, tail
 // non-polymer molecule: will match name and generally match HEAD+TAIL and get linked even though it should not
 //
-// here both map to LYS, HEAD/TAIL decides:
+// Here both map to LYS, HEAD/TAIL decides:
 // UNIT NLYS RESIDUE LYS
 // UNIT LYS RESIDUE LYS
 //
-// if we have ResMap { A B } in existing system.
+// If we have ResMap { A B } in existing system.
 // and both residue A and B already exist:
 // All A get converted to B
-// in my system we get:
 //
-//  UNIT A, RESIDUE B  <- renamed
-//  UNIT A, RESIDUE A  <- this one must be hidden
-//  UNIT B, RESIDUE B
+// With auto-match protocol, ResMap gives a duplicate lookup entry key:
+//  key A, RESIDUE B  <- renamed, B residue keyed by A
+//  key A, RESIDUE A  <- this original A must be hidden for standard behavior to work
+//  key B, RESIDUE B
 //
 // ResMap does not modify residue, just add lookup key by renamed value
-// If we match, and key != RESIDUE name, this gets priority over head/tail match
+// If we match, and key != RESIDUE name, this gets priority over head/tail match (mappng forced by ResMap)
 //
 // ResMap { 0 LYS NLYS }
 // UNIT NLYS RESIDUE NLYS index=LYS   NLYS->NLYS  LYS=>NLYS if head/tail match
@@ -2100,15 +2105,10 @@ zLoadUnit(char *name) {
 // ResMap { 0 LYS NLYS }
 // UNIT NLYS RESIDUE LYS index=NLYS+LYS -- NLYS->LYS as it is now
 
-
-
-//START
-
-
-
 #define MAXATOMS       512   // max atoms in a single residue (max in PDB = 439)
 #define MAXCANDIDATES   40   // sanity cap
 #define MAX_UNMATCHED_CONNECT 2  // spurious contact limit per residue
+#define MAX_PATCH_ADD_ATOMS   5  // max atom names for _add_<name>,<name>... patch
 
 // -- Scoring (least tolerable -> most tolerable) ------------------------------
 #define MAXCONNECTPAIRS 32
@@ -2200,18 +2200,9 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
     }
     EXPLAIN(pdb_seq,"tie-breaker ranking (pdbseq)",)
     #undef EXPLAIN
-}
-
-static void
-zUpdateBestCandidate(MatchCandidate *best, const MatchCandidate *challenger)
-{
-    if (!best->uTemplate) { *best = *challenger; return; }
-    if (ziCompareCandidates(challenger, best) < 0) {
-        zLogCandidateLoss(challenger, best);
-        *best = *challenger;
-    } else {
-        zLogCandidateLoss(best, challenger);
-    }
+    VP2("  CANDIDATE TIE: %s.%s with %s.%s (retains first encountered)\n",
+                   sContainerName(loser->uTemplate), sContainerName(rL),
+                   sContainerName(winner->uTemplate), sContainerName(rW));
 }
 
 // -- Helpers -----------------------------------------------------------------
@@ -2526,21 +2517,25 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
         }
 
         if (match->score.missing_atoms) {
-            char *names[MAXATOMS];
-            int   nNames = 0;
-            for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
-                if (!match->atomMatched[n])
-                    names[nNames++] = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName;
+            if (match->score.missing_atoms > MAX_PATCH_ADD_ATOMS) {
+                VPWARN("Too many missing atoms (%d) for atom addition patch.\n", match->score.missing_atoms);
+            } else {
+                char *names[MAXATOMS];
+                int   nNames = 0;
+                for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
+                    if (!match->atomMatched[n])
+                        names[nNames++] = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName;
+                }
+                qsort(names, nNames, sizeof(char *), qsort_strcmp);
+                sprintf(sPatchName[0], "%s_add_%s", cPResName, names[0]);
+                if (cPResType) sprintf(sPatchName[1], "%s_add_%s", cPResType, names[0]);
+                for (int i = 1; i < nNames; i++) {
+                    strcat(sPatchName[0], ","); strcat(sPatchName[0], names[i]);
+                    if (cPResType) { strcat(sPatchName[1], ","); strcat(sPatchName[1], names[i]); }
+                }
+                prPPdb->iSubstRes1 = iResGlobal;
+                zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1);
             }
-            qsort(names, nNames, sizeof(char *), qsort_strcmp);
-            sprintf(sPatchName[0], "%s_add_%s", cPResName, names[0]);
-            if (cPResType) sprintf(sPatchName[1], "%s_add_%s", cPResType, names[0]);
-            for (int i = 1; i < nNames; i++) {
-                strcat(sPatchName[0], ","); strcat(sPatchName[0], names[i]);
-                if (cPResType) { strcat(sPatchName[1], ","); strcat(sPatchName[1], names[i]); }
-            }
-            prPPdb->iSubstRes1 = iResGlobal;
-            zProcessPatches(prPPdb, sPatchName, cPResType ? 2 : 1);
         }
     }
 
@@ -2604,7 +2599,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
                 if (bCurrentIsAdj || !isAdjacentBack) continue;
             }
             cnPCandidate->pairPMatched[0] = p;
-            // additional checks for TAIL(prev) -> HEAD(curr) because TAIL(prev) is mapped
+            // additional checks for TAIL(prev) -> HEAD(curr) because TAIL(prev) has already been mapped to a template
             bool partnerIsTail = isAdjacentBack && prPPdb->rRes && aUnitTail(prPPdb->uUnit) &&
                              !strcmp(anPAtoms[p->to_member].sName, sContainerName(aUnitTail(prPPdb->uUnit)));
             cnPCandidate->bHeadIsCrossLink = !partnerIsTail;
@@ -2839,7 +2834,11 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 ix_record.key, uTemplate,
                 &cnCandidate);
 
-        zUpdateBestCandidate(&cnMatch, &cnCandidate);
+        if (!cnMatch.uTemplate) cnMatch = cnCandidate;
+        else if (ziCompareCandidates(&cnCandidate, &cnMatch) < 0) {
+            zLogCandidateLoss(&cnCandidate, &cnMatch);
+            cnMatch = cnCandidate;
+        } else zLogCandidateLoss(&cnMatch, &cnCandidate);
 
         if (iVerbosity() > 2) {
             if (strcmp(ix_record.key, sContainerName(uTemplate))) {
@@ -2856,6 +2855,12 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
     // -- Report and return ---------------------------------------------------
 
+    if (cnMatch.score.missing_atoms > 0.75 * (iLastAtom - iFirstAtom + 1)) {
+        VPWARN("Rejecting template residue %s.%s due to excessive atom mismatches\n", 
+                   sContainerName(cnMatch.uTemplate),
+                   sContainerName(oContainerFirstObject(cnMatch.uTemplate)));
+        iNumCandidates = 0;
+    }
     if (iNumCandidates > 0) {
         if (iVerbosity() > 2) {
             VP2("%s.%s:%d Candidates: %s", cPResName,
@@ -2976,7 +2981,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
     } else {
 
-        VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n", // FIXME set flag
+        VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n", // FIXME set RESIDUE created flag?
             cPResName, rnPName->sChainId,
             rnPName->iPdbSequence, rnPName->cICode);
         uResult = (UNIT)oCreate(UNITid);
@@ -3141,7 +3146,7 @@ int             iChainCount=0;
         if (GDefaults.iPdbConvertResName) {
             if (GDefaults.iPdbConvertResName==1) // keep: Copy PDB file input resName
                 strcpy(sContainerName(rRes),rnPName->sName);
-            else if (GDefaults.iPdbConvertResName==2) // variant: Copy Template UNIT variant name
+            else if (GDefaults.iPdbConvertResName==2 && strlen(sContainerName(uNew)) <= 3) // variant: Copy Template UNIT variant name
                 // This will do nothing in traditional libraries where Unit name == Res name
                 strcpy(sContainerName(rRes),sContainerName(uNew));
         }
@@ -3220,7 +3225,7 @@ int             iChainCount=0;
                 MESSAGE("Read atom: %s and adding it to: %s\n", anAtom->sName,
                                 sContainerName((CONTAINER)rRes) );
                 STRING sTemp;
-                VP0("Created a new atom named: %s within residue: %s\n", // FIXME set created flag
+                VP0("Created a new atom named: %s within residue: %s\n", // FIXME set ATOM created flag?
                         anAtom->sName, sContainerFullDescriptor((CONTAINER)rRes,sTemp) );
                 iCreate ++;
             } else {
@@ -3254,8 +3259,9 @@ int             iChainCount=0;
             }
         }
 
-        if (GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink)
+        if (GDefaults.bPdbAutoMatch || GDefaults.bPdbAutoLink) {
             zProcessModifications(prPPdb, &cnMatch, iFirstAtom, iLastAtom);
+        }
 
         zPdbBuildCoordinatesForContainer( (CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
 

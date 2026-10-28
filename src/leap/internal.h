@@ -94,7 +94,7 @@ typedef INTERNALt	*INTERNAL;
 #define         MAXTORSIONSAROUNDBOND   12      /* Actually never more than 9 */
 
 
-
+#ifdef DEBUG
 static inline OBJEKT objekt_from_internal(INTERNAL i) { return &(i->oSuper); }
 static inline INTERNAL internal_from_internal(INTERNAL i) { return i; }
 static inline INTERNAL internal_from_objekt(OBJEKT o)
@@ -103,6 +103,9 @@ static inline INTERNAL internal_from_objekt(OBJEKT o)
     OBJEKT: internal_from_objekt, \
     INTERNAL: internal_from_internal \
 )(x)
+#else
+#define INTERNAL_from(x) ((INTERNAL)(x))
+#endif
 
 /*
 ======================================================================

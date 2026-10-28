@@ -23,13 +23,16 @@
  *      the number of arguments, and an array
  *      of objects which are the arguments.
  *
+ *      XXX The design is flawed. In general, argument validation
+ *      and mapping should be separate from procedural code,
+ *      so that command functions are programmatically callable.
+ *
  */
 
 /*
  *TODO: Add the following commands to the documentation.
  *      New command line options.
  *      addPath
- *      measure
  *      select   - change this one
  *      deSelect
  *
@@ -111,8 +114,6 @@
 #include        "model.h"
 #include        "elements.h"
 #include        "select_mask.h"
-
-int     iMemDebug = 0;
 
 //extern DICTIONARY       GdVariables;
 
@@ -1831,7 +1832,11 @@ char            *sUsage =
     /*
      *  check args - always need 2 units & cutoff
      */
-    if ( !bCmdGoodArguments( sCmd, 3, aaArgs, "u u ln" ) ) {
+    if ( iArgCount < 3 ) {
+            VPFATALDELAYEDEXIT("%s",sUsage );
+            return NULL;
+    }
+    if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u ln" ) ) {
         VPFATALDELAYEDEXIT("%s",sUsage );
         return NULL;
     }
@@ -1960,7 +1965,7 @@ char            *sUsage =
 
 
 /*
- *      oCmd_solvateBox
+ *      oCmd_solvateCell
  *
  *      Author: Juno Krahn (2026)
  *
@@ -1980,7 +1985,7 @@ int             iInitialSize, iFinalSize;
 bool            bUsage;
 char            *sCmd = "solvateCell";
 char            *sUsage =
-                 "usage:  \n";
+                 "usage:  solvateCell <solute> <solvent> [closeness]\n";
 
     if (iArgCount == 2)
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u u" );
@@ -2069,6 +2074,10 @@ char            *sUsage =
         /*
          *  check args - always need 2 units & cutoff
          */
+        if ( iArgCount < 3 ) {
+                VPFATALDELAYEDEXIT("%s",sUsage );
+                return NULL;
+        }
         if ( !bCmdGoodArguments( sCmd, 3, aaArgs, "u u ln" ) ) {
                 VPFATALDELAYEDEXIT("%s",sUsage );
                 return NULL;
@@ -4735,6 +4744,7 @@ char            *usage =
 }
 
 
+
 /*
  *      oCmd_addPdbResMap
  *
@@ -4948,7 +4958,7 @@ char            *sCmd = "measureGeom";
 OBJEKT
 oCmd_memDebug( int iArgCount, ASSOC aaArgs[] )
 {
-        iMemDebug = 1;
+        GiMemDebug = 1;
         return NULL;
 }
 

@@ -33,6 +33,8 @@
 extern void	FortranFile(FILE *fOut);
 extern void	FortranFormat(int iPerLine, char *sFormat);
 
+extern void     FortranSection(const char * sName);
+extern void     FortranIntFormat(int maxval);
 extern void	FortranWriteInt(int iVal);
 extern void	FortranWriteDouble(double dVal);
 extern void	FortranWriteString(char *sVal);

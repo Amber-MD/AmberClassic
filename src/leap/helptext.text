@@ -893,11 +893,12 @@ pdb_auto_match=TRUE: Match RESIDUE templates by ResName, Residue Type, HEAD,
 pdb_auto_link=TRUE: apply Bonds to all detected Crosslinks with CONNECT
                (both residues must have CONNECT atoms)
 pdb_altloc=character: Retain atoms with this non-blank AltLoc, default="A"
-pdb_convert_resname: "none" = allow PdbResMap conversion e.g. DC -> DC5
-                     "keep" = keep all input residue names
-                     "variant" = convert to AMBER variant e.g. HIE
-                          note: variant names longer than 3 characters excluded
-                     "standard" = convert to standard name e.g. HIS
+pdb_convert_resname: "standard" = Use resName from the template RESIDUE (traditional method)
+                         Note: this converts to standard name e.g. HIS,HIE) -> HIS if using auto-match libraries
+                     "keep" = keep all input residue names (i.e. HOH=WAT will not convert names to WAT)
+                     "variant" = Use name from the template UNIT
+                         Note: this converts to AMBER variant e.g. (HIS,HIE) -> HIE if using auto-match libraries
+                         Note: variant names longer than 3 characters excluded; same as standard with old libraries
 pdb_link_cutoff=factor: allow TAIL-HEAD bonds up to factor * covalent distance
 pdb_crosslink_cutoff=factor: allow CONNECT bonds up to factor * covalent distance
 pdb_link_ions=TRUE: apply LINK,CONECT bonds to ions (old default=TRUE, now FALSE) 
@@ -1485,6 +1486,17 @@ Sets the SELECT flag on all ATOMs within _obj_.  See the deSelect command.
 
 @@endHelp
 
+@@beginHelp:  resequence
+
+
+    resequence unit
+
+      UNIT                       _unit_
+
+    Renumber all of LEAP's Sequence IDs within _unit_
+
+@@endHelp
+
 @@beginHelp:  selectMask
 
 
@@ -1496,16 +1508,30 @@ Sets the SELECT flag on all ATOMs within _obj_.  See the deSelect command.
 
 
 
-Sets the SELECT flag on all ATOMs selected by _mask_.  Also see the deSelectMask command.
+Sets the SELECT flag on all ATOMs selected by _mask_. Also see the deSelectMask command.
 
-Implements cpptraj AtomMask
+Inline usage:
+   _unit_([R:]_mask_)
+
+   applies _mask_ to _unit_ and returns a LIST of atoms, or residues if R: prefix given
+
+Implements all of cpptraj AtomMask plus:
 1. ~ Forced Literal String, for names containing leading zero or letters * or ?
-2. Integer Auto-Promotion to String in Name Contexts (ChainID or residue name list)
-3. Full fnmatch() Glob with bracket expressions that support character escape
-4. Drop '=' Wildcard Alias
-5. ":#" for Flat Index, and migrate ":" defaults to PDB resSeq
+3. Full fnmatch() Glob processing, adds bracket expressions
+4. Excludes '=' Wildcard Alias -- this will nto be supported
+5. :#<number> for LEAP Seq index, typically same as :<number>
+6. @#<number> for atom LEAP Seq index, atom sequence within a residue
 
-For '=' wildcard and ':' as residue index: set mask_compat = true
+Note that LEAP Seq index and default flat index are typically the same, unless
+you delete a residue. LEAP's sequence ID is persistant, so that residues after
+the deleted residue retain te original index, whereas :<number> will select
+by the current flat 1-based residue index.
+
+(If you delete atoms/residues, see resequence to re-serialize LEAP Seq IDs)
+
+Atom indexing is similar, but due to AMBER atomMask design, the default atom
+index is the global flat index, and LEAP Index is original sequence within
+a residue. There is no selector for curent 1-based index within a residue.
 
 Full Grammar
 expression  := operand
@@ -1528,13 +1554,15 @@ mol_res_selection
             := mol_selection res_selection         -- AND, intermediate for 3-level
 
 res_selection
-            := ':' value_list                      -- Residue Index or PDB resSeq when following chainID
-             | ':#' value_list                     -- flat sequential index
+            := ':' value_list                      -- Flat index
+             | ':#' value_list                     -- LEAP sequential index
+             | ':;' value_list                     -- PDB resSeq
              | '::' value_list                     -- chain ID (int auto-promoted)
              | ':(' expression ')'                 -- residues containing expr
 
 atom_selection
-            := '@' value_list                      -- atom number or name
+            := '@' value_list                      -- atom name or flat global index
+             | '@#' value_list                     -- LEAP sequential index
              | '@%' value_list                     -- atom type (always literal)
              | '@/' value_list                     -- element number or name
 
@@ -1549,9 +1577,9 @@ value       := integer
              | name                                -- string, glob active
              | '~' name                            -- forced literal, no glob
 
-name        := chars including [x] literal escapes for special chars
-               * and ? are glob wildcards outside ~ context
+name        := chars including *, ?, \\<char> escapes, and [range]
                See "man fnmatch" for full bracket class functionality.
+               cpptraj compatible atomMask should onle use *, ? and \\
 
 distance_op := ('<' | '>') ('@' | ':' | ';' | '^') number
              -- select within < or beyond > 
@@ -1560,7 +1588,6 @@ distance_op := ('<' | '>') ('@' | ':' | ';' | '^') number
              -- e.g.  :ALA <@5.0
 
 @@endHelp
-
 
 
 @@beginHelp:  sequence
@@ -1590,6 +1617,22 @@ internal coordinates of the component UNITs.
 
 @@endHelp
 
+
+@@beginHelp:  scaleCharges
+
+
+    scaleCoor container scale_factor
+
+
+      UNIT/RESIDUE/ATOM   _container_
+
+      NUMBER              _scale_factor_
+
+This command scales the coordinates in the object by _scale_factor_,
+which must be > 0.  It can use used e.g. for *silghtly* over-packed
+solvation box, to help reduce shrinkage in constant-pressure equilibration.
+
+@@endHelp
 
 @@beginHelp:  scaleCharges
 
@@ -1684,7 +1727,11 @@ The more useful parameters for each type of _container_ are the following:
 @@beginHelp:  get
 
 
-    variable = get container parameter [mode]
+    variable = get container parameter
+
+      OR
+
+    variable = get LIST parameter [mode]
 
       object/value                 _variable_
 
@@ -1715,6 +1762,8 @@ The accessible parameters for each type of _container_ are the following:
                   cap.z, cap.r
                cap                  BOOL: cap enabled = 1
 
+               (Note that box and cap are actually bit flags)
+
 
   RESIDUE      name                 STRING
                restype              Residue link category (see _set_)
@@ -1730,6 +1779,17 @@ The accessible parameters for each type of _container_ are the following:
                position.x           X coordinate
                position.y           Y coordinate
                position.z           Z coordinate
+
+
+If _container_ is a LIST, the contained objects should all be one of the above
+types, and _mode_ is one of:
+  "ave" -- calculate average of all elements.
+  "sum" -- calculate sum of all elements.
+  "elem" -- return the first result encountered
+
+You may also use the string 'count' to query the number of objects in the list:
+
+   get LIST count
 
 @@endHelp
 
@@ -1997,6 +2057,30 @@ code imaging.
 
 @@endHelp
 
+
+
+@@beginHelp:  solvateCell
+
+
+    solvateCell solute solvent [ closeness ]
+
+
+      UNIT                         _solute_
+
+      UNIT                         _solvent_
+
+      NUMBER                       _closeness_
+
+
+
+The solvateCell command fills the box with origin at (0,0,0) and supports
+a general triclinic cell with full consideration of solute wrapping.
+The _solute_ UNIT is modified by the addition of _solvent_ RESIDUEs.
+
+The solvent box UNIT is copied and repeated in all three spatial directions
+with an optional solute atom closeness trimming option, as with solvateBox.
+
+@@endHelp
 
 
 @@beginHelp:  solvateCap

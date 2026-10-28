@@ -1,7 +1,6 @@
 /*
  *        File:        unitio_prmtop.c
  *
- ************************************************************************
  *
  *        Description:
  *                Input/output routines for PRMTOP and CRD files
@@ -21,10 +20,14 @@
 #include        "parser.h" // for PARMLIB GplAllParameters
 
 #define DBLFORMAT_C     "%16.8lE"
-#define DBLFORMAT_F     "5E16.8"
+#define DBLFORMAT_F     "5E16.8"  // XXX This really should be 5ES16.8 to match C format
 #define DBLCOUNT        5
+#define DUMMY_DBLFORMAT_C     "%#2.0f" // # forces decimal
+#define DUMMY_DBLFORMAT_F     "40F2.0"
+#define DUMMY_DBLCOUNT        40
 #define LBLFORMAT_C     "%-4s"
-#define LBLFORMAT_F     "A4"
+#define LBLFORMAT_F     "20A4"
+#define LBLCOUNT        20
 #define AMBER_VERSION   "3.0"
 
 /* COMMENT_DIM: annotate a FLAG section with its dimension name and size.
@@ -82,17 +85,6 @@ int        ii, iiMax, jj = 0; \
                                 || bAtomFlagsSet(a4,ATOMPERTURB)))
 
 
-static void FortranIntFormat(int maxval) {
-  char fmt[32],line[80];
-  int width, count;
-  width = snprintf(NULL, 0, "%d", maxval);
-  snprintf(fmt, sizeof(fmt), "%%%dd", width);  /* e.g. "%4d" */
-  count = 80 / width;                 /* ints per line */
-  sprintf(line,"%%FORMAT(%dI%d)",count,width);
-  FortranWriteString(line);
-  FortranFormat(count, fmt);
-}
-
 //---------------------------------------------------------------------------------------------
 // bBondAugmentationFound: test for the existence of bond augmentations.  Return 1 if they are
 //                        found, which will ordeer them to be printed.
@@ -134,7 +126,7 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
 {
     SAVERESIDUEt *srPRes;
     int iResidues, iAtom, iCount;
-    bool bSeenFirstSolvent = false, bWarn = false;
+    bool bSeenFirstSolvent = false, bDiscontig = false;
     ATOM aAtom;
 
     if (uUnit->vaAtomsPerMolecule) VarArrayDestroy(&(uUnit->vaAtomsPerMolecule));
@@ -151,7 +143,7 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
 
     /* Loop over all RESIDUES */
     int iMolecule = 0;
-    int iAtomSum = 0; // fix me discontig test
+    int iAtomSum = 0;
     for (int i=0; i < iResidues; i++, srPRes++) {
 
         /* Search for the next RESIDUE whose first ATOM has not */
@@ -167,10 +159,8 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
             continue;
         }
 
-        if (srPRes->iAtomStartIndex != iAtomSum + 1 && !bWarn) {
-            VPWARN("Discontiguous molecules detected. Set reorder_molecules=true to correct.\n");
-            bWarn = true;
-        }
+        if (srPRes->iAtomStartIndex != iAtomSum + 1) bDiscontig = true;
+
         /* Touch all of the ATOMs within the molecule that */
         /* contains the current RESIDUE */
 
@@ -196,7 +186,27 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
         VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP) & iCount);
         iAtomSum += iCount;
     }
-
+    if (bDiscontig) {
+        int iOldMolecule = -1;
+        iMolecule = 0;
+        iCount = 0;
+        RESIDUE rRes;
+        VPWARN("Discontiguous molecules detected. Set reorder_molecules=true to re-order atoms.\n"
+               "LEAP will now reassign molecules to *exclude* bonds that bridge a discontinuity\n");
+        VarArrayDestroy(&(uUnit->vaAtomsPerMolecule));
+        uUnit->vaAtomsPerMolecule = vaVarArrayCreate(sizeof(int));
+        LOOPOVERALL(uUnit,RESIDUES,rRes,lRes) {
+            if (rRes->iMolecule != iOldMolecule) {
+                VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
+                iMolecule++;
+                iOldMolecule = rRes->iMolecule;
+                iCount = 0;
+            }
+            rRes->iMolecule = iMolecule;
+            iCount += iCollectionSize(rRes->cHeader.lContents);
+        }
+        VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
+    }
     if (!bSeenFirstSolvent) {
         uUnit->iFirstSolvent = iVarArrayElementCount(uUnit->vaAtomsPerMolecule);
     }
@@ -220,7 +230,7 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
  *      indices into the (vaPNonBonds) array which contains the indices
  *      for the unique atom types (all those with unique parameters).
  */
-void
+static void
 zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
                           VARARRAY * vaPNBParameters,
                           VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds)
@@ -374,7 +384,7 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 		CheckAgainstNBEdits(vaPNBEdits,
 				    PVAI(vaNonBonds, NONBONDt, i)->sType,
 				    PVAI(vaNonBonds, NONBONDt, j)->sType,
-				    &dA, &dB);
+				    &dA, &dB); // XXX: is this really correct? No LJ14 specific edits?
                 PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA14 = dA;
                 PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dB14 = dB;
             }
@@ -388,8 +398,6 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
     /* have already been assigned their return values. */
 
 }
-
-
 
 //---------------------------------------------------------------------------------------------
 // zUnitIOSaveAmberParmFormat: save an Amber-format topology.
@@ -574,16 +582,17 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   else if (GDefaults.dPrmtopFormat>2.0) GDefaults.dPrmtopFormat=2.0;
   else if (GDefaults.dPrmtopFormat!=1.0 && GDefaults.dPrmtopFormat!=2.0) GDefaults.dPrmtopFormat=1.1;
 
-  // -1- Save the title of the UNIT
-  FortranDebug("-1-");
-  MESSAGE("Saving the name of the UNIT\n");
   FortranFormat(1, "%-80s");
   time(&tp);
   strftime(sComment,sizeof(sComment), "DATE = %m/%d/%y  %H:%M:%S", localtime(&tp));
   snprintf(sVersionHeader,sizeof(sVersionHeader),"%%VERSION  VERSION_STAMP = V%08.3f  %.40s",
         GDefaults.dPrmtopFormat, sComment);
   FortranWriteString(sVersionHeader);
-  FortranWriteString("%FLAG TITLE");
+
+  // -1- Save the title of the UNIT
+  FortranDebug("-1-");
+  MESSAGE("Saving the name of the UNIT\n");
+  FortranSection("TITLE");
   COMMENT("LENGTH:80; SCALAR;")
   FortranWriteString("%FORMAT(A80)");
   FortranWriteString(sContainerName(uUnit));
@@ -593,8 +602,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       STRING sTemp1, sTemp2;
       PARMSET psParm;
       int iLines=0, iPARM=-1;
-      FortranFormat(1,"%-80s");
-      FortranWriteString("%FLAG FORCE_FIELD_TYPE");
+      FortranSection("FORCE_FIELD_TYPE");
       iLines = iVarArrayElementCount(uUnit->vaParmSets) * 2 + 1;
       COMMENT_SIZE(iLines)
       if (GDefaults.dPrmtopFormat < 2.0)
@@ -827,8 +835,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       // -2- Save control information
       FortranDebug("-2-");
       MESSAGE("Saving all the main control variables\n");
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG POINTERS");
+      FortranSection("POINTERS");
       COMMENT("MEMBERS:NATOM,NTYPES,NBONH,NBONA,NTHETH,NTHETA,NPHIH,NPHIA,NHPARM,")
       COMMENT("NPARM,NNB,NRES,MBONA,MTHETA,MPHIA,NUMBND,NUMANG,NPTRA,NATYP,NPHB,")
       COMMENT("IFPERT,NBPER,NGPER,NDPER,MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP,NUMEXTRA;")
@@ -848,11 +855,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -3-  write out the names of the atoms
   FortranDebug("-3-");
   MESSAGE("Writing the names of the atoms\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ATOM_NAME");
+  FortranSection("ATOM_NAME");
   COMMENT_DIM_STR(NATOM,4)
-  FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-  FortranFormat(20, LBLFORMAT_C);
+  FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+  FortranFormat(LBLCOUNT, LBLFORMAT_C);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     cPTemp = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->sName;
     if (strlen(cPTemp) > 4) {
@@ -865,8 +871,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -4- write out the atomic charges
   FortranDebug("-4-");
   MESSAGE("Writing the atomic charges\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG CHARGE");
+  FortranSection("CHARGE");
   COMMENT_DIM_UNITS(NATOM, "sqrt(kcal*angstrom/mol)")
   COMMENT("NOTE:elementary charge multiplied by 18.2223")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
@@ -876,10 +881,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   }
   FortranEndLine();
   MESSAGE("Writing the atomic numbers\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ATOMIC_NUMBER");
+  FortranSection("ATOMIC_NUMBER");
   COMMENT_DIM(NATOM)
-  FortranIntFormat(NATOM);
+  FortranIntFormat(100);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     FortranWriteInt(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->iElement);
   }
@@ -888,8 +892,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -5- write out the atomic masses
   FortranDebug("-5-");
   MESSAGE("Writing the atomic masses\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG MASS");
+  FortranSection("MASS");
   COMMENT_DIM_UNITS(NATOM, "g/mol")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -911,10 +914,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -6- write out the atomic types
   FortranDebug("-6-");
   MESSAGE("Writing the atomic types\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ATOM_TYPE_INDEX");
+  FortranSection("ATOM_TYPE_INDEX");
   COMMENT_DIM(NATOM)
-  FortranIntFormat(NATOM);
+  FortranIntFormat(NTYPES);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     iAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->iTypeIndex - 1;
     iTemp = *PVAI(vaNBIndex, int, iAtom);
@@ -925,10 +927,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -7- write out the starting index into the excluded atom list
   FortranDebug("-7-");
   MESSAGE("Writing the starting index into the excluded atom list\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG NUMBER_EXCLUDED_ATOMS");
+  FortranSection("NUMBER_EXCLUDED_ATOMS");
   COMMENT_DIM(NATOM)
-  FortranIntFormat(NATOM);
+  FortranIntFormat(iMaxAtoms+100);  // iMaxAtoms = max atoms per residue  FIXME?
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     FortranWriteInt(*PVAI(vaExcludedCount, int, i));
   }
@@ -937,12 +938,11 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -8- Write the index for the position of the non bond type of each type
   FortranDebug("-8-");
   MESSAGE("writing position of the non bond type of each type\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG NONBONDED_PARM_INDEX");
+  FortranSection("NONBONDED_PARM_INDEX");
   COMMENT("DIMENSION:NTYPES,NTYPES;")
   COMMENT("DESC:Entry I,J = atom pair LJ parm index")
   COMMENT_SIZE(NTYPES*NTYPES)
-  FortranIntFormat(NTYPES*NTYPES);
+  FortranIntFormat(iVarArrayElementCount(vaNBParameters));
   for (i = 0; i < iVarArrayElementCount(vaNBIndexMatrix); i++) {
     FortranWriteInt(*PVAI(vaNBIndexMatrix, int, i));
   }
@@ -953,11 +953,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // taking the last three characters if it is too long
   FortranDebug("-9-");
   MESSAGE("Writing the residue labels\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG RESIDUE_LABEL");
+  FortranSection("RESIDUE_LABEL");
   COMMENT_DIM_STR(NRES,4)
-  FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-  FortranFormat(20, LBLFORMAT_C);
+  FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+  FortranFormat(LBLCOUNT, LBLFORMAT_C);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
     cPTemp = PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sName;
     if (strlen(cPTemp) > 3) {
@@ -971,10 +970,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // -10- Pointer list for all the residues
   FortranDebug("-10-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG RESIDUE_POINTER");
+  FortranSection("RESIDUE_POINTER");
   COMMENT_DIM(NRES)
-  FortranIntFormat(NATOM);
+  FortranIntFormat(NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
     FortranWriteInt(PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->iAtomStartIndex);
   }
@@ -983,8 +981,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -11- Force constants for bonds
   FortranDebug("-11-");
   MESSAGE("Writing bond force constants\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG BOND_FORCE_CONSTANT");
+  FortranSection("BOND_FORCE_CONSTANT");
   COMMENT_DIM_UNITS(NUMBND, "kcal/mol/angstrom^2")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1002,8 +999,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -12A- Equilibrium bond lengths
   FortranDebug("-12A-");
   MESSAGE("Writing equilibrium bond lengths\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG BOND_EQUIL_VALUE");
+  FortranSection("BOND_EQUIL_VALUE");
   COMMENT_DIM_UNITS(NUMBND, "angstrom")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1025,8 +1021,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -12B- Bond pulling adjustments: force constants
     FortranDebug("-12B-");
     MESSAGE("Writing bond pulling adjustments--force constants\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG BOND_STIFFNESS_PULL_ADJ");
+    FortranSection("BOND_STIFFNESS_PULL_ADJ");
     COMMENT_DIM_UNITS(NUMBND, "kcal/mol/angstrom^2")
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1040,8 +1035,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -12C- Bond pulling adjustments: equilibrium lengths
     FortranDebug("-12C-");
     MESSAGE("Writing bond pulling adjustments--equilibria\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG BOND_EQUIL_PULL_ADJ");
+    FortranSection("BOND_EQUIL_PULL_ADJ");
     COMMENT_DIM_UNITS(NUMBND, "angstrom")
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1055,8 +1049,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -12D- Bond pulling adjustments: equilibrium lengths
     FortranDebug("-12D-");
     MESSAGE("Writing bond compression adjustments--force constants\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG BOND_STIFFNESS_PRESS_ADJ");
+    FortranSection("BOND_STIFFNESS_PRESS_ADJ");
     COMMENT_DIM_UNITS(NUMBND, "kcal/mol/angstrom^2")
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1070,8 +1063,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -12E- Bond pulling adjustments: equilibrium lengths
     FortranDebug("-12E-");
     MESSAGE("Writing bond compression adjustments--force constants\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG BOND_EQUIL_PRESS_ADJ");
+    FortranSection("BOND_EQUIL_PRESS_ADJ");
     COMMENT_DIM_UNITS(NUMBND, "angstrom")
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1086,8 +1078,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -13- Force constants for angles
   FortranDebug("-13-");
   MESSAGE("Writing angle force constants\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ANGLE_FORCE_CONSTANT");
+  FortranSection("ANGLE_FORCE_CONSTANT");
   COMMENT_DIM_UNITS(NUMANG, "kcal/mol/radian^2")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1106,8 +1097,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranDebug("-14-");
 
   MESSAGE("Writing equilibrium angle values\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ANGLE_EQUIL_VALUE");
+  FortranSection("ANGLE_EQUIL_VALUE");
   COMMENT_DIM_UNITS(NUMANG, "radians")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1125,8 +1115,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -15- Force constants for torsions
   FortranDebug("-15-");
   MESSAGE("Writing torsional force constants\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG DIHEDRAL_FORCE_CONSTANT");
+  FortranSection("DIHEDRAL_FORCE_CONSTANT");
   COMMENT_DIM_UNITS(NPTRA, "kcal/mol")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1152,8 +1141,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -16- Periodicity for the dihedral angles
   FortranDebug("-16-");
   MESSAGE("Writing periodicity of torsion interaction\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG DIHEDRAL_PERIODICITY");
+  FortranSection("DIHEDRAL_PERIODICITY");
   COMMENT_DIM(NPTRA)
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1179,8 +1167,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranDebug("-17-");
 
   MESSAGE("Writing phase for torsion interactions\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG DIHEDRAL_PHASE");
+  FortranSection("DIHEDRAL_PHASE");
   COMMENT_DIM_UNITS(NPTRA, "radians")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1203,8 +1190,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -17B-
   FortranDebug("-17B-");
   MESSAGE("Writing SCEE_SCALE_FACTOR torsion\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG SCEE_SCALE_FACTOR");
+  FortranSection("SCEE_SCALE_FACTOR");
   COMMENT_DIM(NPTRA)
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1224,8 +1210,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -17C-
   FortranDebug("-17C-");
   MESSAGE("Writing SCNB_SCALE_FACTOR torsion\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG SCNB_SCALE_FACTOR");
+  FortranSection("SCNB_SCALE_FACTOR");
   COMMENT_DIM(NPTRA)
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1242,24 +1227,24 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   }
   FortranEndLine();
 
+  if (GDefaults.dPrmtopFormat==1.0) {
   // -18- Not used, reserved for future use, uses NATYP
   // Corresponds to the AMBER SOLTY array
   FortranDebug("-18-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG SOLTY");
+  FortranSection("SOLTY");
   COMMENT_DIM(NATYP)
-  FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
-  FortranFormat(DBLCOUNT, DBLFORMAT_C);
+  FortranWriteString("%FORMAT(" DUMMY_DBLFORMAT_F ")");
+  FortranFormat(DUMMY_DBLCOUNT, DUMMY_DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalAtomParms(uUnit->psParameters); i++) {
     FortranWriteDouble(0.0);
   }
   FortranEndLine();
+  }
 
   // -19- Lennard jones r**12 term for all possible interactions
   // CN1 array
   FortranDebug("-19-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG LENNARD_JONES_ACOEF");
+  FortranSection("LENNARD_JONES_ACOEF");
   COMMENT("NOTE:NTTYP=NTYPES*(NTYPES+1)/2;")
   COMMENT_DIM_UNITS(NTTYP, "kcal/mol*angstrom^12")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
@@ -1272,8 +1257,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -20- Lennard jones r**6 term for all possible interactions
   // CN2 array
   FortranDebug("-20-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG LENNARD_JONES_BCOEF");
+  FortranSection("LENNARD_JONES_BCOEF");
   COMMENT_DIM_UNITS(NTTYP, "kcal/mol*angstrom^6")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1287,11 +1271,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // into the interaction table
   FortranDebug("-21-");
   MESSAGE("Writing the bond interactions with hydrogens\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG BONDS_INC_HYDROGEN");
+  FortranSection("BONDS_INC_HYDROGEN");
   COMMENT("STRIDE:3; MEMBERS:ATOM_I,ATOM_J,PARM_INDEX;")
   COMMENT_DIM(NBONH)
-  FortranIntFormat(3*NATOM);
+  FortranIntFormat(NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++) {
     sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, sbPBond->iAtom1 - 1)->aAtom;
@@ -1312,11 +1295,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // into the interaction table
   FortranDebug("-22-");
   MESSAGE("Writing the bond interactions without hydrogens\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG BONDS_WITHOUT_HYDROGEN");
+  FortranSection("BONDS_WITHOUT_HYDROGEN");
   COMMENT("STRIDE:3; MEMBERS:ATOM_I,ATOM_J,PARM_INDEX;")
   COMMENT_DIM(NBONA)
-  FortranIntFormat(3*NATOM);
+  FortranIntFormat(NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++) {
     sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, sbPBond->iAtom1 - 1)->aAtom;
@@ -1351,11 +1333,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranDebug("-23-");
 
   MESSAGE("Writing the angle interactions with hydrogens\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ANGLES_INC_HYDROGEN");
+  FortranSection("ANGLES_INC_HYDROGEN");
   COMMENT("STRIDE:4; MEMBERS:ATOM_I,ATOM_J,ATOM_K,PARM_INDEX;")
   COMMENT_DIM(NTHETH)
-  FortranIntFormat(3*NATOM);
+  FortranIntFormat(NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++) {
     saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, saPAngle->iAtom1 - 1)->aAtom;
@@ -1379,11 +1360,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // into the interaction table
   FortranDebug("-24-");
   MESSAGE("Writing the angle interactions without hydrogens\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG ANGLES_WITHOUT_HYDROGEN");
+  FortranSection("ANGLES_WITHOUT_HYDROGEN");
   COMMENT("STRIDE:4; MEMBERS:ATOM_I,ATOM_J,ATOM_K,PARM_INDEX;")
   COMMENT_DIM(NTHETA)
-  FortranIntFormat(3*NATOM);
+  FortranIntFormat(NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++) {
     saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, saPAngle->iAtom1 - 1)->aAtom;
@@ -1421,11 +1401,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // into the interaction table
   FortranDebug("-25-");
   MESSAGE("Writing the torsion interactions with hydrogens\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG DIHEDRALS_INC_HYDROGEN");
+  FortranSection("DIHEDRALS_INC_HYDROGEN");
   COMMENT("STRIDE:5; MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,PARM_INDEX;")
   COMMENT_DIM(NPHIH)
-  FortranIntFormat(30*NATOM);
+  FortranIntFormat(-NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++) {
     stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
@@ -1468,11 +1447,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // into the interaction table
   FortranDebug("-26-");
   MESSAGE("Writing the torsion interactions without hydrogens\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG DIHEDRALS_WITHOUT_HYDROGEN");
+  FortranSection("DIHEDRALS_WITHOUT_HYDROGEN");
   COMMENT("STRIDE:5; MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L,PARM_INDEX;")
   COMMENT_DIM(NPHIA)
-  FortranIntFormat(30*NATOM);
+  FortranIntFormat(-NATOM*3);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++) {
     stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, i);
     aA = PVAI(uUnit->vaAtoms, SAVEATOMt, stPTorsion->iAtom1 - 1)->aAtom;
@@ -1531,10 +1509,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -27- Write the excluded atom list
   FortranDebug("-27-");
   MESSAGE("Writing the excluded atom list\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG EXCLUDED_ATOMS_LIST");
+  FortranSection("EXCLUDED_ATOMS_LIST");
   COMMENT_DIM(NNB)
-  FortranIntFormat(NNB);
+  FortranIntFormat(NATOM*3);
   for (i = 0; i < iVarArrayElementCount(vaExcludedAtoms); i++) {
     FortranWriteInt(*PVAI(vaExcludedAtoms, int, i));
   }
@@ -1542,8 +1519,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // -28- Write the R^12 term for the Hydrogen bond equation
   FortranDebug("-28-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG HBOND_ACOEF");
+  FortranSection("HBOND_ACOEF");
   COMMENT_DIM(NPHB)
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1555,8 +1531,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // -29- Write the R^10 term for the Hydrogen bond equation
   FortranDebug("-29-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG HBOND_BCOEF");
+  FortranSection("HBOND_BCOEF");
   COMMENT_DIM(NPHB)
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -1566,25 +1541,25 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   }
   FortranEndLine();
 
+  if (GDefaults.dPrmtopFormat==1.0) {
   // -30- No longer used, but stored
   FortranDebug("-30-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG HBCUT");
+  FortranSection("HBCUT");
   COMMENT_DIM(NPHB)
-  FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
-  FortranFormat(DBLCOUNT, DBLFORMAT_C);
+  FortranWriteString("%FORMAT(" DUMMY_DBLFORMAT_F ")");
+  FortranFormat(DUMMY_DBLCOUNT, DUMMY_DBLFORMAT_C);
   for (i = 0; i < iParmSetTotalHBondParms(uUnit->psParameters); i++) {
     FortranWriteDouble(0.0);
   }
   FortranEndLine();
+  }
 
   // -31- List of atomic symbols
   FortranDebug("-31-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG AMBER_ATOM_TYPE");
+  FortranSection("AMBER_ATOM_TYPE");
   COMMENT_DIM_STR(NATOM,4)
-  FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-  FortranFormat(20, LBLFORMAT_C);
+  FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+  FortranFormat(LBLCOUNT, LBLFORMAT_C);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     FortranWriteString(sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom));
     //FortranWriteInt(iAtomCoordination(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom)); //VeryNew
@@ -1593,12 +1568,11 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // -32- List of tree symbols
   FortranDebug("-32-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG TREE_CHAIN_CLASSIFICATION");
+  FortranSection("TREE_CHAIN_CLASSIFICATION");
   COMMENT_DIM_STR(NATOM,4)
   COMMENT("DESC:mainchain tree class: M,E,S,B,3,4,5,6,X,BLA=unknown;")
-  FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-  FortranFormat(20, LBLFORMAT_C);
+  FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+  FortranFormat(LBLCOUNT, LBLFORMAT_C);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     aAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom;
     if (dAtomTemp(aAtom) == (double) 'M') {
@@ -1636,10 +1610,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // -33- Tree Joining information !!!!!!! Add support for this !!!!!
   FortranDebug("-33-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG JOIN_ARRAY");
+  FortranSection("JOIN_ARRAY");
   COMMENT_DIM(NATOM)
-  FortranIntFormat(NATOM);
+  FortranIntFormat(1);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     FortranWriteInt(0);
   }
@@ -1647,10 +1620,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // -34- Who knows, something to do with rotating atoms
   FortranDebug("-34-");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG IROTAT");
+  FortranSection("IROTAT");
   COMMENT_DIM(NATOM)
-  FortranIntFormat(NATOM);
+  FortranIntFormat(1);
   for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
     FortranWriteInt(0);
   }
@@ -1679,11 +1651,12 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     int NSPSOL = uUnit->iFirstSolvent + 1;
 
     if (GDefaults.dPrmtopFormat<2.0) {
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG SOLVENT_POINTERS");
+      FortranSection("SOLVENT_POINTERS");
       COMMENT("PARAMETER; MEMBERS:IPTRES,NSPM,NSPSOL;")
       COMMENT_SIZE(3)
-      FortranIntFormat(NRES); //FIXME
+      int maxval = NRES > IPTRES ? NRES : IPTRES;
+      if (NSPSOL > maxval) maxval = NSPSOL;
+      FortranIntFormat(maxval);
       FortranWriteInt(IPTRES);
       FortranWriteInt(NSPM);
       FortranWriteInt(NSPSOL);
@@ -1692,8 +1665,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -35B- The number of ATOMs in the Ith MOLECULE
     FortranDebug("-35B-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG ATOMS_PER_MOLECULE");
+    FortranSection("ATOMS_PER_MOLECULE");
     COMMENT_DIM(NSPM)
     FortranIntFormat(NSPM);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtomsPerMolecule); i++) {
@@ -1704,8 +1676,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -35C- BETA, (BOX(I), I=1,3 )
     FortranDebug("-35C-");
     UnitGetBox(uUnit, &dX, &dY, &dZ);
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG BOX_DIMENSIONS");
+    FortranSection("BOX_DIMENSIONS");
     COMMENT("SIZE:4; UNITS:degrees,angstrom; MEMBERS:BETA,A,B,C;")
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(4, DBLFORMAT_C);
@@ -1716,8 +1687,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranEndLine();
 
     if (IFBOX > 1) {
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG BOX_ANGLES");
+      FortranSection("BOX_ANGLES");
       COMMENT("SIZE:3; UNITS:degrees; MEMBERS:ALPHA,BETA,GAMMA;")
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
       FortranFormat(3, DBLFORMAT_C);
@@ -1731,17 +1701,15 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // -35D- NATCAP
   if (bUnitUseSolventCap(uUnit)) {
     FortranDebug("-35D-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CAP_INFO");
+    FortranSection("CAP_INFO");
     FortranWriteString("%COMMENT SCALAR;");
-    FortranIntFormat(NATOM); //FIXME?
+    FortranIntFormat(uUnit->iCapTempInt);
     FortranWriteInt(uUnit->iCapTempInt);
     FortranEndLine();
 
     // -35E- CUTCAP, XCAP, YCAP, ZCAP
     FortranDebug("-35E-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CAP_INFO2");
+    FortranSection("CAP_INFO2");
     COMMENT("UNITS:angstrom; MEMBERS:CUTCAP,XCAP,YCAP,ZCAP;")
     COMMENT_SIZE(4)
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
@@ -1756,8 +1724,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // Write out the GB radii
   MESSAGE("Writing the GB radii\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG RADIUS_SET");
+  FortranSection("RADIUS_SET");
   FortranWriteString("%COMMENT SCALAR;");
   FortranWriteString("%FORMAT(1a80)");
   if (GDefaults.iGBparm >= 0 && GDefaults.iGBparm <= GBPARM_MAX)
@@ -1766,7 +1733,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       sprintf(sComment,"Unknown radius set %d (programming error)",GDefaults.iGBparm );
   FortranWriteString(sComment);
 
-  FortranWriteString("%FLAG RADII");
+  FortranSection("RADII");
   COMMENT_DIM_UNITS(NATOM, "angstrom")
   COMMENT("DESC:GB radius;")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
@@ -1778,8 +1745,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   // Write out the GB screening parameters
   MESSAGE("Writing the GB screening parameters\n");
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG SCREEN");
+  FortranSection("SCREEN");
   COMMENT_DIM(NATOM)
   COMMENT("DESC:GB screening factor;")
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
@@ -1790,11 +1756,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FREE(dGBScreen);
 
   // Write IPOL near the end of prmtop
-  FortranFormat(1, "%-80s");
-  FortranWriteString("%FLAG IPOL");
+  FortranSection("IPOL");
   FortranWriteString("%COMMENT SCALAR;");
   COMMENT("DESC:Flag for polarizable force field;")
-  FortranWriteString("%FORMAT(1I8)");
+  FortranIntFormat(1);
   FortranWriteInt(GDefaults.iIPOL);
   FortranEndLine();
 
@@ -1805,11 +1770,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // Totally perturbed bonds first,
     // boundary second
     FortranDebug("-36A-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_BOND_ATOMS");
+    FortranSection("PERT_BOND_ATOMS");
     COMMENT("STRIDE:2; MEMBERS:ATOM_I,ATOM_J;")
     COMMENT_DIM(NBPER)
-    FortranIntFormat(NBPER);
+    FortranIntFormat(NATOM*3);
     if (iVarArrayElementCount(uUnit->vaBonds)) {
       sbPBond = PVAI(uUnit->vaBonds, SAVEBONDt, 0);
       for (i = 0; i < iVarArrayElementCount(uUnit->vaBonds); i++, sbPBond++) {
@@ -1832,10 +1796,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36B- Index into bond interaction arrays
     FortranDebug("-36B-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_BOND_PARAMS");
+    FortranSection("PERT_BOND_PARAMS");
     COMMENT_DIM(NBPER)
-    FortranIntFormat(NBPER);
+    FortranIntFormat(NATOM*3);
 
     // First, LAMBDA = 0
     if (iVarArrayElementCount(uUnit->vaBonds)) {
@@ -1876,11 +1839,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36C- Angles that are to be perturbed
     FortranDebug("-36C-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_ANGLE_ATOMS");
+    FortranSection("PERT_ANGLE_ATOMS");
     COMMENT("STRIDE:3; MEMBERS:ATOM_I,ATOM_J,ATOM_K;")
     COMMENT_DIM(NGPER)
-    FortranIntFormat(NGPER);
+    FortranIntFormat(NATOM*3);
     if (iVarArrayElementCount(uUnit->vaAngles)) {
       saPAngle = PVAI(uUnit->vaAngles, SAVEANGLEt, 0);
       for (i = 0; i < iVarArrayElementCount(uUnit->vaAngles); i++, saPAngle++) {
@@ -1905,10 +1867,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36D- Index into angle interaction arrays
     FortranDebug("-36D-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_ANGLE_PARAMS");
+    FortranSection("PERT_ANGLE_PARAMS");
     COMMENT_DIM(NGPER)
-    FortranIntFormat(NGPER);
+    FortranIntFormat(NATOM*3);
 
     // First LAMBDA = 0
     if (iVarArrayElementCount(uUnit->vaAngles)) {
@@ -1949,11 +1910,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36E- Torsions that are to be perturbed
     FortranDebug("-36E-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_DIHEDRAL_ATOMS");
+    FortranSection("PERT_DIHEDRAL_ATOMS");
     COMMENT("STRIDE:4; MEMBERS:ATOM_I,ATOM_J,ATOM_K,ATOM_L;")
     COMMENT_DIM(NDPER)
-    FortranIntFormat(NDPER);
+    FortranIntFormat(-NATOM*3);
     if (iVarArrayElementCount(uUnit->vaTorsions)) {
       stPTorsion = PVAI(uUnit->vaTorsions, SAVETORSIONt, 0);
       for (i = 0; i < iVarArrayElementCount(uUnit->vaTorsions); i++, stPTorsion++) {
@@ -1996,10 +1956,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36F- Index into torsion interaction arrays
     FortranDebug("-36F-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_DIHEDRAL_PARAMS");
+    FortranSection("PERT_DIHEDRAL_PARAMS");
     COMMENT_DIM(NDPER)
-    FortranIntFormat(NDPER);
+    FortranIntFormat(NPTRA);
 
     // First LAMBDA = 0
     if (iVarArrayElementCount(uUnit->vaTorsions)) {
@@ -2047,11 +2006,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // taking the last three characters if it is too long
     FortranDebug("-36G-");
     MESSAGE("Writing the residue labels\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_RESIDUE_NAME");
+    FortranSection("PERT_RESIDUE_NAME");
     COMMENT_DIM_STR(NRES,4)
-    FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-    FortranFormat(20, LBLFORMAT_C);
+    FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+    FortranFormat(LBLCOUNT, LBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
       cPTemp = PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sName;
       if (strlen(cPTemp) > 3) {
@@ -2063,11 +2021,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36H- Atom names at LAMBDA = 0
     FortranDebug("-36H-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_ATOM_NAME");
+    FortranSection("PERT_ATOM_NAME");
     COMMENT_DIM_STR(NATOM,4)
-    FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-    FortranFormat(20, LBLFORMAT_C);
+    FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+    FortranFormat(LBLCOUNT, LBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
       cPTemp = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->sPertName;
       if (strlen(cPTemp) == 0) cPTemp = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->sName;
@@ -2078,11 +2035,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36I- List of atomic symbols (atom types??????)
     FortranDebug("-36I-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_ATOM_SYMBOL");
+    FortranSection("PERT_ATOM_SYMBOL");
     COMMENT_DIM_STR(NATOM,4)
-    FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-    FortranFormat(20, LBLFORMAT_C);
+    FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+    FortranFormat(LBLCOUNT, LBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
       cPTemp = sAtomPertType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom);
       if (strlen(cPTemp) == 0) cPTemp = sAtomType(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom);
@@ -2091,25 +2047,25 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     }
     FortranEndLine();
 
+    if (GDefaults.dPrmtopFormat==1.0) {
     // -36J- Value of LAMBDA for each ATOM ?????????
     // TODO: Figure out what the hell this is
     FortranDebug("-36J-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG ALMPER");
+    FortranSection("ALMPER");
     COMMENT_DIM(NATOM)
-    FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
-    FortranFormat(DBLCOUNT, DBLFORMAT_C);
+    FortranWriteString("%FORMAT(" DUMMY_DBLFORMAT_F ")");
+    FortranFormat(DUMMY_DBLCOUNT, DUMMY_DBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
       FortranWriteDouble(0.0);
     }
     FortranEndLine();
+    }
 
     // -36K- Flag to tell whether the atom is perturbed
     FortranDebug("-36K-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG IAPER");
+    FortranSection("IAPER");
     COMMENT_DIM(NATOM)
-    FortranIntFormat(NATOM);
+    FortranIntFormat(1);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
       FortranWriteInt(bAtomPerturbed(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->aAtom)?1:0);
     }
@@ -2117,10 +2073,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36L- List of atom types - IACPER
     FortranDebug("-36L-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_ATOM_TYPE_INDEX");
+    FortranSection("PERT_ATOM_TYPE_INDEX");
     COMMENT_DIM(NATOM)
-    FortranIntFormat(NATOM);
+    FortranIntFormat(NTYPES);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
       iAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->iPertTypeIndex - 1;
       iTemp = *PVAI(vaNBIndex, int, iAtom);
@@ -2130,8 +2085,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -36M- Perturbed charges
     FortranDebug("-36M-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG PERT_CHARGE");
+    FortranSection("PERT_CHARGE");
     COMMENT_DIM(NATOM)
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2163,8 +2117,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     iMax = iVarArrayElementCount(uUnit->vaAtoms);
     MESSAGE("Writing the atomic polarizabilities\n");
 
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG POLARIZABILITY");
+    FortranSection("POLARIZABILITY");
     COMMENT_DIM_UNITS(NATOM, "angstrom^3")
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2184,8 +2137,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     }
     FortranEndLine();
 
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG DIPOLE_DAMP_FACTOR");
+    FortranSection("DIPOLE_DAMP_FACTOR");
     COMMENT_DIM(NATOM)
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2202,8 +2154,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     if (bPert) {
       int iPertTot = 0;
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG PERT_POLARIZABILITY");
+      FortranSection("PERT_POLARIZABILITY");
       COMMENT_DIM_UNITS(NATOM, "angstrom^3")
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
       FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2239,8 +2190,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -19- Lennard jones r**12 term for all 14 interactions
     // CN114 array
     FortranDebug("-19-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG LENNARD_JONES_14_ACOEF");
+    FortranSection("LENNARD_JONES_14_ACOEF");
     COMMENT_DIM_UNITS(NTTYP, "kcal/mol*angstrom^12")
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2252,8 +2202,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     // -20- Lennard jones r**6 term for all 14 interactions
     // CN214 array
     FortranDebug("-20-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG LENNARD_JONES_14_BCOEF");
+    FortranSection("LENNARD_JONES_14_BCOEF");
     COMMENT_DIM_UNITS(NTTYP, "kcal/mol*angstrom^6")
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2264,8 +2213,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -13- Force constants for Urey-Bradley
     FortranDebug("-13-"); // FIXME: leap never had this wth headers in v1,0 files, and leap is EVERY ANGLE
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CHARMM_UREY_BRADLEY_FORCE_CONSTANT");
+    FortranSection("CHARMM_UREY_BRADLEY_FORCE_CONSTANT");
     COMMENT_DIM(NUMANG)
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2278,8 +2226,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     // -14- Equilibrium distances for Urey-Bradley
     FortranDebug("-14-");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG CHARMM_UREY_BRADLEY_EQUIL_VALUE");
+    FortranSection("CHARMM_UREY_BRADLEY_EQUIL_VALUE");
     COMMENT_DIM(NUMANG)
     FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
@@ -2293,8 +2240,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   if (GDefaults.dPrmtopFormat>1.0) {
       MESSAGE("Writing the residue types\n");
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG RESIDUE_TYPE");
+      FortranSection("RESIDUE_TYPE");
       COMMENT_DIM_STR(NRES,1)
       FortranWriteString("%FORMAT(80A1)");
       FortranFormat(80, "%1.1s");
@@ -2308,8 +2254,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranEndLine();
       if (iUnknownResTypes>0) VPWARN("%d residues have undefined type\n",iUnknownResTypes);
 
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG RESIDUE_MOLECULE");
+      FortranSection("RESIDUE_MOLECULE");
       COMMENT_DIM(NRES)
       FortranIntFormat(NRES);
       for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
@@ -2319,8 +2264,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranEndLine();
 
 #if 0
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG RESIDUE_SEQUENCE");
+      FortranSection("RESIDUE_SEQUENCE");
       COMMENT_DIM(NRES)
       FortranIntFormat(NRES);
       for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
@@ -2333,8 +2277,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
   if ( GDefaults.bPdbKeepChainId) {
     MESSAGE("Writing residue PDB ResId\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG RESIDUE_NUMBER");
+    FortranSection("RESIDUE_NUMBER");
     COMMENT_DIM(NRES)
     FortranIntFormat(NRES);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
@@ -2343,11 +2286,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranEndLine();
 
     MESSAGE("Writing residue PDB ChainId\n");
-    FortranFormat(1, "%-80s");
-    FortranWriteString("%FLAG RESIDUE_CHAINID");
+    FortranSection("RESIDUE_CHAINID");
     COMMENT_DIM_STR(NRES,4)
-    FortranWriteString("%FORMAT(20" LBLFORMAT_F ")");
-    FortranFormat(20, LBLFORMAT_C);
+    FortranWriteString("%FORMAT(" LBLFORMAT_F ")");
+    FortranFormat(LBLCOUNT, LBLFORMAT_C);
     bool bHasICodes = false;
     for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
       SAVERESIDUEt *srRes = PVAI(uUnit->vaResidues, SAVERESIDUEt, i);
@@ -2358,8 +2300,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
 
     if (bHasICodes) {
       MESSAGE("Writing residue PDB iCode\n");
-      FortranFormat(1, "%-80s");
-      FortranWriteString("%FLAG RESIDUE_ICODE");
+      FortranSection("RESIDUE_ICODE");
       COMMENT_DIM_STR(NRES,1)
       FortranWriteString("%FORMAT(80A1)");
       FortranFormat(80, "%1.1s");
@@ -3879,8 +3820,7 @@ IX_DESC         iResIx;
 	/*
         FortranEndLine();
 	if (GDefaults.dDipoleDampFactor > 1.0) {
-           FortranFormat(1, "%-80s");
-           FortranWriteString("%FLAG DIPOLE_DAMP_FACTOR");
+           FortranSection("DIPOLE_DAMP_FACTOR");
            FortranWriteString("%FORMAT(5E16.8)");
            FortranFormat(5, DBLFORMAT);
            for (i = 0; i < iMax; i++, saPAtom++) {

@@ -7,25 +7,26 @@
 #include "elements.h"
 #include "residue.h"
 #include "molecule.h"
+#include "internal.h" // only due to loop.h _Generic() dispatch
 #include "loop.h"
 #include "unitio.h"
 #include "defaults.h"
-#include "internal.h"
-
-#ifdef DEBUG
-// These are unused here; needed for object debugging in objekt.h
-#include "assoc.h"
-#include "oString.h"
-#include "oDouble.h"
-#endif
 
 /* AtomMaskPrepare: stamp sequential TempInt on residues and atoms in
  * output order (respecting bReorderResidues flag). Must be called before
  * any selection evaluation on a unit. Always re-runs since LEAP has no
- * per-atom dirty tracking — cost is O(N) traversal which is acceptable
+ * per-atom dirty tracking -- cost is O(N) traversal which is acceptable
  * even for large systems. Molecule numbers are also refreshed here via
- * iUnitLabelMolecules(). Fine-grained dirty tracking at LEAP command level
- * is a future project.                                                    */
+ * iUnitLabelMolecules().
+ *
+ * Final index numbering must order atoms exactly as unitio.c routines:
+ *   UnitDoAtom()
+ *   UnitIOBuildTables()
+ *   iUnitIOAmberOrderResiduesUnitIOBuildTables()
+ *
+ * The actual sort happens with DIRECTCONTENTSPARMORDER or
+ * DIRECTCONTENTSBYSEQNUM (old LEAP used convoluted ad-hoc ordering chaos)
+ */
 void
 AtomMaskPrepare(UNIT uUnit)
 {
@@ -127,7 +128,7 @@ static void NodeEnsureGrid(const SELNODE node, const ATOM atom)
         points[i].group = 0;
         points[i].p     = (void*)*aPAtom;
     }
-    /* single group — group_start has n_groups+1 elements, last is sentinel */
+    /* single group -- group_start has n_groups+1 elements, last is sentinel */
     unsigned int group_start[2] = {0, npoints};
     node->ngGrid = neighbor_grid_setup(points, npoints, 1, group_start, node->dist);
     VarArrayDestroy(&vaAtoms);
@@ -152,10 +153,10 @@ void SelInvalidateCoords(SELNODE node)
 static inline bool bSelMatchText(const SELNODE node, const char *value)
 {
     if (!node || !value) return false;
-    /* forced_string or no glob chars: exact compare */
+    /* ~ forced_string or no glob chars: exact compare */
     if (node->forced_string || !node->has_glob)
         return strcmp(node->text, value) == 0;
-    /* globbing via fnmatch — use ~ prefix to force literal match */
+    /* globbing via fnmatch() */
     return fnmatch(node->text, value, 0) == 0;
 }
 

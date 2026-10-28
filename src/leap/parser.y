@@ -117,8 +117,7 @@ BLOCK		GbExecute = NULL;
 int		GiClipPrompts = 0;
 bool		GbGraphicalEnvironment;
 STRING		GsProgramName;
-
-extern int	iMemDebug;
+int             GiMemDebug = 0;
 
 static	STRING	*SbFirstSourceFiles = NULL;
 static	int	iFirstSource = 0;
@@ -1299,10 +1298,10 @@ zbResidNumeric(const char *s, char *cICode)
  * Resolve a token (which may have a leading '$' and/or a ':' separator)
  * into a typed value.
  *
- * Literals are untyped: digit-only → CTOK_INT, otherwise → CTOK_STRING,
+ * Literals are untyped: digit-only -> CTOK_INT, otherwise -> CTOK_STRING,
  *   except that a ':' anywhere means CTOK_CHAINRES (left side may be empty).
- * Variables are typed by their object type: ODOUBLEid → CTOK_INT,
- *   OSTRINGid → CTOK_STRING or CTOK_CHAINRES if value contains ':'.
+ * Variables are typed by their object type: ODOUBLEid -> CTOK_INT,
+ *   OSTRINGid -> CTOK_STRING or CTOK_CHAINRES if value contains ':'.
  *   A numeric-looking OSTRINGid is NOT converted to CTOK_INT.
  *
  * For CTOK_CHAINRES: sOut receives chain (may be ""), *piValue receives resid.
@@ -1385,7 +1384,7 @@ bool        bFromVar = false;
 
     /* --- no colon ---
      * vars: OSTRINGid is always a name, even if digits only
-     * literals: digit-only → int, otherwise → string             */
+     * literals: digit-only  int, otherwise -> string             */
     if (!bFromVar && zbResidNumeric(sVal,NULL)) {
         *piValue = atoi(sVal);
         return CTOK_INT;
@@ -1852,7 +1851,7 @@ extern void CMAPDestroy(void);
 void
 ParseShutdown()
 {
-	if ( !iMemDebug )
+	if ( !GiMemDebug )
 
 	Destroy( (OBJEKT *)&aDummy );
 	VariablesDestroy();

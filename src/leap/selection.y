@@ -18,10 +18,10 @@
 //               | mol_res_selection atom_selection   -- implied AND (3-level chain)
 //               | selection_spec_list selection_spec -- implied OR (same/other level)
 //
-//  res_selection   := ':' value_list          -- RESNUM: default (PDB resSeq or flat in compat mode)
+//  res_selection   := ':' value_list          -- RES_INDEX: flat index
 //                   | ':;' value_list         -- RES_PDBSEQ: always PDB resSeq
-//                   | ':#' value_list         -- RES_INDEX: always flat sequential index
-//                   | ':%' name               -- RESTYPE: residue type (single name, always literal)
+//                   | ':#' value_list         -- RES_SEQ: LEAP index (equals RESNUM unless residues deleted)
+//                   | ':%' type name          -- RESTYPE: residue type (single name, always literal)
 //                   | '::' value_list         -- chain ID
 //                   | '::' value_list ':' value_list  -- chain ID + PDB resSeq (: forced to PDB resSeq)
 //                   | ':(' expr ')'           -- residues containing expr
@@ -49,10 +49,10 @@
 //                 number                     -- REAL or INTEGER (promoted to double)
 //
 //  Residue numbering modes:
-//    RESNUM    ':'   default — PDB resSeq normally, flat index in compat mode
-//    RES_PDBSEQ':;'  always PDB resSeq (cpptraj called this "original resnum")
-//    RES_INDEX ':#'  always flat sequential index
-//    RESTYPE   ':%'  residue type — single literal name, not a number
+//    RES_INDEX    ':'   flat index
+//    RES_PDBSEQ   ':;'  PDB resSeq (cpptraj called this "original resnum")
+//    RES_SEQ      ':#'  LEAP sequence ID, assigned at instantiation
+//    RESTYPE      ':%'  residue type -- single literal name, not a number
 //
 //  Implied AND fires when moving DOWN the hierarchy: mol -> res -> atom
 //  Implied OR  fires for same-level or upward juxtaposition
@@ -93,11 +93,11 @@ SELNODE selection_root = NULL;
 %token <inum> INTEGER        /* integer */
 %token <rnum> REAL           /* double, used for distance cutoffs */
 %token TILDE                 /* ~ force literal string for next token */
-%token COLON                 /* :  residue RESNUM (default) */
+%token COLON                 /* :  RES_INDEX flat residue index */
 %token COLON_COLON           /* :: chain ID */
-%token COLON_SEMICOLON       /* :; RES_PDBSEQ — always PDB resSeq */
-%token COLON_HASH            /* :# RES_INDEX  — always flat sequential index */
-%token COLON_PCT             /* :% RESTYPE    — residue type, single literal name */
+%token COLON_SEMICOLON       /* :; RES_PDBSEQ -- always PDB resSeq */
+%token COLON_HASH            /* :# RES_SEQ -- LEAP sequence ID */
+%token COLON_PCT             /* :% RESTYPE    -- residue type, single literal name */
 %token COLON_FLAG    /* :{  residue flag test */
 %token COLON_FLAGN   /* :{! residue flag negated */
 %token AT                    /* @  atom name or global index (cpptraj compat) */
@@ -124,7 +124,7 @@ SELNODE selection_root = NULL;
 %token RPAREN                /* ) */
 %token DASH                  /* - */
 %token RBRACE                /* } */
-/* NOTE: no STAR token — * and ? are valid NAMESTART chars and lex as NAME.
+/* NOTE: no STAR token -- * and ? are valid NAMESTART chars and lex as NAME.
  * fnmatch handles glob matching. Bare * at expression level is select-all,
  * handled by checking NAME == "*" in primary.                             */
 
@@ -182,14 +182,14 @@ factor
  * The reference set is the left child; the nonbond grid is built from it
  * lazily on first eval and cached on the node. dist is stored as-is;
  * neighbor_grid_setup() squares it internally.
- * Both REAL and INTEGER are accepted for distance — INTEGER is promoted
+ * Both REAL and INTEGER are accepted for distance -- INTEGER is promoted
  * to double so <@5 and <@5.0 are equivalent.                            */
 primary
     : LPAREN expr RPAREN             { $$ = $2; }
     | LPAREN error RPAREN            { selerror("invalid expression inside parentheses");
                                        YYERROR; }
     | NAME                           { if (strcmp($1, "*") != 0) {
-                                           selerror("bare name requires : @ ^ prefix — "
+                                           selerror("bare name requires : @ ^ prefix -- "
                                                     "did you mean :name or @name? "
                                                     "Use * alone to select all atoms.");
                                            free($1); YYERROR;
@@ -233,7 +233,7 @@ selection_spec_list
         { $$ = mk_node(SEL_NODE_OR,  $1, $2); }
     ;
 
-/* three-level chain: ^1:ALA@CA — mol+res reduces here first via its own
+/* three-level chain: ^1:ALA@CA -- mol+res reduces here first via its own
  * %prec so bison doesn't confuse it with selection_spec_list mol res.
  * The combined node can then accept an atom_selection for the third level,
  * or stand alone as a two-level mol+res selection.                        */
@@ -249,7 +249,7 @@ res_selection
     | COLON_SEMICOLON res_list_pdbseq   { $$ = $2; }
     | COLON_HASH      res_list_index    { $$ = $2; }
     | COLON_PCT       name              { $$ = mk_text_node(SEL_NODE_RESTYPE, $2, 1); }
-    | COLON_PCT       INTEGER           { selerror(":% residue type requires a name, not a number — "
+    | COLON_PCT       INTEGER           { selerror(":% residue type requires a name, not a number -- "
                                                    "did you mean :# for residue index?");
                                           YYERROR; }
     | COLON_COLON     chain_list        { $$ = $2; }
@@ -259,7 +259,7 @@ res_selection
     | COLON_FLAGN NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG_NOT, fResFlagNameToBit($2)); free($2); }
     ;
 
-/* '::' chain ':' resnum — ':' is always PDB resSeq here regardless of
+/* '::' chain ':' resnum -- ':' is always PDB resSeq here regardless of
  * cpptraj_compat, since an explicit chain ID implies PDB coordinate context.
  * ::A:#17 and ::A:%name are handled via implied AND since :# and :% are
  * already unambiguous regardless of context.                              */
@@ -288,7 +288,7 @@ atom_list_index
 atom_item_index
     : INTEGER               { $$ = mk_int_node(SEL_NODE_ATOM_INDEX,       $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_ATOM_INDEX, $1, $3); }
-    | NAME                  { selerror("@# requires integer — use @ for atom name");
+    | NAME                  { selerror("@# requires integer -- use @ for atom name");
                               free($1); YYERROR; }
     ;
 
@@ -302,7 +302,7 @@ atom_list_residx
 atom_item_residx
     : INTEGER               { $$ = mk_int_node(SEL_NODE_ATOM_RESIDX,       $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_ATOM_RESIDX, $1, $3); }
-    | NAME                  { selerror("@; requires integer — atom index within residue");
+    | NAME                  { selerror("@; requires integer -- atom index within residue");
                               free($1); YYERROR; }
     ;
 
@@ -317,7 +317,7 @@ selection_spec
     | mol_selection                     { $$ = $1; }
     ;
 
-/* --- residue lists — three separate sets to carry numbering scheme ---
+/* --- residue lists -- three separate sets to carry numbering scheme ---
  *
  * Each scheme gets its own list, item, and range node kinds so the
  * evaluator knows which numbering to use without inspecting context.
@@ -344,7 +344,7 @@ res_list_pdbseq
 res_item_pdbseq
     : INTEGER               { $$ = mk_int_node( SEL_NODE_RES_PDBSEQ,       $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RES_PDBSEQ, $1, $3); }
-    | NAME                  { selerror(":; PDB resSeq requires integer — "
+    | NAME                  { selerror(":; PDB resSeq requires integer -- "
                                        "use : for residue name selection");
                               free($1); YYERROR; }
     ;
@@ -357,7 +357,7 @@ res_list_index
 res_item_index
     : INTEGER               { $$ = mk_int_node( SEL_NODE_RES_INDEX,       $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RES_INDEX, $1, $3); }
-    | NAME                  { selerror(":# residue index requires integer — "
+    | NAME                  { selerror(":# residue index requires integer -- "
                                        "use : for residue name selection");
                               free($1); YYERROR; }
     ;
@@ -407,7 +407,7 @@ elem_item
     | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_ELEM, $1, $3); }
     ;
 
-/* --- atom type list (always forced literal — no glob in type names) --- */
+/* --- atom type list (always forced literal -- no glob in type names) --- */
 
 type_list
     : type_item                         { $$ = $1; }
@@ -420,7 +420,7 @@ type_item
                               YYERROR; }
     ;
 
-/* --- molecule list (numbers and ranges only — no string names) --- */
+/* --- molecule list (numbers and ranges only -- no string names) --- */
 
 mol_list
     : mol_item                          { $$ = $1; }
@@ -430,7 +430,7 @@ mol_list
 mol_item
     : INTEGER               { $$ = mk_int_node(SEL_NODE_MOLNUM,    $1); }
     | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_MOL, $1, $3); }
-    | NAME                  { selerror("^ molecule selector requires integer — "
+    | NAME                  { selerror("^ molecule selector requires integer -- "
                                        "molecule names are not supported");
                               free($1); YYERROR; }
     ;
@@ -444,12 +444,12 @@ name
 forced_name
     /* The lexer handles ~ as a unit: ~017 is emitted as TILDE NAME("017"),
      * never as TILDE INTEGER. This preserves leading zeros so ~017 != ~17.
-     * The parser never sees TILDE INTEGER — adding that rule would corrupt
+     * The parser never sees TILDE INTEGER -- adding that rule would corrupt
      * numeric names by routing through atol() and losing leading zeros.
      * The 'forced' flag in mk_text_node() disables glob pattern matching:
      * ~ means "literal string, no wildcards, no fnmatch".                */
     : TILDE NAME            { $$ = $2; }
-    | TILDE INTEGER         { selerror("~ followed by bare integer — "
+    | TILDE INTEGER         { selerror("~ followed by bare integer -- "
                                        "leading zeros are preserved so ~017 != ~17, "
                                        "but the lexer should have emitted this as NAME. "
                                        "This is an internal error.");
@@ -512,8 +512,8 @@ static SELNODE mk_range(SELNODEKINDt k, long a, long b)
 
 static SELNODE mk_dist_node(SELNODEKINDt k, SELNODE ref, double dist)
 {
-    /* dist stored as-is — neighbor_grid_setup() squares it internally.
-     * ngGrid is left NULL by calloc — built lazily on first eval and
+    /* dist stored as-is -- neighbor_grid_setup() squares it internally.
+     * ngGrid is left NULL by calloc -- built lazily on first eval and
      * cached here for reuse across trajectory frames. Caller must call
      * sel_invalidate_coords(root) between frames if coordinates change. */
     SELNODE n = alloc_node(k);
