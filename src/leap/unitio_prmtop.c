@@ -1,6 +1,7 @@
 /*
  *        File:        unitio_prmtop.c
  *
+ ************************************************************************
  *
  *        Description:
  *                Input/output routines for PRMTOP and CRD files
@@ -1608,6 +1609,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   }
   FortranEndLine();
 
+  if (GDefaults.dPrmtopFormat==1.0) {
   // -33- Tree Joining information !!!!!!! Add support for this !!!!!
   FortranDebug("-33-");
   FortranSection("JOIN_ARRAY");
@@ -1627,6 +1629,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranWriteInt(0);
   }
   FortranEndLine();
+  }
 
   // -35A- The last residue before "solvent"
   // Number of molecules
@@ -1667,7 +1670,14 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranDebug("-35B-");
     FortranSection("ATOMS_PER_MOLECULE");
     COMMENT_DIM(NSPM)
-    FortranIntFormat(NSPM);
+    {
+        int maxval=0;
+        for (i = 0; i < iVarArrayElementCount(uUnit->vaAtomsPerMolecule); i++) {
+            int j = *PVAI(uUnit->vaAtomsPerMolecule, int, i);
+            if (j > maxval) maxval = j;
+        }
+        FortranIntFormat(maxval);
+    }
     for (i = 0; i < iVarArrayElementCount(uUnit->vaAtomsPerMolecule); i++) {
       FortranWriteInt(*PVAI(uUnit->vaAtomsPerMolecule, int, i));
     }

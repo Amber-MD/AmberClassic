@@ -1739,6 +1739,8 @@ int             iCurrentBioMT=0;
                 anAtom.x = p.pdb.atom.x;
                 anAtom.y = p.pdb.atom.y;
                 anAtom.z = p.pdb.atom.z;
+                anAtom.b = p.pdb.atom.temp_factor;
+                anAtom.q = p.pdb.atom.occupancy;
                 VarArrayAdd( prPRead->vaAtomRecs, (GENP)&anAtom );
 
                 break;
@@ -3243,6 +3245,9 @@ int             iChainCount=0;
             VECTOR vPos;
             VectorDef( &vPos, anAtom->x, anAtom->y, anAtom->z );
             AtomSetPosition( aAtom, vPos );
+            aAtom->iAtomSerial = anAtom->iAtomSerial;
+            aAtom->dOccupancy = anAtom->q;
+            aAtom->dBfactor = anAtom->b;
         }
 
         if (!bStartChain && !GDefaults.bPdbAutoMatch &&

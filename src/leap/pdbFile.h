@@ -61,11 +61,11 @@ typedef struct  {
 
 // ATOM info: name, xyz, element, atomSerial (only for CONECT), rest go to RESIDUENAMEt
 typedef struct  {
-        double   x,y,z;
-        char    sName[6];
-        uint8_t iElement;
+        double   x,y,z,b,q;
         int     iAtomSerial;
         int     iResNameIndex; // parent index
+        char    sName[6];
+        uint8_t iElement;
 } ATOMNAMEt;
 
 typedef struct {

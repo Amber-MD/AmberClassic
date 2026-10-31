@@ -18,6 +18,7 @@ typedef enum {
     SEL_NODE_RES_INDEX,
     SEL_NODE_RES_FLAG,
     SEL_NODE_RES_FLAG_NOT,
+    SEL_NODE_RES_ATTR_CMP,
     SEL_NODE_RESNAME,
     SEL_NODE_RESTYPE,
     SEL_NODE_CHAINID,
@@ -27,6 +28,8 @@ typedef enum {
     SEL_NODE_ATOM_RESIDX,
     SEL_NODE_ATOM_FLAG,
     SEL_NODE_ATOM_FLAG_NOT,
+    SEL_NODE_ATOM_ATTR_CMP_INT,
+    SEL_NODE_ATOM_ATTR_CMP_REAL,
     SEL_NODE_ELEMENT,
     SEL_NODE_ELEMENT_NUM,
     SEL_NODE_INDEX,
@@ -51,6 +54,10 @@ typedef enum {
     SEL_NODE_DIST_BEYOND_MOL,
 } SELNODEKINDt;
 
+typedef enum { OP_EQ, OP_NE, OP_LT, OP_LE, OP_GT, OP_GE } SEL_CMP_OPt;
+
+typedef enum { RES_INVALID=0, RES_CHARGE, RES_POSX, RES_POSY, RES_POSZ } RES_ATTRt;
+
 typedef struct SELNODEt SELNODEt;
 typedef SELNODEt *SELNODE;
 
@@ -63,11 +70,11 @@ struct SELNODEt {
     struct SELNODEt *right;  /* right child (binary), NULL otherwise */
     char *text;    /* for name nodes */
     long a, b;     /* for numeric, numeric-range nodes */
-    double dist;  /* distance, distance nodes only */
+    double dist;  /* for distance nodes */
     NeighborGrid *ngGrid; /* nonbond grid cache, distance nodes only */
     Point *pPGridPoints; /* point array for neighbor grid */
-    void *cache_object;
-    bool cache_result;
+    void *cache_object; /* points to parent object to cache for e.g. select within residue */
+    bool cache_result;  /* evaluation result for the above cached object */
     bool forced_string;
     bool has_glob;
 };
@@ -81,5 +88,7 @@ extern VARARRAY vaUnitEvalSelection(const SELNODE node, const UNIT uUnit);
 extern bool bAtomEvalSelection(const SELNODE node, const ATOM atom);
 extern FLAGS fAtomFlagNameToBit(const char *name);
 extern FLAGS fResFlagNameToBit(const char *name);
+extern bool bAtomAttrNameToOffset(const char *name, size_t *offset, bool *is_real);
+extern int iResAttrNameToEnum(const char *name);
 
 #endif // SELECT_MASK_H

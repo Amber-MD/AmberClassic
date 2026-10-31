@@ -134,8 +134,9 @@ static void NodeEnsureGrid(const SELNODE node, const ATOM atom)
     VarArrayDestroy(&vaAtoms);
 }
 
-/* Invalidate cached grids after coordinate change. Walk the full AST.
- * Call between trajectory frames or after any AtomSetPosition() calls. */
+// Invalidate cached grids after coordinate change. Walk the full AST.
+// Call between trajectory frames or after any AtomSetPosition() calls.
+// NOTE: Only needed for a persistent atomMask AST parse, but currently all are transient.
 void SelInvalidateCoords(SELNODE node)
 {
     if (!node) return;
@@ -248,6 +249,18 @@ static bool bSelMolContains(const SELNODE node, const UNIT uUnit, long iMol)
     return false;
 }
 
+static bool bCompare(double a, int op, double b) {
+   switch(op) {
+   case OP_LT: return a < b;
+   case OP_LE: return a <= b;
+   case OP_EQ: return a == b;
+   case OP_NE: return a != b;
+   case OP_GT: return a > b;
+   case OP_GE: return a >= b;
+   default: return false;
+   }
+}
+
 #define RANGE_CHECK(v) \
     { long _a = node->a, _b = node->b; \
       return (_a<=_b) ? ((v)>=_a && (v)<=_b) : ((v)>=_b && (v)<=_a); }
@@ -351,10 +364,28 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
         return (fResidueFlags(cContainerWithin(atom)) & node->a) != 0;
     case SEL_NODE_RES_FLAG_NOT:
         return (fResidueFlags(cContainerWithin(atom)) & node->a) == 0;
+    case SEL_NODE_RES_ATTR_CMP:
+        {
+            double dValue, dTemp;
+            RESIDUE rRes = RESIDUE_from(cContainerWithin(atom));
+            if (node->cache_object == rRes) return node->cache_result;
+            switch(node->a) {
+            case RES_CHARGE: ContainerTotalCharge((CONTAINER)cContainerWithin(atom), &dValue, &dTemp );
+            default: return false; // error
+            }
+            bool result = bCompare(dValue, node->b, node->dist);
+            node->cache_object = rRes;
+            node->cache_result = result;
+            return result;
+        }
     case SEL_NODE_ATOM_FLAG:
         return (fAtomFlags(atom) & node->a) != 0;
     case SEL_NODE_ATOM_FLAG_NOT:
         return (fAtomFlags(atom) & node->a) == 0;
+    case SEL_NODE_ATOM_ATTR_CMP_INT:
+        return bCompare( *(const int *)((const char *)atom + node->a), node->b, node->dist);
+    case SEL_NODE_ATOM_ATTR_CMP_REAL:
+        return bCompare( *(const double *)((const char *)atom + node->a), node->b, node->dist);
 
     case SEL_NODE_DIST_WITHIN_ATOM:   return  bNodeSelectionWithin(node, atom);
     case SEL_NODE_DIST_BEYOND_ATOM:   return !bNodeSelectionWithin(node, atom);
@@ -364,11 +395,9 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
     case SEL_NODE_DIST_BEYOND_RESCEN: return !bSelWithinResCenter(node, atom);
     case SEL_NODE_DIST_WITHIN_MOL:    return  bSelWithinMolecule(node, atom);
     case SEL_NODE_DIST_BEYOND_MOL:    return !bSelWithinMolecule(node, atom);
-
-    default:
-        VPFATAL("bAtomEvalSelection: unhandled node kind %d\n", node->kind);
-        return false;
     }
+    VPFATAL("bAtomEvalSelection: unhandled node kind %d\n", node->kind);
+    return false;
 }
 
 FLAGS fAtomFlagNameToBit(const char *name) {
@@ -394,7 +423,7 @@ FLAGS fAtomFlagNameToBit(const char *name) {
     VPWARN("AtomMask: '%s' is not a valid atom flag name. Known flags:\n",name);
     for (int i=0; flag_names[i].name; i++)
         VP0("   %s\n", flag_names[i].name);
-    return 0x000080000; // return a bit that cannot be matched
+    return 0x00008000; // return a bit that cannot be matched
 }
 
 FLAGS fResFlagNameToBit(const char *name) {
@@ -415,5 +444,42 @@ FLAGS fResFlagNameToBit(const char *name) {
     VPWARN("AtomMask: '%s' is not a valid residue flag name. Known flags:\n",name);
     for (int i=0; flag_names[i].name; i++)
         VP0("   %s\n", flag_names[i].name);
-    return 0x000080000; // return a bit that cannot be matched
+    return 0x00008000; // return a bit that cannot be matched
+}
+
+bool bAtomAttrNameToOffset(const char *name, size_t *offset, bool *is_real) {
+    struct { const char *name; size_t offset; bool is_real; } attr_names[] = {
+        { "element", offsetof(ATOMt, iAtomicNumber), false },
+        { "atomserial", offsetof(ATOMt, iAtomSerial), false },
+        { "bfactor", offsetof(ATOMt, dBfactor), true },
+        { "occupancy", offsetof(ATOMt, dOccupancy), true },
+        { "charge", offsetof(ATOMt, dCharge), true },
+        { "pertcharge", offsetof(ATOMt, dPertCharge), true },
+        { "position.x", offsetof(ATOMt, vPosition)+offsetof(VECTOR,dX), true },
+        { "position.y", offsetof(ATOMt, vPosition)+offsetof(VECTOR,dY), true },
+        { "position.z", offsetof(ATOMt, vPosition)+offsetof(VECTOR,dZ), true }
+    }; 
+    for (int i=0; attr_names[i].name; i++) {
+        if (!strcasecmp(attr_names[i].name,name)) {
+            *offset = attr_names[i].offset;
+            *is_real = attr_names[i].is_real;
+            return true;
+        }
+    }
+    VPWARN("AtomMask: '%s' is not a valid atom attribute. Supported attributes:\n",name);
+    for (int i=0; attr_names[i].name; i++)
+        VP0("   %s\n", attr_names[i].name);
+    *is_real=false;
+    return false;
+}
+
+int iResAttrNameToEnum(const char *name) {
+    const char *attr_names[] = { "charge", NULL };
+    for (int i=0; attr_names[i]; i++) {
+        if (!strcasecmp(attr_names[i],name)) return i+1;
+    }
+    VPWARN("AtomMask: '%s' is not a valid residue attribute. Supported attributes:\n",name);
+    for (int i=0; attr_names[i]; i++)
+        VP0("   %s\n", attr_names[i]);
+    return 0;
 }

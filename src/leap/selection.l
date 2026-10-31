@@ -22,6 +22,7 @@ char sel_error_token[256] = "";
 %}
 
 %x TILDE_MODE
+%x ATTR_MODE
 
 WS         [ \t\r\n]+
 REALNUM    [0-9]+[.][0-9]+
@@ -66,10 +67,14 @@ TILDENAME  ({TILDECHAR}|{BRACKET})+
 ":;"                    return COLON_SEMICOLON;   /* RES_PDBSEQ: always PDB resSeq */
 ":#"                    return COLON_HASH;        /* RES_INDEX: always flat sequential index */
 ":"                     return COLON;             /* PDB resSeq (default)   */
+":{"                    { BEGIN(ATTR_MODE); return COLON_ATTR; }
+":{!"                   { BEGIN(ATTR_MODE); return COLON_ATTRN; }
 "^"                     return CARAT;             /* molecule index         */
 "@%"                    return AT_PCT;            /* atom type              */
 "@/"                    return AT_SLASH;          /* atom element           */
 "@"                     return AT;               /* atom name/index        */
+"@{"                    { BEGIN(ATTR_MODE); return AT_ATTR; }
+"@{!"                   { BEGIN(ATTR_MODE); return AT_ATTRN; }
 "<@"                    return LESS_AT;
 "<:"                    return LESS_COLON;
 "<;"                    return LESS_SEMICOLON;
@@ -82,6 +87,7 @@ TILDENAME  ({TILDECHAR}|{BRACKET})+
 "&"                     return AND;
 "|"                     return OR;
 "-"                     return DASH;
+"}"                     return RBRACE;
   /* '*' and '?' are valid NAMESTART chars — they lex as part of NAME tokens
    * via the NAMESTART/NAME regex. No separate STAR token needed.            */
 
@@ -102,6 +108,34 @@ TILDENAME  ({TILDECHAR}|{BRACKET})+
                             if (!sellval.text) abort();
                             return NAME;
                         }
+
+<ATTR_MODE>{WS}         ;
+
+<ATTR_MODE>"=="         return ATTR_EQ;
+<ATTR_MODE>"!="         return ATTR_NE;
+<ATTR_MODE>"<="         return ATTR_LE;
+<ATTR_MODE>">="         return ATTR_GE;
+<ATTR_MODE>"<"          return ATTR_LT;
+<ATTR_MODE>">"          return ATTR_GT;
+<ATTR_MODE>"="          return ATTR_EQ;   /* bare = treated as eq */
+
+<ATTR_MODE>{REALNUM}    {
+                            sellval.rnum = atof(yytext);
+                            return REAL;
+                        }
+
+<ATTR_MODE>{NUM}        {
+                            sellval.inum = atol(yytext);
+                            return INTEGER;
+                        }
+
+<ATTR_MODE>[A-Za-z_][A-Za-z0-9_]*  {
+                            sellval.text = strdup(yytext);
+                            if (!sellval.text) abort();
+                            return NAME;
+                        }
+
+<ATTR_MODE>"}"          { BEGIN(INITIAL); return RBRACE; }
 
   /* ------------------------------------------------------------------ */
   /* TILDE_MODE: after ~, consume one forced-literal name token.         */

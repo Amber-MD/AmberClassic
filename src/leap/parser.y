@@ -197,11 +197,8 @@ static  int    yyparse();
 static ASSOC zaEvalBinary(char operator, ASSOC arg1, ASSOC arg2 );
 %}
 
-
 %start  input
-
-
-
+%expect 7
 
 
 %%

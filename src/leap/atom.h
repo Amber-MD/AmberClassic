@@ -82,6 +82,8 @@ typedef struct  ATOMSTRUCT {
         CONTAINERt              cHeader;
         int                     iUniqueId;
         int                     iAtomicNumber;
+        int                     iAtomSerial;
+        double                  dBfactor, dOccupancy;
         int                     iPertAtomicNumber;
         CONTAINERNAMEt          sPertName;
         ATOMTYPEt               sType;

@@ -71,8 +71,9 @@
 static SELNODE mk_node(SELNODEKINDt k, SELNODE l, SELNODE r);
 static SELNODE mk_text_node(SELNODEKINDt k, char *text, int forced);
 static SELNODE mk_int_node(SELNODEKINDt k, long v);
-static SELNODE mk_range(SELNODEKINDt k, long a, long b);
+static SELNODE mk_range_node(SELNODEKINDt k, long a, long b);
 static SELNODE mk_dist_node(SELNODEKINDt k, SELNODE ref, double dist);
+static SELNODE mk_cmp_node(SELNODEKINDt k, long offset, long op, double value);
 
 extern int sellex(void);
 extern void selerror(const char *s);
@@ -81,6 +82,12 @@ extern char sel_error_token[];  /* last token seen, set by lexer via YY_USER_ACT
 
 SELNODE selection_root = NULL;
 %}
+/* Shift/reduce conflicts are expected and intentional: IMPLIED_AND/
+ * IMPLIED_OR juxtaposition rules are disambiguated via precedence
+ * (see %left/%right block above), not left ambiguous. Note that
+ * byacc does nto suppress s/r warnings with %expect
+ */
+%expect 29
 
 %union {
     char   *text;
@@ -98,15 +105,15 @@ SELNODE selection_root = NULL;
 %token COLON_SEMICOLON       /* :; RES_PDBSEQ -- always PDB resSeq */
 %token COLON_HASH            /* :# RES_SEQ -- LEAP sequence ID */
 %token COLON_PCT             /* :% RESTYPE    -- residue type, single literal name */
-%token COLON_FLAG    /* :{  residue flag test */
-%token COLON_FLAGN   /* :{! residue flag negated */
+%token COLON_ATTR    /* :{  residue flag test */
+%token COLON_ATTRN   /* :{! residue flag negated */
 %token AT                    /* @  atom name or global index (cpptraj compat) */
 %token AT_HASH               /* @# explicit global flat atom index */
 %token AT_SEMICOLON          /* @; atom index within residue (PDB order, 1-based) */
 %token AT_PCT                /* @% atom type (always literal) */
 %token AT_SLASH              /* @/ atom element */
-%token AT_FLAG       /* @{  atom flag test */
-%token AT_FLAGN      /* @{! atom flag negated */
+%token AT_ATTR       /* @{  atom flag test */
+%token AT_ATTRN      /* @{! atom flag negated */
 %token LESS_AT               /* <@ distance within, by atom */
 %token LESS_COLON            /* <: distance within, by residue */
 %token LESS_SEMICOLON        /* <; distance within, by residue center */
@@ -124,6 +131,7 @@ SELNODE selection_root = NULL;
 %token RPAREN                /* ) */
 %token DASH                  /* - */
 %token RBRACE                /* } */
+%token ATTR_EQ ATTR_NE ATTR_LT ATTR_LE ATTR_GT ATTR_GE
 /* NOTE: no STAR token -- * and ? are valid NAMESTART chars and lex as NAME.
  * fnmatch handles glob matching. Bare * at expression level is select-all,
  * handled by checking NAME == "*" in primary.                             */
@@ -144,6 +152,7 @@ SELNODE selection_root = NULL;
 %type <node> mol_list mol_item
 %type <rnum> number
 %type <text> name forced_name any_name
+%type <inum> attr_op
 
 /* Implied operator precedence: AND binds tighter than OR */
 %left  IMPLIED_OR
@@ -244,6 +253,15 @@ mol_res_selection
 
 /* --- typed selection specs --- */
 
+attr_op
+    : ATTR_EQ { $$ = OP_EQ; }
+    | ATTR_NE { $$ = OP_NE; }
+    | ATTR_LT { $$ = OP_LT; }
+    | ATTR_LE { $$ = OP_LE; }
+    | ATTR_GT { $$ = OP_GT; }
+    | ATTR_GE { $$ = OP_GE; }
+    ;
+
 res_selection
     : COLON           res_list_default  { $$ = $2; }
     | COLON_SEMICOLON res_list_pdbseq   { $$ = $2; }
@@ -255,8 +273,20 @@ res_selection
     | COLON_COLON     chain_list        { $$ = $2; }
     | chain_res_selection               { $$ = $1; }
     | COLON LPAREN expr RPAREN          { $$ = mk_node(SEL_NODE_RES_CONTAINS, $3, NULL); }
-    | COLON_FLAG  NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG, fResFlagNameToBit($2)); free($2); }
-    | COLON_FLAGN NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG_NOT, fResFlagNameToBit($2)); free($2); }
+    | COLON_ATTR  NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG, fResFlagNameToBit($2)); free($2); }
+    | COLON_ATTRN NAME RBRACE { $$ = mk_int_node(SEL_NODE_RES_FLAG_NOT, fResFlagNameToBit($2)); free($2); }
+    | COLON_ATTR  NAME attr_op INTEGER RBRACE {
+                              int iType = iResAttrNameToEnum($2);
+                              free($2);
+                              if (!iType) YYERROR;
+                              $$ = mk_cmp_node(SEL_NODE_RES_ATTR_CMP, iType, $3, (double)$4);
+                          }
+    | COLON_ATTR  NAME attr_op REAL RBRACE {
+                              int iType = iResAttrNameToEnum($2);
+                              free($2);
+                              if (!iType) YYERROR;
+                              $$ = mk_cmp_node(SEL_NODE_RES_ATTR_CMP, iType, $3, $4);
+                          }
     ;
 
 /* '::' chain ':' resnum -- ':' is always PDB resSeq here regardless of
@@ -274,8 +304,20 @@ atom_selection
     | AT_SEMICOLON atom_list_residx    { $$ = $2; }   /* index within residue, PDB order */
     | AT_PCT       type_list           { $$ = $2; }
     | AT_SLASH     elem_list           { $$ = $2; }
-    | AT_FLAG     NAME RBRACE { $$ = mk_int_node(SEL_NODE_ATOM_FLAG, fAtomFlagNameToBit($2)); free($2); }
-    | AT_FLAGN    NAME RBRACE { $$ = mk_int_node(SEL_NODE_ATOM_FLAG_NOT, fAtomFlagNameToBit($2)); free($2); }
+    | AT_ATTR     NAME RBRACE { $$ = mk_int_node(SEL_NODE_ATOM_FLAG, fAtomFlagNameToBit($2)); free($2); }
+    | AT_ATTRN    NAME RBRACE { $$ = mk_int_node(SEL_NODE_ATOM_FLAG_NOT, fAtomFlagNameToBit($2)); free($2); }
+    | AT_ATTR  NAME attr_op INTEGER RBRACE {
+                              size_t off; bool is_real;
+                              if (!bAtomAttrNameToOffset($2, &off, &is_real)) { free($2); YYERROR; }
+                              $$ = mk_cmp_node(is_real ? SEL_NODE_ATOM_ATTR_CMP_REAL : SEL_NODE_ATOM_ATTR_CMP_INT, off, $3, (double)$4);
+                              free($2);
+                          }
+    | AT_ATTR  NAME attr_op REAL RBRACE {
+                              size_t off; bool is_real;
+                              if (!bAtomAttrNameToOffset($2, &off, &is_real)) { free($2); YYERROR; }
+                              $$ = mk_cmp_node(is_real ? SEL_NODE_ATOM_ATTR_CMP_REAL : SEL_NODE_ATOM_ATTR_CMP_INT, off, $3, $4);
+                              free($2);
+                          }
     ;
 
 /* --- atom index lists --- */
@@ -287,7 +329,7 @@ atom_list_index
 
 atom_item_index
     : INTEGER               { $$ = mk_int_node(SEL_NODE_ATOM_INDEX,       $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_ATOM_INDEX, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(   SEL_NODE_RANGE_ATOM_INDEX, $1, $3); }
     | NAME                  { selerror("@# requires integer -- use @ for atom name");
                               free($1); YYERROR; }
     ;
@@ -301,7 +343,7 @@ atom_list_residx
 
 atom_item_residx
     : INTEGER               { $$ = mk_int_node(SEL_NODE_ATOM_RESIDX,       $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_ATOM_RESIDX, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(   SEL_NODE_RANGE_ATOM_RESIDX, $1, $3); }
     | NAME                  { selerror("@; requires integer -- atom index within residue");
                               free($1); YYERROR; }
     ;
@@ -333,7 +375,7 @@ res_item_default
     : name                  { $$ = mk_text_node(SEL_NODE_RESNAME,      $1, 0); }
     | forced_name           { $$ = mk_text_node(SEL_NODE_RESNAME,      $1, 1); }
     | INTEGER               { $$ = mk_int_node( SEL_NODE_RESNUM,       $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RESNUM, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(    SEL_NODE_RANGE_RESNUM, $1, $3); }
     ;
 
 res_list_pdbseq
@@ -343,7 +385,7 @@ res_list_pdbseq
 
 res_item_pdbseq
     : INTEGER               { $$ = mk_int_node( SEL_NODE_RES_PDBSEQ,       $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RES_PDBSEQ, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(    SEL_NODE_RANGE_RES_PDBSEQ, $1, $3); }
     | NAME                  { selerror(":; PDB resSeq requires integer -- "
                                        "use : for residue name selection");
                               free($1); YYERROR; }
@@ -356,7 +398,7 @@ res_list_index
 
 res_item_index
     : INTEGER               { $$ = mk_int_node( SEL_NODE_RES_INDEX,       $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_RES_INDEX, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(    SEL_NODE_RANGE_RES_INDEX, $1, $3); }
     | NAME                  { selerror(":# residue index requires integer -- "
                                        "use : for residue name selection");
                               free($1); YYERROR; }
@@ -373,7 +415,7 @@ atom_item
     : name                  { $$ = mk_text_node(SEL_NODE_ATOMNAME,   $1, 0); }
     | forced_name           { $$ = mk_text_node(SEL_NODE_ATOMNAME,   $1, 1); }
     | INTEGER               { $$ = mk_int_node( SEL_NODE_INDEX,      $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_ATOM, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(    SEL_NODE_RANGE_ATOM, $1, $3); }
     ;
 
 /* --- chain list --- */
@@ -404,7 +446,7 @@ elem_list
 elem_item
     : any_name              { $$ = mk_text_node(SEL_NODE_ELEMENT,    $1, 0); }
     | INTEGER               { $$ = mk_int_node( SEL_NODE_ELEMENT_NUM,$1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(    SEL_NODE_RANGE_ELEM, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(    SEL_NODE_RANGE_ELEM, $1, $3); }
     ;
 
 /* --- atom type list (always forced literal -- no glob in type names) --- */
@@ -429,7 +471,7 @@ mol_list
 
 mol_item
     : INTEGER               { $$ = mk_int_node(SEL_NODE_MOLNUM,    $1); }
-    | INTEGER DASH INTEGER  { $$ = mk_range(   SEL_NODE_RANGE_MOL, $1, $3); }
+    | INTEGER DASH INTEGER  { $$ = mk_range_node(   SEL_NODE_RANGE_MOL, $1, $3); }
     | NAME                  { selerror("^ molecule selector requires integer -- "
                                        "molecule names are not supported");
                               free($1); YYERROR; }
@@ -502,7 +544,7 @@ static SELNODE mk_int_node(SELNODEKINDt k, long v)
     return n;
 }
 
-static SELNODE mk_range(SELNODEKINDt k, long a, long b)
+static SELNODE mk_range_node(SELNODEKINDt k, long a, long b)
 {
     SELNODE n = alloc_node(k);
     n->a = a;
@@ -519,5 +561,13 @@ static SELNODE mk_dist_node(SELNODEKINDt k, SELNODE ref, double dist)
     SELNODE n = alloc_node(k);
     n->left = ref;
     n->dist = dist;
+    return n;
+}
+
+static SELNODE mk_cmp_node(SELNODEKINDt k, long offset, long op, double value) {
+    SELNODE n = alloc_node(k);
+    n->a = offset;
+    n->b = op;
+    n->dist = value;
     return n;
 }
