@@ -184,14 +184,15 @@ typedef struct {
     double dR14;  // CHARMM ext
     bool bCapableOfHBonding;
     typeStr sType;
-} NONBONDt;
+} SAVENONBONDt;
 
 typedef struct {
     double dA;
     double dB;
     double dA14;
     double dB14;
-} NONBONDACt;
+    double dC;
+} SAVENONBONDACt;
 
                         /* Used to save the bounding box info */
                         /* All of this is stored in one OFF entry */

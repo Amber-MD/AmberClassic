@@ -1247,7 +1247,7 @@ PdbWrite( FILE *fOut, UNIT uUnit )
          * If we use periodic boundary conditions, write the CRYST1 record
          */
         if (bUnitUseBox(uUnit)) {
-            VP0("   printing CRYST1 record to PDB file with box info\n" );
+            VP0("   writing CRYST1 record to PDB file with box info\n" );
             double a, b, c;
             UnitGetBox(uUnit, &a, &b, &c);
             p.pdb.cryst1.a = a;
@@ -1706,7 +1706,6 @@ int             iCurrentBioMT=0;
                     rnName.iTerminator = iTerm;
                     strcpy( rnName.sChainId, p.pdb.atom.residue.chain_id);
                     strcpy( rnName.sName, cPResName );
-                    rnName.cICode = p.pdb.atom.residue.insert_code;
                     rnName.iFirstAtom = iVarArrayElementCount(prPRead->vaAtomRecs); // zero based array
 
                     anAtom.iResNameIndex = iVarArrayElementCount( prPRead->vaResidues );
@@ -1761,8 +1760,11 @@ int             iCurrentBioMT=0;
                 prPRead->uUnit->dAlpha = p.pdb.cryst1.alpha * DEGTORAD;
                 prPRead->uUnit->dBeta = p.pdb.cryst1.beta * DEGTORAD;
                 prPRead->uUnit->dGamma = p.pdb.cryst1.gamma * DEGTORAD;
-                UnitSetUseBox(prPRead->uUnit, true );
                 sprintf(sUnitDescription(prPRead->uUnit),"SG: %s;",p.pdb.cryst1.space_grp);
+                // In order to preserve old behavior, we save the dimensions but do not set UNITUSEBOUNDINGBOX
+                // We set UNITBOXCRYST1 to indicate the dimensions come from CRYST1, but these will be
+                // ignored unless activated by solvateCell, or setCell
+                VP1("Box dimensions set from CRYST1; use solvateCell or setCell to use as AMBER BOX");
                 if (!prPRead->bSymmOps) break;
 
                 SPACEGROUPt sg;
@@ -3044,6 +3046,9 @@ DICTIONARY      dVariables;
         char *key = ix_record.key;
         strcpy(key, sResName);
         // Add both RESIDUE and VARIABLE indices
+#ifdef DEBUG
+        printf("Index residue %s (%s,%s,%s)\n", sResName, sVarName,sContainerName(uTemplate), sResName);
+#endif
         add_key(&ix_record,&(prPPdb->ixResMap));
         if (strcmp(sVarName,sResName)) {
             strcpy(key, sVarName);
@@ -3073,6 +3078,10 @@ DICTIONARY      dVariables;
             }
             // TODO: enforce HEAD,TAIL presence matches iTerm flag
             ix_record.recptr = (IX_RECPOS) uTemplate;
+#ifdef DEBUG
+            printf("Index ResMap residue %s (%s,%s,%s)\n", ix_record.key, sDictLoopKey(dlLoop),
+                    sContainerName(uTemplate), sContainerName(oContainerFirstObject(uTemplate)));
+#endif
             add_key(&ix_record,&(prPPdb->ixResMap));
         }
     }

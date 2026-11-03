@@ -1183,6 +1183,7 @@ CRITERIAt       cCriteria;
     }
 }
 
+//      Author: Juno Krahn (2026)
 void
 ToolSolvateCell( UNIT uSolute, UNIT uSolvent, double dCloseness)
 {
@@ -1194,6 +1195,11 @@ VARARRAY        vaSolute;
 int             iCriteria;
 CRITERIAt       cCriteria = {0};
 
+    if (!bUnitUseBox( uSolute ) && !bUnitFlagsSet(uSolute, UNITBOXCRYST1) ) {
+        VPFATAL("UNIT Cell must be set before using SolvateCell\n");
+    }
+    UnitResetFlags( uSolute, UNITBOXCRYST1);
+    UnitSetUseBox( uSolute, true );
     if (!GDefaults.bNoCenter && GDefaults.bPdbExpandSymm) {
         char *p = strstr("PG: ",sUnitDescription(uSolute));
         if (p && p[4]>='1' && p[4]<='6' && p[5]==';') {

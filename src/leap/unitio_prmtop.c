@@ -232,16 +232,19 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
  *      for the unique atom types (all those with unique parameters).
  */
 static void
-zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
-                          VARARRAY * vaPNBParameters,
-                          VARARRAY * vaPNBIndex, VARARRAY * vaPNonBonds)
+zUnitIOBuildNonBondArrays(UNIT uUnit,
+                          VARARRAY * vaPNBIndexMatrix, // int; atom I,J lookup index
+                          VARARRAY * vaPNBParameters,  // SAVENONBONDACt = A,B[,C] pairwise params
+                          VARARRAY * vaPNBIndex,       // nonbond type index into reduced table
+                          VARARRAY * vaPNonBonds,      // SAVENONBONDt = E,R for both atoms
+                          bool     * bPHasC4Coeff)
 {
-    VARARRAY vaNBIndex, vaNonBonds, vaPNBEdits;
+    VARARRAY vaNBIndex, vaNonBonds;
     int i, j, iNonBonds, iNBIndices, iTemp, iI, iJ, iX, iY;
     int iIndex, iHBondIndex, iNBIndex;
     double dE, dR, dE14, dR14, dA, dB, dEI, dRI, dEJ, dRJ;
     typeStr sType, sTypeI, sTypeJ;
-    NONBONDt *nbPFirst, *nbPCur, *nbPTemp, *nbPLast;
+    SAVENONBONDt *nbPFirst, *nbPCur, *nbPTemp, *nbPLast;
 
     /* Build the NON-BONDED arrays */
     /* First reduce the non-bond parameters to the absolute */
@@ -249,45 +252,43 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
     /* maintaining a many to one mapping into the */
     /* rolled up non-bond parameter array */
 
-
     vaNBIndex = vaVarArrayCreate(sizeof(int));
-    vaNonBonds = vaVarArrayCreate(sizeof(NONBONDt));
+    vaNonBonds = vaVarArrayCreate(sizeof(SAVENONBONDt));
     iNonBonds = iParmSetTotalAtomParms(uUnit->psParameters);
     iNBIndices = iNonBonds;
     VarArraySetSize(vaNonBonds, iNonBonds);
     VarArraySetSize(vaNBIndex, iNonBonds);
-    vaPNBEdits = uUnit->psParameters->vaNBEdits;
     for (i = 0; i < iNonBonds; i++) {
         ParmSetAtom(uUnit->psParameters, i,
                     sType, NULL, NULL, &dE, &dR, &dE14, &dR14,
                     NULL, NULL, NULL, NULL );
-        PVAI(vaNonBonds, NONBONDt, i)->bCapableOfHBonding =
+        PVAI(vaNonBonds, SAVENONBONDt, i)->bCapableOfHBonding =
             bParmSetCapableOfHBonding(uUnit->psParameters, sType);
-        PVAI(vaNonBonds, NONBONDt, i)->dE = dE;
-        PVAI(vaNonBonds, NONBONDt, i)->dR = dR;
-        PVAI(vaNonBonds, NONBONDt, i)->dE14 = dE14;
-        PVAI(vaNonBonds, NONBONDt, i)->dR14 = dR14;
-        strcpy(PVAI(vaNonBonds, NONBONDt, i)->sType, sType);
+        PVAI(vaNonBonds, SAVENONBONDt, i)->dE = dE;
+        PVAI(vaNonBonds, SAVENONBONDt, i)->dR = dR;
+        PVAI(vaNonBonds, SAVENONBONDt, i)->dE14 = dE14;
+        PVAI(vaNonBonds, SAVENONBONDt, i)->dR14 = dR14;
+        strcpy(PVAI(vaNonBonds, SAVENONBONDt, i)->sType, sType);
         *PVAI(vaNBIndex, int, i) = i;
     }
 
     /* Now roll up the equivalent NON-BOND parameters */
 
     if (!GDefaults.bCharmm) {
-        nbPLast = PVAI(vaNonBonds, NONBONDt, iNonBonds - 1);
+        nbPLast = PVAI(vaNonBonds, SAVENONBONDt, iNonBonds - 1);
         for (iNBIndex = 0; iNBIndex < iVarArrayElementCount(vaNBIndex);
              iNBIndex++) {
-            nbPFirst = PVAI(vaNonBonds, NONBONDt, 0);
+            nbPFirst = PVAI(vaNonBonds, SAVENONBONDt, 0);
             nbPCur =
-                PVAI(vaNonBonds, NONBONDt, *PVAI(vaNBIndex, int, iNBIndex));
-            if (!nbPCur->bCapableOfHBonding) {
+                PVAI(vaNonBonds, SAVENONBONDt, *PVAI(vaNBIndex, int, iNBIndex));
+            if (!nbPCur->bCapableOfHBonding && !bTypeHasNBEdit(uUnit->psParameters, nbPCur->sType)) {
                 while (nbPFirst < nbPCur) {
                     if (nbPFirst->dE == nbPCur->dE &&
                             nbPFirst->dR == nbPCur->dR &&
                             nbPFirst->dE14 == nbPCur->dE14 &&
                             nbPFirst->dR14 == nbPCur->dR14 &&
-			    CheckTypeNBEdit(nbPFirst->sType, vaPNBEdits) == 0 &&
-			    CheckTypeNBEdit(nbPCur->sType, vaPNBEdits) == 0) {
+			    !bTypeHasNBEdit(uUnit->psParameters, nbPFirst->sType)) {
+
                         for (nbPTemp = nbPCur; nbPTemp < nbPLast; nbPTemp++)
                             *nbPTemp = *(nbPTemp + 1);
                         iNonBonds--;
@@ -297,7 +298,7 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
                         /* Making sure that indices into parameters that */
                         /* follow the one at j will be moved back on */
 
-                        j = nbPFirst - PVAI(vaNonBonds, NONBONDt, 0);
+                        j = nbPFirst - PVAI(vaNonBonds, SAVENONBONDt, 0);
                         *PVAI(vaNBIndex, int, iNBIndex) = j;
                         for (iTemp = iNBIndex + 1; iTemp < iNBIndices;
                              iTemp++) {
@@ -330,6 +331,8 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
             /* Calculate the position of the parameters for the */
             /* non-bond interaction i-j within the vaPNBParameters */
             /* array */
+// NOTE: Looping over the full NBIndex means redundant writing into
+// the index matrix (should be re-written but it works)
 
             iI = *PVAI(vaNBIndex, int, i);
             iJ = *PVAI(vaNBIndex, int, j);
@@ -340,7 +343,7 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 
             /* Check if there is an H-Bond parameter for this */
             /* interaction, if there is, make iIndex = -iHBondIndex */
-            /***ve to signify that the index is into the HBOND tables */
+            /* to signify that the index is into the HBOND tables */
 
             ParmSetAtom(uUnit->psParameters, i, sTypeI, NULL, NULL, NULL,
                                     NULL, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -358,36 +361,51 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
     /* Now calculate the A,C parameters for all unique */
     /* NON-BOND interactions */
 
-    *vaPNBParameters = vaVarArrayCreate(sizeof(NONBONDACt));
+    *vaPNBParameters = vaVarArrayCreate(sizeof(SAVENONBONDACt));
     VarArraySetSize((*vaPNBParameters), iNonBonds * (iNonBonds + 1) / 2);
+    if (bPHasC4Coeff) *bPHasC4Coeff = false;
     for (j = 0; j < iNonBonds; j++) {
         for (i = 0; i <= j; i++) {
             iX = i;
             iY = j;
             iIndex = iY * (iY + 1) / 2 + iX;
-            dEI = PVAI(vaNonBonds, NONBONDt, i)->dE;
-            dRI = PVAI(vaNonBonds, NONBONDt, i)->dR;
-            dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE;
-            dRJ = PVAI(vaNonBonds, NONBONDt, j)->dR;
+            int iNBEdit = iParmSetFindNBEdit(uUnit->psParameters,
+				PVAI(vaNonBonds, SAVENONBONDt, i)->sType,
+				PVAI(vaNonBonds, SAVENONBONDt, j)->sType);
+            double dC = 0;
+            if (iNBEdit != PARM_NOT_FOUND) {
+                STRING sDesc;
+                ParmSetNBEdit(uUnit->psParameters, iNBEdit, NULL, NULL,
+                          &dEI, &dEJ, &dRI, &dRJ, sDesc);
+                if (bPHasC4Coeff) {
+                    char *p = strstr(sDesc,"C4COEFF=");
+                    if (p) {
+                        dC = atof(p+8);
+                        if (!*bPHasC4Coeff) VP0("LJ C4 Coefficients will be written to LENNARD_JONES_CCOEF\n");
+                        *bPHasC4Coeff = true;
+                    }
+                }
+            } else {
+                dEI = PVAI(vaNonBonds, SAVENONBONDt, i)->dE;
+                dRI = PVAI(vaNonBonds, SAVENONBONDt, i)->dR;
+                dEJ = PVAI(vaNonBonds, SAVENONBONDt, j)->dE;
+                dRJ = PVAI(vaNonBonds, SAVENONBONDt, j)->dR;
+            }
             MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dB);
-	    CheckAgainstNBEdits(vaPNBEdits,
-				PVAI(vaNonBonds, NONBONDt, i)->sType,
-				PVAI(vaNonBonds, NONBONDt, j)->sType,
-				&dA, &dB);
-            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA = dA;
-            PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dB = dB;
+            PVAI(*vaPNBParameters, SAVENONBONDACt, iIndex)->dA = dA;
+            PVAI(*vaPNBParameters, SAVENONBONDACt, iIndex)->dB = dB;
+            PVAI(*vaPNBParameters, SAVENONBONDACt, iIndex)->dC = dC;
             if (GDefaults.bCharmm) {
-                dEI = PVAI(vaNonBonds, NONBONDt, i)->dE14;
-                dRI = PVAI(vaNonBonds, NONBONDt, i)->dR14;
-                dEJ = PVAI(vaNonBonds, NONBONDt, j)->dE14;
-                dRJ = PVAI(vaNonBonds, NONBONDt, j)->dR14;
-                MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dB);
-		CheckAgainstNBEdits(vaPNBEdits,
-				    PVAI(vaNonBonds, NONBONDt, i)->sType,
-				    PVAI(vaNonBonds, NONBONDt, j)->sType,
-				    &dA, &dB); // XXX: is this really correct? No LJ14 specific edits?
-                PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dA14 = dA;
-                PVAI(*vaPNBParameters, NONBONDACt, iIndex)->dB14 = dB;
+                if (iNBEdit != PARM_NOT_FOUND) {
+                    dEI = PVAI(vaNonBonds, SAVENONBONDt, i)->dE14;
+                    dRI = PVAI(vaNonBonds, SAVENONBONDt, i)->dR14;
+                    dEJ = PVAI(vaNonBonds, SAVENONBONDt, j)->dE14;
+                    dRJ = PVAI(vaNonBonds, SAVENONBONDt, j)->dR14;
+                    MathOpConvertNonBondToAC(dEI, dRI, dEJ, dRJ, &dA, &dB);
+                }
+	        // XXX: is this really correct? No LJ14 specific edits just force regular into LJ14?
+                PVAI(*vaPNBParameters, SAVENONBONDACt, iIndex)->dA14 = dA;
+                PVAI(*vaPNBParameters, SAVENONBONDACt, iIndex)->dB14 = dB;
             }
         }
     }
@@ -424,7 +442,7 @@ zUnitIOBuildNonBondArrays(UNIT uUnit, VARARRAY * vaPNBIndexMatrix,
 // ...
 //
 // ATOM_ALTLOC --> LES_ID
-// ATOM_BFACTOR, ATOM_OCCUPANCY, ATOM_NUMBER -- coordinate properties
+// ATOM_BFACTOR, ATOM_OCCUPANCY, ATOM_NUMBER -- coordinate properties; last is atomSerial directly from PDB
 // important caveat: PDB serial numbers are probably best understood as labels for records in the
 // coordinate-record deck, not as intrinsic identifiers of molecular atoms. Note that TER
 // records get their own index! This was originally for physical punch cards, and then CONECT
@@ -452,7 +470,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     int iN, iAtoms, iMaxAtoms, iTemp, iAtom;
     int iElement, iStart;
     RESIDUE rRes;
-    bool bFoundSome;
+    bool bFoundSome, bHasC4Coeff;
     char *cPTemp = NULL;
     double dX, dY, dZ;
     STRING sDesc;
@@ -547,7 +565,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     /******* Build the NON-BOND arrays ******/
     START(iNB);
     zUnitIOBuildNonBondArrays(uUnit, &vaNBIndexMatrix, &vaNBParameters,
-                              &vaNBIndex, &vaNonBonds);
+                              &vaNBIndex, &vaNonBonds, &bHasC4Coeff);
     STOP(iNB,"Generate Nonbond arrays");
 
     /**** Fork: NetCDF or Fortran text ***************************/
@@ -828,25 +846,32 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   }
   NUMEXTRA=iNumExtra;
 
-  // NCOPY was POINTER(32). C4Pairwise was POINTER(33)
-  //NCOPY but not sure why it is not here. PMEMDCUDA reads it though.
 
   if (GDefaults.dPrmtopFormat < 2.0) {
-#define POINTERS_SIZE 31
+#define POINTERS_SIZE 33
+      int NCOPY=0, C4PAIR=0;
       // -2- Save control information
       FortranDebug("-2-");
       MESSAGE("Saving all the main control variables\n");
       FortranSection("POINTERS");
-      COMMENT("MEMBERS:NATOM,NTYPES,NBONH,NBONA,NTHETH,NTHETA,NPHIH,NPHIA,NHPARM,")
-      COMMENT("NPARM,NNB,NRES,MBONA,MTHETA,MPHIA,NUMBND,NUMANG,NPTRA,NATYP,NPHB,")
-      COMMENT("IFPERT,NBPER,NGPER,NDPER,MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP,NUMEXTRA;")
-      COMMENT_SIZE(POINTERS_SIZE)
+      if (!GDefaults.bCompatible) {
+          COMMENT("MEMBERS:NATOM,NTYPES,NBONH,NBONA,NTHETH,NTHETA,NPHIH,NPHIA,NHPARM,")
+          COMMENT("NPARM,NNB,NRES,MBONA,MTHETA,MPHIA,NUMBND,NUMANG,NPTRA,NATYP,NPHB,")
+          COMMENT("IFPERT,NBPER,NGPER,NDPER,MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP,")
+          COMMENT("NUMEXTRA,NCOPY,C4PAIR;")
+          COMMENT_SIZE(POINTERS_SIZE)
+      }
       int pointers[POINTERS_SIZE]= {
               NATOM, NTYPES, NBONH, MBONA, NTHETH, MTHETA, NPHIH, MPHIA,
               NHPARM, NPARM, NNB, NRES, NBONA, NTHETA, NPHIA,
               NUMBND, NUMANG, NPTRA, NATYP, NPHB, IFPERT, NBPER, NGPER,
-              NDPER, MBPER, MGPER, MDPER, IFBOX, NMXRS, IFCAP, NUMEXTRA };
-      int maxval=0;
+              NDPER, MBPER, MGPER, MDPER, IFBOX, NMXRS, IFCAP, NUMEXTRA,
+              NCOPY, C4PAIR };
+      // Force minimum width to compatible (For now, needed due to variable items with
+      // NCOPY, C4Pairwise appended, and SANDER depending on reading those from blank
+      // padding on the last line (HACK!)
+      int maxval=99999999; // force minimum width 8 for compatibility
+      if (GDefaults.bCompatible) maxval = 9999999; // 7 chars because compatible adds one space
       for (i=0; i<POINTERS_SIZE; i++) if (pointers[i]>maxval) maxval = pointers[i];
       FortranIntFormat(maxval);
       for (i=0; i<POINTERS_SIZE; i++) FortranWriteInt(pointers[i]);
@@ -1251,7 +1276,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
   for (i = 0; i < iVarArrayElementCount(vaNBParameters); i++) {
-    FortranWriteDouble(PVAI(vaNBParameters, NONBONDACt, i)->dA);
+    FortranWriteDouble(PVAI(vaNBParameters, SAVENONBONDACt, i)->dA);
   }
   FortranEndLine();
 
@@ -1263,9 +1288,20 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
   FortranFormat(DBLCOUNT, DBLFORMAT_C);
   for (i = 0; i < iVarArrayElementCount(vaNBParameters); i++) {
-    FortranWriteDouble(PVAI(vaNBParameters, NONBONDACt, i)->dB);
+    FortranWriteDouble(PVAI(vaNBParameters, SAVENONBONDACt, i)->dB);
   }
   FortranEndLine();
+
+  if (bHasC4Coeff) {
+    FortranSection("LENNARD_JONES_CCOEF");
+    COMMENT_DIM_UNITS(NTTYP, "kcal/mol*angstrom^4")
+    FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
+    FortranFormat(DBLCOUNT, DBLFORMAT_C);
+    for (i = 0; i < iVarArrayElementCount(vaNBParameters); i++) {
+      FortranWriteDouble(PVAI(vaNBParameters, SAVENONBONDACt, i)->dC);
+    }
+    FortranEndLine();
+  }
 
   // -21- Write the bond interactions that include hydrogen
   // Write the two indices into the atom table, then the index
@@ -2205,7 +2241,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(vaNBParameters); i++) {
-      FortranWriteDouble(PVAI(vaNBParameters, NONBONDACt, i)->dA14);
+      FortranWriteDouble(PVAI(vaNBParameters, SAVENONBONDACt, i)->dA14);
     }
     FortranEndLine();
 
@@ -2217,7 +2253,7 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
     FortranFormat(DBLCOUNT, DBLFORMAT_C);
     for (i = 0; i < iVarArrayElementCount(vaNBParameters); i++) {
-      FortranWriteDouble(PVAI(vaNBParameters, NONBONDACt, i)->dB14);
+      FortranWriteDouble(PVAI(vaNBParameters, SAVENONBONDACt, i)->dB14);
     }
     FortranEndLine();
 
@@ -2289,7 +2325,12 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     MESSAGE("Writing residue PDB ResId\n");
     FortranSection("RESIDUE_NUMBER");
     COMMENT_DIM(NRES)
-    FortranIntFormat(NRES);
+    int maxval=0;
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
+      int j = PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->iPdbResSeq;
+      if (j > maxval) maxval = j;
+    }
+    FortranIntFormat(maxval);
     for (i = 0; i < iVarArrayElementCount(uUnit->vaResidues); i++) {
       FortranWriteInt( PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->iPdbResSeq );
     }
@@ -2570,7 +2611,7 @@ IX_DESC         iResIx;
                 /* Build the NON-BOND arrays that AMBER needs */
 
     zUnitIOBuildNonBondArrays( uUnit, &vaNBIndexMatrix, &vaNBParameters,
-                                        &vaNBIndex, &vaNonBonds);
+                                        &vaNBIndex, &vaNonBonds, NULL);
  
 
     FortranFile( fOut );
@@ -3062,7 +3103,7 @@ IX_DESC         iResIx;
 
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iVarArrayElementCount(vaNBParameters); i++ ) {
-        FortranWriteDouble( PVAI( vaNBParameters, NONBONDACt, i )->dA );
+        FortranWriteDouble( PVAI( vaNBParameters, SAVENONBONDACt, i )->dA );
     }
     FortranEndLine();
     
@@ -3072,7 +3113,7 @@ IX_DESC         iResIx;
 
     FortranFormat( 5, DBLFORMAT );
     for ( i=0; i<iVarArrayElementCount(vaNBParameters); i++ ) {
-        FortranWriteDouble( PVAI( vaNBParameters, NONBONDACt, i )->dB );
+        FortranWriteDouble( PVAI( vaNBParameters, SAVENONBONDACt, i )->dB );
     }
     FortranEndLine();
  
@@ -3884,7 +3925,7 @@ IX_DESC         iResIx;
 
         FortranFormat( 5, DBLFORMAT );
         for ( i=0; i<iVarArrayElementCount(vaNBParameters); i++ ) {
-                FortranWriteDouble( PVAI( vaNBParameters, NONBONDACt, i )->dA14 );
+                FortranWriteDouble( PVAI( vaNBParameters, SAVENONBONDACt, i )->dA14 );
         }
         FortranEndLine();
     
@@ -3894,7 +3935,7 @@ IX_DESC         iResIx;
 
         FortranFormat( 5, DBLFORMAT );
         for ( i=0; i<iVarArrayElementCount(vaNBParameters); i++ ) {
-                FortranWriteDouble( PVAI( vaNBParameters, NONBONDACt, i )->dB14 );
+                FortranWriteDouble( PVAI( vaNBParameters, SAVENONBONDACt, i )->dB14 );
         }
         FortranEndLine();
 

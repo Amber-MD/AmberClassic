@@ -117,6 +117,7 @@ typedef struct UNITSTRUCT {
         VARARRAY        vaGroupNames;  // STRING
         VARARRAY        vaGroupAtoms;  // SAVEGROUPSt
         VARARRAY        vaCMAPs;       // SAVECMAPt
+        VARARRAY        vaC4Type;      // C4TYPEt
 
 // from  zUnitIOFindAndCountMolecules()
         int             iFirstSolvent;
@@ -126,6 +127,10 @@ typedef struct UNITSTRUCT {
 
 typedef UNITt   *UNIT;
 
+typedef struct C4TYPESTRUCT {
+    typeStr a,b;
+    double coeff;
+} C4TYPEt;
 
 #ifdef DEBUG
 static inline CONTAINER container_from_unit(UNIT u, const char*f, int l) { return u ? &(u->cHeader) : NULL; }

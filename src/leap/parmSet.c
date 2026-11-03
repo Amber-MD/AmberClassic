@@ -2001,59 +2001,24 @@ iParmSetAddNBEdit( PARMSET psLib, const typeStr sType1, const typeStr sType2, do
 }
 
 /*
- *      CheckTypeNBEdit
+ *      bTypeHasNBEdit
  *
  *        Author:       David S. Cerutti (2013)
+ *        Edited: Juno Krahn 2026
  *
- *      Check to sebpBond.sDesce whether this atom type (which is imminently to be
+ *      Check to see whether this atom type (which is imminently to be
  *      compacted in the nonbonded parameters array) is mentioned in any
  *      nonbonded pair potential adjustments.  If so, then it has to remain
  *      its own type.
  */
-int
-CheckTypeNBEdit(const typeStr sType, VARARRAY vaPNBEdits)
-{
-  int i;
-
-  for (i = 0; i < vaPNBEdits->count; i++) {
-    if (strcmp(sType, PVAI(vaPNBEdits, NBEDITt, i)->sType1) == 0 ||
-	strcmp(sType, PVAI(vaPNBEdits, NBEDITt, i)->sType2) == 0) {
-      return 1;
+bool bTypeHasNBEdit(PARMSET psLib, const typeStr sType) {
+  for (int i = 0; i < psLib->vaNBEdits->count; i++) {
+    if (strcmp(sType, PVAI(psLib->vaNBEdits, NBEDITt, i)->sType1) == 0 ||
+	strcmp(sType, PVAI(psLib->vaNBEdits, NBEDITt, i)->sType2) == 0) {
+      return true;
     }
   }
-
-  return 0;
-}
-
-/*
- *      CheckAgainstNBEdits
- *
- *        Author:       David S. Cerutti (2013)
- *
- *      Check to see whether an atom type, when paired with any other atom
- *      type, has any Lennard-Jones sigma and epsilon pairs that do not
- *      conform to the standard combining rules.
- */
-void
-CheckAgainstNBEdits(VARARRAY vaPNBEdits, const typeStr tI, const typeStr tJ,
-		    double *dA, double *dB)
-{
-  int i;
-
-  for (i = 0; i < vaPNBEdits->count; i++) {
-    if ((strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType1, tI) == 0 &&
-	 strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType2, tJ) == 0) ||
-	(strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType1, tJ) == 0 &&
-	 strcmp(PVAI(vaPNBEdits, NBEDITt, i)->sType2, tI) == 0)) {
-
-      /* This is an edited pair interaction */
-      MathOpConvertNonBondToAC(PVAI(vaPNBEdits, NBEDITt, i)->dEI,
-			       PVAI(vaPNBEdits, NBEDITt, i)->dRI,
-			       PVAI(vaPNBEdits, NBEDITt, i)->dEJ,
-			       PVAI(vaPNBEdits, NBEDITt, i)->dRJ, dA, dB);
-      break;
-    }
-  }
+  return false;
 }
 
 

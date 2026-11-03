@@ -895,7 +895,6 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
     ContainerSetTempInt(aAtom, i + 1);
     saPAtom = PVAI(uUnit->vaAtoms, SAVEATOMt, i);
 
-
     saPAtom->aAtom = aAtom;
     REF(aAtom);
 
@@ -2299,7 +2298,8 @@ zbUnitIOIndexTorsionParameters(PARMLIB plLib, UNIT uUnit,
                 stP->iPertParmIndex = iIndexMap[ stP->iPertParmIndex - iParmOffset - 1 ];
         }
         FREE( iIndexMap );
-        }//XXX proper BoilTorsion is a leak
+        }
+        //XXX proper BoilTorsion is a leak
         //BoilTorsions(&uUnit->psParameters->vaTorsions, 0,        /* parm table */
         //             uUnit->vaTorsions, 0);        /* atom lists */
         STOP(iBoil,"Proper (BoilTorsions)");
@@ -2455,6 +2455,7 @@ iUnitIOAmberOrderResidues( UNIT uUnit )
         srPResidue->iNextChildSequence = iContainerNextChildsSequence(rRes);
         srPResidue->iPdbResSeq = iResiduePdbSequence(rRes);
         strcpy(srPResidue->sChainId,sResidueChainId(rRes));
+        // fixed char to C NUL string for iCode
         if (rRes->cICode == ' ') srPResidue->sICode[0]=0;
         else { srPResidue->sICode[0]=rRes->cICode; srPResidue->sICode[1]=0; }
         srPResidue++;

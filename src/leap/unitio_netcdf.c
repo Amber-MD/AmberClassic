@@ -1035,7 +1035,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                                                                    : "atom_site.label_asym_id",
                             NULL));
         for (int i = 0; i < n_residues; i++) {
-            if (PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sICode[0] != ' ') {
+            if (PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sICode[0] != 0) {
                 bHasICodes = true; break;
             }
         }
@@ -1351,15 +1351,15 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     {
         double *A = MALLOC(nttyp*sizeof(double)), *B = MALLOC(nttyp*sizeof(double));
         for (int i = 0; i < nttyp; i++) {
-            A[i] = PVAI(vaNBParameters, NONBONDACt, i)->dA;
-            B[i] = PVAI(vaNBParameters, NONBONDACt, i)->dB;
+            A[i] = PVAI(vaNBParameters, SAVENONBONDACt, i)->dA;
+            B[i] = PVAI(vaNBParameters, SAVENONBONDACt, i)->dB;
         }
         NC_CHECK(nc_put_var_double(ncid, vid_acoef, A));
         NC_CHECK(nc_put_var_double(ncid, vid_bcoef, B));
         if (GDefaults.bCharmm) {
             for (int i = 0; i < nttyp; i++) {
-                A[i] = PVAI(vaNBParameters, NONBONDACt, i)->dA14;
-                B[i] = PVAI(vaNBParameters, NONBONDACt, i)->dB14;
+                A[i] = PVAI(vaNBParameters, SAVENONBONDACt, i)->dA14;
+                B[i] = PVAI(vaNBParameters, SAVENONBONDACt, i)->dB14;
             }
             NC_CHECK(nc_put_var_double(ncid, vid_14acoef, A));
             NC_CHECK(nc_put_var_double(ncid, vid_14bcoef, B));
@@ -1570,7 +1570,7 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
             char *sbuf = MALLOC(n_residues);
             for (int i = 0; i < n_residues; i++) {
                 char iCode = PVAI(uUnit->vaResidues, SAVERESIDUEt, i)->sICode[0];
-                sbuf[i] = iCode ? iCode : ' ';
+                sbuf[i] = iCode ? iCode : ' '; // convert 0-1 NUL string back to single char
             }
             NC_CHECK(nc_put_var_text(ncid, vid_res_icode, sbuf));
             FREE(sbuf);

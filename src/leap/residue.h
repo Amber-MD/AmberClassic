@@ -103,7 +103,8 @@ typedef struct RESIDUESTRUCT {
 	OBJEKT          aaConnect[MAXCONNECT];
 	OBJEKT		aSolventImagingAtom;	/* ATOM */
 	int		iPdbResSeq;
-	char		sChainId[3], cICode;
+	char		sChainId[3]; // 0-2 char NUL terminated
+	char		cICode;      // alphabetic or blank=' '
 	VARARRAY	vaImpropers;
 	double		dTemp;
 	int		iTemp; // do we need this? only used for default resSeq

@@ -515,7 +515,7 @@ yyerror( const char *sStr )
               "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...");
     VP0("\nError from the parser: %s.", sStr);
     if (SsCurrentVariable)
-        VP0("\n\t('%.128s' is not a command.)",SsCurrentVariable);
+        VP0("\n\t(Note: '%.128s' is not a command)",SsCurrentVariable);
     VPFATALEXIT("\tCheck for typos, misspellings, etc.\n"
                 "\tTry help on the command name and desc on the command arguments.\n");
     return 1;
@@ -967,8 +967,6 @@ STRING		sPossibleCmd;
 		LIST lAtoms = lAtomMaskSelect((UNIT)oVar, sMask );
                 lAtoms->bFreeChildren = true;
 		aAssoc = (ASSOC)oCreate(ASSOCid);
-                int iSize = iCollectionSize(lAtoms);
-                VP2("AtomMask selected %d atoms\n", iSize );
                 if (bSelectResidues) {
                     RESIDUE rCurrent = NULL;
                     OBJEKT oObject;
@@ -998,7 +996,7 @@ STRING		sPossibleCmd;
 		MESSAGE("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
 		return(LASSOC);
 	    }
-	    /* not a UNIT: '(' really is just the single-char token */
+	    /* preceding string is not a UNIT; '(' is a single-char token */
 	    zUngetc( c );
 	    break;
 	}
@@ -1316,7 +1314,7 @@ char        sBuf[MAXSTRINGLENGTH];
 char        *cPColon;
 bool        bFromVar = false;
 
-    *cICode = 0;
+    *cICode = ' ';
     /* --- expand leading '$' if present --- */
     if (*cPPos == '$') {
         cPPos++;
@@ -1457,7 +1455,7 @@ eContTokenType  eTok;
 
             case CTOK_CHAINRES:
                 if (iObjectType(oObj) != UNITid) {
-                    VPWARN("ChainId:Resid selection only valid within UNIT\n");
+                    VPWARN("ChainId:ResId selection only valid within UNIT\n");
                     return NULL;
                 }
                 lRes = lLoop(oObj, RESIDUES);
@@ -1470,8 +1468,13 @@ eContTokenType  eTok;
                     }
                 }
                 if (!cCont) {
-                    VPWARN("ChainId:Resid %s:%d not found in %s %s\n",
-                            sOut, iValue, sObjectIndexType(iType), sContainerName(oObj));
+                    if (cICode != ' ') {
+                        VPWARN("ChainId \"%s\", ResId %d, iCode '%c' not found in %s %s\n",
+                                sOut, iValue, cICode, sObjectIndexType(iType), sContainerName(oObj));
+                    } else {
+                        VPWARN("ChainId \"%s\", ResId %d not found in %s %s\n",
+                                sOut, iValue, sObjectIndexType(iType), sContainerName(oObj));
+                    }
                     return NULL;
                 }
                 break;

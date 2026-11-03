@@ -141,7 +141,14 @@ void FortranSection(const char *label) {
 void FortranIntFormat(int maxval) {
   char fmt[32],line[80];
   int width, count;
+  static bool bWarned = false;
   width = snprintf(NULL, 0, "%d", maxval);
+  if (GDefaults.bCompatible && maxval >= 0) width++; // ensure space between numbers (if signed, there's already room)
+  if (GDefaults.bCompatible && width < 8) width=8; // ensure minimum width = 8 (original V1 compatibility)
+  if (width>8 && !bWarned) {
+    VPWARN("Integer format expanded to accomodate large structure\n");
+    bWarned = true;
+  }
   snprintf(fmt, sizeof(fmt), "%%%dd", width);  /* e.g. "%4d" */
   count = 80 / width;                 /* ints per line */
   if (GDefaults.dPrmtopFormat>1.0) {
@@ -188,7 +195,7 @@ FortranWriteInt( int iVal )
     static const char *sWarnSection=NULL;
     int n = fprintf( SfFile, SsFormat, iVal );
     if (n > SiIntWidth) {
-        // warn on ove
+        // warn on overflow
         if (sWarnSection != ScPSection)
             VPFATAL("Integer overflow in %s, writing value %d with format width %d\n", ScPSection, iVal, SiIntWidth);
         sWarnSection = ScPSection;

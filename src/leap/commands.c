@@ -88,6 +88,7 @@
 #include        <string.h>
 
 #include        "basics.h"
+#include        "unit.h"
 #include        "vector.h"
 #include        "matrix.h"
 #include        "classes.h"
@@ -1298,6 +1299,40 @@ DONE:
     return NULL;
 }
 
+\
+/*
+ *
+ *      oCmd_addC4Type
+ *
+ *      Newly Added Commands for Atom-type-speific C4 (2021)
+ *
+ *      Create C4 interactions between two atom types.
+ *
+ *      Arguments:
+                [1]     - UNIT uUnit
+ *              [2]     - char *sA
+ *              [3]     - char *sB
+ *      option  [4]     - float C4 parameter between two types.
+*/
+
+OBJEKT
+oCmd_addC4Type( int iArgCount, ASSOC aaArgs[] )
+{
+    UNIT            uUnit;
+    char            *sCmd = "addC4Type";
+    if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s s n" ) ) {
+        VPFATALDELAYEDEXIT("usage:  addC4Type <unit> <type1> <type2> <C4coefficient>\n" );
+        return NULL;
+    }
+    C4TYPEt c4type;
+    uUnit = (UNIT)oAssocObject(aaArgs[0]);
+    strcpy(c4type.a, sOString(oAssocObject(aaArgs[1]))); 
+    strcpy(c4type.b, sOString(oAssocObject(aaArgs[2]))); 
+    c4type.coeff = dODouble( oAssocObject(aaArgs[3]) ) ;
+    if (!uUnit->vaC4Type) uUnit->vaC4Type = vaVarArrayCreate( sizeof(C4TYPEt) );
+    VarArrayAdd(uUnit->vaC4Type, (GENP) &c4type);
+    return NULL;
+}
 
 /*
  *      oCmd_deleteBond
@@ -2988,13 +3023,15 @@ double  dX, dY, dZ, daBuffer[3];
 int     i;
 bool    bUsage;
 char    *sCmd = "setBox";
-char    *sUsage = "usage:  setBox <unit> vdw|centers [ clearance | <clearance_xyz_list> ]\n";
+char    *sUsage = "usage:  setBox <unit> [vdw|centers [ clearance | <clearance_xyz_list> ]]\n";
 char    *sOpt;
 bool    bVdw;
 
-    if ( iArgCount == 2 )
+    if ( iArgCount == 1 )
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u" );
+    else if ( iArgCount == 2 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" );
-    else
+    else if ( iArgCount != 1 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s ln" );
 
     if ( bUsage ) {
@@ -3003,6 +3040,12 @@ bool    bVdw;
     }
 
     uUnit = UNIT_from(oAssocObject(aaArgs[0]));
+    if (iArgCount == 0) {
+        VP0("setBox: Resetting BOX\n");
+        UnitResetFlags( uUnit, UNITBOXCRYST1);
+        UnitSetUseBox( uUnit, false );
+        return NULL;
+    }
     sOpt = (char *)sOString(oAssocObject(aaArgs[1]));
     if ( !strcmp(sOpt, "vdw")  ) {
         bVdw = true;
@@ -3116,11 +3159,14 @@ OBJEKT
 oCmd_setCell( int iArgCount, ASSOC aaArgs[] )
 {
 UNIT    uUnit;
+double  dX,dY,dZ,dA,dB,dG;
 bool    bUsage;
 char    *sCmd = "setCell";
-char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> | <beta> ]\n";
+char    *sUsage = "usage:  setCell <unit> [<a> <b> <c> [ <alpha> <beta> <gamma> | <beta> ]]\n";
 
-    if ( iArgCount == 4 )
+    if ( iArgCount == 0 )
+        bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u" );
+    else if ( iArgCount == 4 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n n n" );
     else if ( iArgCount == 5 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u n n n n" );
@@ -3133,19 +3179,36 @@ char    *sUsage = "usage:  setCell <unit> <a> <b> <c> [ <alpha> <beta> <gamma> |
     }
 
     uUnit = UNIT_from(oAssocObject(aaArgs[0]));
-    double a = dODouble(oAssocObject(aaArgs[1]));
-    double b = dODouble(oAssocObject(aaArgs[2]));
-    double c = dODouble(oAssocObject(aaArgs[3]));
-    double alpha=90.0, beta=90.0, gamma=90.0;
-    if (iArgCount == 7) {
-       alpha = dODouble(oAssocObject(aaArgs[4]));
-       beta = dODouble(oAssocObject(aaArgs[5]));
-       gamma = dODouble(oAssocObject(aaArgs[6]));
-    } else if (iArgCount == 5)
-       beta = dODouble(oAssocObject(aaArgs[4]));
-    UnitSetCell(uUnit,a,b,c,alpha,beta,gamma);
+    if (iArgCount == 0) {
+        if (bUnitUseBox( uUnit )) {
+            VP0("setCell: UNIT BOX already active\n");
+        } else if (!bUnitFlagsSet(uUnit, UNITBOXCRYST1)) {
+            VP0("setCell: UNIT Cell was not initialized by CRYST1\n");
+            return NULL;
+        } else {
+            VP0("setCell: Using BOX initialized from PDB CRYST1\n");
+        }
+        UnitGetCell(uUnit,&dX,&dY,&dZ,&dA,&dB,&dG);
+    } else {
+        dX = dODouble(oAssocObject(aaArgs[1]));
+        dY = dODouble(oAssocObject(aaArgs[2]));
+        dZ = dODouble(oAssocObject(aaArgs[3]));
+        dA=dB=dG=90.0;
+        if (iArgCount == 7) {
+           dA = dODouble(oAssocObject(aaArgs[4]));
+           dB = dODouble(oAssocObject(aaArgs[5]));
+           dG = dODouble(oAssocObject(aaArgs[6]));
+        } else if (iArgCount == 5)
+           dB = dODouble(oAssocObject(aaArgs[4]));
+        UnitSetCell(uUnit,dX,dY,dZ,dA,dB,dG);
+    }
+    UnitResetFlags( uUnit, UNITBOXCRYST1);
     UnitSetUseBox( uUnit, true );
-    VP0("Cell dimensions:  %f %f %f %f %f %f\n", a,b,c,alpha,beta,gamma );
+    VP0("Periodic box: %10.5lf, %10.5lf, %10.5lf\n", dX, dY, dZ );
+    if ( fabs(dA-90.0) > 1e-4 || fabs(dB-90.0) > 1e-4 || fabs(dG-90.0) > 1e-4 ) {
+       VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
+       dA*RADTODEG, dB*RADTODEG, dG*RADTODEG );
+    }
     return NULL;
 }
 
@@ -7132,6 +7195,7 @@ COMMANDt        cCommands[] = {
 
         { "add",                oCmd_add },
         { "addH",               oCmd_addH },
+        { "addC4Type",          oCmd_addC4Type },
         { "addIons",            oCmd_addIons },
         { "addIons2",           oCmd_addIons2 },
         { "addIonSolv",         oCmd_addIonSolv },

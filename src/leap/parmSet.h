@@ -190,8 +190,8 @@ extern int        iParmSetFindHBond(PARMSET psLib, const typeStr sType1, const t
 extern int        iParmSetFindNBEdit(PARMSET psLib, const typeStr sType1, const typeStr sType2);
 
 // Find NB edit parm and apply to dA, dB
-extern void CheckAgainstNBEdits(VARARRAY vaPNBEdits, const typeStr tI, const typeStr tJ,
-		    double *dA, double *dB);
+//extern void CheckAgainstNBEdits(VARARRAY vaPNBEdits, const typeStr tI, const typeStr tJ,
+//		    double *dA, double *dB);
 
 /*
  *        TORSION routines
@@ -255,8 +255,8 @@ extern bool        bParmSetCapableOfHBonding( PARMSET psParms, const typeStr sTy
 #define iParmSetTotalNBEdits( psParmSet ) \
                         (int)iVarArrayElementCount( (psParmSet)->vaNBEdits )
 
-extern  bool    bParmSetCapableofHBonding(void);    /* ( PARMSET, char* ) */
-extern int CheckTypeNBEdit(const typeStr sType, VARARRAY vaPNBEdits);
+//extern  bool bParmSetCapableofHBonding(void);    /* ( PARMSET, char* ) */
+extern bool bTypeHasNBEdit(PARMSET psLib, const typeStr sType);
 
 /*
  *        Routines used to actually obtain PARMSET parameters
