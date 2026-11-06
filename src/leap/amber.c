@@ -810,13 +810,11 @@ bool            bNew;
         } else if ( strncmp( sLine, "NONB", 4 ) == 0 ) {
             bNew = true;
             *bPNonBond = true;
-        } else if ( strncmp( sLine, "LJEDIT", 4 ) == 0 ) {
+        } else if ( strncmp( sLine, "LJED", 4 ) == 0 ) {
             bNew = true;
-        } else if ( strncmp( sLine, "NBEDIT", 4 ) == 0 ) {
+        } else if ( strncmp( sLine, "NBED", 4 ) == 0 ) {
             bNew = true;
         } else if ( strncmp( sLine, "CMAP", 4 ) == 0 ) {
-            bNew = true;
-        } else if ( strncmp( sLine, "LJEDIT", 4 ) == 0 ) {
             bNew = true;
         }
     } while ( !feof(fIn) );

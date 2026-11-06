@@ -50,6 +50,8 @@ static char *Dielectric_optionDesc[] = {"Undefined","Constant","Distance",NULL};
 static char *PdbConvertResname_options[] = {"standard","keep","variant",NULL};
 static char *PdbConvertResname_optionDesc[] = {"Standard names","Retain input names",
                                       "Variant names",NULL };
+static char *Molecule_options[] = {"none","reorder","contiguous",NULL};
+static char *Molecule_optionDesc[] = {"Original","Reorder atoms","Contiguous molecules only",NULL};
 
 // NOTE: uninitialized values get zero. Most defaults are zero and don't need defaults initialization.
 static DefaultSetting
@@ -58,10 +60,12 @@ zSDefaultSettings[] = {
     { 'B', "pdbwritecharges", "PdbWriteCharges", &GDefaults.pdbwritecharges },
     { 'B', "nocenter", "NoCenter", &GDefaults.bNoCenter },
     { 'B', "reorder_residues", "Reorder_Residues", &GDefaults.bReorderResidues, .defval.integer=1 },
-    { 'B', "reorder_molecules", "Reorder_Molecules", &GDefaults.bReorderMolecules }, //TODO: , .defval.integer=1 },
+    { 'I', "molecules", "Molecules", &GDefaults.iMolecules, // TODO: .defval.integer=MOLECULES_CONTIGUOUS
+               .options = Molecule_options, .optionDesc = Molecule_optionDesc },
     { 'B', "original_cmap_order", "Original_CMAP_Order", &GDefaults.bOrigCMAPOrder, .defval.integer=1 },
     { 'B', "oldprmtopformat", "OldPrmtopFormat", &GDefaults.bOldPrmtopFormat },
     { 'D', "prmtopformat", "PrmtopFormat", &GDefaults.dPrmtopFormat, .defval.real=1.0 },
+    { 'B', "prmtop_restraints", "Prmtop_Restraints", &GDefaults.bPrmtopRestraints },
     { 'B', "gibbs", "Gibbs", &GDefaults.bGibbs },
     { 'B', "hybrid36", "Hybrid36", &GDefaults.bPdbHybrid36, .defval.integer=1 },
     { 'B', "keep_input_solvent", "Keep_Input_Solvent", &GDefaults.bKeepInputSolvent, .defval.integer=0 },

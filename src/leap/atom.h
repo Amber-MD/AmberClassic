@@ -26,6 +26,12 @@
  *      Description:
  *
  *              Atoms can contain anything.
+ *
+ *      Atom contents are normally "internal" [bond,angle,torsion]
+ *      coordinates as INTERNAL objects, which are then used to
+ *      generate "external" [x,y,z] coordinates. A given INTERNAL
+ *      is referneced in the lContents object of every atom
+ *      associated with it.
  */
  
 #include        "basics.h"
@@ -83,7 +89,7 @@ typedef struct  ATOMSTRUCT {
         int                     iUniqueId;
         int                     iAtomicNumber;
         int                     iAtomSerial;
-        double                  dBfactor, dOccupancy;
+        double                  dBFactor, dOccupancy;
         int                     iPertAtomicNumber;
         CONTAINERNAMEt          sPertName;
         ATOMTYPEt               sType;
@@ -150,7 +156,7 @@ typedef ATOMt   *ATOM;
 #define ATOMPOSITIONBUILT       0x00800000
 #define ATOMPOSITIONDRAWN       0x01000000
 #define ATOMMOCKPOSITIONKNOWN   0x02000000
-#define ATOMFLAGUNUSED0         0x04000000
+#define ATOMCREATED             0x08000000
 #define ATOMFLAGUNUSED1         0x08000000
 #define ATOMFLAG0               0x10000000
 #define ATOMFLAG1               0x20000000

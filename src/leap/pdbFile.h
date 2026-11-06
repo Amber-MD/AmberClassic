@@ -66,6 +66,7 @@ typedef struct  {
         int     iResNameIndex; // parent index
         char    sName[6];
         uint8_t iElement;
+        ATOM    aAtom; // to refernece the atom using it's PDB index after instantiated
 } ATOMNAMEt;
 
 typedef struct {

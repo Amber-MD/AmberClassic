@@ -1318,8 +1318,15 @@ where each sublist is of the form
 
       { "OddAtomName" "LibAtomName" }
 
+or
+
+      { "resName" "OddAtomName" "LibAtomName" }
+
+
 Many `odd' atom names can map to one `standard' atom name, but any single
 odd atom name maps only to the last standard atom name it was mapped to.
+The second form renames atoms only if resName matches the residue name.
+
 
 @@endHelp
 
@@ -1897,7 +1904,7 @@ Allowed arguments to "set default variable value" are these:
   reorder_molecules "on"        Sort atoms so that all molecules are contiguous
                                 so that ATOMS_PER_MOLECULE can partition atoms
 
-  random orientation "on"       Randomize the direction of rotatable atoms built.
+  random_orientation "on"       Randomize the direction of rotatable atoms built.
 
   Only for compatibility (to be removed):
   original_cmap_order "on"      Order CMAP on PRMTOP as original code

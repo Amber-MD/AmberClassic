@@ -27,11 +27,20 @@
 # include   "objekt.h"
 # include   "parmSet.h"
 
-
+// These are all technically globals because LEAP (currently) has a single global PARMLIB
 typedef struct  {
 	LIST            lParmSets;
 	LISTLOOP        llParmSetLoop;
+        VARARRAY        vaAuxParamDefs; // PARMAUXDEFt
 } PARMLIBt;
+
+// define an axuiliary parameter to augment a standard geometry 
+typedef struct {
+        char sSection[16]; // BOND, ANGLE, NBEDIT, etc
+        char sKey[32];     // <NAME>= idientifier string, defines one real number value
+        char sName[64];    // data name in PRMTOP (%FLAG label)
+        // type?
+} PARMAUXDEFt;
 
 typedef PARMLIBt	*PARMLIB;
 

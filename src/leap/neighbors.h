@@ -8,6 +8,12 @@
 
 // Procedures use member fields, so the need to be intptr_t to ensure
 // the full pointer-sized union gets transfered. (Or update the code)
+// {member,r,p} can be anything to identify the point/atom within the
+// group/residue, typical uses:
+//     index with residue
+//     index within structure
+//     r = covalent radius for culling returned points
+//     p = pointer to ATOM object
 typedef struct {
     float x,y,z;
     int group;        // residue number, can be groups by whole molecule
@@ -48,6 +54,7 @@ extern NeighborGrid *neighbor_grid_setup(const Point *points,
                                   const unsigned int *group_start,
                                   float r_cut);
 
+// *** All queries return non-zero on failure
 // query inter-group contacts by group number (e.g. residue number)
 // returns a Pair array for all contacts within r_cut
 extern int neighbor_grid_query_group(NeighborGrid *grid,

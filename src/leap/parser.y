@@ -243,8 +243,7 @@ assign  :       LVARIABLE LASSIGN express
                                 /* Set the value of the variable */
                             aAssoc = $<aVal>3;
 			    if ( aAssoc != NULL ) {
-                                MESSAGE("Assigning a value to %s\n", 
-                                                        $<sVal>1 );
+                                MESSAGE(">Assigning a value to %s\n", $<sVal>1);
                                 VariableSet( $<sVal>1, oAssocObject(aAssoc) );
 				MESSAGE("DEREF (assign) - %s\n",
 							sAssocName(aAssoc) );
@@ -278,6 +277,7 @@ rawexp  :       LOPENLIST
                             OBJEKT oObject = oCreate(LISTid);
                             LIST_from(oObject)->bFreeChildren = true;
                             AssocTakeObject( aAssoc, oObject );
+                            printf("assoc obj = %p\n",oObject);
                             CURRENTLIST = aAssoc;
                         }
                     elements LCLOSELIST 
@@ -454,7 +454,7 @@ evalfactor: scalar
                         }
           ;
 
-elements:       /* nothing */
+elements:       /* nothing */  {  $<aVal>$ = CURRENTLIST; }
         |       elements rawexp 
                         {
                                 /* Get the element and add it to the list */
@@ -984,16 +984,22 @@ STRING		sPossibleCmd;
                           iCollectionSize(lResidues));
                     lResidues->bFreeChildren = true;
                     ListDestroy(&lAtoms);
-                    oResult = OBJEKT_from(lResidues);
+                    if (iCollectionSize(lResidues) == 1) {
+                        oResult = lResidues->nPFirstNode->PObject;
+                        ListDestroy(&lResidues);
+                    } else oResult = OBJEKT_from(lResidues);
                 } else {
-                    oResult = OBJEKT_from(lAtoms);
                     VP2("AtomMask selected %d atoms\n",
                           iCollectionSize(lAtoms));
+                    if (iCollectionSize(lAtoms) == 1) {
+                        oResult = lAtoms->nPFirstNode->PObject;
+                        ListDestroy(&lAtoms);
+                    } else oResult = OBJEKT_from(lAtoms);
                 }
                 AssocSetName( aAssoc, "atomMask" );
                 AssocTakeObject( aAssoc, oResult );
 		yylval.aVal = aAssoc;
-		MESSAGE("Parsed inline mask on UNIT %s: %s\n", sStr, sMask );
+		MESSAGE("Parsed inline atomMask on UNIT %s: %s\n", sStr, sMask );
 		return(LASSOC);
 	    }
 	    /* preceding string is not a UNIT; '(' is a single-char token */

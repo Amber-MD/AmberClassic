@@ -496,7 +496,7 @@ iLoopParmOrder(const void *A, const void *B)
                 ((cResidueType(rB) == RESTYPESOLVENT) ? 1 : 0);
         if (iSolA < iSolB) return -1;
         else if (iSolA > iSolB) return 1;
-        if (GDefaults.bReorderMolecules) {
+        if (GDefaults.iMolecules == MOLECULES_REORDER) {
             // RESIDUE.iMolecule MUST BE labelled with the molecule number
             if (rA->iMolecule < rB->iMolecule) return -1;
             if (rA->iMolecule > rB->iMolecule) return 1;

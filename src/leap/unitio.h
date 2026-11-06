@@ -88,6 +88,7 @@ typedef struct {
     int iSequence;
     FLAGS fFlags;
     ATOM aAtom;
+    double dOccupancy, dBFactor;
 } SAVEATOMt;
 
 typedef struct {

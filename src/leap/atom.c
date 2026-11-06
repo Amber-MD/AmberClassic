@@ -74,8 +74,9 @@ static  ORDERt  SoaOrders[] = {
 VFUNCTION       GfAtomClassGraphicsCreator = NULL;
 VFUNCTION       GfAtomClassGraphicsDestructor = NULL;
 
+#if 0
 VARARRAY        GvaVDWTypes, GvaVDWValues;
-
+#endif
 /*
 ======================================================================
 
@@ -190,8 +191,7 @@ AtomDescribe( ATOM aAtom )
 int             i;
 STRING          sTemp, sTemp1;
 
-    if ( strlen(sAtomPertType(aAtom)) != 0 ||
-         strlen(sAtomPertName(aAtom)) != 0 ) {
+    if ( *sAtomPertType(aAtom) || *sAtomPertName(aAtom)) {
         VP0("ATOM\n" );
         VP0("             Normal      Perturbed\n" );
         VP0("Name:         %-5s         %-5s\n",
@@ -212,6 +212,8 @@ STRING          sTemp, sTemp1;
         VP0("Polarization: %6.4f\n", dAtomPolar(aAtom) );
         VP0("Element:      %-5s\n",
                 sElementName( iAtomElement(aAtom), sTemp1 ) );
+        VP0("B-factor:     %6.4f\n", aAtom->dBFactor );
+        VP0("Occupancy:    %6.4f\n", aAtom->dOccupancy );
     }
 
     VP0("Atom flags: (decimal %ld hex 0x%lx)\n", 
@@ -939,11 +941,9 @@ int             iElement;
 STRING          sTemp;
 
     if ( strcasecmp( sAttr, "charge" ) == 0 ) {
-        if ( !bObjektWarnType( oAttr, ODOUBLEid ) ) return;
-        AtomSetCharge( aAtom, dODouble(oAttr) );
-        return;
-    }
-    if ( strcasecmp( sAttr, "pert" ) == 0 ) {
+        if ( bObjektWarnType( oAttr, ODOUBLEid ) )
+            AtomSetCharge( aAtom, dODouble(oAttr) );
+    } else if ( strcasecmp( sAttr, "pert" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         strcpy( sTemp, sOString(oAttr) );
         StringLower(sTemp);
@@ -953,49 +953,38 @@ STRING          sTemp;
             AtomResetFlags( aAtom, ATOMPERTURB );
         } else
             VPFATALEXIT("pert: expected 'true' or 'false'\n" );
-        return;
-    } 
-    if ( strcasecmp( sAttr, "pertCharge" ) == 0 ) {
-        if ( !bObjektWarnType( oAttr, ODOUBLEid ) ) return;
-        AtomSetPertCharge( aAtom, dODouble(oAttr) );
-        return;
-    }
-    if ( strcasecmp( sAttr, "name" ) == 0 ) {
-        if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
-        ContainerSetName( aAtom, sOString(oAttr) );
-        return;
-    }
-    if ( strcasecmp( sAttr, "pertName" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "pertCharge" ) == 0 ) {
+        if ( bObjektWarnType( oAttr, ODOUBLEid ) )
+            AtomSetPertCharge( aAtom, dODouble(oAttr) );
+    } else if ( strcasecmp( sAttr, "name" ) == 0 ) {
+        if ( bObjektWarnType( oAttr, OSTRINGid ) )
+            ContainerSetName( aAtom, sOString(oAttr) );
+    } else if ( strcasecmp( sAttr, "pertName" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetPertName( aAtom, "" );
-        } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
-        AtomSetPertName( aAtom, sOString(oAttr) );
-        return;
-    }
-    if ( strcasecmp( sAttr, "type" ) == 0 ) {
+        } else if ( bObjektWarnType( oAttr, OSTRINGid ) ) {
+            AtomSetPertName( aAtom, sOString(oAttr) );
+        }
+    } else if ( strcasecmp( sAttr, "type" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetType( aAtom, "" );
-        } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) 
-            return;
-        AtomSetType( aAtom, sOString(oAttr) );
-        return;
-    }
-    if ( strcasecmp( sAttr, "element" ) == 0 ) {
+        } else if ( bObjektWarnType( oAttr, OSTRINGid ) )  {
+            AtomSetType( aAtom, sOString(oAttr) );
+        }
+    } else if ( strcasecmp( sAttr, "element" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetElement( aAtom, NOELEMENT );
         } else if ( iObjectType(oAttr) == ODOUBLEid ) {
             AtomSetElement( aAtom, dODouble(oAttr));
-        } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) 
-            return;
-        iElement = iElementNumber(sOString(oAttr));
-        if ( iElement == NOELEMENT ) {
-            VPFATALEXIT("Unknown element: %s\n", sOString(oAttr) );
-        } else {
-            AtomSetElement( aAtom, iElement );
+        } else if ( bObjektWarnType( oAttr, OSTRINGid ) ) {
+            iElement = iElementNumber(sOString(oAttr));
+            if ( iElement == NOELEMENT ) {
+                VPFATALEXIT("Unknown element: %s\n", sOString(oAttr) );
+            } else {
+                AtomSetElement( aAtom, iElement );
+            }
         }
-        return;
-    }
-    if ( strcasecmp( sAttr, "pertType" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "pertType" ) == 0 ) {
         if ( iObjectType(oAttr) == NULLid ) {
             AtomSetPertType( aAtom, "" );
         } else if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
@@ -1007,9 +996,7 @@ STRING          sTemp;
                         AtomResetFlags( aAtom, ATOMPERTURB );
                 }
         }
-        return;
-    }
-    if ( strcasecmp( sAttr, "position" ) == 0 ) {
+    } else if ( strcasecmp( sAttr, "position" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, LISTid ) ) return;
         if ( iListSize( oAttr ) != 3 ) {
             VPFATALEXIT("Invalid vector\n" );
@@ -1026,11 +1013,17 @@ STRING          sTemp;
                                 dODouble(oAssocObject(aZCoord)) );
             AtomSetPosition( aAtom, vPos );
         }
-        return;
+    } else if ( strcasecmp( sAttr, "bfactor" ) == 0 ) {
+        if ( bObjektWarnType( oAttr, ODOUBLEid ) )
+            aAtom->dBFactor = dODouble(oAttr);
+    } else if ( strcasecmp( sAttr, "occupancy" ) == 0 ) {
+        if ( bObjektWarnType( oAttr, ODOUBLEid ) )
+            aAtom->dBFactor = dODouble(oAttr);
+    } else {
+        VPFATALEXIT("%s: non-existent attribute for an atom.\n", sAttr );
+        VP0("\tAtom attributes: charge, name, type, element, position\n");
+        VP0("\t\tpert, pertCharge, pertName, pertType, bfactor, occupancy\n" );
     }
-    VPFATALEXIT("%s: non-existent attribute for an atom.\n", sAttr );
-    VP0("\tAtom attributes: charge, name, type, element, position\n");
-    VP0("\t\tpert, pertCharge, pertName, pertType\n" );
 }
 
 
@@ -1090,10 +1083,17 @@ OBJEKT          oResult = NULL;
     } else if ( strcasecmp( sAttr, "parent" ) == 0 ) {
         oResult = (OBJEKT)cContainerWithin( aAtom );
         REF(oResult);
+    } else if ( strcasecmp( sAttr, "bfactor" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, aAtom->dBFactor );
+    } else if ( strcasecmp( sAttr, "occupancy" ) == 0 ) {
+        oResult = oCreate(ODOUBLEid);
+        ODoubleSet( oResult, aAtom->dOccupancy );
     } else {
         VPFATALEXIT("%s: non-existent attribute for an atom.\n", sAttr );
         VP0("\tAtom attributes: charge, name, type, element, position[.x|.y|.z]\n");
-        VP0("\t\tpert, pertCharge, pertName, pertType, hybridization, seq, parent\n" );
+        VP0("\t\tpert, pertCharge, pertName, pertType, bfactor, occupancy\n" );
+        VP0("\t\thybridization, seq, parent\n" );
     }
     return oResult;
 }
@@ -1202,6 +1202,7 @@ int             i, iNum, iOrder;
     return BONDNONE;
 }
 
+#if 0
 /*
  *      bAtomSpaceConflict
  *
@@ -1291,7 +1292,7 @@ double  dScreenF;
 
     return  dR ;
 }
-
+#endif
 
 
 bool

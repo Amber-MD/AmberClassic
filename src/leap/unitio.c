@@ -919,6 +919,8 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
     saPAtom->iSequence = iContainerSequence(aAtom);
     saPAtom->iElement = iAtomElement(aAtom);
     saPAtom->iPertElement = iAtomPertElement(aAtom);
+    saPAtom->dOccupancy = aAtom->dOccupancy;
+    saPAtom->dBFactor = aAtom->dBFactor;
 
     /* If the atom is contained by a residue then set */
     /* which residue it is, otherwise set it to zero */
@@ -2628,7 +2630,7 @@ UnitIOBuildTables(UNIT uUnit, PARMLIB plParameters,
 
     /* Generate the table storing the RESTRAINTs */
 
-    if (iBagSize(uUnit->bRestraints)) {
+    if (GDefaults.bPrmtopRestraints && iBagSize(uUnit->bRestraints)) {
         uUnit->vaRestraints = vaVarArrayCreate(sizeof(SAVERESTRAINTt));
         VarArraySetSize((uUnit->vaRestraints),
                         iBagSize(uUnit->bRestraints));

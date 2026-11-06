@@ -157,15 +157,10 @@ typedef unsigned char   bool;
 # include <sys/syslimits.h> 
 #endif
 
-// functions
-// ---------------------------------------------------------------------
-
-#ifndef tolower
-# define        tolower(c)      ( c - 'A' + 'a' )
-#endif
-
-#ifndef toupper
-# define        toupper(c)      ( c - 'a' + 'A' )
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || \
+      defined(__OpenBSD__) || defined(__NetBSD__)
+#  define HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
 #endif
 
 // types
@@ -640,6 +635,12 @@ extern void myPrintTrace(const char *prefix, int depth, const char *fmt, ...);
  *      By calling the macros MESSAGEON and MESSAGEOFF the
  *      caller can selectively turn on and turn off messages
  *      from different source files.
+ *
+ *      Enable messages with environment variable
+ *         MESSAGEON="file1.c file2.c ..."
+ *      or at runtime with:
+ *         debugOn file.c
+ *         debugOff file.c
  *
  *      The flag DEBUG determines whether or not MESSAGE macros
  *      are even expanded.  If DEBUG is defined then MESSAGE macros

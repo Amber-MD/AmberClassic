@@ -188,25 +188,29 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
         iAtomSum += iCount;
     }
     if (bDiscontig) {
-        int iOldMolecule = -1;
-        iMolecule = 0;
-        iCount = 0;
-        RESIDUE rRes;
-        VPWARN("Discontiguous molecules detected. Set reorder_molecules=true to re-order atoms.\n"
-               "LEAP will now reassign molecules to *exclude* bonds that bridge a discontinuity\n");
-        VarArrayDestroy(&(uUnit->vaAtomsPerMolecule));
-        uUnit->vaAtomsPerMolecule = vaVarArrayCreate(sizeof(int));
-        LOOPOVERALL(uUnit,RESIDUES,rRes,lRes) {
-            if (rRes->iMolecule != iOldMolecule) {
-                VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
-                iMolecule++;
-                iOldMolecule = rRes->iMolecule;
-                iCount = 0;
+        VPWARN("Discontiguous molecules detected.\n");
+        if (GDefaults.iMolecules == MOLECULES_CONTIGUOUS) {
+            int iOldMolecule = -1;
+            iMolecule = 0;
+            iCount = 0;
+            RESIDUE rRes;
+            VP0("LEAP will now reassign molecules to exclude bonds that bridge a discontinuity\n");
+            VarArraySetSize(uUnit->vaAtomsPerMolecule,0);
+            LOOPOVERALL(uUnit,RESIDUES,rRes,lRes) {
+                if (rRes->iMolecule != iOldMolecule) {
+                    VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
+                    iMolecule++;
+                    iOldMolecule = rRes->iMolecule;
+                    iCount = 0;
+                }
+                rRes->iMolecule = iMolecule;
+                iCount += iCollectionSize(rRes->cHeader.lContents);
             }
-            rRes->iMolecule = iMolecule;
-            iCount += iCollectionSize(rRes->cHeader.lContents);
+            VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
+        } else {
+            VP0("Set molecules \"reorder\" to re-order atoms\n"
+               "or set molecules \"contiguous\" to exclude bonds that bridge a discontinuity\n");
         }
-        VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
     }
     if (!bSeenFirstSolvent) {
         uUnit->iFirstSolvent = iVarArrayElementCount(uUnit->vaAtomsPerMolecule);
@@ -2258,7 +2262,8 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
     FortranEndLine();
 
     // -13- Force constants for Urey-Bradley
-    FortranDebug("-13-"); // FIXME: leap never had this wth headers in v1,0 files, and leap is EVERY ANGLE
+    FortranDebug("-13-"); // FIXME? leap never had this wth headers in v1.0 files
+                          // NOTE: leap is EVERY ANGLE instead of a distinct dimension with new CHARMM
     FortranSection("CHARMM_UREY_BRADLEY_FORCE_CONSTANT");
     COMMENT_DIM(NUMANG)
       FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
@@ -2360,6 +2365,26 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       }
       FortranEndLine();
     }
+
+    MESSAGE("Writing atom PDB Occupancy\n");
+    FortranSection("ATOM_OCCUPANCY");
+    COMMENT_DIM_STR(NATOM,1)
+    FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
+    FortranFormat(DBLCOUNT, DBLFORMAT_C);
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
+      FortranWriteDouble(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->dOccupancy);
+    }
+    FortranEndLine();
+
+    MESSAGE("Writing atom PDB B-factor\n");
+    FortranSection("ATOM_BFACTOR");
+    COMMENT_DIM_STR(NATOM,1)
+    FortranWriteString("%FORMAT(" DBLFORMAT_F ")");
+    FortranFormat(DBLCOUNT, DBLFORMAT_C);
+    for (i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
+      FortranWriteDouble(PVAI(uUnit->vaAtoms, SAVEATOMt, i)->dBFactor);
+    }
+    FortranEndLine();
   }
 
   // CMAP parameters, Mengjuei Hsieh and Yong Duan

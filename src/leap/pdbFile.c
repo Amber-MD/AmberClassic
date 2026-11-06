@@ -64,6 +64,7 @@ static DICTIONARY      SdResidueNameMap;
 static  DICTIONARY      SdAtomNameMap;
 
 #define MAX_BOND_LENGTH 2.21 // P-P bond, but Si-Si can be 2.33Å
+// Based on fe-toolkit/ndfes/src/python/lib/ndfes/constants/PeriodicTable.py
 static float dCovalentRadius[] = { 0.73,// use this for default radius
    0.00,                                                                                        0.00,
    0.00, 0.00,                                                    0.82, 0.77, 0.75, 0.73, 0.71, 0.00,
@@ -71,6 +72,13 @@ static float dCovalentRadius[] = { 0.73,// use this for default radius
    0.00, 0.00, 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00, 0.00, 1.22, 1.19, 1.16, 1.14, 0.00,
    0.00, 0.00, 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00, 0.00, 0.00, 1.38, 1.35, 1.33, 0.00 };
 static int iMaxCovalentElement = sizeof(dCovalentRadius) / sizeof(float);
+
+static float dVdWRadius[] = { 1.53,
+   1.10,                                                                                        1.40,
+   1.81, 1.53,                                                    1.92, 1.70, 1.55, 1.52, 1.47, 1.54,
+   2.27, 1.73,                                                    1.84, 2.10, 1.80, 1.80, 1.75, 1.88,
+   2.75, 2.31, 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00, 1.87, 2.11, 1.85, 1.90, 1.83, 2.02,
+   3.03, 2.49, 0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00, 1.93, 2.17, 2.06, 2.06, 1.98, 2.16};
 
 // Possible chainID from best to worst.
 // Note that AMBER Mask parsers don't support escape sequences
@@ -96,7 +104,7 @@ static void PrintMatrix(MATRIX M) {
 }
 
 // compute if two atoms are within bonding distance by covalent radii
-// versus distance squared (dist2) and a relative bond-length rejection cutoff 
+// versus distance squared (dist2) and a relative bond-length rejection cutoff
 static bool
 bAtomsBondedDist(int iElem1, int iElem2, float dist2, float cutoff, float *dPCutoff_return) {
     if (iElem1 <= 0 || iElem1 >= iMaxCovalentElement) iElem1 = 0;
@@ -110,6 +118,21 @@ bAtomsBondedDist(int iElem1, int iElem2, float dist2, float cutoff, float *dPCut
     if (dPCutoff_return) *dPCutoff_return = cd;
     return dist2 < cd * cd;
 }
+
+// compute if two atoms are within bonding distance by covalent radii
+// versus distance squared (dist2) and a relative bond-length rejection cutoff
+static float
+dAtomsVdWOverlap(int iElem1, int iElem2, float dist) {
+    if (iElem1 <= 0 || iElem1 >= iMaxCovalentElement) iElem1 = 0;
+    if (iElem2 <= 0 || iElem2 >= iMaxCovalentElement) iElem2 = 0;
+
+    float r1 = dVdWRadius[iElem1];
+    float r2 = dVdWRadius[iElem2];
+    if (!r1) r1 = dVdWRadius[0];
+    if (!r2) r2 = dVdWRadius[0];
+    return r1 + r2 - dist;
+}
+
 
 /*
  *      zcPPdbTerminationCode
@@ -452,7 +475,7 @@ BADTYPE:
  *      name, termination type.
  *      Return NULL if none was found.
  */
-char *
+static char *
 zcPPdbMapName( DICTIONARY SdNameMap, int iType, const char *sName, const RESIDUE rRes )
 {
 char            *cPData;
@@ -496,7 +519,7 @@ STRING          sKey;
  *      Each TER card raises the sequence number by 10000
  *      if GDefaults.iPdbLoadSequential == 0
  */
-void
+static void
 zPdbConvertNamesAndSequenceNumbers( PDBREADt *prPPdb )
 {
 UNIT            uUnit;
@@ -647,16 +670,14 @@ RESIDUE         rRes;
  *      This will guarantee that all ATOMs bonded to ATOMs within the
  *      CONTAINER will be built.
  */
-void
-zPdbBuildCoordinatesForContainer( CONTAINER cCont, int *iPAddH,
+static void
+zPdbBuildCoordinatesForContainer( PDBREADt *prPPdb,  CONTAINER cCont, int *iPAddH,
         int *iPAddHeavy, int *iPAddUnk )
 {
 LOOP            lSpan;
 ATOM            aAtom, aTemp, aSpan;
 int             i;
-#ifdef DEBUG
-STRING          sSpan;
-#endif
+STRING          sTemp;
                 /* Fix the internal coordinates */
     BuildFixInternals( (UNIT) cCont );
 
@@ -668,8 +689,9 @@ STRING          sSpan;
             lSpan = lLoop( (OBJEKT)aAtom, SPANNINGTREE );
             LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
 
-                        /* Look for a collision with an ATOM whose */
-                        /* ATOMPOSITIONKNOWN flag is set */
+                /* Look for a collision with an ATOM whose */
+                /* ATOMPOSITIONKNOWN flag is set */
+                /* NOTE: collision here means connected by a bond */
             aSpan = NULL;
             while ( (aTemp = (ATOM)oNext(&lSpan)) ) {
                 if ( aSpan == NULL ) aSpan = aTemp;
@@ -680,7 +702,7 @@ STRING          sSpan;
             }
 
             MESSAGE("Building externals from: %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aSpan, sSpan ) );
+                        sContainerFullDescriptor( (CONTAINER)aSpan, sTemp ) );
 
                         /* Build external coordinates */
             lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
@@ -694,8 +716,7 @@ STRING          sSpan;
                 aSpan = aAtomBondedNeighbor(aAtom,i);
                 if ( !bAtomFlagsSet( aSpan, ATOMPOSITIONKNOWN ) ) {
                     MESSAGE("Building externals from: %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aSpan, sSpan ) );
-
+                        sContainerFullDescriptor( (CONTAINER)aSpan, sTemp ) );
                     lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
                     LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
                     BuildExternalsUsingFlags( &lSpan,
@@ -707,7 +728,45 @@ STRING          sSpan;
             }
         }
     }
+    if ( iObjectType(cCont) == RESIDUEid ) {
+        RESIDUENAMEt *rnTo;
+        ATOMNAMEt *anTo;
+        RESIDUE rRes = RESIDUE_from(cCont);
+        LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
+            if (!bAtomFlagsSet( aAtom, ATOMPOSITIONBUILT ) ) continue;
+            const Pair *pairs;
+            size_t count;
+            int n = neighbor_grid_query_point(prPPdb->ngBondGrid,
+                    dVX(&vAtomPosition(aAtom)), dVY(&vAtomPosition(aAtom)),
+                    dVZ(&vAtomPosition(aAtom)), -1, -1, &pairs, &count);
 
+            if (n) {
+                VPWARN("%s: neighbor_grid_query_point() failed\n",__func__);
+                break;
+            }
+            if (!count) continue;
+            bool bFound = false;
+            float dMaxOverlap = 0.6;
+            for (i=0;i<(int)count;i++) {
+                if (pairs[i].to_group == rRes->iTemp) continue;
+                rnTo = PVAI(prPPdb->vaResidues, RESIDUENAMEt, pairs[i].to_group);
+                anTo = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, pairs[i].to_member);
+                float dDist = sqrt(pairs[i].d2);
+                float dOverlap = dAtomsVdWOverlap(aAtom->iAtomicNumber, anTo->iElement, dDist);
+                if (dOverlap < dMaxOverlap) continue;
+                if (!bFound) {
+                    VPWARN("Built atom %s collides with %s.%s:%d%c.%s, dist=%.1fÅ, overlap=%.1fÅ\n",
+                            sFullDescriptor(aAtom,sTemp), rnTo->sName, rnTo->sChainId,
+                            rnTo->iPdbSequence, rnTo->cICode, anTo->sName, dDist, dOverlap);
+                    bFound = true;
+                } else {
+                    VP0("\tand %s.%s:%d%c.%s, dist=%.1fÅ, overlap=%.1fÅ\n",
+                            rnTo->sName, rnTo->sChainId, rnTo->iPdbSequence, rnTo->cICode,
+                            anTo->sName, dDist, dOverlap);
+                }
+            }
+        }
+    }
                 /* Destroy the INTERNALs in the CONTAINER */
 
     LOOP lTemp = lLoop( (OBJEKT)cCont, ATOMS );
@@ -871,7 +930,7 @@ zPdbFileBegin( PDBWRITEt *pwPFile, FILE *fOut )
  *
  *      rRes argument added to copy ChainId (TODO: should also replace pwPFile->sResidueName)
  */
-void
+static void
 zPdbFileWriteAtomRecord( PDBWRITEt *pwPFile, ATOM aAtom, RESIDUE rRes)
 {
 pdb_record      p;
@@ -2128,7 +2187,7 @@ typedef struct {
     int pdb_seq;
 } MatchScore;
 
-char sMatchResNames[MAXCANDIDATES][32];
+char sMatchResNames[MAXCANDIDATES][64];
 
 typedef struct MatchCandidate {
     UNIT        uTemplate;
@@ -2187,6 +2246,7 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
                    sContainerName(loser->uTemplate), sContainerName(rL), \
                    sContainerName(winner->uTemplate), sContainerName(rW), \
                    loser->score.field, winner->score.field); \
+            extra \
             return; \
         }
     EXPLAIN(mismatched_head_restype,"mismatch HEAD ResidueType",)
@@ -2194,7 +2254,7 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
     EXPLAIN(missing_head_tail,"missing HEAD/TAIL",)
     if (!GDefaults.bPdbExactMatch) EXPLAIN(extra_head_tail,"extra HEAD/TAIL",)
     EXPLAIN(missing_atoms,"missing ATOMs", if (loser->sUnmatchedNames[0])
-            VP2("        missing: %s\n", loser->sUnmatchedNames));
+            VP2("        missing: %s\n", loser->sUnmatchedNames););
     if (!GDefaults.bPdbExactMatch) EXPLAIN(missing_connect,"missing CONNECT",)
     EXPLAIN(extra_nonh_atoms,"extra non-H atoms",)
     EXPLAIN(extra_h_atoms,"extra H atoms",)
@@ -2322,7 +2382,7 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, bool bFromIsConnect,
         if (!bToIsConnect && aPToConnect[1] && !strcmp(anTo->sName, sContainerName(aPToConnect[1]))) bToIsConnect = true;
     }
 
-    ATOM    aFrom = (ATOM)cContainerFindName((CONTAINER)prPPdb->rRes,   ATOMid, anFrom->sName);
+    ATOM    aFrom = (ATOM)cContainerFindName((CONTAINER)prPPdb->rRes, ATOMid, anFrom->sName);
     ATOM    aTo   = (ATOM)cContainerFindName((CONTAINER)rnTo->rResidue, ATOMid, anTo->sName);
     RESIDUE rFrom = prPPdb->rRes;
     RESIDUE rTo   = rnTo->rResidue;
@@ -2847,7 +2907,8 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         if (iVerbosity() > 2) {
             if (strcmp(ix_record.key, sContainerName(uTemplate))) {
                 sprintf(sMatchResNames[iNumCandidates],
-                         "%.24s(%.5s)",ix_record.key, sContainerName(uTemplate));
+                         "(%s:%s.%s)",ix_record.key, sContainerName(uTemplate),
+                         sContainerName(oContainerFirstObject(uTemplate)));
             } else {
                 sprintf(sMatchResNames[iNumCandidates],"%.31s",ix_record.key);
             }
@@ -2860,22 +2921,22 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
     // -- Report and return ---------------------------------------------------
 
     if (cnMatch.score.missing_atoms > 0.75 * (iLastAtom - iFirstAtom + 1)) {
-        VPWARN("Rejecting template residue %s.%s due to excessive atom mismatches\n", 
+        VPWARN("Rejecting template residue %s.%s due to excessive atom mismatches\n",
                    sContainerName(cnMatch.uTemplate),
                    sContainerName(oContainerFirstObject(cnMatch.uTemplate)));
         iNumCandidates = 0;
     }
     if (iNumCandidates > 0) {
+        uTemplate = cnMatch.uTemplate;
+        RESIDUE rTemplateRes = (RESIDUE)oContainerFirstObject(uTemplate);
+
         if (iVerbosity() > 2) {
             VP2("%s.%s:%d Candidates: %s", cPResName,
                 rnPName->sChainId, rnPName->iPdbSequence, sMatchResNames[0]);
             for (int i = 1; i < iNumCandidates; i++) VP2(",%s", sMatchResNames[i]);
-            VP2(" Match: %s%s\n", sContainerName(cnMatch.uTemplate),
+            VP2(" Match: %s.%s%s\n", sContainerName(uTemplate),sContainerName(rTemplateRes),
                 cnMatch.bMatchedHydrogens ? "" : " [non-H match]");
         }
-
-        uTemplate = cnMatch.uTemplate;
-        RESIDUE rTemplateRes = (RESIDUE)oContainerFirstObject(uTemplate);
 
         if (cnMatch.score.extra_connect        ||
                 cnMatch.score.mismatched_head_restype ||
@@ -2985,11 +3046,12 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
     } else {
 
-        VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n", // FIXME set RESIDUE created flag?
+        VP0("Creating new UNIT for residue: %3s %2.2s%4d%c\n",
             cPResName, rnPName->sChainId,
             rnPName->iPdbSequence, rnPName->cICode);
         uResult = (UNIT)oCreate(UNITid);
         RESIDUE rRes = (RESIDUE)oCreate(RESIDUEid);
+        ResidueSetFlags(rRes, RESIDUECREATED);
         ContainerSetName(rRes, cPResName);
         ContainerAdd((CONTAINER)uResult, (OBJEKT)rRes);
         DEREF(rRes);
@@ -3155,9 +3217,10 @@ int             iChainCount=0;
         RESIDUE rRes = (RESIDUE) oContainerFirstObject(uNew);
 
         if (GDefaults.iPdbConvertResName) {
-            if (GDefaults.iPdbConvertResName==1) // keep: Copy PDB file input resName
+            if (GDefaults.iPdbConvertResName==PDB_RESNAME_KEEP) // keep: Copy PDB file input resName
                 strcpy(sContainerName(rRes),rnPName->sName);
-            else if (GDefaults.iPdbConvertResName==2 && strlen(sContainerName(uNew)) <= 3) // variant: Copy Template UNIT variant name
+            else if (GDefaults.iPdbConvertResName==PDB_RESNAME_VARIANT
+                      && strlen(sContainerName(uNew)) <= 3) // variant: Copy Template UNIT variant name
                 // This will do nothing in traditional libraries where Unit name == Res name
                 strcpy(sContainerName(rRes),sContainerName(uNew));
         }
@@ -3233,10 +3296,11 @@ int             iChainCount=0;
                 ContainerAdd( (CONTAINER)rRes, (OBJEKT)aAtom ); DEREF(aAtom);
                 ContainerSetName( (CONTAINER)aAtom, anAtom->sName );
                 AtomSetElement( aAtom, anAtom->iElement );
+                AtomSetFlags(aAtom, ATOMCREATED);
                 MESSAGE("Read atom: %s and adding it to: %s\n", anAtom->sName,
                                 sContainerName((CONTAINER)rRes) );
                 STRING sTemp;
-                VP0("Created a new atom named: %s within residue: %s\n", // FIXME set ATOM created flag?
+                VP0("Created a new ATOM named: %s within residue: %s\n", // FIXME set ATOM created flag?
                         anAtom->sName, sContainerFullDescriptor((CONTAINER)rRes,sTemp) );
                 iCreate ++;
             } else {
@@ -3256,7 +3320,8 @@ int             iChainCount=0;
             AtomSetPosition( aAtom, vPos );
             aAtom->iAtomSerial = anAtom->iAtomSerial;
             aAtom->dOccupancy = anAtom->q;
-            aAtom->dBfactor = anAtom->b;
+            aAtom->dBFactor = anAtom->b;
+            anAtom->aAtom = aAtom;
         }
 
         if (!bStartChain && !GDefaults.bPdbAutoMatch &&
@@ -3277,7 +3342,8 @@ int             iChainCount=0;
             zProcessModifications(prPPdb, &cnMatch, iFirstAtom, iLastAtom);
         }
 
-        zPdbBuildCoordinatesForContainer( (CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
+        rRes->iTemp = iRes;
+        zPdbBuildCoordinatesForContainer(prPPdb, (CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
 
     }
 
@@ -3389,7 +3455,7 @@ int             iChainCount=0;
 
                 /* Build geometry for everything that has not */
                 /* been build */
-    zPdbBuildCoordinatesForContainer( (CONTAINER)prPPdb->uUnit,
+    zPdbBuildCoordinatesForContainer(prPPdb, (CONTAINER)prPPdb->uUnit,
                                 &iAddH, &iAddHeavy, &iAddUnk );
 
     VP0("  total atoms in file: %d\n", nAtoms );

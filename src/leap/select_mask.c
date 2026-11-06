@@ -367,11 +367,22 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
     case SEL_NODE_RES_ATTR_CMP:
         {
             double dValue, dTemp;
+            VECTOR vPos;
             RESIDUE rRes = RESIDUE_from(cContainerWithin(atom));
             if (node->cache_object == rRes) return node->cache_result;
             switch(node->a) {
-            case RES_CHARGE: ContainerTotalCharge((CONTAINER)cContainerWithin(atom), &dValue, &dTemp );
-            default: return false; // error
+                case RES_CHARGE:
+                    ContainerTotalCharge(cContainerWithin(atom), &dValue, &dTemp);
+                case RES_POSX:
+                    vPos = vContainerGeometricCenter(cContainerWithin(atom));
+                    dValue = dVX(&vPos);
+                case RES_POSY:
+                    vPos = vContainerGeometricCenter(cContainerWithin(atom));
+                    dValue = dVY(&vPos);
+                case RES_POSZ:
+                    vPos = vContainerGeometricCenter(cContainerWithin(atom));
+                    dValue = dVZ(&vPos);
+                default: return false; // error
             }
             bool result = bCompare(dValue, node->b, node->dist);
             node->cache_object = rRes;
@@ -401,7 +412,7 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
 }
 
 FLAGS fAtomFlagNameToBit(const char *name) {
-    struct { const char *name; FLAGS flag; } flag_names[12] = {
+    struct { const char *name; FLAGS flag; } flag_names[] = {
         { "posfxd", ATOMPOSITIONFIXED },
         { "posblt", ATOMPOSITIONBUILT },
         { "posdrwn", ATOMPOSITIONDRAWN },
@@ -413,6 +424,7 @@ FLAGS fAtomFlagNameToBit(const char *name) {
         { "internal", ATOMPOSITIONINTERNAL },
         { "needsmin", ATOMNEEDSMINIMIZER },
         { "needsbuild", ATOMNEEDSBUILD },
+        { "created", ATOMCREATED },
         { NULL, 0 }
     };
     for (int i=0; flag_names[i].name; i++) {
@@ -427,11 +439,12 @@ FLAGS fAtomFlagNameToBit(const char *name) {
 }
 
 FLAGS fResFlagNameToBit(const char *name) {
-    struct { const char *name; FLAGS flag; } flag_names[7] = {
+    struct { const char *name; FLAGS flag; } flag_names[] = {
         { "unknown",RESIDUEUNKNOWN },
         { "bulksolv",RESIDUEBULKSOLVENT },
         { "incap", RESIDUEINCAP },
-        { "noend",RESIDUENOEND },
+        { "created", RESIDUECREATED },
+        { "noend",RESIDUENOEND }, // not sure if these flags get set, see comment in residue.h
         { "firstend",RESIDUEFIRSTEND },
         { "lastend",RESIDUELASTEND },
         { NULL, 0 }
@@ -444,14 +457,14 @@ FLAGS fResFlagNameToBit(const char *name) {
     VPWARN("AtomMask: '%s' is not a valid residue flag name. Known flags:\n",name);
     for (int i=0; flag_names[i].name; i++)
         VP0("   %s\n", flag_names[i].name);
-    return 0x00008000; // return a bit that cannot be matched
+    return 0; // return a value that cannot be matched
 }
 
 bool bAtomAttrNameToOffset(const char *name, size_t *offset, bool *is_real) {
     struct { const char *name; size_t offset; bool is_real; } attr_names[] = {
         { "element", offsetof(ATOMt, iAtomicNumber), false },
         { "atomserial", offsetof(ATOMt, iAtomSerial), false },
-        { "bfactor", offsetof(ATOMt, dBfactor), true },
+        { "bfactor", offsetof(ATOMt, dBFactor), true },
         { "occupancy", offsetof(ATOMt, dOccupancy), true },
         { "charge", offsetof(ATOMt, dCharge), true },
         { "pertcharge", offsetof(ATOMt, dPertCharge), true },

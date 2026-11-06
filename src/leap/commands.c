@@ -88,7 +88,6 @@
 #include        <string.h>
 
 #include        "basics.h"
-#include        "unit.h"
 #include        "vector.h"
 #include        "matrix.h"
 #include        "classes.h"
@@ -602,8 +601,11 @@ LIBRARY         ul;
     do {
         sNext = sLibraryNext( ul );
         if ( sNext != NULL ) {
+#ifdef DEBUG
             VP1("Loading: %s\n", sNext );
+#endif
             oObj = oLibraryLoad( ul, sNext );   /* comes w/ 1 REF */
+            ContainerDescribe(CONTAINER_from(oObj));
             VariableSet( sNext, oObj );         /* adds 1 REF */
             DEREF( oObj );                      /* balance REF */
 
@@ -1326,8 +1328,8 @@ oCmd_addC4Type( int iArgCount, ASSOC aaArgs[] )
     }
     C4TYPEt c4type;
     uUnit = (UNIT)oAssocObject(aaArgs[0]);
-    strcpy(c4type.a, sOString(oAssocObject(aaArgs[1]))); 
-    strcpy(c4type.b, sOString(oAssocObject(aaArgs[2]))); 
+    strcpy(c4type.a, sOString(oAssocObject(aaArgs[1])));
+    strcpy(c4type.b, sOString(oAssocObject(aaArgs[2])));
     c4type.coeff = dODouble( oAssocObject(aaArgs[3]) ) ;
     if (!uUnit->vaC4Type) uUnit->vaC4Type = vaVarArrayCreate( sizeof(C4TYPEt) );
     VarArrayAdd(uUnit->vaC4Type, (GENP) &c4type);
@@ -1732,7 +1734,7 @@ char            *sString;
 FILE            *fOut;
 
     if ( !bCmdGoodArguments( "savePdb", iArgCount, aaArgs, "u s" ) ) {
-        VPFATALDELAYEDEXIT("usage:  savePdb <object> <filename>\n" );
+        VPFATALDELAYEDEXIT("usage:  savePdb <unit> <filename>\n" );
         return NULL;
     }
     sString = sOString( oAssocObject(aaArgs[1]) );
@@ -1745,6 +1747,116 @@ FILE            *fOut;
     return NULL;
 }
 
+
+/*
+ *      oCmd_saveDisAng
+ *
+ *      Author: Juno Krahn (2026)
+ *
+ *      Save restraints as nmropt DISANG file
+ *
+ *      Arguments:
+ *              [0] -   Unit with restrants
+ *              [1] -   Name of file to save to.
+ */
+OBJEKT
+oCmd_saveDisAng( int iArgCount, ASSOC aaArgs[] )
+{
+char            *sString;
+FILE            *fOut;
+UNIT            uUnit;
+BAGLOOP         blRestraint;
+RESTRAINT       rRest;
+
+    if ( !bCmdGoodArguments( "saveDisAng", iArgCount, aaArgs, "u s" ) ) {
+        VPFATALDELAYEDEXIT("usage:  saveDisAng <unit> <filename>\n" );
+        return NULL;
+    }
+    uUnit = UNIT_from(oAssocObject(aaArgs[0]));
+    if (!iBagSize(uUnit->bRestraints)) {
+        VP0("UNIT %s has no restraints defined, file not written\n",sContainerName(uUnit));
+        return NULL;
+    }
+    sString = sOString( oAssocObject(aaArgs[1]) );
+    fOut = FOPENCOMPLAIN( sString, "w" );
+    if ( fOut == NULL ) return NULL;
+    VP0("Writing DISANG file: %s\n", sString);
+    // Label all atoms with index
+    RESIDUE rRes;
+    ATOM aAtom;
+    int i=0;
+    LOOPOVERALL(uUnit, (GDefaults.bReorderResidues ?
+            DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM),
+            rRes, lResidues) {
+        LOOPOVERALL(rRes, GDefaults.bReorderResidues ?
+                DIRECTCONTENTSPARMORDER : DIRECTCONTENTSBYSEQNUM,
+                aAtom , lAtoms) {
+            ContainerSetTempInt(aAtom, ++i);
+        }
+    }
+    blRestraint = blBagLoop(uUnit->bRestraints);
+    // NOTE: RESTRAINT Flags property is never set anywhere (incomplete code for PERTURB/BIUNDARY flags)
+    while ((rRest = RESTRAINT_from(PBagNext(&blRestraint)))) {
+        ATOM aAtom1, aAtom2, aAtom3, aAtom4;
+        STRING s1,s2,s3,s4;
+        double dKx,dX0;
+        int iN;
+        switch (iRestraintType(rRest)) {
+        case RESTRAINTBOND:
+            RestraintBondGet(rRest, &aAtom1, &aAtom2, &dKx, &dX0);
+            fprintf(fOut,"&rst iat=%d,%d, r1=0.0,r2=%.3f,r3=%.3f,r4=999.0,"
+                    "rk2=%.1f,rk3=%.1f, &end ! bond %s - %s\n", 
+                    iContainerTempInt(aAtom1),
+                    iContainerTempInt(aAtom2),
+                    dX0,dX0,dKx,dKx,
+                    sFullDescriptor(aAtom1, s1),
+                    sFullDescriptor(aAtom2, s2));
+            break;
+        case RESTRAINTANGLE:
+            RestraintAngleGet(rRest, &aAtom1, &aAtom2, &aAtom3, &dKx, &dX0);
+            dX0 *= RADTODEG;
+            fprintf(fOut,"&rst iat=%d,%d,%d, r1=%.1f,r2=%.1f,r3=%.1f,r4=%.1f,"
+                    "rk2=%.1f,rk3=%.1f, &end ! angle %s - %s - %s\n", 
+                    iContainerTempInt(aAtom1),
+                    iContainerTempInt(aAtom2),
+                    iContainerTempInt(aAtom3),
+                    dX0-180.0,dX0,dX0,dX0+180.0,dKx,dKx,
+                    sFullDescriptor(aAtom1, s1),
+                    sFullDescriptor(aAtom2, s2),
+                    sFullDescriptor(aAtom3, s3));
+            break;
+        case RESTRAINTTORSION:
+            RestraintTorsionGet(rRest, &aAtom1, &aAtom2, &aAtom3, &aAtom4, &dKx, &dX0, &iN);
+            if (iN) {
+                VPWARN("Invalid torsion restraint: %s - %s - %s - %s = %.1f,%.1f,%d\n"
+                       "DISANG does not support periodic torsions, multiplicity must be zero.\n",
+                        sFullDescriptor(aAtom1, s1),
+                        sFullDescriptor(aAtom2, s2),
+                        sFullDescriptor(aAtom3, s3),
+                        sFullDescriptor(aAtom4, s4),
+                        dKx, dX0, iN);
+                break;
+            }
+            dX0 *= RADTODEG;
+            fprintf(fOut,"&rst iat=%d,%d,%d,%d r1=%.1f,r2=%.1f,r3=%.1f,r4=%.1f,"
+                    "rk2=%.1f,rk3=%.1f, &end ! torsion %s - %s - %s - %s\n", 
+                    iContainerTempInt(aAtom1),
+                    iContainerTempInt(aAtom2),
+                    iContainerTempInt(aAtom3),
+                    iContainerTempInt(aAtom3),
+                    dX0-180.0,dX0,dX0,dX0+180.0,dKx,dKx,
+                    sFullDescriptor(aAtom1, s1),
+                    sFullDescriptor(aAtom2, s2),
+                    sFullDescriptor(aAtom3, s3),
+                    sFullDescriptor(aAtom4, s4));
+            break;
+        default:
+            DFATAL("Invalid restraint type!");
+        }
+    }
+    fclose( fOut );
+    return NULL;
+}
 
 /*
  *      oCmd_saveMol2
@@ -4171,7 +4283,7 @@ LISTLOOP llElements;
             }
             if ( !bObjectInClass( oElement, CONTAINERid ) ) {
                 VPFATALEXIT("Cannot delete %s - not a 'container'\n"
-                        "\ttype %s\n", 
+                        "\ttype %s\n",
                          (iObjectType(oElement)==ASSOCid ? sAssocName(aAssoc) : "object"),
                          sObjectType(oElement) );
                 continue;
@@ -4200,7 +4312,7 @@ oCmd_delete( int iArgCount, ASSOC aaArgs[] )
     OBJEKT oObject = oAssocObject(aaArgs[0]);
     if (iObjectType(oObject)==UNITid)
         VariableRemove( sAssocName(aaArgs[0]) );
-    else 
+    else
         DeleteObject(oObject);
 
     return NULL;
@@ -4728,6 +4840,23 @@ oCmd_addPath( int iArgCount, ASSOC aaArgs[] )
 }
 
 
+
+OBJEKT
+oCmd_addAuxParamDef( int iArgCount, ASSOC aaArgs[] )
+{
+    if ( !bCmdGoodArguments( "addAuxParamDef", iArgCount, aaArgs, "s s s" ) ) {
+         VPFATALDELAYEDEXIT("usage:  addAuxParamDef <section> <key> <name>\n" );
+         return NULL;
+    }
+    PARMAUXDEFt def;
+    strcpy(def.sSection, sOString(oAssocObject(aaArgs[0])));
+    strcpy(def.sKey, sOString(oAssocObject(aaArgs[1])));
+    strcpy(def.sName, sOString(oAssocObject(aaArgs[2])));
+    if (!GplDefaultParmLib->vaAuxParamDefs) GplDefaultParmLib->vaAuxParamDefs = vaVarArrayCreate( sizeof(PARMAUXDEFt) );
+    printf("size=%d, p = %p\n",(int)sizeof(PARMAUXDEFt) ,GplDefaultParmLib->vaAuxParamDefs);
+    VarArrayAdd(GplDefaultParmLib->vaAuxParamDefs, (GENP)&def);
+    return NULL;
+}
 
 
 /*
@@ -7072,8 +7201,11 @@ UNIT        uUnit;
 LOOP        lAtoms;
 ATOM        aAtom;
 
+    if ( !bCmdGoodArguments( "flip", iArgCount, aaArgs, "u" ) ) {
+          VPFATALDELAYEDEXIT("usage:  flip <unit>\n" );
+          return NULL;
+    }
     uUnit = UNIT_from(oAssocObject(aaArgs[0]));
-    if ( uUnit == NULL ) return NULL;
 
     lAtoms = lLoop(OBJEKT_from( uUnit), ATOMS );
     while ( (aAtom = ATOM_from(oNext(&lAtoms)))) {
@@ -7081,7 +7213,6 @@ ATOM        aAtom;
             bBuildFlipChiralityFor(CONTAINER_from( uUnit), aAtom );
         }
     }
-
 
     return NULL;
 }
@@ -7099,9 +7230,12 @@ oCmd_relax(int iArgCount, ASSOC aaArgs[])
 {
 MINIMIZER       mStrain;
 UNIT            uUnit;
+    if ( !bCmdGoodArguments( "relax", iArgCount, aaArgs, "u" ) ) {
+          VPFATALDELAYEDEXIT("usage:  relax <unit>\n" );
+          return NULL;
+    }
 
     uUnit = UNIT_from(oAssocObject(aaArgs[0]));
-    if ( uUnit == NULL ) return NULL;
 
         /* Setup a MINIMIZER and give it a callback to use */
         /* to update the display every step of the minimization */
@@ -7131,9 +7265,12 @@ ATOM            aAtom, aStart;
 UNIT            uUnit;
 int             iDum;
 
+    if ( !bCmdGoodArguments( "addH", iArgCount, aaArgs, "u" ) ) {
+          VPFATALDELAYEDEXIT("usage:  addH <unit>\n" );
+          return NULL;
+    }
     DisplayerAccumulateUpdates();
     uUnit = UNIT_from(oAssocObject(aaArgs[0]));
-    if ( uUnit == NULL ) return NULL;
 
         /* Add hydrogens */
 
@@ -7190,6 +7327,28 @@ int             iDum;
     return NULL;
 }
 
+// TODO: build rotamers using CHI tables.
+// for each torsion, measuer torsion with: dTorsion = dVectorAtomTorsion()
+// Then modify with delta: BuildRotateAroundBondFromTo()
+//> addRotamer resName rotamerName percent chi1 chi2 ...
+
+
+#if 0
+OBJEKT
+oCmd_rebuild(int iArgCount, ASSOC aaArgs[])
+{
+RESIDUE         rResidue;
+    if ( !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "r" ) ) {
+          VPFATALDELAYEDEXIT("usage:  rebuild <residue>\n" );
+          return NULL;
+    }
+    rResidue = UNIT_from(oAssocObject(aaArgs[0]));
+
+        /* Add hydrogens */
+
+    ModelAddHydrogens( uUnit );
+#endif
+
 
 COMMANDt        cCommands[] = {
 
@@ -7204,6 +7363,7 @@ COMMANDt        cCommands[] = {
         { "addPdbAtomMap",      oCmd_addPdbAtomMap },
         { "addPdbResMap",       oCmd_addPdbResMap },
         { "addAtomTypes",       oCmd_addAtomTypes },
+        { "addAuxParamDef",     oCmd_addAuxParamDef },
         { "alias",              oCmd_alias },
         { "alignAxes",          oCmd_alignAxes },
         { "bond",               oCmd_bond },
@@ -7276,6 +7436,7 @@ COMMANDt        cCommands[] = {
         { "saveOff",            oCmd_saveOff},
         { "saveOffParm",        oCmd_saveOffParm },
         { "savePdb",            oCmd_savePdb },
+        { "saveDisAng",         oCmd_saveDisAng },
         { "scaleCharges",       oCmd_scaleCharges },
         { "scaleCoor",          oCmd_scaleCoor },
         { "select",             oCmd_select },

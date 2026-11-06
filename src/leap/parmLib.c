@@ -35,7 +35,6 @@
 PARMLIB	GplDefaultParmLib = NULL;
 
 
-
 /*
  *================================================================
  *
@@ -87,7 +86,7 @@ plParmLibCreate()
 {
 PARMLIB     plTemp;
 
-    plTemp = (PARMLIB)MALLOC(sizeof(PARMLIBt) );
+    plTemp = (PARMLIB)CALLOC(sizeof(PARMLIBt) );
 
     plTemp->lParmSets = (LIST)oCreate(LISTid);
     return plTemp;
@@ -111,6 +110,7 @@ PARMSET		psSet;
 	ParmSetDestroy( &psSet );
     }
     Destroy( (OBJEKT *)&((*plPLib)->lParmSets) );
+    if ((*plPLib)->vaAuxParamDefs) VarArrayDestroy(&(*plPLib)->vaAuxParamDefs);
     FREE( *plPLib );
     *plPLib = NULL;
 }

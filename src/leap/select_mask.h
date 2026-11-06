@@ -54,9 +54,15 @@ typedef enum {
     SEL_NODE_DIST_BEYOND_MOL,
 } SELNODEKINDt;
 
-typedef enum { OP_EQ, OP_NE, OP_LT, OP_LE, OP_GT, OP_GE } SEL_CMP_OPt;
+typedef enum {
+    OP_EQ, OP_NE, OP_LT,
+    OP_LE, OP_GT, OP_GE
+} SEL_CMP_OPt;
 
-typedef enum { RES_INVALID=0, RES_CHARGE, RES_POSX, RES_POSY, RES_POSZ } RES_ATTRt;
+typedef enum { RES_INVALID=0,
+    RES_CHARGE,
+    RES_POSX, RES_POSY, RES_POSZ
+} RES_ATTRt;
 
 typedef struct SELNODEt SELNODEt;
 typedef SELNODEt *SELNODE;

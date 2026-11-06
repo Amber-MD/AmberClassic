@@ -80,6 +80,7 @@
 #define	RESIDUEPERM	0x0000FFFF
 #define RESIDUEUNKNOWN  0x00000001
 #define RESIDUEBULKSOLVENT 0x00000002
+#define RESIDUECREATED  0x00000004
 
 // These are not used in residue, for fGetPdbResMapped()
 #define RESIDUENOEND    0x00000008
@@ -107,8 +108,7 @@ typedef struct RESIDUESTRUCT {
 	char		cICode;      // alphabetic or blank=' '
 	VARARRAY	vaImpropers;
 	double		dTemp;
-	int		iTemp; // do we need this? only used for default resSeq
-                               // parent already has iTempInt
+	int		iTemp;
 	int		iMolecule;
 } RESIDUEt;
 

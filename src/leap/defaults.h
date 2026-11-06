@@ -12,10 +12,11 @@ typedef struct {
 	bool	pdbwritecharges;
 	bool    bNoCenter;
 	bool    bReorderResidues;
-	bool    bReorderMolecules;
+	int     iMolecules;
 	bool    bOrigCMAPOrder;
         bool    bRandomOrientation;
         bool    bOldPrmtopFormat;
+        bool    bPrmtopRestraints;
         double  dPrmtopFormat;
 	double	dGridSpace;
 	double	dShellExtent;
@@ -76,5 +77,13 @@ extern char *PBRadii_options[], *PBRadii_optionDesc[];
 #define GBPARM_SIRAH 5
 #define GBPARM_PARSE 6
 #define GBPARM_MAX 6
+
+#define PDB_RESNAME_STANDARD 0
+#define PDB_RESNAME_KEEP 1
+#define PDB_RESNAME_VARIANT 2
+
+#define MOLECULES_DEFAULT 0
+#define MOLECULES_REORDER 1
+#define MOLECULES_CONTIGUOUS 2
 
 #endif
