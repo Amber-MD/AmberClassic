@@ -267,10 +267,10 @@ static void print_help(void) {
         "\033[34m                      4 or parm10: \033[0m parm10\n"
         "\033[34m                      5 or lipid14:\033[0m lipid14\n"
         "\033[34m                      6 or glycam: \033[0m GLYCAM_06j\n"
-        "\033[31m                -frc \033[0m frcmod files to load; supported names:\n"
-        "\033[31m                     \033[0m ff99SB, ff14SB, ff03 for proteins\n"
-        "\033[31m                     \033[0m bsc1, ol15, ol3 for DNA; yil for RNA\n"
-        "\033[31m                     \033[0m eg. ff14SB+bsc1+yil, ff99SB+bsc1\n"
+        "\033[31m                -frc \033[0m frcmod.<name> files to load; supported names and aliases:\n"
+        "\033[31m                     \033[0m ff99SB, ff14SB, ff19SB, ff03, fb15 for proteins;\n"
+        "\033[31m                     \033[0m bsc1, ol15, ol21, ol24 for DNA; and ol3(RNA.OL3), roc, yil(CHI_YIL), shaw, LJbb for RNA\n"
+        "\033[31m                     \033[0m eg. ff14SB,bsc1,yil, ff99SB+bsc1\n"
         "\033[31m                -p   \033[0m parmfile, suppresses -s, optional\n"
         "\033[31m                -pf  \033[0m parmfile format\n"
         "\033[34m                      1:\033[0m amber FF data file (the default)\n"
@@ -300,7 +300,7 @@ static void print_help(void) {
         "\033[34m                      1:\033[0m summary/brief\n"
         "\033[34m                      2:\033[0m verbose info\n";
 
-    int color=(!strcmp(COLORTEXT,"YES")||!strcmp(COLORTEXT,"yes"));
+    int color=(!strcasecmp(COLORTEXT,"yes"));
     if (color) printf("%s",help); else strip_ansi_and_print(help);
 }
 
@@ -395,73 +395,45 @@ void improper_id1(char *filename) {
     char   t1[MAXCHAR], t2[MAXCHAR], t3[MAXCHAR], t4[MAXCHAR];
     char line[MAXCHAR];
 
-	if ((fpin = fopen(filename, "r")) == NULL) {
-		fprintf(stdout, "Cannot open file %s in improper_id1(), exit\n", filename);
-		exit(1);
-	}
-	readindex = 0;
-	for (;;) {
-		if (fgets(line, MAXCHAR, fpin) == NULL)
-			break;
-		sscanf(line, "%s", tmpchar1);
-		if (strcmp("IMPROPER", tmpchar1) == 0) {
-			readindex = 1;
-			continue;
-		}
-		if (spaceline(line) == 1 && readindex == 1)
-			readindex = 0;
-		if (strcmp(tmpchar1, "DONE") == 0 && readindex == 1)
-			readindex = 0;
-		if (strcmp(tmpchar1, "STOP") == 0 && readindex == 1)
-			readindex = 0;
-		if (strcmp(tmpchar1, "CHARGE") == 0 && readindex == 1)
-			readindex = 0;
-		if (strcmp(tmpchar1, "LOOP") == 0 && readindex == 1)
-			readindex = 0;
-		if (strcmp(tmpchar1, "IMPROPER") == 0 && readindex == 1)
-			readindex = 0;
-
-		if (readindex == 1) {
-			sscanf(line, "%s%s%s%s", tmpchar1, tmpchar2, tmpchar3,
-				   tmpchar4);
-			if (strcmp(tmpchar1, "-M") == 0)
-				continue;
-			if (strcmp(tmpchar2, "-M") == 0)
-				continue;
-			if (strcmp(tmpchar3, "-M") == 0)
-				continue;
-			if (strcmp(tmpchar4, "-M") == 0)
-				continue;
-			if (strcmp(tmpchar1, "+M") == 0)
-				continue;
-			if (strcmp(tmpchar2, "+M") == 0)
-				continue;
-			if (strcmp(tmpchar3, "+M") == 0)
-				continue;
-			if (strcmp(tmpchar4, "+M") == 0)
-				continue;
-			for (i = 0; i < atomnum; i++) {
-				if (strcmp(tmpchar1, atom[i].name) == 0) {
-					improper[impropernum].atid1 = i;
-					continue;
-				}
-				if (strcmp(tmpchar2, atom[i].name) == 0) {
-					improper[impropernum].atid2 = i;
-					continue;
-				}
-				if (strcmp(tmpchar3, atom[i].name) == 0) {
-					improper[impropernum].atid3 = i;
-					continue;
-				}
-				if (strcmp(tmpchar4, atom[i].name) == 0) {
-					improper[impropernum].atid4 = i;
-					continue;
-				}
-			}
-			impropernum++;
-		}
-	}
-	fclose(fpin);
+    if ((fpin = fopen(filename, "r")) == NULL) {
+        fprintf(stdout, "Cannot open %s in improper_id1(), exit\n", filename);
+        exit(1);
+    }
+    while (fgets(line, MAXCHAR, fpin)) {
+        sscanf(line, "%s", t1);
+        if (!strcmp("IMPROPER", t1)) { readindex = 1; continue; }
+        if (readindex == 1) {
+            if (spaceline(line) == 1      || !strcmp(t1, "DONE")   ||
+                !strcmp(t1, "STOP")       || !strcmp(t1, "CHARGE") ||
+                !strcmp(t1, "LOOP")       || !strcmp(t1, "IMPROPER"))
+                { readindex = 0; continue; }
+            sscanf(line, "%s%s%s%s", t1, t2, t3, t4);
+            if (!strcmp(t1,"-M")||!strcmp(t2,"-M")||!strcmp(t3,"-M")||!strcmp(t4,"-M")) continue;
+            if (!strcmp(t1,"+M")||!strcmp(t2,"+M")||!strcmp(t3,"+M")||!strcmp(t4,"+M")) continue;
+            printf("IMPR(%s,%s,%s,%s) FIXME!!!\n", t1, t2, t3, t4);
+            for (int i = 0; i < atomnum; i++) {
+                if (!strcmp(t1, atom[i].name)) { strcpy(t1, atom[i].ambername); improper[impropernum].atid1 = i; continue; }
+                if (!strcmp(t2, atom[i].name)) { strcpy(t2, atom[i].ambername); improper[impropernum].atid2 = i; continue; }
+                if (!strcmp(t3, atom[i].name)) { strcpy(t3, atom[i].ambername); improper[impropernum].atid3 = i; continue; }
+                if (!strcmp(t4, atom[i].name)) { strcpy(t4, atom[i].ambername); improper[impropernum].atid4 = i; continue; }
+            }
+            impropernum++;
+        }
+    }
+    fclose(fpin);
+}
+void improper_id2(void) {
+    impropernum = 0;
+    for (int i = 0; i < atomnum; i++)
+        if (atom[i].improper == 1) {
+            if (atom[i].con[0] < 0 || atom[i].con[1] < 0 || atom[i].con[2] < 0)
+                continue;
+            improper[impropernum].atid3 = i;
+            improper[impropernum].atid1 = atom[i].con[0];
+            improper[impropernum].atid2 = atom[i].con[1];
+            improper[impropernum].atid4 = atom[i].con[2];
+            impropernum++;
+        }
 }
 
 /*========================================================================
@@ -1414,6 +1386,7 @@ static void frcmod_parse(const char *filename, FrcmodMode mode) {
 void rfrcmod(char *filename, int read_mode) {
     frcmod_parse(filename, read_mode ? FRCMOD_READ_R : FRCMOD_COUNT);
 }
+
 void readfrcmod(char *filename) {
     frcmod_parse(filename, FRCMOD_READ_MAIN);
 }
@@ -1828,7 +1801,6 @@ void cleanup_frcmod(char *filename) {
 }
 
 
-
 /*========================================================================
  * chk_atomtype_core / chk_atomtype
  *======================================================================*/
@@ -1994,7 +1966,7 @@ static int torsion_find(const char *c1, const char *c2,
 
 /* print_torsion: output one torsion entry, handles fterm<0 chains */
 static void print_torsion(int tid, const char *n1, const char *n2,
-                           const char *n3, const char *n4, double sc) {
+                           const char *n3, const char *n4, double sc, bool wc_match) {
     while (torsionparm[tid].fterm<0){
         fprintf(fpout,"%-2s-%-2s-%-2s-%-2s%4d%9.3lf%14.3lf%16.3lf"
                 "      same as %-2s-%-2s-%-2s-%-2s\n",
@@ -2012,11 +1984,13 @@ static void print_torsion(int tid, const char *n1, const char *n2,
         tid++;
     }
     fprintf(fpout,"%-2s-%-2s-%-2s-%-2s%4d%9.3lf%14.3lf%16.3lf"
-            "      same as %-2s-%-2s-%-2s-%-2s, penalty score=%5.1lf\n",
+            "      same as %-2s-%-2s-%-2s-%-2s",
             n1,n2,n3,n4,torsionparm[tid].mul,torsionparm[tid].force,
             torsionparm[tid].phase,torsionparm[tid].fterm,
             torsionparm[tid].name1,torsionparm[tid].name2,
-            torsionparm[tid].name3,torsionparm[tid].name4,sc);
+            torsionparm[tid].name3,torsionparm[tid].name4);
+    if (wc_match && sc==0) fprintf(fpout," (general term)\n");
+    else fprintf(fpout,", penalty score=%5.1lf\n",sc);
     torsionparm[torsionparmnum]=torsionparm[tid];
     strcpy(torsionparm[torsionparmnum].name1,n1);
     strcpy(torsionparm[torsionparmnum].name2,n2);
@@ -2575,7 +2549,15 @@ void chk_torsion_core(TorsionQuery *queries, int nqueries) {
             }
         }
         if (suc&&besttorid>=0){
-            print_torsion(besttorid,name1,name2,name3,name4,bestscore);
+            int is_wc_dup=(
+                strcmp(torsionparm[besttorid].name1,"X")==0 &&
+                strcmp(torsionparm[besttorid].name4,"X")==0 &&
+                ((strcmp(torsionparm[besttorid].name2,name2)==0 &&
+                  strcmp(torsionparm[besttorid].name3,name3)==0) ||
+                 (strcmp(torsionparm[besttorid].name2,name3)==0 &&
+                  strcmp(torsionparm[besttorid].name3,name2)==0)));
+            print_torsion(besttorid,name1,name2,name3,name4,bestscore,
+                          is_wc_dup?" (wildcard duplicate)":NULL);
             besttorid=-1; continue;
         }
 
@@ -2586,7 +2568,7 @@ void chk_torsion_core(TorsionQuery *queries, int nqueries) {
             if (idx>=0){
                 VLOG(1,"  -> X-%s-%s-X exact match\n",name2,name3);
                 if (allparm_flag)
-                    print_torsion(idx,name1,name2,name3,name4,0.0);
+                    print_torsion(idx,name1,name2,name3,name4,0.0,NULL);
                 else {
                     torsionparm[torsionparmnum]=torsionparm[idx];
                     strcpy(torsionparm[torsionparmnum].name1,name1);
@@ -2621,7 +2603,15 @@ void chk_torsion_core(TorsionQuery *queries, int nqueries) {
             }
         }
         if (suc&&besttorid>=0){
-            print_torsion(besttorid,name1,name2,name3,name4,bestscore);
+            int is_wc_dup=(
+                strcmp(torsionparm[besttorid].name1,"X")==0 &&
+                strcmp(torsionparm[besttorid].name4,"X")==0 &&
+                ((strcmp(torsionparm[besttorid].name2,name2)==0 &&
+                  strcmp(torsionparm[besttorid].name3,name3)==0) ||
+                 (strcmp(torsionparm[besttorid].name2,name3)==0 &&
+                  strcmp(torsionparm[besttorid].name3,name2)==0)));
+            print_torsion(besttorid,name1,name2,name3,name4,bestscore,
+                          is_wc_dup?" (wildcard duplicate)":NULL);
             besttorid=-1; continue;
         }
 
@@ -2681,7 +2671,7 @@ void chk_torsion_core(TorsionQuery *queries, int nqueries) {
                          torsionparm[best[r].idx].name1,torsionparm[best[r].idx].name2,
                          torsionparm[best[r].idx].name3,torsionparm[best[r].idx].name4,
                          best[r].score,r);
-                print_torsion(best[0].idx,name1,name2,name3,name4,best[0].score);
+                print_torsion(best[0].idx,name1,name2,name3,name4,best[0].score,NULL);
                 for (int r=1;r<nbest;r++){
                     int ai=best[r].idx;
                     fprintf(fpout,"# alt[%d]: %2s-%2s-%2s-%2s%4d%9.3lf%14.3lf%16.3lf, score=%5.1lf\n",
@@ -2733,7 +2723,7 @@ void chk_torsion_core(TorsionQuery *queries, int nqueries) {
                     VLOG(1,"     X-%s-%s-X penalty=%.1f (alt %d)\n",
                          torsionparm[best[r].idx].name2,torsionparm[best[r].idx].name3,
                          best[r].score,r);
-                print_torsion(best[0].idx,name1,name2,name3,name4,best[0].score);
+                print_torsion(best[0].idx,name1,name2,name3,name4,best[0].score,NULL);
                 for (int r=1;r<nbest;r++){
                     int ai=best[r].idx;
                     fprintf(fpout,"# alt[%d]: X-%2s-%2s-X%4d%9.3lf%14.3lf%16.3lf, score=%5.1lf\n",
@@ -2783,6 +2773,7 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
         pid1=get_pid(q->atid1,name1); pid2=get_pid(q->atid2,name2);
         pid3=get_pid(q->atid3,name3); pid4=get_pid(q->atid4,name4);
         int ipm_lim=(iformat<=FILETYPE_MOL2)?improperparmnum:improperparmnum2;
+        int impr_general=0;  /* set when matched via X wildcard */
 
 /*	step 1 check directly	*/
         suc=0;
@@ -2868,7 +2859,8 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
                                 score3=(!strcmp(improperparm[kk].name3,"X"))?wt.X3:0;
                                 score4=(!strcmp(improperparm[kk].name4,"X"))?wt.X:0;
                                 score=score1+score2+score3+score4;
-                                if (score<bestscore){ bestimproperid=kk; bestscore=score; suc=1; }
+                                if (score<bestscore){ bestimproperid=kk; bestscore=score; suc=1;
+                                    impr_general=1; }
                                 break;
                             }
                         }
@@ -2946,7 +2938,8 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
                                 if (!strcmp(improperparm[kk].name2,"X")) score+=wt.X;
                                 if (!strcmp(improperparm[kk].name3,"X")) score+=wt.X3;
                                 if (!strcmp(improperparm[kk].name4,"X")) score+=wt.X;
-                                if (score<bestscore){ bestimproperid=kk; bestscore=score; suc=1; }
+                                if (score<bestscore){ bestimproperid=kk; bestscore=score; suc=1;
+                                    impr_general=1; }
                                 break;
                             }
                         }
@@ -2956,6 +2949,7 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
         }
         if (suc&&bestimproperid>=0) goto improper_output;
 
+        /* no match found — use default */
         fprintf(fpout,"%-2s-%-2s-%-2s-%-2s %11.1lf%15.1lf%12.1lf"
                 "          Using the default value\n",
                 name1,name2,name3,name4,1.1,180.0,2.0);
@@ -2970,15 +2964,8 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
         GROW_ARRAY(improperparm,improperparmnum,maximproperparm,MAX_FF_IMPROPER,IMPROPER);
         continue;
 
-    improper_output:
-        if (output_improper_flag||allparm_flag) {
-            int impr_general= (
-                    !strcmp(improperparm[bestimproperid].name1,"X") ||
-                    !strcmp(improperparm[bestimproperid].name2,"X") ||
-                    !strcmp(improperparm[bestimproperid].name3,"X") ||
-                    !strcmp(improperparm[bestimproperid].name4,"X") );
-            fprintf(fpout,"%-2s-%-2s-%-2s-%-2s %11.1lf%15.1lf%12.1lf          "
-                          "Same as %-2s-%-2s-%-2s-%-2s, penalty score=%5.1lf%s\n",
+    improper_output:        if (output_improper_flag||allparm_flag) {
+            fprintf(fpout,"%-2s-%-2s-%-2s-%-2s %11.1lf%15.1lf%12.1lf          Same as %-2s-%-2s-%-2s-%-2s",
                     name1,name2,name3,name4,
                     improperparm[bestimproperid].force,
                     improperparm[bestimproperid].phase,
@@ -2986,8 +2973,9 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
                     improperparm[bestimproperid].name1,
                     improperparm[bestimproperid].name2,
                     improperparm[bestimproperid].name3,
-                    improperparm[bestimproperid].name4,
-                    bestscore, impr_general ? " (general term)":"");
+                    improperparm[bestimproperid].name4);
+            if (impr_general && bestscore==0) fprintf(fpout," (general term)\n");
+            else fprintf(fpout,", penalty score=%5.1lf\n",bestscore);
         }
         strcpy(improperparm[improperparmnum].name1,name1);
         strcpy(improperparm[improperparmnum].name2,name2);
@@ -3004,7 +2992,7 @@ void chk_improper_core(ImproperQuery *queries, int nqueries) {
 
 char *assemble_command_line(int argc, char *argv[]) {
     const size_t max_len = 1024; // must be <= leap MAXSTRINGLENGTH
-    char *prefix = "ParmChk2("  ") ";
+    char *prefix = "ParmChk2(" AMBER_VERSION ") ";
 
     if (argc <= 0 || argv == NULL) return NULL;
 
@@ -3056,6 +3044,7 @@ typedef enum {
 } OptKey;
 
 typedef struct { const char *flag; OptKey key; } OptEntry;
+
 static const OptEntry opt_table[]={
     {"-i",OPT_I},{"-o",OPT_O},{"-f",OPT_F},{"-s",OPT_S},{"-p",OPT_P},
     {"-pf",OPT_PF},{"-c",OPT_C},{"-a",OPT_A},{"-w",OPT_W},{"-fc",OPT_FC},
@@ -3063,18 +3052,67 @@ static const OptEntry opt_table[]={
     {"-v",OPT_V},{"-icor",OPT_ICOR},{"-multi",OPT_MULTI},
     {NULL,OPT_UNKNOWN}
 };
+
 static OptKey find_opt(const char *arg) {
     for (const OptEntry *e=opt_table;e->flag;e++)
         if (!strcmp(arg,e->flag)) return e->key;
     return OPT_UNKNOWN;
 }
 
-static const struct { const char *key; const char *file; } frcmod_table[]={
-    {"ff14SB","frcmod.ff14SB"},{"ff99SB","frcmod.ff99SB"},{"ff03","frcmod.ff03"},
-    {"bsc1","frcmod.parmbsc1"},{"ol15","frcmod.DNA.OL15"},
-    {"ol3","frcmod.RNA.OL3"},{"yil","frcmod.parmCHI_YIL"},
-    {NULL,NULL}
-};
+/* Resolve one frcmod_id to a filename, trying both path patterns.
+ * Returns true on success (path in out), false on failure. */
+static void resolve_frcmod_path(const char *token, const char *frcmod_id, char *out, size_t outsz) {
+    build_path(out, "/dat/leap/parm/frcmod.", frcmod_id, outsz, 0);
+    if (access(out, F_OK) == 0) return;
+    build_path(out, "/dat/leap/parm/frcmod.parm", frcmod_id, outsz, 0);
+    if (access(out, F_OK) == 0) return;
+    build_path(out, "/dat/leap/parm/", frcmod_id, outsz, 0);
+    if (access(out, F_OK) == 0) return;
+    fprintf(stderr, "Error: could not find frcmod file for '%s' "
+                    "(tried \"frcmod.%s\", \"frcmod.parm%s\" and \"%s\")\n",
+                    token, frcmod_id, frcmod_id, frcmod_id);
+    exit(1);
+}
+
+/* Parse frcmod_str into tokens delimited by '+' or ',', resolve each, and load it. */
+static void process_frcmod_tokens(const char *frcmod_str) {
+    static const struct { const char *alias; const char *frcmod_id; } alias_table[] = {
+        {"ol15", "DNA.OL15"},
+        {"ol3",  "RNA.OL3"},
+        {"LJbb",  "RNA.LJbb"},
+        {"ol21", "ff-nucleic-OL21.frcmod"},
+        {"ol24", "ff-nucleic-OL24.frcmod"},
+        {"roc",  "ROC-RNA_const"}, // also "ROC-RNA" special case see below
+        {"yil",  "CHI_YIL"},
+        {NULL, NULL}
+    };
+    if (!frcmod_str[0]) return;
+
+    char buf[MAXCHAR];
+    snprintf(buf, sizeof buf, "%s", frcmod_str);
+
+    char *saveptr = NULL, *tok;
+    for (tok = strtok_r(buf, "+,", &saveptr); tok != NULL;
+            tok = strtok_r(NULL, "+,", &saveptr)) {
+        const char *frcmod_id = tok;
+        for (int i = 0; alias_table[i].alias; i++) {
+            if (strcmp(tok, alias_table[i].alias) == 0) {
+                frcmod_id = alias_table[i].frcmod_id;
+                break;
+            }
+        }
+        char frcmod_filename[MAXCHAR];
+        resolve_frcmod_path(tok, frcmod_id, frcmod_filename, sizeof frcmod_filename);
+        readfrcmod(frcmod_filename);
+        update_last_counts();
+        if (!strcmp(tok,"roc")) {
+            build_path(frcmod_filename, "/dat/leap/parm/",
+                "frcmod.ROC-RNA", sizeof frcmod_filename, 0);
+            readfrcmod(frcmod_filename);
+            update_last_counts();
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
     int overflow_flag=0;
@@ -3086,7 +3124,7 @@ int main(int argc, char *argv[]) {
     minfo.connect_file[0]='\0';
     build_dat_path(minfo.connect_file,"CONNECT.TPL",sizeof minfo.connect_file,0);
 
-    if (argc==2&&(!strcmp(argv[1],"-l")||!strcmp(argv[1],"-L"))){
+    if (argc==2&&(!strcasecmp(argv[1],"-l"))){
         printf("\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
         printf("Format of Additional PARMCHK ATCS file\n");
         printf("# Each atom type starts with \"PARM\" in the first four columns.\n");
@@ -3253,14 +3291,7 @@ int main(int argc, char *argv[]) {
         build_ext_corr();
     }
 
-    if (frcmod_str[0])
-        for (int fi=0;frcmod_table[fi].key;fi++)
-            if (strstr(frcmod_str,frcmod_table[fi].key)){
-                build_path(frcmod_filename,"/dat/leap/parm/",
-                           frcmod_table[fi].file,sizeof frcmod_filename,0);
-                readfrcmod(frcmod_filename);
-                update_last_counts();
-            }
+    process_frcmod_tokens(frcmod_str);
 
     if (additional_frcmod_file[0]){
         afrcmod_atomtypenum_beg=atomtypenum; afrcmod_bondparmnum_beg=bondparmnum;

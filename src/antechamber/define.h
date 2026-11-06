@@ -1,7 +1,8 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
-const char *const ANTECHAMBER_VERSION = "26aug26" ;
+# define AMBER_VERSION "3.0"
+const char *const ANTECHAMBER_VERSION = AMBER_VERSION ;
 
 # define COLORTEXT "YES"
 # define REDUCEFACTOR 1
