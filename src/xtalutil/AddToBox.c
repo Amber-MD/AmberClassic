@@ -280,8 +280,10 @@ int main(int argc, char* argv[])
   nfail = 0;
   for (i = 0; i < N; i++) {
 
-    fprintf(stderr, "\rAddToBox >> Examining residue %7d", i);
-    fflush(stderr);
+    if( i % 100 == 0 ){
+       fprintf(stderr, "\rAddToBox >> Examining residue %7d", i);
+       fflush(stderr);
+    }
                                      
     /*** Pointer to oxygen coordinates ***/
     placed = 0;
