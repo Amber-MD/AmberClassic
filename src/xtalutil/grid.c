@@ -155,7 +155,7 @@ int BiColorGrid(bgrid tg, double* crds, int natm, dmat U, dmat invU,
 
   for (h = 0; h < natm; h++) {
 
-    if (h % 1024 == 0 && updateUser == 1) {
+    if (h % 10000 == 0 && updateUser == 1) {
       fprintf(stderr, "\rBiColorGrid >> Coloring atom %6d", h);
       fflush(stderr);
     }
