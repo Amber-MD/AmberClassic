@@ -86,6 +86,10 @@
 #define RESIDUENOEND    0x00000008
 #define RESIDUEFIRSTEND 0x00000010
 #define RESIDUELASTEND  0x00000020
+#define RESIDUEFLAG0    0x00001000
+#define RESIDUEFLAG1    0x00002000
+#define RESIDUEFLAG2    0x00004000
+#define RESIDUEFLAG3    0x00008000
 
 #define	RESIDUETEMP	0xFFFF0000
 #define	RESIDUEINCAP	0x00010000
@@ -181,7 +185,7 @@ extern void	ResidueIAmBeingRemoved(RESIDUE rRes, CONTAINER cRemoved);
 #define fResidueFlags(r)                (RESIDUE_from(r)->fFlags)
 #define ResidueSetFlags(r,f)            (RESIDUE_from(r)->fFlags |= f,CDU(r) )
 #define ResidueDefineFlags(r,f)  (RESIDUE_from(r)->fFlags = f,CDU(r))
-#define ResidueResetFlags(r,f)    (RESIDUE_from(r)->fFlags &= ~f,CDU(r))
+#define ResidueResetFlags(r,f)    (RESIDUE_from(r)->fFlags &= ~(f),CDU(r))
 #define	ResidueSetType(r,c)	(RESIDUE_from(r)->cResType = (c),CDU(r))
 #define	cResidueType(r)		(RESIDUE_from(r)->cResType)
 #define ResidueSetImagingAtom(r,a) (RESIDUE_from(r)->aSolventImagingAtom=(OBJEKT)(a),CDU(r))

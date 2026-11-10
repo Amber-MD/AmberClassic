@@ -50,173 +50,346 @@ struct ROTAMERSTRUCT {
   int  iPercent;
   int  iChi[4];
 } rsRotamers[] = {
-    { "ARG",  "mmm-85", 2, { -62, -68, -65, -85}},
-    { "ARG",  "mmm180", 1, { -62, -68, -65, 175}},
-    { "ARG",  "mmt-85", 2, { -62, -68, 180, -85}},
-    { "ARG",  "mmt180", 2, { -62, -68, 180, 180}},
-    { "ARG",  "mmt85", 1, { -62, -68, 180, 85}},
-    { "ARG",  "mtm-85", 6, { -67, -167, -65, -85}},
-    { "ARG",  "mtm180", 5, { -67, 180, -65, 175}},
-    { "ARG",  "mtm105", 2, { -67, 180, -65, 105}},
-    { "ARG",  "mtt-85", 6, { -67, 180, 180, -85}},
-    { "ARG",  "mtt180", 9, { -67, 180, 180, 180}},
-    { "ARG",  "mtt85", 4, { -67, 180, 180, 85}},
-    { "ARG",  "mtp-105", 1, { -67, 180, 65, -105}},
-    { "ARG",  "mtp180", 5, { -67, 180, 65, -175}},
-    { "ARG",  "mtp85", 2, { -67, 180, 65, 85}},
-    { "ARG",  "ttm-85", 3, { -177, 180, -65, -85}},
-    { "ARG",  "ttm180", 1, { -177, 180, -65, 175}},
-    { "ARG",  "ttm105", 1, { -177, 180, -65, 105}},
-    { "ARG",  "ttt-85", 3, { -177, 180, 180, -85}},
-    { "ARG",  "ttt180", 4, { -177, 180, 180, 180}},
-    { "ARG",  "ttt85", 2, { -177, 180, 180, 85}},
-    { "ARG",  "ttp-105", 1, { -177, 180, 65, -105}},
-    { "ARG",  "ttp180", 3, { -177, 180, 65, -175}},
-    { "ARG",  "ttp85", 4, { -177, 180, 65, 85}},
-    { "ARG",  "tpt180", 2, { -177, 65, 180, 180}},
-    { "ARG",  "tpt85", 2, { -177, 65, 180, 85}},
-    { "ARG",  "tpp180", 1, { -177, 65, 65, -175}},
-    { "ARG",  "tpp85", 1, { -177, 65, 65, 85}},
-    { "ARG",  "ptm-85", 1, { 62, 180, -65, -85}},
-    { "ARG",  "ptm180", 1, { 62, 180, -65, 175}},
-    { "ARG",  "ptt-85", 2, { 62, 180, 180, -85}},
-    { "ARG",  "ptt180", 2, { 62, 180, 180, 180}},
-    { "ARG",  "ptt85", 2, { 62, 180, 180, 85}},
-    { "ARG",  "ptp180", 1, { 62, 180, 65, -175}},
-    { "ARG",  "ptp85", 0, { 62, 180, 65, 85}},
-    { "LYS",  "ptpt", 1, { 62, 180, 68, 180}},
-    { "LYS",  "pttp", 1, { 62, 180, 180, 65}},
-    { "LYS",  "pttt", 2, { 62, 180, 180, 180}},
-    { "LYS",  "pttm", 1, { 62, 180, 180, -65}},
-    { "LYS",  "ptmt", 0, { 62, 180, 68, 180}},
-    { "LYS",  "tptp", 1, { -177, 68, 180, 65}},
-    { "LYS",  "tptt", 3, { -177, 68, 180, 180}},
-    { "LYS",  "tptm", 1, { -177, 68, 180, -65}},
-    { "LYS",  "ttpp", 1, { -177, 180, 68, 65}},
-    { "LYS",  "ttpt", 2, { -177, 180, 68, 180}},
-    { "LYS",  "tttp", 4, { -177, 180, 180, 65}},
-    { "LYS",  "tttt", 13, { -177, 180, 180, 180}},
-    { "LYS",  "tttm", 3, { -177, 180, 180, -65}},
-    { "LYS",  "ttmt", 2, { -177, 180, -68, 180}},
-    { "LYS",  "ttmm", 0, { -177, 180, -68, -65}},
-    { "LYS",  "mptt", 0, { -90, 68, 180, 180}},
-    { "LYS",  "mtpp", 1, { -67, 180, 68, 65}},
-    { "LYS",  "mtpt", 3, { -67, 180, 68, 180}},
-    { "LYS",  "mttp", 3, { -67, 180, 180, 65}},
-    { "LYS",  "mttt", 20, { -67, 180, 180, 180}},
-    { "LYS",  "mttm", 5, { -67, 180, 180, -65}},
-    { "LYS",  "mtmt", 3, { -67, 180, -68, 180}},
-    { "LYS",  "mtmm", 1, { -67, 180, -68, -65}},
-    { "LYS",  "mmtp", 1, { -62, -68, 180, 65}},
-    { "LYS",  "mmtt", 6, { -62, -68, 180, 180}},
-    { "LYS",  "mmtm", 1, { -62, -68, 180, -65}},
-    { "LYS",  "mmmt", 1, { -62, -68, -68, 180}},
-    { "MET",  "ptp", 2, { 62, 180, 75, 0}},
-    { "MSE",  "ptp", 2, { 62, 180, 75, 0}},
-    { "MET",  "ptm", 3, { 62, 180, -75, 0}},
-    { "MSE",  "ptm", 3, { 62, 180, -75, 0}},
-    { "MET",  "tpp", 5, { -177, 65, 75, 0}},
-    { "MSE",  "tpp", 5, { -177, 65, 75, 0}},
-    { "MET",  "tpt", 2, { -177, 65, 180, 0}},
-    { "MSE",  "tpt", 2, { -177, 65, 180, 0}},
-    { "MET",  "ttp", 5, { -177, 180, 75, 0}},
-    { "MSE",  "ttp", 5, { -177, 180, 75, 0}},
-    { "MET",  "ttt", 3, { -177, 180, 180, 0}},
-    { "MSE",  "ttt", 3, { -177, 180, 180, 0}},
-    { "MET",  "ttm", 7, { -177, 180, -75, 0}},
-    { "MSE",  "ttm", 7, { -177, 180, -75, 0}},
-    { "MET",  "mtp", 17, { -67, 180, 75, 0}},
-    { "MSE",  "mtp", 17, { -67, 180, 75, 0}},
-    { "MET",  "mtt", 8, { -67, 180, 180, 0}},
-    { "MSE",  "mtt", 8, { -67, 180, 180, 0}},
-    { "MET",  "mtm", 11, { -67, 180, -75, 0}},
-    { "MSE",  "mtm", 11, { -67, 180, -75, 0}},
-    { "MET",  "mmp", 3, { -65, -65, 103, 0}},
-    { "MSE",  "mmp", 3, { -65, -65, 103, 0}},
-    { "MET",  "mmt", 2, { -65, -65, 180, 0}},
-    { "MSE",  "mmt", 2, { -65, -65, 180, 0}},
-    { "MET",  "mmm", 19, { -65, -65, -70, 0}},
-    { "MSE",  "mmm", 19, { -65, -65, -70, 0}},
-    { "GLU",  "pt-20 ", 5, { 62, 180, -20, 0}},
-    { "GLU",  "pm0", 2, { 70, -80, 0, 0}},
-    { "GLU",  "tp10", 6, { -177, 65, 10, 0}},
-    { "GLU",  "tt 0 ", 24, { -177, 180, 0, 0}},
-    { "GLU",  "tm-20", 1, { -177, -80, -25, 0}},
-    { "GLU",  "mp0", 6, { -65, 85, 0, 0}},
-    { "GLU",  "mt-10 ", 33, { -67, 180, -10, 0}},
-    { "GLU",  "mm-40", 13, { -65, -65, -40, 0}},
-    { "GLN",  "pt 20 ", 4, { 62, 180, 20, 0}},
-    { "GLN",  "pm0", 2, { 70, -75, 0, 0}},
-    { "GLN",  "tp-100", 2, { -177, 65, -100, 0}},
-    { "GLN",  "tp60", 9, { -177, 65, 60, 0}},
-    { "GLN",  "tt 0 ", 16, { -177, 180, 0, 0}},
-    { "GLN",  "mp0", 3, { -65, 85, 0, 0}},
-    { "GLN",  "mt -30 ", 35, { -67, 180, -25, 0}},
-    { "GLN",  "mm-40", 15, { -65, -65, -40, 0}},
-    { "GLN",  "mm100", 3, { -65, -65, 100, 0}},
-    { "ASP",  "p-10", 10, { 62, -10, 0, 0}},
-    { "ASP",  "p30", 9, { 62, 30, 0, 0}},
-    { "ASP",  "t 0 ", 21, { -177, 0, 0, 0}},
-    { "ASP",  "t70", 6, { -177, 65, 0, 0}},
-    { "ASP",  "m-20 ", 51, { -70, -15, 0, 0}},
-    { "ASN",  "p-10", 7, { 62, -10, 0, 0}},
-    { "ASN",  "p30", 9, { 62, 30, 0, 0}},
-    { "ASN",  "t-20", 12, { -174, -20, 0, 0}},
-    { "ASN",  "t30", 15, { -177, 30, 0, 0}},
-    { "ASN",  "m-20", 39, { -65, -20, 0, 0}},
-    { "ASN",  "m-80", 8, { -65, -75, 0, 0}},
-    { "ASN",  "m120", 4, { -65, 120, 0, 0}},
-    { "ILE",  "pp", 1, { 62, 100, 0, 0}},
-    { "ILE",  "pt", 13, { 62, 170, 0, 0}},
-    { "ILE",  "tp", 2, { -177, 66, 0, 0}},
-    { "ILE",  "tt", 8, { -177, 170, 0, 0}},
-    { "ILE",  "mp", 1, { -65, 100, 0, 0}},
-    { "ILE",  "mt", 60, { -65, 170, 0, 0}},
-    { "ILE",  "mm", 15, { -57, -59, 0, 0}},
-    { "LEU",  "pp", 1, { 62, 80, 0, 0}},
-    { "LEU",  "tp", 29, { -177, 65, 0, 0}},
-    { "LEU",  "tt", 2, { -172, 147, 0, 0}},
-    { "LEU",  "mp", 2, { -85, 65, 0, 0}},
-    { "LEU",  "mt", 59, { -65, 174, 0, 0}},
-    { "HIS",  "p-80", 9, { 62, -75, 0, 0}},
-    { "HIS",  "p80", 4, { 62, 78, 0, 0}},
-    { "HIS",  "t-160", 5, { -177, -163, 0, 0}},
-    { "HIS",  "t-80", 11, { -177, -81, 0, 0}},
-    { "HIS",  "t60", 16, { -177, 62, 0, 0}},
-    { "HIS",  "m-70", 29, { -65, -69, 0, 0}},
-    { "HIS",  "m170", 7, { -65, 165, 0, 0}},
-    { "HIS",  "m80", 13, { -65, 83, 0, 0}},
-    { "TRP",  "p-90", 11, { 62, -90, 0, 0}},
-    { "TRP",  "p90", 6, { 62, 90, 0, 0}},
-    { "TRP",  "t-105", 16, { -177, -105, 0, 0}},
-    { "TRP",  "t90", 18, { -177, 90, 0, 0}},
-    { "TRP",  "m-90", 5, { -65, -90, 0, 0}},
-    { "TRP",  "m0", 8, { -65, -4, 0, 0}},
-    { "TRP",  "m95", 32, { -65, 95, 0, 0}},
-    { "TYR",  "p90", 13, { 62, 90, 0, 0}},
-    { "TYR",  "t80", 34, { -177, 80, 0, 0}},
-    { "TYR",  "m-85", 43, { -65, -85, 0, 0}},
-    { "TYR",  "m -30 ", 9, { -65, -30, 0, 0}},
-    { "PHE",  "p90", 13, { 62, 90, 0, 0}},
-    { "PHE",  "t80", 33, { -177, 80, 0, 0}},
-    { "PHE",  "m-85", 44, { -65, -85, 0, 0}},
-    { "PHE",  "m -30 ", 9, { -65, -30, 0, 0}},
-    { "PRO",  "Cg endo", 44, { 30, -37.5, 0, 0}},
-    { "PRO",  "Cg exo", 43, { -30, 37.5, 0, 0}},
-    { "PRO",  "cis Cg endo", 6, { 30, -37.5, 0, 0}},
-    { "THR",  "p", 49, { 62, 0, 0, 0}},
-    { "THR",  "t", 7, { -175, 0, 0, 0}},
-    { "THR",  "m", 43, { -65, 0, 0, 0}},
-    { "VAL",  "p", 6, { 63, 0, 0, 0}},
-    { "VAL",  "t", 73, { 175, 0, 0, 0}},
-    { "VAL",  "m", 20, { -60, 0, 0, 0}},
-    { "SER",  "p", 48, { 62, 0, 0, 0}},
-    { "SER",  "t", 22, { -177, 0, 0, 0}},
-    { "SER",  "m", 29, { -65, 0, 0, 0}},
-    { "CYS",  "p", 23, { 62, 0, 0, 0}},
-    { "CYS",  "t", 26, { -177, 0, 0, 0}},
-    { "CYS",  "m", 50, { -65, 0, 0, 0}}
+    { "ARG", "mtt180", 9, { -67, 180, 180, 180 }},
+    { "ARG", "mtm-85", 6, { -67, -167, -65, -85 }},
+    { "ARG", "mtt-85", 6, { -67, 180, 180, -85 }},
+    { "ARG", "mtm180", 5, { -67, 180, -65, 175 }},
+    { "ARG", "mtp180", 5, { -67, 180, 65, -175 }},
+    { "ARG", "mtt85", 4, { -67, 180, 180, 85 }},
+    { "ARG", "ttp85", 4, { -177, 180, 65, 85 }},
+    { "ARG", "ttt180", 4, { -177, 180, 180, 180 }},
+    { "ARG", "ttm-85", 3, { -177, 180, -65, -85 }},
+    { "ARG", "ttp180", 3, { -177, 180, 65, -175 }},
+    { "ARG", "ttt-85", 3, { -177, 180, 180, -85 }},
+    { "ARG", "mmm-85", 2, { -62, -68, -65, -85 }},
+    { "ARG", "mmt180", 2, { -62, -68, 180, 180 }},
+    { "ARG", "mmt-85", 2, { -62, -68, 180, -85 }},
+    { "ARG", "mtm105", 2, { -67, 180, -65, 105 }},
+    { "ARG", "mtp85", 2, { -67, 180, 65, 85 }},
+    { "ARG", "ptt180", 2, { 62, 180, 180, 180 }},
+    { "ARG", "ptt-85", 2, { 62, 180, 180, -85 }},
+    { "ARG", "ptt85", 2, { 62, 180, 180, 85 }},
+    { "ARG", "tpt180", 2, { -177, 65, 180, 180 }},
+    { "ARG", "tpt85", 2, { -177, 65, 180, 85 }},
+    { "ARG", "ttt85", 2, { -177, 180, 180, 85 }},
+    { "ARG", "mmm180", 1, { -62, -68, -65, 175 }},
+    { "ARG", "mmt85", 1, { -62, -68, 180, 85 }},
+    { "ARG", "mtp-105", 1, { -67, 180, 65, -105 }},
+    { "ARG", "ptm180", 1, { 62, 180, -65, 175 }},
+    { "ARG", "ptm-85", 1, { 62, 180, -65, -85 }},
+    { "ARG", "ptp180", 1, { 62, 180, 65, -175 }},
+    { "ARG", "tpp180", 1, { -177, 65, 65, -175 }},
+    { "ARG", "tpp85", 1, { -177, 65, 65, 85 }},
+    { "ARG", "ttm105", 1, { -177, 180, -65, 105 }},
+    { "ARG", "ttm180", 1, { -177, 180, -65, 175 }},
+    { "ARG", "ttp-105", 1, { -177, 180, 65, -105 }},
+    { "ARG", "ptp85", 0, { 62, 180, 65, 85 }},
+    { "ASN", "m-20", 39, { -65, -20 }},
+    { "ASN", "t30", 15, { -177, 30 }},
+    { "ASN", "t-20", 12, { -174, -20 }},
+    { "ASN", "p30", 9, { 62, 30 }},
+    { "ASN", "m-80", 8, { -65, -75 }},
+    { "ASN", "p-10", 7, { 62, -10 }},
+    { "ASN", "m120", 4, { -65, 120 }},
+    { "ASP", "m-20 ", 51, { -70, -15 }},
+    { "ASP", "t 0 ", 21, { -177 }},
+    { "ASP", "p-10", 10, { 62, -10 }},
+    { "ASP", "p30", 9, { 62, 30 }},
+    { "ASP", "t70", 6, { -177, 65 }},
+    { "CYS", "m", 50, { -65 }},
+    { "CYS", "t", 26, { -177 }},
+    { "CYS", "p", 23, { 62 }},
+    { "GLN", "mt -30 ", 35, { -67, 180, -25 }},
+    { "GLN", "tt 0 ", 16, { -177, 180 }},
+    { "GLN", "mm-40", 15, { -65, -65, -40 }},
+    { "GLN", "tp60", 9, { -177, 65, 60 }},
+    { "GLN", "pt 20 ", 4, { 62, 180, 20 }},
+    { "GLN", "mm100", 3, { -65, -65, 100 }},
+    { "GLN", "mp0", 3, { -65, 85 }},
+    { "GLN", "pm0", 2, { 70, -75 }},
+    { "GLN", "tp-100", 2, { -177, 65, -100 }},
+    { "GLU", "mt-10 ", 33, { -67, 180, -10 }},
+    { "GLU", "tt 0 ", 24, { -177, 180 }},
+    { "GLU", "mm-40", 13, { -65, -65, -40 }},
+    { "GLU", "mp0", 6, { -65, 85 }},
+    { "GLU", "tp10", 6, { -177, 65, 10 }},
+    { "GLU", "pt-20 ", 5, { 62, 180, -20 }},
+    { "GLU", "pm0", 2, { 70, -80 }},
+    { "GLU", "tm-20", 1, { -177, -80, -25 }},
+    { "HIS", "m-70", 29, { -65, -69 }},
+    { "HIS", "t60", 16, { -177, 62 }},
+    { "HIS", "m80", 13, { -65, 83 }},
+    { "HIS", "t-80", 11, { -177, -81 }},
+    { "HIS", "p-80", 9, { 62, -75 }},
+    { "HIS", "m170", 7, { -65, 165 }},
+    { "HIS", "t-160", 5, { -177, -163 }},
+    { "HIS", "p80", 4, { 62, 78 }},
+    { "ILE", "mt", 60, { -65, 170 }},
+    { "ILE", "mm", 15, { -57, -59 }},
+    { "ILE", "pt", 13, { 62, 170 }},
+    { "ILE", "tt", 8, { -177, 170 }},
+    { "ILE", "tp", 2, { -177, 66 }},
+    { "ILE", "mp", 1, { -65, 100 }},
+    { "ILE", "pp", 1, { 62, 100 }},
+    { "LEU", "mt", 59, { -65, 174 }},
+    { "LEU", "tp", 29, { -177, 65 }},
+    { "LEU", "mp", 2, { -85, 65 }},
+    { "LEU", "tt", 2, { -172, 147 }},
+    { "LEU", "pp", 1, { 62, 80 }},
+    { "LYS", "mttt", 20, { -67, 180, 180, 180 }},
+    { "LYS", "tttt", 13, { -177, 180, 180, 180 }},
+    { "LYS", "mmtt", 6, { -62, -68, 180, 180 }},
+    { "LYS", "mttm", 5, { -67, 180, 180, -65 }},
+    { "LYS", "tttp", 4, { -177, 180, 180, 65 }},
+    { "LYS", "mtmt", 3, { -67, 180, -68, 180 }},
+    { "LYS", "mtpt", 3, { -67, 180, 68, 180 }},
+    { "LYS", "mttp", 3, { -67, 180, 180, 65 }},
+    { "LYS", "tptt", 3, { -177, 68, 180, 180 }},
+    { "LYS", "tttm", 3, { -177, 180, 180, -65 }},
+    { "LYS", "pttt", 2, { 62, 180, 180, 180 }},
+    { "LYS", "ttmt", 2, { -177, 180, -68, 180 }},
+    { "LYS", "ttpt", 2, { -177, 180, 68, 180 }},
+    { "LYS", "mmmt", 1, { -62, -68, -68, 180 }},
+    { "LYS", "mmtm", 1, { -62, -68, 180, -65 }},
+    { "LYS", "mmtp", 1, { -62, -68, 180, 65 }},
+    { "LYS", "mtmm", 1, { -67, 180, -68, -65 }},
+    { "LYS", "mtpp", 1, { -67, 180, 68, 65 }},
+    { "LYS", "ptpt", 1, { 62, 180, 68, 180 }},
+    { "LYS", "pttm", 1, { 62, 180, 180, -65 }},
+    { "LYS", "pttp", 1, { 62, 180, 180, 65 }},
+    { "LYS", "tptm", 1, { -177, 68, 180, -65 }},
+    { "LYS", "tptp", 1, { -177, 68, 180, 65 }},
+    { "LYS", "ttpp", 1, { -177, 180, 68, 65 }},
+    { "LYS", "mptt", 0, { -90, 68, 180, 180 }},
+    { "LYS", "ptmt", 0, { 62, 180, 68, 180 }},
+    { "LYS", "ttmm", 0, { -177, 180, -68, -65 }},
+    { "MET", "mmm", 19, { -65, -65, -70 }},
+    { "MET", "mtp", 17, { -67, 180, 75 }},
+    { "MET", "mtm", 11, { -67, 180, -75 }},
+    { "MET", "mtt", 8, { -67, 180, 180 }},
+    { "MET", "ttm", 7, { -177, 180, -75 }},
+    { "MET", "tpp", 5, { -177, 65, 75 }},
+    { "MET", "ttp", 5, { -177, 180, 75 }},
+    { "MET", "mmp", 3, { -65, -65, 103 }},
+    { "MET", "ptm", 3, { 62, 180, -75 }},
+    { "MET", "ttt", 3, { -177, 180, 180 }},
+    { "MET", "mmt", 2, { -65, -65, 180 }},
+    { "MET", "ptp", 2, { 62, 180, 75 }},
+    { "MET", "tpt", 2, { -177, 65, 180 }},
+    { "MSE", "mmm", 19, { -65, -65, -70 }},
+    { "MSE", "mtp", 17, { -67, 180, 75 }},
+    { "MSE", "mtm", 11, { -67, 180, -75 }},
+    { "MSE", "mtt", 8, { -67, 180, 180 }},
+    { "MSE", "ttm", 7, { -177, 180, -75 }},
+    { "MSE", "tpp", 5, { -177, 65, 75 }},
+    { "MSE", "ttp", 5, { -177, 180, 75 }},
+    { "MSE", "mmp", 3, { -65, -65, 103 }},
+    { "MSE", "ptm", 3, { 62, 180, -75 }},
+    { "MSE", "ttt", 3, { -177, 180, 180 }},
+    { "MSE", "mmt", 2, { -65, -65, 180 }},
+    { "MSE", "ptp", 2, { 62, 180, 75 }},
+    { "MSE", "tpt", 2, { -177, 65, 180 }},
+    { "PHE", "m-85", 44, { -65, -85 }},
+    { "PHE", "t80", 33, { -177, 80 }},
+    { "PHE", "p90", 13, { 62, 90 }},
+    { "PHE", "m -30 ", 9, { -65, -30 }},
+    { "PRO", "Cg endo", 44, { 30, -37.5 }},
+    { "PRO", "Cg exo", 43, { -30, 37.5 }},
+    { "PRO", "cis Cg endo", 6, { 30, -37.5 }},
+    { "SER", "p", 48, { 62 }},
+    { "SER", "m", 29, { -65 }},
+    { "SER", "t", 22, { -177 }},
+    { "THR", "p", 49, { 62 }},
+    { "THR", "m", 43, { -65 }},
+    { "THR", "t", 7, { -175 }},
+    { "TRP", "m95", 32, { -65, 95 }},
+    { "TRP", "t90", 18, { -177, 90 }},
+    { "TRP", "t-105", 16, { -177, -105 }},
+    { "TRP", "p-90", 11, { 62, -90 }},
+    { "TRP", "m0", 8, { -65, -4 }},
+    { "TRP", "p90", 6, { 62, 90 }},
+    { "TRP", "m-90", 5, { -65, -90 }},
+    { "TYR", "m-85", 43, { -65, -85 }},
+    { "TYR", "t80", 34, { -177, 80 }},
+    { "TYR", "p90", 13, { 62, 90 }},
+    { "TYR", "m -30 ", 9, { -65, -30 }},
+    { "VAL", "t", 73, { 175 }},
+    { "VAL", "m", 20, { -60 }},
+    { "VAL", "p", 6, { 63 }},
+    { NULL }
 };
+
+static int
+iChiIndex(char *name) {
+    int result;
+    if (!strcmp(name,"N")) result = 0; // Richardsons, IUPAC use N, some systems use C here
+    else if (!strcmp(name,"CA")) result = 1;
+    else if (!strcmp(name,"CB")) result = 2;
+    else if (name[1]=='G' && (name[2]==0 || name[2]=='1')) result = 3;
+    else if (name[1]=='D' && (name[2]==0 || name[2]=='1')) result = 4;
+    else if (name[1]=='E' && (name[2]==0 || name[2]=='1')) result = 5;
+    else if (name[1]=='Z' && name[2]==0) result = 6;
+    else result = -1;
+    return result;
+}
+
+
+// Returns true if rotamer was built
+// Failure is normally because iRotamer >= rotamer count for the residue
+// bRebuild = rebuild ATOMPOSITIONBUILT, else rebuild entire side chain
+bool
+BuildRotamer(RESIDUE rRes, int iRotamer, bool bRebuild, const char **sRotamerName) {
+    INTERNAL iTorsion;
+    INTERNAL iChi[4] = { NULL };
+    double dDelta[4] = { 0.0 };
+    int iCount=0;
+    int iIndex;
+    for (iIndex = 0; rsRotamers[iIndex].sResName; iIndex++) {
+        if (!strcmp(rsRotamers[iIndex].sResName, sContainerName(rRes))) break;
+    }
+    iIndex += iRotamer;
+    if (iIndex >= sizeof(rsRotamers)/sizeof(*rsRotamers)-1) return false;
+    if (strcmp(rsRotamers[iIndex].sResName, sContainerName(rRes))) return false;
+    if (sRotamerName) *sRotamerName = rsRotamers[iIndex].sRotamerName;
+    LOOPOVERALL(rRes, INTERNALS, iTorsion, lInternals) {
+        if ( iInternalType(iTorsion)!=INTERNALTORSION ) continue;
+        int i1 = iChiIndex(aInternalAtom1(iTorsion)->cHeader.sName);
+        if (i1<0) continue;
+        int i2 = iChiIndex(aInternalAtom2(iTorsion)->cHeader.sName);
+        if (i2<0) continue;
+        int i3 = iChiIndex(aInternalAtom3(iTorsion)->cHeader.sName);
+        if (i3<0) continue;
+        int i4 = iChiIndex(aInternalAtom4(iTorsion)->cHeader.sName);
+        if (i4<0) continue;
+        if (i2 > i3) {
+            int j = i3; i3 = i2; i2 = j;
+            j = i4; i4 = i1; i1 = j;
+        }
+        if (i2 != i1+1 || i3 != i2+1 || i4 != i3+1) continue;
+        if (iChi[i1]) continue;
+        iChi[i1] = iTorsion;
+        if (++iCount == 4) break;
+    }
+    for (int i=0;i<4;i++) {
+        iTorsion = iChi[i];
+        if (!iTorsion) continue;
+        double dAngle = dVectorAtomTorsion(
+                &vAtomPosition(aInternalAtom1(iTorsion)),
+                &vAtomPosition(aInternalAtom2(iTorsion)),
+                &vAtomPosition(aInternalAtom3(iTorsion)),
+                &vAtomPosition(aInternalAtom4(iTorsion)));
+        dDelta[i] = (double)rsRotamers[iIndex].iChi[i]*DEGTORAD - dAngle;
+    }
+    LOOPOVERALL(rRes, INTERNALS, iTorsion, lInternals) {
+        OBJEKT oOwner = lInternals.oaSubLoopOver[lInternals.iCurSubLoop];
+        if ( iInternalType(iTorsion)!=INTERNALTORSION ) continue;
+        if ((OBJEKT)aInternalAtom2(iTorsion) != oOwner) continue;
+        int i2 = iChiIndex(aInternalAtom2(iTorsion)->cHeader.sName);
+        if (i2<0) continue;
+        int i3 = iChiIndex(aInternalAtom3(iTorsion)->cHeader.sName);
+        if (i3<0) continue;
+        if (i2 > i3) {
+            int j = i3; i3 = i2; i2 = j;
+        }
+        if (i3 != i2+1 || i2<1 || i2>4) continue;
+        dInternalValue(iTorsion) += dDelta[i2-1];
+    }
+    ATOM aAtom;
+    LOOPOVERALL(rRes, ATOMS, aAtom, lAtoms) {
+        if (bRebuild) {
+            if (bAtomFlagsSet(aAtom,ATOMPOSITIONBUILT)) {
+                AtomResetFlags(aAtom, ATOMPOSITIONBUILT|ATOMPOSITIONKNOWN);
+                //AtomSetFlags(aAtom, ATOMNEEDSBUILD);
+            }
+        } else {
+            const char *backbone[] = { "N","CA","CB","C","O","H","HA", NULL };
+            bool bFound = false;
+            for (const char **sName = backbone; *sName; sName++) {
+                if (!strcmp(*sName,sContainerName(aAtom))) {
+                    bFound = true;
+                    break;
+                }
+            }
+            if (bFound) AtomResetFlags(aAtom, ATOMPOSITIONBUILT|ATOMPOSITIONKNOWN);
+        }
+    }
+    int iAddH=0, iAddHeavy=0, iAddUnk=0; // Untracked
+    BuildCoordinatesForContainer((CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk);
+    return true;
+}
+
+
+
+/*
+ *      BuildCoordinatesForContainer
+ *
+ *      Author: Christian Schafmeister (1991)
+ *
+ *      Search through the CONTAINER for ATOMs that do not have
+ *      ATOMPOSITIONKNOWN and build external coordinates for those.
+ *      Also search through ATOMs that are bonded to ATOMs that have
+ *      ATOMPOSITIONKNOWN and build those that do not have ATOMPOSITIONKNOWN
+ *      This will guarantee that all ATOMs bonded to ATOMs within the
+ *      CONTAINER will be built.
+ */
+void
+BuildCoordinatesForContainer(CONTAINER cCont, int *iPAddH,
+        int *iPAddHeavy, int *iPAddUnk )
+{
+LOOP            lSpan;
+ATOM            aAtom, aTemp, aSpan;
+int             i;
+STRING          sTemp;
+
+                /* Loop through all ATOMs looking for those that */
+                /* do not have positions known and build externals */
+                /* for them and neighbors that are bonded to them */
+    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
+        if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) {
+            lSpan = lLoop( (OBJEKT)aAtom, SPANNINGTREE );
+            LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
+
+                /* Look for a collision with an ATOM whose */
+                /* ATOMPOSITIONKNOWN flag is set */
+                /* NOTE: collision here means connected by a bond */
+            aSpan = NULL;
+            while ( (aTemp = (ATOM)oNext(&lSpan)) ) {
+                if ( aSpan == NULL ) aSpan = aTemp;
+                if ( aLoopLastCollisionAtom(&lSpan) != NULL ) {
+                    aSpan = aLoopLastCollisionAtom(&lSpan);
+                    break;
+                }
+            }
+
+            MESSAGE("Building externals from: %s\n",
+                        sContainerFullDescriptor( (CONTAINER)aSpan, sTemp ) );
+
+                        /* Build external coordinates */
+            lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
+            LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
+            BuildExternalsUsingFlags( &lSpan,
+                                        0, ATOMPOSITIONKNOWN,
+                                        ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
+                                        iPAddH, iPAddHeavy, iPAddUnk, true );
+        } else {
+            for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
+                aSpan = aAtomBondedNeighbor(aAtom,i);
+                if ( !bAtomFlagsSet( aSpan, ATOMPOSITIONKNOWN ) ) {
+                    MESSAGE("Building externals from: %s\n",
+                        sContainerFullDescriptor( (CONTAINER)aSpan, sTemp ) );
+                    lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
+                    LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
+                    BuildExternalsUsingFlags( &lSpan,
+                                                0, ATOMPOSITIONKNOWN,
+                                                ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
+                                                iPAddH, iPAddHeavy, iPAddUnk,
+                                                true );
+                }
+            }
+        }
+    }
+}
+
 
 
 /*
@@ -1251,11 +1424,11 @@ STRING		sTemp;
 			sContainerFullDescriptor((CONTAINER)aAtom,sTemp) );
 #ifdef DEBUG
         LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
-	    MESSAGE("    Internal type = %c  at: %p\n", iInternalType(iInt), iInt );
+	    MESSAGE("    Internal type = %c  at: %p\n", iInternalType(iInt), (void*)iInt );
 	}
 #endif
         LOOPOVERALL(aAtom, INTERNALS, iInt, lInternals) {
-	    MESSAGE("    destroying    = %c  at: %p\n", iInternalType(iInt), iInt );
+	    MESSAGE("    destroying    = %c  at: %p\n", iInternalType(iInt), (void*)iInt );
             Destroy( (OBJEKT *)&iInt );
         }
     }

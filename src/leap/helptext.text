@@ -743,7 +743,7 @@ For each template, print:
      * ATOMs with undefined elements (These are corrected)
      * RESIDUE name longer than 3 letters (or 4 with N,C prefix)
      * Residue Type undefined with polymeric RESIDUE (U.HEAD or U.TAIL)
-     * UNIT HEAD or TAIL does not match RESIDUE HEAD or TAIL 
+     * UNIT HEAD or TAIL does not match RESIDUE HEAD or TAIL
      * RESIDUE lists CONNECT atoms to hydrogen
 
 HEAD and TAIL members of RESIDUE are generally not used as the active links
@@ -901,7 +901,7 @@ pdb_convert_resname: "standard" = Use resName from the template RESIDUE (traditi
                          Note: variant names longer than 3 characters excluded; same as standard with old libraries
 pdb_link_cutoff=factor: allow TAIL-HEAD bonds up to factor * covalent distance
 pdb_crosslink_cutoff=factor: allow CONNECT bonds up to factor * covalent distance
-pdb_link_ions=TRUE: apply LINK,CONECT bonds to ions (old default=TRUE, now FALSE) 
+pdb_link_ions=TRUE: apply LINK,CONECT bonds to ions (old default=TRUE, now FALSE)
 pdb_auto_load=TRUE: Automatically "loadOff <resName>.{lib,mol2,prepc}" for missing resName
 pdb_use_link=TRUE: Add bonds using LINK and SSBOND
 pdb_use_conect=TRUE: Add bonds using CONECT (old default)
@@ -1589,8 +1589,8 @@ name        := chars including *, ?, \\<char> escapes, and [range]
                cpptraj compatible atomMask should onle use *, ? and \\
 
 distance_op := ('<' | '>') ('@' | ':' | ';' | '^') number
-             -- select within < or beyond > 
-             -- select atoms @, residues :, residus by center ;, or molecules ^ 
+             -- select within < or beyond >
+             -- select atoms @, residues :, residus by center ;, or molecules ^
              -- within or beyond radius in Angstroms
              -- e.g.  :ALA <@5.0
 
@@ -1805,112 +1805,91 @@ You may also use the string 'count' to query the number of objects in the list:
 
 Allowed arguments to "set default variable value" are these:
 
+  variables	   values	descriptions
 
-@@beginHelp:  set_default
-
-Allowed arguments to "set default variable value" are these:
-
-  variables        values       descriptions
-
-
-  PdbWriteCharges  "on"         Write charge to each ATOM record as B-factor
-                   "off"        (default)
+  PdbWriteCharges  "on"		Write charge to each ATOM record as B-factor
+		   "off"	(default)
 
   (See help loadPdb for pdb_* settings)
 
-  keep_chainid     "on"         Keep ChainId and ResId number read from PDB.
-                                These are written to prmtop arrays
-                                RESIDUE_CHAINID and RESIDUE_NUMBER, as with
-                                parmed "addPdb". Supports 2-character chainId
-                   "off"        (default)
+  keep_chainid	   "on"		Keep ChainId and ResId number read from PDB.
+				These are written to prmtop arrays
+				RESIDUE_CHAINID and RESIDUE_NUMBER, as with
+				parmed "addPdb". Supports 2-character chainId
+		   "off"	(default)
 
-  hybrid36         "on"         Write PDB files using hybrid36 format for
-                                overflow instead of Leap's extra column mode.
-                                (Reading PDB will auto-detect either form.)
-                                (default)
-                   "off"        Use old LEaP procedure for overflows
+  hybrid36	   "on"		Write PDB files using hybrid36 format for
+				overflow instead of Leap's extra column mode.
+				(Reading PDB will auto-detect either form.)
+				(default)
+		   "off"	Use old LEaP procedure for overflows
 
-  CIF_use_auth     "on"         read *_auth fields
-                   "off"        read wwPDB standardized fields
+  CIF_use_auth	   "on"		read *_auth fields
+		   "off"	read wwPDB standardized fields
 
+  OldPrmtopFormat  "on"		use prmtop format from Amber6 and earlier
+		   "off"	use the new prmtop format (default)
 
-  OldPrmtopFormat  "on"         use prmtop format from Amber6 and earlier
-                   "off"        use the new prmtop format (default)
+  PrmTop_NetCDF    "on"		Write experimental NetCDF PRMTOP with saveAmberParmNetCDF
 
-  PrmTop_NetCDF    "on"         Write experimental NetCDF PRMTOP with saveAmberParmNetCDF
-
-  Charmm           "on"         include terms for CHARMM22 force fields
-                   "off"        don't include these (default)
+  Charmm	   "on"		include terms for CHARMM22 force fields
+		   "off"	don't include these (default)
 
   DeleteExtraPointAngles
-                   "on"         delete angles and torsions relating to
-                                   extra points (default)
-                   "off"        don't delete these (for older codes only)
+		   "on"		delete angles and torsions relating to
+				   extra points (default)
+		   "off"	don't delete these (for older codes only)
 
+  FlexibleWater    "on"		allow for flexible 3-point water models
+		   "off"	assume 3-point water models are rigid (default)
 
-  FlexibleWater    "on"         allow for flexible 3-point water models
-                   "off"        assume 3-point water models are rigid (default)
+  PBRadii	   "bondi"	use Bondi radii for generalized Born
+		   "mbondi"	use H-modified Bondi radii (default)
+		   "mbondi2"	use H(N)-modified Bondi radii
+		   "mbondi3"	ArgH and AspGluO modified Bondi2 radii
+		   "parse"	Radii from the Sitkoff et al. parse parameters
+		   "pbamber"	Huo and Kollman optimized radii (old!)
+		   "amber6"	use radii that were the default in amber6
+				   (only recommended for backwards compat.)
 
+  Dielectric	   "distance"	use distance-dependent dielectric (default)
+		   "constant"	use constant dielectric
 
-  PBRadii          "bondi"      use Bondi radii for generalized Born
-                   "mbondi"     use H-modified Bondi radii (default)
-                   "mbondi2"    use H(N)-modified Bondi radii
-                   "mbondi3"    ArgH and AspGluO modified Bondi2 radii
-                   "parse"      Radii from the Sitkoff et al. parse parameters
-                   "pbamber"    Huo and Kollman optimized radii (old!)
-                   "amber6"     use radii that were the default in amber6
-                                   (only recommended for backwards compat.)
+  dipole_damp_factor	real	sets the default value for "DIPOLE_DAMP_FACTOR"
+				for dipole screening factors in Thole models.
+				Valid value > 0.0
 
+  sceescalefactor  real		sets the default value for "SCEE_SCALE_FACTOR"
+				for 1-4 EEL scaling factors. Valid value > 0.0.
+				Default=1.2.
 
-  Dielectric       "distance"   use distance-dependent dielectric (default)
-                   "constant"   use constant dielectric
+  scnbscalefactor  real		sets the default value for "SCNB_SCALE_FACTOR"
+				for 1-4 NB scaling factors. Valid value > 0.0.
+				Default=2.0.
 
+  CMAP		   "on"		include CMAP corrections for dihedrals
+		   "off"	don't include these (default)
 
-  Shell_Extent FIXME
-  SearchDistance
+  ipol		   integer	Sets the default value for IPOL.
+				Valid values are 0 - 4.
+				Default value is 0, meaning disabled.
 
-  dipole_damp_factor    real    sets the default value for "DIPOLE_DAMP_FACTOR"
-                                for dipole screening factors in Thole models.
-                                Valid value > 0.0
+  nocenter	   "on"		coordinates will not be centered in the
+				periodic simulation box
+		   "off"	coordinates will be centered (default)
 
+  reorder_residues "on"		solvent will be moved to the end (default)
+		   "off"	residue order will be maintained as input.
 
-  sceescalefactor  real         sets the default value for "SCEE_SCALE_FACTOR"
-                                for 1-4 EEL scaling factors. Valid value > 0.0.
-                                Default=1.2.
+  reorder_molecules "on"	Sort atoms so that all molecules are contiguous
+				so that ATOMS_PER_MOLECULE can partition atoms
 
-
-  scnbscalefactor  real         sets the default value for "SCNB_SCALE_FACTOR"
-                                for 1-4 NB scaling factors. Valid value > 0.0.
-                                Default=2.0.
-
-
-  CMAP             "on"         include CMAP corrections for dihedrals
-                   "off"        don't include these (default)
-
-
-  ipol             integer      Sets the default value for IPOL.
-                                Valid values are 0 - 4.
-                                Default value is 0, meaning disabled.
-
-
-  nocenter         "on"         coordinates will not be centered in the
-                                periodic simulation box
-                   "off"        coordinates will be centered (default)
-
-
-  reorder_residues "on"         solvent will be moved to the end (default)
-                   "off"        residue order will be maintained as input.
-
-  reorder_molecules "on"        Sort atoms so that all molecules are contiguous
-                                so that ATOMS_PER_MOLECULE can partition atoms
-
-  random_orientation "on"       Randomize the direction of rotatable atoms built.
+  random_orientation "on"	Randomize the direction of rotatable atoms built.
 
   Only for compatibility (to be removed):
-  original_cmap_order "on"      Order CMAP on PRMTOP as original code
-  compatible "on"               Keep various compatibilities like inexact PI,
-                                reverse list order on copy
-
+  original_cmap_order "on"	Order CMAP on PRMTOP as original code
+  compatible "on"		Keep various compatibilities like inexact PI,
+				reverse list order on copy
 
 @@endHelp
 

@@ -166,7 +166,7 @@ static inline size_t ziVarArrayDesiredSlot(size_t count, size_t size)
 size_t iVarArrayPointerToIndex(VARARRAY header, void *data)
 {
     if (header == NULL || data == NULL) DFATAL(" iVarArrayPointerToIndex: VARARRAY or Data is NULL");
-    return ((data - header->data) / header->size);
+    return (((char*)data - (char*)header->data) / header->size);
 }
 
 #ifdef DEBUG // otherwise inline form header
@@ -400,7 +400,7 @@ VARARRAY vaVarArrayCopy2(VARARRAY header1, VARARRAY header2)
         memcpy(new->data, header1->data, copysize);
     }
     if (header2->count > 0) {
-        memcpy(new->data + copysize, header2->data, (size_t)new->size * header2->count);
+        memcpy((char*)new->data + copysize, header2->data, (size_t)new->size * header2->count);
     }
 
     MESSAGE("Merged 2 VARRAYs: %zu + %zu = %zu elements, %zu slots, %zu bytes",

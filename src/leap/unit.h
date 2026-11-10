@@ -54,6 +54,7 @@
 #include        "restraint.h"
 #include        "dictionary.h"
 #include        "parmLib.h"
+#include        "neighbors.h"
 
 
 #define UNITNORMAL      1

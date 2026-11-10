@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "neighbors.h"
-#include "basics.h"
+#include "basics.h"  // only for MALLOC/FREE wrappers
 
 typedef struct {
     uint64_t key;
@@ -16,12 +16,11 @@ typedef struct {
     uint64_t key;
 } CellRange;
 
-
 struct NeighborGrid {
     const Point *points;
     unsigned int total_points;
     int num_groups;
-    const unsigned int *group_start;   // length num_groups + 1
+    const unsigned int *group_start;   // length num_groups + 1, with sentinel index
 
     float r_cut;
     float cell;
@@ -107,8 +106,8 @@ static CellRange *find_range(CellRange *ranges, unsigned int rcount, uint64_t ke
 
 NeighborGrid *neighbor_grid_setup(const Point *points,
                                   unsigned int total_points,
-                                  int num_groups,
                                   const unsigned int *group_start,
+                                  int num_groups,
                                   float r_cut)
 {
     if (!points || !group_start || num_groups <= 0 || total_points == 0) return NULL;
@@ -180,7 +179,7 @@ NeighborGrid *neighbor_grid_setup(const Point *points,
     grid->ranges = ranges;
     grid->ranges_count = ranges_count;
 
-    grid->results_cap = 1024;
+    grid->results_cap = 256; // dynamically reallocates
     grid->results_count = 0;
     grid->results = (Pair *)MALLOC(grid->results_cap * sizeof(Pair));
 

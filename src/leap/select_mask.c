@@ -130,7 +130,7 @@ static void NodeEnsureGrid(const SELNODE node, const ATOM atom)
     }
     /* single group -- group_start has n_groups+1 elements, last is sentinel */
     unsigned int group_start[2] = {0, npoints};
-    node->ngGrid = neighbor_grid_setup(points, npoints, 1, group_start, node->dist);
+    node->ngGrid = neighbor_grid_setup(points, npoints, group_start, 1, node->dist);
     VarArrayDestroy(&vaAtoms);
 }
 
@@ -373,15 +373,19 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
             switch(node->a) {
                 case RES_CHARGE:
                     ContainerTotalCharge(cContainerWithin(atom), &dValue, &dTemp);
+                    break;
                 case RES_POSX:
                     vPos = vContainerGeometricCenter(cContainerWithin(atom));
                     dValue = dVX(&vPos);
+                    break;
                 case RES_POSY:
                     vPos = vContainerGeometricCenter(cContainerWithin(atom));
                     dValue = dVY(&vPos);
+                    break;
                 case RES_POSZ:
                     vPos = vContainerGeometricCenter(cContainerWithin(atom));
                     dValue = dVZ(&vPos);
+                    break;
                 default: return false; // error
             }
             bool result = bCompare(dValue, node->b, node->dist);

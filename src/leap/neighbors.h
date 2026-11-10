@@ -26,8 +26,8 @@ typedef struct {
 
 typedef struct {
     int from_idx, from_group;
-    union { intptr_t from_member; float from_r; void *from_p; };
     int to_idx,   to_group;
+    union { intptr_t from_member; float from_r; void *from_p; };
     union { intptr_t to_member; float to_r; void *to_p; };
     double d2;
 } Pair;
@@ -50,8 +50,8 @@ typedef struct NeighborGrid NeighborGrid;  // opaque to caller
 // Setup point grid structure
 extern NeighborGrid *neighbor_grid_setup(const Point *points,
                                   unsigned int total_points,
-                                  int num_groups,
                                   const unsigned int *group_start,
+                                  int num_groups,
                                   float r_cut);
 
 // *** All queries return non-zero on failure

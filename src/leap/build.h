@@ -57,7 +57,9 @@ extern void		bBuildFlipChiralityFor( CONTAINER cContainer,
 extern void		BuildInternalsBetweenUnitsUsingFlags( UNIT uFirst, 
 				UNIT uSecond, FLAGS fForSet, FLAGS fForReset );
 extern void		BuildInternalsForSimpleRings( CONTAINER cContainer );
-
+extern void             BuildCoordinatesForContainer(CONTAINER cCont, int *iPAddH,
+                                int *iPAddHeavy, int *iPAddUnk );
+extern bool             BuildRotamer(RESIDUE rRes, int iRotamer, bool bRebuild, const char **sRotamerName);
 
 
 #endif

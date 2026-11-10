@@ -605,7 +605,6 @@ LIBRARY         ul;
             VP1("Loading: %s\n", sNext );
 #endif
             oObj = oLibraryLoad( ul, sNext );   /* comes w/ 1 REF */
-            ContainerDescribe(CONTAINER_from(oObj));
             VariableSet( sNext, oObj );         /* adds 1 REF */
             DEREF( oObj );                      /* balance REF */
 
@@ -4853,7 +4852,6 @@ oCmd_addAuxParamDef( int iArgCount, ASSOC aaArgs[] )
     strcpy(def.sKey, sOString(oAssocObject(aaArgs[1])));
     strcpy(def.sName, sOString(oAssocObject(aaArgs[2])));
     if (!GplDefaultParmLib->vaAuxParamDefs) GplDefaultParmLib->vaAuxParamDefs = vaVarArrayCreate( sizeof(PARMAUXDEFt) );
-    printf("size=%d, p = %p\n",(int)sizeof(PARMAUXDEFt) ,GplDefaultParmLib->vaAuxParamDefs);
     VarArrayAdd(GplDefaultParmLib->vaAuxParamDefs, (GENP)&def);
     return NULL;
 }
@@ -5509,9 +5507,6 @@ int             iCount=0, iErrorCount=0;
             iErrorCount++;
         }
         VP0("%8s=<U %4s;%3s,%4s(%2d),%4s(%2d)>,<R %4s;%3.3s;%4s,%4s,%4s,%4s,%4s,%4s> "
-#ifdef DEBUG
-               "(%d,%d) "
-#endif
                "%s\n",
                cPVarName,cPUnitName,sEndFlags,
                (aHead?sContainerName(aHead):""),
@@ -5526,10 +5521,6 @@ int             iCount=0, iErrorCount=0;
                bResidueConnectUsed(rRes,3) ? sContainerName(aResidueConnectAtom(rRes,3)):"",
                bResidueConnectUsed(rRes,4) ? sContainerName(aResidueConnectAtom(rRes,4)):"",
                bResidueConnectUsed(rRes,5) ? sContainerName(aResidueConnectAtom(rRes,5)):"",
-#ifdef DEBUG // reference counting is hopelelssly corrupted so don't even try
-               OBJEKT_from(uUnit)->iReferences,
-               OBJEKT_from(rRes)->iReferences,
-#endif
                sErrors );
     }
     VP0("--------+-------+--------+---------+-------+---+----+----+----+----+----+----+---------\n");
@@ -6042,7 +6033,7 @@ char            *sName1, *sName2=NULL, *sUnitName;
             iGroupStart[count] = iVarArrayElementCount(vaSolventPoints);
             ngSolventAtoms = neighbor_grid_setup(
                    PVAI(vaSolventPoints, Point, 0),
-                  iVarArrayElementCount(vaSolventPoints),count,iGroupStart,3.0);
+                  iVarArrayElementCount(vaSolventPoints),iGroupStart,count,3.0);
         } else
             VP1(" (no solvent present)\n" );
     }
@@ -6885,7 +6876,7 @@ char    *sCmd = "alias";
     switch ( iArgCount) {
         case 2 : /* Adds an alias */
                 MESSAGE("Add alias:  %p, %s\n",
-                        oAssocObject(aaArgs[0]),
+                        (void*)oAssocObject(aaArgs[0]),
                         sObjectType( oAssocObject(aaArgs[1])));
                 if ( bCmdGoodArguments( sCmd, iArgCount, aaArgs, "s s" )) {
                     strcpy( sAlias, sOString( oAssocObject( aaArgs[0] )));

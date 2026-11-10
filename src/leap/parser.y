@@ -277,7 +277,6 @@ rawexp  :       LOPENLIST
                             OBJEKT oObject = oCreate(LISTid);
                             LIST_from(oObject)->bFreeChildren = true;
                             AssocTakeObject( aAssoc, oObject );
-                            printf("assoc obj = %p\n",oObject);
                             CURRENTLIST = aAssoc;
                         }
                     elements LCLOSELIST 

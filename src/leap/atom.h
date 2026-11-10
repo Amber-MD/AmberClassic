@@ -156,7 +156,7 @@ typedef ATOMt   *ATOM;
 #define ATOMPOSITIONBUILT       0x00800000
 #define ATOMPOSITIONDRAWN       0x01000000
 #define ATOMMOCKPOSITIONKNOWN   0x02000000
-#define ATOMCREATED             0x08000000
+#define ATOMCREATED             0x04000000
 #define ATOMFLAGUNUSED1         0x08000000
 #define ATOMFLAG0               0x10000000
 #define ATOMFLAG1               0x20000000
@@ -230,7 +230,7 @@ static inline ATOM atom_from_atom(ATOM a,const char *file,int line) { return a; 
 #define bAtomPerturbed( a )             (bAtomFlagsSet((ATOM_from(a)),ATOMPERTURB))
 #define AtomDefineFlags(a,f)            ((ATOM_from(a))->fFlags = f,CDU(a) )
 #define AtomSetFlags(a,f)               ((ATOM_from(a))->fFlags |= f,CDU(a) )
-#define AtomResetFlags(a,f)             ((ATOM_from(a))->fFlags &= (~f),CDU(a) )
+#define AtomResetFlags(a,f)             ((ATOM_from(a))->fFlags &= (~(f)),CDU(a) )
 #define fAtomFlags(a)                   ((ATOM_from(a))->fFlags)
 #define bAtomFlagsSet(a,f)              (((ATOM_from(a))->fFlags&(f))==(f))
 #define bAtomFlagsReset(a,f)     ((~((ATOM_from(a))->fFlags)&(f))==(f))

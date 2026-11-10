@@ -381,8 +381,8 @@ int             iInt;
                 strlen(sData) == 0 ) goto BADTYPE;
         if ( iInt == 0 ) iInt = FIRSTEND;
         else if ( iInt == 1 ) iInt = LASTEND;
-        else if ( iInt == 2 ) iInt = COMPID_HETID;
-        else if ( iInt == 3 ) iInt = HETID_COMPID;
+        else if ( iInt == 3 ) iInt = COMPID_HETID;
+        else if ( iInt == 5 ) iInt = HETID_COMPID;
         zPdbToNameMapKey( iInt, sTempKey, sKey, NULL );
     } else {
         if ( aC != NULL ) goto BADTYPE;
@@ -656,123 +656,49 @@ RESIDUE         rRes;
 
 
 
-
-
-/*
- *      zPdbBuildCoordinatesForContainer
- *
- *      Author: Christian Schafmeister (1991)
- *
- *      Search through the CONTAINER for ATOMs that do not have
- *      ATOMPOSITIONKNOWN and build external coordinates for those.
- *      Also search through ATOMs that are bonded to ATOMs that have
- *      ATOMPOSITIONKNOWN and build those that do not have ATOMPOSITIONKNOWN
- *      This will guarantee that all ATOMs bonded to ATOMs within the
- *      CONTAINER will be built.
- */
-static void
-zPdbBuildCoordinatesForContainer( PDBREADt *prPPdb,  CONTAINER cCont, int *iPAddH,
-        int *iPAddHeavy, int *iPAddUnk )
-{
-LOOP            lSpan;
-ATOM            aAtom, aTemp, aSpan;
-int             i;
-STRING          sTemp;
-                /* Fix the internal coordinates */
-    BuildFixInternals( (UNIT) cCont );
-
-                /* Loop through all ATOMs looking for those that */
-                /* do not have positions known and build externals */
-                /* for them and neighbors that are bonded to them */
-    LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
-        if ( !bAtomFlagsSet( aAtom, ATOMPOSITIONKNOWN ) ) {
-            lSpan = lLoop( (OBJEKT)aAtom, SPANNINGTREE );
-            LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
-
-                /* Look for a collision with an ATOM whose */
-                /* ATOMPOSITIONKNOWN flag is set */
-                /* NOTE: collision here means connected by a bond */
-            aSpan = NULL;
-            while ( (aTemp = (ATOM)oNext(&lSpan)) ) {
-                if ( aSpan == NULL ) aSpan = aTemp;
-                if ( aLoopLastCollisionAtom(&lSpan) != NULL ) {
-                    aSpan = aLoopLastCollisionAtom(&lSpan);
-                    break;
-                }
-            }
-
-            MESSAGE("Building externals from: %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aSpan, sTemp ) );
-
-                        /* Build external coordinates */
-            lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
-            LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
-            BuildExternalsUsingFlags( &lSpan,
-                                        0, ATOMPOSITIONKNOWN,
-                                        ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
-                                        iPAddH, iPAddHeavy, iPAddUnk, true );
-        } else {
-            for ( i=0; i<iAtomCoordination(aAtom); i++ ) {
-                aSpan = aAtomBondedNeighbor(aAtom,i);
-                if ( !bAtomFlagsSet( aSpan, ATOMPOSITIONKNOWN ) ) {
-                    MESSAGE("Building externals from: %s\n",
-                        sContainerFullDescriptor( (CONTAINER)aSpan, sTemp ) );
-                    lSpan = lLoop( (OBJEKT)aSpan, SPANNINGTREE );
-                    LoopDefineInvisibleAtoms( &lSpan, ATOMPOSITIONKNOWN );
-                    BuildExternalsUsingFlags( &lSpan,
-                                                0, ATOMPOSITIONKNOWN,
-                                                ATOMPOSITIONKNOWN|ATOMPOSITIONBUILT, 0,
-                                                iPAddH, iPAddHeavy, iPAddUnk,
-                                                true );
-                }
+static float
+zPdbClashCheck( PDBREADt *prPPdb, RESIDUE rRes, float dOverlapCutoff ) {
+    RESIDUENAMEt *rnTo, *rnClash = NULL;
+    ATOMNAMEt *anTo, *anClash = NULL;
+    STRING sTemp;
+    ATOM aAtom, aClash = NULL;
+    float dMaxOverlap = 0, dMaxDist = 0;
+    LOOPOVERALL(rRes,ATOMS,aAtom,lAtoms) {
+        if (!bAtomFlagsSet( aAtom, ATOMPOSITIONBUILT ) ) continue;
+        if (sContainerName(aAtom)[0]=='H' && (sContainerName(aAtom)[1]==0 || sContainerName(aAtom)[1]=='A')) continue;
+        const Pair *pairs;
+        size_t count;
+        int n = neighbor_grid_query_point(prPPdb->ngBondGrid,
+                dVX(&vAtomPosition(aAtom)), dVY(&vAtomPosition(aAtom)),
+                dVZ(&vAtomPosition(aAtom)), -1, rRes->iTemp, &pairs, &count);
+        if (n) {
+            VPWARN("%s: neighbor_grid_query_point() failed\n",__func__);
+            break;
+        }
+        if (!count) continue;
+        for (int i=0;i<(int)count;i++) {
+            if (pairs[i].to_group == rRes->iTemp) continue;
+            anTo = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, pairs[i].to_member);
+            rnTo = PVAI(prPPdb->vaResidues, RESIDUENAMEt, pairs[i].to_group);
+            float dDist = sqrt(pairs[i].d2);
+            float dOverlap = dAtomsVdWOverlap(aAtom->iAtomicNumber, anTo->iElement, dDist);
+            if (dOverlap > dMaxOverlap) {
+                 dMaxOverlap = dOverlap;
+                 dMaxDist = dDist;
+                 aClash = aAtom;
+                 anClash = anTo;
+                 rnClash = rnTo;
             }
         }
     }
-    if ( iObjectType(cCont) == RESIDUEid ) {
-        RESIDUENAMEt *rnTo;
-        ATOMNAMEt *anTo;
-        RESIDUE rRes = RESIDUE_from(cCont);
-        LOOPOVERALL(cCont,ATOMS,aAtom,lAtoms) {
-            if (!bAtomFlagsSet( aAtom, ATOMPOSITIONBUILT ) ) continue;
-            const Pair *pairs;
-            size_t count;
-            int n = neighbor_grid_query_point(prPPdb->ngBondGrid,
-                    dVX(&vAtomPosition(aAtom)), dVY(&vAtomPosition(aAtom)),
-                    dVZ(&vAtomPosition(aAtom)), -1, -1, &pairs, &count);
-
-            if (n) {
-                VPWARN("%s: neighbor_grid_query_point() failed\n",__func__);
-                break;
-            }
-            if (!count) continue;
-            bool bFound = false;
-            float dMaxOverlap = 0.6;
-            for (i=0;i<(int)count;i++) {
-                if (pairs[i].to_group == rRes->iTemp) continue;
-                rnTo = PVAI(prPPdb->vaResidues, RESIDUENAMEt, pairs[i].to_group);
-                anTo = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, pairs[i].to_member);
-                float dDist = sqrt(pairs[i].d2);
-                float dOverlap = dAtomsVdWOverlap(aAtom->iAtomicNumber, anTo->iElement, dDist);
-                if (dOverlap < dMaxOverlap) continue;
-                if (!bFound) {
-                    VPWARN("Built atom %s collides with %s.%s:%d%c.%s, dist=%.1fÅ, overlap=%.1fÅ\n",
-                            sFullDescriptor(aAtom,sTemp), rnTo->sName, rnTo->sChainId,
-                            rnTo->iPdbSequence, rnTo->cICode, anTo->sName, dDist, dOverlap);
-                    bFound = true;
-                } else {
-                    VP0("\tand %s.%s:%d%c.%s, dist=%.1fÅ, overlap=%.1fÅ\n",
-                            rnTo->sName, rnTo->sChainId, rnTo->iPdbSequence, rnTo->cICode,
-                            anTo->sName, dDist, dOverlap);
-                }
-            }
-        }
+    if (dMaxOverlap > dOverlapCutoff) {
+        VPWARN("Built atom %s clashes with %s.%s:%d%c.%s, dist=%.1fÅ, overlap=%.1fÅ\n",
+                sFullDescriptor(aClash,sTemp), rnClash->sName, rnClash->sChainId,
+                rnClash->iPdbSequence, rnClash->cICode, anClash->sName, dMaxDist, dMaxOverlap);
     }
-                /* Destroy the INTERNALs in the CONTAINER */
-
-    LOOP lTemp = lLoop( (OBJEKT)cCont, ATOMS );
-    BuildDestroyInternals( &lTemp );
-
+    return dMaxOverlap;
 }
+
 
 
 
@@ -1640,8 +1566,9 @@ int             iCurrentBioMT=0;
                     }
                 }
                 if (p.pdb.hetnam.extra[0] != 0 && p.pdb.hetnam.extra[0] != ' ') {
-                    // Long to short name mapping: addPdbResMap { 2 COMP_ID HetID }
+                    // COMP_ID stuck in the string overflow region of HETNAM
                     char sKey[32];
+                    // Long to short name mapping: addPdbResMap { 2 COMP_ID HetID }
                     zPdbToNameMapKey(COMPID_HETID, p.pdb.hetnam.het_id, sKey, NULL);
                     zPdbNameMapAdd( &SdResidueNameMap, sKey, p.pdb.hetnam.extra);
                     zPdbToNameMapKey(HETID_COMPID, p.pdb.hetnam.het_id, sKey, NULL);
@@ -1669,12 +1596,13 @@ int             iCurrentBioMT=0;
                     }
                     char *pCompId = strstr(*desc,"COMP_ID:");
                     if (pCompId) {
+                    // COMP_ID in HETSYN with COMP_ID:<HetID>
                         char sCompId[32], sKey[32];
-                        StringCopyMax(sCompId,pCompId+strlen("COMP_ID:"),sizeof(sCompId));
+                        StringCopyMax(sCompId,pCompId+8, sizeof(sCompId));
                         pCompId = strtok(sCompId,"; \n\r");
                         VP0("Found COMP_ID=%s for HetID=%s\n",pCompId,p.pdb.hetsyn.het_id);
                         if ( strlen(pCompId) < 3 || strlen(pCompId) > 5 ) {
-                            VPWARN("COMPID length unexpected size: \"%s\"\n",pCompId);
+                            VPWARN("COMP_ID length unexpected size: \"%s\"\n",pCompId);
                         } else {
                             zPdbToNameMapKey(HETID_COMPID, p.pdb.hetsyn.het_id, sKey, NULL);
                             zPdbNameMapAdd( &SdResidueNameMap, sKey, pCompId);
@@ -2182,8 +2110,9 @@ typedef struct {
     int extra_head_tail;
     int missing_atoms;
     int missing_connect;
-    int extra_h_atoms;   // raw count; patch logic checks == 1 for deprotonation
-    int extra_nonh_atoms;   // raw count; patch logic checks == 1 for deprotonation
+    int extra_h_atoms;   // patch logic checks == 1 for deprotonation (only single deprotonation supported)
+                         // rank scoring also requires extra_h_atoms == 1 *unless* match_exact flag is set
+    int extra_nonh_atoms;   //
     int pdb_seq;
 } MatchScore;
 
@@ -2194,13 +2123,15 @@ typedef struct MatchCandidate {
     const Pair *pairPMatched[MAXCONNECT];   // detected bonds matching CONNECT
     const Pair *pairPUnmatched[MAXCONNECTPAIRS]; // detected bonds not matching CONNECT
     bool        atomMatched[MAXATOMS];      // true if this PDB atom matched the template
-    char        sUnmatchedNames[80];        // List of PDB names not matched
     bool        bHeadIsCrossLink;           // Flag: HEAD bond to non-TAIL
     bool        bTailIsCrossLink;           // Flag: TAIL bonds to non-HEAD
     bool        bHasPendingForwardLinks;    // Flag: CONNECT links to forward atoms
                                             // (CONNECT status of forward atom is unknown)
     bool        bMatchedHydrogens;          // flag to keep track of whether PDB residue had hydrogens
     MatchScore  score;
+    char        sUnmatchedNames[80];        // List of PDB names not matched
+    char        sExtraNonHNames[80];        // List of Template names not matched, excluding hydrogen, EP
+    char        sExtraHNames[80];           // List of Template names not matched, only hydrogen, EP
 } MatchCandidate;
 
 // -- Comparator --------------------------------------------------------------
@@ -2225,11 +2156,20 @@ ziCompareCandidates(const MatchCandidate *A, const MatchCandidate *B)
         CMP(missing_atoms)
         CMP(missing_connect)
         CMP(extra_nonh_atoms)
-        CMP(extra_h_atoms)
+        if (A->bMatchedHydrogens && a->extra_h_atoms <= 2 && b->extra_h_atoms <= 2) { CMP(extra_h_atoms) }
     }
     CMP(pdb_seq)
     return 0;
     #undef CMP
+}
+
+static void
+zAppendStringList(char *sString, size_t iLen, const char *sAppend) {
+    if (strlen(sString) > iLen-4) return;
+    if (strlen(sString)+strlen(sAppend) <= iLen-6) {
+         if (sString[0]) strcat(sString, ",");
+         strcat(sString,sAppend);
+    } else strcat(sString, "...");
 }
 
 // -- Running-best ------------------------------------------------------------
@@ -2256,8 +2196,13 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
     EXPLAIN(missing_atoms,"missing ATOMs", if (loser->sUnmatchedNames[0])
             VP2("        missing: %s\n", loser->sUnmatchedNames););
     if (!GDefaults.bPdbExactMatch) EXPLAIN(missing_connect,"missing CONNECT",)
-    EXPLAIN(extra_nonh_atoms,"extra non-H atoms",)
-    EXPLAIN(extra_h_atoms,"extra H atoms",)
+    EXPLAIN(extra_nonh_atoms,"extra non-H atoms", if (loser->sExtraNonHNames[0])
+            VP2("        extra: %s\n", loser->sExtraNonHNames);)
+    if (winner->bMatchedHydrogens && winner->score.extra_h_atoms <= 2
+                                  && loser->score.extra_h_atoms <= 2) {
+        EXPLAIN(extra_h_atoms,"extra H atoms", if (loser->sExtraHNames[0])
+            VP2("        extra: %s\n", loser->sExtraHNames);)
+    }
     if (GDefaults.bPdbExactMatch) {
         EXPLAIN(extra_head_tail,"extra HEAD/TAIL",)
         EXPLAIN(missing_connect,"missing CONNECT",)
@@ -2388,15 +2333,15 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, bool bFromIsConnect,
     RESIDUE rTo   = rnTo->rResidue;
 
     int iNonConnectSides = !bFromIsConnect + !bToIsConnect;
-    if ((iNonConnectSides >= 2 && GDefaults.iPdbIgnoreNonConnect >= 1) ||
-        (iNonConnectSides >= 1 && GDefaults.iPdbIgnoreNonConnect >= 2)) {
+    if ((iNonConnectSides >= 2 && GDefaults.iPdbExcludeNonConnect >= 1) ||
+        (iNonConnectSides >= 1 && GDefaults.iPdbExcludeNonConnect >= 2)) {
         if (bToIsConnect)
             VPWARN("Filtered out bond from %s.%s:%d.%s to %s.%s:%d.%s\n"
                    "   with pdb_ignore_nonconnect = %d\n"
                    "   but earlier residue (from) match was based on this pending bond.\n",
                    sContainerName(rTo),   sResidueChainId(rTo),   iResiduePdbSequence(rTo),   sContainerName(aTo),
                    sContainerName(rFrom), sResidueChainId(rFrom), iResiduePdbSequence(rFrom), sContainerName(aFrom),
-                   GDefaults.iPdbIgnoreNonConnect);
+                   GDefaults.iPdbExcludeNonConnect);
         return;
     }
 
@@ -2614,7 +2559,6 @@ zProcessModifications(PDBREADt *prPPdb, MatchCandidate *match,
     }
 }
 
-
 static void
 zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
         int iFirstAtom, int iLastAtom,
@@ -2705,7 +2649,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
         if (match) continue;
 
         // Analyze non-CONNECT atom bonding contacts
-        if (GDefaults.iPdbIgnoreNonConnect >= 2) continue;
+        if (GDefaults.iPdbExcludeNonConnect >= 2) continue;
         bool bToIsConnect = false;
         bool bForwardLink = (pairPDetected[id]->to_group > iResIndex);
         if (bForwardLink) {
@@ -2722,7 +2666,7 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
                 }
             }
         }
-        if (bToIsConnect && GDefaults.iPdbIgnoreNonConnect >= 1) continue;
+        if (bToIsConnect && GDefaults.iPdbExcludeNonConnect >= 1) continue;
         if (bForwardLink) cnPCandidate->bHasPendingForwardLinks = true;
         if (unmatched_conn < MAXCONNECTPAIRS)
             cnPCandidate->pairPUnmatched[unmatched_conn++] = p;
@@ -2746,12 +2690,12 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
     int na_h_template = iContainerTempInt(uTemplate);
     int na_nonh_template = iContainerNumberOfChildren(rTemplateRes) - na_h_template;
 
-    //int na_residue = iLastAtom - iFirstAtom + 1;
+    // int na_residue = iLastAtom - iFirstAtom + 1;
     int num_h_matched = 0;
     int num_nonh_matched = 0;
     for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
         cnPCandidate->atomMatched[n] = true;
-        const char *name    = anPAtoms[i].sName;
+        const char *name = anPAtoms[i].sName;
         CONTAINER found = cContainerFindName((CONTAINER)rTemplateRes, ATOMid, name);
         if (!found) {
             // Try atom name aliases
@@ -2762,12 +2706,9 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
         if (!found) {
             // Atom not in template, mark and append to string list
             cnPCandidate->atomMatched[n] = false;
-            if (strlen(cnPCandidate->sUnmatchedNames) <= sizeof(cnPCandidate->sUnmatchedNames)-10) {
-                if (strlen(cnPCandidate->sUnmatchedNames)+strlen(name) <= sizeof(cnPCandidate->sUnmatchedNames)-10) {
-                    if (num_unmatched) strcat(cnPCandidate->sUnmatchedNames, ",");
-                    strcat(cnPCandidate->sUnmatchedNames, name);
-                } else strcat(cnPCandidate->sUnmatchedNames, "...");
-            }
+            if (iVerbosity() > 3)
+                zAppendStringList(cnPCandidate->sUnmatchedNames,
+                        sizeof(cnPCandidate->sUnmatchedNames), name);
             num_unmatched++;
         } else if (ATOM_from(found)->iAtomicNumber == HYDROGEN ||
                    ATOM_from(found)->iAtomicNumber == LONEPAIR) num_h_matched++;
@@ -2778,6 +2719,31 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
     cnPCandidate->score.extra_nonh_atoms = na_nonh_template - num_nonh_matched;
     cnPCandidate->score.pdb_seq = iResiduePdbSequence(oContainerFirstObject(uTemplate));
     cnPCandidate->bMatchedHydrogens = num_h_matched;
+    cnPCandidate->sExtraHNames[0] = 0;
+    cnPCandidate->sExtraNonHNames[0] = 0;
+    if (iVerbosity() > 3 && cnPCandidate->score.extra_nonh_atoms) {
+        ATOM aAtom;
+        FOR_ATOMS_IN_RESIDUE(aAtom,RESIDUE_from(oContainerFirstObject(uTemplate))) {
+            bool bHydrogen = aAtom->iAtomicNumber == HYDROGEN || aAtom->iAtomicNumber == LONEPAIR;
+            if (bHydrogen && !num_h_matched) continue;
+            bool bFound = false;
+            for (int i = iFirstAtom, n = 0; i <= iLastAtom; i++, n++) {
+                if (!strcmp(anPAtoms[i].sName,sContainerName(aAtom))) {
+                    bFound = true;
+                    break;
+                }
+            }
+            if (!bFound) {
+                if (bHydrogen) {
+                    zAppendStringList(cnPCandidate->sExtraHNames, sizeof(cnPCandidate->sExtraHNames),
+                            sContainerName(aAtom));
+                } else {
+                    zAppendStringList(cnPCandidate->sExtraNonHNames, sizeof(cnPCandidate->sExtraNonHNames),
+                            sContainerName(aAtom));
+                }
+            }
+        }
+    }
 }
 
 // -- Link detection ------------------------------------------------------
@@ -2848,7 +2814,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
 
     // -- Template lookup -----------------------------------------------------
 
-    // check HetID to CompID mapping -- for input PDB without HETNAM/HETSYN COMP_ID mapping
+    // check 3-letter HetID to 3-5 letter CompID mapping
     char *cPResName = zcPPdbMapName( SdResidueNameMap,
                         HETID_COMPID, rnPName->sName, NULL );
     if (cPResName) {
@@ -2869,6 +2835,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
             } else cPResName = NULL;
         } else cPResName = NULL;
     }
+
     // Now try direct residue name lookup
     if (!cPResName) {
         cPResName = rnPName->sName;
@@ -2905,13 +2872,9 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         } else zLogCandidateLoss(&cnMatch, &cnCandidate);
 
         if (iVerbosity() > 2) {
-            if (strcmp(ix_record.key, sContainerName(uTemplate))) {
-                sprintf(sMatchResNames[iNumCandidates],
-                         "(%s:%s.%s)",ix_record.key, sContainerName(uTemplate),
-                         sContainerName(oContainerFirstObject(uTemplate)));
-            } else {
-                sprintf(sMatchResNames[iNumCandidates],"%.31s",ix_record.key);
-            }
+            sprintf(sMatchResNames[iNumCandidates],
+                     "%.30s.%.30s", sContainerName(uTemplate),
+                     sContainerName(oContainerFirstObject(uTemplate)));
         }
         if (++iNumCandidates >= MAXCANDIDATES) break;
         status = next_key(&ix_record, &(prPPdb->ixResMap));
@@ -2933,7 +2896,7 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         if (iVerbosity() > 2) {
             VP2("%s.%s:%d Candidates: %s", cPResName,
                 rnPName->sChainId, rnPName->iPdbSequence, sMatchResNames[0]);
-            for (int i = 1; i < iNumCandidates; i++) VP2(",%s", sMatchResNames[i]);
+            for (int i = 1; i < iNumCandidates; i++) VP2(", %s", sMatchResNames[i]);
             VP2(" Match: %s.%s%s\n", sContainerName(uTemplate),sContainerName(rTemplateRes),
                 cnMatch.bMatchedHydrogens ? "" : " [non-H match]");
         }
@@ -2982,25 +2945,9 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
             }
             if ( (iVerbosity()>3 && (cnMatch.score.extra_h_atoms+cnMatch.score.extra_nonh_atoms)>0) ||
                  (cnMatch.score.extra_h_atoms==1 || cnMatch.score.extra_h_atoms==2 || cnMatch.score.extra_nonh_atoms)) {
-                VP0(" Extra atoms in template: %d(H) + %d(non-H)", cnMatch.score.extra_h_atoms,cnMatch.score.extra_nonh_atoms);
-                ATOM    aAtom;
-                LOOP    lAtoms = lLoop((OBJEKT)rTemplateRes, ATOMS);
-                bool    first  = true;
-                while ((aAtom = (ATOM)oNext(&lAtoms)) != NULL) {
-                    if (!cnMatch.bMatchedHydrogens && aAtom->iAtomicNumber == HYDROGEN) continue;
-                    bool found = false;
-                    for (int i = iFirstAtom; i <= iLastAtom; i++) {
-                        if (!strcmp(sContainerName(aAtom),
-                                    PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, i)->sName))
-                            { found = true; break; }
-                    }
-                    if (!found) {
-                        VP0("%s%s", first ? " (" : ",", sContainerName(aAtom));
-                        first = false;
-                    }
-                }
-                if (!first) VP0(")\n");
-                else VP0("\n");
+                VP0(" Extra atoms in template: %d(non-H) + %d(H)  (%s;%s)\n",
+                        cnMatch.score.extra_nonh_atoms,cnMatch.score.extra_h_atoms,
+                        cnMatch.sExtraNonHNames,cnMatch.sExtraHNames);
             }
             if (cnMatch.score.missing_connect > MAX_UNMATCHED_CONNECT) {
                 VP0("Warning: %s.%s:%d has %d unmatched cross-link contacts"
@@ -3342,8 +3289,42 @@ int             iChainCount=0;
             zProcessModifications(prPPdb, &cnMatch, iFirstAtom, iLastAtom);
         }
 
-        rRes->iTemp = iRes;
-        zPdbBuildCoordinatesForContainer(prPPdb, (CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
+                /* Fix the internal coordinates */
+        BuildFixInternals( prPPdb->uUnit );
+        int iAddHeavyStart = iAddHeavy;
+        BuildCoordinatesForContainer((CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
+
+        if (iAddHeavyStart != iAddHeavy) {
+            rRes->iTemp = iRes;
+            float dClashCutoff = 0.6;
+            float dClash = zPdbClashCheck(prPPdb, rRes, dClashCutoff);
+            if (dClash > dClashCutoff) {
+                int iVerbosity0 = iVerbosity();
+                VerbositySet(0);
+                int iBest = 0;
+                float dBest = 999;
+                for (int iRotamer=0; ; iRotamer++) {
+                    const char *sName;
+                    if (!BuildRotamer(rRes, iRotamer, true, &sName)) break;
+                    dClash = zPdbClashCheck(prPPdb, rRes, dClashCutoff);
+                    VP0("Rotamer %d (%s) overlap=%.2f\n", iRotamer, sName, dClash);
+                    if (dClash < dClashCutoff) break;
+                    if (dClash < dBest) {
+                        dBest = dClash;
+                        iBest = iRotamer;
+                    }
+                }
+                if (dClash > dClashCutoff) {
+                    VP0("Rebuild with best rotamer %d\n",iBest);
+                    BuildRotamer(rRes, iBest, true, NULL);
+                }
+                VerbositySet( iVerbosity0 );
+            }
+        }
+
+                /* Destroy the INTERNALs in the CONTAINER */
+        LOOP lTemp = lLoop( (OBJEKT)rRes, ATOMS );
+        BuildDestroyInternals( &lTemp );
 
     }
 
@@ -3453,10 +3434,17 @@ int             iChainCount=0;
         }
     }
 
+                /* Fix the internal coordinates */
+    BuildFixInternals( prPPdb->uUnit );
+
                 /* Build geometry for everything that has not */
                 /* been build */
-    zPdbBuildCoordinatesForContainer(prPPdb, (CONTAINER)prPPdb->uUnit,
+    BuildCoordinatesForContainer((CONTAINER)prPPdb->uUnit,
                                 &iAddH, &iAddHeavy, &iAddUnk );
+
+                /* Destroy the INTERNALs in the CONTAINER */
+    LOOP lTemp = lLoop( (OBJEKT)prPPdb->uUnit, ATOMS );
+    BuildDestroyInternals( &lTemp );
 
     VP0("  total atoms in file: %d\n", nAtoms );
     if ( (iAdd = iAddH + iAddHeavy + iAddUnk) ) {
@@ -3652,7 +3640,7 @@ int             i;
     }
     if (GDefaults.bPdbAutoLink || GDefaults.bPdbAutoMatch ) {
         prPdb.ngBondGrid = neighbor_grid_setup( PVAI(prPdb.vaPoints, Point, 0),
-                iVarArrayElementCount(prPdb.vaPoints), iNumPdbResidues, prPdb.iPGroupStart,
+                iVarArrayElementCount(prPdb.vaPoints), prPdb.iPGroupStart, iNumPdbResidues,
                 MAX_BOND_LENGTH * GDefaults.dPdbLinkCovalentCutoff ); // max expected bond length * cutoff multiplier
 
     }

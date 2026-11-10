@@ -104,7 +104,7 @@ zSDefaultSettings[] = {
     { 'B', "pdb_reset_chainids","PDB_Reset_ChainIds", &GDefaults.bPdbResetChainID },
     { 'S', "pdb_convert_resname","PDB_Convert_ResName", &GDefaults.iPdbConvertResName,
                .options = PdbConvertResname_options, .optionDesc = PdbConvertResname_optionDesc  },
-    { 'I', "pdb_ignore_nonconnect","PDB_Ignore_NonConnect", &GDefaults.iPdbIgnoreNonConnect },
+    { 'I', "pdb_exclude_nonconnect","PDB_Exclude_NonConnect", &GDefaults.iPdbExcludeNonConnect },
     { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
     { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
     { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },

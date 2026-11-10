@@ -39,7 +39,6 @@
 #include        "mathop.h"
 #include        "sort.h"
 #include        "neighbors.h"
-//#include        "symmetry.h"
 #include        "defaults.h"
 
 /*
@@ -870,7 +869,7 @@ NeighborGrid    *ngSolute;
                         
     unsigned int nbgroups[2]={0,iVarArrayElementCount( vaSolute )};
     // R cutoff = twice the largest radius, or dBuffer for shell mode (dBuffer becomes dCloseness)
-    ngSolute = neighbor_grid_setup(PVAI(vaSolute, Point, 0), nbgroups[1], 1, nbgroups,
+    ngSolute = neighbor_grid_setup(PVAI(vaSolute, Point, 0), nbgroups[1], nbgroups, 1,
             (iCriteria & TOOLOUTSIDESHELL) ? dBuffer : (2.0 * dToolFindBiggestAtom(uSolute)) );
 
                 /* Loop over all solvent boxes to add */
@@ -1529,14 +1528,70 @@ double          dMinPot, dMaxPot;
 
 
 
+// Gneerate non-bond grid, with minimum radius set by VdW or given radius if non-zero
+NeighborGrid *
+NonbondSetup( UNIT uUnit, float dRadius ) {
+unsigned int            iAtoms, iResidues;
+ATOM                    aAtom;
+RESIDUE                 rRes;
+double                  dMaxR, dR;
+VARARRAY                vaGroups;
+VARARRAY                vaPoints;
+NeighborGrid            *ngAtomGrid = NULL;
+
+    vaPoints = vaVarArrayCreate( sizeof(Point) );
+    vaGroups = vaVarArrayCreate( sizeof(unsigned int) );
+    dMaxR = 1.0; // minimum radius
+    iAtoms = 0;
+    iResidues = 0;
+    VarArrayAdd(vaGroups, &iAtoms);
+    LOOPOVERALL(uUnit,RESIDUES,rRes,lResidue) {
+        LOOPOVERALL(rRes,ATOMS,aAtom,lAtom) {
+            Point p = {
+                    vAtomPosition( aAtom ).dX,
+                    vAtomPosition( aAtom ).dY,
+                    vAtomPosition( aAtom ).dZ,
+                    iResidues,
+                    { .p = (void*)aAtom }};
+            VarArrayAdd(vaPoints, &p);
+            if (!dRadius) {
+                dR = dToolAtomR( aAtom );
+                if (dR > dMaxR) dMaxR = dR;
+            }
+            iAtoms++;
+        }
+        VarArrayAdd(vaGroups, &iAtoms);
+        iResidues++;
+    }
+    if (iAtoms > 1) {
+        ngAtomGrid = neighbor_grid_setup(PVAI(vaPoints, Point, 0), iAtoms,
+                     PVAI(vaGroups, unsigned int, 0), iResidues,
+                     dRadius ? dRadius : dMaxR);
+    }
+    VarArrayDestroy(&vaPoints);
+    VarArrayDestroy(&vaGroups);
+    return ngAtomGrid;
+}
+
+static inline double
+dSwitching(double dR, double dRon, double dRoff) {
+    if (dR <= dRon) return 1.0;
+    else if (dR >= dRoff) return 0.0;
+    double x = (dR - dRon) / (dRoff - dRon);
+    return 1.0 + (-10.0 + (15.0-6.0*x)*x)*x*x*x;
+}
+
+//double
+//NonbondEnergy(NeighborGrid *ngGrid, ATOM aAtom
+
+
+
 /*
 --------------------------------------------------------
 
         Create bonds in a distance search
         
 */
-
-
 
 
         
@@ -1585,13 +1640,13 @@ double                  dR, dX, dY, dZ;
 double                  dDist, dMaxR;
 STRING                  sTemp, sTemp1, sTemp2;
 int                     iCount;
-// Identified bonding pairs:
+// Identified bonding pairs (for bond creation only):
 VARARRAY                vaPairs;
 PAIRt                   pair, *Ppair;
 int                     iPairs;
-// Neighbor grid points:
+// Neighbor grid points (query points):
 VARARRAY                vaPoints;
-// Neighbor grid pairs:
+// Neighbor grid pairs (distance results):
 const Pair              *pairGrid;
 size_t                  npairs;
 
@@ -1642,7 +1697,7 @@ size_t                  npairs;
 
     NeighborGrid    *ngAtoms;
     unsigned int nbgroups[2]={0,iAtoms};
-    ngAtoms = neighbor_grid_setup(PVAI(vaPoints, Point, 0), nbgroups[1], 1, nbgroups,
+    ngAtoms = neighbor_grid_setup(PVAI(vaPoints, Point, 0), nbgroups[1], nbgroups, 1,
             bAbsoluteDistance ? dCloseness : dMaxR);
 
                 /* Compare the position of every atom with every other */
