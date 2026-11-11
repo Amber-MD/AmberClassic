@@ -1,0 +1,99 @@
+# Load nucleic acid libraries for:
+# monophosphate, DNA.OL21, RNA.OL3
+
+loadOff terminal_monophosphate.lib
+# Create unique UNIT names, plus standard internal residue names
+# Note: element values are missing, we need at least link atoms to be correct
+# Adding CONNECT0 to residue required for CHAIN_TREE to work
+PO3H_DA5 = DA5
+set PO3H_DA5 name "PO3H_DA5"
+set PO3H_DA5.1 name "DA"
+set PO3H_DA5.1 restype "nucleic"
+set PO3H_DA5.1@O3' element "O"
+set PO3H_DA5.1 connect1 PO3H_DA5.1.HOP3
+
+PO3H_DC5 = DC5
+set PO3H_DC5 name "PO3H_DC5"
+set PO3H_DC5.1 name "DC"
+set PO3H_DC5.1 restype "nucleic"
+set PO3H_DC5.1@O3' element "O"
+set PO3H_DC5.1 connect1 PO3H_DC5.1.HOP3
+
+PO3H_DG5 = DG5
+set PO3H_DG5 name "PO3H_DG5"
+set PO3H_DG5.1 name "DG"
+set PO3H_DG5.1 restype "nucleic"
+set PO3H_DG5.1@O3' element "O"
+set PO3H_DG5.1 connect1 PO3H_DG5.1.HOP3
+
+PO3H_DT5 = DT5
+set PO3H_DT5 name "PO3H_DT5"
+set PO3H_DT5.1 name "DT"
+set PO3H_DT5.1 restype "nucleic"
+set PO3H_DT5.1@O3' element "O"
+set PO3H_DT5.1 connect1 PO3H_DT5.1.HOP3
+
+PO3H_A5 = A5
+set PO3H_A5 name "PO3H_A5"
+set PO3H_A5.1 name "A"
+set PO3H_A5.1 restype "nucleic"
+set PO3H_A5.1@O3' element "O"
+set PO3H_DA5.1 connect1 PO3H_DA5.1.HOP3
+
+PO3H_C5 = C5
+set PO3H_C5 name "PO3H_C5"
+set PO3H_C5.1 name "C"
+set PO3H_C5.1 restype "nucleic"
+set PO3H_C5.1@O3' element "O"
+set PO3H_DC5.1 connect1 PO3H_DC5.1.HOP3
+
+PO3H_G5 = G5
+set PO3H_G5 name "PO3H_G5"
+set PO3H_G5.1 name "G"
+set PO3H_G5.1 restype "nucleic"
+set PO3H_G5.1@O3' element "O"
+set PO3H_DG5.1 connect1 PO3H_DG5.1.HOP3
+
+PO3H_U5 = U5
+set PO3H_U5 name "PO3H_U5"
+set PO3H_U5.1 name "U"
+set PO3H_U5.1 restype "nucleic"
+set PO3H_U5.1@O3' element "O"
+set PO3H_U5.1 connect1 PO3H_U5.1.HOP3
+
+source leaprc.DNA.OL21
+
+set DA5.1 name "DA"
+set DA3.1 name "DA"
+set DAN.1 name "DA"
+
+set DG5.1 name "DG"
+set DG3.1 name "DG"
+set DGN.1 name "DG"
+
+set DC5.1 name "DC"
+set DC3.1 name "DC"
+set DCN.1 name "DC"
+
+set DT5.1 name "DT"
+set DT3.1 name "DT"
+set DTN.1 name "DT"
+
+source leaprc.RNA.OL3
+# OHE = 5'P cap -OP3-HOP3
+set A5.1 name "A"
+set A3.1 name "A"
+set AN.1 name "A"
+
+set G5.1 name "G"
+set G3.1 name "G"
+set GN.1 name "G"
+
+set C5.1 name "C"
+set C3.1 name "C"
+set CN.1 name "C"
+
+set U5.1 name "U"
+set U3.1 name "U"
+set UN.1 name "U"
+
