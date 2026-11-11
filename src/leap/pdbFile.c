@@ -3294,15 +3294,16 @@ int             iChainCount=0;
         int iAddHeavyStart = iAddHeavy;
         BuildCoordinatesForContainer((CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
 
-        if (iAddHeavyStart != iAddHeavy) {
+        if (GDefaults.dPdbBuildRotamers > 0.0 && iAddHeavyStart != iAddHeavy) {
             rRes->iTemp = iRes;
-            float dClashCutoff = 0.6;
+            float dClashCutoff = GDefaults.dPdbBuildRotamers;
             float dClash = zPdbClashCheck(prPPdb, rRes, dClashCutoff);
             if (dClash > dClashCutoff) {
                 int iVerbosity0 = iVerbosity();
                 VerbositySet(0);
                 int iBest = 0;
                 float dBest = 999;
+                // Keep the first rotamer that fits based on simple element covalent radius
                 for (int iRotamer=0; ; iRotamer++) {
                     const char *sName;
                     if (!BuildRotamer(rRes, iRotamer, true, &sName)) break;

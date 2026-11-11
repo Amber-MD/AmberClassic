@@ -579,13 +579,15 @@ STRING          sAtom;
     
     if ( bUnitUseBox(uUnit) ) {
         UnitGetCell( uUnit, &dX, &dY, &dZ, &dA, &dB, &dG );
+        dA *= RADTODEG;
+        dB *= RADTODEG;
+        dG *= RADTODEG;
         VP0("Periodic box: %10.5lf, %10.5lf, %10.5lf\n", dX, dY, dZ );
-        if ( fabs(dA - 90.0) > 1e-4 ||
-                fabs(dB  - 90.0) > 1e-4 ||
-                fabs(dG - 90.0) > 1e-4 ) {
-            VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
-                    dA*RADTODEG, dB*RADTODEG, dG*RADTODEG );
+        if ( fabs(dA-90.0) > 1e-4 || fabs(dB-90.0) > 1e-4 || fabs(dG-90.0) > 1e-4 ) {
+            VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n", dA, dB, dG);
         }
+        if (bUnitFlagsSet(uUnit,UNITBOXOCT)) VP0("(OCTAL)\n");
+        else if (bUnitFlagsSet(uUnit,UNITBOXCRYST1)) VP0("(Set by CRYST1)\n");
     }
     if ( bUnitUseSolventCap(uUnit) ) {
         UnitGetSolventCap( uUnit, &dX, &dY, &dZ, &dR );
@@ -985,12 +987,10 @@ UNIT            uNew;
     uNew = (UNIT)oCreate(UNITid);
     if ( !bUnitIOLoadTables( uNew, db ) ) {
         Destroy((OBJEKT *)&uNew);
-        uNew = NULL;
-        goto DONE;
+        return NULL;
     }
     UnitIOBuildFromTables( uNew );
     UnitIODestroyTables( uNew );
-DONE:
     return uNew;
 }
 
@@ -1395,17 +1395,14 @@ RESIDUE         rRes;
  *      Set the bounding box of the UNIT to the
  *      dimensions passed in oAttr.
  *      If oAttr is a single double then use that for all three dimensions.
- *      If oAttr use the first, second, and third values as x,y,z.
+ *      If oAttr is a LIST, use the first, second, and third values as x,y,z.
  *      If oAttr is NULL then don't use the bounding box.
  */
 static void
 zUnitSetBox( UNIT uUnit, OBJEKT oAttr )
 {
-double          dX, daVector[3];
-int             i;
-LISTLOOP        llElements;
-ASSOC           aAssoc;
-
+double          dX;
+VECTOR          vVector;
 
     switch ( iObjectType(oAttr) ) {
         case ODOUBLEid:
@@ -1415,23 +1412,8 @@ ASSOC           aAssoc;
             UnitSetUseBox( uUnit, true );
             break;
         case LISTid:
-            i = 0;
-            llElements = llListLoop((LIST)oAttr);
-            while ( (aAssoc = (ASSOC)oListNext(&llElements)) ) {
-                if ( iObjectType(oAssocObject(aAssoc)) == ODOUBLEid ) {
-                    if ( i<3 ) {
-                        daVector[i++] = dODouble(oAssocObject(aAssoc));
-                    } else {
-                        VPFATALEXIT("Invalid vector\n" );
-                        break;
-                    }
-                } else {
-                    VPFATALEXIT("Invalid vector\n" );
-                    break;
-                }
-            }
-            if ( i==3 ) {
-                UnitSetBox( uUnit, daVector[0], daVector[1], daVector[2] );
+            if (GetAssocVector(oAttr, &vVector)) {
+                UnitSetBox( uUnit, dVX(&vVector), dVY(&vVector), dVZ(&vVector));
                 UnitSetUseBox( uUnit, true );
                 UnitSetBeta( uUnit, 90.0*DEGTORAD );
             }
@@ -1519,38 +1501,30 @@ UnitSetAttribute( UNIT uUnit, STRING sAttr, OBJEKT oAttr )
 
     if ( strcasecmp( sAttr, "head" ) == 0 ) {
         zUnitSetHead( uUnit, (ATOM)oAttr );
-        goto DONE;
     } else if ( strcasecmp( sAttr, "tail" ) == 0 ) {
         zUnitSetTail( uUnit, (ATOM)oAttr );
-        goto DONE;
     } else if ( strcasecmp( sAttr, "restype" ) == 0 ) {
         zUnitSetResidueType( uUnit, oAttr );
-        goto DONE;
     } else if ( strcasecmp( sAttr, "box" ) == 0 ) {
         zUnitSetBox( uUnit, oAttr );
-        goto DONE;
     } else if ( strcasecmp( sAttr, "cap" ) == 0 ) {
         zUnitSetCap( uUnit, oAttr );
-        goto DONE;
     } else if ( strcasecmp( sAttr, "name" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         ContainerSetName( uUnit, sOString(oAttr) );
-        goto DONE;
     } else if ( strcasecmp( sAttr, "description" ) == 0 ) {
         if ( !bObjektWarnType( oAttr, OSTRINGid ) ) return;
         UnitSetDescription( uUnit, sOString(oAttr) );
-        goto DONE;
+    } else {
+        VPFATALEXIT("%s: %s is a non-existent attribute for a unit.\n"
+                "\tUnit attributes: head, tail, restype, box, cap, name\n",
+                                    sContainerName(uUnit), sAttr );
+        if ( strncmp( sAttr, "connect", 7 ) == 0 )
+            VP0("\t-- 'connectX' is used for residues, e.g. %s.1\n",
+                                                    sContainerName(uUnit) );
+        return;
     }
 
-    VPFATALEXIT("%s: %s is a non-existent attribute for a unit.\n"
-            "\tUnit attributes: head, tail, restype, box, cap, name\n",
-                                sContainerName(uUnit), sAttr );
-    if ( strncmp( sAttr, "connect", 7 ) == 0 )
-        VP0("\t-- 'connectX' is used for residues, e.g. %s.1\n",
-                                                sContainerName(uUnit) );
-    return;
-
-DONE:
     CDU(uUnit);
 
 }
@@ -1945,8 +1919,12 @@ iUnitLabelMolecules(UNIT uUnit) {
 
     /* Clear the ATOMTOUCHED flag on all the ATOMs for molecule labelling */
     /* Also clear the imaging atom flag which will be updated */
-    ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED|RESIDUEIMAGEATOM);
-    LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) AtomSetSeenId(aAtom, -1);
+    LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) {
+      AtomSetSeenId(aAtom, -1);
+      AtomResetFlags(aAtom, ATOMTOUCHED|RESIDUEIMAGEATOM );
+      iAtomCount++;
+    }
+    uUnit->iAtomCount = iAtomCount;
 
     /* Loop through solvent RESIDUEs and:
      * 1) Count them
@@ -1955,11 +1933,12 @@ iUnitLabelMolecules(UNIT uUnit) {
      * 2) set the temp flag saying if they are in the cap or not
      * 3) label all molecule groups.
      *     ==> This is repeated in zUnitIOFindAndCountMolecules()
-     *     but must be repeated after residue ordering
+     *     ==> but must be repeated after residue ordering
      *     TODO: zUnitIOFindAndCountMolecules can use labels instead
      *     of repeating the full spanning tree search
      * 4) set image atom flag if present; only valid if solvent residue
     */
+    iAtomCount = 0;
     LOOPOVERALL(uUnit,DIRECTCONTENTSBYSEQNUM,rRes,lResidues) {
         iResidueCount++;
         if (cResidueType(rRes) == RESTYPESOLVENT) {
@@ -1974,7 +1953,7 @@ iUnitLabelMolecules(UNIT uUnit) {
         /* been touched */
         aAtom = ATOM_from(oContainerFirstObject(rRes));
         if (bAtomFlagsSet(aAtom, ATOMTOUCHED)) continue;
-        iMolecule++; // inrement first: molecule index is 1-based
+        iMolecule++; // increment first: molecule index is 1-based
 
         /* Touch all of the ATOMs within the molecule that */
         /* contains the current RESIDUE */
@@ -1987,9 +1966,18 @@ iUnitLabelMolecules(UNIT uUnit) {
         }
     }
 
+    if (iAtomCount != uUnit->iAtomCount) {
+        VPWARN("Found %d atoms disconnected from their residue\n", // FIXME: Missed if they are in atom position 1
+               uUnit->iAtomCount - iAtomCount);
+        LOOPOVERALL(uUnit,ATOMS,aAtom,lAtoms) {
+            if (!bAtomFlagsSet(aAtom, ATOMTOUCHED)) {
+                STRING sTemp;
+                VP0("%s\n",sFullDescriptor(aAtom,sTemp));
+            }
+        }
+    }
     uUnit->iMoleculeCount = iMolecule;
     uUnit->iResidueCount = iResidueCount;
-    uUnit->iAtomCount = iAtomCount;
     ContainerResetAllAtomsFlags(CONTAINER_from(uUnit), ATOMTOUCHED);
 
     return iResidueCount;

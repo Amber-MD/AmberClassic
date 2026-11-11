@@ -1242,7 +1242,8 @@ CRITERIAt       cCriteria = {0};
     double          dX, dY, dZ, dA, dB, dG;
     UnitGetCell( uSolute, &dX, &dY, &dZ, &dA, &dB, &dG );
     VP0("\nPeriodic box: %10.5lf, %10.5lf, %10.5lf\n", dX, dY, dZ );
-    VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
+    if ( fabs(dA-90.0*DEGTORAD) > 1e-4 || fabs(dB-90.0*DEGTORAD) > 1e-4 || fabs(dG-90.0*DEGTORAD) > 1e-4 )
+        VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
                     dA*RADTODEG, dB*RADTODEG, dG*RADTODEG );
     /* Setup the flags that control what criteria are used */
     /* to reject solvent molecules */
@@ -1528,7 +1529,7 @@ double          dMinPot, dMaxPot;
 
 
 
-// Gneerate non-bond grid, with minimum radius set by VdW or given radius if non-zero
+// Generate non-bond grid, with minimum radius set by VdW or given radius
 NeighborGrid *
 NonbondSetup( UNIT uUnit, float dRadius ) {
 unsigned int            iAtoms, iResidues;
@@ -1581,8 +1582,152 @@ dSwitching(double dR, double dRon, double dRoff) {
     return 1.0 + (-10.0 + (15.0-6.0*x)*x)*x*x*x;
 }
 
-//double
-//NonbondEnergy(NeighborGrid *ngGrid, ATOM aAtom
+int bondDistance(const ATOM aFrom, const ATOM aTo, int iMaxBonds)
+{
+    if (!aFrom || !aTo || aFrom == aTo || iMaxBonds <= 0) return 0;
+    int best = 0;
+    const int count = iAtomCoordination(aFrom);
+    for (int i = 0; i < count; ++i) {
+        const ATOM aNext = aFrom->aaBonds[i];
+        if (!aNext) continue;
+        if (aNext == aTo) return 1;
+        int child = bondDistance(aNext, aTo, iMaxBonds - 1);
+        if (child != 0) {
+            int distance = child + 1;
+            if (best == 0 || distance < best)
+                best = distance;
+        }
+    }
+
+    return best;
+}
+
+/* r, dRI, dRJ, delta: Angstrom
+ * dEI, dEJ: positive well depths in kcal/mol
+ * dRI, dRJ: AMBER Rmin/2 radii
+ * delta == 0: standard Lennard-Jones
+ * delta >  0: quadratic softened repulsion
+ */
+double
+dSoftVdW(double dRadius,
+         double dEI, double dRI,
+         double dEJ, double dRJ,
+         double dDelta, double dCap)
+{
+    double dEps, dR, dOverlap, x, x6, dResult;
+
+    if (!isfinite(dRadius)     || dRadius < 0.0 ||
+        !isfinite(dDelta) || dDelta < 0.0 ||
+        !isfinite(dEI)   || dEI < 0.0 ||
+        !isfinite(dEJ)   || dEJ < 0.0 ||
+        !isfinite(dRI)   || dRI < 0.0 ||
+        !isfinite(dRJ)   || dRJ < 0.0)
+        return NAN;
+
+    dEps = sqrt(dEI) * sqrt(dEJ);
+    dR = dRI + dRJ;
+
+    if (dEps == 0.0 || dR == 0.0)
+        return 0.0;
+
+    if (dDelta > 0.0 && dRadius < dR) {
+        dOverlap = (dR - dRadius) / dDelta;
+        dResult = dEps * (dOverlap * dOverlap - 1.0);
+    } else {
+        if (dRadius == 0.0) return dCap;
+        x = dR / dRadius;
+        x6 = x * x * x;
+        x6 *= x6;
+        dResult = dEps * x6 * (x6 - 2.0);
+    }
+    if (dResult > dCap) dResult = dCap;
+    return dResult;
+}
+
+/* Uses dSwitching().
+ *
+ * dQI, dQJ: charges in elementary-charge units
+ * dR, dRon, dRoff: Angstrom
+ * dDielectric: relative dielectric; 1.0 for vacuum Coulomb
+ * dScale: multiplier, e.g. 1.0 or 1.0 / SCEE
+ * dCap: positive energy magnitude cap, kcal/mol
+ *
+ * Requires:
+ *   dR >= 0, 0 <= dRon < dRoff,
+ *   dDielectric > 0, dScale >= 0, dCap > 0.
+ */
+static inline double
+dElectrostatic(double dR,
+               double dQI, double dQJ,
+               double dDielectric,
+               double dRon, double dRoff,
+               double dCap)
+{
+    const double dCoulomb = 332.0522173;
+    double dQQ, dEnergy;
+
+    if (dR >= dRoff) return 0.0;
+
+    dQQ = dQI * dQJ;
+    if (dQQ == 0.0) return 0.0;
+
+    if (dR == 0.0) {
+        dEnergy = copysign(dCap, dQQ);
+    } else {
+        dEnergy = dCoulomb * dQQ / (dDielectric * dR);
+        dEnergy = fmax(-dCap, fmin(dCap, dEnergy));
+    }
+
+    return dSwitching(dR, dRon, dRoff) * dEnergy;
+}
+
+double
+NonbondEnergy(UNIT uUnit, ATOM aAtom, NeighborGrid *ngGrid,
+        double dRon, double dRoff, double dDeltaLJ,
+        double dDielectric, double dVScale14, double dEScale14, double dCap) {
+    const Pair *pairGrid;
+    size_t iNPairs;
+    if (neighbor_grid_query_point(ngGrid,
+            dVX(&vAtomPosition(aAtom)),
+            dVY(&vAtomPosition(aAtom)),
+            dVZ(&vAtomPosition(aAtom)),
+            RESIDUE_from(cContainerWithin(aAtom))->iTemp, // group
+            (intptr_t)aAtom,
+            &pairGrid, &iNPairs)) return 0;
+    printf("Nonbound count = %ld\n",iNPairs);
+    double dEI, dRI, dEI14, dRI14, dEnergy=0;
+    int iParam = iParmSetFindAtom(uUnit->psParameters, sAtomType(aAtom));
+    if (iParam == PARM_NOT_FOUND) return 0;
+    ParmSetAtom(uUnit->psParameters, iParam,
+                    NULL, NULL, NULL, &dEI, &dRI, &dEI14, &dRI14,
+                    NULL, NULL, NULL, NULL );
+    for (int i=0;i<iNPairs;i++) {
+        ATOM aTo = (ATOM)pairGrid[i].to_p;
+        int iDist = bondDistance(aAtom, aTo, 3);
+        if (iDist<3) continue;
+        iParam = iParmSetFindAtom(uUnit->psParameters, sAtomType(aTo));
+        if (iParam == PARM_NOT_FOUND) continue;
+        double dR = sqrt(pairGrid[i].d2);
+        double dEJ, dRJ, dEJ14, dRJ14;
+        ParmSetAtom(uUnit->psParameters, iParam,
+                    NULL, NULL, NULL, &dEJ, &dRJ, &dEJ14, &dRJ14,
+                    NULL, NULL, NULL, NULL );
+        double dVDW;
+        if (iDist == 3 && dEI14 && dEJ14 && dRI14 && dRJ14) {
+            dVDW = dSoftVdW(dR, dEI14, dRI14, dEJ14, dRJ14, dDeltaLJ, dCap);
+        } else {
+            dVDW = dSoftVdW(dR, dEI, dRI, dEJ, dRJ, dDeltaLJ, dCap);
+            if (iDist == 3) dVDW *= dVScale14;
+        }
+        double dELEC = dElectrostatic(dR,
+               dAtomCharge(aAtom), dAtomCharge(aTo),
+               dDielectric, dRon, dRoff, dCap);
+            if (iDist == 3) dELEC *= dEScale14;
+        dEnergy += dVDW + dELEC;
+    }
+    return dEnergy;
+}
+
 
 
 

@@ -147,3 +147,23 @@ CreateAssocVector(VECTOR vVector) {
 
     return (OBJEKT)lResult;
 }
+
+bool
+GetAssocVector(OBJEKT oAssoc, VECTOR *vPResult) {
+LISTLOOP        llElements;
+ASSOC           aAssoc;
+double          dVector[3];
+int             i=0;
+    if (iObjectType(oAssoc) == LISTid) goto ERROR;
+    llElements = llListLoop((LIST)oAssoc);
+    while ( (aAssoc = ASSOC_from(oListNext(&llElements))) ) {
+        if ( i==3 ) goto ERROR;
+        if ( iObjectType(oAssocObject(aAssoc)) != ODOUBLEid ) goto ERROR;
+        dVector[i++] = dODouble(oAssocObject(aAssoc));
+    }
+    VectorDef( vPResult, dVector[0],dVector[1],dVector[2]);
+    return true;
+ERROR:
+    VPFATALEXIT("Invalid vector\n" );
+    return false;
+}

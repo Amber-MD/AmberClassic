@@ -443,7 +443,7 @@ OBJEKT  oObj;
     if ( iSeq > iContainerNextChildsSequence(cCont) ) {
         return NULL;
     }
-    LOOPOVERALL(cCont,CONTAINERS,oObj,lContainers) {
+    LOOPOVERALL(cCont,iContainerType,oObj,lContainers) {
         if ( iContainerSequence(oObj) == iSeq ) break;
     }
     return((CONTAINER)oObj);

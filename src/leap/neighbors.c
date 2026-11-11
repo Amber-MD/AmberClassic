@@ -264,7 +264,7 @@ int neighbor_grid_query_group(NeighborGrid *grid,
 int neighbor_grid_query_point(NeighborGrid *grid,
                               float x, float y, float z,
                               int query_group,
-                              int query_member,
+                              intptr_t query_member,
                               const Pair **pairs_out,
                               size_t *count_out)
 {

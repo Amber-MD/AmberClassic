@@ -40,7 +40,7 @@ extern size_t      iVarArrayPointerToIndex(VARARRAY header, void *data);
 extern size_t      iVarArrayElementSize(VARARRAY header);
 extern size_t      iVarArrayElementCount(VARARRAY header);
 extern void     *PVarArrayIndex( VARARRAY header, size_t pos);
-#else
+#else // inline array access for production build performance
 static inline size_t iVarArrayElementSize(VARARRAY header) {
     return (header->size);
 }

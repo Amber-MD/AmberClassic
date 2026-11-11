@@ -41,6 +41,7 @@ typedef struct {
         double  dPdbLinkCovalentCutoff;
         double  dPdbCrosslinkCovalentCutoff;
         double  dPdbBulkQ;
+        double  dPdbBuildRotamers;
         int     iPdbExcludeNonConnect;
         int     iPdbReadModel;
         int     iPdbConvertResName;

@@ -98,6 +98,7 @@ extern void             AssocDescribe( ASSOC aAssoc );
 
 // helper function:
 extern OBJEKT           CreateAssocVector(VECTOR vVector);
+extern bool             GetAssocVector(OBJEKT oAssoc, VECTOR *vPResult);
 
 
 #endif /* ASSOC_H */

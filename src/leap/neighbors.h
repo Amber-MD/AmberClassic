@@ -25,8 +25,8 @@ typedef struct {
 } Point;
 
 typedef struct {
-    int from_idx, from_group;
-    int to_idx,   to_group;
+    int from_idx, from_group;  // _idx is the global point index
+    int to_idx,   to_group;    // _group and union data as defined by Point struct
     union { intptr_t from_member; float from_r; void *from_p; };
     union { intptr_t to_member; float to_r; void *to_p; };
     double d2;
@@ -66,7 +66,7 @@ extern int neighbor_grid_query_group(NeighborGrid *grid,
 extern int neighbor_grid_query_point(NeighborGrid *grid,
                               float x, float y, float z,
                               int query_group,
-                              int query_member,
+                              intptr_t query_member,
                               const Pair **pairs_out,
                               size_t *count_out);
 

@@ -1914,6 +1914,28 @@ use "centers" if the system has been previously equilibrated as a
 periodic box. See the solvateBox command for a description of the
 buffer object, which extends either type of box by an arbitrary amount.
 
+See also: setCell for fixed box or to use CRYST1 dimensions
+
+
+@@endHelp
+
+@@beginHelp:  setCell
+
+
+    setCell solute [ a b c [ alpha beta gamma | beta ]]
+
+      UNIT                         _solute_
+
+      NUMBER                       _a_ ... _beta_
+
+
+The setCell command creates a periodic box around the _solute_ UNIT
+when the exact values are known. Most useful with solvateCell. If invoked
+with no arguments, the values read from PDB CRYST1 are flagged as valid
+for solvateBox and solvateOct, which oherwise derive an optimal centered
+box.
+
+See also: setBox, solvateCell
 
 @@endHelp
 
@@ -2063,8 +2085,14 @@ The solvateCell command fills the box with origin at (0,0,0) and supports
 a general triclinic cell with full consideration of solute wrapping.
 The _solute_ UNIT is modified by the addition of _solvent_ RESIDUEs.
 
+The perdiodic box must be set first. If CRYST1 values were present in
+the solute UNIT PDB file, it will be used, unlike solvatebox which will
+replace the CRYST1 values.
+
 The solvent box UNIT is copied and repeated in all three spatial directions
-with an optional solute atom closeness trimming option, as with solvateBox.
+to fill the bos/cell. An optional solute atom closeness option defines the
+clsoe contact cutoff for solvent exclusion. Periodic wrapping of solute
+atoms accounted for in solvent overlap detection.
 
 @@endHelp
 

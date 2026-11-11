@@ -3311,14 +3311,13 @@ char    *sUsage = "usage:  setCell <unit> [<a> <b> <c> [ <alpha> <beta> <gamma> 
            dG = dODouble(oAssocObject(aaArgs[6]));
         } else if (iArgCount == 5)
            dB = dODouble(oAssocObject(aaArgs[4]));
-        UnitSetCell(uUnit,dX,dY,dZ,dA,dB,dG);
+        UnitSetCell(uUnit,dX,dY,dZ, dA * DEGTORAD, dB * DEGTORAD, dG * DEGTORAD);
     }
     UnitResetFlags( uUnit, UNITBOXCRYST1);
     UnitSetUseBox( uUnit, true );
     VP0("Periodic box: %10.5lf, %10.5lf, %10.5lf\n", dX, dY, dZ );
     if ( fabs(dA-90.0) > 1e-4 || fabs(dB-90.0) > 1e-4 || fabs(dG-90.0) > 1e-4 ) {
-       VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n",
-       dA*RADTODEG, dB*RADTODEG, dG*RADTODEG );
+       VP0("              a=%8.4f, b=%8.4f, g=%8.4f\n", dA, dB, dG );
     }
     return NULL;
 }

@@ -108,6 +108,7 @@ zSDefaultSettings[] = {
     { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
     { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
     { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },
+    { 'D', "pdb_build_rotamers","PDB_Build_Rotamers", &GDefaults.dPdbBuildRotamers },
     { 'B', "cif_read_auth","CIF_Read_auth", &GDefaults.bCIFReadAuth, .defval.integer=1 },
     { 'S', "pdb_patch_file","PDB_Patch_File", &GDefaults.sPdbPatchFilename },
     { 'D', "pdb_bulk_q","PDB_Bulk_Q", &GDefaults.dPdbBulkQ, .defval.real=1.0 },
