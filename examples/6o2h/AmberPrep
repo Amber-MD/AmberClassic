@@ -15,6 +15,13 @@ repeats="(62)"
 id="6o2h"
 idalt="dac1"
 seed=18
+#  supercell unit cell parameters:
+a=356.152
+b=353.474
+c=379.643
+al=88.66
+bt=108.46
+gm=111.88
 
 #==========================================================================
 #  set up unit cell and supercell
@@ -191,21 +198,24 @@ addPath \$\$AMBERCLASSICHOME/dat/leap/lib
 addPath \$\$AMBERCLASSICHOME/dat/leap/parm
 addPath \$\$AMBERCLASSICHOME/dat/leap/cmd
 addPath \$\$AMBERCLASSICHOME/dat/leap/prep
-# defaults for crystal simulations
+# defaults for crystal simulations:
 set default nocenter on
 set default reorder_residues off
 # following line allows pdb_auto_link to find links:
 source leaprc.protein.autolink
 source leaprc.water.spce
 source leaprc.gaff2
-# options to simplify the tleap input
+# options to simplify the tleap input:
 set pdb_auto_match 1
 set pdb_auto_link 1
 set pdb_auto_load 1
+set PDB_build_rotamers 0
 #  load the input PDB file from above
 x = loadPdb $idalt.pdb
-solvateCell x SPCBOX 0.55
-addIonsRand x CL 81
+# use the CRYST1 values in $idlat.pdb for unit cell parameters:
+setCell x $a $b $c $al $bt $gm
+# solvateCell x SPCBOX 0.55
+# addIonsRand x CL 81
 saveAmberParm x $idalt.parm7 $idalt.rst7
 # next line keeps chainIDs and also adds LINK records to the PDB file
 set keep_chainid 1
