@@ -237,6 +237,9 @@ iChiIndex(char *name) {
 // Returns true if rotamer was built
 // Failure is normally because iRotamer >= rotamer count for the residue
 // bRebuild = rebuild ATOMPOSITIONBUILT, else rebuild entire side chain
+// This requires 3 loops over rRes content: 1) find primary Chi torsions,
+// 2) modify all Chi-aligned torsions, and 3) reset atom built flags
+// And then finally the rebuild phase als loops over atoms and internals
 bool
 BuildRotamer(RESIDUE rRes, int iRotamer, bool bRebuild, const char **sRotamerName) {
     INTERNAL iTorsion;

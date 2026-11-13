@@ -86,6 +86,7 @@
 #include        <stdlib.h>
 #include        <float.h>
 #include        <string.h>
+#include        <sys/stat.h>
 
 #include        "basics.h"
 #include        "vector.h"
@@ -601,9 +602,7 @@ LIBRARY         ul;
     do {
         sNext = sLibraryNext( ul );
         if ( sNext != NULL ) {
-#ifdef DEBUG
-            VP1("Loading: %s\n", sNext );
-#endif
+            MESSAGE("Loading: %s\n", sNext );
             oObj = oLibraryLoad( ul, sNext );   /* comes w/ 1 REF */
             VariableSet( sNext, oObj );         /* adds 1 REF */
             DEREF( oObj );                      /* balance REF */
@@ -1804,7 +1803,7 @@ RESTRAINT       rRest;
         case RESTRAINTBOND:
             RestraintBondGet(rRest, &aAtom1, &aAtom2, &dKx, &dX0);
             fprintf(fOut,"&rst iat=%d,%d, r1=0.0,r2=%.3f,r3=%.3f,r4=999.0,"
-                    "rk2=%.1f,rk3=%.1f, &end ! bond %s - %s\n", 
+                    "rk2=%.1f,rk3=%.1f, &end ! bond %s - %s\n",
                     iContainerTempInt(aAtom1),
                     iContainerTempInt(aAtom2),
                     dX0,dX0,dKx,dKx,
@@ -1815,7 +1814,7 @@ RESTRAINT       rRest;
             RestraintAngleGet(rRest, &aAtom1, &aAtom2, &aAtom3, &dKx, &dX0);
             dX0 *= RADTODEG;
             fprintf(fOut,"&rst iat=%d,%d,%d, r1=%.1f,r2=%.1f,r3=%.1f,r4=%.1f,"
-                    "rk2=%.1f,rk3=%.1f, &end ! angle %s - %s - %s\n", 
+                    "rk2=%.1f,rk3=%.1f, &end ! angle %s - %s - %s\n",
                     iContainerTempInt(aAtom1),
                     iContainerTempInt(aAtom2),
                     iContainerTempInt(aAtom3),
@@ -1838,7 +1837,7 @@ RESTRAINT       rRest;
             }
             dX0 *= RADTODEG;
             fprintf(fOut,"&rst iat=%d,%d,%d,%d r1=%.1f,r2=%.1f,r3=%.1f,r4=%.1f,"
-                    "rk2=%.1f,rk3=%.1f, &end ! torsion %s - %s - %s - %s\n", 
+                    "rk2=%.1f,rk3=%.1f, &end ! torsion %s - %s - %s - %s\n",
                     iContainerTempInt(aAtom1),
                     iContainerTempInt(aAtom2),
                     iContainerTempInt(aAtom3),
@@ -2614,15 +2613,9 @@ int     iVerb;
 }
 
 
-//#include <stdio.h>
-//#include <string.h>
-#include <sys/stat.h>
 
-#define MAX_LOG_SIZE   (10 * 1024 * 1024)   /* trigger threshold */
-#define KEEP_LOG_SIZE  (5  * 1024 * 1024)   /* how much tail to keep */
-// use getenv AMBERLEAP_LOGMAX
 void
-CheckAndTruncateLog( const char *sLogPath )
+CheckAndTruncateLog( const char *sLogPath, size_t iMax )
 {
 struct stat     statBuf;
 FILE            *fpIn, *fpOut;
@@ -2632,9 +2625,9 @@ char            sBuf[65536];
 size_t          nRead;
 
     if ( stat( sLogPath, &statBuf ) != 0 ) return;      /* doesn't exist yet */
-    if ( statBuf.st_size <= MAX_LOG_SIZE ) return;       /* under threshold */
+    if ( statBuf.st_size <= iMax ) return;       /* under threshold */
 
-    lSkip = statBuf.st_size - KEEP_LOG_SIZE;
+    lSkip = statBuf.st_size - (iMax / 2);
 
     fpIn = fopen( sLogPath, "r" );
     if ( fpIn == NULL ) return;
@@ -2684,22 +2677,30 @@ oCmd_logFile( int iArgCount, ASSOC aaArgs[] )
 {
 STRING          sFilename;
 FILE            *fLog;
+bool            ok;
 
-    if ( !bCmdGoodArguments( "logFile", iArgCount, aaArgs, "s" ) ) {
-        VPFATALDELAYEDEXIT("usage:  logFile <filename>\n" );
+    if ( iArgCount == 2) ok = bCmdGoodArguments( "logFile", iArgCount, aaArgs, "s n");
+    else ok = bCmdGoodArguments( "logFile", iArgCount, aaArgs, "sz");
+    if (!ok) {
+        VPFATALDELAYEDEXIT("usage:  logFile <filename> [ <MaxMB> ]\n" );
         return NULL;
     }
-
-    strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
 
                 /* Close the old log file if it exists */
 
     if ( fVerbosityLogFile() != NULL ) fclose( fVerbosityLogFile() );
     VerbositySetLogFile( NULL );
 
+    if ( iObjectType(oAssocObject( aaArgs[0] )) == NULLid ) {
+        VP0("Log file closed\n");
+        return NULL;
+    }
+
                 /* Open the new log file */
 
-    CheckAndTruncateLog( sFilename );
+    strcpy( sFilename, sOString(oAssocObject(aaArgs[0])) );
+    printf("file=%s iarg=%d\n",sFilename,iArgCount);
+    if (iArgCount==2) CheckAndTruncateLog( sFilename, dODouble(oAssocObject( aaArgs[1] )) );
     fLog = FOPENCOMPLAIN( sFilename, "a" );
     if ( fLog != NULL ) {
         time_t  t = time( (time_t *)0 );

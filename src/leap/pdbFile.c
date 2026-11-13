@@ -655,14 +655,14 @@ RESIDUE         rRes;
 
 
 
-
+// dist cutoff positive = distance, negative = VdW radius overlap
 static float
-zPdbClashCheck( PDBREADt *prPPdb, RESIDUE rRes, float dOverlapCutoff ) {
+zPdbClashCheck( PDBREADt *prPPdb, RESIDUE rRes, float dDistCutoff ) {
     RESIDUENAMEt *rnTo, *rnClash = NULL;
     ATOMNAMEt *anTo, *anClash = NULL;
-    STRING sTemp;
-    ATOM aAtom, aClash = NULL;
+    ATOM aAtom, aClashFrom = NULL;
     float dMaxOverlap = 0, dMaxDist = 0;
+    if (!prPPdb->ngBondGrid) return 0;
     LOOPOVERALL(rRes,ATOMS,aAtom,lAtoms) {
         if (!bAtomFlagsSet( aAtom, ATOMPOSITIONBUILT ) ) continue;
         if (sContainerName(aAtom)[0]=='H' && (sContainerName(aAtom)[1]==0 || sContainerName(aAtom)[1]=='A')) continue;
@@ -673,7 +673,7 @@ zPdbClashCheck( PDBREADt *prPPdb, RESIDUE rRes, float dOverlapCutoff ) {
                 dVZ(&vAtomPosition(aAtom)), -1, rRes->iTemp, &pairs, &count);
         if (n) {
             VPWARN("%s: neighbor_grid_query_point() failed\n",__func__);
-            break;
+            return 0;
         }
         if (!count) continue;
         for (int i=0;i<(int)count;i++) {
@@ -681,22 +681,28 @@ zPdbClashCheck( PDBREADt *prPPdb, RESIDUE rRes, float dOverlapCutoff ) {
             anTo = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt, pairs[i].to_member);
             rnTo = PVAI(prPPdb->vaResidues, RESIDUENAMEt, pairs[i].to_group);
             float dDist = sqrt(pairs[i].d2);
-            float dOverlap = dAtomsVdWOverlap(aAtom->iAtomicNumber, anTo->iElement, dDist);
+            float dOverlap;
+            if (dDistCutoff < 0) dOverlap = dAtomsVdWOverlap(aAtom->iAtomicNumber, anTo->iElement, dDist);
+            else dOverlap = dDistCutoff - dDist;
             if (dOverlap > dMaxOverlap) {
                  dMaxOverlap = dOverlap;
                  dMaxDist = dDist;
-                 aClash = aAtom;
+                 aClashFrom = aAtom;
                  anClash = anTo;
                  rnClash = rnTo;
             }
         }
     }
-    if (dMaxOverlap > dOverlapCutoff) {
-        VPWARN("Built atom %s clashes with %s.%s:%d%c.%s, dist=%.1fÅ, overlap=%.1fÅ\n",
-                sFullDescriptor(aClash,sTemp), rnClash->sName, rnClash->sChainId,
-                rnClash->iPdbSequence, rnClash->cICode, anClash->sName, dMaxDist, dMaxOverlap);
+    if (dMaxOverlap > ( (dDistCutoff < 0) ? -dDistCutoff : 0.0)) {
+        VP0("Built atom %s %s:%d%c.%s clashes with %s.%s:%d%c.%s, dist=%.1fÅ",
+                sContainerName(rRes), sResidueChainId(rRes), iResiduePdbSequence(rRes),
+                rRes->cICode, sContainerName(aClashFrom), rnClash->sName, rnClash->sChainId,
+                rnClash->iPdbSequence, rnClash->cICode, anClash->sName, dMaxDist);
+        if (dDistCutoff < 0) VP0(", overlap=%.1fÅ\n",dMaxOverlap);
+        else VP0("\n");
+        return dMaxOverlap;
     }
-    return dMaxOverlap;
+    return 0.0;
 }
 
 
@@ -2200,7 +2206,7 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
             VP2("        extra: %s\n", loser->sExtraNonHNames);)
     if (winner->bMatchedHydrogens && winner->score.extra_h_atoms <= 2
                                   && loser->score.extra_h_atoms <= 2) {
-        EXPLAIN(extra_h_atoms,"extra H atoms", if (loser->sExtraHNames[0])
+        EXPLAIN(extra_h_atoms,"extra H/EP atoms", if (loser->sExtraHNames[0])
             VP2("        extra: %s\n", loser->sExtraHNames);)
     }
     if (GDefaults.bPdbExactMatch) {
@@ -2909,6 +2915,8 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 cnMatch.score.missing_connect         ||
                 cnMatch.score.extra_nonh_atoms        ||
                 (GDefaults.bPdbExactMatch && cnMatch.score.extra_h_atoms) ) {
+            // Always print imprecise match because either something is odd
+            // or missing side chain and build.c always prints heavy atom building
             VP0("Imprecise match for residue: %3s %2.2s%4d%c\n",
                 cPResName, rnPName->sChainId,
                 rnPName->iPdbSequence, rnPName->cICode);
@@ -2943,11 +2951,14 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 }
                 VP0("\n");
             }
-            if ( (iVerbosity()>3 && (cnMatch.score.extra_h_atoms+cnMatch.score.extra_nonh_atoms)>0) ||
-                 (cnMatch.score.extra_h_atoms==1 || cnMatch.score.extra_h_atoms==2 || cnMatch.score.extra_nonh_atoms)) {
-                VP0(" Extra atoms in template: %d(non-H) + %d(H)  (%s;%s)\n",
-                        cnMatch.score.extra_nonh_atoms,cnMatch.score.extra_h_atoms,
-                        cnMatch.sExtraNonHNames,cnMatch.sExtraHNames);
+            if ( (iVerbosity()>3 && cnMatch.score.extra_h_atoms)
+                      || cnMatch.score.extra_h_atoms==1 || cnMatch.score.extra_h_atoms==2
+                      || cnMatch.score.extra_nonh_atoms ) {
+                VP0(" Extra atoms in template: %d(non-H) + %d(H/EP)",
+                        cnMatch.score.extra_nonh_atoms,cnMatch.score.extra_h_atoms);
+                if ( iVerbosity()>3 ) {
+                    VP0("  (%s;%s)\n", cnMatch.sExtraNonHNames, cnMatch.sExtraHNames);
+                } else VP0("\n");
             }
             if (cnMatch.score.missing_connect > MAX_UNMATCHED_CONNECT) {
                 VP0("Warning: %s.%s:%d has %d unmatched cross-link contacts"
@@ -3055,9 +3066,7 @@ DICTIONARY      dVariables;
         char *key = ix_record.key;
         strcpy(key, sResName);
         // Add both RESIDUE and VARIABLE indices
-#ifdef DEBUG
-        printf("Index residue %s (%s,%s,%s)\n", sResName, sVarName,sContainerName(uTemplate), sResName);
-#endif
+        MESSAGE("Index residue %s (%s,%s,%s)\n", sResName, sVarName,sContainerName(uTemplate), sResName);
         add_key(&ix_record,&(prPPdb->ixResMap));
         if (strcmp(sVarName,sResName)) {
             strcpy(key, sVarName);
@@ -3087,10 +3096,8 @@ DICTIONARY      dVariables;
             }
             // TODO: enforce HEAD,TAIL presence matches iTerm flag
             ix_record.recptr = (IX_RECPOS) uTemplate;
-#ifdef DEBUG
-            printf("Index ResMap residue %s (%s,%s,%s)\n", ix_record.key, sDictLoopKey(dlLoop),
+            MESSAGE("Index ResMap residue %s (%s,%s,%s)\n", ix_record.key, sDictLoopKey(dlLoop),
                     sContainerName(uTemplate), sContainerName(oContainerFirstObject(uTemplate)));
-#endif
             add_key(&ix_record,&(prPPdb->ixResMap));
         }
     }
@@ -3294,32 +3301,39 @@ int             iChainCount=0;
         int iAddHeavyStart = iAddHeavy;
         BuildCoordinatesForContainer((CONTAINER)rRes, &iAddH, &iAddHeavy, &iAddUnk );
 
-        if (GDefaults.dPdbBuildRotamers > 0.0 && iAddHeavyStart != iAddHeavy) {
+        if (GDefaults.dPdbBuildRotamers != 0.0 && iAddHeavyStart != iAddHeavy
+                && (GDefaults.bPdbAutoLink || GDefaults.bPdbAutoMatch )) { // otherwise no grid
             rRes->iTemp = iRes;
-            float dClashCutoff = GDefaults.dPdbBuildRotamers;
-            float dClash = zPdbClashCheck(prPPdb, rRes, dClashCutoff);
-            if (dClash > dClashCutoff) {
-                int iVerbosity0 = iVerbosity();
-                VerbositySet(0);
+            float dDistCutoff = GDefaults.dPdbBuildRotamers; // negative = overlap cutoff
+            float dDist = zPdbClashCheck(prPPdb, rRes, dDistCutoff);
+            if (dDist > 0) {
                 int iBest = 0;
                 float dBest = 999;
+                const char *sName = NULL, *sBest = NULL;
+                int iVerbosity0 = iVerbosity();
+                VerbositySet(-1);
                 // Keep the first rotamer that fits based on simple element covalent radius
-                for (int iRotamer=0; ; iRotamer++) {
-                    const char *sName;
-                    if (!BuildRotamer(rRes, iRotamer, true, &sName)) break;
-                    dClash = zPdbClashCheck(prPPdb, rRes, dClashCutoff);
-                    VP0("Rotamer %d (%s) overlap=%.2f\n", iRotamer, sName, dClash);
-                    if (dClash < dClashCutoff) break;
-                    if (dClash < dBest) {
-                        dBest = dClash;
+                int iRotamer = 0;
+                for (;;) {
+                    bool bBuilt = BuildRotamer(rRes, iRotamer, true, &sName);
+                    if (!bBuilt) break;
+                    dDist = zPdbClashCheck(prPPdb, rRes, dDistCutoff);
+                    if (dDist == 0.0) break;
+                    if (dDist < dBest) {
+                        dBest = dDist;
                         iBest = iRotamer;
+                        sBest = sName;
                     }
+                    iRotamer++;
                 }
-                if (dClash > dClashCutoff) {
-                    VP0("Rebuild with best rotamer %d\n",iBest);
+                if (dDist) {
                     BuildRotamer(rRes, iBest, true, NULL);
+                    VerbositySet(iVerbosity0);
+                    VP0("Rebuild with best rotamer %s:%d (%s)\n", sContainerName(rRes), iBest+1, sBest);
+                } else {
+                    VerbositySet(iVerbosity0);
+                    VP0("Rebuilt with rotamer %s:%d (%s)\n", sContainerName(rRes), iRotamer+1, sName);
                 }
-                VerbositySet( iVerbosity0 );
             }
         }
 

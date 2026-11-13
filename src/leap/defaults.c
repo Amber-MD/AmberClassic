@@ -108,7 +108,7 @@ zSDefaultSettings[] = {
     { 'I', "pdb_read_model","PDB_read_Model", &GDefaults.iPdbReadModel, .defval.integer=-1 },
     { 'B', "pdb_expand_ncs","PDB_Expand_NCS", &GDefaults.bPdbExpandNCSMt, .defval.integer=1 },
     { 'B', "pdb_expand_symmetry","PDB_Expand_Symmetry", &GDefaults.bPdbExpandSymm },
-    { 'D', "pdb_build_rotamers","PDB_Build_Rotamers", &GDefaults.dPdbBuildRotamers },
+    { 'd', "pdb_build_rotamers","PDB_Build_Rotamers", &GDefaults.dPdbBuildRotamers },
     { 'B', "cif_read_auth","CIF_Read_auth", &GDefaults.bCIFReadAuth, .defval.integer=1 },
     { 'S', "pdb_patch_file","PDB_Patch_File", &GDefaults.sPdbPatchFilename },
     { 'D', "pdb_bulk_q","PDB_Bulk_Q", &GDefaults.dPdbBulkQ, .defval.real=1.0 },
@@ -130,6 +130,7 @@ void InitializeDefaults(void) {
                 *((char*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.integer;
                 break;
             case 'D':
+            case 'd':
                 *((double*)zSDefaultSettings[i].pValue) = zSDefaultSettings[i].defval.real;
                 break;
             case 'S':
@@ -140,6 +141,8 @@ void InitializeDefaults(void) {
                 else
                     (*((STRING*)zSDefaultSettings[i].pValue))[0] = 0;
                 break;
+            default:
+                VPFATAL("Programming error: invalide default type '%c'\n", zSDefaultSettings[i].iType);
         }
     }
 }
@@ -183,6 +186,7 @@ int iOptIndex;
                     dValue = (double) *((int*)zSDefaultSettings[iOptIndex].pValue);
                     break;
                 case 'D':
+                case 'd':
                     dValue = *((double*)zSDefaultSettings[iOptIndex].pValue);
                     break;
                 case 'C':
@@ -234,14 +238,16 @@ int iOptIndex;
             *((bool*)zSDefaultSettings[iOptIndex].pValue) = bValue;
             break;
         case 'D':
-            if ( iType != ODOUBLEid ) {
-                VPFATAL("Set %s: value must be a number\n",zSDefaultSettings[iOptIndex].sName);
-                return NULL;
-            }
             if (dValue < 0.0) {
                 dValue = zSDefaultSettings[iOptIndex].defval.real;
                 VPWARN("set default: %s value must be greater than 0; resetting to %g\n",
                        zSDefaultSettings[iOptIndex].sName, dValue);
+            }
+            /* fall-through */
+        case 'd': // small d = signed OK
+            if ( iType != ODOUBLEid ) {
+                VPFATAL("Set %s: value must be a number\n",zSDefaultSettings[iOptIndex].sName);
+                return NULL;
             }
             *((double*)zSDefaultSettings[iOptIndex].pValue) = dValue;
             break;
@@ -317,8 +323,9 @@ zPrintDefaultSetting(int index) {
                 return;
             }
         }
-        VP0("ERROR: Undfined otion index: %d\n",ioption );
-    } else if (zSDefaultSettings[index].iType == 'D') {
+        VP0("ERROR: Undefined option index: %d\n",ioption );
+    } else if (zSDefaultSettings[index].iType == 'D' ||
+               zSDefaultSettings[index].iType == 'd') {
         VP0("%lf\n",*((double*)zSDefaultSettings[index].pValue) );
     } else if (zSDefaultSettings[index].iType == 'C') {
         char c = *((char*)zSDefaultSettings[index].pValue);

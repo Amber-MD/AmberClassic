@@ -959,16 +959,21 @@ see loadPdb.
 @@beginHelp:  logFile
 
 
-    logFile filename
+    logFile filename [ size ]
 
 
       STRING                       _filename_
 
+      NUMBER                       _size_
 
 
 This command opens the file with the file name _filename_ as a log
 file.  User input and ALL output is written to the log file.  Output
-is written to the log file as if the verbosity level were set to 2.
+is written to the log file unless verbosoty is negative.
+
+If filename is null (bare string 'null') the log file is closed.
+If _size_ is given, an existing log file larger than _size_ MB is truncated
+to half of _size_ before opening for logging.
 
 
 @@endHelp
