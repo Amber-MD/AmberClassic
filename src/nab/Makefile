@@ -136,7 +136,7 @@ checkexpr.c: nabgrm.tab.o
 
 molio.o:  molio.c
 	@echo "[NAB]  CC $<"
-	$(CC) -c $(COPTFLAGS) $(CFLAGS) $(AMBERCFLAGS) molio.c
+	$(VB)$(CC) -c $(COPTFLAGS) $(CFLAGS) $(AMBERCFLAGS) molio.c
 
 mme_init.o:  mme_init.c
 	@echo "[NAB]  CC $<"

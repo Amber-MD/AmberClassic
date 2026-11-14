@@ -13,8 +13,6 @@
 #include <math.h>
 #include <assert.h>
 
-#define NDEBUG
-
 #include "nab.h"
 #include "errormsg.h"
 #include "memutil.h"

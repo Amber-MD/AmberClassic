@@ -199,7 +199,7 @@ char	nfmask[];
     char *nabhome = NABHOME;
 	cmd_sz = 1024;
 	cmd = malloc(cmd_sz);
-	sprintf( cmd, "%s -Wno-parentheses -I%s/include", CC, nabhome );
+	sprintf( cmd, "%s -Wno-parentheses -Wno-incompatible-pointer-types -I%s/include", CC, nabhome );
 	for( ac = 1; ac < argc; ac++ ){
 		word[0] = '\0';
 		if( nfmask[ ac ] ){
