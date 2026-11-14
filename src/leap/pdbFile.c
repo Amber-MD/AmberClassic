@@ -904,10 +904,7 @@ STRING          sTemp;
     p.pdb.atom.z = dVZ(&vAtomPosition(aAtom));
     p.pdb.atom.occupancy = bAtomFlagsSet(aAtom,ATOMBULKSOLVENT) ? GDefaults.dPdbBulkQ : 1.0;
     double chg = dAtomCharge(aAtom);
-    if (GDefaults.pdbwritecharges)
-        p.pdb.atom.temp_factor = chg;
-    else
-        p.pdb.atom.temp_factor = 0.0;
+    p.pdb.atom.temp_factor = GDefaults.pdbwritecharges ? chg : 0.0;
     strcpy(p.pdb.atom.element,sElement);
     if (floor(chg)==chg && chg != 0.0 && fabs(chg)<10.0) {
         p.pdb.atom.fcharge[0] = '0' + abs((int)chg);
@@ -1623,6 +1620,7 @@ int             iCurrentBioMT=0;
             case PDB_HETATM:
 
                 if (p.pdb.atom.alt_loc != ' ' && p.pdb.atom.alt_loc != GDefaults.cPdbAltLocSelect) break;
+                // left-justify 2-letter chainId
                 if (p.pdb.atom.residue.chain_id[0]==' ') memmove(p.pdb.atom.residue.chain_id,p.pdb.atom.residue.chain_id+1,2);
 
                 if (iCurrentModel) {
@@ -2339,15 +2337,14 @@ zMakeBond(PDBREADt *prPPdb, const Pair *p, bool bFromIsConnect,
     RESIDUE rTo   = rnTo->rResidue;
 
     int iNonConnectSides = !bFromIsConnect + !bToIsConnect;
-    if ((iNonConnectSides >= 2 && GDefaults.iPdbExcludeNonConnect >= 1) ||
-        (iNonConnectSides >= 1 && GDefaults.iPdbExcludeNonConnect >= 2)) {
+    if (iNonConnectSides <= GDefaults.iPdbAllowNonConnect){
         if (bToIsConnect)
             VPWARN("Filtered out bond from %s.%s:%d.%s to %s.%s:%d.%s\n"
-                   "   with pdb_ignore_nonconnect = %d\n"
+                   "   with pdb_allow_nonconnect = %d\n"
                    "   but earlier residue (from) match was based on this pending bond.\n",
                    sContainerName(rTo),   sResidueChainId(rTo),   iResiduePdbSequence(rTo),   sContainerName(aTo),
                    sContainerName(rFrom), sResidueChainId(rFrom), iResiduePdbSequence(rFrom), sContainerName(aFrom),
-                   GDefaults.iPdbExcludeNonConnect);
+                   GDefaults.iPdbAllowNonConnect);
         return;
     }
 
@@ -2654,13 +2651,11 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
         }
         if (match) continue;
 
+        if (!GDefaults.iPdbAllowNonConnect) continue;
         // Analyze non-CONNECT atom bonding contacts
-        if (GDefaults.iPdbExcludeNonConnect >= 2) continue;
         bool bToIsConnect = false;
         bool bForwardLink = (pairPDetected[id]->to_group > iResIndex);
-        if (bForwardLink) {
-            bToIsConnect = true; /* assume connect -- verified when partner is processed */
-        } else {
+        if (!bForwardLink && GDefaults.iPdbAllowNonConnect == 1) {
             RESIDUENAMEt *rnTo = &rnPResidues[pairPDetected[id]->to_group];
             if (rnTo->rResidue) {
                 ATOMNAMEt *anTo        = PVAI(prPPdb->vaAtomRecs, ATOMNAMEt,
@@ -2671,11 +2666,11 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
                         { bToIsConnect = true; break; }
                 }
             }
+            if (!bToIsConnect) continue;
         }
-        if (bToIsConnect && GDefaults.iPdbExcludeNonConnect >= 1) continue;
         if (bForwardLink) cnPCandidate->bHasPendingForwardLinks = true;
         if (unmatched_conn < MAXCONNECTPAIRS)
-            cnPCandidate->pairPUnmatched[unmatched_conn++] = p;
+                cnPCandidate->pairPUnmatched[unmatched_conn++] = p;
     }
 
     cnPCandidate->score.extra_head_tail =

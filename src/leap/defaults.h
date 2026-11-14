@@ -42,7 +42,7 @@ typedef struct {
         double  dPdbCrosslinkCovalentCutoff;
         double  dPdbBulkQ;
         double  dPdbBuildRotamers;
-        int     iPdbExcludeNonConnect;
+        int     iPdbAllowNonConnect;
         int     iPdbReadModel;
         int     iPdbConvertResName;
         bool    bPrmtopNetcdf;

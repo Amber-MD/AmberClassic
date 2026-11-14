@@ -58,6 +58,7 @@
 # undef ERROR
 
 # define strcasecmp _stricmp
+# define strncasecmp _strnicmp
 #else
 # include <unistd.h>
 # include <strings.h>

@@ -2940,7 +2940,7 @@ oCmd_get( int iArgCount, ASSOC aaArgs[] )
 {
 char    *sCmd = "get";
 OBJEKT  oResult;
-int     iMode=0;
+int     iMode=0; // 0 = sum, 1 = average, 2 = element
     if ( iArgCount == 2 && !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "lumra s" ) ) {
         getUsage();
         return NULL;
@@ -2950,9 +2950,9 @@ int     iMode=0;
             return NULL;
         }
         char *mode = sOString(oAssocObject(aaArgs[2]));
-        if (!strcasecmp(mode,"ave")) iMode=1;
-        else if (!strcasecmp(mode,"elem")) iMode=2;
-        else if (strcasecmp(mode,"sum")) {
+        if (!strncasecmp(mode,"ave",3)) iMode=1;
+        else if (!strncasecmp(mode,"elem",4)) iMode=2;
+        else if (strncasecmp(mode,"sum",3)) {
             getUsage();
             return NULL;
         }
@@ -3000,7 +3000,7 @@ int     iMode=0;
             else if (iObjectType(oElemResult)==ODOUBLEid)  {
                ODoubleSet(oResult, dODouble(oResult)+dODouble(oElemResult));
             }
-            if (iMode==2) break;
+            if (iMode==2) break; // element
             // TODO: how to combine strings?? add vectors, vector GET
         }
         if (iMode==1 && iCount > 0) ODoubleSet(oResult, dODouble(oResult) / (double)iCount);
