@@ -405,7 +405,7 @@ extern  bool    GbInterrupt;
 
 #define MAXCHARSPERPRINTF       4096    /* 4096 characters max */
 
-typedef void            (*VFUNCTION)();
+//typedef void            (*VFUNCTION)(void);
 
 #ifdef DEBUG
 // For _Generic() macros in DEBUG build
@@ -423,8 +423,9 @@ typedef void            (*VFUNCTION)();
 #include "oDouble.h"
 #endif
 
+typedef void (*PRINTSINKCALLBACK) (char *sLine, GENP PData);
 extern bool             GbPrintPrefix;
-extern VFUNCTION        GfPrintStringCallback;
+extern PRINTSINKCALLBACK GfPrintStringCallback;
 extern char             *GcPPrefix;
 extern GENP             GPData;
 
@@ -789,7 +790,8 @@ extern void             MessageFileList(void);
 extern int              BasicsAddDirectory( STRING sDirectory, int bomb );
 extern FILE             *fBasicsMyFopen( char *sFilename, char *sAttributes,
                                 bool bComplain );
-extern int              iCreatePrintSink( VFUNCTION fOutputCallback,
+extern int              iCreatePrintSink(
+                                void (*fOutputCallback)(char *sLine, GENP PData),
                                 char *sPrefix, GENP PData );
 extern void             DestroyPrintSink( int iHandle );
 extern void             PushCurrentPrintSink( int iSink );

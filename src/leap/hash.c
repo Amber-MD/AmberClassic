@@ -548,7 +548,7 @@ int		i;
  *		(VFunc)( PCallback, cPKey, PData )
  */
 void
-HTWalk( HASH_TABLE htTable, GENP PCallback, VFUNCTION VFunc )
+HTWalk( HASH_TABLE htTable, GENP PCallback, void (*VFunc)(GENP PCallback,char*cPKey,GENP PData))
 {
 int		i;
 HASH_LISTt	*hlPCur, *hlPFree;

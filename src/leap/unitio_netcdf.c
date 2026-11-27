@@ -12,10 +12,13 @@
 #include        <assert.h>
 #include        <netcdf.h>
 #include        <stdarg.h>
+#if __has_feature(memory_sanitizer)
+# include <sanitizer/msan_interface.h>
+#endif
 
 #define LABLEN 4
 #define MAXDESCLEN MAXSTRINGLENGTH
-#define AMBER_VERSION   "3.0"
+#define AMBER_VERSION  "3.0"
 
 /* NC_RESTRAINTLOOP: NetCDF equivalent of RESTRAINTLOOP.
    Collects values into buf[] at offset, preserves iParmIndex
@@ -131,6 +134,9 @@ NC_DEFVAR(int ncid, int *pvid, const char *name, nc_type type,
         NC_PARAM(ncid, (dimname), (amber_name), (len));         \
     } while(0)
 
+#if __has_feature(memory_sanitizer)
+__attribute__((no_sanitize("memory")))
+#endif
 void
 UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                               bool bPert, bool bPolar, int iMaxAtoms,
@@ -863,12 +869,11 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
         NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_excl_h, "dihedrals_without_hydrogen", NC_INT, 0, NULL,
                             "NPHIA", NULL, "count of dihedrals without hydrogen",
                             "index_dimension", "dihedral",
-                            "comment", "dihedrals_inc_hydrogen + n_dihedrals_without_hydrogen == n_dihedral",
+                            "comment", "#dihedrals_inc_hydrogen + #dihedrals_without_hydrogen == #dihedral",
                             NULL));
         NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_restraints, "dihedral_restraint", NC_INT, 0, NULL,
-                            NULL, NULL, "count of trailing dihedral restraints",
+                            NULL, NULL, "count of trailing dihedral restraints in dihedrals_without_hydrogen",
                             "index_dimension", "dihedral",
-                            "comment", "dihedrals_inc_hydrogen + n_dihedrals_without_hydrogen == n_dihedral",
                             NULL));
         int dims2[2] = {dimid_dihe, dimid_atom4};
         NC_CHECK(NC_DEFVAR(ncid, &vid_dihe_atom, "dihedral_atom", NC_INT, 2, dims2,
@@ -905,16 +910,21 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
                             "index_dimension", "atom",
                             "comment", "typical use: CHARMM improper, first atom = center atom",
                             NULL));
+        NC_CHECK(NC_DEFVAR(ncid, &vid_harm_restraint, "harmonic_dihedral_restraint", NC_INT, 0, NULL,
+                            NULL, NULL, "count of trailing harmonic dihedral restraints",
+                            NULL));
         NC_CHECK(NC_DEFVAR(ncid, &vid_harm_parm, "harmonic_dihedral_type_index", NC_INT, 1, &dimid_harm,
                             NULL, NULL, "harmonic dihedral parameter index",
                             "index_variables", "harmonic_dihedral_force_constant harmonic_dihedral_equil_value",
                             NULL));
+#if 0
         NC_CHECK(NC_DEFVAR(ncid, &vid_harm_restraint, "harmonic_dihedral_restraint", NC_BYTE, 1, &dimid_harm,
                             NULL, NULL, "supplemental restraint flag",
                             "flag_meanings", "force_field_term restraint",
                             NULL));
          int flag_val[2]={0,1};
          NC_CHECK(nc_put_att_int(ncid, vid_harm_restraint, "flag_values", NC_INT, 2, flag_val));
+#endif
     }
 
     /* NATYP */
@@ -1121,7 +1131,8 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
     if (n_harm_total > 0) {
         NC_CHECK(nc_put_var_int   (ncid, vid_harm_atom, (int*)harm_atoms));
         NC_CHECK(nc_put_var_int   (ncid, vid_harm_parm, harm_parm));
-        NC_CHECK(nc_put_var_schar (ncid, vid_harm_restraint, (signed char*)harm_restraint));
+        //NC_CHECK(nc_put_var_schar (ncid, vid_harm_restraint, (signed char*)harm_restraint));
+        NC_CHECK(nc_put_var_int (ncid, vid_harm_restraint, &n_harm_restraints)); // FIXME, these may need sorting?? Or just cancel restaints?
         NC_CHECK(nc_put_var_double(ncid, vid_harm_dihe_force, harm_force));
         NC_CHECK(nc_put_var_double(ncid, vid_harm_dihe_equil, harm_equil));
     }
@@ -1619,6 +1630,9 @@ UnitIOSaveAmberParmNetcdf(const char *fname, UNITt *uUnit,
    Author: Robin Betz (2013)
    Writes coordinates in UNIT to a NetCDF coordinate file.
    ================================================================ */
+#if __has_feature(memory_sanitizer)
+__attribute__((no_sanitize("memory")))
+#endif
 void
 UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
 {
@@ -1638,14 +1652,14 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
                         strlen(sContainerName(uUnit)), sContainerName(uUnit)));
     NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "application", 5, "AMBER"));
     NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "program", 4, "leap"));
-    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "programVersion", 3, LEAP_VERSION));
+    NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "programVersion", strlen(LEAP_VERSION), LEAP_VERSION));
     NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "Conventions", 12, "AMBERRESTART"));
     NC_CHECK(nc_put_att_text(ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0"));
 
     NC_CHECK(nc_def_dim(ncid, "spatial", 3, &did_spatial));
     NC_CHECK(nc_def_var(ncid, "spatial", NC_CHAR, 1, &did_spatial, &vid_spatial));
     NC_CHECK(nc_def_dim(ncid, "atom", iAtomCount, &did_atom));
-    NC_CHECK(nc_def_var(ncid, "time", NC_DOUBLE, 0, dimensionID, &vid_time));
+    NC_CHECK(nc_def_var(ncid, "time", NC_DOUBLE, 0, NULL, &vid_time));
     NC_CHECK(nc_put_att_text(ncid, vid_time, "units", 10, "picosecond"));
 
     if (bUnitUseBox(uUnit)) {
@@ -1691,7 +1705,7 @@ UnitIOSaveAmberCoordNetcdf(UNIT uUnit, char *filename)
         dX2 = dY2 = dZ2 = 0.0;
     }
 
-    for (int i = 0; i < iVarArrayElementCount(uUnit->vaAtoms); i++) {
+    for (int i = 0; i < iAtomCount; i++) {
         vPos = PVAI(uUnit->vaAtoms, SAVEATOMt, i)->vPos;
         data[counter++] = dVX(&vPos) + dX2;
         data[counter++] = dVY(&vPos) + dY2;

@@ -1339,13 +1339,13 @@ PdbAppendToAtomMap( LIST lEntries )
  *      Clear the residue name map.
  */
 void
-PdbClearResMap()
+PdbClearResMap(void)
 {
     zPdbNameMapDestroy( &SdResidueNameMap );
 }
 
 void
-PdbClearAtomMap()
+PdbClearAtomMap(void)
 {
     zPdbNameMapDestroy( &SdAtomNameMap );
 }
@@ -1383,7 +1383,7 @@ fGetPdbResMapped(char *sResName) {
  *      Display the Name Map.
  */
 void
-PdbDisplayResMap()
+PdbDisplayResMap(void)
 {
 DICTLOOP        dlEntries;
 char            *cPData;
@@ -1463,7 +1463,7 @@ CANCEL:
  */
 
 void
-PdbDisplayAtomMap()
+PdbDisplayAtomMap(void)
 {
 DICTLOOP        dlEntries;
 char            *cPData;
@@ -2108,6 +2108,7 @@ zLoadUnit(char *name) {
 // -- Scoring (least tolerable -> most tolerable) ------------------------------
 #define MAXCONNECTPAIRS 32
 typedef struct {
+    bool bAliasMatch;                // Flag: variable name not UNIT name -> forced mapping
     int mismatched_head_restype;
     int extra_connect;
     int missing_head_tail;
@@ -2122,7 +2123,7 @@ typedef struct {
 
 char sMatchResNames[MAXCANDIDATES][64];
 
-typedef struct MatchCandidate {
+typedef struct MatchCandidate_ {
     UNIT        uTemplate;
     const Pair *pairPMatched[MAXCONNECT];   // detected bonds matching CONNECT
     const Pair *pairPUnmatched[MAXCONNECTPAIRS]; // detected bonds not matching CONNECT
@@ -2146,6 +2147,7 @@ ziCompareCandidates(const MatchCandidate *A, const MatchCandidate *B)
     const MatchScore *a = &A->score;
     const MatchScore *b = &B->score;
     #define CMP(field) if (a->field < b->field) return -1; if (a->field > b->field) return 1;
+    CMP(bAliasMatch)
     CMP(mismatched_head_restype)
     CMP(extra_connect)
     CMP(missing_head_tail)
@@ -2193,6 +2195,7 @@ zLogCandidateLoss(const MatchCandidate *winner, const MatchCandidate *loser)
             extra \
             return; \
         }
+    EXPLAIN(bAliasMatch,"Variable alias, forced match by resName",)
     EXPLAIN(mismatched_head_restype,"mismatch HEAD ResidueType",)
     EXPLAIN(extra_connect,"extra CONNECT",)
     EXPLAIN(missing_head_tail,"missing HEAD/TAIL",)
@@ -2593,6 +2596,9 @@ zMatchResidueCandidate(PDBREADt *prPPdb, int iResIndex,
     cnPCandidate->uTemplate = uTemplate;
     int matched_conn = 0, unmatched_conn = 0;
 
+    cnPCandidate->score.bAliasMatch = strcmp(key,sContainerName(uTemplate))
+                             && strcmp(key,sContainerName(rTemplateRes));
+
     // -- CONNECT Atom matching ---------------------------------------------------
     for (int id = 0; id < iNumDetected; id++) {
         const Pair *p         = pairPDetected[id];
@@ -2806,7 +2812,6 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
     int             iNumDetected;
 
     VPTRACEENTER(__func__);
-    VP3("------------------------------\n");
 
     // -- Link detection ------------------------------------------------------
 
@@ -2816,42 +2821,34 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
     // -- Template lookup -----------------------------------------------------
 
     // check 3-letter HetID to 3-5 letter CompID mapping
-    char *cPResName = zcPPdbMapName( SdResidueNameMap,
+    // Lookup by 5 letter COMP_ID code first if found, then by 3 letter resName code
+    char *cPResName, *cPResNames[2];
+    int n=1;
+    cPResNames[0] = zcPPdbMapName( SdResidueNameMap,
                         HETID_COMPID, rnPName->sName, NULL );
-    if (cPResName) {
-        VP0("HetID %s -> COMP_ID %s\n",rnPName->sName,cPResName);
-        strcpy(ix_record.key, cPResName);
-        ix_record.recptr = NULL;
-        // First lookup always fails with data=NULL (IX_DUPKEY)
-        status = locate_key(&ix_record, &(prPPdb->ixResMap), 0);
-        status = next_key(&ix_record, &(prPPdb->ixResMap));
-        if (strcmp(cPResName, ix_record.key)) {
-            VP0("Template Residue not found for: %s\n", cPResName);
-            uTemplate = zLoadUnit(cPResName);
-            // If template loaded, add record to the index
-            if (uTemplate) {
-                strcpy(ix_record.key, cPResName);
-                ix_record.recptr = uTemplate;
-                add_key(&ix_record, &(prPPdb->ixResMap));
-            } else cPResName = NULL;
-        } else cPResName = NULL;
+    if (cPResNames[0]) {
+        VP0("HetID %s -> COMP_ID %s\n",rnPName->sName,cPResNames[0]);
+        n=2;
     }
-
-    // Now try direct residue name lookup
-    if (!cPResName) {
-        cPResName = rnPName->sName;
+    cPResNames[n-1] = rnPName->sName;
+   
+    for (int i=0;i<n;i++) { 
+        cPResName = cPResNames[i];
         strcpy(ix_record.key, cPResName);
         ix_record.recptr = NULL;
+        // First lookup always fails with data=NULL and mode=IX_DUPKEY
+        // and NULL is always before the first match to non-NULL data
         status = locate_key(&ix_record, &(prPPdb->ixResMap), 0);
         status = next_key(&ix_record, &(prPPdb->ixResMap));
-        if (strcmp(cPResName, ix_record.key)) {
-            VP0("Template Residue not found for: %s\n", cPResName);
-            uTemplate = zLoadUnit(cPResName);
-            if (uTemplate) {
-                strcpy(ix_record.key, cPResName);
-                ix_record.recptr = uTemplate;
-                add_key(&ix_record, &(prPPdb->ixResMap));
-            }
+        if (!strcmp(cPResName, ix_record.key)) break;
+        VP0("Template Residue not found for: %s\n", cPResName);
+        uTemplate = zLoadUnit(cPResName);
+        // If template was loaded from a file, add record to the index
+        if (uTemplate) {
+            strcpy(ix_record.key, cPResName);
+            ix_record.recptr = uTemplate;
+            add_key(&ix_record, &(prPPdb->ixResMap));
+            break;
         }
     }
 
@@ -2866,8 +2863,14 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
                 ix_record.key, uTemplate,
                 &cnCandidate);
 
-        if (!cnMatch.uTemplate) cnMatch = cnCandidate;
-        else if (ziCompareCandidates(&cnCandidate, &cnMatch) < 0) {
+        if (!cnMatch.uTemplate) {
+            cnMatch = cnCandidate;
+            if (cnMatch.score.bAliasMatch) {
+                VP2("  FORCED MATCH: %s -> %s.%s\n", cPResName,
+                   sContainerName(cnMatch.uTemplate),
+                   sContainerName(oContainerFirstObject(uTemplate)));
+            }
+        } else if (ziCompareCandidates(&cnCandidate, &cnMatch) < 0) {
             zLogCandidateLoss(&cnCandidate, &cnMatch);
             cnMatch = cnCandidate;
         } else zLogCandidateLoss(&cnMatch, &cnCandidate);
@@ -2880,7 +2883,8 @@ zPdbMatchResidueTemplate(PDBREADt *prPPdb, int iResIndex, MatchCandidate *cnPMat
         if (++iNumCandidates >= MAXCANDIDATES) break;
         status = next_key(&ix_record, &(prPPdb->ixResMap));
 
-    } while (status != IX_END && !strcmp(cPResName, ix_record.key));
+    } while (status != IX_END && !strcmp(cPResName, ix_record.key)
+            && !cnMatch.score.bAliasMatch); // forced match
 
     // -- Report and return ---------------------------------------------------
 
@@ -3047,23 +3051,26 @@ DICTIONARY      dVariables;
         if ( iObjectType(rRes) != RESIDUEid ) continue; // unlikely
         // VARIABLE is a UNIT containing a single RESIDUE
         // => Residue Template signature
-        // Index it by VARIABLE name and RESIDUE name
-        // And mark UNIT TempInt with number of hydrogen atoms
+        // * Index it by VARIABLE name and RESIDUE name
+        // * Set UNIT iTempInt with number of hydrogen atoms
+        // * Use iCapTempInt to flag variable alias (name does not match UNIT name)
         ATOM aAtom;
         int nH=0;
         LOOPOVERALL(rRes,ATOMS,aAtom,lAtoms)
             if (aAtom->iAtomicNumber == HYDROGEN) nH++;
         ContainerSetTempInt(uTemplate,nH);
         char *sVarName = sDictLoopKey(dlLoop);
+        char *sUnitName = sContainerName(uTemplate);
         char *sResName = sContainerName(rRes);
         IX_REC ix_record;
         ix_record.recptr = (IX_RECPOS) uTemplate;
         char *key = ix_record.key;
         strcpy(key, sResName);
         // Add both RESIDUE and VARIABLE indices
-        MESSAGE("Index residue %s (%s,%s,%s)\n", sResName, sVarName,sContainerName(uTemplate), sResName);
+        MESSAGE("Index residue %s (%s,%s,%s)\n", sResName, sVarName, sUnitName, sResName);
         add_key(&ix_record,&(prPPdb->ixResMap));
-        if (strcmp(sVarName,sResName)) {
+        // Index by variable name if it differs from UNIT (is var alias) or from RESIDUE (is a variant name)
+        if (strcmp(sVarName,sResName) || strcmp(sVarName,sUnitName)) {
             strcpy(key, sVarName);
             add_key(&ix_record,&(prPPdb->ixResMap));
         }
@@ -3143,6 +3150,7 @@ int             iChainCount=0;
     int iResidueCount = iVarArrayElementCount( prPPdb->vaResidues );
     //int iAtomCount = iVarArrayElementCount( prPPdb->vaAtomRecs );
     for (int iRes = 0; iRes < iResidueCount; iRes++) {
+        VP3("-----------------------------\n");
         RESIDUENAMEt *rnPName = PVAI( prPPdb->vaResidues, RESIDUENAMEt, iRes);
         int iFirstAtom = rnPName->iFirstAtom;
         int iLastAtom = (iRes < iResidueCount - 1) ? ((rnPName + 1)->iFirstAtom - 1)
@@ -3337,6 +3345,7 @@ int             iChainCount=0;
         BuildDestroyInternals( &lTemp );
 
     }
+    VP3("------------------------------\n");
 
     if (GDefaults.bPdbUseConect) {
         for (int i=0; i<iVarArrayElementCount(prPPdb->vaConectRecs); i++) {

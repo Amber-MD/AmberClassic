@@ -1382,7 +1382,7 @@ DONE:
  *      Create the containers for atoms, bonds, angles, and torsions.
  */
 MINIMIZER
-mMinimizerCreate()
+mMinimizerCreate(void)
 {
 MINIMIZER       eNew;
 

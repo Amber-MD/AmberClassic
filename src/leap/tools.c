@@ -1802,6 +1802,7 @@ size_t                  npairs;
 
     vaPoints = vaVarArrayCreate( sizeof(Point) );
     vaAtoms = vaVarArrayCreate( sizeof(BONDSEARCHt) );
+    if ( iOperation == DISTANCE_SEARCH_CREATE_BONDS ) vaPairs = vaVarArrayCreate( sizeof(PAIRt) );
     dMaxR = 0;
     iAtoms = 0;
     LOOPOVERALL(cCont,ATOMS,aAtom,lTemp) {

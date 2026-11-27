@@ -43,7 +43,7 @@
  *      Create an OINTEGER
  */
 OINTEGER
-oiOIntegerCreate()
+oiOIntegerCreate(void)
 {
 OINTEGER        oiNew;
 

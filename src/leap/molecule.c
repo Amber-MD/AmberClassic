@@ -59,7 +59,7 @@
  *              Return a pointer to the MOLECULE created.
  */
 MOLECULE
-mMoleculeCreate()
+mMoleculeCreate(void)
 {
 MOLECULE        m;
 

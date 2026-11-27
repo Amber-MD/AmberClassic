@@ -267,8 +267,7 @@ _pdbx_struct_assembly_gen.asym_id_list
     if (cifMtrix.pCategory) {
         // Convert struct_ncs_oper to MTRIXn form
         for (int i = 0; i < cifMtrix.pCategory->numRow; i++) {
-            int iCol=0;
-            const char *pItem = zcPCifGetItem(&cifMtrix, i, iCol++);
+            const char *pItem = zcPCifGetItem(&cifMtrix, i, 0);
             // Crude filtering: assume all numerically named transforms applied to all chains
             // And assumes first entry is identity matrix !!FIXME!!
             if (!isdigit((unsigned char)*pItem)) continue;
@@ -277,23 +276,22 @@ _pdbx_struct_assembly_gen.asym_id_list
                                                          // or BioMT "type"
             // FIXME: how to use code/type info
             // e.g. 6O3H P='transform to point frame', 1='identity operation', 2='point symmetry operation'
-            iCol++;
             PDBMATRIXt matrix = { (iSerial != 1), {
                  {
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 1)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 2)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 3)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 4)),
                  },{
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 5)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 6)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 7)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 8)),
                  },{
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
-                     atof(zcPCifGetItem(&cifMtrix, i, iCol++)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 9)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 10)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 11)),
+                     atof(zcPCifGetItem(&cifMtrix, i, 12)),
                  },{
                      0.0,0.0,0.0,1.0
                  }

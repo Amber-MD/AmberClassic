@@ -8,8 +8,12 @@
 #include       "hybrid36.h"
 
 static  char scratch[BUFSIZ];
-static  char *outint(), *outunsigned(), *outstr(), *outfloat(), *outexp();
-static  void e_outfloat();
+static char * outint(int value, int width, int radix, char fill_char, char hex, int left_justify, char *p, char zero);
+static char * outunsigned(unsigned value, int width, char fill_char, int left_justify, char *p);
+static char * outstr(const char *s, int width, int maxstr, char fill_char, int left_justify, char *p);
+static char * outfloat(double value, int width, int nplace, char fill_char, int left_justify, char *p);
+static char * outexp(double value, int width, int nplace, char fill_char, int left_justify, char *p);
+static void e_outfloat(int width, char *where);
 /*
  * added fields:
  *    h    encode a hybrid36 string, 4 or 5 digits
@@ -187,14 +191,7 @@ pdb_sprintf(char *outbuf, char *fmt, ...)
 
 static
 char *
-outint(value, width, radix, fill_char, hex, left_justify, p, zero)
-register int    value, width;
-int             radix;
-char            fill_char;
-char            hex;
-int             left_justify;
-register char   *p;
-char            zero;
+outint(register int value, register int width, int radix, char fill_char, char hex, int left_justify, register char *p, char zero)
 {
         register char   *s;
         register int    n;
@@ -234,12 +231,7 @@ char            zero;
 
 static
 char *
-outunsigned(value, width, fill_char, left_justify, p)
-register unsigned       value;
-register int            width;
-char                    fill_char;
-int                     left_justify;
-register char           *p;
+outunsigned(register unsigned value, register int width, char fill_char, int left_justify, register char*p)
 {
         register char   *s;
         register int    n;
@@ -266,13 +258,7 @@ register char           *p;
 
 static
 char *
-outstr(s, width, maxstr, fill_char, left_justify, p)
-register char   *s;
-register int    width;
-int             maxstr;
-char            fill_char;
-int             left_justify;
-register char   *p;
+outstr(register const char *s, register int width, int maxstr, char fill_char, int left_justify, register char *p)
 {
         register int    len;
 
@@ -295,12 +281,7 @@ register char   *p;
 
 static
 char *
-outfloat(value, width, nplace, fill_char, left_justify, p)
-double          value;
-int             width, nplace;
-char            fill_char;
-int             left_justify;
-register char   *p;
+outfloat(double value, int width, int nplace, char fill_char, int left_justify, register char *p)
 {
         register int    i, intval;
         register char   *place, *to, *from;
@@ -374,9 +355,7 @@ register char   *p;
 }
 
 static void
-e_outfloat(width, where)
-int     width;
-char    *where;
+e_outfloat(int width, char *where)
 {
         register char   *c;
 
@@ -386,12 +365,7 @@ char    *where;
 
 static
 char *
-outexp(value, width, nplace, fill_char, left_justify, p)
-double          value;
-register int    width, nplace;
-char            fill_char;
-int             left_justify;
-register char   *p;
+outexp(double value, register int width, register int nplace, char fill_char, int left_justify, register char *p)
 {
         register int    n;
         register char   *s;

@@ -94,7 +94,7 @@
 
 void ParseInit(RESULTt * rPResult);
 void ParseArguments(int argc, char *argv[]);
-void ParseShutdown();
+void ParseShutdown(void);
 extern void ParseBlock(BLOCK, RESULTt *);
 /*
  *******************************************************************

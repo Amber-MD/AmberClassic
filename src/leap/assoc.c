@@ -71,7 +71,7 @@
  *      Create an ASSOC.
  */
 ASSOC   
-aAssocCreate()
+aAssocCreate(void)
 {
 ASSOC   aNew;
 

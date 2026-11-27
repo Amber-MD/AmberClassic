@@ -144,7 +144,7 @@ int	iSize;
  *	Create an empty BLOCK and return it.
  */
 BLOCK	
-bBlockCreate()
+bBlockCreate(void)
 {
 BLOCK	bNew;
 

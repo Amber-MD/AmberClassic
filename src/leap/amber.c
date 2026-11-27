@@ -85,7 +85,7 @@ typedef struct  {
  * CO-CX-2C-C    1     0.00000    0.0 -4.0  CASH/CASN chi1'
  * The format is at most a2,1x,a2,1x,a2,1x,a2; hence, the magic 9.
  */
-#define REPLACEDASHES(s) {StringRTrim(sLine); for(int z=0;z<9;z++) if(s[z]=='-')s[z]=' '; else if(s[z]=='\n') break;}
+#define REPLACEDASHES(s) {StringRTrim(sLine); if(strlen(sLine)<9) break; for(int z=0;z<9;z++) if(s[z]=='-')s[z]=' '; else if(s[z]=='\n') break;}
 #define NODASHES(s)     {for(int z=0;z<9;z++) if(s[z]=='-')s[z]=' ';}
 #define NODASHESWL(s)     {for(int z=0;z<strlen(s);z++) if(s[z]=='-')s[z]=' ';}
 
@@ -487,23 +487,33 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
     while (1) {
         FGETS( sLine, fIn );
         REPLACEDASHES(sLine);
+ // Mark dScEE, dScNB as "not read", will get defaults
+        dScEE = -1.0;
+        dScNB = -1.0;
 
 // beginning of a group.
 /* Read in parmxx.dat format
  *
  *        DI-DJ-DK-DL division kp PHI periodicity SCEE SCNB
  */
+  iDesc=iDesc1=iDesc2=-1;
         iRead = sscanf( sLine, "%s %s %s %s %lf %lf %lf %lf %n%lf %n%lf %n",
                                 saStr[0], saStr[1], saStr[2], saStr[3],
                                 &dDivisions, &dKp, &dP0, &dN, &iDesc1,
                                 &dScEE, &iDesc2, &dScNB, &iDesc );
         if ( iRead <= 0 )
             break;
+        if (iRead < 9) iDesc = iDesc1;
+        else if (iRead < 10) iDesc = iDesc2;
         if ( sLine[0] == ' ' && sLine[1] == ' ') {
             VPWARN("Bad proper torsion definition (skipping):\n (%s)\n",
                                                                 sLine );
             continue;
         }
+
+        if (iRead < 9) iDesc = iDesc1;
+        else if (iRead < 10) iDesc = iDesc2;
+
 /* Try GLYCAM format
  *
  *        DI-DJ-DK-DL division kp PHI periodicity SCEE=scee SCNB=scnb
@@ -519,22 +529,9 @@ zAmberReadParmSetPropers( PARMSET psParms, FILE *fIn )
             }
         }
 
-/*
- *  Neither SCEE nor SCNB has been set. Mark dScEE = 0.0, dScNB = 0.0 "not read".
- */
-        if (iRead < 9) {
-            iDesc = iDesc1;
-            dScEE = -1.0;
-            dScNB = -1.0;
-        } else if (iRead < 10) {
-            iDesc = iDesc2;
-            dScNB = -1.0;
-        }
-
 /* For some reason, we must divide dKp by dDivisions */
 
-        if ( dDivisions == 0.0 )
-            dDivisions = 1.0;
+        if ( dDivisions == 0.0 ) dDivisions = 1.0;
         dKp /= dDivisions;
         iN = (int)floor(dN+0.5);
         zAmberConvertWildCard( saStr[0] );

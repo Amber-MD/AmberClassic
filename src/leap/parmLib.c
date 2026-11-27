@@ -82,7 +82,7 @@ bool		bOk;
  *      Return a PARMLIB
  */
 PARMLIB
-plParmLibCreate()
+plParmLibCreate(void)
 {
 PARMLIB     plTemp;
 

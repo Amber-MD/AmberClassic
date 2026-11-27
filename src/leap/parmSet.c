@@ -738,6 +738,8 @@ typedef struct PARMVALUEKEYSTRUCT {
 PARMVALUEKEYt   *key = (PARMVALUEKEYt*)&ixRec.key;
 intptr_t        *pIndex = (intptr_t *)&ixRec.recptr;
 
+    memset(&ixRec,0,sizeof(ixRec));
+
     /* keyed on canonicalized (iN,dKp,dP0,dScEE,dScNB) */
     create_index(&ixParms,IX_NODUPKEY,sizeof(PARMVALUEKEYt));
 
@@ -971,7 +973,7 @@ void ParmSetCMAP(PARMSET psLib, int i, CMAP cmapReturn, bool bCopy)
  *      its contents.
  */
 PARMSET
-psParmSetCreate()
+psParmSetCreate(void)
 {
 PARMSET psNew;
 
@@ -2352,7 +2354,7 @@ typeStr         s1, s2;
  *        This is a routine (& not a #define) to hide TORSION_MATCHt.
  */
 TORSION
-tParmSetTORSIONCreate()
+tParmSetTORSIONCreate(void)
 {
     return(vaVarArrayCreate(sizeof(TORSION_MATCHt)));
 }

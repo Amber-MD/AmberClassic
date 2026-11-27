@@ -35,7 +35,7 @@
 VECTOR	vXAxis, vYAxis, vZAxis;
 
 void
-zMatrixInit()
+zMatrixInit(void)
 {
 	vXAxis.dX = 1.0;
 	vXAxis.dY = 0.0;

@@ -48,7 +48,7 @@ struct ROTAMERSTRUCT {
   char *sResName;
   char *sRotamerName;
   int  iPercent;
-  int  iChi[4];
+  float fChi[4];
 } rsRotamers[] = {
     { "ARG", "mtt180", 9, { -67, 180, 180, 180 }},
     { "ARG", "mtm-85", 6, { -67, -167, -65, -85 }},
@@ -281,7 +281,7 @@ BuildRotamer(RESIDUE rRes, int iRotamer, bool bRebuild, const char **sRotamerNam
                 &vAtomPosition(aInternalAtom2(iTorsion)),
                 &vAtomPosition(aInternalAtom3(iTorsion)),
                 &vAtomPosition(aInternalAtom4(iTorsion)));
-        dDelta[i] = (double)rsRotamers[iIndex].iChi[i]*DEGTORAD - dAngle;
+        dDelta[i] = (double)rsRotamers[iIndex].fChi[i]*DEGTORAD - dAngle;
     }
     LOOPOVERALL(rRes, INTERNALS, iTorsion, lInternals) {
         OBJEKT oOwner = lInternals.oaSubLoopOver[lInternals.iCurSubLoop];

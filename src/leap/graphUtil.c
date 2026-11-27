@@ -49,7 +49,7 @@
  */
 bool
 bGraphUtilFindShortestPath( UNIT uUnit, ATOM aStart, ATOM aStop, 
-		void (*fPCallback)())
+		void (*fPCallback)(ATOM))
 {
 LOOP		lSpanning;
 ATOM		aCur;

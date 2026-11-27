@@ -1260,7 +1260,8 @@ VECTOR		vCenter;
 		 */
 		DestroyOctant( PonNode, OCT_EXCLUDED );
 		return OCT_EXCLUDED;
-	} 
+	}
+        UNUSED(iIncluded);
 	/*
 	 * (don't fold into 1 node if iIncluded == 8 to avoid complications 
 	 *	in regrouping charges from subnodes - so even if technically 

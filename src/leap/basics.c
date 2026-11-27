@@ -514,7 +514,7 @@ iExpandDir( char *sExpanded, char *sOriginal )
 #else
 char		user[100];
 int		i;
-struct passwd 	*pw, *getpwnam();
+struct passwd 	*pw;
 
 /* 
 TODO: add string size protection
@@ -740,7 +740,7 @@ typedef	struct	{
 	bool		bSinkUsed;
 	bool		bPrintPrefix;
 	STRING		sPrefix;
-	VFUNCTION	fCallback;
+        void            (*fCallback)(char *sLine, GENP PData);
 	GENP		PData;
 } SINKINFOt;
 
@@ -771,7 +771,8 @@ static int		iCurrentPrintSink = -1;
  *
  */
 int
-iCreatePrintSink( VFUNCTION fOutputCallback, char *sPrefix, GENP PData )
+iCreatePrintSink( PRINTSINKCALLBACK fOutputCallback,
+                  char *sPrefix, GENP PData )
 {
 int		i;
 bool		bFoundOne;
@@ -963,7 +964,7 @@ myPuts( char *sLine, GENP PData )
     printf( "%s", sLine );
 }
 
-void	(*GfPrintStringCallback)() = (VFUNCTION)myPuts;
+void	(*GfPrintStringCallback)(char *sLine, GENP PData) = myPuts;
 
 
 /*

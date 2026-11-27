@@ -166,7 +166,7 @@ SortByString( GENP PStart, int iElements, int iSize,
  *	false.
  */
 
-typedef	bool	(*SIFTFUNCTION)();
+typedef	bool	(*SIFTFUNCTION)(GENP);
 
 void
 Sift( GENP PData, int iElementSize, int iElements, SIFTFUNCTION bFCriteria, 

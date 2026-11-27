@@ -44,7 +44,7 @@
  *      Create an ODOUBLE
  */
 ODOUBLE 
-odODoubleCreate()
+odODoubleCreate(void)
 {
 ODOUBLE         odNew;
 

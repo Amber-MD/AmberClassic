@@ -55,7 +55,7 @@ extern bool		bHTDelete(HASH_TABLE htTable, const char *sKey,
 				char **cPPKey, GENP *PPData);
 
 extern void		HTWalk(HASH_TABLE htTable, GENP PCallback, 
-				VFUNCTION VFunc);
+                                void (*VFunc)(GENP PCallback,char*cPKey,GENP PData));
 
 
 #define	iHTTableSize(h)		((h)->iTableSize)

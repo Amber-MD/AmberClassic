@@ -71,8 +71,8 @@ static  ORDERt  SoaOrders[] = {
  *      in which case the graphics routines aren't linked.
  */
 
-VFUNCTION       GfAtomClassGraphicsCreator = NULL;
-VFUNCTION       GfAtomClassGraphicsDestructor = NULL;
+void (*GfAtomClassGraphicsCreator)(ATOM a) = NULL;
+void (*GfAtomClassGraphicsDestructor)(ATOM a) = NULL;
 
 #if 0
 VARARRAY        GvaVDWTypes, GvaVDWValues;
@@ -131,7 +131,7 @@ int     i, j;
  *              Return a pointer to the ATOM created.
  */
 ATOM 
-aAtomCreate()
+aAtomCreate(void)
 {
 ATOM    a;
 
@@ -1174,6 +1174,7 @@ PARMSET         psSet;
 
                 /* Otherwise the atom is SP3 */
     else                        iH = HSP3;
+    UNUSED(iSingle);
 
     return iH;
 }

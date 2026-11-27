@@ -32,7 +32,7 @@
  */
 
 extern bool	bGraphUtilFindShortestPath( UNIT uUnit, ATOM aStart, ATOM aStop,
-                	void (*fPCallback)());
+                	void (*fPCallback)(ATOM));
 extern void	zGraphUtilDescribeRing( INTERNAL iRing );
 extern bool	zbGraphUtilSeparate( INTERNAL iBig, int iBigIndex, 
 			INTERNAL iSmall, int iSmallIndex );

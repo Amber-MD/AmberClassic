@@ -46,7 +46,7 @@
  *	Create and return a RING node.
  */
 static RINGNODEt *
-zrnPRingCreateNode()
+zrnPRingCreateNode(void)
 {
 RINGNODEt	*rnPNew;
 
@@ -122,7 +122,7 @@ GENP		PCur;
  *	Create and return a RING.
  */
 RING
-rRingCreate()
+rRingCreate(void)
 {
 RING	rNew;
 

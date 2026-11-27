@@ -428,7 +428,7 @@ bUnitIgnoreAngle( typeStr sA, typeStr sB, typeStr sC )
  *              Return a pointer to the UNIT created.
  */
 UNIT
-uUnitCreate()
+uUnitCreate(void)
 {
 UNIT    m;
 

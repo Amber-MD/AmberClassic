@@ -356,9 +356,10 @@ bool bAtomEvalSelection(const SELNODE node, const ATOM atom)
 
     case SEL_NODE_RESTYPE:
         {
+            size_t len = strlen(node->text);
             char cResType = cResidueType(cContainerWithin(atom));
-            if (node->text[1] == '\0') return (cLower(node->text[0]) == cResType);
-            return !strcmp(node->text, sResidueTypeNameFromChar(cResType));
+            if (len == 1) return (cLower(node->text[0]) == cResType);
+            return !strncmp(node->text, sResidueTypeNameFromChar(cResType), len);
         }
     case SEL_NODE_RES_FLAG:
         return (fResidueFlags(cContainerWithin(atom)) & node->a) != 0;

@@ -84,7 +84,7 @@ zDictionarySortCleanup(DICTIONARY dDict)
  *	for the key.
  */
 static void
-zDictionaryDestroyKey( DICTIONARY dDict, char *cPKey, GENP PData )
+zDictionaryDestroyKey( /*DICTIONARY*/ GENP dDict, char *cPKey, GENP PData )
 {
     FREE(cPKey);
 }
@@ -104,8 +104,9 @@ zDictionaryDestroyKey( DICTIONARY dDict, char *cPKey, GENP PData )
  *	dDict->dlLastSort.
  */
 static void
-zDictionaryFillSortVarArray( DICTIONARY dDict, char *cPKey, GENP PData )
+zDictionaryFillSortVarArray( /*DICTIONARY*/ GENP PDict, char *cPKey, GENP PData )
 {
+    DICTIONARY dDict = (DICTIONARY)PDict;
     (dDict->dlLastSort)->cPKey = cPKey;
     (dDict->dlLastSort)->PData = PData;
     dDict->dlLastSort++;
@@ -147,7 +148,7 @@ ziDictionaryCompareDictLoopEntries( DICTLOOP dlA, DICTLOOP dlB )
  *	Create a DICTIONARY.
  */
 DICTIONARY
-dDictionaryCreate()
+dDictionaryCreate(void)
 {
 DICTIONARY	dNew;
 

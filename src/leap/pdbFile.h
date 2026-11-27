@@ -115,7 +115,6 @@ typedef struct  {
         unsigned int    *iPGroupStart;   // starting index of each point group (MALLOC)
         NeighborGrid    *ngBondGrid;     // Fast grid search data structure
         IX_DESC         ixResMap;        // AVL tree index auto-match ResMap
-        //IX_DESC         ixPatchFilenames;// AVL tree to cache patch filenames found (not implemented yet)
 
         VARARRAY        vaConectRecs;    // struct pdb_conect
         VARARRAY        vaLinkRecs;      // struct pdb_link (OR converted pdb_ssbond)

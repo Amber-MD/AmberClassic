@@ -60,7 +60,7 @@ static  DICTLOOP        SdlLoop;        /* Used to loop through help keywords*/
  *      Initialize the HELP database.
  */
 void
-HelpInitialize()
+HelpInitialize(void)
 {
 
     SdHelp = dDictionaryCreate();
@@ -80,7 +80,7 @@ HelpInitialize()
  *	Free all memory taken up by the help database.
  */
 void
-HelpShutdown()
+HelpShutdown(void)
 {
 DICTLOOP	dlEntries;
 HELP		hCur;
@@ -162,7 +162,7 @@ STRING	sTmp;
  *      entry in the database.
  */
 void
-HelpLoop()
+HelpLoop(void)
 {
     SdlLoop = ydlDictionaryLoop(SdHelp);
 }
@@ -178,7 +178,7 @@ HelpLoop()
  *      Return subsequent help entries.
  */
 HELP
-hHelpNext()
+hHelpNext(void)
 {
 HELP    hNext;
 

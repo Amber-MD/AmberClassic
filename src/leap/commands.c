@@ -2930,7 +2930,7 @@ bool            bAbsoluteDist = true;
 }
 
 static void
-getUsage()
+getUsage(void)
 {
         VPFATALDELAYEDEXIT("usage: variable = get <container> <parameter> [sum|ave|elem]\n");
 }
@@ -3030,7 +3030,7 @@ int     iMode=0; // 0 = sum, 1 = average, 2 = element
  *              [2] -  OBJEKT new value of attribute.
  */
 static void
-setUsage()
+setUsage(void)
 {
         VPFATALDELAYEDEXIT("usage:  set <container> <parameter> <object>\n"
               "   or:  set [default] <parameter> <value>\n" );
@@ -3143,7 +3143,7 @@ bool    bVdw;
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u" );
     else if ( iArgCount == 2 )
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s" );
-    else if ( iArgCount != 1 )
+    else
         bUsage = !bCmdGoodArguments( sCmd, iArgCount, aaArgs, "u s ln" );
 
     if ( bUsage ) {
@@ -5724,8 +5724,7 @@ RET:
  *  vaSolventResidues() - make array of residue pointers
  *      TODO - maybe restrict it to dShellExtent?
  */
-VARARRAY        vaSolventResidues( uUnit )
-UNIT            uUnit;
+VARARRAY        vaSolventResidues( UNIT uUnit )
 {
 VARARRAY        vaSolvent;
 LOOP            lRes;

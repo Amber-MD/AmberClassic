@@ -221,7 +221,7 @@ extern void     UnitSetUseBox(UNIT uUnit, bool b);
 extern void     UnitSetBoxOct(UNIT uUnit, bool b);
 extern void     UnitSetUseSolventCap(UNIT uUnit, bool b);
 extern void     UnitDestroy( UNIT *uPUnit );
-extern bool     bUnitIgnoreAngle( STRING sA, STRING sB, STRING sC );
+extern bool     bUnitIgnoreAngle( typeStr sA, typeStr sB, typeStr sC );
 extern int      iUnitLabelMolecules(UNIT uUnit);
 
 #define uCopyUnit(u) UNIT_from(oCopy(OBJEKT_from(u)))

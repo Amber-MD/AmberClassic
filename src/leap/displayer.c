@@ -148,7 +148,9 @@ DISPLAYER	dPrev, dCur;
  *	Add a callback routine to the DISPLAYER.
  */
 void
-DisplayerAdd( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
+DisplayerAdd( DISPLAYER dDisp,
+         void (*vFunc)(struct DISPLAYERs*,GENP,GENP),
+         GENP PData )
 {
 DISPLAYERNODE	dnNew;
 
@@ -170,7 +172,9 @@ DISPLAYERNODE	dnNew;
  *	Return true if it was found.
  */
 bool
-bDisplayerRemove( DISPLAYER dDisp, VFUNCTION vFunc, GENP PData )
+bDisplayerRemove( DISPLAYER dDisp,
+        void (*vFunc)(struct DISPLAYERs*,GENP,GENP),
+        GENP PData )
 {
 DISPLAYERNODE	dnCur, dnPrev;
 
@@ -276,7 +280,7 @@ DISPLAYERNODE	dnCur;
  *	Update all DISPLAYERs in the SdDisplayerAccumulateList.
  */
 void
-DisplayerReleaseUpdates()
+DisplayerReleaseUpdates(void)
 {
 DISPLAYER	dCur, dPrev;
 
@@ -312,7 +316,7 @@ DISPLAYER	dCur, dPrev;
 static int	iOffed = 0;
 
 void
-TurnOffDisplayerUpdates()
+TurnOffDisplayerUpdates(void)
 {
 	if ( GbGraphicalEnvironment ) {
 		if ( iOffed )
@@ -323,7 +327,7 @@ TurnOffDisplayerUpdates()
 }
 
 void
-TurnOnDisplayerUpdates()
+TurnOnDisplayerUpdates(void)
 {
 	if ( iOffed ) {
 		iOffed = 0;

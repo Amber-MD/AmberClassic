@@ -29,7 +29,7 @@ pdb_read_record(FILE *f)
         register struct pdb_sheet       *sh;
         register pdb_residue    *sha0, *sha1;
 
-                memset( &r, 0, sizeof(r) );
+        memset( &r, 0, sizeof(r) );
 
         if (fgets(buffer, PDB_BUFSIZ, f) == NULL) {
                 /* at eof or error - default to eof */
@@ -474,23 +474,24 @@ ATOM  33998  CG  LYSag 338     210.492 325.105 205.495  1.00 43.06           C
                 break;
 
         case PDB_TER:
-        {
-                /* Default is hybrid36, which by design supports all standard integers */
-                int atom_overflow = isdigit((unsigned char)buffer[11]);
-                int residue_overflow = isdigit((unsigned char)buffer[26]);
-                if (atom_overflow  &&  !residue_overflow) {
-                        fmt = "%6 %6h%5 %3s%2c%4d%c";
-                } else if (!atom_overflow  &&  residue_overflow) {
-                        fmt = "%6 %5h%6 %3s%2c%5d%c";
-                } else if (atom_overflow  &&  residue_overflow) {
-                        fmt = "%6 %6h%5 %3s%2c%5d%c";
+                if (strlen(buffer)>26) {
+                    /* Default is hybrid36, which by design supports all standard integers */
+                    int atom_overflow = isdigit((unsigned char)buffer[11]);
+                    int residue_overflow = isdigit((unsigned char)buffer[26]);
+                    if (atom_overflow  &&  !residue_overflow) {
+                            fmt = "%6 %6h%5 %3s%2c%4d%c";
+                    } else if (!atom_overflow  &&  residue_overflow) {
+                            fmt = "%6 %5h%6 %3s%2c%5d%c";
+                    } else if (atom_overflow  &&  residue_overflow) {
+                            fmt = "%6 %6h%5 %3s%2c%5d%c";
+                    }
                 }
                 pdb_sscanf(buffer, fmt, &r.pdb.ter.serial_num,
                         r.pdb.ter.residue.name, &r.pdb.ter.residue.chain_id,
                         &r.pdb.ter.residue.seq_num,
                         &r.pdb.ter.residue.insert_code);
                 break;
-        }
+
         case PDB_TURN:
                 pdb_sscanf(buffer, fmt, &r.pdb.turn.seq_num, r.pdb.turn.id,
                         r.pdb.turn.residues[0].name,

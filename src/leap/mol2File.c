@@ -57,32 +57,6 @@ typedef struct {
     int iResidueSeq;
     STRING sResidueName;
 } MOL2WRITEt;
-/*
-typedef struct {
-    int iAtom1;
-    int iAtom2;
-    FLAGS fFlags;
-} SAVECONNECTIVITYt;
-
-typedef struct {
-    CONTAINERNAMEt sName;
-    CONTAINERNAMEt sPertName;
-    ATOMTYPEt sType;
-    ATOMTYPEt sPertType;
-    int iTypeIndex;
-    int iPertTypeIndex;
-    int iElement;
-    int iPertElement;
-    double dCharge;
-    double dPertCharge;
-    int iResidueIndex;
-    VECTOR vPos;
-    VECTOR vVelocity;
-    int iSequence;
-    FLAGS fFlags;
-    ATOM aAtom;
-} SAVEATOMt;
-*/
 
 static void zMol2FileBegin(MOL2WRITEt * pwPFile, FILE * fOut)
 {
@@ -206,7 +180,6 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
     int j, k;
     LOOP lContents, lTemp, lResidues;
     SAVERESIDUEt *srPResidue;
-    SAVECONNECTIVITYt *scPCon;
     MOL2WRITEt pwFile;
     STRING sTemp;
     char *sName;
@@ -290,14 +263,11 @@ void Mol2Write(FILE * fOut, UNIT uUnit, int choice)
     if (iCount) {
         i = 0;
         lTemp = lLoop((OBJEKT) uUnit, BONDS);
-        scPCon = PVAI(uUnit->vaConnectivity, SAVECONNECTIVITYt, 0);
         while (oNext(&lTemp) != NULL) {
             /*LoopGetBond(&lTemp, &aAtom1, &aAtom2); */
             (*(&aAtom1)) = (ATOM) (&lTemp)->oaObj[0];
             (*(&aAtom2)) = (ATOM) (&lTemp)->oaObj[1];
-            i++;
-            scPCon++;
-            fprintf(fOut, "%5d %5d %5d %5d\n", i,
+            fprintf(fOut, "%5d %5d %5d %5d\n", ++i,
                     (((CONTAINER) (aAtom1))->iTempInt),
                     (((CONTAINER) (aAtom2))->iTempInt),
                     fAtomFindBondFlags(aAtom1, aAtom2));

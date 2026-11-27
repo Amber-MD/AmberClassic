@@ -72,7 +72,7 @@
  *      Create and initialize a new string.
  */
 OSTRING
-osOStringCreate()
+osOStringCreate(void)
 {
 OSTRING osNew;
 

@@ -36,7 +36,7 @@
  *	Return a pointer to a RESTRAINT of undefined type.
  */
 RESTRAINT
-rRestraintCreate()
+rRestraintCreate(void)
 {
 RESTRAINT	rNew;
 

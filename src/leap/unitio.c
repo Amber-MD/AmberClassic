@@ -973,6 +973,7 @@ zUnitIOTableAddAtom(UNIT uUnit, ATOM aAtom, int i, PARMLIB plParameters,
                         "parameters for type (%s)\n",
                      sFullDescriptor(aAtom, sTemp),
                      sAtomType(aAtom));
+                iElement = NOELEMENT;
                 *bPFailed = true;
             }
         } else {

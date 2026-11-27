@@ -92,7 +92,7 @@ searchList( NODEP nPPList, OBJEKT oObj )
  *	Return a new list.
  */
 LIST
-lListCreate()
+lListCreate(void)
 {
 LIST    lList;
 

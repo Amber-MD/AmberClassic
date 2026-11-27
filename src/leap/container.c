@@ -9,7 +9,7 @@
  *     VERSION: 1.0                                                     *
  *     Programmers:                                                     *
  *             Christian Schafmeister                                   *
- *             David A. Rivkin                                             *
+ *             David A. Rivkin                                          *
  *                                                                      *
  *     Principal Investigator: Peter A. Kollman                         *
  *                                                                      *

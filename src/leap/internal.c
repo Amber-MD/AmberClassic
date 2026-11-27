@@ -71,7 +71,7 @@
  *      It is better to use iInternalBond, iInternalAngle etc.
  */
 INTERNAL
-iInternalCreate()
+iInternalCreate(void)
 {
 INTERNAL        iNew;
 
@@ -782,7 +782,7 @@ INTERNAL	iInt;
  *	Return an INTERNAL that is a ring.
  */
 INTERNAL
-iInternalRing()
+iInternalRing(void)
 {
 INTERNAL	iInt;
 

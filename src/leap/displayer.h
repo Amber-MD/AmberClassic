@@ -27,9 +27,10 @@
 #define	D_MODIFIED	0x01
 #define	D_SENSITIVE	0x02
 
+struct DISPLAYERs;
 typedef	struct	DISPLAYERNODEs {
 	struct DISPLAYERNODEs	*dnNext;
-	VFUNCTION		fCallback;
+	void                    (*fCallback)(struct DISPLAYERs*,GENP,GENP);
 	GENP			PData;
 } DISPLAYERNODEt;
 
@@ -50,9 +51,11 @@ extern	int		GiDisplayerAccumulateUpdates;
 extern DISPLAYER	dDisplayerCreate(GENP PObject);
 extern void		DisplayerDestroy(DISPLAYER *dPOld);
 
-extern void		DisplayerAdd(DISPLAYER dDisp, VFUNCTION vFunc, 
+extern void		DisplayerAdd(DISPLAYER dDisp,
+                                void (*vFunc)(struct DISPLAYERs*,GENP,GENP), 
 				GENP PData );
-extern bool		bDisplayerRemove(DISPLAYER dDisp, VFUNCTION vFunc, 
+extern bool		bDisplayerRemove(DISPLAYER dDisp,
+                                void (*vFunc)(struct DISPLAYERs*,GENP,GENP), 
 				GENP PData);
 extern void		DisplayerUpdate(DISPLAYER dDisp);
 

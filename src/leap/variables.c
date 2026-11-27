@@ -41,7 +41,7 @@ DICTIONARY      GdVariables;
  *      Define the Variables dictionary.
  */
 void
-VariablesInit()
+VariablesInit(void)
 {
     GdVariables = dDictionaryCreate();
 }
@@ -59,7 +59,7 @@ VariablesInit()
  *      List the variables to stdout
  */
 void
-VariablesList()
+VariablesList(void)
 {
 DICTLOOP        dlLoop;
 int             i = 1;
@@ -183,7 +183,7 @@ OBJEKT  oVar;
  *      Destroy all of the variables.
  */
 void
-VariablesDestroy()
+VariablesDestroy(void)
 {
 DICTLOOP        dlLoop;
 
@@ -209,7 +209,7 @@ DICTLOOP        dlLoop;
  *      Return the dictionary containing ALL variables.
  */
 DICTIONARY
-dVariablesDictionary()
+dVariablesDictionary(void)
 {
     return GdVariables;
 }

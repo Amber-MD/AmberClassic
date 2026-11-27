@@ -79,7 +79,7 @@ BNODEP   bnPCur, *bnPPPrev;
  *        Return a new bag.
  */
 BAG
-bBagCreate()
+bBagCreate(void)
 {
 BAG    bBag;
 

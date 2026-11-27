@@ -29,7 +29,7 @@
 #define LBLFORMAT_C     "%-4s"
 #define LBLFORMAT_F     "20A4"
 #define LBLCOUNT        20
-#define AMBER_VERSION   "3.0"
+#define AMBER_VERSION  "3.0"
 
 /* COMMENT_DIM: annotate a FLAG section with its dimension name and size.
    For 2D/strided arrays, add STRIDE=n manually after the macro.          */
@@ -87,8 +87,8 @@ int        ii, iiMax, jj = 0; \
 
 
 //---------------------------------------------------------------------------------------------
-// bBondAugmentationFound: test for the existence of bond augmentations.  Return 1 if they are
-//                        found, which will ordeer them to be printed.
+// bBondAugmentationFound: test for the existence of bond augmentations.  Return true if they are
+//                        found, which will result in being written to the PRMTOP.
 //
 // Arguments:
 //   uUnit:    the tleap Unit to save
@@ -194,7 +194,8 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
             iMolecule = 0;
             iCount = 0;
             RESIDUE rRes;
-            VP0("LEAP will now reassign molecules to exclude bonds that bridge a discontinuity\n");
+            VP0("LEAP will now reassign molecules to exclude bonds that bridge a discontinuity\n"
+                "\t(set molecules \"contiguous\"')\n");
             VarArraySetSize(uUnit->vaAtomsPerMolecule,0);
             LOOPOVERALL(uUnit,RESIDUES,rRes,lRes) {
                 if (rRes->iMolecule != iOldMolecule) {
@@ -207,9 +208,13 @@ UnitIOFindAndCountMolecules(UNIT uUnit)
                 iCount += iCollectionSize(rRes->cHeader.lContents);
             }
             VarArrayAdd(uUnit->vaAtomsPerMolecule, (GENP)&iCount);
+        } else if (GDefaults.iMolecules == MOLECULES_REORDER) {
+            VP0("Residues will be re-ordered on output to make molecules contiguous\n"
+                "\t(set molecules \"reorder\"')\n");
         } else {
             VP0("Set molecules \"reorder\" to re-order atoms\n"
-               "or set molecules \"contiguous\" to exclude bonds that bridge a discontinuity\n");
+               "or set molecules \"contiguous\" to exclude bonds that bridge a discontinuity\n"
+               "ATOMS_PER_MOLECULE in the PRMTOP file may be interpreted incorrectly\n");
         }
     }
     if (!bSeenFirstSolvent) {
@@ -628,10 +633,10 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       FortranSection("FORCE_FIELD_TYPE");
       iLines = iVarArrayElementCount(uUnit->vaParmSets) * 2 + 1;
       COMMENT_SIZE(iLines)
-      if (GDefaults.dPrmtopFormat < 2.0)
-          FortranWriteString("%FORMAT(i2,a78)");
-      else
-          FortranWriteString("%FORMAT(A)");
+      if (GDefaults.dPrmtopFormat < 2.0) {
+          if (iLines < 100) FortranWriteString("%FORMAT(i2,a78)");
+          else FortranWriteString("%FORMAT(i3,a77)");
+      } else FortranWriteString("%FORMAT(A)");
       for (i=0; i< iVarArrayElementCount(uUnit->vaParmSets); i++) {
           psParm = *PVAI(uUnit->vaParmSets, PARMSET, i);
           if (!strncmp(psParm->sTitle,"PARM",4)) {
@@ -642,7 +647,8 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
       if (iPARM >= 0) sprintf(sTemp1,"%s %.1024s", sLabel, psParm->sTitle);
       else strcpy(sTemp1,sLabel);
       if (GDefaults.dPrmtopFormat < 2.0) {
-          sprintf(sTemp2,"%2d %.77s", iLines, sTemp1);
+          if (iLines < 100) sprintf(sTemp2,"%2d%.78s", iLines, sTemp1);
+          else sprintf(sTemp2,"%3d%.77s", iLines, sTemp1);
           FortranWriteString(sTemp2);
       } else FortranWriteString(sTemp1);
       for (i=0; i< iVarArrayElementCount(uUnit->vaParmSets); i++) {
@@ -830,9 +836,9 @@ void UnitIOSaveAmberParmFormat(UNIT uUnit, char *prmtopName,
   // Save flag for periodic boundary conditions
   if (bUnitUseBox(uUnit)) {
     if (bUnitBoxOct(uUnit)) IFBOX = 2;
-    else if (abs(uUnit->dAlpha * RADTODEG - 90.0) > 1.e-5 ||
-             abs(uUnit->dBeta  * RADTODEG - 90.0) > 1.e-5 ||
-             abs(uUnit->dGamma * RADTODEG - 90.0) > 1.e-5) IFBOX = 3;
+    else if (fabs(uUnit->dAlpha * RADTODEG - 90.0) > 1.e-5 ||
+             fabs(uUnit->dBeta  * RADTODEG - 90.0) > 1.e-5 ||
+             fabs(uUnit->dGamma * RADTODEG - 90.0) > 1.e-5) IFBOX = 3;
     else IFBOX = 1;
   } else IFBOX = 0;
 

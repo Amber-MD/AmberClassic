@@ -90,7 +90,7 @@ STRING	GsFortranDebug;
  *	Read the next line into the STATIC variable SsInput.
  */
 static void
-zFortranGetInputLine()
+zFortranGetInputLine(void)
 {
    while ( !feof(SfFile) ) {
 	SsInput[0] = '\0';
@@ -141,13 +141,22 @@ void FortranSection(const char *label) {
 void FortranIntFormat(int maxval) {
   char fmt[32],line[80];
   int width, count;
-  static bool bWarned = false;
+  static bool bWarned = false, bWarn8 = false;
   width = snprintf(NULL, 0, "%d", maxval);
-  if (GDefaults.bCompatible && maxval >= 0) width++; // ensure space between numbers (if signed, there's already room)
-  if (GDefaults.bCompatible && width < 8) width=8; // ensure minimum width = 8 (original V1 compatibility)
-  if (width>8 && !bWarned) {
-    VPWARN("Integer format expanded to accomodate large structure\n");
-    bWarned = true;
+  //if (GDefaults.bCompatible && maxval >= 0) width++; // ensure space between numbers (if signed, there's already room)
+  //if (GDefaults.bCompatible && width < 8) width=8; // ensure minimum width = 8 (original V1 compatibility)
+  if (GDefaults.dPrmtopFormat == 1.0) {
+    if (width < 8) {
+      width = 8;
+    } else if (width == 8) {
+      if (!bWarn8) {
+        VPWARN("Large integers eliminate spacing: will break fragile parsers\n");
+        bWarn8 = true;
+      }
+    } else if (!bWarned) { // width > 8
+      VPWARN("Integer format expanded to accomodate large structure\n");
+      bWarned = true;
+    }
   }
   snprintf(fmt, sizeof(fmt), "%%%dd", width);  /* e.g. "%4d" */
   count = 80 / width;                 /* ints per line */
@@ -267,7 +276,7 @@ FortranWriteString( char *sVal )
  *      and end of line.
  */
 void
-FortranEndLine()
+FortranEndLine(void)
 {
     if ( SbWroteNothing || SiOnLine != 0 ) 
 	fprintf( SfFile, "\n" );
@@ -351,7 +360,7 @@ int             iLen;
  *      Read the next string and return it as an integer.
  */
 int
-iFortranReadInt( )
+iFortranReadInt(void)
 {
 STRING          sInt;
 int             iVal;
@@ -372,7 +381,7 @@ int             iVal;
  *      Read the next string and return it as a double.
  */
 double  
-dFortranReadDouble( )
+dFortranReadDouble(void)
 {
 STRING          sDouble;
 double          dVal;
@@ -392,7 +401,7 @@ double          dVal;
  *	Skip a line of input
  */
 void
-FortranSkipLine()
+FortranSkipLine(void)
 {
     if ( feof(SfFile) ) 
 	return;
@@ -414,7 +423,7 @@ FortranSkipLine()
  *	the nasty looking files.
  */
 void
-FortranDebugOn()
+FortranDebugOn(void)
 {
     SbFortranDebug = true;
 }
